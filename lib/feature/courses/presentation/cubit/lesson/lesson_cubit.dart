@@ -1,10 +1,10 @@
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/core/logging/logger.dart';
-import 'package:founders_academy/core/safe_execution/domain/safe_execution_manager.dart';
-import 'package:founders_academy/feature/auth/domain/user_session_manager.dart';
-import 'package:founders_academy/feature/courses/data/model/lesson/lesson_data.dart';
-import 'package:founders_academy/feature/courses/domain/repository/base_course_repository.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/logging/logger.dart';
+import 'package:lumi_pass/core/safe_execution/domain/safe_execution_manager.dart';
+import 'package:lumi_pass/feature/auth/domain/user_session_manager.dart';
+import 'package:lumi_pass/feature/courses/data/model/lesson/lesson_data.dart';
+import 'package:lumi_pass/feature/courses/domain/repository/base_course_repository.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 part 'lesson_state.dart';

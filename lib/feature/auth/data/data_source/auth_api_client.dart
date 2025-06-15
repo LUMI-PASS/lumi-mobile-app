@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
-import 'package:founders_academy/core/api/api_response.dart';
-import 'package:founders_academy/di/module/api_client_module.dart';
-import 'package:founders_academy/feature/auth/data/model/international_user_login_request.dart';
-import 'package:founders_academy/feature/auth/data/model/local_user_login_request.dart';
-import 'package:founders_academy/feature/auth/data/model/otp_data.dart';
-import 'package:founders_academy/feature/auth/data/model/token_data.dart';
+import 'package:lumi_pass/core/api/api_response.dart';
+import 'package:lumi_pass/di/module/api_client_module.dart';
+import 'package:lumi_pass/feature/auth/data/model/international_user_login_request.dart';
+import 'package:lumi_pass/feature/auth/data/model/local_user_login_request.dart';
+import 'package:lumi_pass/feature/auth/data/model/otp_data.dart';
+import 'package:lumi_pass/feature/auth/data/model/token_data.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -26,7 +26,7 @@ abstract class AuthApiClient {
     @Body() InternationalUserLoginRequest user,
   );
 
-  @POST('/api/auth/signin')
+  @POST('/api/v1/auth/login')
   Future<ApiResponse<TokenData>> login(
     @Body() OtpData otpData,
   );

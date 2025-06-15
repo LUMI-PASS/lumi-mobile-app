@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/home/data/model/search_item/search_item.dart';
-import 'package:founders_academy/feature/home/data/model/search_list/search_list_data.dart';
+import 'package:lumi_pass/feature/home/data/model/search_item/search_item.dart';
+import 'package:lumi_pass/feature/home/data/model/search_list/search_list_data.dart';
 
 abstract interface class BaseSearchRepository {
   Stream<List<SearchItem>> getSearchHistory();

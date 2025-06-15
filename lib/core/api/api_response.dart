@@ -1,5 +1,6 @@
-import 'package:founders_academy/core/error/chess_exception.dart';
 import 'package:json_annotation/json_annotation.dart';
+
+import '../error/chess_exception.dart';
 
 part 'api_response.g.dart';
 

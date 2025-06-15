@@ -1,15 +1,15 @@
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/core/logging/logger.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_cubit.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_state.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/image_cubit/image_cubit.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/image_cubit/image_state.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/profile_cubit/profile_cubit.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/profile_cubit/profile_state.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/core/logging/logger.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_cubit.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_state.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/image_cubit/image_cubit.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/image_cubit/image_state.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/profile_cubit/profile_cubit.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/profile_cubit/profile_state.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

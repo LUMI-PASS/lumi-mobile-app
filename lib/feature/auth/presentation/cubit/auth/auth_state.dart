@@ -1,5 +1,5 @@
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/feature/auth/data/model/otp_data.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/feature/auth/data/model/otp_data.dart';
 
 sealed class AuthState {
   const AuthState();

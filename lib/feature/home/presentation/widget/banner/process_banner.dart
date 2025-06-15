@@ -1,6 +1,6 @@
-import 'package:founders_academy/feature/base_url/app_base_url_cubit.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_state.dart';
-import 'package:founders_academy/feature/courses/data/model/course/course_data.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_cubit.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_state.dart';
+import 'package:lumi_pass/feature/courses/data/model/course/course_data.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

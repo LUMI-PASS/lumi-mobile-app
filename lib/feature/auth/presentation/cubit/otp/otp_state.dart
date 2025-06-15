@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/auth/data/model/otp_data.dart';
-import 'package:founders_academy/feature/shared/presentation/text_field_view_model.dart';
+import 'package:lumi_pass/feature/auth/data/model/otp_data.dart';
+import 'package:lumi_pass/feature/shared/presentation/text_field_view_model.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'otp_state.freezed.dart';

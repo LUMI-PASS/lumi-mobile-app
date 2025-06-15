@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/feature/home/data/data_source/remote_data_source/home_api_client.dart';
-import 'package:founders_academy/feature/shared/data/model/push_notification_subscribe_request_model.dart';
-import 'package:founders_academy/feature/shared/domain/repository/base_push_notification_repository.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/feature/home/data/data_source/remote_data_source/home_api_client.dart';
+import 'package:lumi_pass/feature/shared/data/model/push_notification_subscribe_request_model.dart';
+import 'package:lumi_pass/feature/shared/domain/repository/base_push_notification_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 

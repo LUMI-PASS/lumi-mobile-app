@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/profile/data/model/leaderboard/leaderboard_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/leaderboard/leaderboard_data.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'leaderboards_response.g.dart';

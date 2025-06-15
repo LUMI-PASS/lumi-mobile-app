@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/core/safe_execution/domain/connectivity_handler.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/safe_execution/domain/connectivity_handler.dart';
 import 'package:injectable/injectable.dart';
 
 typedef ExecutiveFunction<DomainModel> = Future<DomainModel> Function();

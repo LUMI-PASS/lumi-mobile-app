@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/profile/data/model/address/address_data.dart';
-import 'package:founders_academy/feature/profile/data/model/education/education_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/address/address_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/education/education_data.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'profile_data.g.dart';

@@ -16,7 +16,7 @@ class AfishaResultScreen extends StatelessWidget {
       image: ChessUiKitAssets.images.successLogo.svg(),
       primaryButtonLabel: "Bosh sahifaga o'tish",
       onPrimaryButtonTap: () {
-        context.popRoute(context);
+        context.router.pop();
       },
     );
   }

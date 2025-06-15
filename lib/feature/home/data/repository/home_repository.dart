@@ -1,13 +1,13 @@
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/feature/home/data/data_source/remote_data_source/home_api_client.dart';
-import 'package:founders_academy/feature/home/data/model/afisha/afisha_data.dart';
-import 'package:founders_academy/feature/home/data/model/book/book_data.dart';
-import 'package:founders_academy/feature/home/data/model/grandmaster/grandmaster_data.dart';
-import 'package:founders_academy/feature/home/data/model/live_stream/live_stream_data.dart';
-import 'package:founders_academy/feature/home/data/model/news/news_data.dart';
-import 'package:founders_academy/feature/home/data/model/notification/notification_data.dart';
-import 'package:founders_academy/feature/home/data/model/review_matches/review_matches_data.dart';
-import 'package:founders_academy/feature/home/domain/repository/base_home_repository.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/feature/home/data/data_source/remote_data_source/home_api_client.dart';
+import 'package:lumi_pass/feature/home/data/model/afisha/afisha_data.dart';
+import 'package:lumi_pass/feature/home/data/model/book/book_data.dart';
+import 'package:lumi_pass/feature/home/data/model/grandmaster/grandmaster_data.dart';
+import 'package:lumi_pass/feature/home/data/model/live_stream/live_stream_data.dart';
+import 'package:lumi_pass/feature/home/data/model/news/news_data.dart';
+import 'package:lumi_pass/feature/home/data/model/notification/notification_data.dart';
+import 'package:lumi_pass/feature/home/data/model/review_matches/review_matches_data.dart';
+import 'package:lumi_pass/feature/home/domain/repository/base_home_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 

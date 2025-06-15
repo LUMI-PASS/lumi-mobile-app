@@ -1,9 +1,9 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/home/data/model/book/book_data.dart';
-import 'package:founders_academy/feature/home/presentation/cubit/book_list_cubit/book_list_cubit.dart';
-import 'package:founders_academy/feature/home/presentation/screen/list_screen/items_list_screen.dart';
-import 'package:founders_academy/feature/home/presentation/widget/book_widget.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/home/data/model/book/book_data.dart';
+import 'package:lumi_pass/feature/home/presentation/cubit/book_list_cubit/book_list_cubit.dart';
+import 'package:lumi_pass/feature/home/presentation/screen/list_screen/items_list_screen.dart';
+import 'package:lumi_pass/feature/home/presentation/widget/book_widget.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

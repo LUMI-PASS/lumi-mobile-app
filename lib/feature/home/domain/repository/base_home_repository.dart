@@ -1,10 +1,10 @@
-import 'package:founders_academy/feature/home/data/model/afisha/afisha_data.dart';
-import 'package:founders_academy/feature/home/data/model/book/book_data.dart';
-import 'package:founders_academy/feature/home/data/model/grandmaster/grandmaster_data.dart';
-import 'package:founders_academy/feature/home/data/model/live_stream/live_stream_data.dart';
-import 'package:founders_academy/feature/home/data/model/news/news_data.dart';
-import 'package:founders_academy/feature/home/data/model/notification/notification_data.dart';
-import 'package:founders_academy/feature/home/data/model/review_matches/review_matches_data.dart';
+import 'package:lumi_pass/feature/home/data/model/afisha/afisha_data.dart';
+import 'package:lumi_pass/feature/home/data/model/book/book_data.dart';
+import 'package:lumi_pass/feature/home/data/model/grandmaster/grandmaster_data.dart';
+import 'package:lumi_pass/feature/home/data/model/live_stream/live_stream_data.dart';
+import 'package:lumi_pass/feature/home/data/model/news/news_data.dart';
+import 'package:lumi_pass/feature/home/data/model/notification/notification_data.dart';
+import 'package:lumi_pass/feature/home/data/model/review_matches/review_matches_data.dart';
 
 abstract interface class BaseHomeRepository {
   Future<dynamic> getAfishas({int page, int count});

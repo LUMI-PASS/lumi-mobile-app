@@ -1,8 +1,8 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/feature/home/data/model/review_matches/review_matches_data.dart';
-import 'package:founders_academy/feature/home/presentation/widget/group/home_items_group.dart';
-import 'package:founders_academy/feature/home/presentation/widget/review_matches_widget.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/feature/home/data/model/review_matches/review_matches_data.dart';
+import 'package:lumi_pass/feature/home/presentation/widget/group/home_items_group.dart';
+import 'package:lumi_pass/feature/home/presentation/widget/review_matches_widget.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

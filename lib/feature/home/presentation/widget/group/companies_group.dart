@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:founders_academy/feature/home/presentation/widget/companies_card_widget.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/feature/home/presentation/widget/companies_card_widget.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'home_items_group.dart';
 
 class CompaniesGroup extends StatelessWidget {

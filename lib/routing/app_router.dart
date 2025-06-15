@@ -1,5 +1,5 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:injectable/injectable.dart';
 
 @LazySingleton()
@@ -68,9 +68,6 @@ class AppRouter extends $AppRouter {
                       page: CoursesRoute.page,
                     ),
                     AutoRoute(
-                      page: PuzzleListRoute.page,
-                    ),
-                    AutoRoute(
                       page: DiscussionsRoute.page,
                     ),
                     AutoRoute(
@@ -90,9 +87,7 @@ class AppRouter extends $AppRouter {
                     ),
                   ],
                 ),
-                AutoRoute(
-                  page: PuzzleDetailsRoute.page,
-                ),
+
                 AutoRoute(
                   page: GrandmasterDetailsRoute.page,
                 ),
@@ -154,25 +149,10 @@ class AppRouter extends $AppRouter {
                   page: NotificationRoute.page,
                 ),
                 AutoRoute(
-                  page: PuzzleQuickTypeRoute.page,
-                ),
-                AutoRoute(
-                  page: PuzzleQuickDetailsRoute.page,
-                ),
-                AutoRoute(
-                  page: PuzzleResultRoute.page,
-                ),
-                AutoRoute(
                   page: AfishaRegistrationRoute.page,
                 ),
                 AutoRoute(
                   page: AfishaResultRoute.page,
-                ),
-                AutoRoute(
-                  page: PuzzleListBotRoute.page,
-                ),
-                AutoRoute(
-                  page: PuzzleWithBotRoute.page,
                 ),
                 AutoRoute(
                   page: MyCertificateRoute.page,

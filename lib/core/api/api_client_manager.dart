@@ -1,7 +1,7 @@
-import 'package:founders_academy/core/api/environment/environment_manager.dart';
-import 'package:founders_academy/core/api/http_inspector.dart';
-import 'package:founders_academy/core/api/interceptor/parse_json_interceptor.dart';
-import 'package:founders_academy/core/api/interceptor/user_session_interceptor.dart';
+import 'package:lumi_pass/core/api/environment/environment_manager.dart';
+import 'package:lumi_pass/core/api/http_inspector.dart';
+import 'package:lumi_pass/core/api/interceptor/parse_json_interceptor.dart';
+import 'package:lumi_pass/core/api/interceptor/user_session_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';

@@ -1,6 +1,6 @@
-import 'package:founders_academy/core/api/environment/environment_manager.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_state.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/core/api/environment/environment_manager.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_state.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable()

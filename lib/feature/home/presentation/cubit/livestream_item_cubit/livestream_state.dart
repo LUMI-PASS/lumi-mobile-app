@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/home/data/model/live_stream/live_stream_data.dart';
+import 'package:lumi_pass/feature/home/data/model/live_stream/live_stream_data.dart';
 
 sealed class LiveStreamItemState {
   const LiveStreamItemState();

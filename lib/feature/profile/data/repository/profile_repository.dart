@@ -1,16 +1,16 @@
 import 'dart:io';
 
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/core/logging/logger.dart';
-import 'package:founders_academy/feature/courses/data/data_source/local_data_source/lesson_completion_database.dart';
-import 'package:founders_academy/feature/profile/data/data_source/profile_api_client.dart';
-import 'package:founders_academy/feature/profile/data/model/leaderboard/leaderboards_response.dart';
-import 'package:founders_academy/feature/profile/data/model/my_certificate/my_certificate_response.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_data.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_delete/profile_delete_data.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_delete/profile_delete_reason_data.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_image/profile_image_data.dart';
-import 'package:founders_academy/feature/profile/domain/repository/base_profile_repository.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/logging/logger.dart';
+import 'package:lumi_pass/feature/courses/data/data_source/local_data_source/lesson_completion_database.dart';
+import 'package:lumi_pass/feature/profile/data/data_source/profile_api_client.dart';
+import 'package:lumi_pass/feature/profile/data/model/leaderboard/leaderboards_response.dart';
+import 'package:lumi_pass/feature/profile/data/model/my_certificate/my_certificate_response.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_delete/profile_delete_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_delete/profile_delete_reason_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_image/profile_image_data.dart';
+import 'package:lumi_pass/feature/profile/domain/repository/base_profile_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:injectable/injectable.dart';

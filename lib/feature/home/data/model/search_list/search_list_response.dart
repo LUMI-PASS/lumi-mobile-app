@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/home/data/model/search_list/search_list_data.dart';
+import 'package:lumi_pass/feature/home/data/model/search_list/search_list_data.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'search_list_response.g.dart';

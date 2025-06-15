@@ -1,4 +1,4 @@
-import 'package:founders_academy/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
 
 abstract interface class ConnectivityHandler {
   Future<bool> handleConnectivityException(

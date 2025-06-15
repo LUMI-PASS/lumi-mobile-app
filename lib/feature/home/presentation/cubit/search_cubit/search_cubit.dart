@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/core/safe_execution/domain/safe_execution_manager.dart';
-import 'package:founders_academy/feature/home/data/model/search_item/search_item.dart';
-import 'package:founders_academy/feature/home/data/model/search_list/search_list_data.dart';
-import 'package:founders_academy/feature/home/domain/repository/base_search_repository.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/safe_execution/domain/safe_execution_manager.dart';
+import 'package:lumi_pass/feature/home/data/model/search_item/search_item.dart';
+import 'package:lumi_pass/feature/home/data/model/search_list/search_list_data.dart';
+import 'package:lumi_pass/feature/home/domain/repository/base_search_repository.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 part 'search_state.dart';

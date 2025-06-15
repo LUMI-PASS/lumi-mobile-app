@@ -1,6 +1,6 @@
-import 'package:founders_academy/core/api/api_response.dart';
-import 'package:founders_academy/di/module/api_client_module.dart';
-import 'package:founders_academy/feature/home/data/model/search_list/search_list_response.dart';
+import 'package:lumi_pass/core/api/api_response.dart';
+import 'package:lumi_pass/di/module/api_client_module.dart';
+import 'package:lumi_pass/feature/home/data/model/search_list/search_list_response.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';

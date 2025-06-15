@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/profile/data/model/profile_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_data.dart';
 
 sealed class ProfileState {
   const ProfileState();

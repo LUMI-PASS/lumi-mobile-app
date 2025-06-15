@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:founders_academy/core/api/api_client_manager.dart';
+import 'package:lumi_pass/core/api/api_client_manager.dart';
 
 import 'package:injectable/injectable.dart';
 

@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/home/presentation/cubit/main_cubit/main_cubit.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/home/presentation/cubit/main_cubit/main_cubit.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';

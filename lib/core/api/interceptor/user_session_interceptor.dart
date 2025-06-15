@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/auth/domain/user_session_manager.dart';
+import 'package:lumi_pass/feature/auth/domain/user_session_manager.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 

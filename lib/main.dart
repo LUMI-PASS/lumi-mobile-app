@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:founders_academy/core/logging/logger.dart';
-import 'package:founders_academy/di/get_it.dart';
+import 'package:lumi_pass/core/logging/logger.dart';
+import 'package:lumi_pass/di/get_it.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 
 import 'package:flutter/material.dart';
 

@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 
 @RoutePage()
 class DiscussionsScreen extends StatefulWidget {

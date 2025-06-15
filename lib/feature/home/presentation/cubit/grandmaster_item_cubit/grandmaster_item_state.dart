@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/home/data/model/grandmaster/grandmaster_data.dart';
+import 'package:lumi_pass/feature/home/data/model/grandmaster/grandmaster_data.dart';
 
 sealed class GrandmasterItemState {
   const GrandmasterItemState();

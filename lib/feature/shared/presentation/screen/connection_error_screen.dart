@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 
-@RoutePage<bool>()
+@RoutePage()
 class ConnectionErrorScreen extends StatelessWidget {
   const ConnectionErrorScreen({super.key});
 

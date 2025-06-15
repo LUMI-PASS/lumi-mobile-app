@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/courses/data/model/lesson_completion/lesson_completion_item.dart';
-import 'package:founders_academy/feature/home/data/model/search_item/search_item.dart';
+import 'package:lumi_pass/feature/courses/data/model/lesson_completion/lesson_completion_item.dart';
+import 'package:lumi_pass/feature/home/data/model/search_item/search_item.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';

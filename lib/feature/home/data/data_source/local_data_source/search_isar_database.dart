@@ -1,5 +1,5 @@
-import 'package:founders_academy/core/database/isar_provider.dart';
-import 'package:founders_academy/feature/home/data/model/search_item/search_item.dart';
+import 'package:lumi_pass/core/database/isar_provider.dart';
+import 'package:lumi_pass/feature/home/data/model/search_item/search_item.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
 

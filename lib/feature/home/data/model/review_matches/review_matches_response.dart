@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/home/data/model/pagination/pagination_data.dart';
-import 'package:founders_academy/feature/home/data/model/review_matches/review_matches_data.dart';
+import 'package:lumi_pass/feature/home/data/model/pagination/pagination_data.dart';
+import 'package:lumi_pass/feature/home/data/model/review_matches/review_matches_data.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'review_matches_response.g.dart';

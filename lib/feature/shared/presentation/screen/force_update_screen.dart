@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/force_update_cubit/force_update_cubit.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/force_update_cubit/force_update_state.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/force_update_cubit/force_update_cubit.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/force_update_cubit/force_update_state.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

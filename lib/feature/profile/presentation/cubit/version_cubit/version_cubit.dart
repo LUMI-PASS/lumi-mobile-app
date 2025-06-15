@@ -1,6 +1,6 @@
-import 'package:founders_academy/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
 import 'package:flutter/foundation.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 

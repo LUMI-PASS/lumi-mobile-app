@@ -1,6 +1,6 @@
-import 'package:founders_academy/core/version/version_manager.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/force_update_cubit/force_update_state.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/core/version/version_manager.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/force_update_cubit/force_update_state.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable()

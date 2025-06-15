@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/courses/data/model/module/module_data.dart';
+import 'package:lumi_pass/feature/courses/data/model/module/module_data.dart';
 
 sealed class CourseDetailsState {
   const CourseDetailsState();

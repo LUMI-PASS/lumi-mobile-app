@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/home/data/model/notification/notification_data.dart';
+import 'package:lumi_pass/feature/home/data/model/notification/notification_data.dart';
 
 sealed class NotificationState {
   const NotificationState();

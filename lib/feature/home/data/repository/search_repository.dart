@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/feature/home/data/data_source/local_data_source/search_isar_database.dart';
-import 'package:founders_academy/feature/home/data/data_source/remote_data_source/search_api_client.dart';
-import 'package:founders_academy/feature/home/data/model/search_item/search_item.dart';
-import 'package:founders_academy/feature/home/data/model/search_list/search_list_data.dart';
-import 'package:founders_academy/feature/home/domain/repository/base_search_repository.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/feature/home/data/data_source/local_data_source/search_isar_database.dart';
+import 'package:lumi_pass/feature/home/data/data_source/remote_data_source/search_api_client.dart';
+import 'package:lumi_pass/feature/home/data/model/search_item/search_item.dart';
+import 'package:lumi_pass/feature/home/data/model/search_list/search_list_data.dart';
+import 'package:lumi_pass/feature/home/domain/repository/base_search_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';

@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/home/data/model/grandmaster/grandmaster_data.dart';
-import 'package:founders_academy/feature/home/data/model/pagination/pagination_data.dart';
+import 'package:lumi_pass/feature/home/data/model/grandmaster/grandmaster_data.dart';
+import 'package:lumi_pass/feature/home/data/model/pagination/pagination_data.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'grandmasters_response.g.dart';

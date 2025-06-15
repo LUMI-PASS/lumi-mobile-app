@@ -1,8 +1,8 @@
-import 'package:founders_academy/core/mixin/code_auto_fill_mixin.dart';
-import 'package:founders_academy/core/mixin/permanent_subscription_mixin.dart';
-import 'package:founders_academy/feature/auth/data/model/otp_data.dart';
-import 'package:founders_academy/feature/auth/presentation/cubit/otp/otp_state.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/core/mixin/code_auto_fill_mixin.dart';
+import 'package:lumi_pass/core/mixin/permanent_subscription_mixin.dart';
+import 'package:lumi_pass/feature/auth/data/model/otp_data.dart';
+import 'package:lumi_pass/feature/auth/presentation/cubit/otp/otp_state.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable()

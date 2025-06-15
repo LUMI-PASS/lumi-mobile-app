@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:founders_academy/core/logging/logger.dart';
+import 'package:lumi_pass/core/logging/logger.dart';
 import 'package:dio/dio.dart';
 
 class ParseJsonInterceptor extends Interceptor {

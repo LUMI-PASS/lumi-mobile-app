@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 
 mixin PermanentSubscriptionMixin<S> on ChessCubit<S> {
   final List<StreamSubscription<Object?>> _permanentSubscriptions = [];

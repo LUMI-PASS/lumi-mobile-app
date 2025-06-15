@@ -1,5 +1,5 @@
-import 'package:founders_academy/di/get_it.config.dart';
-import 'package:founders_academy/routing/app_router.dart';
+import 'package:lumi_pass/di/get_it.config.dart';
+import 'package:lumi_pass/routing/app_router.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 

@@ -1,9 +1,9 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/home/data/model/afisha/afisha_data.dart';
-import 'package:founders_academy/feature/home/presentation/cubit/afisha_register_cubit/afisha_cubit.dart';
-import 'package:founders_academy/feature/home/presentation/cubit/afisha_register_cubit/afisha_state.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/home/data/model/afisha/afisha_data.dart';
+import 'package:lumi_pass/feature/home/presentation/cubit/afisha_register_cubit/afisha_cubit.dart';
+import 'package:lumi_pass/feature/home/presentation/cubit/afisha_register_cubit/afisha_state.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';

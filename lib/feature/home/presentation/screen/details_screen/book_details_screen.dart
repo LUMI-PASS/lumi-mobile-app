@@ -1,10 +1,10 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_cubit.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_state.dart';
-import 'package:founders_academy/feature/home/data/model/book/book_data.dart';
-import 'package:founders_academy/feature/home/presentation/cubit/book_cubit/book_cubit.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_cubit.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_state.dart';
+import 'package:lumi_pass/feature/home/data/model/book/book_data.dart';
+import 'package:lumi_pass/feature/home/presentation/cubit/book_cubit/book_cubit.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

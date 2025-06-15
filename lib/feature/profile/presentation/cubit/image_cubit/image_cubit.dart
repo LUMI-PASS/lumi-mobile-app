@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/core/safe_execution/domain/safe_execution_manager.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_data.dart';
-import 'package:founders_academy/feature/profile/domain/repository/base_profile_repository.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/image_cubit/image_state.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/safe_execution/domain/safe_execution_manager.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_data.dart';
+import 'package:lumi_pass/feature/profile/domain/repository/base_profile_repository.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/image_cubit/image_state.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable()

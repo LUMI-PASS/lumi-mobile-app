@@ -1,10 +1,10 @@
-import 'package:founders_academy/feature/courses/data/model/course/course_data.dart';
-import 'package:founders_academy/feature/home/data/model/afisha/afisha_data.dart';
-import 'package:founders_academy/feature/home/data/model/book/book_data.dart';
-import 'package:founders_academy/feature/home/data/model/grandmaster/grandmaster_data.dart';
-import 'package:founders_academy/feature/home/data/model/live_stream/live_stream_data.dart';
-import 'package:founders_academy/feature/home/data/model/news/news_data.dart';
-import 'package:founders_academy/feature/home/data/model/review_matches/review_matches_data.dart';
+import 'package:lumi_pass/feature/courses/data/model/course/course_data.dart';
+import 'package:lumi_pass/feature/home/data/model/afisha/afisha_data.dart';
+import 'package:lumi_pass/feature/home/data/model/book/book_data.dart';
+import 'package:lumi_pass/feature/home/data/model/grandmaster/grandmaster_data.dart';
+import 'package:lumi_pass/feature/home/data/model/live_stream/live_stream_data.dart';
+import 'package:lumi_pass/feature/home/data/model/news/news_data.dart';
+import 'package:lumi_pass/feature/home/data/model/review_matches/review_matches_data.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'home_state.freezed.dart';

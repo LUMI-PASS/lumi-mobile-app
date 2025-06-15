@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/profile/data/model/profile_data.dart';
-import 'package:founders_academy/feature/shared/presentation/text_field_view_model.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_data.dart';
+import 'package:lumi_pass/feature/shared/presentation/text_field_view_model.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 

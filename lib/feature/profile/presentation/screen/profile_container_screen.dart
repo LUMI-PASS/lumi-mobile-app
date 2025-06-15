@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/profile_cubit/profile_cubit.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/version_cubit/version_cubit.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/profile_cubit/profile_cubit.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/version_cubit/version_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

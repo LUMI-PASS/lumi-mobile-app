@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:founders_academy/feature/courses/data/model/course/course_data.dart';
+import 'package:lumi_pass/feature/courses/data/model/course/course_data.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;

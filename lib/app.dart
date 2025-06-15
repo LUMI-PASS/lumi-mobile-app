@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
-import 'package:founders_academy/routing/app_router.dart';
+import 'package:lumi_pass/routing/app_router.dart';
 
 import 'core/api/http_inspector.dart';
 import 'di/get_it.dart';

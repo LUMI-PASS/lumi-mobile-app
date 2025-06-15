@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/profile/data/model/my_certificate/my_certificate_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/my_certificate/my_certificate_data.dart';
 
 sealed class MyCertificateState {
   const MyCertificateState();

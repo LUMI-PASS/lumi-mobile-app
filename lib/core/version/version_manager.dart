@@ -1,5 +1,5 @@
-import 'package:founders_academy/core/firebase/firebase_remote_config_keys.dart';
-import 'package:founders_academy/core/firebase/firebase_remote_config_manager.dart';
+import 'package:lumi_pass/core/firebase/firebase_remote_config_keys.dart';
+import 'package:lumi_pass/core/firebase/firebase_remote_config_manager.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';

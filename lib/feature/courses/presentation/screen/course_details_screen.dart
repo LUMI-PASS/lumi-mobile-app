@@ -1,20 +1,20 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/core/logging/logger.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/auth/data/data_source/token_data_source.dart';
-import 'package:founders_academy/feature/auth/data/data_source/user_data_source.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_cubit.dart';
-import 'package:founders_academy/feature/base_url/app_base_url_state.dart';
-import 'package:founders_academy/feature/courses/data/model/course/course_data.dart';
-import 'package:founders_academy/feature/courses/presentation/cubit/course_details/course_details_cubit.dart';
-import 'package:founders_academy/feature/courses/presentation/cubit/course_details/course_details_state.dart';
-import 'package:founders_academy/feature/courses/presentation/widget/lesson_expansion_tile.dart';
-import 'package:founders_academy/feature/courses/presentation/widget/payment_bottom_sheet.dart';
+import 'package:lumi_pass/core/logging/logger.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/auth/data/data_source/token_data_source.dart';
+import 'package:lumi_pass/feature/auth/data/data_source/user_data_source.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_cubit.dart';
+import 'package:lumi_pass/feature/base_url/app_base_url_state.dart';
+import 'package:lumi_pass/feature/courses/data/model/course/course_data.dart';
+import 'package:lumi_pass/feature/courses/presentation/cubit/course_details/course_details_cubit.dart';
+import 'package:lumi_pass/feature/courses/presentation/cubit/course_details/course_details_state.dart';
+import 'package:lumi_pass/feature/courses/presentation/widget/lesson_expansion_tile.dart';
+import 'package:lumi_pass/feature/courses/presentation/widget/payment_bottom_sheet.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:founders_academy/feature/home/presentation/screen/details_screen/book_details_screen.dart';
+import 'package:lumi_pass/feature/home/presentation/screen/details_screen/book_details_screen.dart';
 
 @RoutePage()
 class CourseDetailsScreen extends StatefulWidget {

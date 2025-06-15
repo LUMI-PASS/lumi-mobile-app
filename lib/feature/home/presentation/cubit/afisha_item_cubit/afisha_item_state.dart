@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/home/data/model/afisha/afisha_data.dart';
+import 'package:lumi_pass/feature/home/data/model/afisha/afisha_data.dart';
 
 sealed class AfishaItemState {
   const AfishaItemState();

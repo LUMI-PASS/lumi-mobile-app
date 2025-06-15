@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/di/get_it.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_delete/profile_delete_reason_data.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/profile_delete_cubit/profile_delete_cubit.dart';
-import 'package:founders_academy/feature/profile/presentation/cubit/profile_delete_cubit/profile_delete_state.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/di/get_it.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_delete/profile_delete_reason_data.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/profile_delete_cubit/profile_delete_cubit.dart';
+import 'package:lumi_pass/feature/profile/presentation/cubit/profile_delete_cubit/profile_delete_state.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

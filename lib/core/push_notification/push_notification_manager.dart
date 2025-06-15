@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/core/logging/logger.dart';
-import 'package:founders_academy/feature/shared/data/data_source/local_data_source/fcm_data_source.dart';
-import 'package:founders_academy/routing/app_router.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/logging/logger.dart';
+import 'package:lumi_pass/feature/shared/data/data_source/local_data_source/fcm_data_source.dart';
+import 'package:lumi_pass/routing/app_router.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:injectable/injectable.dart';

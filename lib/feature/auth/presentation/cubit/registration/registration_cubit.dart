@@ -1,6 +1,6 @@
-import 'package:founders_academy/feature/auth/presentation/cubit/registration/registration_state.dart';
+import 'package:lumi_pass/feature/auth/presentation/cubit/registration/registration_state.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable()

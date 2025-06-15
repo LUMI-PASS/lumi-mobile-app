@@ -1,7 +1,7 @@
-import 'package:founders_academy/core/push_notification/push_notification_manager.dart';
-import 'package:founders_academy/core/version/version_manager.dart';
+import 'package:lumi_pass/core/push_notification/push_notification_manager.dart';
+import 'package:lumi_pass/core/version/version_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:founders_academy/feature/shared/presentation/cubit/chess_cubit.dart';
+import 'package:lumi_pass/feature/shared/presentation/cubit/chess_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 part 'main_state.dart';

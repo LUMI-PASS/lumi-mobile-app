@@ -1,5 +1,5 @@
-import 'package:founders_academy/feature/auth/data/data_source/token_data_source.dart';
-import 'package:founders_academy/feature/auth/data/data_source/user_data_source.dart';
+import 'package:lumi_pass/feature/auth/data/data_source/token_data_source.dart';
+import 'package:lumi_pass/feature/auth/data/data_source/user_data_source.dart';
 import 'package:injectable/injectable.dart';
 
 @Singleton()

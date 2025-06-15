@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:founders_academy/feature/courses/data/model/lesson/lesson_data.dart';
-import 'package:founders_academy/feature/courses/data/model/module/module_data.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/feature/courses/data/model/lesson/lesson_data.dart';
+import 'package:lumi_pass/feature/courses/data/model/module/module_data.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:chess_ui_kit/chess_ui_kit.dart';
 import 'package:flutter/material.dart';
 

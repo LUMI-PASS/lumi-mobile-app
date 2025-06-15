@@ -1,10 +1,10 @@
-import 'package:founders_academy/di/module/api_client_module.dart';
-import 'package:founders_academy/feature/profile/data/model/leaderboard/leaderboards_response.dart';
-import 'package:founders_academy/feature/profile/data/model/my_certificate/my_certificate_response.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_data.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_delete/profile_delete_data.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_delete/profile_delete_reason_data.dart';
-import 'package:founders_academy/feature/profile/data/model/profile_image/profile_image_data.dart';
+import 'package:lumi_pass/di/module/api_client_module.dart';
+import 'package:lumi_pass/feature/profile/data/model/leaderboard/leaderboards_response.dart';
+import 'package:lumi_pass/feature/profile/data/model/my_certificate/my_certificate_response.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_delete/profile_delete_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_delete/profile_delete_reason_data.dart';
+import 'package:lumi_pass/feature/profile/data/model/profile_image/profile_image_data.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/http.dart';

@@ -1,8 +1,8 @@
-import 'package:founders_academy/core/error/chess_exception.dart';
-import 'package:founders_academy/core/safe_execution/domain/connectivity_handler.dart';
-import 'package:founders_academy/feature/auth/domain/user_session_manager.dart';
-import 'package:founders_academy/routing/app_router.dart';
-import 'package:founders_academy/routing/app_router.gr.dart';
+import 'package:lumi_pass/core/error/chess_exception.dart';
+import 'package:lumi_pass/core/safe_execution/domain/connectivity_handler.dart';
+import 'package:lumi_pass/feature/auth/domain/user_session_manager.dart';
+import 'package:lumi_pass/routing/app_router.dart';
+import 'package:lumi_pass/routing/app_router.gr.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable(as: ConnectivityHandler)

@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/home/data/model/download/download_data.dart';
+import 'package:lumi_pass/feature/home/data/model/download/download_data.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'book_data.g.dart';

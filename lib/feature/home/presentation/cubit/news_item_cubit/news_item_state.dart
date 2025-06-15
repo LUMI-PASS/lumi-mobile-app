@@ -1,4 +1,4 @@
-import 'package:founders_academy/feature/home/data/model/news/news_data.dart';
+import 'package:lumi_pass/feature/home/data/model/news/news_data.dart';
 
 sealed class NewsItemState {
   const NewsItemState();
