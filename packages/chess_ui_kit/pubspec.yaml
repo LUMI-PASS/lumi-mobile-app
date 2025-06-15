@@ -1,0 +1,92 @@
+name: chess_ui_kit
+description: Common reusable UI components
+version: 0.0.1
+homepage: "none"
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0-149.0.dev <4.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_svg: 2.0.9
+  lottie: 3.1.0
+  flutter_markdown: 0.6.20
+  pod_player: 0.2.1
+  intl: 0.19.0
+  url_launcher: 6.2.5
+  shimmer: 3.0.0
+  vimeo_player_flutter: ^0.1.0
+  flutter_html: 3.0.0-beta.2
+  webview_flutter: any
+  youtube_player_flutter: any
+  cached_network_image: any
+
+  flutter_chess_board:
+    git:
+      url: https://github.com/Global-Move/flutter_chess_board
+    version: 2.0.15
+  flutter_countries_educations:
+    git:
+      url: https://github.com/Global-Move/flutter_countries_educations
+    version: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  build_runner: 2.4.6
+  flutter_gen_runner: 5.3.2
+  flutter_lints: ^3.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+  uses-material-design: true
+  generate: false
+  assets: # generate ChessUiKitAssets using build_runner
+    # Images
+    - assets/images/
+    # Lottie
+    - assets/lotties/
+    # Icons
+    - assets/icons/
+    - assets/icons/course/
+    - assets/icons/general/
+    - assets/icons/navigation_bar/
+    - assets/icons/corner_case/
+    - assets/icons/profile/
+    - assets/icons/puzzle/
+    # Markdown
+    - assets/markdown/
+
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Bold.ttf
+        - asset: assets/fonts/Nunito-ExtraBold.ttf
+        - asset: assets/fonts/Nunito-ExtraLight.ttf
+        - asset: assets/fonts/Nunito-Light.ttf
+        - asset: assets/fonts/Nunito-Italic.ttf
+        - asset: assets/fonts/Nunito-Black.ttf
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+
+flutter_gen:
+  output: lib/src/assets/
+  line_length: 100
+  assets:
+    enabled: true
+    outputs:
+      # Assets need to be referenced with the package option, see
+      # https://docs.flutter.dev/development/ui/assets-and-images#from-packages
+      package_parameter_enabled: true
+      class_name: ChessUiKitAssets
+
+  # Optional
+  integrations:
+    flutter_svg: true
+    lottie: true
