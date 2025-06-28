@@ -38,13 +38,13 @@ class ChessMarkdownSheet extends StatelessWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: ChessColors.greyG900,
+        backgroundColor: ChessColors.greyG40,
         builder: (_) => SizedBox(
           height: MediaQuery.sizeOf(context).height * 0.75,
           child: Column(
             children: [
               const SizedBox(height: 16.0),
-              Text(sheetTitle, style: context.textTheme.caption1Medium.copyWith(color: ChessColors.greyG40)),
+              Text(sheetTitle, style: context.textTheme.caption1Medium.copyWith(color: ChessColors.greyG400)),
               const SizedBox(height: 8.0),
               const Divider(),
               Expanded(child: Markdown(data: data)),

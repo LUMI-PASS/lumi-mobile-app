@@ -122,11 +122,9 @@ class _ChessTextFieldState extends State<ChessTextField> {
                   child: AddressSelector.dialCode(
                     title: "Davlatni tanlang",
                     titleTextStyle: context.textTheme.bodyRegular
-                        .copyWith(color: ChessColors.greyG10),
-                    lightColor: ChessColors.greyG900,
-                    darkColor: ChessColors.greyG10,
+                        .copyWith(color: ChessColors.black),
                     subtitleTextStyle: context.textTheme.subheadlineRegular
-                        .copyWith(color: ChessColors.greyG20),
+                        .copyWith(color: ChessColors.black),
                     selectedCountry: _selectedCountry,
                     onItemSelect: (country) {
                       if (country != null) {
@@ -138,7 +136,7 @@ class _ChessTextFieldState extends State<ChessTextField> {
                     builder: (context) => Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: ChessColors.greyG400,
+                        color: ChessColors.greyG40,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -155,8 +153,7 @@ class _ChessTextFieldState extends State<ChessTextField> {
                           const SizedBox(width: 4),
                           Text(
                             _selectedCountry.dialCode,
-                            style: context.textTheme.bodyRegular
-                                .copyWith(color: ChessColors.white),
+                            style: context.textTheme.bodyRegular,
                           ),
                         ],
                       ),
@@ -199,7 +196,7 @@ class _ChessTextFieldState extends State<ChessTextField> {
                     onTapOutside: (_) => widget.focusNode.unfocus(),
                     decoration: InputDecoration(
                       labelText: widget.label,
-                      hintText: widget.placeholder,
+                      hintText: widget.placeholder ,
                       prefixIcon: widget.prefixIcon,
                       suffixIconColor: widget.foregroundColor,
                       prefixIconColor: widget.foregroundColor,
@@ -213,7 +210,7 @@ class _ChessTextFieldState extends State<ChessTextField> {
                             )
                           : widget.suffixIcon,
                       hintStyle: context.textTheme.bodyRegular.copyWith(
-                        color: widget.foregroundColor,
+                        color: widget.labelColor() ,
                       ),
                       prefixIconConstraints: const BoxConstraints(
                         minHeight: 36,

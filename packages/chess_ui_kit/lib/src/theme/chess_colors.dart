@@ -8,6 +8,7 @@ abstract class ChessColors {
   static const black = Color(0xff000000);
   static const white = Color(0xffffffff);
   static const transparent = Color(0x00000000);
+  static const window = Color(0xFFF3F5F6);
 
   // Grey colors
   static const greyG10 = Color(0xfffafafa);

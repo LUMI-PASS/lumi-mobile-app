@@ -30,19 +30,24 @@ class _AppState extends State<App> {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
-            primaryColor: ChessColors.greyG900,
-
-            appBarTheme: const AppBarTheme(color: ChessColors.greyG900, ),
+            primaryColor: ChessColors.primaryDefault,
+            appBarTheme: const AppBarTheme(
+              color: ChessColors.window,
+            ),
             useMaterial3: true,
-            scaffoldBackgroundColor: ChessColors.greyG900,
+            colorScheme: const ColorScheme.light(
+              primary: ChessColors.primaryDefault,
+            ),
+            scaffoldBackgroundColor: ChessColors.window,
             bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-              backgroundColor: ChessColors.greyG800,
+              backgroundColor: ChessColors.white,
             ),
             fontFamily: FontFamily.nunito,
             textTheme: context.textTheme.theme.apply(
-              displayColor: ChessColors.greyG10,
-              bodyColor: ChessColors.greyG10,
+              displayColor: ChessColors.black,
+              bodyColor: ChessColors.black,
             ),
+
           ),
           routerConfig: _appRouter.config(
             navigatorObservers: () => [AutoRouteObserver()],

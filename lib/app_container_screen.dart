@@ -17,7 +17,7 @@ class AppContainerScreen extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => getIt<AppInitCubit>()..checkAuth(),
+          create: (context) => getIt<AppInitCubit>(),
         ),
         BlocProvider(
           create: (context) => getIt<AppBaseUrlCubit>()..init(),
@@ -51,7 +51,7 @@ class AppContainerScreen extends StatelessWidget {
 
     if (state is AppInitLoadingState || state is NeedForceUpdateState) {
       router.replaceAll([
-        const SplashRoute(),
+        const OnboardingRoute(),
       ]);
     }
 

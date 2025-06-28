@@ -219,13 +219,13 @@ extension GetItInjectableX on _i1.GetIt {
           gh<_i6.EnvironmentManager>(),
         ));
     gh.factory<_i30.Dio>(
-      () => apiClientModule.getAuthorizedApiClient(gh<_i29.ApiClientManager>()),
-      instanceName: 'AuthorizedApiClient',
-    );
-    gh.factory<_i30.Dio>(
       () =>
           apiClientModule.getUnauthorizedApiClient(gh<_i29.ApiClientManager>()),
       instanceName: 'UnauthorizedApiClient',
+    );
+    gh.factory<_i30.Dio>(
+      () => apiClientModule.getAuthorizedApiClient(gh<_i29.ApiClientManager>()),
+      instanceName: 'AuthorizedApiClient',
     );
     gh.factory<_i31.HomeApiClient>(() =>
         _i31.HomeApiClient(gh<_i30.Dio>(instanceName: 'AuthorizedApiClient')));

@@ -7,27 +7,27 @@ extension TextFieldTypeExtension on ChessTextField {
   Color backgroundColor({bool hasFocus = false}) {
     if (!isValueValid) return ChessColors.errorBg;
 
-    if (hasFocus) return ChessColors.greyG300;
+    if (hasFocus) return ChessColors.greyG40;
 
-    return ChessColors.greyG400;
+    return ChessColors.greyG40;
   }
 
   bool get isPhoneType => type == TextFieldType.phone;
 
   Color labelColor({bool hasFocus = false}) {
-    if (readOnly) return ChessColors.white;
+    if (readOnly) return ChessColors.greyG400;
 
     if (!isValueValid) return ChessColors.errorDefault;
 
-    if (hasFocus) return ChessColors.white;
+    if (hasFocus) return ChessColors.greyG400;
 
-    return ChessColors.white;
+    return ChessColors.greyG400;
   }
 
   Color get foregroundColor {
-    if (readOnly) return ChessColors.greyG60;
+    if (readOnly) return ChessColors.greyG40;
 
-    return ChessColors.white;
+    return ChessColors.greyG40;
   }
 
   bool checkMaskCountry({Country? country}) => country?.isUzbekistan ?? false;

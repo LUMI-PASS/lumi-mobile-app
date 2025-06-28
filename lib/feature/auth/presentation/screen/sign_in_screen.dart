@@ -93,8 +93,10 @@ class _SignInScreenState extends State<SignInScreen>
                 child: SlideTransition(
                   position: _slideAnimation,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Expanded(child: Container()),
+                      ChessUiKitAssets.images.congrats
+                          .image(width: 123, height: 123),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -107,7 +109,7 @@ class _SignInScreenState extends State<SignInScreen>
                           // ),
                           // const SizedBox(height: 16),
                           Text(
-                            "Kirish",
+                            "Enter Your Phone \nNumber",
                             style: context.textTheme.largeTitle3Bold,
                           ),
                           const SizedBox(height: 8),
@@ -121,6 +123,7 @@ class _SignInScreenState extends State<SignInScreen>
                             placeholder: "Telefon raqam",
                             focusNode: _phoneFocusNode,
                             controller: _phoneController,
+
                             onCountrySelect: countryCubit.setCountry,
                           ),
                           AnimatedSize(

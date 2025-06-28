@@ -30,7 +30,7 @@ class ChessLinkedText extends StatelessWidget {
                     text: text,
                     style: textStyle ??
                         context.textTheme.bodyMedium.copyWith(
-                          color: ChessColors.greyG20,
+                          color: ChessColors.greyG400,
                         ),
                   )
                 : TextSpan(

@@ -12,7 +12,7 @@ class AppRouter extends $AppRouter {
           page: AppContainerRoute.page,
           children: [
             AutoRoute(
-              page: SplashRoute.page,
+              page: OnboardingRoute.page,
               initial: true,
             ),
             AutoRoute(
@@ -87,7 +87,6 @@ class AppRouter extends $AppRouter {
                     ),
                   ],
                 ),
-
                 AutoRoute(
                   page: GrandmasterDetailsRoute.page,
                 ),

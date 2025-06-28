@@ -18,7 +18,6 @@ class AppInitCubit extends ChessCubit<AppInitState> {
 
   Future<void> checkAuth() async {
     // await _versionManager.init();
-    await Future.delayed(const Duration(seconds: 2));
     final isFirstRun = await _userSessionManager.isFirstRun();
 
     if (isFirstRun) {

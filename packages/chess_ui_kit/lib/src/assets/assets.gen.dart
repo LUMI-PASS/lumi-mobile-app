@@ -43,6 +43,14 @@ class $AssetsImagesGen {
   AssetGenImage get chesscom =>
       const AssetGenImage('assets/images/chesscom.png');
 
+  /// File path: assets/images/chesscom.png
+  AssetGenImage get onboard1 =>
+      const AssetGenImage('assets/images/onboard3.jpg');
+
+  /// File path: assets/images/chesscom.png
+  AssetGenImage get onboard2 =>
+      const AssetGenImage('assets/images/onboard2.jpg');
+
   /// File path: assets/images/click_image.svg
   SvgGenImage get clickImage =>
       const SvgGenImage('assets/images/click_image.svg');
@@ -61,6 +69,9 @@ class $AssetsImagesGen {
   /// File path: assets/images/logo-main.png
   AssetGenImage get logoMainPng =>
       const AssetGenImage('assets/images/logo-main.png');
+  /// File path: assets/images/logo-main.png
+  AssetGenImage get congrats =>
+      const AssetGenImage('assets/images/congrats.png');
 
   /// File path: assets/images/logo-main.svg
   SvgGenImage get logoMainSvg =>
@@ -116,7 +127,10 @@ class $AssetsImagesGen {
         paymeImage,
         silverMedal,
         smile,
-        successLogo
+        successLogo,
+        onboard1,
+        onboard2,
+    congrats
       ];
 }
 
