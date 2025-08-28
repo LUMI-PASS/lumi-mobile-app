@@ -1,0 +1,82 @@
+import 'package:flexobo/common/base/base_cubit.dart';
+import 'package:flexobo/common/gen/assets.gen.dart';
+import 'package:flexobo/common/gen/strings.dart';
+import 'package:flexobo/data/storage/storage.dart';
+import 'package:flexobo/presentation/start/onboard/cubit/onboarding_state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:injectable/injectable.dart';
+
+@injectable
+class OnboardingCubit
+    extends BaseCubit<OnboardingBuildable, OnboardingListenable> {
+  OnboardingCubit(this._storage) : super(const OnboardingBuildable());
+
+  final Storage _storage;
+
+  void changeIndex(int index) async {
+    if (index == 3) {
+      await _storage.showOnboard.set(false);
+      final tokens = _storage.tokens.call();
+      if (tokens == null) {
+        invoke(const OnboardingListenable(effect: OnboardEffect.login));
+        return;
+      }
+      invoke(const OnboardingListenable(effect: OnboardEffect.home));
+      return;
+    }
+    build((buildable) => buildable.copyWith(index: index));
+  }
+
+  void skipAll() async {
+    await _storage.showOnboard.set(false);
+    final tokens = _storage.tokens.call();
+    if (tokens == null) {
+      invoke(const OnboardingListenable(effect: OnboardEffect.login));
+      return;
+    }
+    invoke(const OnboardingListenable(effect: OnboardEffect.home));
+    return;
+  }
+}
+
+enum Onboard {
+  first,
+  second,
+  third,
+}
+
+extension LanguageExtensions on Onboard {
+  String get title {
+    switch (this) {
+      case Onboard.first:
+        return Strings.onboard1Title;
+      case Onboard.second:
+        return Strings.onboard2Title;
+      case Onboard.third:
+        return Strings.onboard3Title;
+    }
+  }
+
+  Widget get icon {
+    switch (this) {
+      case Onboard.first:
+        return Assets.images.onboarding1.image(height: 337.h, width: 1.sw);
+      case Onboard.second:
+        return Assets.images.onboarding2.image(height: 337.h, width: 1.sw);
+      case Onboard.third:
+        return Assets.images.onboarding3.image(height: 337.h, width: 1.sw);
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case Onboard.first:
+        return Strings.onboard1Subtitle;
+      case Onboard.second:
+        return Strings.onboard2Subtitle;
+      case Onboard.third:
+        return Strings.onboard3Subtitle;
+    }
+  }
+}
