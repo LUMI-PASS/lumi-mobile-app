@@ -1,5 +1,5 @@
-import 'package:flexobo/common/base/base_cubit.dart';
-import 'package:flexobo/data/storage/storage.dart';
+import 'package:lumi_pass/common/base/base_cubit.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:injectable/injectable.dart';
 
 import 'profile_state.dart';

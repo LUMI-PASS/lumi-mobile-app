@@ -1,4 +1,4 @@
-import 'package:flexobo/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pinput/pinput.dart';
@@ -43,11 +43,9 @@ class _CommonPinPutState extends State<CommonPinPut> {
     return Center(
       child: Pinput(
         autofocus: true,
-        length: 6,
+        length: 4,
         controller: widget.pinController,
         focusNode: focusNode,
-        androidSmsAutofillMethod: AndroidSmsAutofillMethod.smsUserConsentApi,
-        listenForMultipleSmsOnAndroid: true,
         defaultPinTheme: defaultPinTheme,
         separatorBuilder: (index) => const SizedBox(width: 8),
         hapticFeedbackType: HapticFeedbackType.lightImpact,

@@ -20,16 +20,15 @@ ProfileModel _$ProfileModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ProfileModel {
-  @JsonKey(name: "_id")
   String? get id => throw _privateConstructorUsedError;
-  String? get fio => throw _privateConstructorUsedError;
-  String? get email => throw _privateConstructorUsedError;
-  @JsonKey(name: "phone_number")
+  String? get firstName => throw _privateConstructorUsedError;
+  String? get lastName => throw _privateConstructorUsedError;
   String? get phoneNumber => throw _privateConstructorUsedError;
+  String? get password => throw _privateConstructorUsedError;
   String? get country => throw _privateConstructorUsedError;
   String? get city => throw _privateConstructorUsedError;
-  String? get role => throw _privateConstructorUsedError;
-  String? get status => throw _privateConstructorUsedError;
+  String? get district => throw _privateConstructorUsedError;
+  String? get gender => throw _privateConstructorUsedError;
 
   /// Serializes this ProfileModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -48,14 +47,15 @@ abstract class $ProfileModelCopyWith<$Res> {
       _$ProfileModelCopyWithImpl<$Res, ProfileModel>;
   @useResult
   $Res call(
-      {@JsonKey(name: "_id") String? id,
-      String? fio,
-      String? email,
-      @JsonKey(name: "phone_number") String? phoneNumber,
+      {String? id,
+      String? firstName,
+      String? lastName,
+      String? phoneNumber,
+      String? password,
       String? country,
       String? city,
-      String? role,
-      String? status});
+      String? district,
+      String? gender});
 }
 
 /// @nodoc
@@ -74,30 +74,35 @@ class _$ProfileModelCopyWithImpl<$Res, $Val extends ProfileModel>
   @override
   $Res call({
     Object? id = freezed,
-    Object? fio = freezed,
-    Object? email = freezed,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
     Object? phoneNumber = freezed,
+    Object? password = freezed,
     Object? country = freezed,
     Object? city = freezed,
-    Object? role = freezed,
-    Object? status = freezed,
+    Object? district = freezed,
+    Object? gender = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String?,
-      fio: freezed == fio
-          ? _value.fio
-          : fio // ignore: cast_nullable_to_non_nullable
+      firstName: freezed == firstName
+          ? _value.firstName
+          : firstName // ignore: cast_nullable_to_non_nullable
               as String?,
-      email: freezed == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
+      lastName: freezed == lastName
+          ? _value.lastName
+          : lastName // ignore: cast_nullable_to_non_nullable
               as String?,
       phoneNumber: freezed == phoneNumber
           ? _value.phoneNumber
           : phoneNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      password: freezed == password
+          ? _value.password
+          : password // ignore: cast_nullable_to_non_nullable
               as String?,
       country: freezed == country
           ? _value.country
@@ -107,13 +112,13 @@ class _$ProfileModelCopyWithImpl<$Res, $Val extends ProfileModel>
           ? _value.city
           : city // ignore: cast_nullable_to_non_nullable
               as String?,
-      role: freezed == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
+      district: freezed == district
+          ? _value.district
+          : district // ignore: cast_nullable_to_non_nullable
               as String?,
-      status: freezed == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
+      gender: freezed == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
   }
@@ -128,14 +133,15 @@ abstract class _$$ProfileModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: "_id") String? id,
-      String? fio,
-      String? email,
-      @JsonKey(name: "phone_number") String? phoneNumber,
+      {String? id,
+      String? firstName,
+      String? lastName,
+      String? phoneNumber,
+      String? password,
       String? country,
       String? city,
-      String? role,
-      String? status});
+      String? district,
+      String? gender});
 }
 
 /// @nodoc
@@ -152,30 +158,35 @@ class __$$ProfileModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = freezed,
-    Object? fio = freezed,
-    Object? email = freezed,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
     Object? phoneNumber = freezed,
+    Object? password = freezed,
     Object? country = freezed,
     Object? city = freezed,
-    Object? role = freezed,
-    Object? status = freezed,
+    Object? district = freezed,
+    Object? gender = freezed,
   }) {
     return _then(_$ProfileModelImpl(
       id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String?,
-      fio: freezed == fio
-          ? _value.fio
-          : fio // ignore: cast_nullable_to_non_nullable
+      firstName: freezed == firstName
+          ? _value.firstName
+          : firstName // ignore: cast_nullable_to_non_nullable
               as String?,
-      email: freezed == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
+      lastName: freezed == lastName
+          ? _value.lastName
+          : lastName // ignore: cast_nullable_to_non_nullable
               as String?,
       phoneNumber: freezed == phoneNumber
           ? _value.phoneNumber
           : phoneNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      password: freezed == password
+          ? _value.password
+          : password // ignore: cast_nullable_to_non_nullable
               as String?,
       country: freezed == country
           ? _value.country
@@ -185,56 +196,58 @@ class __$$ProfileModelImplCopyWithImpl<$Res>
           ? _value.city
           : city // ignore: cast_nullable_to_non_nullable
               as String?,
-      role: freezed == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
+      district: freezed == district
+          ? _value.district
+          : district // ignore: cast_nullable_to_non_nullable
               as String?,
-      status: freezed == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
+      gender: freezed == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
   }
 }
 
 /// @nodoc
-@JsonSerializable()
+
+@JsonSerializable(fieldRename: FieldRename.snake)
 class _$ProfileModelImpl implements _ProfileModel {
   const _$ProfileModelImpl(
-      {@JsonKey(name: "_id") this.id,
-      this.fio,
-      this.email,
-      @JsonKey(name: "phone_number") this.phoneNumber,
+      {this.id,
+      this.firstName,
+      this.lastName,
+      this.phoneNumber,
+      this.password,
       this.country,
       this.city,
-      this.role,
-      this.status});
+      this.district,
+      this.gender});
 
   factory _$ProfileModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProfileModelImplFromJson(json);
 
   @override
-  @JsonKey(name: "_id")
   final String? id;
   @override
-  final String? fio;
+  final String? firstName;
   @override
-  final String? email;
+  final String? lastName;
   @override
-  @JsonKey(name: "phone_number")
   final String? phoneNumber;
+  @override
+  final String? password;
   @override
   final String? country;
   @override
   final String? city;
   @override
-  final String? role;
+  final String? district;
   @override
-  final String? status;
+  final String? gender;
 
   @override
   String toString() {
-    return 'ProfileModel(id: $id, fio: $fio, email: $email, phoneNumber: $phoneNumber, country: $country, city: $city, role: $role, status: $status)';
+    return 'ProfileModel(id: $id, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, password: $password, country: $country, city: $city, district: $district, gender: $gender)';
   }
 
   @override
@@ -243,20 +256,25 @@ class _$ProfileModelImpl implements _ProfileModel {
         (other.runtimeType == runtimeType &&
             other is _$ProfileModelImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.fio, fio) || other.fio == fio) &&
-            (identical(other.email, email) || other.email == email) &&
+            (identical(other.firstName, firstName) ||
+                other.firstName == firstName) &&
+            (identical(other.lastName, lastName) ||
+                other.lastName == lastName) &&
             (identical(other.phoneNumber, phoneNumber) ||
                 other.phoneNumber == phoneNumber) &&
+            (identical(other.password, password) ||
+                other.password == password) &&
             (identical(other.country, country) || other.country == country) &&
             (identical(other.city, city) || other.city == city) &&
-            (identical(other.role, role) || other.role == role) &&
-            (identical(other.status, status) || other.status == status));
+            (identical(other.district, district) ||
+                other.district == district) &&
+            (identical(other.gender, gender) || other.gender == gender));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, fio, email, phoneNumber, country, city, role, status);
+  int get hashCode => Object.hash(runtimeType, id, firstName, lastName,
+      phoneNumber, password, country, city, district, gender);
 
   /// Create a copy of ProfileModel
   /// with the given fields replaced by the non-null parameter values.
@@ -276,36 +294,37 @@ class _$ProfileModelImpl implements _ProfileModel {
 
 abstract class _ProfileModel implements ProfileModel {
   const factory _ProfileModel(
-      {@JsonKey(name: "_id") final String? id,
-      final String? fio,
-      final String? email,
-      @JsonKey(name: "phone_number") final String? phoneNumber,
+      {final String? id,
+      final String? firstName,
+      final String? lastName,
+      final String? phoneNumber,
+      final String? password,
       final String? country,
       final String? city,
-      final String? role,
-      final String? status}) = _$ProfileModelImpl;
+      final String? district,
+      final String? gender}) = _$ProfileModelImpl;
 
   factory _ProfileModel.fromJson(Map<String, dynamic> json) =
       _$ProfileModelImpl.fromJson;
 
   @override
-  @JsonKey(name: "_id")
   String? get id;
   @override
-  String? get fio;
+  String? get firstName;
   @override
-  String? get email;
+  String? get lastName;
   @override
-  @JsonKey(name: "phone_number")
   String? get phoneNumber;
+  @override
+  String? get password;
   @override
   String? get country;
   @override
   String? get city;
   @override
-  String? get role;
+  String? get district;
   @override
-  String? get status;
+  String? get gender;
 
   /// Create a copy of ProfileModel
   /// with the given fields replaced by the non-null parameter values.

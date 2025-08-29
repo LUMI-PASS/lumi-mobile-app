@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'profile_state.dart';
+part of 'profile_detail_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,24 +15,24 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$ProfileBuildable {
+mixin _$ProfileDetailBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
   HomForUser? get homeModel => throw _privateConstructorUsedError;
 
-  /// Create a copy of ProfileBuildable
+  /// Create a copy of ProfileDetailBuildable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProfileBuildableCopyWith<ProfileBuildable> get copyWith =>
+  $ProfileDetailBuildableCopyWith<ProfileDetailBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ProfileBuildableCopyWith<$Res> {
-  factory $ProfileBuildableCopyWith(
-          ProfileBuildable value, $Res Function(ProfileBuildable) then) =
-      _$ProfileBuildableCopyWithImpl<$Res, ProfileBuildable>;
+abstract class $ProfileDetailBuildableCopyWith<$Res> {
+  factory $ProfileDetailBuildableCopyWith(ProfileDetailBuildable value,
+          $Res Function(ProfileDetailBuildable) then) =
+      _$ProfileDetailBuildableCopyWithImpl<$Res, ProfileDetailBuildable>;
   @useResult
   $Res call(
       {bool isSelected, bool isLoading, bool success, HomForUser? homeModel});
@@ -41,16 +41,17 @@ abstract class $ProfileBuildableCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
-    implements $ProfileBuildableCopyWith<$Res> {
-  _$ProfileBuildableCopyWithImpl(this._value, this._then);
+class _$ProfileDetailBuildableCopyWithImpl<$Res,
+        $Val extends ProfileDetailBuildable>
+    implements $ProfileDetailBuildableCopyWith<$Res> {
+  _$ProfileDetailBuildableCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ProfileBuildable
+  /// Create a copy of ProfileDetailBuildable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -80,7 +81,7 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
     ) as $Val);
   }
 
-  /// Create a copy of ProfileBuildable
+  /// Create a copy of ProfileDetailBuildable
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
@@ -96,11 +97,12 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
 }
 
 /// @nodoc
-abstract class _$$ProfileBuildableImplCopyWith<$Res>
-    implements $ProfileBuildableCopyWith<$Res> {
-  factory _$$ProfileBuildableImplCopyWith(_$ProfileBuildableImpl value,
-          $Res Function(_$ProfileBuildableImpl) then) =
-      __$$ProfileBuildableImplCopyWithImpl<$Res>;
+abstract class _$$ProfileDetailBuildableImplCopyWith<$Res>
+    implements $ProfileDetailBuildableCopyWith<$Res> {
+  factory _$$ProfileDetailBuildableImplCopyWith(
+          _$ProfileDetailBuildableImpl value,
+          $Res Function(_$ProfileDetailBuildableImpl) then) =
+      __$$ProfileDetailBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -111,14 +113,16 @@ abstract class _$$ProfileBuildableImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$ProfileBuildableImplCopyWithImpl<$Res>
-    extends _$ProfileBuildableCopyWithImpl<$Res, _$ProfileBuildableImpl>
-    implements _$$ProfileBuildableImplCopyWith<$Res> {
-  __$$ProfileBuildableImplCopyWithImpl(_$ProfileBuildableImpl _value,
-      $Res Function(_$ProfileBuildableImpl) _then)
+class __$$ProfileDetailBuildableImplCopyWithImpl<$Res>
+    extends _$ProfileDetailBuildableCopyWithImpl<$Res,
+        _$ProfileDetailBuildableImpl>
+    implements _$$ProfileDetailBuildableImplCopyWith<$Res> {
+  __$$ProfileDetailBuildableImplCopyWithImpl(
+      _$ProfileDetailBuildableImpl _value,
+      $Res Function(_$ProfileDetailBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ProfileBuildable
+  /// Create a copy of ProfileDetailBuildable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -128,7 +132,7 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
     Object? success = null,
     Object? homeModel = freezed,
   }) {
-    return _then(_$ProfileBuildableImpl(
+    return _then(_$ProfileDetailBuildableImpl(
       isSelected: null == isSelected
           ? _value.isSelected
           : isSelected // ignore: cast_nullable_to_non_nullable
@@ -151,8 +155,8 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ProfileBuildableImpl implements _ProfileBuildable {
-  const _$ProfileBuildableImpl(
+class _$ProfileDetailBuildableImpl implements _ProfileDetailBuildable {
+  const _$ProfileDetailBuildableImpl(
       {this.isSelected = false,
       this.isLoading = false,
       this.success = false,
@@ -172,14 +176,14 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
 
   @override
   String toString() {
-    return 'ProfileBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
+    return 'ProfileDetailBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProfileBuildableImpl &&
+            other is _$ProfileDetailBuildableImpl &&
             (identical(other.isSelected, isSelected) ||
                 other.isSelected == isSelected) &&
             (identical(other.isLoading, isLoading) ||
@@ -193,22 +197,22 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
   int get hashCode =>
       Object.hash(runtimeType, isSelected, isLoading, success, homeModel);
 
-  /// Create a copy of ProfileBuildable
+  /// Create a copy of ProfileDetailBuildable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProfileBuildableImplCopyWith<_$ProfileBuildableImpl> get copyWith =>
-      __$$ProfileBuildableImplCopyWithImpl<_$ProfileBuildableImpl>(
-          this, _$identity);
+  _$$ProfileDetailBuildableImplCopyWith<_$ProfileDetailBuildableImpl>
+      get copyWith => __$$ProfileDetailBuildableImplCopyWithImpl<
+          _$ProfileDetailBuildableImpl>(this, _$identity);
 }
 
-abstract class _ProfileBuildable implements ProfileBuildable {
-  const factory _ProfileBuildable(
+abstract class _ProfileDetailBuildable implements ProfileDetailBuildable {
+  const factory _ProfileDetailBuildable(
       {final bool isSelected,
       final bool isLoading,
       final bool success,
-      final HomForUser? homeModel}) = _$ProfileBuildableImpl;
+      final HomForUser? homeModel}) = _$ProfileDetailBuildableImpl;
 
   @override
   bool get isSelected;
@@ -219,45 +223,46 @@ abstract class _ProfileBuildable implements ProfileBuildable {
   @override
   HomForUser? get homeModel;
 
-  /// Create a copy of ProfileBuildable
+  /// Create a copy of ProfileDetailBuildable
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProfileBuildableImplCopyWith<_$ProfileBuildableImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$ProfileDetailBuildableImplCopyWith<_$ProfileDetailBuildableImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-mixin _$ProfileListenable {
-  ProfileEffect get effect => throw _privateConstructorUsedError;
+mixin _$ProfileDetailListenable {
+  ProfileDetailEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of ProfileListenable
+  /// Create a copy of ProfileDetailListenable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProfileListenableCopyWith<ProfileListenable> get copyWith =>
+  $ProfileDetailListenableCopyWith<ProfileDetailListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ProfileListenableCopyWith<$Res> {
-  factory $ProfileListenableCopyWith(
-          ProfileListenable value, $Res Function(ProfileListenable) then) =
-      _$ProfileListenableCopyWithImpl<$Res, ProfileListenable>;
+abstract class $ProfileDetailListenableCopyWith<$Res> {
+  factory $ProfileDetailListenableCopyWith(ProfileDetailListenable value,
+          $Res Function(ProfileDetailListenable) then) =
+      _$ProfileDetailListenableCopyWithImpl<$Res, ProfileDetailListenable>;
   @useResult
-  $Res call({ProfileEffect effect});
+  $Res call({ProfileDetailEffect effect});
 }
 
 /// @nodoc
-class _$ProfileListenableCopyWithImpl<$Res, $Val extends ProfileListenable>
-    implements $ProfileListenableCopyWith<$Res> {
-  _$ProfileListenableCopyWithImpl(this._value, this._then);
+class _$ProfileDetailListenableCopyWithImpl<$Res,
+        $Val extends ProfileDetailListenable>
+    implements $ProfileDetailListenableCopyWith<$Res> {
+  _$ProfileDetailListenableCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ProfileListenable
+  /// Create a copy of ProfileDetailListenable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -268,91 +273,95 @@ class _$ProfileListenableCopyWithImpl<$Res, $Val extends ProfileListenable>
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
-              as ProfileEffect,
+              as ProfileDetailEffect,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$ProfileListenableImplCopyWith<$Res>
-    implements $ProfileListenableCopyWith<$Res> {
-  factory _$$ProfileListenableImplCopyWith(_$ProfileListenableImpl value,
-          $Res Function(_$ProfileListenableImpl) then) =
-      __$$ProfileListenableImplCopyWithImpl<$Res>;
+abstract class _$$ProfileDetailListenableImplCopyWith<$Res>
+    implements $ProfileDetailListenableCopyWith<$Res> {
+  factory _$$ProfileDetailListenableImplCopyWith(
+          _$ProfileDetailListenableImpl value,
+          $Res Function(_$ProfileDetailListenableImpl) then) =
+      __$$ProfileDetailListenableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({ProfileEffect effect});
+  $Res call({ProfileDetailEffect effect});
 }
 
 /// @nodoc
-class __$$ProfileListenableImplCopyWithImpl<$Res>
-    extends _$ProfileListenableCopyWithImpl<$Res, _$ProfileListenableImpl>
-    implements _$$ProfileListenableImplCopyWith<$Res> {
-  __$$ProfileListenableImplCopyWithImpl(_$ProfileListenableImpl _value,
-      $Res Function(_$ProfileListenableImpl) _then)
+class __$$ProfileDetailListenableImplCopyWithImpl<$Res>
+    extends _$ProfileDetailListenableCopyWithImpl<$Res,
+        _$ProfileDetailListenableImpl>
+    implements _$$ProfileDetailListenableImplCopyWith<$Res> {
+  __$$ProfileDetailListenableImplCopyWithImpl(
+      _$ProfileDetailListenableImpl _value,
+      $Res Function(_$ProfileDetailListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ProfileListenable
+  /// Create a copy of ProfileDetailListenable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? effect = null,
   }) {
-    return _then(_$ProfileListenableImpl(
+    return _then(_$ProfileDetailListenableImpl(
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
-              as ProfileEffect,
+              as ProfileDetailEffect,
     ));
   }
 }
 
 /// @nodoc
 
-class _$ProfileListenableImpl implements _ProfileListenable {
-  const _$ProfileListenableImpl({required this.effect});
+class _$ProfileDetailListenableImpl implements _ProfileDetailListenable {
+  const _$ProfileDetailListenableImpl({required this.effect});
 
   @override
-  final ProfileEffect effect;
+  final ProfileDetailEffect effect;
 
   @override
   String toString() {
-    return 'ProfileListenable(effect: $effect)';
+    return 'ProfileDetailListenable(effect: $effect)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProfileListenableImpl &&
+            other is _$ProfileDetailListenableImpl &&
             (identical(other.effect, effect) || other.effect == effect));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of ProfileListenable
+  /// Create a copy of ProfileDetailListenable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProfileListenableImplCopyWith<_$ProfileListenableImpl> get copyWith =>
-      __$$ProfileListenableImplCopyWithImpl<_$ProfileListenableImpl>(
-          this, _$identity);
+  _$$ProfileDetailListenableImplCopyWith<_$ProfileDetailListenableImpl>
+      get copyWith => __$$ProfileDetailListenableImplCopyWithImpl<
+          _$ProfileDetailListenableImpl>(this, _$identity);
 }
 
-abstract class _ProfileListenable implements ProfileListenable {
-  const factory _ProfileListenable({required final ProfileEffect effect}) =
-      _$ProfileListenableImpl;
+abstract class _ProfileDetailListenable implements ProfileDetailListenable {
+  const factory _ProfileDetailListenable(
+          {required final ProfileDetailEffect effect}) =
+      _$ProfileDetailListenableImpl;
 
   @override
-  ProfileEffect get effect;
+  ProfileDetailEffect get effect;
 
-  /// Create a copy of ProfileListenable
+  /// Create a copy of ProfileDetailListenable
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProfileListenableImplCopyWith<_$ProfileListenableImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$ProfileDetailListenableImplCopyWith<_$ProfileDetailListenableImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }

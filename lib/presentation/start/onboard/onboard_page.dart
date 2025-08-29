@@ -1,25 +1,11 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flexobo/common/base/base_page.dart';
-import 'package:flexobo/common/extensions/sizedbox_extensions.dart';
-import 'package:flexobo/common/extensions/text_extensions.dart';
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/gen/assets.gen.dart';
-import 'package:flexobo/common/gen/strings.dart';
-import 'package:flexobo/common/router/app_router.dart';
-import 'package:flexobo/common/widget/common_button.dart';
-import 'package:flexobo/presentation/app/widgets/base_box.dart';
-import 'package:flexobo/presentation/app/widgets/bottom_box.dart';
-import 'package:flexobo/presentation/app/cubit/app_cubit.dart';
-import 'package:flexobo/presentation/app/cubit/app_state.dart';
-import 'package:flexobo/presentation/profile/language/lang/language.dart';
-import 'package:flexobo/presentation/profile/language/lang/language_service.dart';
-import 'package:flexobo/presentation/start/onboard/cubit/onboarding_cubit.dart';
-import 'package:flexobo/presentation/start/onboard/cubit/onboarding_state.dart';
+import 'package:lumi_pass/common/base/base_page.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_cubit.dart';
+import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 @RoutePage()
 class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
@@ -40,318 +26,199 @@ class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
     }
   }
 
+  PageController _pageController = PageController();
+  late List<OnboardingData> _pages;
+
+  @override
+  void init(BuildContext context) {
+    initialize();
+  }
+
+  void initialize() {
+    _pages = [
+      OnboardingData(
+        title: "BEST BOOKING APP",
+        subtitle: "Explore The Best Booking App To Meet The ExtraOrdinary",
+        backgroundImage: Image.asset(
+          'assets/images/onboard1.png',
+          fit: BoxFit.cover,
+        ),
+      ),
+      OnboardingData(
+        title: "Events With Love",
+        subtitle: "Explore The Best Booking App To Meet The ExtraOrdinary",
+        backgroundImage: Image.asset(
+          'assets/images/onboard1.png',
+          fit: BoxFit.cover,
+        ),
+      ),
+      OnboardingData(
+        title: "Book Near You",
+        subtitle: "Explore The Best Booking App To Meet The ExtraOrdinary",
+        backgroundImage: Image.asset(
+          'assets/images/onboard2.png',
+          fit: BoxFit.cover,
+        ),
+      ),
+    ];
+  }
+
   @override
   Widget builder(BuildContext context, OnboardingBuildable state) {
     return Scaffold(
-      backgroundColor: context.colors.primary,
-      resizeToAvoidBottomInset: false,
-      body: Padding(
-        padding: EdgeInsets.only(left: 14.w, right: 14.w, bottom: 32.h),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 148.h,
-              child: Stack(
-                children: [
-                  Positioned(
-                      top: 0.h,
-                      left: 0.h,
-                      right: 0.h,
-                      bottom: 0.h,
-                      child: Assets.images.frameFlexobo.image(height: 128.h)),
-                  Positioned(
-                    bottom: 12.h,
-                    right: 0.h,
-                    child: BaseBox(
-                      onTap: () {
-                        context.read<OnboardingCubit>().skipAll();
-                      },
-                      backgroundColor: context.colors.display,
-                      padding:
-                          EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
-                      child:
-                          Strings.skip.s(14).w(500).c(context.colors.onPrimary),
+      backgroundColor: context.colors.black,
+      body: Stack(
+        children: [
+          // Background image positioned to fill entire screen
+          Positioned.fill(
+            child: _pages[state.index].backgroundImage,
+          ),
+
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) =>
+                context.read<OnboardingCubit>().changeIndex(index),
+            itemCount: _pages.length,
+            itemBuilder: (context, index) {
+              return OnboardingPageWidget(data: _pages[state.index]);
+            },
+          ),
+          Positioned(
+            top: 50,
+            right: 20,
+            child: TextButton(
+              onPressed: () {
+                context.read<OnboardingCubit>().skipAll();
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Skip',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Progress Dots
+          Positioned(
+            bottom: 120,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _pages.length,
+                (index) => AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  width: state.index == index ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: state.index == index
+                        ? context.colors.onPrimary
+                        : context.colors.primary,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Next Button (only show on third page)
+          if (state.index == 2)
+            Positioned(
+              bottom: 50,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      context.read<OnboardingCubit>().changeIndex(3),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  Positioned(
-                    bottom: 12.h,
-                    left: 0.h,
-                    child: BaseBox(
-                      onTap: () {
-                        _showLanguageBottomSheet(context);
-                      },
-                      backgroundColor: context.colors.display,
-                      padding:
-                          EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
-                      child: Builder(
-                        builder: (context) {
-                          final appCubit = context.watch<AppCubit>();
-                          final currentLanguage =
-                              appCubit.state.buildable?.language ??
-                                  Language.from(context);
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              currentLanguage.icon,
-                              4.kw,
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 16.w,
-                                color: context.colors.onPrimary,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                  child: Text(
+                    'Get Started',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
-                  )
-                ],
-              ),
-            ),
-            16.kh,
-            Assets.images.onboardIcon.image(width: 138.w, height: 32.h),
-            16.kh,
-            SizedBox(
-              width: 1.sw,
-              height: 1.sh * 0.6,
-              child: PageView.builder(
-                controller: controller,
-                itemBuilder: (context, index) {
-                  return Column(
-                    children: [
-                      Onboard.values[state.index].icon,
-                      24.kh,
-                      Onboard.values[state.index].title
-                          .s(24)
-                          .w(600)
-                          .c(context.colors.onPrimary)
-                          .a(TextAlign.center),
-                      16.kh,
-                      Onboard.values[state.index].description
-                          .s(14)
-                          .w(400)
-                          .c(context.colors.onPrimary)
-                          .a(TextAlign.center),
-                    ],
-                  );
-                },
-                onPageChanged: (index) {
-                  context.read<OnboardingCubit>().changeIndex(index);
-                },
-                itemCount: Onboard.values.length,
-              ),
-            ),
-            16.kh,
-            AnimatedSmoothIndicator(
-              activeIndex: state.index,
-              count: 3,
-              effect: CustomizableEffect(
-                dotDecoration: DotDecoration(
-                  color: context.colors.title01,
-                  width: 8.w,
-                  height: 8.h,
-                  borderRadius: BorderRadius.circular(5),
-                  dotBorder: DotBorder(
-                    width: 1.w,
-                    color: context.colors.primary01,
-                  ),
-                ),
-                activeDotDecoration: DotDecoration(
-                  color: context.colors.onPrimary,
-                  width: 24.w,
-                  height: 8.h,
-                  borderRadius: BorderRadius.circular(5),
-                  dotBorder: DotBorder(
-                    width: 1.w,
-                    color: context.colors.primary,
                   ),
                 ),
               ),
             ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: state.index != 0
-                  ? MainAxisAlignment.spaceBetween
-                  : MainAxisAlignment.end,
-              children: [
-                Flexible(
-                  child: state.index != 0
-                      ? SizedBox(
-                          height: 48.h,
-                          child: CommonButton.elevated(
-                            backgroundColor: context.colors.display,
-                            text: Strings.backButton,
-                            onPressed: () => context
-                                .read<OnboardingCubit>()
-                                .changeIndex(state.index - 1),
-                          ),
-                        )
-                      : SizedBox(),
-                ),
-                8.kw,
-                Flexible(
-                  child: CommonButton.elevated(
-                    isRight: true,
-                    backgroundColor: context.colors.primary2,
-                    text: Strings.nextButton,
-                    icon: Assets.icons.arrowRight.svg(),
-                    onPressed: () => context
-                        .read<OnboardingCubit>()
-                        .changeIndex(state.index + 1),
-                  ),
-                ),
-              ],
-            )
-          ],
-        ),
+        ],
       ),
     );
   }
-
-  void _showLanguageBottomSheet(BuildContext context) {
-    final appCubit = context.read<AppCubit>();
-    final initialLanguage =
-        appCubit.state.buildable?.language ?? Language.from(context);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          _LanguageBottomSheetContent(initialLanguage: initialLanguage),
-    );
-  }
 }
 
-class _LanguageBottomSheetContent extends StatefulWidget {
-  final Language initialLanguage;
+class OnboardingPageWidget extends StatelessWidget {
+  final OnboardingData data;
 
-  const _LanguageBottomSheetContent({required this.initialLanguage});
-
-  @override
-  _LanguageBottomSheetContentState createState() =>
-      _LanguageBottomSheetContentState();
-}
-
-class _LanguageBottomSheetContentState
-    extends State<_LanguageBottomSheetContent> {
-  late Language selectedLanguage;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedLanguage = widget.initialLanguage;
-  }
+  const OnboardingPageWidget({
+    Key? key,
+    required this.data,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.onPrimary,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
+    return SafeArea(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+        padding: EdgeInsets.symmetric(horizontal: 40),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
+            Text(
+              data.title,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.2,
               ),
+              textAlign: TextAlign.center,
             ),
-            8.kh,
-            Strings.selectLanguage.s(20).w(500).c(context.colors.primary),
-            8.kh,
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(
-                Language.values.length,
-                (index) => _buildLanguageOption(
-                  Language.values[index],
-                  Language.values[index].icon,
-                  context,
-                  selectedLanguage,
-                  selectedLanguage == Language.values[index],
-                  () {
-                    setState(() {
-                      selectedLanguage = Language.values[index];
-                    });
-                  },
-                ),
+            SizedBox(height: 20),
+            Text(
+              data.subtitle,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.9),
+                height: 1.5,
               ),
+              textAlign: TextAlign.center,
             ),
-            12.kh,
-            CommonButton.elevated(
-              text: Strings.saveButton,
-              backgroundColor: context.colors.primary,
-              onPressed: () async {
-                await _handleLanguageWithService(context, selectedLanguage);
-              },
-            ),
-            24.kh
+            SizedBox(height: 200),
           ],
         ),
       ),
     );
   }
+}
 
-  Future<void> _handleLanguageWithService(
-      BuildContext context, Language selectedLanguage) async {
-    try {
-      context.read<AppCubit>().selectLanguage(selectedLanguage);
-      await LanguageService().changeLanguage(context, selectedLanguage.locale);
-    } catch (e) {}
+class OnboardingData {
+  final String title;
+  final String subtitle;
+  final Widget backgroundImage;
 
-    Navigator.of(context).pop();
-  }
-
-  Widget _buildLanguageOption(
-      Language language,
-      Widget flagIcon,
-      BuildContext context,
-      Language? currentSelectedLanguage,
-      bool isSelected,
-      VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 8.h),
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
-        decoration: BoxDecoration(
-          border: Border.all(
-              color: isSelected ? context.colors.primary : context.colors.grey),
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Row(
-          children: [
-            flagIcon,
-            16.kw,
-            language.name
-                .s(14)
-                .c(isSelected
-                    ? context.colors.primary
-                    : const Color(0xFF414651))
-                .w(500),
-            const Spacer(),
-            Radio(
-              value: language.name,
-              groupValue: currentSelectedLanguage?.name,
-              onChanged: (value) {
-                onTap();
-              },
-              activeColor: context.colors.primary,
-              fillColor: MaterialStateProperty.all(context.colors.primary),
-            )
-          ],
-        ),
-      ),
-    );
-  }
+  OnboardingData({
+    required this.title,
+    required this.subtitle,
+    required this.backgroundImage,
+  });
 }

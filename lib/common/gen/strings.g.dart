@@ -6,7 +6,7 @@ part of 'strings.dart';
 // LocalizationGenerator
 // **************************************************************************
 
-// Generated at: Wed, 16 Jul 2025 15:38:59 +05:00
+// Generated at: Sun, 03 Aug 2025 12:56:06 +05:00
 class Strings {
   static const supportedLocales = [
     Locale('ru', 'RU'),
@@ -934,4 +934,60 @@ class Strings {
 
   // close
   static String get close => 'close'.tr();
+
+  // chats
+  static String get chats => 'chats'.tr();
+
+  // message
+  static String get message => 'message'.tr();
+
+  // search
+  static String get search => 'search'.tr();
+
+  // status
+  static String get status => 'status'.tr();
+
+  // booking
+  static String get bookingRequested => 'booking_requested'.tr();
+
+  // price
+  static String get priceRequested => 'price_requested'.tr();
+
+  // booking
+  static String get bookingAccepted => 'booking_accepted'.tr();
+  static String get bookingRejected => 'booking_rejected'.tr();
+
+  // accepted
+  static String get accepted => 'accepted'.tr();
+
+  // rejected
+  static String get rejected => 'rejected'.tr();
+
+  // owner
+  static String get ownerPost => 'owner_post'.tr();
+
+  // view
+  static String get viewChat => 'view_chat'.tr();
+
+  // you
+  static String get youOffered => 'you_offered'.tr();
+
+  // to
+  static String get toYouOffered => 'to_you_offered'.tr();
+
+  // booked
+  static String get booked => 'booked'.tr();
+
+  // truck
+  static String get truckNewTab => 'truck_new_tab'.tr();
+
+  // no
+  static String get noLoads => 'no_loads'.tr();
+  static String get noTransports => 'no_transports'.tr();
+
+  // input
+  static String get inputCarDesc => 'input_car_desc'.tr();
+
+  // volume
+  static String get volumeUnit => 'volume_unit'.tr();
 }

@@ -1,8 +1,8 @@
-import 'package:flexobo/common/extensions/sizedbox_extensions.dart';
-import 'package:flexobo/common/extensions/text_extensions.dart';
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/widget/bouncing_button.dart';
-import 'package:flexobo/data/base_model/default_theme_colors.dart';
+import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/widget/bouncing_button.dart';
+import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -23,7 +23,7 @@ class CommonButton extends StatelessWidget {
   final bool loading;
   final bool enabled;
   final VoidCallback? onPressed;
-  final double radius;
+  final double? radius;
   final Color? backgroundColor;
   final Color? textColor;
   final Widget? icon;
@@ -39,7 +39,7 @@ class CommonButton extends StatelessWidget {
       bool loading = false,
       bool enabled = true,
       VoidCallback? onPressed,
-      double radius = 8,
+      double? radius,
       Color? backgroundColor,
       Color? textColor,
       Key? key,
@@ -63,7 +63,7 @@ class CommonButton extends StatelessWidget {
     Color? backgroundColor,
     Color? textColor,
     Widget? icon,
-    double radius = 12,
+    double? radius,
     Key? key,
     double? padding,
     bool? isRight,
@@ -75,7 +75,7 @@ class CommonButton extends StatelessWidget {
           loading,
           enabled,
           onPressed,
-          radius,
+          radius ?? 16.r,
           CommonButtonType.elevated,
           key: key,
           icon: icon,
@@ -138,11 +138,8 @@ class CommonButton extends StatelessWidget {
                     children: [icon ?? Container(), 6.kw],
                   ),
                 Center(
-                    child: text
-                        .w(600)
-                        .s(16)
-                        .c(textColor ?? StaticColors.white)
-                ),
+                    child:
+                        text.w(600).s(16).c(textColor ?? StaticColors.white)),
                 Visibility(
                   visible: icon != null && isRightIcon == true,
                   child: Row(
@@ -162,7 +159,7 @@ class CommonButton extends StatelessWidget {
         height: 48.sp,
         width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius),
+          borderRadius: BorderRadius.circular(radius ?? 16.r),
           border: Border.all(color: borderColor ?? context.colors.primary),
           color: backgroundColor ?? context.colors.onPrimary,
         ),
@@ -190,7 +187,7 @@ class CommonButton extends StatelessWidget {
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
+            borderRadius: BorderRadius.circular(radius ?? 16.r),
             color: enabled
                 ? backgroundColor ?? context.colors.primary
                 : context.colors.grey,

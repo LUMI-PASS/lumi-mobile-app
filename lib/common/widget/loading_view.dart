@@ -1,4 +1,4 @@
-import 'package:flexobo/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

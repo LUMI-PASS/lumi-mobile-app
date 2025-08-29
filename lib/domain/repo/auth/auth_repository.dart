@@ -1,33 +1,22 @@
-import 'package:flexobo/data/api_model/checking_response/checking_response_model.dart';
-import 'package:flexobo/data/api_model/register/register_model.dart';
-import 'package:flexobo/data/base_model/token/tokens.dart';
-import 'package:flutter/material.dart';
+import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
+import 'package:lumi_pass/data/api_model/register/register_model.dart';
 
 abstract class AuthRepository {
-  Future<void> register(RegisterModel registerModel);
+  Future<ProfileModel> register(ProfileModel registerModel);
 
-  Future<CheckingResponseModel> login(String phone, String password);
+  Future<bool> checkNumber(String phoneNumber);
 
-  Future<void> verifyCode(
-      String phoneNumber, int verificationCode, String codeHash);
-
-  Future<CheckingResponseModel> resetPasswordSendCode(String phone);
-
-  Future<void> resetPasswordConfirm(String phone, String code);
-
-  Future<CheckingResponseModel> verifyPhoneNumber(String phone, bool isReg);
-
-  Future<void> resetPassword(String phoneOrEmail, String newPassword);
+  Future<bool> verifyNumber(String phoneNumber, String code, bool isReg);
 
   Future<void> logout();
 
-  Future<void> getFirebaseToken();
-
-  Future<void> firebaseInit();
-
-  Future<void> sendDeviceToken();
-
-  Future<void> deleteDeviceToken();
-
-  void initializeFirebaseMessaging();
+// Future<void> getFirebaseToken();
+//
+// Future<void> firebaseInit();
+//
+// Future<void> sendDeviceToken();
+//
+// Future<void> deleteDeviceToken();
+//
+// void initializeFirebaseMessaging();
 }

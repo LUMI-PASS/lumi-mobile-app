@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flexobo/common/constants/constants.dart';
-import 'package:flexobo/data/interceptor/auth_interceptor.dart';
+import 'package:lumi_pass/common/constants/constants.dart';
+import 'package:lumi_pass/data/interceptor/auth_interceptor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';

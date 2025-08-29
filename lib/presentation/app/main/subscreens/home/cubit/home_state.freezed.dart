@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'login_state.dart';
+part of 'home_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,45 +15,42 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$LoginBuildable {
+mixin _$HomeBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
-  String? get errorPhone => throw _privateConstructorUsedError;
-  String? get errorPassword => throw _privateConstructorUsedError;
+  HomeModel? get homeModel => throw _privateConstructorUsedError;
 
-  /// Create a copy of LoginBuildable
+  /// Create a copy of HomeBuildable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $LoginBuildableCopyWith<LoginBuildable> get copyWith =>
+  $HomeBuildableCopyWith<HomeBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $LoginBuildableCopyWith<$Res> {
-  factory $LoginBuildableCopyWith(
-          LoginBuildable value, $Res Function(LoginBuildable) then) =
-      _$LoginBuildableCopyWithImpl<$Res, LoginBuildable>;
+abstract class $HomeBuildableCopyWith<$Res> {
+  factory $HomeBuildableCopyWith(
+          HomeBuildable value, $Res Function(HomeBuildable) then) =
+      _$HomeBuildableCopyWithImpl<$Res, HomeBuildable>;
   @useResult
   $Res call(
-      {bool isSelected,
-      bool isLoading,
-      bool success,
-      String? errorPhone,
-      String? errorPassword});
+      {bool isSelected, bool isLoading, bool success, HomeModel? homeModel});
+
+  $HomeModelCopyWith<$Res>? get homeModel;
 }
 
 /// @nodoc
-class _$LoginBuildableCopyWithImpl<$Res, $Val extends LoginBuildable>
-    implements $LoginBuildableCopyWith<$Res> {
-  _$LoginBuildableCopyWithImpl(this._value, this._then);
+class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
+    implements $HomeBuildableCopyWith<$Res> {
+  _$HomeBuildableCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of LoginBuildable
+  /// Create a copy of HomeBuildable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -61,8 +58,7 @@ class _$LoginBuildableCopyWithImpl<$Res, $Val extends LoginBuildable>
     Object? isSelected = null,
     Object? isLoading = null,
     Object? success = null,
-    Object? errorPhone = freezed,
-    Object? errorPassword = freezed,
+    Object? homeModel = freezed,
   }) {
     return _then(_value.copyWith(
       isSelected: null == isSelected
@@ -77,43 +73,52 @@ class _$LoginBuildableCopyWithImpl<$Res, $Val extends LoginBuildable>
           ? _value.success
           : success // ignore: cast_nullable_to_non_nullable
               as bool,
-      errorPhone: freezed == errorPhone
-          ? _value.errorPhone
-          : errorPhone // ignore: cast_nullable_to_non_nullable
-              as String?,
-      errorPassword: freezed == errorPassword
-          ? _value.errorPassword
-          : errorPassword // ignore: cast_nullable_to_non_nullable
-              as String?,
+      homeModel: freezed == homeModel
+          ? _value.homeModel
+          : homeModel // ignore: cast_nullable_to_non_nullable
+              as HomeModel?,
     ) as $Val);
+  }
+
+  /// Create a copy of HomeBuildable
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $HomeModelCopyWith<$Res>? get homeModel {
+    if (_value.homeModel == null) {
+      return null;
+    }
+
+    return $HomeModelCopyWith<$Res>(_value.homeModel!, (value) {
+      return _then(_value.copyWith(homeModel: value) as $Val);
+    });
   }
 }
 
 /// @nodoc
-abstract class _$$LoginBuildableImplCopyWith<$Res>
-    implements $LoginBuildableCopyWith<$Res> {
-  factory _$$LoginBuildableImplCopyWith(_$LoginBuildableImpl value,
-          $Res Function(_$LoginBuildableImpl) then) =
-      __$$LoginBuildableImplCopyWithImpl<$Res>;
+abstract class _$$HomeBuildableImplCopyWith<$Res>
+    implements $HomeBuildableCopyWith<$Res> {
+  factory _$$HomeBuildableImplCopyWith(
+          _$HomeBuildableImpl value, $Res Function(_$HomeBuildableImpl) then) =
+      __$$HomeBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
-      {bool isSelected,
-      bool isLoading,
-      bool success,
-      String? errorPhone,
-      String? errorPassword});
+      {bool isSelected, bool isLoading, bool success, HomeModel? homeModel});
+
+  @override
+  $HomeModelCopyWith<$Res>? get homeModel;
 }
 
 /// @nodoc
-class __$$LoginBuildableImplCopyWithImpl<$Res>
-    extends _$LoginBuildableCopyWithImpl<$Res, _$LoginBuildableImpl>
-    implements _$$LoginBuildableImplCopyWith<$Res> {
-  __$$LoginBuildableImplCopyWithImpl(
-      _$LoginBuildableImpl _value, $Res Function(_$LoginBuildableImpl) _then)
+class __$$HomeBuildableImplCopyWithImpl<$Res>
+    extends _$HomeBuildableCopyWithImpl<$Res, _$HomeBuildableImpl>
+    implements _$$HomeBuildableImplCopyWith<$Res> {
+  __$$HomeBuildableImplCopyWithImpl(
+      _$HomeBuildableImpl _value, $Res Function(_$HomeBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of LoginBuildable
+  /// Create a copy of HomeBuildable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -121,10 +126,9 @@ class __$$LoginBuildableImplCopyWithImpl<$Res>
     Object? isSelected = null,
     Object? isLoading = null,
     Object? success = null,
-    Object? errorPhone = freezed,
-    Object? errorPassword = freezed,
+    Object? homeModel = freezed,
   }) {
-    return _then(_$LoginBuildableImpl(
+    return _then(_$HomeBuildableImpl(
       isSelected: null == isSelected
           ? _value.isSelected
           : isSelected // ignore: cast_nullable_to_non_nullable
@@ -137,27 +141,22 @@ class __$$LoginBuildableImplCopyWithImpl<$Res>
           ? _value.success
           : success // ignore: cast_nullable_to_non_nullable
               as bool,
-      errorPhone: freezed == errorPhone
-          ? _value.errorPhone
-          : errorPhone // ignore: cast_nullable_to_non_nullable
-              as String?,
-      errorPassword: freezed == errorPassword
-          ? _value.errorPassword
-          : errorPassword // ignore: cast_nullable_to_non_nullable
-              as String?,
+      homeModel: freezed == homeModel
+          ? _value.homeModel
+          : homeModel // ignore: cast_nullable_to_non_nullable
+              as HomeModel?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$LoginBuildableImpl implements _LoginBuildable {
-  const _$LoginBuildableImpl(
+class _$HomeBuildableImpl implements _HomeBuildable {
+  const _$HomeBuildableImpl(
       {this.isSelected = false,
       this.isLoading = false,
       this.success = false,
-      this.errorPhone = null,
-      this.errorPassword = null});
+      this.homeModel});
 
   @override
   @JsonKey()
@@ -169,54 +168,46 @@ class _$LoginBuildableImpl implements _LoginBuildable {
   @JsonKey()
   final bool success;
   @override
-  @JsonKey()
-  final String? errorPhone;
-  @override
-  @JsonKey()
-  final String? errorPassword;
+  final HomeModel? homeModel;
 
   @override
   String toString() {
-    return 'LoginBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, errorPhone: $errorPhone, errorPassword: $errorPassword)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LoginBuildableImpl &&
+            other is _$HomeBuildableImpl &&
             (identical(other.isSelected, isSelected) ||
                 other.isSelected == isSelected) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
             (identical(other.success, success) || other.success == success) &&
-            (identical(other.errorPhone, errorPhone) ||
-                other.errorPhone == errorPhone) &&
-            (identical(other.errorPassword, errorPassword) ||
-                other.errorPassword == errorPassword));
+            (identical(other.homeModel, homeModel) ||
+                other.homeModel == homeModel));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, isSelected, isLoading, success, errorPhone, errorPassword);
+  int get hashCode =>
+      Object.hash(runtimeType, isSelected, isLoading, success, homeModel);
 
-  /// Create a copy of LoginBuildable
+  /// Create a copy of HomeBuildable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$LoginBuildableImplCopyWith<_$LoginBuildableImpl> get copyWith =>
-      __$$LoginBuildableImplCopyWithImpl<_$LoginBuildableImpl>(
-          this, _$identity);
+  _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>
+      __$$HomeBuildableImplCopyWithImpl<_$HomeBuildableImpl>(this, _$identity);
 }
 
-abstract class _LoginBuildable implements LoginBuildable {
-  const factory _LoginBuildable(
+abstract class _HomeBuildable implements HomeBuildable {
+  const factory _HomeBuildable(
       {final bool isSelected,
       final bool isLoading,
       final bool success,
-      final String? errorPhone,
-      final String? errorPassword}) = _$LoginBuildableImpl;
+      final HomeModel? homeModel}) = _$HomeBuildableImpl;
 
   @override
   bool get isSelected;
@@ -225,49 +216,47 @@ abstract class _LoginBuildable implements LoginBuildable {
   @override
   bool get success;
   @override
-  String? get errorPhone;
-  @override
-  String? get errorPassword;
+  HomeModel? get homeModel;
 
-  /// Create a copy of LoginBuildable
+  /// Create a copy of HomeBuildable
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$LoginBuildableImplCopyWith<_$LoginBuildableImpl> get copyWith =>
+  _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-mixin _$LoginListenable {
-  LoginEffect get effect => throw _privateConstructorUsedError;
+mixin _$HomeListenable {
+  HomeEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of LoginListenable
+  /// Create a copy of HomeListenable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $LoginListenableCopyWith<LoginListenable> get copyWith =>
+  $HomeListenableCopyWith<HomeListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $LoginListenableCopyWith<$Res> {
-  factory $LoginListenableCopyWith(
-          LoginListenable value, $Res Function(LoginListenable) then) =
-      _$LoginListenableCopyWithImpl<$Res, LoginListenable>;
+abstract class $HomeListenableCopyWith<$Res> {
+  factory $HomeListenableCopyWith(
+          HomeListenable value, $Res Function(HomeListenable) then) =
+      _$HomeListenableCopyWithImpl<$Res, HomeListenable>;
   @useResult
-  $Res call({LoginEffect effect});
+  $Res call({HomeEffect effect});
 }
 
 /// @nodoc
-class _$LoginListenableCopyWithImpl<$Res, $Val extends LoginListenable>
-    implements $LoginListenableCopyWith<$Res> {
-  _$LoginListenableCopyWithImpl(this._value, this._then);
+class _$HomeListenableCopyWithImpl<$Res, $Val extends HomeListenable>
+    implements $HomeListenableCopyWith<$Res> {
+  _$HomeListenableCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of LoginListenable
+  /// Create a copy of HomeListenable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -278,91 +267,91 @@ class _$LoginListenableCopyWithImpl<$Res, $Val extends LoginListenable>
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
-              as LoginEffect,
+              as HomeEffect,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$LoginListenableImplCopyWith<$Res>
-    implements $LoginListenableCopyWith<$Res> {
-  factory _$$LoginListenableImplCopyWith(_$LoginListenableImpl value,
-          $Res Function(_$LoginListenableImpl) then) =
-      __$$LoginListenableImplCopyWithImpl<$Res>;
+abstract class _$$HomeListenableImplCopyWith<$Res>
+    implements $HomeListenableCopyWith<$Res> {
+  factory _$$HomeListenableImplCopyWith(_$HomeListenableImpl value,
+          $Res Function(_$HomeListenableImpl) then) =
+      __$$HomeListenableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({LoginEffect effect});
+  $Res call({HomeEffect effect});
 }
 
 /// @nodoc
-class __$$LoginListenableImplCopyWithImpl<$Res>
-    extends _$LoginListenableCopyWithImpl<$Res, _$LoginListenableImpl>
-    implements _$$LoginListenableImplCopyWith<$Res> {
-  __$$LoginListenableImplCopyWithImpl(
-      _$LoginListenableImpl _value, $Res Function(_$LoginListenableImpl) _then)
+class __$$HomeListenableImplCopyWithImpl<$Res>
+    extends _$HomeListenableCopyWithImpl<$Res, _$HomeListenableImpl>
+    implements _$$HomeListenableImplCopyWith<$Res> {
+  __$$HomeListenableImplCopyWithImpl(
+      _$HomeListenableImpl _value, $Res Function(_$HomeListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of LoginListenable
+  /// Create a copy of HomeListenable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? effect = null,
   }) {
-    return _then(_$LoginListenableImpl(
+    return _then(_$HomeListenableImpl(
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
-              as LoginEffect,
+              as HomeEffect,
     ));
   }
 }
 
 /// @nodoc
 
-class _$LoginListenableImpl implements _LoginListenable {
-  const _$LoginListenableImpl({required this.effect});
+class _$HomeListenableImpl implements _HomeListenable {
+  const _$HomeListenableImpl({required this.effect});
 
   @override
-  final LoginEffect effect;
+  final HomeEffect effect;
 
   @override
   String toString() {
-    return 'LoginListenable(effect: $effect)';
+    return 'HomeListenable(effect: $effect)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LoginListenableImpl &&
+            other is _$HomeListenableImpl &&
             (identical(other.effect, effect) || other.effect == effect));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of LoginListenable
+  /// Create a copy of HomeListenable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$LoginListenableImplCopyWith<_$LoginListenableImpl> get copyWith =>
-      __$$LoginListenableImplCopyWithImpl<_$LoginListenableImpl>(
+  _$$HomeListenableImplCopyWith<_$HomeListenableImpl> get copyWith =>
+      __$$HomeListenableImplCopyWithImpl<_$HomeListenableImpl>(
           this, _$identity);
 }
 
-abstract class _LoginListenable implements LoginListenable {
-  const factory _LoginListenable({required final LoginEffect effect}) =
-      _$LoginListenableImpl;
+abstract class _HomeListenable implements HomeListenable {
+  const factory _HomeListenable({required final HomeEffect effect}) =
+      _$HomeListenableImpl;
 
   @override
-  LoginEffect get effect;
+  HomeEffect get effect;
 
-  /// Create a copy of LoginListenable
+  /// Create a copy of HomeListenable
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$LoginListenableImplCopyWith<_$LoginListenableImpl> get copyWith =>
+  _$$HomeListenableImplCopyWith<_$HomeListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

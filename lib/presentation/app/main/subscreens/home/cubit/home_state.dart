@@ -1,25 +1,22 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
-part 'login_state.freezed.dart';
-
-@freezed
-class LoginBuildable with _$LoginBuildable {
-  const factory LoginBuildable({
-    @Default(false) bool isSelected,
-    @Default(false) bool isLoading,
-    @Default(false) bool success,
-    @Default(null) String? errorPhone,
-    @Default(null) String? errorPassword,
-  }) = _LoginBuildable;
-}
+part 'home_state.freezed.dart';
 
 @freezed
-class LoginListenable with _$LoginListenable {
-  const factory LoginListenable({
-    required LoginEffect effect,
-  }) = _LoginListenable;
+class HomeBuildable with _$HomeBuildable {
+  const factory HomeBuildable(
+      {@Default(false) bool isSelected,
+      @Default(false) bool isLoading,
+      @Default(false) bool success,
+      HomeModel? homeModel}) = _HomeBuildable;
 }
 
-enum LoginEffect {
-  verify, reg
+@freezed
+class HomeListenable with _$HomeListenable {
+  const factory HomeListenable({
+    required HomeEffect effect,
+  }) = _HomeListenable;
 }
+
+enum HomeEffect { verify, reg }

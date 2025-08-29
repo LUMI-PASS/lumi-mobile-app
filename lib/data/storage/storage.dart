@@ -1,5 +1,5 @@
-import 'package:flexobo/common/base/base_storage.dart';
-import 'package:flexobo/data/base_model/token/tokens.dart';
+import 'package:lumi_pass/common/base/base_storage.dart';
+import 'package:lumi_pass/data/base_model/token/tokens.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 

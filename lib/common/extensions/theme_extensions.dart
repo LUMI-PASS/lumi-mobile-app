@@ -1,5 +1,5 @@
-import 'package:flexobo/data/base_model/default_theme_colors.dart';
-import 'package:flexobo/di/injection.dart';
+import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:flutter/cupertino.dart';
 
 

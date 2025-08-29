@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flexobo/common/base/base_cubit.dart';
-import 'package:flexobo/common/gen/strings.dart';
-import 'package:flexobo/domain/repo/auth/auth_repository.dart';
+import 'package:lumi_pass/common/base/base_cubit.dart';
+import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'verify_state.dart';
 
@@ -39,9 +39,10 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
     build((buildable) => buildable.copyWith(error: error));
   }
 
-  Future<void> checkCode(String phoneNumber, String codeHash) => callable(
-        future: _repo.verifyCode(
-            phoneNumber.replaceAll("-", ""), buildable.code ?? 0, codeHash),
+  Future<void> checkCode(String phoneNumber, String codeHash, bool isReg) =>
+      callable(
+        future: _repo.verifyNumber(phoneNumber.replaceAll("-", ""),
+            (buildable.code ?? 0).toString(), isReg),
         buildOnStart: () => buildable.copyWith(loading: true),
         invokeOnData: (data) => const VerifyListenable(
           VerifyEffect.success,
@@ -55,10 +56,7 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
       );
 
   Future<void> checkPhone(String phoneOrMail, bool isRegister) => callable(
-        future: isRegister
-            ? _repo.verifyPhoneNumber(
-                phoneOrMail.replaceAll("-", ""), isRegister)
-            : _repo.resetPasswordSendCode(phoneOrMail),
+        future: _repo.checkNumber(phoneOrMail),
         buildOnStart: () => buildable.copyWith(resetLoading: true),
         invokeOnData: (data) {
           return const VerifyListenable(

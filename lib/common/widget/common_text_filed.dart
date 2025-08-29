@@ -1,11 +1,12 @@
-import 'package:flexobo/common/extensions/sizedbox_extensions.dart';
-import 'package:flexobo/common/extensions/text_extensions.dart';
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class CommonTextField extends StatefulWidget {
@@ -154,116 +155,119 @@ class _CommonTextFieldState extends State<CommonTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextFormField(
-          focusNode: widget.focusNode,
-          onFieldSubmitted: (_) {
-            if (widget.isNext == true) {
-              FocusScope.of(context).requestFocus(widget.nextFocusNode);
-            }
-          },
-          validator: widget.validator,
-          textAlignVertical: TextAlignVertical.center,
-          maxLines: widget.maxLines,
-          minLines: widget.minLines,
-          maxLength: widget.maxLength,
-          initialValue: widget.initialValue,
-          autofocus: widget.autofocus,
-          enabled: widget.enabled,
-          controller: widget.controller,
-          onTap: widget.onTap,
-          keyboardType: widget.keyboardType,
-          obscureText: passwordVisible,
-          cursorColor: context.colors.primary,
-          textAlign: TextAlign.start,
-          inputFormatters: inputFormatters,
-          onChanged: widget.onChanged == null
-              ? null
-              : (phone) {
-                  final number = widget.moneyInput
-                      ? phone.replaceAll(' ', '')
-                      : maskFormatter.unmaskText(phone);
-                  widget.onChanged!(number);
-                },
-          textInputAction: widget.isNext == true
-              ? TextInputAction.next
-              : TextInputAction.done,
-          decoration: InputDecoration(
-            filled: true,
-            labelText: widget.labelText,
-            alignLabelWithHint: true,
-            labelStyle: GoogleFonts.onest(
-                fontSize: 12.sp, color: context.colors.display),
-            fillColor:
-                widget.background ?? context.colors.grey.withOpacity(0.2),
-            hintText: widget.hint,
-            errorMaxLines: 5,
-            // Fixed content padding for consistent height
-            contentPadding: widget.padding ??
-                EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-            // Use custom prefix icon with fixed dimensions
-            prefixIcon: widget.prefixIcon != null ? _buildPrefixIcon() : null,
-            prefixIconConstraints: widget.prefixIcon != null
-                ? BoxConstraints(
-                    minWidth: 48.w,
-                    maxWidth: 48.w,
-                    minHeight: 50.h,
-                    maxHeight: 50.h,
-                  )
-                : null,
-            hintStyle: TextStyle(
+        SizedBox(
+          height: 64.h,
+          child: TextFormField(
+            focusNode: widget.focusNode,
+            onFieldSubmitted: (_) {
+              if (widget.isNext == true) {
+                FocusScope.of(context).requestFocus(widget.nextFocusNode);
+              }
+            },
+            validator: widget.validator,
+            textAlignVertical: TextAlignVertical.center,
+            maxLines: widget.maxLines,
+            minLines: widget.minLines,
+            maxLength: widget.maxLength,
+            initialValue: widget.initialValue,
+            autofocus: widget.autofocus,
+            enabled: widget.enabled,
+            controller: widget.controller,
+            onTap: widget.onTap,
+            keyboardType: widget.keyboardType,
+            obscureText: passwordVisible,
+            cursorColor: context.colors.primary,
+            textAlign: TextAlign.start,
+            inputFormatters: inputFormatters,
+            onChanged: widget.onChanged == null
+                ? null
+                : (phone) {
+                    final number = widget.moneyInput
+                        ? phone.replaceAll(' ', '')
+                        : maskFormatter.unmaskText(phone);
+                    widget.onChanged!(number);
+                  },
+            textInputAction: widget.isNext == true
+                ? TextInputAction.next
+                : TextInputAction.done,
+            decoration: InputDecoration(
+              filled: true,
+              labelText: widget.labelText,
+              alignLabelWithHint: true,
+              labelStyle: GoogleFonts.onest(
+                  fontSize: 12.sp, color: context.colors.display),
+              fillColor:
+                  widget.background ?? context.colors.grey.withOpacity(0.2),
+              hintText: widget.hint,
+              errorMaxLines: 5,
+              // Fixed content padding for consistent height
+              contentPadding: widget.padding ??
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              // Use custom prefix icon with fixed dimensions
+              prefixIcon: widget.prefixIcon != null ? _buildPrefixIcon() : null,
+              prefixIconConstraints: widget.prefixIcon != null
+                  ? BoxConstraints(
+                      minWidth: 48.w,
+                      maxWidth: 48.w,
+                      minHeight: 50.h,
+                      maxHeight: 50.h,
+                    )
+                  : null,
+              hintStyle: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w400,
+                color: widget.hintColor ?? const Color(0xFF717680),
+              ),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: widget.disabledBorderColor ?? context.colors.grey),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: widget.enabledBorderColor ?? context.colors.grey),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: widget.disabledBorderColor ?? context.colors.grey),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: widget.enabledBorderColor ?? StaticColors.primary),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: context.colors.primary2),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: context.colors.primary2),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              errorStyle: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
+                  color: context.colors.primary2),
+              // Use custom suffix icon with fixed dimensions
+              suffixIcon: (widget.obscureText || widget.suffix != null)
+                  ? _buildSuffixIcon()
+                  : null,
+              suffixIconConstraints: (widget.obscureText || widget.suffix != null)
+                  ? BoxConstraints(
+                      minWidth: 48.w,
+                      maxWidth: 48.w,
+                      minHeight: 50.h,
+                      maxHeight: 50.h,
+                    )
+                  : null,
+            ),
+            style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w400,
-              color: widget.hintColor ?? const Color(0xFF717680),
+              color: widget.textColor ?? context.colors.label,
             ),
-            border: OutlineInputBorder(
-              borderSide: BorderSide(
-                  color: widget.disabledBorderColor ?? context.colors.grey),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                  color: widget.enabledBorderColor ?? context.colors.grey),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                  color: widget.disabledBorderColor ?? context.colors.grey),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                  color: widget.enabledBorderColor ?? context.colors.primary01),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: context.colors.primary2),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: context.colors.primary2),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            errorStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                color: context.colors.primary2),
-            // Use custom suffix icon with fixed dimensions
-            suffixIcon: (widget.obscureText || widget.suffix != null)
-                ? _buildSuffixIcon()
-                : null,
-            suffixIconConstraints: (widget.obscureText || widget.suffix != null)
-                ? BoxConstraints(
-                    minWidth: 48.w,
-                    maxWidth: 48.w,
-                    minHeight: 50.h,
-                    maxHeight: 50.h,
-                  )
-                : null,
-          ),
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w400,
-            color: widget.textColor ?? context.colors.label,
           ),
         ),
         if (widget.errorText != null) ...[

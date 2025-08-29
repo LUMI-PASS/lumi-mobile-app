@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flexobo/common/router/app_router.dart';
-import 'package:flexobo/data/storage/storage.dart';
-import 'package:flexobo/di/injection.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
 
 class InitialGuard extends AutoRouteGuard {
   final Storage storage = getIt<Storage>();

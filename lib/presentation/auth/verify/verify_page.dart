@@ -1,17 +1,17 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flexobo/common/base/base_page.dart';
-import 'package:flexobo/common/extensions/sizedbox_extensions.dart';
-import 'package:flexobo/common/extensions/text_extensions.dart';
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/gen/assets.gen.dart';
-import 'package:flexobo/common/gen/strings.dart';
-import 'package:flexobo/common/router/app_router.dart';
-import 'package:flexobo/common/widget/base_app_bar.dart';
-import 'package:flexobo/common/widget/common_button.dart';
-import 'package:flexobo/data/storage/storage.dart';
-import 'package:flexobo/di/injection.dart';
-import 'package:flexobo/presentation/auth/check_user/cubit/check_user_cubit.dart';
-import 'package:flexobo/presentation/auth/verify/cubit/verify_cubit.dart';
+import 'package:lumi_pass/common/base/base_page.dart';
+import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/common/widget/common_button.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/widgets/base_box.dart';
+import 'package:lumi_pass/presentation/auth/verify/cubit/verify_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -40,13 +40,7 @@ class VerifyPage
   @override
   void listener(BuildContext context, VerifyListenable state) {
     if (state.effect == VerifyEffect.success) {
-      if (verifyStatus == VerifyStatus.PASSWORDRESET) {
-        context.router.push(ForgetPasswordRoute(phoneOrEmail: phoneOrEmail));
-      } else if (verifyStatus == VerifyStatus.REGISTER) {
-        context.router.push(RegisterRoute(phoneOrMail: phoneOrEmail));
-      } else {
-        context.router.replaceAll(const [MainRoute()]);
-      }
+      context.router.replaceAll(const [MainRoute()]);
     }
     super.listener(context, state);
   }
@@ -54,91 +48,81 @@ class VerifyPage
   @override
   Widget builder(context, state) {
     return Scaffold(
-      body: Column(
-        children: [
-          SizedBox(
-            height: 1.sh * 0.4,
-            child: Stack(
+      body: SizedBox(
+        height: 1.sh,
+        width: 1.sw,
+        child: Column(
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).viewPadding.top + 24.h,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Positioned(
-                  top: (-110).h,
-                  left: 0,
-                  right: 0,
-                  child: Assets.images.pattern
-                      .image(width: 1.sw, fit: BoxFit.cover, height: 480.h),
-                ),
-                Positioned(
-                  top: 200.h,
-                  left: 25.w,
-                  right: 25.w,
-                  bottom: 0,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Strings.verificationTitle.s(24).w(600),
-                        8.kh,
-                        (phoneOrEmail.startsWith("+")
-                                ? Strings.smsCodeSentPhone
-                                : Strings.smsCodeSentEmail)
-                            .s(16)
-                            .w(400)
-                            .c(context.colors.display)
-                            .a(TextAlign.center),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                    top: MediaQuery.of(context).viewPadding.top + 16.h,
-                    left: 16.w,
-                    child: AppBarLeadingScreens(context)),
+                Assets.images.congrats.image(width: 123.w, height: 123.h),
+                24.kw,
               ],
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CommonPinPut(
-                  onChanged: (text) =>
-                      context.read<VerifyCubit>().changeCode(int.parse(text)),
-                ),
-                24.kh,
-                InkWell(
-                    onTap: () {
-                      if (state.timer == 0) {
-                        context.read<VerifyCubit>().timerChange();
-                        context.read<VerifyCubit>().checkPhone(
-                            phoneOrEmail.replaceAll("-", ""),
-                            verifyStatus == VerifyStatus.REGISTER);
-                      }
-                    },
-                    child: (state.timer != 0
-                            ? "00:${state.timer}"
-                            : Strings.resendCode)
+            Center(
+              child: BaseBox(
+                margin: const EdgeInsets.all(24),
+                backgroundColor: Color(0xFFA652C7).withOpacity(0.2),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    "Verofy phone number".s(24).w(500),
+                    8.kh,
+                    "We Have Sent Code To Your Phone Number"
                         .s(14)
-                        .w(600)
-                        .c(context.colors.primary01)),
-                12.kh,
-                if (state.error != null)
-                  "${state.error}".s(14).c(context.colors.primary2),
-                12.kh,
-                CommonButton.elevated(
-                    text: Strings.nextButton,
-                    backgroundColor: context.colors.primary01,
-                    loading: state.loading,
-                    onPressed: () {
-                      context.read<VerifyCubit>().checkCode(
-                          phoneOrEmail, storage.codeHash.call() ?? "");
-                    }),
-                24.kh,
-              ],
+                        .w(400)
+                        .a(TextAlign.center),
+                    12.kh,
+                    phoneOrEmail.s(12).w(500),
+                    16.kh,
+                    CommonPinPut(
+                      onChanged: (text) => context
+                          .read<VerifyCubit>()
+                          .changeCode(int.parse(text)),
+                    ),
+                    12.kh,
+                    InkWell(
+                        onTap: () {
+                          if (state.timer == 0) {
+                            context.read<VerifyCubit>().timerChange();
+                            context.read<VerifyCubit>().checkPhone(
+                                phoneOrEmail.replaceAll("-", ""),
+                                verifyStatus == VerifyStatus.REGISTER);
+                          }
+                        },
+                        child: (state.timer != 0
+                                ? "00:${state.timer}"
+                                : "Resend code")
+                            .s(14)
+                            .w(600)
+                            .c(context.colors.primary01)),
+                    12.kh,
+                    if (state.error != null)
+                      "${state.error}".s(14).c(context.colors.primary2),
+                    12.kh,
+                    CommonButton.elevated(
+                        text: "Verify",
+                        backgroundColor: context.colors.primary,
+                        loading: state.loading,
+                        onPressed: () {
+                          context.read<VerifyCubit>().checkCode(
+                              phoneOrEmail,
+                              storage.codeHash.call() ?? "",
+                              verifyStatus == VerifyStatus.REGISTER);
+                        }),
+                    24.kh,
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

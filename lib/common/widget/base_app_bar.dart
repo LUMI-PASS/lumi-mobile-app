@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flexobo/common/extensions/text_extensions.dart';
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -36,7 +36,7 @@ class BaseAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: leading ?? (canPop ? appBarLeading(context) : null),
       centerTitle: centerTitle,
       title: hasIcon
-          ? Assets.icons.smallIcon.svg()
+          ? Assets.icons.eye.svg()
           : InkWell(
               onTap: () => onPressed?.call(),
               child: (title ?? '').w(600).s(16).c(context.colors.label),
@@ -78,7 +78,7 @@ class AppBarIos extends StatelessWidget implements PreferredSizeWidget {
       leading: leading ?? (canPop ? appBarLeading(context) : null),
       centerTitle: centerTitle,
       title: hasIcon
-          ? Assets.icons.smallIcon.svg()
+          ? Assets.icons.eye.svg()
           : InkWell(
               onTap: () => onPressed?.call(),
               child: (title ?? '').w(500).s(16).c(backgroundColor != null
@@ -118,7 +118,7 @@ Widget AppBarLeadingScreens(BuildContext context) {
     onTap: () {
       print("context.router.canPop() ::: ${context.router.canPop()}");
       try {
-        context.router.pop();
+        context.router.maybePop();
       } catch (e) {
         print("error:::: $e");
       }

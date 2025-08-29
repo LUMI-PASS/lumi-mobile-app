@@ -1,6 +1,6 @@
-import 'package:flexobo/common/extensions/text_extensions.dart';
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/widget/common_button.dart';
+import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:flutter/material.dart';
 
 class CustomDialog extends StatelessWidget {

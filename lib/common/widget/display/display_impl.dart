@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flexobo/common/gen/strings.dart';
+import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:injectable/injectable.dart';
 
 import 'display.dart';

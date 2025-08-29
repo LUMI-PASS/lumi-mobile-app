@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'home_state.dart';
+part of 'schedule_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,42 +15,43 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$HomeBuildable {
+mixin _$ScheduleBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
-  HomeModel? get homeModel => throw _privateConstructorUsedError;
+  List<ScheduleItem>? get homeModel => throw _privateConstructorUsedError;
 
-  /// Create a copy of HomeBuildable
+  /// Create a copy of ScheduleBuildable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $HomeBuildableCopyWith<HomeBuildable> get copyWith =>
+  $ScheduleBuildableCopyWith<ScheduleBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $HomeBuildableCopyWith<$Res> {
-  factory $HomeBuildableCopyWith(
-          HomeBuildable value, $Res Function(HomeBuildable) then) =
-      _$HomeBuildableCopyWithImpl<$Res, HomeBuildable>;
+abstract class $ScheduleBuildableCopyWith<$Res> {
+  factory $ScheduleBuildableCopyWith(
+          ScheduleBuildable value, $Res Function(ScheduleBuildable) then) =
+      _$ScheduleBuildableCopyWithImpl<$Res, ScheduleBuildable>;
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, HomeModel? homeModel});
-
-  $HomeModelCopyWith<$Res>? get homeModel;
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      List<ScheduleItem>? homeModel});
 }
 
 /// @nodoc
-class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
-    implements $HomeBuildableCopyWith<$Res> {
-  _$HomeBuildableCopyWithImpl(this._value, this._then);
+class _$ScheduleBuildableCopyWithImpl<$Res, $Val extends ScheduleBuildable>
+    implements $ScheduleBuildableCopyWith<$Res> {
+  _$ScheduleBuildableCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of HomeBuildable
+  /// Create a copy of ScheduleBuildable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -76,49 +77,35 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
       homeModel: freezed == homeModel
           ? _value.homeModel
           : homeModel // ignore: cast_nullable_to_non_nullable
-              as HomeModel?,
+              as List<ScheduleItem>?,
     ) as $Val);
-  }
-
-  /// Create a copy of HomeBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $HomeModelCopyWith<$Res>? get homeModel {
-    if (_value.homeModel == null) {
-      return null;
-    }
-
-    return $HomeModelCopyWith<$Res>(_value.homeModel!, (value) {
-      return _then(_value.copyWith(homeModel: value) as $Val);
-    });
   }
 }
 
 /// @nodoc
-abstract class _$$HomeBuildableImplCopyWith<$Res>
-    implements $HomeBuildableCopyWith<$Res> {
-  factory _$$HomeBuildableImplCopyWith(
-          _$HomeBuildableImpl value, $Res Function(_$HomeBuildableImpl) then) =
-      __$$HomeBuildableImplCopyWithImpl<$Res>;
+abstract class _$$ScheduleBuildableImplCopyWith<$Res>
+    implements $ScheduleBuildableCopyWith<$Res> {
+  factory _$$ScheduleBuildableImplCopyWith(_$ScheduleBuildableImpl value,
+          $Res Function(_$ScheduleBuildableImpl) then) =
+      __$$ScheduleBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, HomeModel? homeModel});
-
-  @override
-  $HomeModelCopyWith<$Res>? get homeModel;
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      List<ScheduleItem>? homeModel});
 }
 
 /// @nodoc
-class __$$HomeBuildableImplCopyWithImpl<$Res>
-    extends _$HomeBuildableCopyWithImpl<$Res, _$HomeBuildableImpl>
-    implements _$$HomeBuildableImplCopyWith<$Res> {
-  __$$HomeBuildableImplCopyWithImpl(
-      _$HomeBuildableImpl _value, $Res Function(_$HomeBuildableImpl) _then)
+class __$$ScheduleBuildableImplCopyWithImpl<$Res>
+    extends _$ScheduleBuildableCopyWithImpl<$Res, _$ScheduleBuildableImpl>
+    implements _$$ScheduleBuildableImplCopyWith<$Res> {
+  __$$ScheduleBuildableImplCopyWithImpl(_$ScheduleBuildableImpl _value,
+      $Res Function(_$ScheduleBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of HomeBuildable
+  /// Create a copy of ScheduleBuildable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -128,7 +115,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? success = null,
     Object? homeModel = freezed,
   }) {
-    return _then(_$HomeBuildableImpl(
+    return _then(_$ScheduleBuildableImpl(
       isSelected: null == isSelected
           ? _value.isSelected
           : isSelected // ignore: cast_nullable_to_non_nullable
@@ -142,21 +129,22 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           : success // ignore: cast_nullable_to_non_nullable
               as bool,
       homeModel: freezed == homeModel
-          ? _value.homeModel
+          ? _value._homeModel
           : homeModel // ignore: cast_nullable_to_non_nullable
-              as HomeModel?,
+              as List<ScheduleItem>?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$HomeBuildableImpl implements _HomeBuildable {
-  const _$HomeBuildableImpl(
+class _$ScheduleBuildableImpl implements _ScheduleBuildable {
+  const _$ScheduleBuildableImpl(
       {this.isSelected = false,
       this.isLoading = false,
       this.success = false,
-      this.homeModel});
+      final List<ScheduleItem>? homeModel})
+      : _homeModel = homeModel;
 
   @override
   @JsonKey()
@@ -167,47 +155,55 @@ class _$HomeBuildableImpl implements _HomeBuildable {
   @override
   @JsonKey()
   final bool success;
+  final List<ScheduleItem>? _homeModel;
   @override
-  final HomeModel? homeModel;
+  List<ScheduleItem>? get homeModel {
+    final value = _homeModel;
+    if (value == null) return null;
+    if (_homeModel is EqualUnmodifiableListView) return _homeModel;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
+    return 'ScheduleBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$HomeBuildableImpl &&
+            other is _$ScheduleBuildableImpl &&
             (identical(other.isSelected, isSelected) ||
                 other.isSelected == isSelected) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
             (identical(other.success, success) || other.success == success) &&
-            (identical(other.homeModel, homeModel) ||
-                other.homeModel == homeModel));
+            const DeepCollectionEquality()
+                .equals(other._homeModel, _homeModel));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isSelected, isLoading, success, homeModel);
+  int get hashCode => Object.hash(runtimeType, isSelected, isLoading, success,
+      const DeepCollectionEquality().hash(_homeModel));
 
-  /// Create a copy of HomeBuildable
+  /// Create a copy of ScheduleBuildable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>
-      __$$HomeBuildableImplCopyWithImpl<_$HomeBuildableImpl>(this, _$identity);
+  _$$ScheduleBuildableImplCopyWith<_$ScheduleBuildableImpl> get copyWith =>
+      __$$ScheduleBuildableImplCopyWithImpl<_$ScheduleBuildableImpl>(
+          this, _$identity);
 }
 
-abstract class _HomeBuildable implements HomeBuildable {
-  const factory _HomeBuildable(
+abstract class _ScheduleBuildable implements ScheduleBuildable {
+  const factory _ScheduleBuildable(
       {final bool isSelected,
       final bool isLoading,
       final bool success,
-      final HomeModel? homeModel}) = _$HomeBuildableImpl;
+      final List<ScheduleItem>? homeModel}) = _$ScheduleBuildableImpl;
 
   @override
   bool get isSelected;
@@ -216,47 +212,47 @@ abstract class _HomeBuildable implements HomeBuildable {
   @override
   bool get success;
   @override
-  HomeModel? get homeModel;
+  List<ScheduleItem>? get homeModel;
 
-  /// Create a copy of HomeBuildable
+  /// Create a copy of ScheduleBuildable
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>
+  _$$ScheduleBuildableImplCopyWith<_$ScheduleBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-mixin _$HomeListenable {
-  HomeEffect get effect => throw _privateConstructorUsedError;
+mixin _$ScheduleListenable {
+  ScheduleEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of HomeListenable
+  /// Create a copy of ScheduleListenable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $HomeListenableCopyWith<HomeListenable> get copyWith =>
+  $ScheduleListenableCopyWith<ScheduleListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $HomeListenableCopyWith<$Res> {
-  factory $HomeListenableCopyWith(
-          HomeListenable value, $Res Function(HomeListenable) then) =
-      _$HomeListenableCopyWithImpl<$Res, HomeListenable>;
+abstract class $ScheduleListenableCopyWith<$Res> {
+  factory $ScheduleListenableCopyWith(
+          ScheduleListenable value, $Res Function(ScheduleListenable) then) =
+      _$ScheduleListenableCopyWithImpl<$Res, ScheduleListenable>;
   @useResult
-  $Res call({HomeEffect effect});
+  $Res call({ScheduleEffect effect});
 }
 
 /// @nodoc
-class _$HomeListenableCopyWithImpl<$Res, $Val extends HomeListenable>
-    implements $HomeListenableCopyWith<$Res> {
-  _$HomeListenableCopyWithImpl(this._value, this._then);
+class _$ScheduleListenableCopyWithImpl<$Res, $Val extends ScheduleListenable>
+    implements $ScheduleListenableCopyWith<$Res> {
+  _$ScheduleListenableCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of HomeListenable
+  /// Create a copy of ScheduleListenable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -267,91 +263,91 @@ class _$HomeListenableCopyWithImpl<$Res, $Val extends HomeListenable>
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
-              as HomeEffect,
+              as ScheduleEffect,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$HomeListenableImplCopyWith<$Res>
-    implements $HomeListenableCopyWith<$Res> {
-  factory _$$HomeListenableImplCopyWith(_$HomeListenableImpl value,
-          $Res Function(_$HomeListenableImpl) then) =
-      __$$HomeListenableImplCopyWithImpl<$Res>;
+abstract class _$$ScheduleListenableImplCopyWith<$Res>
+    implements $ScheduleListenableCopyWith<$Res> {
+  factory _$$ScheduleListenableImplCopyWith(_$ScheduleListenableImpl value,
+          $Res Function(_$ScheduleListenableImpl) then) =
+      __$$ScheduleListenableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({HomeEffect effect});
+  $Res call({ScheduleEffect effect});
 }
 
 /// @nodoc
-class __$$HomeListenableImplCopyWithImpl<$Res>
-    extends _$HomeListenableCopyWithImpl<$Res, _$HomeListenableImpl>
-    implements _$$HomeListenableImplCopyWith<$Res> {
-  __$$HomeListenableImplCopyWithImpl(
-      _$HomeListenableImpl _value, $Res Function(_$HomeListenableImpl) _then)
+class __$$ScheduleListenableImplCopyWithImpl<$Res>
+    extends _$ScheduleListenableCopyWithImpl<$Res, _$ScheduleListenableImpl>
+    implements _$$ScheduleListenableImplCopyWith<$Res> {
+  __$$ScheduleListenableImplCopyWithImpl(_$ScheduleListenableImpl _value,
+      $Res Function(_$ScheduleListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of HomeListenable
+  /// Create a copy of ScheduleListenable
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? effect = null,
   }) {
-    return _then(_$HomeListenableImpl(
+    return _then(_$ScheduleListenableImpl(
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
-              as HomeEffect,
+              as ScheduleEffect,
     ));
   }
 }
 
 /// @nodoc
 
-class _$HomeListenableImpl implements _HomeListenable {
-  const _$HomeListenableImpl({required this.effect});
+class _$ScheduleListenableImpl implements _ScheduleListenable {
+  const _$ScheduleListenableImpl({required this.effect});
 
   @override
-  final HomeEffect effect;
+  final ScheduleEffect effect;
 
   @override
   String toString() {
-    return 'HomeListenable(effect: $effect)';
+    return 'ScheduleListenable(effect: $effect)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$HomeListenableImpl &&
+            other is _$ScheduleListenableImpl &&
             (identical(other.effect, effect) || other.effect == effect));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of HomeListenable
+  /// Create a copy of ScheduleListenable
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$HomeListenableImplCopyWith<_$HomeListenableImpl> get copyWith =>
-      __$$HomeListenableImplCopyWithImpl<_$HomeListenableImpl>(
+  _$$ScheduleListenableImplCopyWith<_$ScheduleListenableImpl> get copyWith =>
+      __$$ScheduleListenableImplCopyWithImpl<_$ScheduleListenableImpl>(
           this, _$identity);
 }
 
-abstract class _HomeListenable implements HomeListenable {
-  const factory _HomeListenable({required final HomeEffect effect}) =
-      _$HomeListenableImpl;
+abstract class _ScheduleListenable implements ScheduleListenable {
+  const factory _ScheduleListenable({required final ScheduleEffect effect}) =
+      _$ScheduleListenableImpl;
 
   @override
-  HomeEffect get effect;
+  ScheduleEffect get effect;
 
-  /// Create a copy of HomeListenable
+  /// Create a copy of ScheduleListenable
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$HomeListenableImplCopyWith<_$HomeListenableImpl> get copyWith =>
+  _$$ScheduleListenableImplCopyWith<_$ScheduleListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

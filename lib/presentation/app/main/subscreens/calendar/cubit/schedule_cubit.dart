@@ -4,20 +4,17 @@ import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
-import 'home_state.dart';
+import 'schedule_state.dart';
 
 @injectable
-class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
-  HomeCubit(this._repo) : super(const HomeBuildable());
+class ScheduleCubit extends BaseCubit<ScheduleBuildable, ScheduleListenable> {
+  ScheduleCubit(this._repo) : super(const ScheduleBuildable());
   final HomeRepository _repo;
 
-  Future<void> getHome() {
+  Future<void> getSchedule() {
     return callable(
-      future: _repo.getHome(),
+      future: _repo.getScheduleList(),
       buildOnStart: () => buildable.copyWith(isLoading: true),
-      // invokeOnData: (data) => HomeListenable(
-      //   effect: data ? HomeEffect.verify : HomeEffect.reg,
-      // ),
       buildOnData: (data) {
         return buildable.copyWith(homeModel: data);
       },

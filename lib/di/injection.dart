@@ -1,5 +1,5 @@
-import 'package:flexobo/common/router/app_router.dart';
-import 'package:flexobo/di/injection.config.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/di/injection.config.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 

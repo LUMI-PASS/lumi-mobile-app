@@ -1,7 +1,7 @@
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/gen/assets.gen.dart';
-import 'package:flexobo/common/gen/strings.dart';
-import 'package:flexobo/common/widget/common_text_filed.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/widget/common_text_filed.dart';
 import 'package:flutter/material.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 

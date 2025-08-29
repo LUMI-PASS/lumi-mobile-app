@@ -1,21 +1,22 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'profile_model.freezed.dart';
+
 part 'profile_model.g.dart';
 
 @freezed
 class ProfileModel with _$ProfileModel {
+  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory ProfileModel({
-    @JsonKey(name: "_id")
     String? id,
-    String? fio,
-    String? email,
-    @JsonKey(name: "phone_number")
+    String? firstName,
+    String? lastName,
     String? phoneNumber,
+    String? password,
     String? country,
     String? city,
-    String? role,
-    String? status,
+    String? district,
+    String? gender,
   }) = _ProfileModel;
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) =>

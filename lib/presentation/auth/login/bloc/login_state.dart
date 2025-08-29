@@ -7,6 +7,7 @@ class LoginBuildable with _$LoginBuildable {
   const factory LoginBuildable({
     @Default(false) bool isSelected,
     @Default(false) bool isLoading,
+    @Default(false) bool success,
     @Default(null) String? errorPhone,
     @Default(null) String? errorPassword,
   }) = _LoginBuildable;
@@ -20,5 +21,5 @@ class LoginListenable with _$LoginListenable {
 }
 
 enum LoginEffect {
-  main,
+  verify, reg
 }

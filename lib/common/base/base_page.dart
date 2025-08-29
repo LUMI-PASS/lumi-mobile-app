@@ -1,7 +1,7 @@
-import 'package:flexobo/common/base/base_builder.dart';
-import 'package:flexobo/common/widget/error_view.dart';
-import 'package:flexobo/common/widget/loading_view.dart';
-import 'package:flexobo/di/injection.dart';
+import 'package:lumi_pass/common/base/base_builder.dart';
+import 'package:lumi_pass/common/widget/error_view.dart';
+import 'package:lumi_pass/common/widget/loading_view.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:focus_detector/focus_detector.dart';

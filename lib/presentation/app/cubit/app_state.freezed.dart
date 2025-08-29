@@ -15,23 +15,13 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$AppBuildable {
-  Language? get language => throw _privateConstructorUsedError;
-
-  /// Create a copy of AppBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $AppBuildableCopyWith<AppBuildable> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+mixin _$AppBuildable {}
 
 /// @nodoc
 abstract class $AppBuildableCopyWith<$Res> {
   factory $AppBuildableCopyWith(
           AppBuildable value, $Res Function(AppBuildable) then) =
       _$AppBuildableCopyWithImpl<$Res, AppBuildable>;
-  @useResult
-  $Res call({Language? language});
 }
 
 /// @nodoc
@@ -46,29 +36,13 @@ class _$AppBuildableCopyWithImpl<$Res, $Val extends AppBuildable>
 
   /// Create a copy of AppBuildable
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? language = freezed,
-  }) {
-    return _then(_value.copyWith(
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as Language?,
-    ) as $Val);
-  }
 }
 
 /// @nodoc
-abstract class _$$AppBuildableImplCopyWith<$Res>
-    implements $AppBuildableCopyWith<$Res> {
+abstract class _$$AppBuildableImplCopyWith<$Res> {
   factory _$$AppBuildableImplCopyWith(
           _$AppBuildableImpl value, $Res Function(_$AppBuildableImpl) then) =
       __$$AppBuildableImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({Language? language});
 }
 
 /// @nodoc
@@ -81,66 +55,30 @@ class __$$AppBuildableImplCopyWithImpl<$Res>
 
   /// Create a copy of AppBuildable
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? language = freezed,
-  }) {
-    return _then(_$AppBuildableImpl(
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as Language?,
-    ));
-  }
 }
 
 /// @nodoc
 
 class _$AppBuildableImpl implements _AppBuildable {
-  const _$AppBuildableImpl({this.language});
-
-  @override
-  final Language? language;
+  const _$AppBuildableImpl();
 
   @override
   String toString() {
-    return 'AppBuildable(language: $language)';
+    return 'AppBuildable()';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$AppBuildableImpl &&
-            (identical(other.language, language) ||
-                other.language == language));
+        (other.runtimeType == runtimeType && other is _$AppBuildableImpl);
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, language);
-
-  /// Create a copy of AppBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$AppBuildableImplCopyWith<_$AppBuildableImpl> get copyWith =>
-      __$$AppBuildableImplCopyWithImpl<_$AppBuildableImpl>(this, _$identity);
+  int get hashCode => runtimeType.hashCode;
 }
 
 abstract class _AppBuildable implements AppBuildable {
-  const factory _AppBuildable({final Language? language}) = _$AppBuildableImpl;
-
-  @override
-  Language? get language;
-
-  /// Create a copy of AppBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$AppBuildableImplCopyWith<_$AppBuildableImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  const factory _AppBuildable() = _$AppBuildableImpl;
 }
 
 /// @nodoc

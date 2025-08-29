@@ -1,4 +1,4 @@
-import 'package:flexobo/data/base_model/default_theme_colors.dart';
+import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
 import 'package:flutter/material.dart';
 
 class CustomCheckbox extends StatefulWidget {

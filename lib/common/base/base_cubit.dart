@@ -1,7 +1,7 @@
-import 'package:flexobo/common/widget/display/display.dart';
-import 'package:flexobo/di/injection.dart';
+import 'package:lumi_pass/common/widget/display/display.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'base_state.dart';
 
 abstract class BaseCubit<BUILDABLE, LISTENABLE>

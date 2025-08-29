@@ -1,8 +1,8 @@
-import 'package:flexobo/common/base/base_cubit.dart';
-import 'package:flexobo/common/gen/assets.gen.dart';
-import 'package:flexobo/common/gen/strings.dart';
-import 'package:flexobo/data/storage/storage.dart';
-import 'package:flexobo/presentation/start/onboard/cubit/onboarding_state.dart';
+import 'package:lumi_pass/common/base/base_cubit.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:injectable/injectable.dart';
@@ -61,11 +61,11 @@ extension LanguageExtensions on Onboard {
   Widget get icon {
     switch (this) {
       case Onboard.first:
-        return Assets.images.onboarding1.image(height: 337.h, width: 1.sw);
+        return Assets.images.onboard1.image(height: 337.h, width: 1.sw);
       case Onboard.second:
-        return Assets.images.onboarding2.image(height: 337.h, width: 1.sw);
+        return Assets.images.onboard2.image(height: 337.h, width: 1.sw);
       case Onboard.third:
-        return Assets.images.onboarding3.image(height: 337.h, width: 1.sw);
+        return Assets.images.onboard2.image(height: 337.h, width: 1.sw);
     }
   }
 

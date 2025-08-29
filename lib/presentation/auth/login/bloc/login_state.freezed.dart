@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$LoginBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
+  bool get success => throw _privateConstructorUsedError;
   String? get errorPhone => throw _privateConstructorUsedError;
   String? get errorPassword => throw _privateConstructorUsedError;
 
@@ -37,6 +38,7 @@ abstract class $LoginBuildableCopyWith<$Res> {
   $Res call(
       {bool isSelected,
       bool isLoading,
+      bool success,
       String? errorPhone,
       String? errorPassword});
 }
@@ -58,6 +60,7 @@ class _$LoginBuildableCopyWithImpl<$Res, $Val extends LoginBuildable>
   $Res call({
     Object? isSelected = null,
     Object? isLoading = null,
+    Object? success = null,
     Object? errorPhone = freezed,
     Object? errorPassword = freezed,
   }) {
@@ -69,6 +72,10 @@ class _$LoginBuildableCopyWithImpl<$Res, $Val extends LoginBuildable>
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      success: null == success
+          ? _value.success
+          : success // ignore: cast_nullable_to_non_nullable
               as bool,
       errorPhone: freezed == errorPhone
           ? _value.errorPhone
@@ -93,6 +100,7 @@ abstract class _$$LoginBuildableImplCopyWith<$Res>
   $Res call(
       {bool isSelected,
       bool isLoading,
+      bool success,
       String? errorPhone,
       String? errorPassword});
 }
@@ -112,6 +120,7 @@ class __$$LoginBuildableImplCopyWithImpl<$Res>
   $Res call({
     Object? isSelected = null,
     Object? isLoading = null,
+    Object? success = null,
     Object? errorPhone = freezed,
     Object? errorPassword = freezed,
   }) {
@@ -123,6 +132,10 @@ class __$$LoginBuildableImplCopyWithImpl<$Res>
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      success: null == success
+          ? _value.success
+          : success // ignore: cast_nullable_to_non_nullable
               as bool,
       errorPhone: freezed == errorPhone
           ? _value.errorPhone
@@ -142,6 +155,7 @@ class _$LoginBuildableImpl implements _LoginBuildable {
   const _$LoginBuildableImpl(
       {this.isSelected = false,
       this.isLoading = false,
+      this.success = false,
       this.errorPhone = null,
       this.errorPassword = null});
 
@@ -153,6 +167,9 @@ class _$LoginBuildableImpl implements _LoginBuildable {
   final bool isLoading;
   @override
   @JsonKey()
+  final bool success;
+  @override
+  @JsonKey()
   final String? errorPhone;
   @override
   @JsonKey()
@@ -160,7 +177,7 @@ class _$LoginBuildableImpl implements _LoginBuildable {
 
   @override
   String toString() {
-    return 'LoginBuildable(isSelected: $isSelected, isLoading: $isLoading, errorPhone: $errorPhone, errorPassword: $errorPassword)';
+    return 'LoginBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, errorPhone: $errorPhone, errorPassword: $errorPassword)';
   }
 
   @override
@@ -172,6 +189,7 @@ class _$LoginBuildableImpl implements _LoginBuildable {
                 other.isSelected == isSelected) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
+            (identical(other.success, success) || other.success == success) &&
             (identical(other.errorPhone, errorPhone) ||
                 other.errorPhone == errorPhone) &&
             (identical(other.errorPassword, errorPassword) ||
@@ -180,7 +198,7 @@ class _$LoginBuildableImpl implements _LoginBuildable {
 
   @override
   int get hashCode => Object.hash(
-      runtimeType, isSelected, isLoading, errorPhone, errorPassword);
+      runtimeType, isSelected, isLoading, success, errorPhone, errorPassword);
 
   /// Create a copy of LoginBuildable
   /// with the given fields replaced by the non-null parameter values.
@@ -196,6 +214,7 @@ abstract class _LoginBuildable implements LoginBuildable {
   const factory _LoginBuildable(
       {final bool isSelected,
       final bool isLoading,
+      final bool success,
       final String? errorPhone,
       final String? errorPassword}) = _$LoginBuildableImpl;
 
@@ -203,6 +222,8 @@ abstract class _LoginBuildable implements LoginBuildable {
   bool get isSelected;
   @override
   bool get isLoading;
+  @override
+  bool get success;
   @override
   String? get errorPhone;
   @override

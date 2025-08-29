@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flexobo/common/base/base_cubit.dart';
-import 'package:flexobo/common/gen/strings.dart';
-import 'package:flexobo/domain/repo/auth/auth_repository.dart';
+import 'package:lumi_pass/common/base/base_cubit.dart';
+import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'login_state.dart';
 
@@ -10,27 +10,16 @@ class LoginCubit extends BaseCubit<LoginBuildable, LoginListenable> {
   LoginCubit(this._repo) : super(const LoginBuildable());
   final AuthRepository _repo;
 
-  Future<void> login(String phoneOrEmail, String password) {
-    if (!buildable.isSelected && password.length >= 6) {
-      build((buildable) => buildable.copyWith(
-          errorPhone: Strings.invalidInputFormat, errorPassword: null));
-      return Future.value();
-    } else if (buildable.isSelected && password.length < 6) {
-      build((buildable) => buildable.copyWith(
-          errorPassword: Strings.passwordMinLength, errorPhone: null));
-      return Future.value();
-    } else if (!buildable.isSelected && password.length < 6) {
-      build((buildable) => buildable.copyWith(
-          errorPhone: Strings.invalidInputFormat,
-          errorPassword: Strings.passwordMinLength));
-      return Future.value();
-    }
+  Future<void> login(String phoneOrEmail) {
     return callable(
-      future: _repo.login(phoneOrEmail, password),
+      future: _repo.checkNumber(phoneOrEmail.replaceAll("-", "")),
       buildOnStart: () => buildable.copyWith(isLoading: true),
-      invokeOnData: (data) => const LoginListenable(
-        effect: LoginEffect.main,
+      invokeOnData: (data) => LoginListenable(
+        effect: data ? LoginEffect.verify : LoginEffect.reg,
       ),
+      buildOnData: (data) {
+        return buildable.copyWith(isSelected: data);
+      },
       onErrorData: (error) {
         final status = (error as DioException);
         if (status.response?.statusCode == 500 ||
@@ -40,6 +29,7 @@ class LoginCubit extends BaseCubit<LoginBuildable, LoginListenable> {
             status.type == DioExceptionType.connectionTimeout) {
           display.error(Strings.connectionError);
         }
+        display.error(error);
       },
       buildOnError: (error) {
         final status = (error as DioException);

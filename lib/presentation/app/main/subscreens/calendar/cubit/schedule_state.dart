@@ -1,22 +1,23 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 
-part 'home_state.freezed.dart';
+part 'schedule_state.freezed.dart';
 
 @freezed
-class HomeBuildable with _$HomeBuildable {
-  const factory HomeBuildable(
+class ScheduleBuildable with _$ScheduleBuildable {
+  const factory ScheduleBuildable(
       {@Default(false) bool isSelected,
       @Default(false) bool isLoading,
       @Default(false) bool success,
-      HomeModel? homeModel}) = _HomeBuildable;
+      List<ScheduleItem>? homeModel}) = _ScheduleBuildable;
 }
 
 @freezed
-class HomeListenable with _$HomeListenable {
-  const factory HomeListenable({
-    required HomeEffect effect,
-  }) = _HomeListenable;
+class ScheduleListenable with _$ScheduleListenable {
+  const factory ScheduleListenable({
+    required ScheduleEffect effect,
+  }) = _ScheduleListenable;
 }
 
-enum HomeEffect { verify, reg }
+enum ScheduleEffect { verify, reg }

@@ -1,20 +1,21 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flexobo/common/base/base_page.dart';
-import 'package:flexobo/common/extensions/sizedbox_extensions.dart';
-import 'package:flexobo/common/extensions/text_extensions.dart';
-import 'package:flexobo/common/extensions/theme_extensions.dart';
-import 'package:flexobo/common/gen/assets.gen.dart';
-import 'package:flexobo/common/gen/strings.dart';
-import 'package:flexobo/common/router/app_router.dart';
-import 'package:flexobo/common/utils/input_validators.dart';
-import 'package:flexobo/common/widget/base_app_bar.dart';
-import 'package:flexobo/common/widget/common_button.dart';
-import 'package:flexobo/common/widget/common_text_filed.dart';
-import 'package:flexobo/data/api_model/register/register_model.dart';
-import 'package:flexobo/presentation/app/widgets/phone_form_field.dart';
-import 'package:flexobo/presentation/auth/register/cubit/register_cubit.dart';
-import 'package:flexobo/presentation/auth/register/cubit/register_state.dart';
-import 'package:flexobo/presentation/auth/verify/verify_page.dart';
+import 'package:lumi_pass/common/base/base_page.dart';
+import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/input_validators.dart';
+import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/common/widget/common_button.dart';
+import 'package:lumi_pass/common/widget/common_text_filed.dart';
+import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
+import 'package:lumi_pass/data/api_model/register/register_model.dart';
+import 'package:lumi_pass/presentation/app/widgets/phone_form_field.dart';
+import 'package:lumi_pass/presentation/auth/register/cubit/register_cubit.dart';
+import 'package:lumi_pass/presentation/auth/register/cubit/register_state.dart';
+import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,29 +27,36 @@ class RegisterPage
 
   final String phoneOrMail;
 
-  final TextEditingController _passwordControllerController =
-      TextEditingController();
-  final TextEditingController _resetPasswordController =
-      TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final FocusNode _nameFocusNode = FocusNode();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _firstNameFocusNode = FocusNode();
+  final FocusNode _lastNameFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
-  final FocusNode _resetPasswordFocusNode = FocusNode();
 
   final _formKey = GlobalKey<FormState>();
 
+  // Gender selection variable
+  String? _selectedGender;
+
   @override
   void dispose() {
-    _passwordControllerController.clear();
-    _resetPasswordController.clear();
-    _nameController.clear();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _passwordController.dispose();
+    _firstNameFocusNode.dispose();
+    _lastNameFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
   @override
   void listener(BuildContext context, RegisterListenable state) {
     if (state.effect == RegisterEffect.main) {
-      context.router.replaceAll([const MainRoute()]);
+      context.router.replaceAll([
+        VerifyRoute(
+            verifyStatus: VerifyStatus.REGISTER, phoneOrEmail: phoneOrMail)
+      ]);
     }
     super.listener(context, state);
   }
@@ -57,128 +65,168 @@ class RegisterPage
   Widget builder(context, state) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(
-              height: 1.sh * 0.4,
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: (-110).h,
-                    left: 0,
-                    right: 0,
-                    child: Assets.images.pattern
-                        .image(width: 1.sw, fit: BoxFit.cover, height: 480.h),
-                  ),
-                  Positioned(
-                    top: 200.h,
-                    left: 25.w,
-                    right: 25.w,
-                    bottom: 0,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Strings.registrationTitle.s(24).w(600),
-                          8.kh,
-                          Strings.registrationSubtitle
-                              .s(16)
-                              .w(400)
-                              .c(context.colors.display)
-                              .a(TextAlign.center),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                      top: MediaQuery.of(context).viewPadding.top + 16.h,
-                      left: 16.w,
-                      child: AppBarLeadingScreens(context)),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: MediaQuery.of(context).viewPadding.top),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                24.kh,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    CommonTextField(
-                      autofocus: true,
-                      focusNode: _nameFocusNode,
-                      controller: _nameController,
-                      hint: Strings.fullNameHint,
-                      validator: (value) =>
-                          InputValidators.required(value, "Ф.И.О"),
-                      isNext: true,
-                      needToCapitalize: true,
-                      nextFocusNode: _passwordFocusNode,
-                    ),
-                    16.kh,
-                    CommonTextField(
-                      controller: _passwordControllerController,
-                      hint: Strings.passwordHint,
-                      isNext: true,
-                      nextFocusNode: _resetPasswordFocusNode,
-                      focusNode: _passwordFocusNode,
-                      obscureText: true,
-                      validator: (value) => InputValidators.password(value),
-                    ),
-                    16.kh,
-                    CommonTextField(
-                      focusNode: _resetPasswordFocusNode,
-                      controller: _resetPasswordController,
-                      hint: Strings.confirmPasswordHint,
-                      obscureText: true,
-                      validator: (value) => InputValidators.confirmPassword(
-                          value, _passwordControllerController.text),
-                    ),
-                    16.kh,
-                    CommonButton.elevated(
-                      text: Strings.nextButton,
-                      backgroundColor: context.colors.primary01,
-                      loading: state.isLoading,
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          context.read<RegisterCubit>().register(RegisterModel(
-                                fio: _nameController.text,
-                                password: _passwordControllerController.text,
-                                phoneNumber: phoneOrMail.startsWith("+")
-                                    ? phoneOrMail.replaceAll("-", "")
-                                    : null,
-                                email: phoneOrMail.startsWith("+")
-                                    ? null
-                                    : phoneOrMail,
-                              ));
-                        }
-                      },
-                    ),
-                    24.kh,
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.center,
-                    //   children: [
-                    //     "У вас уже есть аккаунт?"
-                    //         .s(14)
-                    //         .c(context.colors.display)
-                    //         .w(400),
-                    //     4.kw,
-                    //     InkWell(
-                    //         onTap: () {
-                    //           context.router.pop();
-                    //         },
-                    //         child: "Войти"
-                    //             .s(14)
-                    //             .c(context.colors.primary01)
-                    //             .w(600)),
-                    //   ],
-                    // )
+                    Assets.images.congrats.image(width: 123.w, height: 123.h),
                   ],
                 ),
-              ),
+                12.kh,
+                "Create your \n Account".s(26).w(600),
+                12.kh,
+                CommonTextField(
+                  autofocus: true,
+                  focusNode: _firstNameFocusNode,
+                  controller: _firstNameController,
+                  hint: "First name",
+                  validator: (value) =>
+                      InputValidators.required(value, "First name"),
+                  isNext: true,
+                  needToCapitalize: true,
+                  nextFocusNode: _lastNameFocusNode,
+                ),
+                16.kh,
+                CommonTextField(
+                  controller: _lastNameController,
+                  hint: "Last name",
+                  isNext: true,
+                  nextFocusNode: _passwordFocusNode,
+                  focusNode: _lastNameFocusNode,
+                  validator: (value) =>
+                      InputValidators.required(value, "Last name"),
+                  needToCapitalize: true,
+                ),
+                16.kh,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    "Gender".s(16).w(500),
+                    8.kh,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => context
+                                .read<RegisterCubit>()
+                                .changeState(false),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 12.h, horizontal: 16.w),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: state.isSelected == false
+                                      ? context.colors.primary
+                                      : context.colors.primary.withOpacity(0.3),
+                                  width: state.isSelected == false ? 2 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8.r),
+                                color: state.isSelected == false
+                                    ? context.colors.primary.withOpacity(0.1)
+                                    : Colors.transparent,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    state.isSelected == false
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: state.isSelected == false
+                                        ? context.colors.primary
+                                        : Colors.grey,
+                                    size: 20.r,
+                                  ),
+                                  8.kw,
+                                  const Text("Male")
+                                      .s(16)
+                                      .w(state.isSelected == false ? 600 : 400),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        12.kw,
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () =>
+                                context.read<RegisterCubit>().changeState(true),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 12.h, horizontal: 16.w),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: state.isSelected == true
+                                      ? context.colors.primary
+                                      : context.colors.primary.withOpacity(0.3),
+                                  width: state.isSelected == true ? 2 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8.r),
+                                color: state.isSelected == true
+                                    ? context.colors.primary.withOpacity(0.1)
+                                    : Colors.transparent,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    state.isSelected == true
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: state.isSelected == true
+                                        ? context.colors.primary
+                                        : Colors.grey,
+                                    size: 20.r,
+                                  ),
+                                  8.kw,
+                                  Text("Female")
+                                      .s(16)
+                                      .w(state.isSelected == true ? 600 : 400),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                24.kh,
+                CommonButton.elevated(
+                  text: "Registration",
+                  backgroundColor: context.colors.primary,
+                  loading: state.isLoading,
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      context.read<RegisterCubit>().register(ProfileModel(
+                            firstName: _firstNameController.text,
+                            lastName: _lastNameController.text,
+                            phoneNumber: phoneOrMail.startsWith("+")
+                                ? phoneOrMail.replaceAll("-", "")
+                                : null,
+                            gender: state.isSelected ? "FEMALE" : "MALE",
+                            city: "Tashkent",
+                            country: "Uzbekistan",
+                            password: phoneOrMail,
+                            district: "Tashkent",
+                          ));
+                    }
+                  },
+                ),
+                24.kh,
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

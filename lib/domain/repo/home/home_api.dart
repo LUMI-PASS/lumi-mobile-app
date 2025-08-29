@@ -1,0 +1,22 @@
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+
+@injectable
+class HomeApi {
+  final Dio _dio;
+
+  HomeApi(this._dio);
+
+  Future<Response> getHome() {
+    return _dio.get('discovery/feed/');
+  }
+
+  Future<Response> getSchedule() {
+    return _dio.get('schedules/parent/');
+  }
+
+  Future<Response> getProfileData() {
+    return _dio.get('profile/');
+  }
+}

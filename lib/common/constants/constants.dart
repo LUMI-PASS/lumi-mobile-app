@@ -1,11 +1,6 @@
 class Constants {
-  static const baseUrl = 'https://api.flexobo.prod.glmv.dev/api/';
-  static const locationBaseurl = 'https://us1.locationiq.com/v1/';
-  static const locationToken = 'pk.b60aba370c8ad3f1386a40d86efcc572';
-  static const chatSocketUrl = 'https://api.flexobo.prod.glmv.dev/chat';
-  static const notificationSocketUrl =
-      'ws://113.30.190.31:8000/ws/notifications/';
-  static const imageUrl = "https://api.mytsj.org/media/";
+  static const baseUrl = 'https://dev-api.lumipass.uz/api/v1/';
+  static const assetsUrl = 'https://dev-api.lumipass.uz/api/v1/assets/files/';
 
   static final countryMap = [
     {"code": "+236", "country": "CF", "mask": "##-##-####"},

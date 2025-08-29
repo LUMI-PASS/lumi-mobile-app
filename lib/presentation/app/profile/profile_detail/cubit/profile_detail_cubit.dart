@@ -4,19 +4,20 @@ import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
-import 'profile_state.dart';
+import 'profile_detail_state.dart';
 
 @injectable
-class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
-  ProfileCubit(this._repo) : super(const ProfileBuildable());
+class ProfileDetailCubit
+    extends BaseCubit<ProfileDetailBuildable, ProfileDetailListenable> {
+  ProfileDetailCubit(this._repo) : super(const ProfileDetailBuildable());
   final HomeRepository _repo;
 
-  Future<void> getProfile() {
+  Future<void> getProfileDetail() {
     return callable(
       future: _repo.getProfileData(),
       buildOnStart: () => buildable.copyWith(isLoading: true),
-      // invokeOnData: (data) => ProfileListenable(
-      //   effect: data ? ProfileEffect.verify : ProfileEffect.reg,
+      // invokeOnData: (data) => ProfileDetailListenable(
+      //   effect: data ? ProfileDetailEffect.verify : ProfileDetailEffect.reg,
       // ),
       buildOnData: (data) {
         return buildable.copyWith(homeModel: data);

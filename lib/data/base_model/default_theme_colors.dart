@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 
 abstract class StaticColors {
   static const black = Color(0xFF000000);
-  static const blueWhale = Color(0xFF082031);
+  static const blueWhale = Color(0xFFA652C7);
   static const white = Color(0xFFFFFFFF);
   static const vividCerulean = Color(0xFF639223);
   static const midnight = Color(0xFF242B3A);
@@ -19,6 +19,7 @@ abstract class StaticColors {
   static const mahogany = Color(0xFFC93E3E);
   static final snow = const Color(0xFF40281A).withOpacity(0.1);
   static const lavender = Colors.blue;
+  static const primary = Color(0xFFA652C7);
 }
 
 @singleton

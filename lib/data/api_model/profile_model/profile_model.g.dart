@@ -8,24 +8,26 @@ part of 'profile_model.dart';
 
 _$ProfileModelImpl _$$ProfileModelImplFromJson(Map<String, dynamic> json) =>
     _$ProfileModelImpl(
-      id: json['_id'] as String?,
-      fio: json['fio'] as String?,
-      email: json['email'] as String?,
+      id: json['id'] as String?,
+      firstName: json['first_name'] as String?,
+      lastName: json['last_name'] as String?,
       phoneNumber: json['phone_number'] as String?,
+      password: json['password'] as String?,
       country: json['country'] as String?,
       city: json['city'] as String?,
-      role: json['role'] as String?,
-      status: json['status'] as String?,
+      district: json['district'] as String?,
+      gender: json['gender'] as String?,
     );
 
 Map<String, dynamic> _$$ProfileModelImplToJson(_$ProfileModelImpl instance) =>
     <String, dynamic>{
-      '_id': instance.id,
-      'fio': instance.fio,
-      'email': instance.email,
+      'id': instance.id,
+      'first_name': instance.firstName,
+      'last_name': instance.lastName,
       'phone_number': instance.phoneNumber,
+      'password': instance.password,
       'country': instance.country,
       'city': instance.city,
-      'role': instance.role,
-      'status': instance.status,
+      'district': instance.district,
+      'gender': instance.gender,
     };
