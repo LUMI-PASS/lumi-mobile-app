@@ -22,7 +22,7 @@ class HomeRepositoryImpl extends HomeRepository {
   Future<List<ScheduleItem>> getScheduleList() {
     return _api
         .getSchedule()
-        .then((value) => ScheduleModel.fromJson(value.data).data!);
+        .then((value) => ScheduleModel.fromJson(value.data).data ?? []);
   }
 
   @override

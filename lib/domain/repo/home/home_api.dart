@@ -9,7 +9,7 @@ class HomeApi {
   HomeApi(this._dio);
 
   Future<Response> getHome() {
-    return _dio.get('discovery/feed/');
+    return _dio.get('discovery/feed/', queryParameters: {'lat': 68.12, 'lng': 68.12322});
   }
 
   Future<Response> getSchedule() {
