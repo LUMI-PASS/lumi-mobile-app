@@ -1,17 +1,31 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
-import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'home_state.dart';
+import 'package:location/location.dart';
 
 @injectable
 class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   HomeCubit(this._repo) : super(const HomeBuildable());
   final HomeRepository _repo;
 
-  Future<void> getHome() {
+  Future<void> getHome() async {
+    Location location = const Location();
+    // try{
+    //   final bool _serviceEnabled = await location.requestPermission();
+    //
+    //   if(_serviceEnabled){
+    //     final Position? position = await location.getCurrentLocation();
+    //     if (position != null) {
+    //       print(position.latitude);
+    //       print(position.longitude);
+    //     }
+    //   }
+    // }catch(e){
+    //   print("error: $e");
+    // }
     return callable(
       future: _repo.getHome(),
       buildOnStart: () => buildable.copyWith(isLoading: true),

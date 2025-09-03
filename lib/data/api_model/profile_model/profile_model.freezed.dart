@@ -30,12 +30,8 @@ mixin _$ProfileModel {
   String? get district => throw _privateConstructorUsedError;
   String? get gender => throw _privateConstructorUsedError;
 
-  /// Serializes this ProfileModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ProfileModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ProfileModelCopyWith<ProfileModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -68,8 +64,6 @@ class _$ProfileModelCopyWithImpl<$Res, $Val extends ProfileModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ProfileModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -152,8 +146,6 @@ class __$$ProfileModelImplCopyWithImpl<$Res>
       _$ProfileModelImpl _value, $Res Function(_$ProfileModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ProfileModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -271,14 +263,12 @@ class _$ProfileModelImpl implements _ProfileModel {
             (identical(other.gender, gender) || other.gender == gender));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, firstName, lastName,
       phoneNumber, password, country, city, district, gender);
 
-  /// Create a copy of ProfileModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ProfileModelImplCopyWith<_$ProfileModelImpl> get copyWith =>
@@ -325,11 +315,8 @@ abstract class _ProfileModel implements ProfileModel {
   String? get district;
   @override
   String? get gender;
-
-  /// Create a copy of ProfileModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ProfileModelImplCopyWith<_$ProfileModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

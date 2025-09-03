@@ -115,8 +115,8 @@ class _CommonTextFieldState extends State<CommonTextField> {
     if (widget.prefixIcon == null) return const SizedBox.shrink();
 
     return Container(
-      width: 48.w, // Fixed width for consistency
-      height: 50.h, // Match field height
+      width: 70.w,
+      height: 50.h,
       alignment: Alignment.center,
       child: widget.prefixIcon,
     );
@@ -126,7 +126,7 @@ class _CommonTextFieldState extends State<CommonTextField> {
     if (widget.obscureText) {
       return Container(
         width: 48.w, // Fixed width for consistency
-        height: 50.h, // Match field height
+        height: 64.h, // Match field height
         alignment: Alignment.center,
         child: InkWell(
           overlayColor: const WidgetStatePropertyAll(Colors.transparent),
@@ -141,7 +141,7 @@ class _CommonTextFieldState extends State<CommonTextField> {
     } else if (widget.suffix != null) {
       return Container(
         width: 48.w, // Fixed width for consistency
-        height: 50.h, // Match field height
+        height: 64.h, // Match field height
         alignment: Alignment.center,
         child: widget.suffix,
       );
@@ -207,8 +207,8 @@ class _CommonTextFieldState extends State<CommonTextField> {
               prefixIcon: widget.prefixIcon != null ? _buildPrefixIcon() : null,
               prefixIconConstraints: widget.prefixIcon != null
                   ? BoxConstraints(
-                      minWidth: 48.w,
-                      maxWidth: 48.w,
+                      minWidth: 60.w,
+                      maxWidth: 110.w,
                       minHeight: 50.h,
                       maxHeight: 50.h,
                     )

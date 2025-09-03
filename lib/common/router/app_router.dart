@@ -13,6 +13,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/wallet_page.dart';
+import 'package:lumi_pass/presentation/app/profile/children/children_page.dart';
 import 'package:lumi_pass/presentation/app/profile/profile_detail/profile_detail_page.dart';
 import 'package:lumi_pass/presentation/auth/login/login_page.dart';
 import 'package:lumi_pass/presentation/auth/register/register_page.dart';
@@ -61,5 +62,6 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: ClassDetailRoute.page),
     AutoRoute(page: BookingCompleteRoute.page),
     AutoRoute(page: ProfileDetailRoute.page),
+    AutoRoute(page: ChildrenRoute.page),
   ];
 }

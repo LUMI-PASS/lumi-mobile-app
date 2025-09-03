@@ -33,9 +33,6 @@ class _$AppBuildableCopyWithImpl<$Res, $Val extends AppBuildable>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
-
-  /// Create a copy of AppBuildable
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -52,9 +49,6 @@ class __$$AppBuildableImplCopyWithImpl<$Res>
   __$$AppBuildableImplCopyWithImpl(
       _$AppBuildableImpl _value, $Res Function(_$AppBuildableImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of AppBuildable
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -100,9 +94,6 @@ class _$AppListenableCopyWithImpl<$Res, $Val extends AppListenable>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
-
-  /// Create a copy of AppListenable
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -119,9 +110,6 @@ class __$$AppListenableImplCopyWithImpl<$Res>
   __$$AppListenableImplCopyWithImpl(
       _$AppListenableImpl _value, $Res Function(_$AppListenableImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of AppListenable
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc

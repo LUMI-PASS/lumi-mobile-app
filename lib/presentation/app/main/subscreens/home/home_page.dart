@@ -84,35 +84,37 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                       ],
                     ),
                     16.kh,
-                    BannerLessonWidgets(
-                      homBanner: (state.homeModel?.data?.upcomingClass ??
-                          HomUpcomingClass()),
-                    ),
-                    16.kh,
-                    CarouselSlider(
-                      options: CarouselOptions(height: 180.h, autoPlay: true),
-                      items: (state.homeModel?.data?.banners ?? []).map((i) {
-                        return Builder(
-                          builder: (BuildContext context) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w),
-                              child: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12.r)),
-                                child: CachedNetworkImage(
-                                  width: 1.sw * 0.7,
-                                  fit: BoxFit.cover,
-                                  imageUrl:
-                                      ("${Constants.assetsUrl}${i.url ?? " "}"),
-                                  errorWidget: (context, error, state) =>
-                                      Assets.images.defaultImage.image(),
+                    if (state.homeModel?.data?.upcomingClass != null)
+                      BannerLessonWidgets(
+                        homBanner: (state.homeModel!.data!.upcomingClass!),
+                      ),
+                    if ((state.homeModel?.data?.banners ?? []).isNotEmpty) ...[
+                      16.kh,
+                      CarouselSlider(
+                        options: CarouselOptions(height: 180.h, autoPlay: true),
+                        items: (state.homeModel?.data?.banners ?? []).map((i) {
+                          return Builder(
+                            builder: (BuildContext context) {
+                              return Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                                child: ClipRRect(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12.r)),
+                                  child: CachedNetworkImage(
+                                    width: 1.sw * 0.7,
+                                    fit: BoxFit.cover,
+                                    imageUrl:
+                                        ("${Constants.assetsUrl}${i.url ?? " "}"),
+                                    errorWidget: (context, error, state) =>
+                                        Assets.images.defaultImage.image(),
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        );
-                      }).toList(),
-                    ),
+                              );
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
                     16.kh,
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

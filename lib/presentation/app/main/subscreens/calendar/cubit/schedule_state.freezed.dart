@@ -21,9 +21,7 @@ mixin _$ScheduleBuildable {
   bool get success => throw _privateConstructorUsedError;
   List<ScheduleItem>? get homeModel => throw _privateConstructorUsedError;
 
-  /// Create a copy of ScheduleBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ScheduleBuildableCopyWith<ScheduleBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -51,8 +49,6 @@ class _$ScheduleBuildableCopyWithImpl<$Res, $Val extends ScheduleBuildable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ScheduleBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -105,8 +101,6 @@ class __$$ScheduleBuildableImplCopyWithImpl<$Res>
       $Res Function(_$ScheduleBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ScheduleBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -188,9 +182,7 @@ class _$ScheduleBuildableImpl implements _ScheduleBuildable {
   int get hashCode => Object.hash(runtimeType, isSelected, isLoading, success,
       const DeepCollectionEquality().hash(_homeModel));
 
-  /// Create a copy of ScheduleBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ScheduleBuildableImplCopyWith<_$ScheduleBuildableImpl> get copyWith =>
@@ -213,11 +205,8 @@ abstract class _ScheduleBuildable implements ScheduleBuildable {
   bool get success;
   @override
   List<ScheduleItem>? get homeModel;
-
-  /// Create a copy of ScheduleBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ScheduleBuildableImplCopyWith<_$ScheduleBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -226,9 +215,7 @@ abstract class _ScheduleBuildable implements ScheduleBuildable {
 mixin _$ScheduleListenable {
   ScheduleEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of ScheduleListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ScheduleListenableCopyWith<ScheduleListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -252,8 +239,6 @@ class _$ScheduleListenableCopyWithImpl<$Res, $Val extends ScheduleListenable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ScheduleListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -287,8 +272,6 @@ class __$$ScheduleListenableImplCopyWithImpl<$Res>
       $Res Function(_$ScheduleListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ScheduleListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -327,9 +310,7 @@ class _$ScheduleListenableImpl implements _ScheduleListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of ScheduleListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ScheduleListenableImplCopyWith<_$ScheduleListenableImpl> get copyWith =>
@@ -343,11 +324,8 @@ abstract class _ScheduleListenable implements ScheduleListenable {
 
   @override
   ScheduleEffect get effect;
-
-  /// Create a copy of ScheduleListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ScheduleListenableImplCopyWith<_$ScheduleListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

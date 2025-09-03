@@ -18,9 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$OnboardingBuildable {
   int get index => throw _privateConstructorUsedError;
 
-  /// Create a copy of OnboardingBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $OnboardingBuildableCopyWith<OnboardingBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -44,8 +42,6 @@ class _$OnboardingBuildableCopyWithImpl<$Res, $Val extends OnboardingBuildable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of OnboardingBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -79,8 +75,6 @@ class __$$OnboardingBuildableImplCopyWithImpl<$Res>
       $Res Function(_$OnboardingBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of OnboardingBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -120,9 +114,7 @@ class _$OnboardingBuildableImpl implements _OnboardingBuildable {
   @override
   int get hashCode => Object.hash(runtimeType, index);
 
-  /// Create a copy of OnboardingBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$OnboardingBuildableImplCopyWith<_$OnboardingBuildableImpl> get copyWith =>
@@ -136,11 +128,8 @@ abstract class _OnboardingBuildable implements OnboardingBuildable {
 
   @override
   int get index;
-
-  /// Create a copy of OnboardingBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$OnboardingBuildableImplCopyWith<_$OnboardingBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -149,9 +138,7 @@ abstract class _OnboardingBuildable implements OnboardingBuildable {
 mixin _$OnboardingListenable {
   OnboardEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of OnboardingListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $OnboardingListenableCopyWith<OnboardingListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -176,8 +163,6 @@ class _$OnboardingListenableCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of OnboardingListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -211,8 +196,6 @@ class __$$OnboardingListenableImplCopyWithImpl<$Res>
       $Res Function(_$OnboardingListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of OnboardingListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -251,9 +234,7 @@ class _$OnboardingListenableImpl implements _OnboardingListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of OnboardingListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$OnboardingListenableImplCopyWith<_$OnboardingListenableImpl>
@@ -268,11 +249,8 @@ abstract class _OnboardingListenable implements OnboardingListenable {
 
   @override
   OnboardEffect get effect;
-
-  /// Create a copy of OnboardingListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$OnboardingListenableImplCopyWith<_$OnboardingListenableImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

@@ -60,8 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         "Change your Account information",
                         false,
                         context,
-                        onTap: () =>
-                            context.router.push(const ProfileDetailRoute()),
+                        onTap: () => context.router.push(ProfileDetailRoute()),
                       ),
                       16.kh,
                       _buildProfileCatalog(
@@ -70,9 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         "Change your children information",
                         false,
                         context,
-                        onTap: () {
-
-                        },
+                        onTap: () => context.router.push(const ChildrenRoute()),
                       ),
                       16.kh,
 

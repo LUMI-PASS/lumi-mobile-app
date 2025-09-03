@@ -29,6 +29,21 @@ class HomeRepositoryImpl extends HomeRepository {
   Future<HomForUser> getProfileData() {
     return _api
         .getProfileData()
-        .then((value) => HomForUser.fromJson(value.data));
+        .then((value) => HomForUser.fromJson(value.data['data']['profile']));
+  }
+
+  @override
+  Future<bool> updateUser(HomForUser user) async {
+    try {
+      await _api.updateProfileData(user);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<HomeModel> getChildren() {
+    return _api.getChildren().then((value) => HomeModel.fromJson(value.data));
   }
 }

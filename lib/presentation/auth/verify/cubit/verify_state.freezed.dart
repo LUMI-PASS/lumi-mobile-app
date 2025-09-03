@@ -22,9 +22,7 @@ mixin _$VerifyBuildable {
   int? get code => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
 
-  /// Create a copy of VerifyBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $VerifyBuildableCopyWith<VerifyBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -49,8 +47,6 @@ class _$VerifyBuildableCopyWithImpl<$Res, $Val extends VerifyBuildable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of VerifyBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -105,8 +101,6 @@ class __$$VerifyBuildableImplCopyWithImpl<$Res>
       _$VerifyBuildableImpl _value, $Res Function(_$VerifyBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of VerifyBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -189,9 +183,7 @@ class _$VerifyBuildableImpl implements _VerifyBuildable {
   int get hashCode =>
       Object.hash(runtimeType, loading, resetLoading, timer, code, error);
 
-  /// Create a copy of VerifyBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$VerifyBuildableImplCopyWith<_$VerifyBuildableImpl> get copyWith =>
@@ -217,11 +209,8 @@ abstract class _VerifyBuildable implements VerifyBuildable {
   int? get code;
   @override
   String? get error;
-
-  /// Create a copy of VerifyBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$VerifyBuildableImplCopyWith<_$VerifyBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -230,9 +219,7 @@ abstract class _VerifyBuildable implements VerifyBuildable {
 mixin _$VerifyListenable {
   VerifyEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of VerifyListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $VerifyListenableCopyWith<VerifyListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -256,8 +243,6 @@ class _$VerifyListenableCopyWithImpl<$Res, $Val extends VerifyListenable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of VerifyListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -291,8 +276,6 @@ class __$$VerifyListenableImplCopyWithImpl<$Res>
       $Res Function(_$VerifyListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of VerifyListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -331,9 +314,7 @@ class _$VerifyListenableImpl implements _VerifyListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of VerifyListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$VerifyListenableImplCopyWith<_$VerifyListenableImpl> get copyWith =>
@@ -347,11 +328,8 @@ abstract class _VerifyListenable implements VerifyListenable {
 
   @override
   VerifyEffect get effect;
-
-  /// Create a copy of VerifyListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$VerifyListenableImplCopyWith<_$VerifyListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

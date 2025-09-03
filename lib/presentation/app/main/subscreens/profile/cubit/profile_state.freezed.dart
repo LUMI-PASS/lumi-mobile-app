@@ -18,9 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ProfileBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
 
-  /// Create a copy of ProfileBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ProfileBuildableCopyWith<ProfileBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -44,8 +42,6 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ProfileBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -79,8 +75,6 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
       $Res Function(_$ProfileBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ProfileBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -121,9 +115,7 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
   @override
   int get hashCode => Object.hash(runtimeType, isLoading);
 
-  /// Create a copy of ProfileBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ProfileBuildableImplCopyWith<_$ProfileBuildableImpl> get copyWith =>
@@ -137,11 +129,8 @@ abstract class _ProfileBuildable implements ProfileBuildable {
 
   @override
   bool get isLoading;
-
-  /// Create a copy of ProfileBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ProfileBuildableImplCopyWith<_$ProfileBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -150,9 +139,7 @@ abstract class _ProfileBuildable implements ProfileBuildable {
 mixin _$ProfileListenable {
   ProfileEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of ProfileListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ProfileListenableCopyWith<ProfileListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -176,8 +163,6 @@ class _$ProfileListenableCopyWithImpl<$Res, $Val extends ProfileListenable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ProfileListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -211,8 +196,6 @@ class __$$ProfileListenableImplCopyWithImpl<$Res>
       $Res Function(_$ProfileListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ProfileListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -251,9 +234,7 @@ class _$ProfileListenableImpl implements _ProfileListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of ProfileListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ProfileListenableImplCopyWith<_$ProfileListenableImpl> get copyWith =>
@@ -267,11 +248,8 @@ abstract class _ProfileListenable implements ProfileListenable {
 
   @override
   ProfileEffect get effect;
-
-  /// Create a copy of ProfileListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ProfileListenableImplCopyWith<_$ProfileListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

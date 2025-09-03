@@ -33,6 +33,8 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit
     as _i386;
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart'
     as _i868;
+import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart'
+    as _i239;
 import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_detail_cubit.dart'
     as _i133;
 import 'package:lumi_pass/presentation/auth/login/bloc/login_cubit.dart'
@@ -73,8 +75,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i868.ProfileCubit(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
-    gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
+    gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
     gh.factory<_i526.HomeRepository>(() => _i162.HomeRepositoryImpl(
           gh<_i433.HomeApi>(),
           gh<_i279.Storage>(),
@@ -83,12 +85,14 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i79.AuthApi>(),
           gh<_i279.Storage>(),
         ));
+    gh.factory<_i133.ProfileDetailCubit>(
+        () => _i133.ProfileDetailCubit(gh<_i526.HomeRepository>()));
+    gh.factory<_i239.ChildrenCubit>(
+        () => _i239.ChildrenCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i386.HomeCubit>(
         () => _i386.HomeCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i526.HomeRepository>()));
-    gh.factory<_i133.ProfileDetailCubit>(
-        () => _i133.ProfileDetailCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i915.AppCubit>(
         () => _i915.AppCubit(gh<_i652.AuthRepository>()));
     gh.factory<_i749.VerifyCubit>(

@@ -20,9 +20,7 @@ mixin _$RegisterBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
   String? get errorPhone => throw _privateConstructorUsedError;
 
-  /// Create a copy of RegisterBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $RegisterBuildableCopyWith<RegisterBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -46,8 +44,6 @@ class _$RegisterBuildableCopyWithImpl<$Res, $Val extends RegisterBuildable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of RegisterBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -91,8 +87,6 @@ class __$$RegisterBuildableImplCopyWithImpl<$Res>
       $Res Function(_$RegisterBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of RegisterBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -157,9 +151,7 @@ class _$RegisterBuildableImpl implements _RegisterBuildable {
   int get hashCode =>
       Object.hash(runtimeType, isSelected, isLoading, errorPhone);
 
-  /// Create a copy of RegisterBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$RegisterBuildableImplCopyWith<_$RegisterBuildableImpl> get copyWith =>
@@ -179,11 +171,8 @@ abstract class _RegisterBuildable implements RegisterBuildable {
   bool get isLoading;
   @override
   String? get errorPhone;
-
-  /// Create a copy of RegisterBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$RegisterBuildableImplCopyWith<_$RegisterBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -192,9 +181,7 @@ abstract class _RegisterBuildable implements RegisterBuildable {
 mixin _$RegisterListenable {
   RegisterEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of RegisterListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $RegisterListenableCopyWith<RegisterListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -218,8 +205,6 @@ class _$RegisterListenableCopyWithImpl<$Res, $Val extends RegisterListenable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of RegisterListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -253,8 +238,6 @@ class __$$RegisterListenableImplCopyWithImpl<$Res>
       $Res Function(_$RegisterListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of RegisterListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -293,9 +276,7 @@ class _$RegisterListenableImpl implements _RegisterListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of RegisterListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$RegisterListenableImplCopyWith<_$RegisterListenableImpl> get copyWith =>
@@ -309,11 +290,8 @@ abstract class _RegisterListenable implements RegisterListenable {
 
   @override
   RegisterEffect get effect;
-
-  /// Create a copy of RegisterListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$RegisterListenableImplCopyWith<_$RegisterListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

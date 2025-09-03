@@ -28,12 +28,8 @@ mixin _$RegisterModel {
   String? get codeHash => throw _privateConstructorUsedError;
   int? get code => throw _privateConstructorUsedError;
 
-  /// Serializes this RegisterModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of RegisterModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $RegisterModelCopyWith<RegisterModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -63,8 +59,6 @@ class _$RegisterModelCopyWithImpl<$Res, $Val extends RegisterModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of RegisterModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -129,8 +123,6 @@ class __$$RegisterModelImplCopyWithImpl<$Res>
       _$RegisterModelImpl _value, $Res Function(_$RegisterModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of RegisterModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -219,14 +211,12 @@ class _$RegisterModelImpl implements _RegisterModel {
             (identical(other.code, code) || other.code == code));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, phoneNumber, email, password, fio, codeHash, code);
 
-  /// Create a copy of RegisterModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$RegisterModelImplCopyWith<_$RegisterModelImpl> get copyWith =>
@@ -265,11 +255,8 @@ abstract class _RegisterModel implements RegisterModel {
   String? get codeHash;
   @override
   int? get code;
-
-  /// Create a copy of RegisterModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$RegisterModelImplCopyWith<_$RegisterModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

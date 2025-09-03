@@ -22,9 +22,7 @@ mixin _$LoginBuildable {
   String? get errorPhone => throw _privateConstructorUsedError;
   String? get errorPassword => throw _privateConstructorUsedError;
 
-  /// Create a copy of LoginBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $LoginBuildableCopyWith<LoginBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -53,8 +51,6 @@ class _$LoginBuildableCopyWithImpl<$Res, $Val extends LoginBuildable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of LoginBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -113,8 +109,6 @@ class __$$LoginBuildableImplCopyWithImpl<$Res>
       _$LoginBuildableImpl _value, $Res Function(_$LoginBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of LoginBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -200,9 +194,7 @@ class _$LoginBuildableImpl implements _LoginBuildable {
   int get hashCode => Object.hash(
       runtimeType, isSelected, isLoading, success, errorPhone, errorPassword);
 
-  /// Create a copy of LoginBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$LoginBuildableImplCopyWith<_$LoginBuildableImpl> get copyWith =>
@@ -228,11 +220,8 @@ abstract class _LoginBuildable implements LoginBuildable {
   String? get errorPhone;
   @override
   String? get errorPassword;
-
-  /// Create a copy of LoginBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$LoginBuildableImplCopyWith<_$LoginBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -241,9 +230,7 @@ abstract class _LoginBuildable implements LoginBuildable {
 mixin _$LoginListenable {
   LoginEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of LoginListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $LoginListenableCopyWith<LoginListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -267,8 +254,6 @@ class _$LoginListenableCopyWithImpl<$Res, $Val extends LoginListenable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of LoginListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -302,8 +287,6 @@ class __$$LoginListenableImplCopyWithImpl<$Res>
       _$LoginListenableImpl _value, $Res Function(_$LoginListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of LoginListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -342,9 +325,7 @@ class _$LoginListenableImpl implements _LoginListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of LoginListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$LoginListenableImplCopyWith<_$LoginListenableImpl> get copyWith =>
@@ -358,11 +339,8 @@ abstract class _LoginListenable implements LoginListenable {
 
   @override
   LoginEffect get effect;
-
-  /// Create a copy of LoginListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$LoginListenableImplCopyWith<_$LoginListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

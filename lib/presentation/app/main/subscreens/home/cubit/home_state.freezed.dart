@@ -21,9 +21,7 @@ mixin _$HomeBuildable {
   bool get success => throw _privateConstructorUsedError;
   HomeModel? get homeModel => throw _privateConstructorUsedError;
 
-  /// Create a copy of HomeBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $HomeBuildableCopyWith<HomeBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -50,8 +48,6 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of HomeBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -80,8 +76,6 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     ) as $Val);
   }
 
-  /// Create a copy of HomeBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $HomeModelCopyWith<$Res>? get homeModel {
@@ -118,8 +112,6 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
       _$HomeBuildableImpl _value, $Res Function(_$HomeBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of HomeBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -193,9 +185,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
   int get hashCode =>
       Object.hash(runtimeType, isSelected, isLoading, success, homeModel);
 
-  /// Create a copy of HomeBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>
@@ -217,11 +207,8 @@ abstract class _HomeBuildable implements HomeBuildable {
   bool get success;
   @override
   HomeModel? get homeModel;
-
-  /// Create a copy of HomeBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -230,9 +217,7 @@ abstract class _HomeBuildable implements HomeBuildable {
 mixin _$HomeListenable {
   HomeEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of HomeListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $HomeListenableCopyWith<HomeListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -256,8 +241,6 @@ class _$HomeListenableCopyWithImpl<$Res, $Val extends HomeListenable>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of HomeListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -291,8 +274,6 @@ class __$$HomeListenableImplCopyWithImpl<$Res>
       _$HomeListenableImpl _value, $Res Function(_$HomeListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of HomeListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -331,9 +312,7 @@ class _$HomeListenableImpl implements _HomeListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of HomeListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$HomeListenableImplCopyWith<_$HomeListenableImpl> get copyWith =>
@@ -347,11 +326,8 @@ abstract class _HomeListenable implements HomeListenable {
 
   @override
   HomeEffect get effect;
-
-  /// Create a copy of HomeListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$HomeListenableImplCopyWith<_$HomeListenableImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

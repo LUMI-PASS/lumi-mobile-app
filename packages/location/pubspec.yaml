@@ -1,0 +1,17 @@
+name: location
+description: Location
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.2
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^14.0.0
+  latlong2: ^0.9.1

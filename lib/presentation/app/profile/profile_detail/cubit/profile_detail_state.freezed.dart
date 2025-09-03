@@ -21,9 +21,7 @@ mixin _$ProfileDetailBuildable {
   bool get success => throw _privateConstructorUsedError;
   HomForUser? get homeModel => throw _privateConstructorUsedError;
 
-  /// Create a copy of ProfileDetailBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ProfileDetailBuildableCopyWith<ProfileDetailBuildable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -51,8 +49,6 @@ class _$ProfileDetailBuildableCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ProfileDetailBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -81,8 +77,6 @@ class _$ProfileDetailBuildableCopyWithImpl<$Res,
     ) as $Val);
   }
 
-  /// Create a copy of ProfileDetailBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $HomForUserCopyWith<$Res>? get homeModel {
@@ -122,8 +116,6 @@ class __$$ProfileDetailBuildableImplCopyWithImpl<$Res>
       $Res Function(_$ProfileDetailBuildableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ProfileDetailBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -197,9 +189,7 @@ class _$ProfileDetailBuildableImpl implements _ProfileDetailBuildable {
   int get hashCode =>
       Object.hash(runtimeType, isSelected, isLoading, success, homeModel);
 
-  /// Create a copy of ProfileDetailBuildable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ProfileDetailBuildableImplCopyWith<_$ProfileDetailBuildableImpl>
@@ -222,11 +212,8 @@ abstract class _ProfileDetailBuildable implements ProfileDetailBuildable {
   bool get success;
   @override
   HomForUser? get homeModel;
-
-  /// Create a copy of ProfileDetailBuildable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ProfileDetailBuildableImplCopyWith<_$ProfileDetailBuildableImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -235,9 +222,7 @@ abstract class _ProfileDetailBuildable implements ProfileDetailBuildable {
 mixin _$ProfileDetailListenable {
   ProfileDetailEffect get effect => throw _privateConstructorUsedError;
 
-  /// Create a copy of ProfileDetailListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ProfileDetailListenableCopyWith<ProfileDetailListenable> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -262,8 +247,6 @@ class _$ProfileDetailListenableCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ProfileDetailListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -300,8 +283,6 @@ class __$$ProfileDetailListenableImplCopyWithImpl<$Res>
       $Res Function(_$ProfileDetailListenableImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ProfileDetailListenable
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -340,9 +321,7 @@ class _$ProfileDetailListenableImpl implements _ProfileDetailListenable {
   @override
   int get hashCode => Object.hash(runtimeType, effect);
 
-  /// Create a copy of ProfileDetailListenable
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ProfileDetailListenableImplCopyWith<_$ProfileDetailListenableImpl>
@@ -357,11 +336,8 @@ abstract class _ProfileDetailListenable implements ProfileDetailListenable {
 
   @override
   ProfileDetailEffect get effect;
-
-  /// Create a copy of ProfileDetailListenable
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ProfileDetailListenableImplCopyWith<_$ProfileDetailListenableImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

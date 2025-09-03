@@ -25,12 +25,8 @@ mixin _$Tokens {
   @HiveField(1)
   String? get access => throw _privateConstructorUsedError;
 
-  /// Serializes this Tokens to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Tokens
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TokensCopyWith<Tokens> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -52,8 +48,6 @@ class _$TokensCopyWithImpl<$Res, $Val extends Tokens>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Tokens
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -91,8 +85,6 @@ class __$$TokensImplCopyWithImpl<$Res>
       _$TokensImpl _value, $Res Function(_$TokensImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Tokens
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -142,13 +134,11 @@ class _$TokensImpl implements _Tokens {
             (identical(other.access, access) || other.access == access));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, refresh, access);
 
-  /// Create a copy of Tokens
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TokensImplCopyWith<_$TokensImpl> get copyWith =>
@@ -175,11 +165,8 @@ abstract class _Tokens implements Tokens {
   @override
   @HiveField(1)
   String? get access;
-
-  /// Create a copy of Tokens
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TokensImplCopyWith<_$TokensImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

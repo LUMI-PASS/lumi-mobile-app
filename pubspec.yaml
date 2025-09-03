@@ -8,6 +8,8 @@ version: 1.0.0+1
 environment:
   sdk: ^3.5.4
 
+workspace:
+  - packages/location
 
 dependencies:
   flutter:
@@ -80,7 +82,8 @@ dev_dependencies:
   auto_route_generator: ^8.0.0
   json_serializable: ^6.7.1
   hive_generator: ^2.0.1
-  flutter_gen_runner: ^5.4.0
+  flutter_gen_runner: 5.4.0
+  flutter_gen_core: 5.4.0
 
 
 dependency_overrides:
