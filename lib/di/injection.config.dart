@@ -21,9 +21,12 @@ import 'package:lumi_pass/data/storage/storage.dart' as _i279;
 import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
 import 'package:lumi_pass/domain/impl/auth_repository_impl.dart' as _i98;
+import 'package:lumi_pass/domain/impl/booking_repository_impl.dart' as _i808;
 import 'package:lumi_pass/domain/impl/home_repository_impl.dart' as _i162;
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart' as _i79;
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart' as _i652;
+import 'package:lumi_pass/domain/repo/booking/booking_api.dart' as _i261;
+import 'package:lumi_pass/domain/repo/booking/booking_repository.dart' as _i760;
 import 'package:lumi_pass/domain/repo/home/home_api.dart' as _i433;
 import 'package:lumi_pass/domain/repo/home/home_repository.dart' as _i526;
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart' as _i915;
@@ -77,6 +80,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
+    gh.factory<_i261.BookingApi>(() => _i261.BookingApi(gh<_i361.Dio>()));
+    gh.factory<_i760.BookingRepository>(() => _i808.BookingRepositoryImpl(
+          gh<_i261.BookingApi>(),
+          gh<_i279.Storage>(),
+        ));
     gh.factory<_i526.HomeRepository>(() => _i162.HomeRepositoryImpl(
           gh<_i433.HomeApi>(),
           gh<_i279.Storage>(),

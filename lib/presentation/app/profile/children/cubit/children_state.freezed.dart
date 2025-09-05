@@ -18,7 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ChildrenBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
   int get selectedIndex => throw _privateConstructorUsedError;
-  HomForUser? get homeModel => throw _privateConstructorUsedError;
+  List<ChildModel>? get childrenList => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ChildrenBuildableCopyWith<ChildrenBuildable> get copyWith =>
@@ -31,9 +31,8 @@ abstract class $ChildrenBuildableCopyWith<$Res> {
           ChildrenBuildable value, $Res Function(ChildrenBuildable) then) =
       _$ChildrenBuildableCopyWithImpl<$Res, ChildrenBuildable>;
   @useResult
-  $Res call({bool isLoading, int selectedIndex, HomForUser? homeModel});
-
-  $HomForUserCopyWith<$Res>? get homeModel;
+  $Res call(
+      {bool isLoading, int selectedIndex, List<ChildModel>? childrenList});
 }
 
 /// @nodoc
@@ -51,7 +50,7 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
   $Res call({
     Object? isLoading = null,
     Object? selectedIndex = null,
-    Object? homeModel = freezed,
+    Object? childrenList = freezed,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
@@ -62,23 +61,11 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
           ? _value.selectedIndex
           : selectedIndex // ignore: cast_nullable_to_non_nullable
               as int,
-      homeModel: freezed == homeModel
-          ? _value.homeModel
-          : homeModel // ignore: cast_nullable_to_non_nullable
-              as HomForUser?,
+      childrenList: freezed == childrenList
+          ? _value.childrenList
+          : childrenList // ignore: cast_nullable_to_non_nullable
+              as List<ChildModel>?,
     ) as $Val);
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $HomForUserCopyWith<$Res>? get homeModel {
-    if (_value.homeModel == null) {
-      return null;
-    }
-
-    return $HomForUserCopyWith<$Res>(_value.homeModel!, (value) {
-      return _then(_value.copyWith(homeModel: value) as $Val);
-    });
   }
 }
 
@@ -90,10 +77,8 @@ abstract class _$$ChildrenBuildableImplCopyWith<$Res>
       __$$ChildrenBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isLoading, int selectedIndex, HomForUser? homeModel});
-
-  @override
-  $HomForUserCopyWith<$Res>? get homeModel;
+  $Res call(
+      {bool isLoading, int selectedIndex, List<ChildModel>? childrenList});
 }
 
 /// @nodoc
@@ -109,7 +94,7 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
   $Res call({
     Object? isLoading = null,
     Object? selectedIndex = null,
-    Object? homeModel = freezed,
+    Object? childrenList = freezed,
   }) {
     return _then(_$ChildrenBuildableImpl(
       isLoading: null == isLoading
@@ -120,10 +105,10 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
           ? _value.selectedIndex
           : selectedIndex // ignore: cast_nullable_to_non_nullable
               as int,
-      homeModel: freezed == homeModel
-          ? _value.homeModel
-          : homeModel // ignore: cast_nullable_to_non_nullable
-              as HomForUser?,
+      childrenList: freezed == childrenList
+          ? _value._childrenList
+          : childrenList // ignore: cast_nullable_to_non_nullable
+              as List<ChildModel>?,
     ));
   }
 }
@@ -132,7 +117,10 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
 
 class _$ChildrenBuildableImpl implements _ChildrenBuildable {
   const _$ChildrenBuildableImpl(
-      {this.isLoading = false, this.selectedIndex = 0, this.homeModel});
+      {this.isLoading = false,
+      this.selectedIndex = 0,
+      final List<ChildModel>? childrenList})
+      : _childrenList = childrenList;
 
   @override
   @JsonKey()
@@ -140,12 +128,19 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
   @override
   @JsonKey()
   final int selectedIndex;
+  final List<ChildModel>? _childrenList;
   @override
-  final HomForUser? homeModel;
+  List<ChildModel>? get childrenList {
+    final value = _childrenList;
+    if (value == null) return null;
+    if (_childrenList is EqualUnmodifiableListView) return _childrenList;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'ChildrenBuildable(isLoading: $isLoading, selectedIndex: $selectedIndex, homeModel: $homeModel)';
+    return 'ChildrenBuildable(isLoading: $isLoading, selectedIndex: $selectedIndex, childrenList: $childrenList)';
   }
 
   @override
@@ -157,13 +152,13 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
                 other.isLoading == isLoading) &&
             (identical(other.selectedIndex, selectedIndex) ||
                 other.selectedIndex == selectedIndex) &&
-            (identical(other.homeModel, homeModel) ||
-                other.homeModel == homeModel));
+            const DeepCollectionEquality()
+                .equals(other._childrenList, _childrenList));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isLoading, selectedIndex, homeModel);
+  int get hashCode => Object.hash(runtimeType, isLoading, selectedIndex,
+      const DeepCollectionEquality().hash(_childrenList));
 
   @JsonKey(ignore: true)
   @override
@@ -177,14 +172,14 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
   const factory _ChildrenBuildable(
       {final bool isLoading,
       final int selectedIndex,
-      final HomForUser? homeModel}) = _$ChildrenBuildableImpl;
+      final List<ChildModel>? childrenList}) = _$ChildrenBuildableImpl;
 
   @override
   bool get isLoading;
   @override
   int get selectedIndex;
   @override
-  HomForUser? get homeModel;
+  List<ChildModel>? get childrenList;
   @override
   @JsonKey(ignore: true)
   _$$ChildrenBuildableImplCopyWith<_$ChildrenBuildableImpl> get copyWith =>

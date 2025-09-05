@@ -6,6 +6,7 @@ import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
+import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/child_widget.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/not_enough_coin_content.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/pocket_widget.dart';
@@ -79,6 +80,7 @@ class _ChooseChildBottomsheetState extends State<ChooseChildBottomsheet> {
                   children: List.generate(
                       4,
                       (index) => ChildWidget(
+                        childModel: ChildModel(),
                             isSelected: selectedIndex == index,
                             onTap: () => setState(() {
                               selectedIndex = index;

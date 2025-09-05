@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
@@ -43,7 +44,10 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
-  Future<HomeModel> getChildren() {
-    return _api.getChildren().then((value) => HomeModel.fromJson(value.data));
+  Future<List<ChildModel>> getChildren() {
+    return _api.getProfileData().then((value) =>
+        (value.data['data']['children'] as List)
+            .map((e) => ChildModel.fromJson(e))
+            .toList());
   }
 }

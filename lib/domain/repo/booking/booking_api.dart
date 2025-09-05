@@ -3,14 +3,13 @@ import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
 @injectable
-class HomeApi {
+class BookingApi {
   final Dio _dio;
 
-  HomeApi(this._dio);
+  BookingApi(this._dio);
 
-  Future<Response> getHome() {
-    return _dio.get('discovery/feed/',
-        queryParameters: {'lat': 68.12, 'lng': 68.12322});
+  Future<Response> getTariffs() {
+    return _dio.get('tariffs');
   }
 
   Future<Response> getSchedule() {

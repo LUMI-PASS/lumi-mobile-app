@@ -19,9 +19,9 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
       // invokeOnData: (data) => ChildrenListenable(
       //   effect: data ? ChildrenEffect.verify : ChildrenEffect.reg,
       // ),
-      // buildOnData: (data) {
-      //   return buildable.copyWith(homeModel: data);
-      // },
+      buildOnData: (data) {
+        return buildable.copyWith(childrenList: data);
+      },
       onErrorData: (error) {
         final status = (error as DioException);
         if (status.response?.statusCode == 500 ||
