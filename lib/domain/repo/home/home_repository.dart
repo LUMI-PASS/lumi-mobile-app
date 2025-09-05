@@ -7,6 +7,10 @@ abstract class HomeRepository {
 
   Future<List<ChildModel>> getChildren();
 
+  Future<void> addChild(ChildModel childModel);
+
+  Future<void> updateChild(ChildModel childModel, String parentId);
+
   Future<HomForUser> getProfileData();
 
   Future<List<ScheduleItem>> getScheduleList();

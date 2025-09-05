@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -34,6 +35,30 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
         display.error(error);
       },
       buildOnDone: () => buildable.copyWith(isLoading: false),
+    );
+  }
+
+  Future<void> submit(ChildModel childModel, bool isUpdate) {
+    return callable(
+      future: isUpdate
+          ? _repo.updateChild(childModel, childModel.id!)
+          : _repo.addChild(childModel),
+      buildOnStart: () => buildable.copyWith(buttonLoading: true),
+      // invokeOnData: (data) => ChildrenListenable(
+      //   effect: data ? ChildrenEffect.verify : ChildrenEffect.reg,
+      // ),
+      onErrorData: (error) {
+        final status = (error as DioException);
+        if (status.response?.statusCode == 500 ||
+            status.response?.statusCode == 502) {
+          display.error(Strings.serverErrorTryLater);
+        } else if (status.type == DioExceptionType.connectionError ||
+            status.type == DioExceptionType.connectionTimeout) {
+          display.error(Strings.connectionError);
+        }
+        display.error(error);
+      },
+      buildOnDone: () => buildable.copyWith(buttonLoading: false),
     );
   }
 

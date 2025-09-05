@@ -22,6 +22,8 @@ import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 import 'package:lumi_pass/presentation/start/onboard/onboard_page.dart';
 import 'package:flutter/cupertino.dart';
 
+import '../../data/api_model/child_model/child_model.dart';
+import '../../presentation/app/profile/children/add_child_page.dart';
 import 'empty_route.dart';
 
 part 'app_router.gr.dart';
@@ -63,5 +65,6 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: BookingCompleteRoute.page),
     AutoRoute(page: ProfileDetailRoute.page),
     AutoRoute(page: ChildrenRoute.page),
+    AutoRoute(page: AddChildRoute.page),
   ];
 }

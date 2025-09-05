@@ -1,9 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/presentation/app/profile/children/children_page.dart';
 
@@ -52,15 +54,20 @@ class _ChildWidgetState extends State<ChildWidget> {
                         ? context.colors.onPrimary
                         : context.colors.black),
                 Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD9D9D9).withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(8.r),
+                InkWell(
+                  onTap: () => context.router
+                      .push(AddChildRoute(childModel: widget.childModel)),
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD9D9D9).withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: "Edit".s(12).w(700).c(widget.isSelected
+                        ? context.colors.onPrimary
+                        : context.colors.black),
                   ),
-                  child: "Edit".s(12).w(700).c(widget.isSelected
-                      ? context.colors.onPrimary
-                      : context.colors.black),
                 )
               ],
             ),
@@ -71,9 +78,10 @@ class _ChildWidgetState extends State<ChildWidget> {
                 color: const Color(0xFFFF94C7).withOpacity(0.3),
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              child: "${getAge(widget.childModel.dob)} years".s(12).w(700).c(widget.isSelected
-                  ? context.colors.onPrimary
-                  : context.colors.black),
+              child: "${getAge(widget.childModel.dob)} years".s(12).w(700).c(
+                  widget.isSelected
+                      ? context.colors.onPrimary
+                      : context.colors.black),
             )
           ],
         ),

@@ -11,6 +11,7 @@ import '../repo/home/home_api.dart';
 class HomeRepositoryImpl extends HomeRepository {
   final HomeApi _api;
   final Storage _storage;
+  String? parentId;
 
   HomeRepositoryImpl(this._api, this._storage);
 
@@ -45,9 +46,21 @@ class HomeRepositoryImpl extends HomeRepository {
 
   @override
   Future<List<ChildModel>> getChildren() {
-    return _api.getProfileData().then((value) =>
-        (value.data['data']['children'] as List)
-            .map((e) => ChildModel.fromJson(e))
-            .toList());
+    return _api.getProfileData().then((value) {
+      parentId = value.data['data']['profile']['id'];
+      return (value.data['data']['children'] as List)
+          .map((e) => ChildModel.fromJson(e))
+          .toList();
+    });
+  }
+
+  @override
+  Future<void> addChild(ChildModel childModel) {
+    return _api.addChild(childModel, parentId!);
+  }
+
+  @override
+  Future<void> updateChild(ChildModel childModel, String parentId) {
+    return _api.updateChild(childModel, parentId);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
 @injectable
@@ -18,6 +19,26 @@ class HomeApi {
   }
 
   Future<Response> getProfileData() {
+    return _dio.get('users/parents/profile/');
+  }
+
+  Future<Response> addChild(ChildModel childModel, String parentId) {
+    return _dio.post('users/parents/profile/children',
+        queryParameters: {
+          'parent_id': parentId,
+        },
+        data: childModel.toJson()..remove("id"));
+  }
+
+  Future<Response> updateChild(ChildModel childModel, String parentId) {
+    return _dio.post('users/parents/profile/children/${childModel.id}',
+        queryParameters: {
+          'parent_id': parentId,
+        },
+        data: childModel.toJson()..remove("id"));
+  }
+
+  Future<Response> updateChildData() {
     return _dio.get('users/parents/profile/');
   }
 

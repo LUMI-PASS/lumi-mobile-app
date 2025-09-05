@@ -8,8 +8,11 @@ part 'children_state.freezed.dart';
 @freezed
 class ChildrenBuildable with _$ChildrenBuildable {
   const factory ChildrenBuildable(
-      {@Default(false) bool isLoading,
+      {
+        @Default(false) bool isLoading,
+        @Default(false) bool buttonLoading,
       @Default(0) int selectedIndex,
+
       List<ChildModel>? childrenList}) = _ChildrenBuildable;
 }
 

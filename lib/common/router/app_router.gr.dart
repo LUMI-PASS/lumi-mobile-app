@@ -15,6 +15,16 @@ abstract class _$AppRouter extends RootStackRouter {
 
   @override
   final Map<String, PageFactory> pagesMap = {
+    AddChildRoute.name: (routeData) {
+      final args = routeData.argsAs<AddChildRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: AddChildPage(
+          key: args.key,
+          childModel: args.childModel,
+        ),
+      );
+    },
     BookingCompleteRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -127,6 +137,44 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
   };
+}
+
+/// generated route for
+/// [AddChildPage]
+class AddChildRoute extends PageRouteInfo<AddChildRouteArgs> {
+  AddChildRoute({
+    Key? key,
+    required ChildModel? childModel,
+    List<PageRouteInfo>? children,
+  }) : super(
+          AddChildRoute.name,
+          args: AddChildRouteArgs(
+            key: key,
+            childModel: childModel,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'AddChildRoute';
+
+  static const PageInfo<AddChildRouteArgs> page =
+      PageInfo<AddChildRouteArgs>(name);
+}
+
+class AddChildRouteArgs {
+  const AddChildRouteArgs({
+    this.key,
+    required this.childModel,
+  });
+
+  final Key? key;
+
+  final ChildModel? childModel;
+
+  @override
+  String toString() {
+    return 'AddChildRouteArgs{key: $key, childModel: $childModel}';
+  }
 }
 
 /// generated route for

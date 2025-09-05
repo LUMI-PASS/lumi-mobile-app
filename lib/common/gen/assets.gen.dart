@@ -69,6 +69,9 @@ class $AssetsIconsGen {
   SvgGenImage get calendarSelected =>
       const SvgGenImage('assets/icons/calendar_selected.svg');
 
+  /// File path: assets/icons/call.svg
+  SvgGenImage get call => const SvgGenImage('assets/icons/call.svg');
+
   /// File path: assets/icons/cards.svg
   SvgGenImage get cards => const SvgGenImage('assets/icons/cards.svg');
 
@@ -118,6 +121,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/profile.svg
   SvgGenImage get profile => const SvgGenImage('assets/icons/profile.svg');
 
+  /// File path: assets/icons/profilee.svg
+  SvgGenImage get profilee => const SvgGenImage('assets/icons/profilee.svg');
+
   /// File path: assets/icons/profilel_unselected.svg
   SvgGenImage get profilelUnselected =>
       const SvgGenImage('assets/icons/profilel_unselected.svg');
@@ -160,6 +166,7 @@ class $AssetsIconsGen {
         availablitiy,
         calendar,
         calendarSelected,
+        call,
         cards,
         coinLumi,
         dollar,
@@ -175,6 +182,7 @@ class $AssetsIconsGen {
         locationPrimary,
         notification,
         profile,
+        profilee,
         profilelUnselected,
         searchSelected,
         searchUnselected,

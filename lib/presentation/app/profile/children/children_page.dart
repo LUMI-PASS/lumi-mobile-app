@@ -1,8 +1,10 @@
 import 'package:auto_route/annotations.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/loading_view.dart';
@@ -45,6 +47,8 @@ class ChildrenPage
                 )),
                 BottomBox(
                     child: CommonButton.outlined(
+                  onPressed: () =>
+                      context.router.push(AddChildRoute(childModel: null)),
                   text: "Add child",
                   textColor: context.colors.primary,
                 ))

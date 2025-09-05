@@ -208,7 +208,7 @@ class _CommonTextFieldState extends State<CommonTextField> {
               prefixIconConstraints: widget.prefixIcon != null
                   ? BoxConstraints(
                       minWidth: 60.w,
-                      maxWidth: 110.w,
+                      maxWidth: 64.w,
                       minHeight: 50.h,
                       maxHeight: 50.h,
                     )
