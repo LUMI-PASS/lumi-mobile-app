@@ -1,22 +1,29 @@
 import 'package:auto_route/annotations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/pocket_widget.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/about_pocket_bottomsheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_cubit.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_state.dart';
 
 import '../../../../../common/gen/assets.gen.dart';
 
 @RoutePage()
-class WalletPage extends StatefulWidget {
+class WalletPage
+    extends BasePage<WalletCubit, WalletBuildable, WalletListenable> {
   const WalletPage({super.key});
 
   @override
-  State<WalletPage> createState() => _WalletPageState();
-}
+  void init(BuildContext context) {
+    context.read<WalletCubit>().getWallet();
+    super.init(context);
+  }
 
-class _WalletPageState extends State<WalletPage> {
   @override
-  Widget build(BuildContext context) {
+  Widget builder(context, state) {
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.only(
@@ -46,14 +53,28 @@ class _WalletPageState extends State<WalletPage> {
             Expanded(
               child: GridView.builder(
                   padding: EdgeInsets.zero,
-                  itemCount: 4,
+                  itemCount: (state.tariffs ?? []).length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       childAspectRatio: 1.2,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8),
                   itemBuilder: (context, index) {
-                    return const PocketWidget();
+                    return PocketWidget(
+                      tariff: (state.tariffs ?? [])[index],
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return AboutPocketBottomsheet(
+                              tariff: (state.tariffs ?? [])[index],
+                            );
+                          },
+                          backgroundColor: Colors.transparent,
+                          isScrollControlled: true,
+                        );
+                      },
+                    );
                   }),
             ),
           ],

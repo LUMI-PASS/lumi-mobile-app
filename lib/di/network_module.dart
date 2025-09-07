@@ -5,13 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
-
 @module
 abstract class NetworkModule {
   Dio dio(AuthInterceptor authInterceptor) {
     final dio = Dio();
 
     dio.options.baseUrl = Constants.baseUrl;
+    // dio.options.headers.addAll({'x-language-code': "ru"});
 
     dio.interceptors.add(authInterceptor);
 

@@ -1,14 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
+import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 
 class AboutPocketBottomsheet extends StatefulWidget {
-  const AboutPocketBottomsheet({super.key});
+  const AboutPocketBottomsheet({super.key, required this.tariff});
+
+  final Tariff tariff;
 
   @override
   State<AboutPocketBottomsheet> createState() => _AboutPocketBottomsheetState();
@@ -62,15 +66,15 @@ class _AboutPocketBottomsheetState extends State<AboutPocketBottomsheet> {
           16.kh,
           Row(
             children: [
-              "Packet “Standart”".s(20).w(700),
+              "Packet “${widget.tariff.title}”".s(20).w(700),
               Spacer(),
               "50".s(20).w(700),
               Assets.icons.coinLumi.image(width: 24.w, height: 24.h),
             ],
           ),
           12.kh,
-          _buildPriceCatalog(
-              Assets.icons.dollar.svg(), "Price", "500.000 SO’M"),
+          _buildPriceCatalog(Assets.icons.dollar.svg(), "Price",
+              "${widget.tariff.price!.toString().toFormattedPrice()} SO’M"),
           12.kh,
           _buildPriceCatalog(
               Assets.icons.availablitiy.svg(), "Availability", "60 days"),

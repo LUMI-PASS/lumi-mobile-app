@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
+import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 
 import '../../data/storage/storage.dart';
@@ -47,7 +48,7 @@ class HomeRepositoryImpl extends HomeRepository {
   @override
   Future<List<ChildModel>> getChildren() {
     return _api.getProfileData().then((value) {
-      parentId = value.data['data']['profile']['id'];
+      _storage.parentId.set(value.data['data']['profile']['id']);
       return (value.data['data']['children'] as List)
           .map((e) => ChildModel.fromJson(e))
           .toList();
@@ -56,11 +57,20 @@ class HomeRepositoryImpl extends HomeRepository {
 
   @override
   Future<void> addChild(ChildModel childModel) {
-    return _api.addChild(childModel, parentId!);
+    return _api.addChild(childModel, _storage.parentId.call()!);
   }
 
   @override
   Future<void> updateChild(ChildModel childModel, String parentId) {
     return _api.updateChild(childModel, parentId);
+  }
+
+  @override
+  Future<List<Tariff>> getTariffs() {
+    return _api.getTariffs().then((value) {
+      return (value.data['data'] as List)
+          .map((e) => Tariff.fromJson(e))
+          .toList();
+    });
   }
 }

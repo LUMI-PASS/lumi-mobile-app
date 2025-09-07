@@ -11,9 +11,11 @@ import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/child_wi
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_state.dart';
 import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
+import 'package:lumi_pass/presentation/app/widgets/empty_view.dart';
 
 @RoutePage()
-class ChildrenPage extends BasePage<ChildrenCubit, ChildrenBuildable, ChildrenListenable> {
+class ChildrenPage
+    extends BasePage<ChildrenCubit, ChildrenBuildable, ChildrenListenable> {
   const ChildrenPage({super.key});
 
   @override
@@ -23,37 +25,52 @@ class ChildrenPage extends BasePage<ChildrenCubit, ChildrenBuildable, ChildrenLi
   }
 
   @override
+  void onFocusGained(BuildContext context) {
+    context.read<ChildrenCubit>().getChildren();
+    super.onFocusGained(context);
+  }
+
+  @override
   Widget builder(context, state) {
-    return Scaffold(
-      appBar: const BaseAppBar(
-        title: "My children",
-      ),
-      body: state.isLoading
-          ? const LoadingView()
-          : Column(
-              children: [
-                Expanded(
-                    child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemBuilder: (context, index) {
-                    return ChildWidget(
-                        childModel: (state.childrenList ?? [])[index],
-                        isSelected: state.selectedIndex == index,
-                        onTap: () {});
-                  },
-                  itemCount: (state.childrenList ?? []).length,
-                )),
-                BottomBox(
-                  child: CommonButton.outlined(
-                    onPressed: () => context.router.push(
-                      AddChildRoute(childModel: null),
+    return RefreshIndicator(
+      onRefresh: () => context.read<ChildrenCubit>().getChildren(),
+      child: Scaffold(
+        appBar: const BaseAppBar(
+          title: "My children",
+        ),
+        body: state.isLoading
+            ? const LoadingView()
+            : Column(
+                children: [
+                  (state.childrenList ?? []).isEmpty
+                      ? const Expanded(
+                          child: EmptyView(
+                            text: "No children found",
+                          ),
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemBuilder: (context, index) {
+                            return ChildWidget(
+                                childModel: (state.childrenList ?? [])[index],
+                                isSelected: state.selectedIndex == index,
+                                onTap: () {});
+                          },
+                          itemCount: (state.childrenList ?? []).length,
+                        )),
+                  BottomBox(
+                    child: CommonButton.outlined(
+                      onPressed: () => context.router.push(
+                        AddChildRoute(childModel: null, parentId: null),
+                      ),
+                      text: "Add child",
+                      textColor: context.colors.primary,
                     ),
-                    text: "Add child",
-                    textColor: context.colors.primary,
-                  ),
-                )
-              ],
-            ),
+                  )
+                ],
+              ),
+      ),
     );
   }
 }
@@ -66,7 +83,8 @@ int? getAge(String? dob) {
 
     int age = now.year - birthDate.year;
 
-    if (now.month < birthDate.month || (now.month == birthDate.month && now.day < birthDate.day)) {
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
       age--;
     }
 

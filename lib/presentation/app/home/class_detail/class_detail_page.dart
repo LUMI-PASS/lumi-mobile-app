@@ -176,7 +176,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     backgroundColor: Colors.transparent,
                     isScrollControlled: true,
                     builder: (context) {
-                      return const ChooseChildBottomsheet();
+                      return  ChooseChildBottomsheet();
                     });
               },
               icon: Assets.icons.coinLumi.image(width: 24.w, height: 24.h),

@@ -56,7 +56,7 @@ class _ChildWidgetState extends State<ChildWidget> {
                 Spacer(),
                 InkWell(
                   onTap: () => context.router
-                      .push(AddChildRoute(childModel: widget.childModel)),
+                      .push(AddChildRoute(childModel: widget.childModel, parentId: null)),
                   child: Container(
                     padding:
                         EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
