@@ -23,6 +23,8 @@ class Storage {
 
   BaseStorage<String> get userId => BaseStorage(_box, 'user_id');
 
+  BaseStorage<String> get parentId => BaseStorage(_box, 'parent_id');
+
   BaseStorage<Tokens> get tokens => BaseStorage(_box, 'tokens');
 
   BaseStorage<int> get code => BaseStorage(_box, 'code');

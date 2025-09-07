@@ -12,6 +12,8 @@ class ChildrenBuildable with _$ChildrenBuildable {
         @Default(false) bool isLoading,
         @Default(false) bool buttonLoading,
       @Default(0) int selectedIndex,
+      @Default('Female') String selectedGender,
+      @Default(null) DateTime? selectedBirthDate,
 
       List<ChildModel>? childrenList}) = _ChildrenBuildable;
 }

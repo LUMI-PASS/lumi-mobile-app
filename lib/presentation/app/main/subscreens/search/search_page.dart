@@ -1,15 +1,27 @@
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+
+import 'package:auto_route/annotations.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
+import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/pocket_widget.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
+import 'package:lumi_pass/presentation/app/widgets/base_box.dart';
 
 @RoutePage()
 class SearchPage extends StatefulWidget {

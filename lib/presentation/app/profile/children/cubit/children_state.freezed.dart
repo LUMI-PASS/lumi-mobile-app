@@ -19,6 +19,8 @@ mixin _$ChildrenBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
   bool get buttonLoading => throw _privateConstructorUsedError;
   int get selectedIndex => throw _privateConstructorUsedError;
+  String get selectedGender => throw _privateConstructorUsedError;
+  DateTime? get selectedBirthDate => throw _privateConstructorUsedError;
   List<ChildModel>? get childrenList => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -36,6 +38,8 @@ abstract class $ChildrenBuildableCopyWith<$Res> {
       {bool isLoading,
       bool buttonLoading,
       int selectedIndex,
+      String selectedGender,
+      DateTime? selectedBirthDate,
       List<ChildModel>? childrenList});
 }
 
@@ -55,6 +59,8 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
     Object? isLoading = null,
     Object? buttonLoading = null,
     Object? selectedIndex = null,
+    Object? selectedGender = null,
+    Object? selectedBirthDate = freezed,
     Object? childrenList = freezed,
   }) {
     return _then(_value.copyWith(
@@ -70,6 +76,14 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
           ? _value.selectedIndex
           : selectedIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      selectedGender: null == selectedGender
+          ? _value.selectedGender
+          : selectedGender // ignore: cast_nullable_to_non_nullable
+              as String,
+      selectedBirthDate: freezed == selectedBirthDate
+          ? _value.selectedBirthDate
+          : selectedBirthDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       childrenList: freezed == childrenList
           ? _value.childrenList
           : childrenList // ignore: cast_nullable_to_non_nullable
@@ -90,6 +104,8 @@ abstract class _$$ChildrenBuildableImplCopyWith<$Res>
       {bool isLoading,
       bool buttonLoading,
       int selectedIndex,
+      String selectedGender,
+      DateTime? selectedBirthDate,
       List<ChildModel>? childrenList});
 }
 
@@ -107,6 +123,8 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
     Object? isLoading = null,
     Object? buttonLoading = null,
     Object? selectedIndex = null,
+    Object? selectedGender = null,
+    Object? selectedBirthDate = freezed,
     Object? childrenList = freezed,
   }) {
     return _then(_$ChildrenBuildableImpl(
@@ -122,6 +140,14 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
           ? _value.selectedIndex
           : selectedIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      selectedGender: null == selectedGender
+          ? _value.selectedGender
+          : selectedGender // ignore: cast_nullable_to_non_nullable
+              as String,
+      selectedBirthDate: freezed == selectedBirthDate
+          ? _value.selectedBirthDate
+          : selectedBirthDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       childrenList: freezed == childrenList
           ? _value._childrenList
           : childrenList // ignore: cast_nullable_to_non_nullable
@@ -137,6 +163,8 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
       {this.isLoading = false,
       this.buttonLoading = false,
       this.selectedIndex = 0,
+      this.selectedGender = 'Female',
+      this.selectedBirthDate = null,
       final List<ChildModel>? childrenList})
       : _childrenList = childrenList;
 
@@ -149,6 +177,12 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
   @override
   @JsonKey()
   final int selectedIndex;
+  @override
+  @JsonKey()
+  final String selectedGender;
+  @override
+  @JsonKey()
+  final DateTime? selectedBirthDate;
   final List<ChildModel>? _childrenList;
   @override
   List<ChildModel>? get childrenList {
@@ -161,7 +195,7 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
 
   @override
   String toString() {
-    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, childrenList: $childrenList)';
+    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, selectedGender: $selectedGender, selectedBirthDate: $selectedBirthDate, childrenList: $childrenList)';
   }
 
   @override
@@ -175,13 +209,23 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
                 other.buttonLoading == buttonLoading) &&
             (identical(other.selectedIndex, selectedIndex) ||
                 other.selectedIndex == selectedIndex) &&
+            (identical(other.selectedGender, selectedGender) ||
+                other.selectedGender == selectedGender) &&
+            (identical(other.selectedBirthDate, selectedBirthDate) ||
+                other.selectedBirthDate == selectedBirthDate) &&
             const DeepCollectionEquality()
                 .equals(other._childrenList, _childrenList));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isLoading, buttonLoading,
-      selectedIndex, const DeepCollectionEquality().hash(_childrenList));
+  int get hashCode => Object.hash(
+      runtimeType,
+      isLoading,
+      buttonLoading,
+      selectedIndex,
+      selectedGender,
+      selectedBirthDate,
+      const DeepCollectionEquality().hash(_childrenList));
 
   @JsonKey(ignore: true)
   @override
@@ -196,6 +240,8 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
       {final bool isLoading,
       final bool buttonLoading,
       final int selectedIndex,
+      final String selectedGender,
+      final DateTime? selectedBirthDate,
       final List<ChildModel>? childrenList}) = _$ChildrenBuildableImpl;
 
   @override
@@ -204,6 +250,10 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
   bool get buttonLoading;
   @override
   int get selectedIndex;
+  @override
+  String get selectedGender;
+  @override
+  DateTime? get selectedBirthDate;
   @override
   List<ChildModel>? get childrenList;
   @override

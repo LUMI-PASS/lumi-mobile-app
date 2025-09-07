@@ -22,6 +22,7 @@ abstract class _$AppRouter extends RootStackRouter {
         child: AddChildPage(
           key: args.key,
           childModel: args.childModel,
+          parentId: args.parentId,
         ),
       );
     },
@@ -176,12 +177,14 @@ class AddChildRoute extends PageRouteInfo<AddChildRouteArgs> {
   AddChildRoute({
     Key? key,
     required ChildModel? childModel,
+    required String? parentId,
     List<PageRouteInfo>? children,
   }) : super(
           AddChildRoute.name,
           args: AddChildRouteArgs(
             key: key,
             childModel: childModel,
+            parentId: parentId,
           ),
           initialChildren: children,
         );
@@ -195,15 +198,18 @@ class AddChildRouteArgs {
   const AddChildRouteArgs({
     this.key,
     required this.childModel,
+    required this.parentId,
   });
 
   final Key? key;
 
   final ChildModel? childModel;
 
+  final String? parentId;
+
   @override
   String toString() {
-    return 'AddChildRouteArgs{key: $key, childModel: $childModel}';
+    return 'AddChildRouteArgs{key: $key, childModel: $childModel, parentId: $parentId}';
   }
 }
 

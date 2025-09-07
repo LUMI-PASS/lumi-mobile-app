@@ -182,20 +182,28 @@ class _CommonTextFieldState extends State<CommonTextField> {
             onChanged: widget.onChanged == null
                 ? null
                 : (phone) {
-                    final number = widget.moneyInput ? phone.replaceAll(' ', '') : maskFormatter.unmaskText(phone);
+                    final number = widget.moneyInput
+                        ? phone.replaceAll(' ', '')
+                        : maskFormatter.unmaskText(phone);
                     widget.onChanged!(number);
                   },
-            textInputAction: widget.isNext == true ? TextInputAction.next : TextInputAction.done,
+            textInputAction: widget.isNext == true
+                ? TextInputAction.next
+                : TextInputAction.done,
             decoration: InputDecoration(
               filled: true,
               labelText: widget.labelText,
               alignLabelWithHint: true,
-              labelStyle: GoogleFonts.onest(fontSize: 12.sp, color: context.colors.display),
-              fillColor: widget.background ?? context.colors.grey.withOpacity(0.2),
+              labelStyle: GoogleFonts.onest(
+                  fontSize: 12.sp, color: context.colors.display),
+              fillColor:
+                  widget.background ?? context.colors.grey.withOpacity(0.2),
               hintText: widget.hint,
-              errorMaxLines: 5,
+              error: null,
+              // errorMaxLines: 5,
               // Fixed content padding for consistent height
-              contentPadding: widget.padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              contentPadding: widget.padding ??
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
               // Use custom prefix icon with fixed dimensions
               prefixIcon: widget.prefixIcon != null ? _buildPrefixIcon() : null,
               prefixIconConstraints: widget.prefixIcon != null
@@ -212,40 +220,43 @@ class _CommonTextFieldState extends State<CommonTextField> {
                 color: widget.hintColor ?? const Color(0xFF717680),
               ),
               border: OutlineInputBorder(
-                borderSide: BorderSide(color: widget.disabledBorderColor ?? context.colors.grey),
+                borderSide: BorderSide(
+                    color: widget.disabledBorderColor ?? context.colors.grey),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: widget.enabledBorderColor ?? context.colors.grey),
+                borderSide: BorderSide(
+                    color: widget.enabledBorderColor ?? context.colors.grey),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               disabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: widget.disabledBorderColor ?? context.colors.grey),
+                borderSide: BorderSide(
+                    color: widget.disabledBorderColor ?? context.colors.grey),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: widget.enabledBorderColor ?? StaticColors.primary),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: context.colors.primary2),
+                borderSide: BorderSide(
+                    color: widget.enabledBorderColor ?? StaticColors.primary),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: context.colors.primary2),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              errorStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400, color: context.colors.primary2),
+              // errorStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400, color: context.colors.primary2),
               // Use custom suffix icon with fixed dimensions
-              suffixIcon: (widget.obscureText || widget.suffix != null) ? _buildSuffixIcon() : null,
-              suffixIconConstraints: (widget.obscureText || widget.suffix != null)
-                  ? BoxConstraints(
-                      minWidth: 48.w,
-                      maxWidth: 48.w,
-                      minHeight: 50.h,
-                      maxHeight: 50.h,
-                    )
+              suffixIcon: (widget.obscureText || widget.suffix != null)
+                  ? _buildSuffixIcon()
                   : null,
+              suffixIconConstraints:
+                  (widget.obscureText || widget.suffix != null)
+                      ? BoxConstraints(
+                          minWidth: 48.w,
+                          maxWidth: 48.w,
+                          minHeight: 50.h,
+                          maxHeight: 50.h,
+                        )
+                      : null,
             ),
             style: TextStyle(
               fontSize: 15.sp,
@@ -254,7 +265,10 @@ class _CommonTextFieldState extends State<CommonTextField> {
             ),
           ),
         ),
-        if (widget.errorText != null) ...[2.kh, widget.errorText!.s(12).c(context.colors.warningDark)]
+        if (widget.errorText != null) ...[
+          2.kh,
+          widget.errorText!.s(12).c(context.colors.warningDark)
+        ]
       ],
     );
   }
@@ -288,7 +302,8 @@ class PriceInputFormatter extends TextInputFormatter {
 
 class CapitalizeFirstLetterFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final text = newValue.text;
     if (text.isEmpty) return newValue;
     final capitalized = text[0].toUpperCase() + text.substring(1);

@@ -265,6 +265,9 @@ class $AssetsImagesGen {
   AssetGenImage get defaultImage =>
       const AssetGenImage('assets/images/default_image.png');
 
+  /// File path: assets/images/empty.png
+  AssetGenImage get empty => const AssetGenImage('assets/images/empty.png');
+
   /// File path: assets/images/not_found.png
   AssetGenImage get notFound =>
       const AssetGenImage('assets/images/not_found.png');
@@ -278,8 +281,15 @@ class $AssetsImagesGen {
       const AssetGenImage('assets/images/onboard2.png');
 
   /// List of all assets
-  List<AssetGenImage> get values =>
-      [congrats, defacultAvatar, defaultImage, notFound, onboard1, onboard2];
+  List<AssetGenImage> get values => [
+        congrats,
+        defacultAvatar,
+        defaultImage,
+        empty,
+        notFound,
+        onboard1,
+        onboard2
+      ];
 }
 
 class $AssetsLocalizationGen {

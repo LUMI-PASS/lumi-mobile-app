@@ -58,11 +58,17 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
         }
         display.error(error);
       },
+      invokeOnData: (data) =>
+          const ChildrenListenable(effect: ChildrenEffect.verify),
       buildOnDone: () => buildable.copyWith(buttonLoading: false),
     );
   }
 
-// void changePhoneState(bool isMatched) {
-//   build((buildable) => buildable.copyWith(isSelected: isMatched));
-// }
+  void changeGender(String isMatched) {
+    build((buildable) => buildable.copyWith(selectedGender: isMatched));
+  }
+
+  void setBirthDate(DateTime? isMatched) {
+    build((buildable) => buildable.copyWith(selectedBirthDate: isMatched));
+  }
 }
