@@ -1,13 +1,13 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class PhoneEmailFormField extends StatefulWidget {
   PhoneEmailFormField(
@@ -120,7 +120,7 @@ class _PhoneEmailFormFieldState extends State<PhoneEmailFormField> {
     // Phone number formatting logic
     if (_isFirstInput && value.isNotEmpty) {
       if (!value.startsWith("+")) {
-        value = "+" + value;
+        value = "+$value";
         widget.phoneController.value = TextEditingValue(
           text: value,
           selection: TextSelection.collapsed(offset: value.length),
@@ -130,7 +130,7 @@ class _PhoneEmailFormFieldState extends State<PhoneEmailFormField> {
     }
 
     if (!_isFirstInput && !value.startsWith("+")) {
-      value = "+" + value;
+      value = "+$value";
       widget.phoneController.value = TextEditingValue(
         text: value,
         selection: TextSelection.collapsed(offset: value.length),
@@ -206,9 +206,7 @@ class _PhoneEmailFormFieldState extends State<PhoneEmailFormField> {
           height: 50.h,
           child: TextFormField(
               autofocus: true,
-              textInputAction: widget.isNext == true
-                  ? TextInputAction.next
-                  : TextInputAction.done,
+              textInputAction: widget.isNext == true ? TextInputAction.next : TextInputAction.done,
               controller: widget.phoneController,
               onFieldSubmitted: (_) {
                 if (widget.isNext == true) {
@@ -224,28 +222,22 @@ class _PhoneEmailFormFieldState extends State<PhoneEmailFormField> {
               // keyboardType: _isEmail ? TextInputType.emailAddress : TextInputType.phone,
               textAlignVertical: TextAlignVertical.center,
               onChanged: _onInputChanged,
-              style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w400,
-                  color: textColor),
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400, color: textColor),
               decoration: InputDecoration(
                   filled: true,
                   alignLabelWithHint: true,
-                  labelStyle: GoogleFonts.onest(
-                      fontSize: 12, color: context.colors.display),
+                  labelStyle: GoogleFonts.onest(fontSize: 12, color: context.colors.display),
                   fillColor: context.colors.grey.withOpacity(0.2),
                   hintText: Strings.emailOrPhoneHint,
                   errorMaxLines: 5,
-                  contentPadding:  EdgeInsets.symmetric(
+                  contentPadding: EdgeInsets.symmetric(
                     horizontal: 16.w,
                     vertical: 16.h,
                   ),
                   suffixIcon: widget.errorPhone != null
                       ? Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 12.w, vertical: 12.h),
-                          child: Assets.icons.errorIcon
-                              .svg(width: 16.w, height: 16.h),
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                          child: Assets.icons.errorIcon.svg(width: 16.w, height: 16.h),
                         )
                       : null,
                   hintStyle: TextStyle(
@@ -277,21 +269,13 @@ class _PhoneEmailFormFieldState extends State<PhoneEmailFormField> {
                     borderSide: BorderSide(color: context.colors.primary2),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  errorStyle: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: context.colors.primary2)),
+                  errorStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400, color: context.colors.primary2)),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@.]')),
                 LengthLimitingTextInputFormatter(_isEmail ? 100 : 20),
               ]),
         ),
-        if (widget.errorPhone != null)
-          ...[
-            2.kh,
-            widget.errorPhone!.s(12).c(context.colors.warningDark)
-          ]
-
+        if (widget.errorPhone != null) ...[2.kh, widget.errorPhone!.s(12).c(context.colors.warningDark)]
       ],
     );
   }

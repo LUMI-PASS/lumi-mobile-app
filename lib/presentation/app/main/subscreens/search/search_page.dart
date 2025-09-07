@@ -1,3 +1,7 @@
+
+import 'package:auto_route/auto_route.dart';
+import 'package:flutter/material.dart';
+
 import 'package:auto_route/annotations.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +11,13 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/widget/common_button.dart';
+import 'package:lumi_pass/common/widget/common_text_filed.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
+import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/pocket_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
@@ -24,67 +35,75 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.only(
-            top: MediaQuery.of(context).viewPadding.top + 16,
-            left: 16,
-            right: 16),
+      body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            "Explore".s(32).w(600),
-            24.kh,
-            Row(
-              children: [
-                Flexible(
-                    child: SizedBox(
-                  height: 64.h,
-                  child: TextField(
-                      decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 24),
-                          hintText: "Search",
-                          fillColor: context.colors.onPrimary,
-                          filled: true,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18.r),
-                              borderSide: BorderSide.none),
-                          prefixIcon: Icon(
-                            CupertinoIcons.search,
-                            color: Colors.grey,
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  "Explore".s(30).w(600).c(context.colors.black),
+                  20.kh,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => context.router.push(SearchUnifiedRoute()),
+                          child: CommonTextField(
+                            prefixIcon: GestureDetector(
+                              onTap: () => context.router.push(SearchUnifiedRoute()),
+                              child: Assets.icons.search.svg(),
+                            ),
+                            hint: "Search",
                           ),
-                          hintStyle: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: context.colors.grey))),
-                )),
-                8.kw,
-                BaseBox(
-                  padding: EdgeInsets.zero,
-                  child: Icon(
-                    CupertinoIcons.sort_down,
-                    color: context.colors.onPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: () => FilterBottomSheet.show(context),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 15),
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Theme.of(context).cardColor,
+                          ),
+                          child: Assets.icons.filter.svg(),
+                        ),
+                      ),
+                    ],
                   ),
-                  backgroundColor: context.colors.primary,
-                  width: 62.w,
-                  height: 62.h,
-                  radius: 14.r,
-                ),
-              ],
+                ],
+              ),
             ),
-            24.kh,
+            12.kh,
             Expanded(
               child: GridView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: 4,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1.2,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8),
-                  itemBuilder: (context, index) {
-                    return CategoryItemWidget(homeCategoryModel: HomCategory());
-                  }),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                physics: const BouncingScrollPhysics(),
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 20,
+                  crossAxisSpacing: 40,
+                ),
+                itemCount: 12,
+                itemBuilder: (context, index) {
+                  return const CategoryItemWidget(homeCategoryModel: null);
+                },
+              ),
+            ),
+            BottomBox(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: CommonButton.elevated(
+                  onPressed: () {},
+                  text: "SEARCH ON MAP",
+                  icon: Assets.icons.map.svg(),
+                ),
+              ),
             ),
           ],
         ),
