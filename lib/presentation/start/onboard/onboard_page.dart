@@ -1,15 +1,16 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_cubit.dart';
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_state.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 @RoutePage()
-class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
-    OnboardingListenable> {
+class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable, OnboardingListenable> {
   OnboardingPage({super.key});
 
   final controller = PageController(initialPage: 0);
@@ -26,7 +27,7 @@ class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
     }
   }
 
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   late List<OnboardingData> _pages;
 
   @override
@@ -76,8 +77,7 @@ class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
 
           PageView.builder(
             controller: _pageController,
-            onPageChanged: (index) =>
-                context.read<OnboardingCubit>().changeIndex(index),
+            onPageChanged: (index) => context.read<OnboardingCubit>().changeIndex(index),
             itemCount: _pages.length,
             itemBuilder: (context, index) {
               return OnboardingPageWidget(data: _pages[state.index]);
@@ -91,12 +91,12 @@ class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
                 context.read<OnboardingCubit>().skipAll();
               },
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
+                child: const Text(
                   'Skip',
                   style: TextStyle(
                     color: Colors.white,
@@ -118,14 +118,12 @@ class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
               children: List.generate(
                 _pages.length,
                 (index) => AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
                   width: state.index == index ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: state.index == index
-                        ? context.colors.onPrimary
-                        : context.colors.primary,
+                    color: state.index == index ? context.colors.onPrimary : context.colors.primary,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -141,17 +139,16 @@ class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable,
               right: 0,
               child: Center(
                 child: ElevatedButton(
-                  onPressed: () =>
-                      context.read<OnboardingCubit>().changeIndex(3),
+                  onPressed: () => context.read<OnboardingCubit>().changeIndex(3),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Get Started',
                     style: TextStyle(
                       fontSize: 16,
@@ -171,21 +168,21 @@ class OnboardingPageWidget extends StatelessWidget {
   final OnboardingData data;
 
   const OnboardingPageWidget({
-    Key? key,
+    super.key,
     required this.data,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text(
               data.title,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -193,7 +190,7 @@ class OnboardingPageWidget extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               data.subtitle,
               style: TextStyle(
@@ -203,7 +200,7 @@ class OnboardingPageWidget extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 200),
+            const SizedBox(height: 200),
           ],
         ),
       ),

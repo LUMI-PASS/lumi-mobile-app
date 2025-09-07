@@ -1,0 +1,376 @@
+str,ru_RU,uz_UZ,en_EN
+skip,Пропустить,O‘tkazish,Skip
+onboard1_title,Полная прозрачность транзакций,To‘liq shaffof tranzaksiyalar,Full transparency of transactions
+onboard1_subtitle,Полная прозрачность транзакций,To‘liq shaffof tranzaksiyalar,Full transparency of transactions
+onboard2_title,Надёжные партнёры,Ishonchli hamkorlar,Reliable partners
+onboard2_subtitle,Сотрудничество с проверенными и доверенными компаниями,Tekshirilgan va ishonchli kompaniyalar bilan hamkorlik,Cooperation with verified and trusted companies
+onboard3_title,Защита данных,Ma’lumotlarni himoyalash,Data protection
+onboard3_subtitle,Надёжность и безопасность вашей информации,Ma’lumotlaringizning ishonchliligi va xavfsizligi,Reliability and security of your information
+next_button,Далее,Keyingi,Next
+back_button,Назад,Orqaga,Back
+login_title,Авторизация,Avtorizatsiya,Authorization
+login_subtitle,Войдите в свой аккаунт для продолжения работы,Hisobingizga kirish uchun login qiling,Log in to your account to continue
+phone_hint,Номер телефона,Telefon raqami,Phone number
+password_hint,Пароль,Parol,Password
+forgot_password,Забыли пароль?,Parolni unutdingizmi?,Forgot password?
+login_button,Войти,Kirish,Log in
+no_account,У вас нет учетной записи?,Hisobingiz yo‘qmi?,Don’t have an account?
+register,Зарегистрироваться,Ro‘yxatdan o‘tish,Sign up
+reset_password_title,Восстановление пароля,Parolni tiklash,Password recovery
+reset_password_subtitle,Введите зарегистрированный адрес электронной почты или номер телефона,Parolni tiklash uchun ro‘yxatdan o‘tgan telefon raqami yoki email kiriting,Enter your registered email or phone number to reset your password
+email_or_phone_hint,Почта или номер телефона,Email yoki telefon raqami,Email or phone number
+continue_button,Далее,Davom etish,Continue
+verification_title,Верификация,Tasdiqlash,Verification
+resend_code,Отправить повторно,Qaytadan yuborish,Resend code
+new_password_title,Новый пароль,Yangi parol,New password
+new_password_subtitle,Пароль должен быть длиной не менее 8 символов,Parol kamida 8 ta belgidan iborat bo‘lishi kerak,Password must be at least 8 characters long
+new_password_hint,Новый пароль,Yangi parol,New password
+confirm_password_hint,Подтвердить пароль,Parolni tasdiqlang,Confirm password
+save_button,Сохранить,Saqlash,Save
+registration_title,Регистрация,Ro‘yxatdan o‘tish,Registration
+registration_subtitle,Создайте аккаунт и получите полный доступ ко всем возможностям,Hisob yarating va barcha imkoniyatlarga to‘liq ega bo‘ling,Create an account and get full access to all features
+full_name_hint,Введите Ф.И.О,F.I.Sh. ni kiriting,Enter full name
+email_hint,Введите почту,Email kiriting,Enter email
+phone_hint,Введите номер телефона,Telefon raqamini kiriting,Enter phone number
+password_hint,Введите пароль,Parol kiriting,Enter password
+confirm_password_hint,Подтвердите пароль,Parolni tasdiqlang,Confirm password
+next_button,Далее,Davom etish,Next
+already_have_account,У вас уже есть аккаунт?,Hisobingiz bormi?,Already have an account?
+login_link,Войти,Kirish,Log in
+filter_title,Фильтр,Filtr,Filter
+price_label,Цена,Narx,Price
+cargo_weight_label,Вес груза,Yuk og'irligi,Cargo Weight
+truck_type_label,Тип грузовика,Yuk mashinasi turi,Truck Type
+loading_type_label,Тип загрузки,Yuklash turi,Loading Type
+loading_full_truck,Отдельной машиной,To'liq yuk mashinasi,Full Truck Load
+loading_partial,Попутно,Qisman yuk,Partial Load
+cargo_type_label,Тип груза,Yuk turi,Cargo Type
+unloading_type_label,Тип разгрузки,Tushirish turi,Unloading Type
+adr_label,ADR,ADR,ADR
+select_adr,Выберите ADR,ADR tanlang,Select ADR
+permissions_label,Разрешения,Ruxsatnomalar,Permits
+tir_permit,ТИР,TIR,TIR
+cmr_permit,СМР,CMR,CMR
+map_view,Карта,Xarita,Map
+types_label,Типы,Turlar,Types
+absent_filter,Отсутв,Yo'q,Absent
+presence_required,Присутствие действие,Mavjudligi talab qilinadi,Presence Required
+trailer_count_label,Ремней,Tirkama soni,Trailer Count
+clear_button,Очистить,Tozalash,Clear
+apply_button,Применить,Qo'llash,Apply
+welcome_message,Добро пожаловать,Xush kelibsiz,Welcome
+search_start_button,Начать поиск,Qidiruvni boshlash,Start Search
+hide_button,Убрать,Yashirish,Hide
+average_price_route,Средняя цена по маршруту,O'rtacha narx yo'nalish bo'yicha,Average Price Per Route
+looking_for_label,Я ищу,Qidiryapman,Searching
+cargo_tab,Грузы,Yuklar,Cargo
+filter_title,Фильтр,Filtr,Filter
+price_label,Цена,Narx,Price
+cargo_weight_label,Вес груза,Yuk og'irligi,Cargo Weight
+truck_type_label,Тип грузовика,Yuk mashinasi turi,Truck Type
+body_type_label,Тип кузова,Kuzov turi,Body Type
+body_type_placeholder,Тип кузова,Kuzov turi,Body Type
+loading_type_label,Тип загрузки,Yuklash turi,Loading Type
+loading_type_placeholder,Тип загрузки,Yuklash turi,Loading Type
+loading_full_truck,Отдельной машиной,To'liq yuk mashinasi,Full Truck Load
+loading_partial,Попутно,Qisman yuk,Partial Load
+cargo_type_label,Тип груза,Yuk turi,Cargo Type
+unloading_type_label,Тип разгрузки,Tushirish turi,Unloading Type
+unloading_type_placeholder,Тип разгрузки,Tushirish turi,Unloading Type
+volume_label,Объем,Hajm,Volume
+volume_placeholder,Объем,Hajm,Volume
+adr_label,ADR,ADR,ADR
+select_adr,Выберите ADR,ADR tanlang,Select ADR
+permissions_label,Разрешения,Ruxsatnomalar,Permits
+tir_permit,ТИР,TIR,TIR
+cmr_permit,СМР,CMR,CMR
+map_view,Карта,Xarita,Map
+medical_card,Мед. карта,Tibbiy guvohnoma,Medical Card
+types_label,Типы,Turlar,Types
+absent_filter,Отсутв,Yo'q,Absent
+presence_required,Присутствие действие,Mavjudligi talab qilinadi,Presence Required
+trailer_count_label,Ремней,Tirkama soni,Trailer Count
+dimensions_label,Габариты,O'lchamlar,Dimensions
+length_label,Длина,Uzunlik,Length
+width_label,Ширина,Kenglik,Width
+height_label,Высота,Balandlik,Height
+clear_button,Очистить,Tozalash,Clear
+apply_button,Применить,Qo'llash,Apply
+welcome_message,Добро пожаловать,Xush kelibsiz,Welcome
+search_start_button,Начать поиск,Qidiruvni boshlash,Start Search
+hide_button,Убрать,Yashirish,Hide
+average_price_route,Средняя цена по маршруту,O'rtacha narx yo'nalish bo'yicha,Average Price Per Route
+cargo_tab,Грузы,Yuklar,Cargo
+trucks_tab,Транспорт,Transportlar,Transports
+cargo_info_title,Информация о грузе,Yuk haqida ma'lumot,Cargo Information
+truck_info_title,Информация о грузовике,Yuk mashinasi haqida ma'lumot,Truck Information
+vat_exclusive,VAT EXLUSIVE,QQS hisobga olinmagan,VAT EXCLUSIVE
+free_road_label,Бесплатная дорога,Bepul yo'l,Free Road
+paid_road_label,Платная дорога,Pullik yo'l,Paid Road
+cargo_direction_label,Направление груза,Yuk yo'nalishi,Cargo Direction
+truck_direction_label,Направление,Yo'nalish,Direction
+cargo_info_section,Информация о грузе,Yuk haqida ma'lumot,Cargo Information
+cargo_type_info,Тип груза,Yuk turi,Cargo Type
+cargo_weight_info,Вес груза,Yuk og'irligi,Cargo Weight
+price_per_km,Цена (за км),Narx (km uchun),Price (per km)
+transport_requirements,Требования к транспортировке,Transport talablari,Transportation Requirements
+body_type_info,Кузов,Kuzov,Body Type
+loading_info,Загрузка,Yuklash,Loading
+rate_payment,Ставка и оплата,Stavka va to'lov,Rate and Payment
+rate_info,Ставка,Stavka,Rate
+other_info,Другие информации,Boshqa ma'lumotlar,Other Information
+truck_type_info,Тип кузова,Yuk mashinasi turi,Truck Type
+machine_type,Тип машины,Mashina turi,Machine Type
+loading_type_info,Тип загрузки,Yuklash turi,Loading Type
+load_capacity,Грузоподъемность,Yuk ko'tarish qobiliyati,Load Capacity
+loading_method,Загрузки,Yuklash usuli,Loading Method
+volume_info,Объем,Hajm,Volume
+permits_section,Разрешения,Ruxsatnomalar,Permits
+medical_certificate,Медкнижка,Tibbiy guvohnoma,Medical Certificate
+cmr_document,CMR,CMR,CMR
+adr_class,ADR Класс,ADR Klass,ADR Class
+rate_payment_section,Ставка и оплата,Stavka va to'lov,Rate and Payment
+total_amount,Общее,Jami,Total
+distance_info,Дистанция,Masofa,Distance
+price_per_km_info,$/км,Narx/km,Price/km
+payment_info,Оплата,To'lov,Payment
+cash_payment,Наличными,Naqd pul,Cash
+other_info_section,Другие информации,Boshqa ma'lumotlar,Other Information
+ready_for_loading,Готов к загрузке,Yuklashga tayyor,Ready for Loading
+days_count,дней,kun,days
+wood_materials,Древесные материалы,Yog'och materiallari,Wood Materials
+tent_covered,Тентованный,Tentovanniy,Tent Covered
+full_truck_loading,Отдельной машиной (FTL),Alohida mashina (FTL),Full Truck Load (FTL)
+request_quote,Запрос,So'rov,Request Quote
+semi_trailer,Полуприцеп,Yarim tirkama,Semi-trailer
+rear_loading,Задняя,Orqadan yuklash,Rear Loading
+tons_unit,т,t,t
+add_title,Добавить,Qo'shish,Add
+add_truck_title,Добавить машину,Mashina qo'shish,Add Truck
+cargo_tab,Грузы,Yuklar,Cargo
+trucks_tab,Грузовики,Yuk mashinalari,Trucks
+select_transport,Выберите транспорт,Transport tanlang,Select Transport
+select_option,Выбрать,Tanlang,Select
+add_truck_button,Добавить грузовик,Yuk mashinasi qo'shish,Add Truck
+route_label,Маршрут,Marshrut,Route
+loading_point,Загрузка,Yuklash,Loading
+loading_radius,Радиус загрузки,Yuklash radiusi,Loading Radius
+km_unit,Км,Km,Km
+unloading_point,Разгрузка,Tushirish,Unloading
+unloading_radius,Радиус разгрузки,Tushirish radiusi,Unloading Radius
+route_section,Маршрут,Marshrut,Route
+ready_for_loading_today,Готов к загрузке с сегодняшнего,Bugun yuklashga tayyor,Ready for loading from today
+from_today,С того дня,Bugundan,From today
+date_label,Дата,Sana,Date
+waiting_days,Дни ожидания,Kutish kunlari,Waiting Days
+back_button,Назад,Orqaga,Back
+next_button,Следующий,Keyingi,Next
+truck_license_number,Гос. номер автомобиля,Avtomobil davlat raqami,Vehicle License Number
+license_placeholder,Гос. номер автомобиля,Avtomobil raqamini kiriting,Enter vehicle license number
+body_type_section,Кузов,Kuzov,Body Type
+select_body_type,Выберите тип кузова,Kuzov turini tanlang,Select Body Type
+semi_trailer_option,Полуприцеп,Fura,Semi-truck
+truck_option,Грузовик,Yuk mashinasi,Truck
+stage_option,Сцепка,Sahna,Stage
+loading_unloading_type,Тип загрузки / Выгрузки,Yuklash / Tushirish turi,Loading / Unloading Type
+select_loading_type,Выберите тип загрузки,Yuklash turini tanlang,Select Loading Type
+rear_option,Догруз,Orqadan,Rear
+hydraulic_option,Гидролифт,Gidrolift,Hydraulic
+side_option,Юбочки,Yondan,Side
+load_capacity_label,Грузоподъемность,Yuk ko'tarish qobiliyati,Load Capacity
+trailer_volume,Объем прицепа,Tirkama hajmi,Trailer Volume
+dimensions_section,Габариты,Gabaritlar,Dimensions
+length_dimension,Длина,Uzunlik,Length
+width_dimension,Ширина,Kenglik,Width
+height_dimension,Высота,Balandlik,Height
+meter_unit,м,m,m
+additional_data,Дополнительные данные,Qo'shimcha ma'lumotlar,Additional Data
+select_permits,Выберите разрешения,Ruxsatnoma tanlang,Select Permits
+select_adr_option,Выберите ADR,ADR tanlang,Select ADR
+save_button,Сохранить,Saqlash,Save
+payment_label,Оплата,To'lov,Payment
+min_rate,Мин. ставка,Minimal stavka,Min. Rate
+possible_bargain,Возможен торг,Kelishish mumkin,Negotiable
+usd_currency,USD,USD,USD
+uzs_currency,UZS,UZS,UZS
+rub_currency,RUB,RUB,RUB
+payment_type_label,Тип оплаты,To'lov turi,Payment Type
+bank_transfer,Банковский перевод,Bank o'tkazmasi,Bank Transfer
+nds_option,НДС,QQS,VAT
+card_payment,Оплата картой,Karta to'lovi,Card Payment
+cash_payment_option,Наличные,Naqd pul,Cash
+notes_label,Примечание,Izohlar,Notes
+notes_placeholder,Введите примечание,Izoh kiriting,Enter notes
+publish_button,Опубликовать,Nashr qilish,Publish
+contact_center_title,Kontakt markazi,Контактный центр,Contact Center
+phone_number_label,Telefon raqami,Телефон номер,Phone number
+instagram_label,Instagram,Instagram,Instagram
+facebook_label,Facebook,Facebook,Facebook
+profile_title,Профиль,Profil,Profile
+my_garage,Мой гараж,Mening garajim,My garage
+my_trips,Мои путешествия,Sayohatlarim,My trips
+settings,Настройки,Sozlamalar,Settings
+my_cargo,Мои грузы,Yuklarim,My cargo
+language,Язык,Til,Language
+contact_center,Контактный центр,Kontakt markazi,Contact center
+from_hint,Откуда,Qayerdan,From
+to_hint,Куда,Qayerga,To
+when_hint,Когда,Qachon,When
+my_updates,Мои объявления,Mening e'lonlarim,My ads
+email_or_phone_label,Почта или номер телефона,Elektron pochta yoki telefon raqami,Email or phone number
+invalid_phone_format,Телефон указан в неправильном формате.,Telefon noto‘g‘ri formatda kiritilgan.,Phone number is in an invalid format.
+invalid_input_format,Ввод имеет неправильный формат.,Kiritilgan ma’lumot noto‘g‘ri formatda.,Input has an invalid format.
+reset_password_instructions,,Parolni tiklash uchun ro‘yxatdan o‘tgan elektron pochta manzilingizni yoki telefon raqamingizni kiritin.,Enter the registered email address or phone number to reset your password.
+generic_invalid_format,Неправильный формат ввода,Noto‘g‘ri formatdagi kiritish,Invalid input format
+password_min_length,Пароль должен содержать не менее 6 символов,Parol kamida 6 belgidan iborat bo‘lishi kerak,Password must be at least 6 characters long.
+invalid_credentials,Неверный логин или пароль,Login yoki parol noto‘g‘ri.,Invalid login or password.
+full_name_abbr,Ф.И.О,F.I.Sh.,Full Name (abbr.)
+sms_code_sent_phone,Мы отправили 6-значный код на ваш номер телефона,Sizning telefon raqamingizga 6 xonali kod yubordik.,We’ve sent a 6-digit code to your phone number.
+postal_address_label,почтовый адрес,pochta manzili,postal address
+ftl_or_ltl_label,FTL или догруз (LTL),FTL yoki LTL,FTL or LTL
+dimensions_dwh,Габариты (Д х Ш х В),Gabaritlar (U x E x B),Dimensions (L × W × H)
+payment_cash,Наличные,Naqd pul,Cash
+payment_credit_card,Кредитная карта,Kredit karta,Credit Card
+payment_with_vat,С НДС,QQS bilan,VAT Included
+payment_bank_transfer,Банковский перевод,Bank o'tkazmasi,Bank Transfer
+payment_unknown,Неизвестно,Nomalum,Unknown
+chat_section_unavailable,Чат-раздел пока не запущен,Chat bo‘limi hozircha ishga tushirilmagan.,Chat section is not yet launched.
+chat_section_future_updates,Этот раздел будет доступен в следующих обновлениях.,Ushbu bo‘lim keyingi yangilanishlarda mavjud bo‘ladi.,This section will be available in future updates.
+logout_title,Выйти,Chiqish,Log out
+logout_confirmation,Вы действительно хотите выйти?,Haqiqatan ham chiqmoqchimisiz?,Are you sure you want to log out?
+filter_all,Все,Barchasi,All
+filter_in_transit,В пути,Yo‘lda,In transit
+filter_customs,Таможня,Bojxona,Customs
+filter_delivered,Доставлено,Yetkazib berildi,Delivered
+new_status,Новый,Yangi,New
+when_start,Когда начинаем,Qachon boshlaymiz,When we start
+field_error,Поле не должно быть пустым,Maydonni to'ldiring,Field cannot be empty
+trck_cargo,Маршрут и груз,Transport va yuk,Cargo and truck
+count_transports,Количество машин,Mashinalar soni,Count of transports
+vehicle_count,Кол-во машин,Mashinalar soni,Number of vehicles
+straps,Ремней,Kamarlari,Straps
+coupling_only,Сцепка,Ulanma,Coupling
+pneumatic_drive,Пневмопривод,Pnevmodrayver,Pneumatic drive
+stakes,Коники,Qoniqlar,Stakes (support posts)
+prepayment,Передоплата,Oldindan to‘lov,Prepayment
+payment_on_unloading,Оплата на выгрузке,Tushirishda to‘lov,Payment on unloading
+payment_after_x_days,Оплата через х банковских дней,x bank kunidan so‘ng to‘lov,Payment after x banking days
+banking_days,Банковских дней,Bank ish kunlari,Banking days
+ready_to_load_plus_2,Готова к загрузке с сегодняшнего +2 дня,Yuklashga +2 kundan tayyor,Ready to load from today +2 days
+sms_code_sent_email,Мы отправили 6-значный код на вашу электронную почту,Biz sizning elektron pochtangizga 6 xonali kod yubordik,We have sent a 6-digit code to your email
+description,Комментарии владельца,Egasining fikri,Owner comment
+car_description,Государственный номер автомобиля,Avtomobil davlat raqami,Vehicle license plate
+select_volume_tr,Введите объем груза,Yuk hajmini tanlang,Select cargo volume
+trailer,Полуприцеп,Yarim tirkama,Semi-trailer
+truck,Грузовик,Yuk mashinasi,Truck
+coupling,Сцепка,Avtopoyezd,Auto-train
+partial_load,Догруз,Qisman yuk,Partial load
+hydraulic_lift,Гидролифт,Gidrolift,Hydraulic lift
+stanchions,Коники,Qoniqlar,Stanchions
+no_title,Нет,Yo'q,No
+user_already_exists,Пользователь с такими учетными данными уже существует,Bunday foydalanuvchi allaqachon mavjud,A user with these credentials already exists
+user_not_found,Пользователь с такими учетными данными не найден,Bunday foydalanuvchi topilmadi,A user with these credentials was not found
+confirmation_code,Ваш код подтверждения:,Sizning tasdiqlash kodingiz:,Your confirmation code:
+invalid_code,Неверный код подтверждения,Noto'g'ri tasdiqlash kodi,Incorrect code confirmation
+not_found,Ничего не найдено,Hech narsa topilmadi,Nothing found
+unavaialble,Hедоступно,Mavjud emas,Unavailable
+check_internet_connection,Проверьте подключение к интернету!,Internetga ulanishni tekshiring!,Check your internet connection!
+server_not_responding_or_timeout,Сервер не отвечает или отвечает слишком долго. Попробуйте позже.,Server javob bermayapti yoki juda sekin javob bermoqda. Keyinroq urinib ko‘ring.,Server is not responding or taking too long. Try again later.
+server_error_try_later,На сервере произошла ошибка. Попробуйте позже.,Serverda xatolik yuz berdi. Keyinroq urinib ko‘ring.,A server error occurred. Try again later.
+unknown_error,Произошла ошибка,"Nimadir xato ketdi, keyinroq urinib ko'ring",Something went wrong
+negotiatable,Торг уместен,Savdolashiladi,Bargaining is appropriate
+unnegotiable,Торг не уместен,Savdolashilmaydi,Bargaining is not appropriate
+select_body_type_error,"Пожалуйста, выберите тип кузова",Kuzov turini tanlang,Please select body type
+select_loading_type_error,"Пожалуйста, выберите тип загрузки",Yuklash turini tanlang,Please select loading type
+select_unloading_type_error,"Пожалуйста, выберите тип выгрузки",Tushirish turini tanlang,Please select unloading type
+edit_title,Изменить,Tahrirlash,Update
+invalid_number,Неверный формат,Noto'g'ri format,Invalid format
+delete_load_title,Вы действительно хотите удалить эту загрузку?,Siz rostdan ham bu yukni o‘chirib tashlamoqchimisiz?,Are you sure you want to delete this load?
+delete_truck_title,Вы действительно хотите удалить этот грузовик?,Siz rostdan ham bu yuk mashinasini o‘chirib tashlamoqchimisiz?,Are you sure you want to delete this truck?
+cancel_button,Отменить,Bekor qilish,Cancel
+delete_button,Удалить,O‘chirish,Delete
+cannot_be_undone,Это действие не может быть отменено.,Bu harakatni tiklab bo'lmaydi,This action cannot be undone
+select_language,Выберите язык,Tilni tanlang,Select language
+without_nds,Без НДС,QQS siz,VAT Not Included
+notification_title,Уведомления,Xabarnomalar,Notifcations
+duplicate_title,Дубликат,Duplikat,Duplicate
+telegram_channel,Telegram канал,Telegram kanali,Telegram channel
+tiktok,TikTok,TikTok,TikTok
+youtube,YouTube,YouTube,YouTube
+delete_transport_title,"Вы уверены, что хотите удалить этот транспорт?",Siz rostan ham bu transportni o'chirishni xohlaysizmi?,You really want to delete this transport?
+select_currency,Выберите валюту,Valyutani tanlang,Select currency
+payment_term,Уcловия оплаты,To'lov shartlari,Payent terms
+sort_title,Выберите тип сортировок,Saralash turini tanlang,Choose sort type
+sort_distance,По удаленности,Masofa bo‘yicha,By distance
+sort_price,Стоимость,Narxi,Price
+sort_price_per_km,Стоимость за KM,KM uchun narxi,Price per KM
+sort_rating,По рейтингу,Reyting bo‘yicha,By rating
+sort_upload_date,Дата загрузки,Yuklash sanasi bo‘yicha,By upload date
+plate_number,Гос. Номер,Davlat raqami,Plate number
+kg_unit,Кг,Kg,Kg
+not_clear_yet,Пока не ясно,Hali aniq emas,Not clear yet
+downloads,Загрузки,Yuklashlar,Downloads
+day_title,день,kun,days
+valid_number_error,"Пожалуйста, введите правильное число","Iltimos, to‘g‘ri raqam kiriting",Please enter a valid number
+min_amount_error,Минимальная сумма {currency} – {min},Minimal miqdor {currency} – {min},Minimum amount for {currency} is {min}
+max_amount_error,Максимальная сумма {currency} – {max},Maksimal miqdor {currency} – {max},Maximum amount for {currency} is {max}
+currency_range_hint,Диапазон: {min} - {max} {code},Oralig‘i: {min} - {max} {code},Range: {min} - {max} {code}
+currency_min_hint,Минимум: {min} {code},Minimum: {min} {code},Minimum: {min} {code}
+currency_max_hint,Максимум: {max} {code},Maximum: {max} {code},Maximum: {max} {code}
+request_price,Запросить цену,Narxni so‘rash,Request price
+applications,Заявки,Arizalar,Applications
+request,Запросить,So‘rash,Request
+truck_question,На каком грузовике вы собираетесь везти груз?,Qaysi yuk mashinasida yukni tashimoqchisiz?,Which truck are you going to use to transport the cargo?
+cargo_question,Какой груз вы планируете перевозить на этом грузовике?,Ushbu yuk mashinasida qanday yuk tashimoqchisiz?,What cargo are you planning to transport on this truck?
+proposal_sent,Ваше предложение отправлено!,Taklifingiz yuborildi!,Your proposal has been sent!
+leave_request,"Оставьте запрос, и мы отправим вам точную стоимость.","So‘rov qoldiring, biz sizga aniq narxni yuboramiz.",Leave a request and we will send you the exact price.
+price_on_request,Цена по запросу,So‘rov bo‘yicha narx,Price on request
+fixed_price,Фиксированная цена,Belgilangan narx,Fixed price
+negotiable_price,Оговариваемая цена,Kelishiladigan narx,Negotiable price
+leave_application,Оставить заявку,Ariza qoldirish,Leave an application
+select_delivery_date,Выберите дату подачи машины,Mashina yetkaziladigan sanani tanlang,Select delivery date
+suggest_price,Предложите цену,Narx taklif qiling,Suggest a price
+bid,Ставка,Taklif,Bid
+send,Отправть,Yuborish,Send
+make_counter_offer,Сделать предложение,Narx taklif qilish,Make an offer
+accept_price,Принять цену,Narxni qabul qilish,Accept the price
+negotiable_price,Оговариваемая цена,Kelishiladigan narx,Negotiable price
+select,Выбрать,Tanlash,Select
+reject,Отклонить,Rad etish,Reject
+approve,Одобрить,Maqbullashtirish,Approve
+provide_price,Предоставить цену,Narxni taqdim etish,Provide a price
+requester,Запрашивающий,So‘rov yuboruvchi,Requester
+request_received_date,Дата получения запроса,So‘rov olingan sana,Request received date
+truck_ready_date,Дата готовности машины,Mashina tayyor bo‘lish sanasi,Truck readiness date
+incoming_requests,Поступившие запросы,Kelgan so‘rovlar,Incoming requests
+bid_title,Заявка,Taklif,Bid
+through_banking,Через {banking_days} банковских дня,{banking_days} bank ish kunida,Through {banking_days} banking days
+connect_with,Связаться,Bog'lanish,Contact 
+server_502_error,Сервер временно недоступен (502). Попробуйте позже.,"Server vaqtincha mavjud emas (502). Iltimos, keyinroq urinib ko‘ring.",Server is temporarily unavailable (502). Please try again later.
+connection_timeout,Время ожидания соединения истекло. Проверьте интернет.,"Ulanish vaqti tugadi. Iltimos, internetingizni tekshiring.",Connection timed out. Please check your internet connection.
+connection_error,Нет подключения к интернету. Попробуйте снова.,"Internetga ulanish yo‘q. Iltimos, qayta urinib ko‘ring.",No internet connection. Please try again.
+unexpected_error,Произошла непредвиденная ошибка. Попробуйте снова.,"Kutilmagan xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.",Unexpected error occurred. Please try again.
+generic_error,Что-то пошло не так. Попробуйте снова.,"Nimadir noto‘g‘ri ketdi. Iltimos, qayta urinib ko‘ring.",Something went wrong. Please try again.
+sort,Сортировать,Saralash,Sort
+close,Закрыть,Yopish,Close
+chats,Чаты,Chatlar,Chats
+message,Сообщение,Xabar,Message
+search,Поиск,Izlash,Search
+status,Статус,Status,Status
+booking_requested,Бронирование было запрошено,Buyurtma so‘rovi yuborildi,Booking was requested
+price_requested,Цена была запрошена,Narx so‘rovi yuborildi,Price was requested
+booking_accepted,Бронирование было принято,Buyurtma qabul qilindi,Booking was accepted
+booking_rejected,Бронирование было отклонено,Buyurtma rad etildi,Booking was rejected
+accepted,Принято,Qabul qilindi,Accepted
+rejected,Отклонено,Rad etildi,Rejected
+owner_post,Владелец поста,Post muallifi,Post owner
+view_chat,Просмотреть чат,Chatni ko'rish,View chat
+you_offered,Вы предложили,Siz taklif qildingiz,You offered
+to_you_offered,Вам предложили,Sizga taklif qilindi,You were offered
+booked,Забронировано,Band qilingan,Booked
+truck_new_tab,Транспорт,Transport,Transport
+no_loads,"Вы еще не добавили груз. Пожалуйста, добавьте груз, чтобы оставить заявку.","Siz hali yuk qo‘shmagansiz. Iltimos, ariza yuborish uchun yuk qo‘shing.",You have not added any loads yet. Please add a load to leave a request.
+no_transports,"Вы еще не добавили транспорт. Пожалуйста, добавьте транспорт, чтобы оставить заявку.","Siz hali transport qo‘shmagansiz. Iltimos, ariza yuborish uchun transport qo‘shing.",You have not added any transports yet. Please add a transport to leave a request.
+input_car_desc,Введите номер автомобиля,Avtomobil davlat raqamini kiriting,Enter car license plate
+volume_unit,м³,m³,m³
+session_expired,"Учетная запись пользователя удалена, пожалуйста, войдите снова!",Foydalanuvchi akkounti o'chirilgan qayta login qiling!,"User account has been deleted, please log in again!"

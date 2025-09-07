@@ -1,4 +1,3 @@
-import 'package:auto_route/annotations.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
-import 'package:lumi_pass/data/api_model/class_model/class_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/choose_child_bottomsheet.dart';
 import 'package:lumi_pass/presentation/app/widgets/base_box.dart';
@@ -40,9 +38,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   right: 0,
                   bottom: 0,
                   child: ClipRRect(
-                    borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(16.r),
-                        bottomRight: Radius.circular(16.r)),
+                    borderRadius:
+                        BorderRadius.only(bottomLeft: Radius.circular(16.r), bottomRight: Radius.circular(16.r)),
                     child: Assets.images.defaultImage.image(
                       width: 1.sw,
                       height: 250.h,
@@ -96,25 +93,18 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         Row(
                           children: [
                             BaseBox(
-                              backgroundColor:
-                                  context.colors.primary.withOpacity(0.2),
+                              backgroundColor: context.colors.primary.withOpacity(0.2),
                               width: 51.w,
                               height: 51.h,
-                              child: Center(
-                                  child: Assets.icons.locationPrimary.svg()),
+                              child: Center(child: Assets.icons.locationPrimary.svg()),
                             ),
                             16.kw,
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                (widget.classModel.branch?.title ?? "")
-                                    .s(14)
-                                    .w(500),
+                                (widget.classModel.branch?.title ?? "").s(14).w(500),
                                 8.kh,
-                                "36 Guild Street London, UK "
-                                    .s(12)
-                                    .w(400)
-                                    .c(context.colors.primary)
+                                "36 Guild Street London, UK ".s(12).w(400).c(context.colors.primary)
                               ],
                             )
                           ],
@@ -123,8 +113,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         Row(
                           children: [
                             BaseBox(
-                              backgroundColor:
-                                  context.colors.primary.withOpacity(0.2),
+                              backgroundColor: context.colors.primary.withOpacity(0.2),
                               width: 51.w,
                               height: 51.h,
                               child: Center(child: Assets.icons.time.svg()),
@@ -147,12 +136,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         Row(
                           children: [
                             BaseBox(
-                              backgroundColor:
-                                  context.colors.primary.withOpacity(0.2),
+                              backgroundColor: context.colors.primary.withOpacity(0.2),
                               width: 51.w,
                               height: 51.h,
-                              child:
-                                  Center(child: Assets.icons.availablitiy.svg()),
+                              child: Center(child: Assets.icons.availablitiy.svg()),
                             ),
                             16.kw,
                             Column(
@@ -171,10 +158,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         24.kh,
                         "About Event".s(18).w(600),
                         16.kh,
-                        (widget.classModel.description ?? "")
-                            .s(16)
-                            .w(400)
-                            .c(context.colors.title),
+                        (widget.classModel.description ?? "").s(16).w(400).c(context.colors.title),
                       ],
                     ),
                   ],

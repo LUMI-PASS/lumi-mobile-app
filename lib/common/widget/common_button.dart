@@ -1,14 +1,13 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CommonButton extends StatelessWidget {
-  const CommonButton._(this.text, this.loading, this.enabled, this.onPressed,
-      this.radius, this.type,
+  const CommonButton._(this.text, this.loading, this.enabled, this.onPressed, this.radius, this.type,
       {super.key,
       this.backgroundColor,
       this.textColor,
@@ -34,7 +33,7 @@ class CommonButton extends StatelessWidget {
   final Color? borderColor;
   final bool? isRightIcon;
 
-  CommonButton.outlined(
+  const CommonButton.outlined(
       {required String text,
       bool loading = false,
       bool enabled = true,
@@ -46,8 +45,7 @@ class CommonButton extends StatelessWidget {
       Widget? icon,
       double? padding,
       Color? borderColor})
-      : this._(text, loading, enabled, onPressed, radius,
-            CommonButtonType.outlined,
+      : this._(text, loading, enabled, onPressed, radius, CommonButtonType.outlined,
             backgroundColor: backgroundColor,
             textColor: textColor,
             key: key,
@@ -137,9 +135,7 @@ class CommonButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [icon ?? Container(), 6.kw],
                   ),
-                Center(
-                    child:
-                        text.w(600).s(16).c(textColor ?? StaticColors.white)),
+                Center(child: text.w(600).s(16).c(textColor ?? StaticColors.white)),
                 Visibility(
                   visible: icon != null && isRightIcon == true,
                   child: Row(
@@ -188,14 +184,10 @@ class CommonButton extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius ?? 16.r),
-            color: enabled
-                ? backgroundColor ?? context.colors.primary
-                : context.colors.grey,
+            color: enabled ? backgroundColor ?? context.colors.primary : context.colors.grey,
           ),
           child: _child(
-            enabled
-                ? textColor ?? context.colors.onPrimary
-                : context.colors.primary,
+            enabled ? textColor ?? context.colors.onPrimary : context.colors.primary,
           ),
         ),
       ),
@@ -205,7 +197,7 @@ class CommonButton extends StatelessWidget {
   Widget _text(BuildContext context) {
     return TextButton(
       style: ButtonStyle(
-        overlayColor: MaterialStateProperty.all(Colors.transparent),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
       ),
       onPressed: _onPressed(),
       child: Row(
@@ -213,9 +205,7 @@ class CommonButton extends StatelessWidget {
         children: [
           Flexible(
               child: text.w(600).s(16).c(context.colors.display).copyWith(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: context.colors.display))),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: context.colors.display))),
           4.kw,
           if (prefixIcon != null) prefixIcon!,
         ],

@@ -1,4 +1,3 @@
-import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -46,12 +45,8 @@ extension TextStyleExtensions on TextStyle {
   }) =>
       TextStyle(
         inherit: inherit ?? this.inherit,
-        color: this.foreground == null && foreground == null
-            ? color ?? this.color
-            : null,
-        backgroundColor: this.background == null && background == null
-            ? backgroundColor ?? this.backgroundColor
-            : null,
+        color: this.foreground == null && foreground == null ? color ?? this.color : null,
+        backgroundColor: this.background == null && background == null ? backgroundColor ?? this.backgroundColor : null,
         fontSize: fontSize ?? this.fontSize,
         fontWeight: fontWeight ?? this.fontWeight,
         fontStyle: fontStyle ?? this.fontStyle,
@@ -117,22 +112,16 @@ extension TextExtensions on Text {
         textAlign: textAlign,
       );
 
-  Text o(TextOverflow textOverflow) => copyWith(
-      style: (style ?? GoogleFonts.onest()),
-      overflow: textOverflow,
-      maxLines: maxLines);
+  Text o(TextOverflow textOverflow) =>
+      copyWith(style: (style ?? GoogleFonts.onest()), overflow: textOverflow, maxLines: maxLines);
 
   Text w(int fontWeight) {
     final weight = FontWeight.values[fontWeight ~/ 100 - 1];
-    return copyWith(
-        style: (style ?? GoogleFonts.onest()).copyWith(fontWeight: weight));
+    return copyWith(style: (style ?? GoogleFonts.onest()).copyWith(fontWeight: weight));
   }
 
   Text m(int maxLines) {
-    return copyWith(
-        maxLines: maxLines,
-        style: (style ?? GoogleFonts.onest()),
-        overflow: overflow);
+    return copyWith(maxLines: maxLines, style: (style ?? GoogleFonts.onest()), overflow: overflow);
   }
 
   Text styles({TextOverflow? overflow}) => Text(

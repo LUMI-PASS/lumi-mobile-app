@@ -25,6 +25,12 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    AddNewCardRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const AddNewCardPage(),
+      );
+    },
     BookingCompleteRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -35,6 +41,12 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: CalendarPage(),
+      );
+    },
+    CheckoutRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const CheckoutPage(),
       );
     },
     ChildrenRoute.name: (routeData) {
@@ -85,6 +97,18 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: OnboardingPage(key: args.key),
+      );
+    },
+    PaymentCardsRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const PaymentCardsPage(),
+      );
+    },
+    PaymentRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const PaymentPage(),
       );
     },
     ProfileDetailRoute.name: (routeData) {
@@ -178,6 +202,20 @@ class AddChildRouteArgs {
 }
 
 /// generated route for
+/// [AddNewCardPage]
+class AddNewCardRoute extends PageRouteInfo<void> {
+  const AddNewCardRoute({List<PageRouteInfo>? children})
+      : super(
+          AddNewCardRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'AddNewCardRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [BookingCompletePage]
 class BookingCompleteRoute extends PageRouteInfo<void> {
   const BookingCompleteRoute({List<PageRouteInfo>? children})
@@ -201,6 +239,20 @@ class CalendarRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'CalendarRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [CheckoutPage]
+class CheckoutRoute extends PageRouteInfo<void> {
+  const CheckoutRoute({List<PageRouteInfo>? children})
+      : super(
+          CheckoutRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'CheckoutRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }
@@ -354,6 +406,34 @@ class OnboardingRouteArgs {
   String toString() {
     return 'OnboardingRouteArgs{key: $key}';
   }
+}
+
+/// generated route for
+/// [PaymentCardsPage]
+class PaymentCardsRoute extends PageRouteInfo<void> {
+  const PaymentCardsRoute({List<PageRouteInfo>? children})
+      : super(
+          PaymentCardsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'PaymentCardsRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [PaymentPage]
+class PaymentRoute extends PageRouteInfo<void> {
+  const PaymentRoute({List<PageRouteInfo>? children})
+      : super(
+          PaymentRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'PaymentRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for
