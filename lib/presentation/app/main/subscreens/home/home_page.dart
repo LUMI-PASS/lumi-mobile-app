@@ -140,30 +140,34 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                                   ))),
                     ),
                     16.kh,
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        "Newly Added Classes".s(14).w(600),
-                        InkWell(
-                          onTap: () {},
-                          child: "See all".s(10).w(400).c(context.colors.grey),
-                        )
-                      ],
-                    ),
-                    8.kh,
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                          children: List.generate(
-                              (state.homeModel?.data?.newClasses?.data ?? [])
-                                  .length,
-                              (index) => ClassItemWidget(
-                                    homClass: (state.homeModel?.data
-                                            ?.nearClasses?.data ??
-                                        [])[index],
-                                  ))),
-                    ),
-                    16.kh,
+                    if ((state.homeModel?.data?.newClasses?.data ?? [])
+                        .isNotEmpty) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          "Newly Added Classes".s(14).w(600),
+                          InkWell(
+                            onTap: () {},
+                            child:
+                                "See all".s(10).w(400).c(context.colors.grey),
+                          )
+                        ],
+                      ),
+                      8.kh,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                            children: List.generate(
+                                (state.homeModel?.data?.newClasses?.data ?? [])
+                                    .length,
+                                (index) => ClassItemWidget(
+                                      homClass: (state.homeModel?.data
+                                              ?.nearClasses?.data ??
+                                          [])[index],
+                                    ))),
+                      ),
+                      16.kh,
+                    ],
                     "Near you".s(14).w(600),
                     8.kh,
                     SingleChildScrollView(

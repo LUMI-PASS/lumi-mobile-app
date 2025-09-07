@@ -14,16 +14,23 @@ class CategoryItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BaseBox(
+        width: 150.w,
+        height: 150.h,
         margin: EdgeInsets.only(left: 8.w),
+        padding: const EdgeInsets.all(10),
         child: Column(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.all(Radius.circular(16.r)),
-              child: Assets.images.defaultImage
-                  .image(width: 100.w, height: 80.h, fit: BoxFit.fill),
+              child: Assets.images.defaultImage.image(),
             ),
             8.kh,
-            (homeCategoryModel?.title ?? "").s(12).w(600),
+            Flexible(
+                child: (homeCategoryModel?.title ?? "")
+                    .s(14)
+                    .w(600)
+                    .m(2)
+                    .a(TextAlign.center)),
           ],
         ));
   }

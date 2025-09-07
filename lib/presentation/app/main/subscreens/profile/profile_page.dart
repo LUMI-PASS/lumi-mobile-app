@@ -71,22 +71,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         onTap: () => context.router.push(const ChildrenRoute()),
                       ),
                       16.kh,
-
-                      // Wallets
                       _buildProfileCatalog(
-                        Assets.icons.walletUnselected.svg(color: context.colors.primary),
+                        Assets.icons.walletUnselected
+                            .svg(color: context.colors.primary),
                         "Wallets",
                         "Buy more coins for your child",
                         false,
                         context,
                         onTap: () {
-                          context.router.push(const PaymentRoute());
-                          // Navigate to wallets page
+                          context.router.replaceAll([const WalletRoute()]);
                         },
                       ),
                       16.kh,
-
-                      // Attendance history
                       _buildProfileCatalog(
                         Assets.icons.attendence.svg(),
                         "Attendance history",
@@ -94,7 +90,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         false,
                         context,
                         onTap: () {
-                          // Navigate to attendance history
                         },
                       ),
                       16.kh,
@@ -107,13 +102,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         false,
                         context,
                         onTap: () {
-                          // Navigate to payment methods
+                          context.router.push(const PaymentRoute());
                         },
                       ),
                       16.kh,
 
                       _buildProfileCatalog(
-                        Icon(Icons.help_outline, color: context.colors.primary, size: 24.w),
+                        Icon(Icons.help_outline,
+                            color: context.colors.primary, size: 24.w),
                         "FAQ",
                         "Find an answer to all your questions",
                         false,
@@ -126,7 +122,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       // Log out
                       _buildProfileCatalog(
-                        Icon(Icons.logout, color: context.colors.primary, size: 24.w),
+                        Icon(Icons.logout,
+                            color: context.colors.primary, size: 24.w),
                         "Log out",
                         "Log out from your account",
                         true,
@@ -148,7 +145,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-Widget _buildProfileCatalog(Widget icon, String title, String subtitle, bool isLast, BuildContext context,
+Widget _buildProfileCatalog(Widget icon, String title, String subtitle,
+    bool isLast, BuildContext context,
     {Function? onTap, bool? isLoading}) {
   return BaseBox(
     padding: EdgeInsets.all(16.w),
@@ -175,7 +173,10 @@ Widget _buildProfileCatalog(Widget icon, String title, String subtitle, bool isL
               children: [
                 title.s(16).w(600).c(context.colors.black ?? Colors.black),
                 4.kh,
-                subtitle.s(14).w(400).c(context.colors.title.withOpacity(0.6) ?? Colors.grey),
+                subtitle
+                    .s(14)
+                    .w(400)
+                    .c(context.colors.title.withOpacity(0.6) ?? Colors.grey),
               ],
             ),
           ),
