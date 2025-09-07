@@ -1,11 +1,10 @@
-import 'package:lumi_pass/common/constants/constants.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:lumi_pass/common/constants/constants.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 
 class PhoneFormField extends StatefulWidget {
   PhoneFormField(
@@ -76,7 +75,7 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
     // If this is the first digit entered, prepend "+"
     if (_isFirstInput && value.isNotEmpty) {
       if (!value.startsWith("+")) {
-        value = "+" + value;
+        value = "+$value";
         widget.phoneController.value = TextEditingValue(
           text: value,
           selection: TextSelection.collapsed(offset: value.length),
@@ -87,7 +86,7 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
 
     // Ensure "+" is preserved once added
     if (!_isFirstInput && !value.startsWith("+")) {
-      value = "+" + value;
+      value = "+$value";
       widget.phoneController.value = TextEditingValue(
         text: value,
         selection: TextSelection.collapsed(offset: value.length),
@@ -171,15 +170,12 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
       controller: widget.phoneController,
       keyboardType: TextInputType.phone,
       textAlignVertical: TextAlignVertical.center,
-      textInputAction:
-          widget.isNext == true ? TextInputAction.next : TextInputAction.done,
+      textInputAction: widget.isNext == true ? TextInputAction.next : TextInputAction.done,
       onChanged: _onInputChanged,
-      style: const TextStyle(
-          fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF717680)),
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF717680)),
       decoration: InputDecoration(
         filled: true,
-        labelStyle:
-            GoogleFonts.onest(fontSize: 12.sp, color: context.colors.display),
+        labelStyle: GoogleFonts.onest(fontSize: 12.sp, color: context.colors.display),
         fillColor: context.colors.grey.withOpacity(0.2),
         hintText: "Введите номер телефона *",
         errorMaxLines: 5,
@@ -187,9 +183,7 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
           horizontal: 16,
           vertical: 12,
         ),
-        suffix: widget.errorPhone != null
-            ? Assets.icons.errorIcon.svg()
-            : Container(),
+        suffix: widget.errorPhone != null ? Assets.icons.errorIcon.svg() : Container(),
         hintStyle: TextStyle(
           fontSize: 14.sp,
           fontWeight: FontWeight.w400,

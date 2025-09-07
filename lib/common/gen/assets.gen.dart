@@ -31,6 +31,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/arrow_left.svg
   SvgGenImage get arrowLeft => const SvgGenImage('assets/icons/arrow_left.svg');
 
+  /// File path: assets/icons/arrow_left_ios.svg
+  SvgGenImage get arrowLeftIos =>
+      const SvgGenImage('assets/icons/arrow_left_ios.svg');
+
   /// File path: assets/icons/arrow_right.svg
   SvgGenImage get arrowRight =>
       const SvgGenImage('assets/icons/arrow_right.svg');
@@ -91,6 +95,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/dollar.svg
   SvgGenImage get dollar => const SvgGenImage('assets/icons/dollar.svg');
 
+  /// File path: assets/icons/dollar_rounded.svg
+  SvgGenImage get dollarRounded =>
+      const SvgGenImage('assets/icons/dollar_rounded.svg');
+
   /// File path: assets/icons/error_icon.svg
   SvgGenImage get errorIcon => const SvgGenImage('assets/icons/error_icon.svg');
 
@@ -105,6 +113,9 @@ class $AssetsIconsGen {
 
   /// File path: assets/icons/faq.svg
   SvgGenImage get faq => const SvgGenImage('assets/icons/faq.svg');
+
+  /// File path: assets/icons/filter.svg
+  SvgGenImage get filter => const SvgGenImage('assets/icons/filter.svg');
 
   /// File path: assets/icons/google.svg
   SvgGenImage get google => const SvgGenImage('assets/icons/google.svg');
@@ -126,6 +137,9 @@ class $AssetsIconsGen {
   SvgGenImage get locationPrimary =>
       const SvgGenImage('assets/icons/location_primary.svg');
 
+  /// File path: assets/icons/map.svg
+  SvgGenImage get map => const SvgGenImage('assets/icons/map.svg');
+
   /// File path: assets/icons/mastercard.svg
   SvgGenImage get mastercard =>
       const SvgGenImage('assets/icons/mastercard.svg');
@@ -133,6 +147,14 @@ class $AssetsIconsGen {
   /// File path: assets/icons/notification.svg
   SvgGenImage get notification =>
       const SvgGenImage('assets/icons/notification.svg');
+
+  /// File path: assets/icons/outlined_calendar.svg
+  SvgGenImage get outlinedCalendar =>
+      const SvgGenImage('assets/icons/outlined_calendar.svg');
+
+  /// File path: assets/icons/outlined_person.svg
+  SvgGenImage get outlinedPerson =>
+      const SvgGenImage('assets/icons/outlined_person.svg');
 
   /// File path: assets/icons/paypal.svg
   SvgGenImage get paypal => const SvgGenImage('assets/icons/paypal.svg');
@@ -146,6 +168,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/profilel_unselected.svg
   SvgGenImage get profilelUnselected =>
       const SvgGenImage('assets/icons/profilel_unselected.svg');
+
+  /// File path: assets/icons/search.svg
+  SvgGenImage get search => const SvgGenImage('assets/icons/search.svg');
 
   /// File path: assets/icons/search_selected.svg
   SvgGenImage get searchSelected =>
@@ -175,6 +200,7 @@ class $AssetsIconsGen {
         arrowEpandHor,
         arrowExpand,
         arrowLeft,
+        arrowLeftIos,
         arrowRight,
         arrowRightExpand,
         arrowStrictRight,
@@ -192,23 +218,29 @@ class $AssetsIconsGen {
         coinLumi,
         coupon,
         dollar,
+        dollarRounded,
         errorIcon,
         errorSvg,
         eye,
         eyeOff,
         faq,
+        filter,
         google,
         group,
         homeFilled,
         infoDis,
         location,
         locationPrimary,
+        map,
         mastercard,
         notification,
+        outlinedCalendar,
+        outlinedPerson,
         paypal,
         profile,
         profilee,
         profilelUnselected,
+        search,
         searchSelected,
         searchUnselected,
         sucess,

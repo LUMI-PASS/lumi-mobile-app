@@ -1,19 +1,12 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import 'custom_checkbox.dart';
 
 class CustomChipTile extends StatefulWidget {
   const CustomChipTile(
-      {super.key,
-      required this.onTap,
-      required this.title,
-      this.icon,
-      this.height,
-      required this.state});
+      {super.key, required this.onTap, required this.title, this.icon, this.height, required this.state});
 
   final Function(bool) onTap;
   final Widget? icon;
@@ -46,13 +39,7 @@ class _CustomChipTileState extends State<CustomChipTile> {
           children: [
             if (widget.icon != null) widget.icon!,
             8.kw,
-            Expanded(
-                child: widget.title
-                    .s(13)
-                    .w(400)
-                    .c(const Color(0xFF8E99A1))
-                    .m(1)
-                    .o(TextOverflow.ellipsis)),
+            Expanded(child: widget.title.s(13).w(400).c(const Color(0xFF8E99A1)).m(1).o(TextOverflow.ellipsis)),
             Checkbox(
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               value: widget.state,
@@ -60,8 +47,7 @@ class _CustomChipTileState extends State<CustomChipTile> {
                 widget.onTap(value!);
               },
               activeColor: context.colors.greenHeadline,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4.r)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
               side: BorderSide(color: context.colors.grey, width: 1.5.w),
               checkColor: context.colors.onPrimary,
             )

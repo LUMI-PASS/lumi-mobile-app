@@ -11,13 +11,11 @@ import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/loading_view.dart';
-import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/banner_lesson_widgets.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/class_item_widget.dart';
-import 'package:lumi_pass/presentation/app/widgets/base_box.dart';
 
 @RoutePage()
 class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
@@ -33,12 +31,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   Widget builder(context, state) {
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.only(
-            top: MediaQuery.of(context).viewPadding.top + 16.h,
-            right: 16.w,
-            left: 16.w),
+        padding: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top + 16.h, right: 16.w, left: 16.w),
         child: state.isLoading
-            ? LoadingView()
+            ? const LoadingView()
             : SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,15 +49,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             "Hello, ".s(14),
-                            (state.homeModel?.data?.forUser?.firstName ??
-                                    "User")
-                                .s(14)
-                                .c(context.colors.primary),
+                            (state.homeModel?.data?.forUser?.firstName ?? "User").s(14).c(context.colors.primary),
                           ],
                         ),
                         const Spacer(),
-                        Assets.icons.notification
-                            .svg(width: 24.w, height: 24.h),
+                        Assets.icons.notification.svg(width: 24.w, height: 24.h),
                       ],
                     ),
                     16.kh,
@@ -75,10 +66,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                           onTap: () {},
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
-                              "See all".s(12).w(400).c(context.colors.primary),
-                              Assets.icons.arrowRight.svg()
-                            ],
+                            children: ["See all".s(12).w(400).c(context.colors.primary), Assets.icons.arrowRight.svg()],
                           ),
                         )
                       ],
@@ -98,15 +86,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.w),
                                 child: ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(12.r)),
+                                  borderRadius: BorderRadius.all(Radius.circular(12.r)),
                                   child: CachedNetworkImage(
                                     width: 1.sw * 0.7,
                                     fit: BoxFit.cover,
-                                    imageUrl:
-                                        ("${Constants.assetsUrl}${i.url ?? " "}"),
-                                    errorWidget: (context, error, state) =>
-                                        Assets.images.defaultImage.image(),
+                                    imageUrl: ("${Constants.assetsUrl}${i.url ?? " "}"),
+                                    errorWidget: (context, error, state) => Assets.images.defaultImage.image(),
                                   ),
                                 ),
                               );
@@ -130,14 +115,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                          children: List.generate(
-                              (state.homeModel?.data?.categories?.data ?? [])
-                                  .length,
-                              (index) => CategoryItemWidget(
-                                    homeCategoryModel: ((state.homeModel?.data
-                                            ?.categories?.data ??
-                                        [])[index]),
-                                  ))),
+                        children: List.generate(
+                          (state.homeModel?.data?.categories?.data ?? []).length,
+                          (index) => CategoryItemWidget(
+                            homeCategoryModel: ((state.homeModel?.data?.categories?.data ?? [])[index]),
+                          ),
+                        ),
+                      ),
                     ),
                     16.kh,
                     Row(
@@ -154,14 +138,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                          children: List.generate(
-                              (state.homeModel?.data?.newClasses?.data ?? [])
-                                  .length,
-                              (index) => ClassItemWidget(
-                                    homClass: (state.homeModel?.data
-                                            ?.nearClasses?.data ??
-                                        [])[index],
-                                  ))),
+                        children: List.generate(
+                          (state.homeModel?.data?.newClasses?.data ?? []).length,
+                          (index) => ClassItemWidget(
+                            homClass: (state.homeModel?.data?.nearClasses?.data ?? [])[index],
+                          ),
+                        ),
+                      ),
                     ),
                     16.kh,
                     "Near you".s(14).w(600),
@@ -170,15 +153,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                       scrollDirection: Axis.horizontal,
                       child: Column(
                           children: List.generate(
-                              (state.homeModel?.data?.nearClasses?.data ?? [])
-                                  .length,
+                              (state.homeModel?.data?.nearClasses?.data ?? []).length,
                               (index) => Padding(
                                     padding: EdgeInsets.only(bottom: 8.h),
                                     child: ClassItemWidget(
                                       width: 1.sw - 32.w,
-                                      homClass: (state.homeModel?.data
-                                              ?.nearClasses?.data ??
-                                          [])[index],
+                                      homClass: (state.homeModel?.data?.nearClasses?.data ?? [])[index],
                                     ),
                                   ))),
                     ),
