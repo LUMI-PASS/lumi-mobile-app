@@ -1,4 +1,3 @@
-import 'package:auto_route/annotations.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,8 +13,7 @@ import 'package:lumi_pass/presentation/app/profile/children/cubit/children_state
 import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
 
 @RoutePage()
-class ChildrenPage
-    extends BasePage<ChildrenCubit, ChildrenBuildable, ChildrenListenable> {
+class ChildrenPage extends BasePage<ChildrenCubit, ChildrenBuildable, ChildrenListenable> {
   const ChildrenPage({super.key});
 
   @override
@@ -27,7 +25,7 @@ class ChildrenPage
   @override
   Widget builder(context, state) {
     return Scaffold(
-      appBar: BaseAppBar(
+      appBar: const BaseAppBar(
         title: "My children",
       ),
       body: state.isLoading
@@ -46,12 +44,14 @@ class ChildrenPage
                   itemCount: (state.childrenList ?? []).length,
                 )),
                 BottomBox(
-                    child: CommonButton.outlined(
-                  onPressed: () =>
-                      context.router.push(AddChildRoute(childModel: null)),
-                  text: "Add child",
-                  textColor: context.colors.primary,
-                ))
+                  child: CommonButton.outlined(
+                    onPressed: () => context.router.push(
+                      AddChildRoute(childModel: null),
+                    ),
+                    text: "Add child",
+                    textColor: context.colors.primary,
+                  ),
+                )
               ],
             ),
     );
@@ -66,8 +66,7 @@ int? getAge(String? dob) {
 
     int age = now.year - birthDate.year;
 
-    if (now.month < birthDate.month ||
-        (now.month == birthDate.month && now.day < birthDate.day)) {
+    if (now.month < birthDate.month || (now.month == birthDate.month && now.day < birthDate.day)) {
       age--;
     }
 

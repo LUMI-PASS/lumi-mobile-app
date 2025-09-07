@@ -17,8 +17,7 @@ import 'cubit/children_cubit.dart';
 import 'cubit/children_state.dart';
 
 @RoutePage()
-class AddChildPage
-    extends BasePage<ChildrenCubit, ChildrenBuildable, ChildrenListenable> {
+class AddChildPage extends BasePage<ChildrenCubit, ChildrenBuildable, ChildrenListenable> {
   final ChildModel? childModel;
 
   const AddChildPage({super.key, required this.childModel});
@@ -49,9 +48,9 @@ class AddChildPage
                       width: 32,
                       height: 32,
                       radius: 10,
-                      padding: EdgeInsets.all(4),
-                      child: Assets.icons.profilee.svg(),
+                      padding: const EdgeInsets.all(4),
                       backgroundColor: context.colors.primary,
+                      child: Assets.icons.profilee.svg(),
                     ),
                   ),
                   "Phone number".s(15).w(600),
@@ -64,9 +63,9 @@ class AddChildPage
                       width: 32,
                       height: 32,
                       radius: 10,
-                      padding: EdgeInsets.all(4),
-                      child: Assets.icons.call.svg(),
+                      padding: const EdgeInsets.all(4),
                       backgroundColor: context.colors.primary,
+                      child: Assets.icons.call.svg(),
                     ),
                     onChanged: (value) {},
                   ),
@@ -89,9 +88,9 @@ class AddChildPage
                       width: 32,
                       height: 32,
                       radius: 10,
-                      padding: EdgeInsets.all(4),
-                      child: Assets.icons.location.svg(),
+                      padding: const EdgeInsets.all(4),
                       backgroundColor: context.colors.primary,
+                      child: Assets.icons.location.svg(),
                     ),
                   ),
                 ],

@@ -72,12 +72,21 @@ class $AssetsIconsGen {
   /// File path: assets/icons/call.svg
   SvgGenImage get call => const SvgGenImage('assets/icons/call.svg');
 
+  /// File path: assets/icons/card.svg
+  SvgGenImage get card => const SvgGenImage('assets/icons/card.svg');
+
   /// File path: assets/icons/cards.svg
   SvgGenImage get cards => const SvgGenImage('assets/icons/cards.svg');
+
+  /// File path: assets/icons/circles.svg
+  SvgGenImage get circles => const SvgGenImage('assets/icons/circles.svg');
 
   /// File path: assets/icons/coin_lumi.png
   AssetGenImage get coinLumi =>
       const AssetGenImage('assets/icons/coin_lumi.png');
+
+  /// File path: assets/icons/coupon.svg
+  SvgGenImage get coupon => const SvgGenImage('assets/icons/coupon.svg');
 
   /// File path: assets/icons/dollar.svg
   SvgGenImage get dollar => const SvgGenImage('assets/icons/dollar.svg');
@@ -97,6 +106,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/faq.svg
   SvgGenImage get faq => const SvgGenImage('assets/icons/faq.svg');
 
+  /// File path: assets/icons/google.svg
+  SvgGenImage get google => const SvgGenImage('assets/icons/google.svg');
+
   /// File path: assets/icons/group.svg
   SvgGenImage get group => const SvgGenImage('assets/icons/group.svg');
 
@@ -114,9 +126,16 @@ class $AssetsIconsGen {
   SvgGenImage get locationPrimary =>
       const SvgGenImage('assets/icons/location_primary.svg');
 
+  /// File path: assets/icons/mastercard.svg
+  SvgGenImage get mastercard =>
+      const SvgGenImage('assets/icons/mastercard.svg');
+
   /// File path: assets/icons/notification.svg
   SvgGenImage get notification =>
       const SvgGenImage('assets/icons/notification.svg');
+
+  /// File path: assets/icons/paypal.svg
+  SvgGenImage get paypal => const SvgGenImage('assets/icons/paypal.svg');
 
   /// File path: assets/icons/profile.svg
   SvgGenImage get profile => const SvgGenImage('assets/icons/profile.svg');
@@ -167,20 +186,26 @@ class $AssetsIconsGen {
         calendar,
         calendarSelected,
         call,
+        card,
         cards,
+        circles,
         coinLumi,
+        coupon,
         dollar,
         errorIcon,
         errorSvg,
         eye,
         eyeOff,
         faq,
+        google,
         group,
         homeFilled,
         infoDis,
         location,
         locationPrimary,
+        mastercard,
         notification,
+        paypal,
         profile,
         profilee,
         profilelUnselected,

@@ -1,17 +1,16 @@
 import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart';
 import 'package:lumi_pass/presentation/app/widgets/base_box.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../../../../common/router/app_router.dart';
 
 @RoutePage()
@@ -75,13 +74,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       // Wallets
                       _buildProfileCatalog(
-                        Assets.icons.walletUnselected
-                            .svg(color: context.colors.primary),
+                        Assets.icons.walletUnselected.svg(color: context.colors.primary),
                         "Wallets",
                         "Buy more coins for your child",
                         false,
                         context,
                         onTap: () {
+                          context.router.push(const PaymentRoute());
                           // Navigate to wallets page
                         },
                       ),
@@ -114,8 +113,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       16.kh,
 
                       _buildProfileCatalog(
-                        Icon(Icons.help_outline,
-                            color: context.colors.primary, size: 24.w),
+                        Icon(Icons.help_outline, color: context.colors.primary, size: 24.w),
                         "FAQ",
                         "Find an answer to all your questions",
                         false,
@@ -128,8 +126,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       // Log out
                       _buildProfileCatalog(
-                        Icon(Icons.logout,
-                            color: context.colors.primary, size: 24.w),
+                        Icon(Icons.logout, color: context.colors.primary, size: 24.w),
                         "Log out",
                         "Log out from your account",
                         true,
@@ -151,8 +148,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-Widget _buildProfileCatalog(Widget icon, String title, String subtitle,
-    bool isLast, BuildContext context,
+Widget _buildProfileCatalog(Widget icon, String title, String subtitle, bool isLast, BuildContext context,
     {Function? onTap, bool? isLoading}) {
   return BaseBox(
     padding: EdgeInsets.all(16.w),
@@ -179,10 +175,7 @@ Widget _buildProfileCatalog(Widget icon, String title, String subtitle,
               children: [
                 title.s(16).w(600).c(context.colors.black ?? Colors.black),
                 4.kh,
-                subtitle
-                    .s(14)
-                    .w(400)
-                    .c(context.colors.title.withOpacity(0.6) ?? Colors.grey),
+                subtitle.s(14).w(400).c(context.colors.title.withOpacity(0.6) ?? Colors.grey),
               ],
             ),
           ),
