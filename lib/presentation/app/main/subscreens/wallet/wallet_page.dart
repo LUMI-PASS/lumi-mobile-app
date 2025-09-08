@@ -4,10 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/widget/loading_view.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/pocket_widget.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/about_pocket_bottomsheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_state.dart';
+import 'package:lumi_pass/presentation/app/widgets/empty_view.dart';
 
 import '../../../../../common/gen/assets.gen.dart';
 
@@ -51,31 +53,36 @@ class WalletPage
             "Choose to top up".s(24).w(600),
             24.kh,
             Expanded(
-              child: GridView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: (state.tariffs ?? []).length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1.2,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8),
-                  itemBuilder: (context, index) {
-                    return PocketWidget(
-                      tariff: (state.tariffs ?? [])[index],
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (context) {
-                            return AboutPocketBottomsheet(
+              child: state.isLoading
+                  ? LoadingView()
+                  : (state.tariffs ?? []).isEmpty
+                      ? EmptyView()
+                      : GridView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: (state.tariffs ?? []).length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 1.2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8),
+                          itemBuilder: (context, index) {
+                            return PocketWidget(
                               tariff: (state.tariffs ?? [])[index],
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    return AboutPocketBottomsheet(
+                                      tariff: (state.tariffs ?? [])[index],
+                                    );
+                                  },
+                                  backgroundColor: Colors.transparent,
+                                  isScrollControlled: true,
+                                );
+                              },
                             );
-                          },
-                          backgroundColor: Colors.transparent,
-                          isScrollControlled: true,
-                        );
-                      },
-                    );
-                  }),
+                          }),
             ),
           ],
         ),

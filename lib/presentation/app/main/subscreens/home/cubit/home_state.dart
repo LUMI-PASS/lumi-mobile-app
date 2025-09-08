@@ -9,7 +9,8 @@ class HomeBuildable with _$HomeBuildable {
       {@Default(false) bool isSelected,
       @Default(false) bool isLoading,
       @Default(false) bool success,
-      HomeModel? homeModel}) = _HomeBuildable;
+      HomeModel? homeModel,
+      List<HomCategory>? categories}) = _HomeBuildable;
 }
 
 @freezed

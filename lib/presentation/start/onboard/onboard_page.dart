@@ -70,7 +70,6 @@ class OnboardingPage extends BasePage<OnboardingCubit, OnboardingBuildable, Onbo
       backgroundColor: context.colors.black,
       body: Stack(
         children: [
-          // Background image positioned to fill entire screen
           Positioned.fill(
             child: _pages[state.index].backgroundImage,
           ),

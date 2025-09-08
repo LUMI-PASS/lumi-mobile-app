@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
@@ -8,19 +9,26 @@ import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_cubit.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_state.dart';
+import 'package:provider/provider.dart';
 
-class AboutPocketBottomsheet extends StatefulWidget {
+class AboutPocketBottomsheet
+    extends BasePage<WalletCubit, WalletBuildable, WalletListenable> {
   const AboutPocketBottomsheet({super.key, required this.tariff});
 
   final Tariff tariff;
 
   @override
-  State<AboutPocketBottomsheet> createState() => _AboutPocketBottomsheetState();
-}
+  void listener(BuildContext context, WalletListenable state) {
+    if (state.effect == WalletEffect.verify) {
+      Navigator.pop(context);
+    }
+    super.listener(context, state);
+  }
 
-class _AboutPocketBottomsheetState extends State<AboutPocketBottomsheet> {
   @override
-  Widget build(BuildContext context) {
+  Widget builder(context, state) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: 16.w,
@@ -66,18 +74,18 @@ class _AboutPocketBottomsheetState extends State<AboutPocketBottomsheet> {
           16.kh,
           Row(
             children: [
-              "Packet “${widget.tariff.title}”".s(20).w(700),
+              "Packet “${tariff.title}”".s(20).w(700),
               Spacer(),
-              "50".s(20).w(700),
+              "${tariff.coins}".s(20).w(700),
               Assets.icons.coinLumi.image(width: 24.w, height: 24.h),
             ],
           ),
           12.kh,
           _buildPriceCatalog(Assets.icons.dollar.svg(), "Price",
-              "${widget.tariff.price!.toString().toFormattedPrice()} SO’M"),
+              "${tariff.price!.toString().toFormattedPrice()} SO’M", context),
           12.kh,
-          _buildPriceCatalog(
-              Assets.icons.availablitiy.svg(), "Availability", "60 days"),
+          _buildPriceCatalog(Assets.icons.availablitiy.svg(), "Availability",
+              "${tariff.validDays} days", context),
           16.kh,
           "About Packet".s(18).w(600),
           16.kh,
@@ -86,14 +94,21 @@ class _AboutPocketBottomsheetState extends State<AboutPocketBottomsheet> {
               .w(400)
               .a(TextAlign.start),
           24.kh,
-          CommonButton.elevated(text: "Purchase"),
+          CommonButton.elevated(
+            text: "Purchase",
+            loading: state.isSelected,
+            onPressed: () => context
+                .read<WalletCubit>()
+                .purchaseSubscription(tariff.id ?? ""),
+          ),
           12.kh,
         ],
       ),
     );
   }
 
-  Widget _buildPriceCatalog(Widget icon, String topTitle, String bottomTitle) {
+  Widget _buildPriceCatalog(
+      Widget icon, String topTitle, String bottomTitle, BuildContext context) {
     return Row(
       children: [
         Container(

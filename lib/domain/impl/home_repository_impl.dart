@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
@@ -70,6 +71,32 @@ class HomeRepositoryImpl extends HomeRepository {
     return _api.getTariffs().then((value) {
       return (value.data['data'] as List)
           .map((e) => Tariff.fromJson(e))
+          .toList();
+    });
+  }
+
+  @override
+  Future<List<HomCategory>> getAllCategories() {
+    return _api.getCategories().then((value) {
+      return (value.data['data'] as List)
+          .map((e) => HomCategory.fromJson(e))
+          .toList();
+    });
+  }
+
+  @override
+  Future<void> purchaseSubscription(String tariffId) {
+    return _api.purchaseSubscription(tariffId);
+  }
+
+  @override
+  Future<List<TimeSlot>> getCLassSchedules(
+      String childId, String fromDate, String toDate, String classId) {
+    return _api
+        .getClassCategories(childId, fromDate, toDate, classId)
+        .then((value) {
+      return (value.data['data']['time_slots'] as List)
+          .map((e) => TimeSlot.fromJson(e))
           .toList();
     });
   }

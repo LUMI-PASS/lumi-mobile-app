@@ -8,6 +8,7 @@ import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
+import 'package:lumi_pass/common/widget/loading_view.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/child_widget.dart';
@@ -28,7 +29,9 @@ class ChooseChildBottomsheet
   int selectedTariffIndex = -1; // -1 means no tariff selected
   Tariff? selectedTariff;
 
-  ChooseChildBottomsheet({super.key});
+  ChooseChildBottomsheet({super.key, this.classId});
+
+  final String? classId;
 
   @override
   void init(BuildContext context) {
@@ -96,21 +99,22 @@ class ChooseChildBottomsheet
               .w(700),
           12.kh,
           hasEnoughCoin
-              ? Column(
-                  children: List.generate(
-                    (state.childrenList ?? []).length,
-                    (index) => ChildWidget(
-                      childModel: (state.childrenList ?? [])[index],
-                      isSelected: selectedChildIndex == index,
-                      onTap: () => setState(() {
-                        selectedChildIndex = index;
-                      }),
-                    ),
-                  ),
-                )
+              ? state.isLoading
+                  ? LoadingView()
+                  : Column(
+                      children: List.generate(
+                        (state.childrenList ?? []).length,
+                        (index) => ChildWidget(
+                          childModel: (state.childrenList ?? [])[index],
+                          isSelected: state.selectedIndex == index,
+                          onTap: () =>
+                              context.read<ChildrenCubit>().selectIndex(index),
+                        ),
+                      ),
+                    )
               : NotEnoughCoinContent(
                   onTariffSelected: _onTariffSelected,
-                  selectedIndex: selectedTariffIndex,
+                  selectedIndex: state.selectedIndex,
                 ),
           48.kh,
           CommonButton.elevated(
@@ -121,7 +125,12 @@ class ChooseChildBottomsheet
                 context: context,
                 builder: (context) {
                   return hasEnoughCoin
-                      ? const GetTicketBottomsheet()
+                      ? GetTicketBottomsheet(
+                          childId:
+                              (state.childrenList ?? [])[state.selectedIndex]
+                                  .id,
+                          classId: classId,
+                        )
                       : AboutPocketBottomsheet(
                           tariff: selectedTariff ?? Tariff(),
                         );

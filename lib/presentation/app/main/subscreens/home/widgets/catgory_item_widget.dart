@@ -15,7 +15,7 @@ class CategoryItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return BaseBox(
         width: 150.w,
-        height: 150.h,
+        height: 130.h,
         margin: EdgeInsets.only(left: 8.w),
         padding: const EdgeInsets.all(10),
         child: Column(

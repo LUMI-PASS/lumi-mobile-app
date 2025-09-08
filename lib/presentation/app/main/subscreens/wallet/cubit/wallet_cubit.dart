@@ -33,6 +33,29 @@ class WalletCubit extends BaseCubit<WalletBuildable, WalletListenable> {
     );
   }
 
+  Future<void> purchaseSubscription(String tariffId) async {
+    return callable(
+      future: _repo.purchaseSubscription(tariffId),
+      buildOnStart: () => buildable.copyWith(isSelected: true),
+      onErrorData: (error) {
+        final status = (error as DioException);
+        if (status.response?.statusCode == 500 ||
+            status.response?.statusCode == 502) {
+          display.error(Strings.serverErrorTryLater);
+        } else if (status.type == DioExceptionType.connectionError ||
+            status.type == DioExceptionType.connectionTimeout) {
+          display.error(Strings.connectionError);
+        }
+        display.error(error);
+      },
+      invokeOnData: (data) {
+        display.success("Subscription purchased successfully");
+        return WalletListenable(effect: WalletEffect.verify);
+      },
+      buildOnDone: () => buildable.copyWith(isSelected: false),
+    );
+  }
+
   void changePhoneState(bool isMatched) {
     build((buildable) => buildable.copyWith(isSelected: isMatched));
   }

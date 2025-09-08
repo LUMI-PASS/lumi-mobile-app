@@ -22,6 +22,11 @@ mixin _$ChildrenBuildable {
   String get selectedGender => throw _privateConstructorUsedError;
   DateTime? get selectedBirthDate => throw _privateConstructorUsedError;
   List<ChildModel>? get childrenList => throw _privateConstructorUsedError;
+  List<TimeSlot> get timeSlots =>
+      throw _privateConstructorUsedError; // Ticket booking selection state
+  DateTime? get selectedDate => throw _privateConstructorUsedError;
+  String? get selectedScheduleId => throw _privateConstructorUsedError;
+  int get selectedTimeIndex => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ChildrenBuildableCopyWith<ChildrenBuildable> get copyWith =>
@@ -40,7 +45,11 @@ abstract class $ChildrenBuildableCopyWith<$Res> {
       int selectedIndex,
       String selectedGender,
       DateTime? selectedBirthDate,
-      List<ChildModel>? childrenList});
+      List<ChildModel>? childrenList,
+      List<TimeSlot> timeSlots,
+      DateTime? selectedDate,
+      String? selectedScheduleId,
+      int selectedTimeIndex});
 }
 
 /// @nodoc
@@ -62,6 +71,10 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
     Object? selectedGender = null,
     Object? selectedBirthDate = freezed,
     Object? childrenList = freezed,
+    Object? timeSlots = null,
+    Object? selectedDate = freezed,
+    Object? selectedScheduleId = freezed,
+    Object? selectedTimeIndex = null,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
@@ -88,6 +101,22 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
           ? _value.childrenList
           : childrenList // ignore: cast_nullable_to_non_nullable
               as List<ChildModel>?,
+      timeSlots: null == timeSlots
+          ? _value.timeSlots
+          : timeSlots // ignore: cast_nullable_to_non_nullable
+              as List<TimeSlot>,
+      selectedDate: freezed == selectedDate
+          ? _value.selectedDate
+          : selectedDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      selectedScheduleId: freezed == selectedScheduleId
+          ? _value.selectedScheduleId
+          : selectedScheduleId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      selectedTimeIndex: null == selectedTimeIndex
+          ? _value.selectedTimeIndex
+          : selectedTimeIndex // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -106,7 +135,11 @@ abstract class _$$ChildrenBuildableImplCopyWith<$Res>
       int selectedIndex,
       String selectedGender,
       DateTime? selectedBirthDate,
-      List<ChildModel>? childrenList});
+      List<ChildModel>? childrenList,
+      List<TimeSlot> timeSlots,
+      DateTime? selectedDate,
+      String? selectedScheduleId,
+      int selectedTimeIndex});
 }
 
 /// @nodoc
@@ -126,6 +159,10 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
     Object? selectedGender = null,
     Object? selectedBirthDate = freezed,
     Object? childrenList = freezed,
+    Object? timeSlots = null,
+    Object? selectedDate = freezed,
+    Object? selectedScheduleId = freezed,
+    Object? selectedTimeIndex = null,
   }) {
     return _then(_$ChildrenBuildableImpl(
       isLoading: null == isLoading
@@ -152,6 +189,22 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
           ? _value._childrenList
           : childrenList // ignore: cast_nullable_to_non_nullable
               as List<ChildModel>?,
+      timeSlots: null == timeSlots
+          ? _value._timeSlots
+          : timeSlots // ignore: cast_nullable_to_non_nullable
+              as List<TimeSlot>,
+      selectedDate: freezed == selectedDate
+          ? _value.selectedDate
+          : selectedDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      selectedScheduleId: freezed == selectedScheduleId
+          ? _value.selectedScheduleId
+          : selectedScheduleId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      selectedTimeIndex: null == selectedTimeIndex
+          ? _value.selectedTimeIndex
+          : selectedTimeIndex // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -165,8 +218,13 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
       this.selectedIndex = 0,
       this.selectedGender = 'Female',
       this.selectedBirthDate = null,
-      final List<ChildModel>? childrenList})
-      : _childrenList = childrenList;
+      final List<ChildModel>? childrenList,
+      final List<TimeSlot> timeSlots = const [],
+      this.selectedDate = null,
+      this.selectedScheduleId = null,
+      this.selectedTimeIndex = -1})
+      : _childrenList = childrenList,
+        _timeSlots = timeSlots;
 
   @override
   @JsonKey()
@@ -193,9 +251,29 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<TimeSlot> _timeSlots;
+  @override
+  @JsonKey()
+  List<TimeSlot> get timeSlots {
+    if (_timeSlots is EqualUnmodifiableListView) return _timeSlots;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_timeSlots);
+  }
+
+// Ticket booking selection state
+  @override
+  @JsonKey()
+  final DateTime? selectedDate;
+  @override
+  @JsonKey()
+  final String? selectedScheduleId;
+  @override
+  @JsonKey()
+  final int selectedTimeIndex;
+
   @override
   String toString() {
-    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, selectedGender: $selectedGender, selectedBirthDate: $selectedBirthDate, childrenList: $childrenList)';
+    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, selectedGender: $selectedGender, selectedBirthDate: $selectedBirthDate, childrenList: $childrenList, timeSlots: $timeSlots, selectedDate: $selectedDate, selectedScheduleId: $selectedScheduleId, selectedTimeIndex: $selectedTimeIndex)';
   }
 
   @override
@@ -214,7 +292,15 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
             (identical(other.selectedBirthDate, selectedBirthDate) ||
                 other.selectedBirthDate == selectedBirthDate) &&
             const DeepCollectionEquality()
-                .equals(other._childrenList, _childrenList));
+                .equals(other._childrenList, _childrenList) &&
+            const DeepCollectionEquality()
+                .equals(other._timeSlots, _timeSlots) &&
+            (identical(other.selectedDate, selectedDate) ||
+                other.selectedDate == selectedDate) &&
+            (identical(other.selectedScheduleId, selectedScheduleId) ||
+                other.selectedScheduleId == selectedScheduleId) &&
+            (identical(other.selectedTimeIndex, selectedTimeIndex) ||
+                other.selectedTimeIndex == selectedTimeIndex));
   }
 
   @override
@@ -225,7 +311,11 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
       selectedIndex,
       selectedGender,
       selectedBirthDate,
-      const DeepCollectionEquality().hash(_childrenList));
+      const DeepCollectionEquality().hash(_childrenList),
+      const DeepCollectionEquality().hash(_timeSlots),
+      selectedDate,
+      selectedScheduleId,
+      selectedTimeIndex);
 
   @JsonKey(ignore: true)
   @override
@@ -242,7 +332,11 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
       final int selectedIndex,
       final String selectedGender,
       final DateTime? selectedBirthDate,
-      final List<ChildModel>? childrenList}) = _$ChildrenBuildableImpl;
+      final List<ChildModel>? childrenList,
+      final List<TimeSlot> timeSlots,
+      final DateTime? selectedDate,
+      final String? selectedScheduleId,
+      final int selectedTimeIndex}) = _$ChildrenBuildableImpl;
 
   @override
   bool get isLoading;
@@ -256,6 +350,14 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
   DateTime? get selectedBirthDate;
   @override
   List<ChildModel>? get childrenList;
+  @override
+  List<TimeSlot> get timeSlots;
+  @override // Ticket booking selection state
+  DateTime? get selectedDate;
+  @override
+  String? get selectedScheduleId;
+  @override
+  int get selectedTimeIndex;
   @override
   @JsonKey(ignore: true)
   _$$ChildrenBuildableImplCopyWith<_$ChildrenBuildableImpl> get copyWith =>

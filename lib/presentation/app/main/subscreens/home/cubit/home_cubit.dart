@@ -50,6 +50,32 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     );
   }
 
+  Future<void> getCategories() async {
+    // Location location = const Location();
+    return callable(
+      future: _repo.getAllCategories(),
+      buildOnStart: () => buildable.copyWith(isLoading: true),
+      // invokeOnData: (data) => HomeListenable(
+      //   effect: data ? HomeEffect.verify : HomeEffect.reg,
+      // ),
+      buildOnData: (data) {
+        return buildable.copyWith(categories: data);
+      },
+      onErrorData: (error) {
+        final status = (error as DioException);
+        if (status.response?.statusCode == 500 ||
+            status.response?.statusCode == 502) {
+          display.error(Strings.serverErrorTryLater);
+        } else if (status.type == DioExceptionType.connectionError ||
+            status.type == DioExceptionType.connectionTimeout) {
+          display.error(Strings.connectionError);
+        }
+        display.error(error);
+      },
+      buildOnDone: () => buildable.copyWith(isLoading: false),
+    );
+  }
+
   void changePhoneState(bool isMatched) {
     build((buildable) => buildable.copyWith(isSelected: isMatched));
   }

@@ -1,12 +1,13 @@
-
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 
 import 'package:auto_route/annotations.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
@@ -15,6 +16,9 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
+import 'package:lumi_pass/common/widget/loading_view.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
@@ -22,18 +26,18 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/subwidgets/pocket_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
 import 'package:lumi_pass/presentation/app/widgets/base_box.dart';
+import 'package:lumi_pass/presentation/app/widgets/empty_view.dart';
 
 @RoutePage()
-class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+class SearchPage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
+  @override
+  void init(BuildContext context) {
+    context.read<HomeCubit>().getCategories();
+    super.init(context);
+  }
 
   @override
-  State<SearchPage> createState() => _SearchPageState();
-}
-
-class _SearchPageState extends State<SearchPage> {
-  @override
-  Widget build(BuildContext context) {
+  Widget builder(context, state) {
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -50,10 +54,14 @@ class _SearchPageState extends State<SearchPage> {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => context.router.push(SearchUnifiedRoute()),
+                          onTap: () =>
+                              context.router.push(SearchUnifiedRoute()),
                           child: CommonTextField(
+                            background: context.colors.onPrimary,
+                            enabledBorderColor: context.colors.onPrimary,
                             prefixIcon: GestureDetector(
-                              onTap: () => context.router.push(SearchUnifiedRoute()),
+                              onTap: () =>
+                                  context.router.push(SearchUnifiedRoute()),
                               child: Assets.icons.search.svg(),
                             ),
                             hint: "Search",
@@ -80,20 +88,29 @@ class _SearchPageState extends State<SearchPage> {
             ),
             12.kh,
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                physics: const BouncingScrollPhysics(),
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 20,
-                  crossAxisSpacing: 40,
-                ),
-                itemCount: 12,
-                itemBuilder: (context, index) {
-                  return const CategoryItemWidget(homeCategoryModel: null);
-                },
-              ),
+              child: state.isLoading
+                  ? LoadingView()
+                  : (state.categories ?? []).isEmpty
+                      ? const EmptyView()
+                      : GridView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          physics: const BouncingScrollPhysics(),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 20,
+                            crossAxisSpacing: 40,
+                            childAspectRatio: 1.2,
+                          ),
+                          itemCount: (state.categories ?? []).length,
+                          itemBuilder: (context, index) {
+                            return CategoryItemWidget(
+                                homeCategoryModel:
+                                    (state.categories ?? [])[index]);
+                          },
+                        ),
             ),
             BottomBox(
               child: Padding(

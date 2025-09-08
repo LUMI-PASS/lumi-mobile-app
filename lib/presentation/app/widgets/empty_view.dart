@@ -21,7 +21,7 @@ class EmptyView extends StatelessWidget {
           50.kh,
           Assets.images.empty.image(width: 120.w, height: 120.h),
           8.kh,
-          (text ?? Strings.notFound).s(16).w(600).c(context.colors.primary),
+          (text ?? "Hech narsa topilmadi!").s(16).w(600).c(context.colors.primary),
         ],
       ),
     );

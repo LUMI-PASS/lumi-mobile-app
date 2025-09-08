@@ -20,6 +20,7 @@ mixin _$HomeBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
   HomeModel? get homeModel => throw _privateConstructorUsedError;
+  List<HomCategory>? get categories => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $HomeBuildableCopyWith<HomeBuildable> get copyWith =>
@@ -33,7 +34,11 @@ abstract class $HomeBuildableCopyWith<$Res> {
       _$HomeBuildableCopyWithImpl<$Res, HomeBuildable>;
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, HomeModel? homeModel});
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      HomeModel? homeModel,
+      List<HomCategory>? categories});
 
   $HomeModelCopyWith<$Res>? get homeModel;
 }
@@ -55,6 +60,7 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? isLoading = null,
     Object? success = null,
     Object? homeModel = freezed,
+    Object? categories = freezed,
   }) {
     return _then(_value.copyWith(
       isSelected: null == isSelected
@@ -73,6 +79,10 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
           ? _value.homeModel
           : homeModel // ignore: cast_nullable_to_non_nullable
               as HomeModel?,
+      categories: freezed == categories
+          ? _value.categories
+          : categories // ignore: cast_nullable_to_non_nullable
+              as List<HomCategory>?,
     ) as $Val);
   }
 
@@ -98,7 +108,11 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, HomeModel? homeModel});
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      HomeModel? homeModel,
+      List<HomCategory>? categories});
 
   @override
   $HomeModelCopyWith<$Res>? get homeModel;
@@ -119,6 +133,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? isLoading = null,
     Object? success = null,
     Object? homeModel = freezed,
+    Object? categories = freezed,
   }) {
     return _then(_$HomeBuildableImpl(
       isSelected: null == isSelected
@@ -137,6 +152,10 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           ? _value.homeModel
           : homeModel // ignore: cast_nullable_to_non_nullable
               as HomeModel?,
+      categories: freezed == categories
+          ? _value._categories
+          : categories // ignore: cast_nullable_to_non_nullable
+              as List<HomCategory>?,
     ));
   }
 }
@@ -148,7 +167,9 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       {this.isSelected = false,
       this.isLoading = false,
       this.success = false,
-      this.homeModel});
+      this.homeModel,
+      final List<HomCategory>? categories})
+      : _categories = categories;
 
   @override
   @JsonKey()
@@ -161,10 +182,19 @@ class _$HomeBuildableImpl implements _HomeBuildable {
   final bool success;
   @override
   final HomeModel? homeModel;
+  final List<HomCategory>? _categories;
+  @override
+  List<HomCategory>? get categories {
+    final value = _categories;
+    if (value == null) return null;
+    if (_categories is EqualUnmodifiableListView) return _categories;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories)';
   }
 
   @override
@@ -178,12 +208,14 @@ class _$HomeBuildableImpl implements _HomeBuildable {
                 other.isLoading == isLoading) &&
             (identical(other.success, success) || other.success == success) &&
             (identical(other.homeModel, homeModel) ||
-                other.homeModel == homeModel));
+                other.homeModel == homeModel) &&
+            const DeepCollectionEquality()
+                .equals(other._categories, _categories));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isSelected, isLoading, success, homeModel);
+  int get hashCode => Object.hash(runtimeType, isSelected, isLoading, success,
+      homeModel, const DeepCollectionEquality().hash(_categories));
 
   @JsonKey(ignore: true)
   @override
@@ -197,7 +229,8 @@ abstract class _HomeBuildable implements HomeBuildable {
       {final bool isSelected,
       final bool isLoading,
       final bool success,
-      final HomeModel? homeModel}) = _$HomeBuildableImpl;
+      final HomeModel? homeModel,
+      final List<HomCategory>? categories}) = _$HomeBuildableImpl;
 
   @override
   bool get isSelected;
@@ -207,6 +240,8 @@ abstract class _HomeBuildable implements HomeBuildable {
   bool get success;
   @override
   HomeModel? get homeModel;
+  @override
+  List<HomCategory>? get categories;
   @override
   @JsonKey(ignore: true)
   _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>

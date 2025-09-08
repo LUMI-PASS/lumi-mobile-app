@@ -79,7 +79,8 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     LoginRoute.name: (routeData) {
-      final args = routeData.argsAs<LoginRouteArgs>(orElse: () => const LoginRouteArgs());
+      final args = routeData.argsAs<LoginRouteArgs>(
+          orElse: () => const LoginRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: LoginPage(key: args.key),
@@ -92,7 +93,8 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     OnboardingRoute.name: (routeData) {
-      final args = routeData.argsAs<OnboardingRouteArgs>(orElse: () => const OnboardingRouteArgs());
+      final args = routeData.argsAs<OnboardingRouteArgs>(
+          orElse: () => const OnboardingRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: OnboardingPage(key: args.key),
@@ -111,7 +113,8 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     ProfileDetailRoute.name: (routeData) {
-      final args = routeData.argsAs<ProfileDetailRouteArgs>(orElse: () => const ProfileDetailRouteArgs());
+      final args = routeData.argsAs<ProfileDetailRouteArgs>(
+          orElse: () => const ProfileDetailRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: ProfileDetailPage(key: args.key),
@@ -136,11 +139,12 @@ abstract class _$AppRouter extends RootStackRouter {
     SearchRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: const SearchPage(),
+        child: SearchPage(),
       );
     },
     SearchUnifiedRoute.name: (routeData) {
-      final args = routeData.argsAs<SearchUnifiedRouteArgs>(orElse: () => const SearchUnifiedRouteArgs());
+      final args = routeData.argsAs<SearchUnifiedRouteArgs>(
+          orElse: () => const SearchUnifiedRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: SearchUnifiedPage(
@@ -191,7 +195,8 @@ class AddChildRoute extends PageRouteInfo<AddChildRouteArgs> {
 
   static const String name = 'AddChildRoute';
 
-  static const PageInfo<AddChildRouteArgs> page = PageInfo<AddChildRouteArgs>(name);
+  static const PageInfo<AddChildRouteArgs> page =
+      PageInfo<AddChildRouteArgs>(name);
 }
 
 class AddChildRouteArgs {
@@ -301,7 +306,8 @@ class ClassDetailRoute extends PageRouteInfo<ClassDetailRouteArgs> {
 
   static const String name = 'ClassDetailRoute';
 
-  static const PageInfo<ClassDetailRouteArgs> page = PageInfo<ClassDetailRouteArgs>(name);
+  static const PageInfo<ClassDetailRouteArgs> page =
+      PageInfo<ClassDetailRouteArgs>(name);
 }
 
 class ClassDetailRouteArgs {
@@ -404,7 +410,8 @@ class OnboardingRoute extends PageRouteInfo<OnboardingRouteArgs> {
 
   static const String name = 'OnboardingRoute';
 
-  static const PageInfo<OnboardingRouteArgs> page = PageInfo<OnboardingRouteArgs>(name);
+  static const PageInfo<OnboardingRouteArgs> page =
+      PageInfo<OnboardingRouteArgs>(name);
 }
 
 class OnboardingRouteArgs {
@@ -460,7 +467,8 @@ class ProfileDetailRoute extends PageRouteInfo<ProfileDetailRouteArgs> {
 
   static const String name = 'ProfileDetailRoute';
 
-  static const PageInfo<ProfileDetailRouteArgs> page = PageInfo<ProfileDetailRouteArgs>(name);
+  static const PageInfo<ProfileDetailRouteArgs> page =
+      PageInfo<ProfileDetailRouteArgs>(name);
 }
 
 class ProfileDetailRouteArgs {
@@ -506,7 +514,8 @@ class RegisterRoute extends PageRouteInfo<RegisterRouteArgs> {
 
   static const String name = 'RegisterRoute';
 
-  static const PageInfo<RegisterRouteArgs> page = PageInfo<RegisterRouteArgs>(name);
+  static const PageInfo<RegisterRouteArgs> page =
+      PageInfo<RegisterRouteArgs>(name);
 }
 
 class RegisterRouteArgs {
@@ -557,7 +566,8 @@ class SearchUnifiedRoute extends PageRouteInfo<SearchUnifiedRouteArgs> {
 
   static const String name = 'SearchUnifiedRoute';
 
-  static const PageInfo<SearchUnifiedRouteArgs> page = PageInfo<SearchUnifiedRouteArgs>(name);
+  static const PageInfo<SearchUnifiedRouteArgs> page =
+      PageInfo<SearchUnifiedRouteArgs>(name);
 }
 
 class SearchUnifiedRouteArgs {

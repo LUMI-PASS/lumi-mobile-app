@@ -168,7 +168,7 @@ class AddChildPage
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        gender: gender,
+        gender: gender.toUpperCase(),
         city: _cityController.text.trim(),
         district: _districtController.text.trim(),
         dob: DateFormat("yyyy-MM-dd").format(selectedDate!),

@@ -19,36 +19,55 @@ class HomeApi {
   }
 
   Future<Response> getProfileData() {
-    return _dio.get('users/parents/profile/',  queryParameters: {'lang': 'ru'});
+    return _dio.get('users/parents/profile/', queryParameters: {'lang': 'ru'});
   }
 
   Future<Response> addChild(ChildModel childModel, String parentId) {
     return _dio.post('users/parents/profile/children',
-        queryParameters: {
-          'parent_id': parentId,
-          'lang': 'ru'
-        },
+        queryParameters: {'parent_id': parentId, 'lang': 'ru'},
         data: childModel.toJson()..remove("id"));
   }
 
   Future<Response> updateChild(ChildModel childModel, String parentId) {
-    return _dio.post('users/parents/profile/children/${childModel.id}',
-        queryParameters: {
-          'parent_id': parentId,
-          'lang': 'ru'
-        },
-        data: childModel.toJson()..remove("id"));
+    return _dio.patch('users/parents/profile/children/${childModel.id}',
+        queryParameters: {'parent_id': parentId, 'lang': 'ru'},
+        data: childModel.toJson());
   }
 
   Future<Response> updateChildData() {
-    return _dio.get('users/parents/profile/',  queryParameters: {'lang': 'ru'});
+    return _dio.get('users/parents/profile/', queryParameters: {'lang': 'ru'});
   }
 
   Future<Response> getChildren() {
-    return _dio.get('users/children/',  queryParameters: {'lang': 'ru'});
+    return _dio.get('users/children/', queryParameters: {'lang': 'ru'});
   }
+
   Future<Response> getTariffs() {
-    return _dio.get('tariffs/',  queryParameters: {'lang': 'ru'});
+    return _dio.get('tariffs/', queryParameters: {'lang': 'ru'});
+  }
+
+  Future<Response> getCategories() {
+    return _dio.get('categories/', queryParameters: {'lang': 'ru'});
+  }
+
+  Future<Response> getClassCategories(
+      String childId, String fromDate, String toDate, String classId) {
+    return _dio.get(
+        'schedules/class/c30dbba8-d55c-4be6-a750-baf192641b93/check-availability',
+        queryParameters: {
+          'lang': 'ru',
+          'child_id': childId,
+          'from_date': fromDate,
+          'to_date': toDate,
+        });
+  }
+
+  Future<Response> purchaseSubscription(String tariffId) {
+    return _dio.post('transaction/subscriptions/', queryParameters: {
+      'lang': 'ru'
+    }, data: {
+      'tariff_id': tariffId,
+    });
   }
 
   Future<Response> updateProfileData(HomForUser user) {
