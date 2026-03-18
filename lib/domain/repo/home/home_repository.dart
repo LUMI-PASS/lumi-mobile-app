@@ -6,7 +6,14 @@ import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 
 abstract class HomeRepository {
-  Future<HomeModel> getHome();
+  Future<HomeModel> getHome({
+    int newClassesPage = 1,
+    int newClassesLimit = 10,
+    int categoryPage = 1,
+    int categoryLimit = 10,
+    int nearClassPage = 1,
+    int nearClassLimit = 10,
+  });
 
   Future<void> purchaseSubscription(String tariffId);
 

@@ -2,6 +2,22 @@ class Constants {
   static const baseUrl = 'https://dev-api.lumipass.uz/api/v1/';
   static const assetsUrl = 'https://dev-api.lumipass.uz/api/v1/assets/files/';
 
+  static const tashkentDistricts = [
+    'Bektemir',
+    'Chilonzor',
+    'Mirobod',
+    "Mirzo Ulug'bek",
+    'Sergeli',
+    'Shayxontohur',
+    'Olmazor',
+    'Uchtepa',
+    'Yakkasaroy',
+    'Yunusobod',
+    'Yashnobod',
+    'Yangihayot',
+    'Boshqa',
+  ];
+
   static final countryMap = [
     {"code": "+236", "country": "CF", "mask": "##-##-####"},
     {"code": "+263", "country": "ZW", "mask": "#-######"},

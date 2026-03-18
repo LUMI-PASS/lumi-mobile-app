@@ -7,7 +7,7 @@ class VerifyBuildable with _$VerifyBuildable {
   const factory VerifyBuildable(
       {@Default(false) bool loading,
       @Default(false) bool resetLoading,
-      @Default(59) int timer,
+      @Default(270) int timer,
       @Default(null) int? code,
       @Default(null) String? error}) = _VerifyBuildable;
 }

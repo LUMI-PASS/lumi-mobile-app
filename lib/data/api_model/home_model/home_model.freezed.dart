@@ -1308,8 +1308,10 @@ mixin _$HomCategory {
   String? get id => throw _privateConstructorUsedError;
   String? get title => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
+  bool? get hasPhoto => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
+  String? get deletedAt => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -1327,8 +1329,10 @@ abstract class $HomCategoryCopyWith<$Res> {
       {String? id,
       String? title,
       String? description,
+      bool? hasPhoto,
       String? createdAt,
-      String? updatedAt});
+      String? updatedAt,
+      String? deletedAt});
 }
 
 /// @nodoc
@@ -1347,8 +1351,10 @@ class _$HomCategoryCopyWithImpl<$Res, $Val extends HomCategory>
     Object? id = freezed,
     Object? title = freezed,
     Object? description = freezed,
+    Object? hasPhoto = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? deletedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -1363,6 +1369,10 @@ class _$HomCategoryCopyWithImpl<$Res, $Val extends HomCategory>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
+              as bool?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -1370,6 +1380,10 @@ class _$HomCategoryCopyWithImpl<$Res, $Val extends HomCategory>
       updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
   }
@@ -1387,8 +1401,10 @@ abstract class _$$HomCategoryImplCopyWith<$Res>
       {String? id,
       String? title,
       String? description,
+      bool? hasPhoto,
       String? createdAt,
-      String? updatedAt});
+      String? updatedAt,
+      String? deletedAt});
 }
 
 /// @nodoc
@@ -1405,8 +1421,10 @@ class __$$HomCategoryImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = freezed,
     Object? description = freezed,
+    Object? hasPhoto = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? deletedAt = freezed,
   }) {
     return _then(_$HomCategoryImpl(
       id: freezed == id
@@ -1421,6 +1439,10 @@ class __$$HomCategoryImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
+              as bool?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -1428,6 +1450,10 @@ class __$$HomCategoryImplCopyWithImpl<$Res>
       updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
   }
@@ -1438,7 +1464,13 @@ class __$$HomCategoryImplCopyWithImpl<$Res>
 @JsonSerializable(fieldRename: FieldRename.snake)
 class _$HomCategoryImpl implements _HomCategory {
   const _$HomCategoryImpl(
-      {this.id, this.title, this.description, this.createdAt, this.updatedAt});
+      {this.id,
+      this.title,
+      this.description,
+      this.hasPhoto,
+      this.createdAt,
+      this.updatedAt,
+      this.deletedAt});
 
   factory _$HomCategoryImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomCategoryImplFromJson(json);
@@ -1450,13 +1482,17 @@ class _$HomCategoryImpl implements _HomCategory {
   @override
   final String? description;
   @override
+  final bool? hasPhoto;
+  @override
   final String? createdAt;
   @override
   final String? updatedAt;
+  @override
+  final String? deletedAt;
 
   @override
   String toString() {
-    return 'HomCategory(id: $id, title: $title, description: $description, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'HomCategory(id: $id, title: $title, description: $description, hasPhoto: $hasPhoto, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -1468,16 +1504,20 @@ class _$HomCategoryImpl implements _HomCategory {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
+            (identical(other.hasPhoto, hasPhoto) ||
+                other.hasPhoto == hasPhoto) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.deletedAt, deletedAt) ||
+                other.deletedAt == deletedAt));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, title, description, createdAt, updatedAt);
+  int get hashCode => Object.hash(runtimeType, id, title, description, hasPhoto,
+      createdAt, updatedAt, deletedAt);
 
   @JsonKey(ignore: true)
   @override
@@ -1498,8 +1538,10 @@ abstract class _HomCategory implements HomCategory {
       {final String? id,
       final String? title,
       final String? description,
+      final bool? hasPhoto,
       final String? createdAt,
-      final String? updatedAt}) = _$HomCategoryImpl;
+      final String? updatedAt,
+      final String? deletedAt}) = _$HomCategoryImpl;
 
   factory _HomCategory.fromJson(Map<String, dynamic> json) =
       _$HomCategoryImpl.fromJson;
@@ -1511,9 +1553,13 @@ abstract class _HomCategory implements HomCategory {
   @override
   String? get description;
   @override
+  bool? get hasPhoto;
+  @override
   String? get createdAt;
   @override
   String? get updatedAt;
+  @override
+  String? get deletedAt;
   @override
   @JsonKey(ignore: true)
   _$$HomCategoryImplCopyWith<_$HomCategoryImpl> get copyWith =>
@@ -1895,11 +1941,17 @@ mixin _$HomClass {
   String? get description => throw _privateConstructorUsedError;
   int? get duration => throw _privateConstructorUsedError;
   num? get price => throw _privateConstructorUsedError;
+  num? get trialPrice => throw _privateConstructorUsedError;
+  bool? get trialEnabled => throw _privateConstructorUsedError;
   int? get minAge => throw _privateConstructorUsedError;
   int? get maxAge => throw _privateConstructorUsedError;
+  String? get gender => throw _privateConstructorUsedError;
   bool? get isActive => throw _privateConstructorUsedError;
+  bool? get hasPhoto => throw _privateConstructorUsedError;
+  double? get distance => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
+  String? get deletedAt => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -1920,11 +1972,17 @@ abstract class $HomClassCopyWith<$Res> {
       String? description,
       int? duration,
       num? price,
+      num? trialPrice,
+      bool? trialEnabled,
       int? minAge,
       int? maxAge,
+      String? gender,
       bool? isActive,
+      bool? hasPhoto,
+      double? distance,
       String? createdAt,
-      String? updatedAt});
+      String? updatedAt,
+      String? deletedAt});
 
   $HomBranchCopyWith<$Res>? get branch;
 }
@@ -1949,11 +2007,17 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? description = freezed,
     Object? duration = freezed,
     Object? price = freezed,
+    Object? trialPrice = freezed,
+    Object? trialEnabled = freezed,
     Object? minAge = freezed,
     Object? maxAge = freezed,
+    Object? gender = freezed,
     Object? isActive = freezed,
+    Object? hasPhoto = freezed,
+    Object? distance = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? deletedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -1984,6 +2048,14 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.price
           : price // ignore: cast_nullable_to_non_nullable
               as num?,
+      trialPrice: freezed == trialPrice
+          ? _value.trialPrice
+          : trialPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
+      trialEnabled: freezed == trialEnabled
+          ? _value.trialEnabled
+          : trialEnabled // ignore: cast_nullable_to_non_nullable
+              as bool?,
       minAge: freezed == minAge
           ? _value.minAge
           : minAge // ignore: cast_nullable_to_non_nullable
@@ -1992,10 +2064,22 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.maxAge
           : maxAge // ignore: cast_nullable_to_non_nullable
               as int?,
+      gender: freezed == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      distance: freezed == distance
+          ? _value.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2003,6 +2087,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
       updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
   }
@@ -2036,11 +2124,17 @@ abstract class _$$HomClassImplCopyWith<$Res>
       String? description,
       int? duration,
       num? price,
+      num? trialPrice,
+      bool? trialEnabled,
       int? minAge,
       int? maxAge,
+      String? gender,
       bool? isActive,
+      bool? hasPhoto,
+      double? distance,
       String? createdAt,
-      String? updatedAt});
+      String? updatedAt,
+      String? deletedAt});
 
   @override
   $HomBranchCopyWith<$Res>? get branch;
@@ -2064,11 +2158,17 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? description = freezed,
     Object? duration = freezed,
     Object? price = freezed,
+    Object? trialPrice = freezed,
+    Object? trialEnabled = freezed,
     Object? minAge = freezed,
     Object? maxAge = freezed,
+    Object? gender = freezed,
     Object? isActive = freezed,
+    Object? hasPhoto = freezed,
+    Object? distance = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? deletedAt = freezed,
   }) {
     return _then(_$HomClassImpl(
       id: freezed == id
@@ -2099,6 +2199,14 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.price
           : price // ignore: cast_nullable_to_non_nullable
               as num?,
+      trialPrice: freezed == trialPrice
+          ? _value.trialPrice
+          : trialPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
+      trialEnabled: freezed == trialEnabled
+          ? _value.trialEnabled
+          : trialEnabled // ignore: cast_nullable_to_non_nullable
+              as bool?,
       minAge: freezed == minAge
           ? _value.minAge
           : minAge // ignore: cast_nullable_to_non_nullable
@@ -2107,10 +2215,22 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.maxAge
           : maxAge // ignore: cast_nullable_to_non_nullable
               as int?,
+      gender: freezed == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      distance: freezed == distance
+          ? _value.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2118,6 +2238,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
       updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
   }
@@ -2135,11 +2259,17 @@ class _$HomClassImpl implements _HomClass {
       this.description,
       this.duration,
       this.price,
+      this.trialPrice,
+      this.trialEnabled,
       this.minAge,
       this.maxAge,
+      this.gender,
       this.isActive,
+      this.hasPhoto,
+      this.distance,
       this.createdAt,
-      this.updatedAt});
+      this.updatedAt,
+      this.deletedAt});
 
   factory _$HomClassImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomClassImplFromJson(json);
@@ -2159,19 +2289,31 @@ class _$HomClassImpl implements _HomClass {
   @override
   final num? price;
   @override
+  final num? trialPrice;
+  @override
+  final bool? trialEnabled;
+  @override
   final int? minAge;
   @override
   final int? maxAge;
   @override
+  final String? gender;
+  @override
   final bool? isActive;
+  @override
+  final bool? hasPhoto;
+  @override
+  final double? distance;
   @override
   final String? createdAt;
   @override
   final String? updatedAt;
+  @override
+  final String? deletedAt;
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, minAge: $minAge, maxAge: $maxAge, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, distance: $distance, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2189,14 +2331,25 @@ class _$HomClassImpl implements _HomClass {
             (identical(other.duration, duration) ||
                 other.duration == duration) &&
             (identical(other.price, price) || other.price == price) &&
+            (identical(other.trialPrice, trialPrice) ||
+                other.trialPrice == trialPrice) &&
+            (identical(other.trialEnabled, trialEnabled) ||
+                other.trialEnabled == trialEnabled) &&
             (identical(other.minAge, minAge) || other.minAge == minAge) &&
             (identical(other.maxAge, maxAge) || other.maxAge == maxAge) &&
+            (identical(other.gender, gender) || other.gender == gender) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
+            (identical(other.hasPhoto, hasPhoto) ||
+                other.hasPhoto == hasPhoto) &&
+            (identical(other.distance, distance) ||
+                other.distance == distance) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.deletedAt, deletedAt) ||
+                other.deletedAt == deletedAt));
   }
 
   @JsonKey(ignore: true)
@@ -2210,11 +2363,17 @@ class _$HomClassImpl implements _HomClass {
       description,
       duration,
       price,
+      trialPrice,
+      trialEnabled,
       minAge,
       maxAge,
+      gender,
       isActive,
+      hasPhoto,
+      distance,
       createdAt,
-      updatedAt);
+      updatedAt,
+      deletedAt);
 
   @JsonKey(ignore: true)
   @override
@@ -2239,11 +2398,17 @@ abstract class _HomClass implements HomClass {
       final String? description,
       final int? duration,
       final num? price,
+      final num? trialPrice,
+      final bool? trialEnabled,
       final int? minAge,
       final int? maxAge,
+      final String? gender,
       final bool? isActive,
+      final bool? hasPhoto,
+      final double? distance,
       final String? createdAt,
-      final String? updatedAt}) = _$HomClassImpl;
+      final String? updatedAt,
+      final String? deletedAt}) = _$HomClassImpl;
 
   factory _HomClass.fromJson(Map<String, dynamic> json) =
       _$HomClassImpl.fromJson;
@@ -2263,15 +2428,27 @@ abstract class _HomClass implements HomClass {
   @override
   num? get price;
   @override
+  num? get trialPrice;
+  @override
+  bool? get trialEnabled;
+  @override
   int? get minAge;
   @override
   int? get maxAge;
   @override
+  String? get gender;
+  @override
   bool? get isActive;
+  @override
+  bool? get hasPhoto;
+  @override
+  double? get distance;
   @override
   String? get createdAt;
   @override
   String? get updatedAt;
+  @override
+  String? get deletedAt;
   @override
   @JsonKey(ignore: true)
   _$$HomClassImplCopyWith<_$HomClassImpl> get copyWith =>
@@ -2285,11 +2462,19 @@ HomUpcomingClass _$HomUpcomingClassFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$HomUpcomingClass {
   String? get classId => throw _privateConstructorUsedError;
+  String? get scheduleId => throw _privateConstructorUsedError;
+  String? get bookingId => throw _privateConstructorUsedError;
   String? get className => throw _privateConstructorUsedError;
   String? get branchName => throw _privateConstructorUsedError;
   String? get branchAddress => throw _privateConstructorUsedError;
+  String? get categoryName => throw _privateConstructorUsedError;
   DateTime? get startTime => throw _privateConstructorUsedError;
   DateTime? get endTime => throw _privateConstructorUsedError;
+  int? get count => throw _privateConstructorUsedError;
+  String? get distance => throw _privateConstructorUsedError;
+  HomChildData? get forChild => throw _privateConstructorUsedError;
+  List<HomRelatedBooking>? get relatedBookings =>
+      throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -2305,11 +2490,20 @@ abstract class $HomUpcomingClassCopyWith<$Res> {
   @useResult
   $Res call(
       {String? classId,
+      String? scheduleId,
+      String? bookingId,
       String? className,
       String? branchName,
       String? branchAddress,
+      String? categoryName,
       DateTime? startTime,
-      DateTime? endTime});
+      DateTime? endTime,
+      int? count,
+      String? distance,
+      HomChildData? forChild,
+      List<HomRelatedBooking>? relatedBookings});
+
+  $HomChildDataCopyWith<$Res>? get forChild;
 }
 
 /// @nodoc
@@ -2326,16 +2520,31 @@ class _$HomUpcomingClassCopyWithImpl<$Res, $Val extends HomUpcomingClass>
   @override
   $Res call({
     Object? classId = freezed,
+    Object? scheduleId = freezed,
+    Object? bookingId = freezed,
     Object? className = freezed,
     Object? branchName = freezed,
     Object? branchAddress = freezed,
+    Object? categoryName = freezed,
     Object? startTime = freezed,
     Object? endTime = freezed,
+    Object? count = freezed,
+    Object? distance = freezed,
+    Object? forChild = freezed,
+    Object? relatedBookings = freezed,
   }) {
     return _then(_value.copyWith(
       classId: freezed == classId
           ? _value.classId
           : classId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scheduleId: freezed == scheduleId
+          ? _value.scheduleId
+          : scheduleId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bookingId: freezed == bookingId
+          ? _value.bookingId
+          : bookingId // ignore: cast_nullable_to_non_nullable
               as String?,
       className: freezed == className
           ? _value.className
@@ -2349,6 +2558,10 @@ class _$HomUpcomingClassCopyWithImpl<$Res, $Val extends HomUpcomingClass>
           ? _value.branchAddress
           : branchAddress // ignore: cast_nullable_to_non_nullable
               as String?,
+      categoryName: freezed == categoryName
+          ? _value.categoryName
+          : categoryName // ignore: cast_nullable_to_non_nullable
+              as String?,
       startTime: freezed == startTime
           ? _value.startTime
           : startTime // ignore: cast_nullable_to_non_nullable
@@ -2357,7 +2570,35 @@ class _$HomUpcomingClassCopyWithImpl<$Res, $Val extends HomUpcomingClass>
           ? _value.endTime
           : endTime // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      count: freezed == count
+          ? _value.count
+          : count // ignore: cast_nullable_to_non_nullable
+              as int?,
+      distance: freezed == distance
+          ? _value.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as String?,
+      forChild: freezed == forChild
+          ? _value.forChild
+          : forChild // ignore: cast_nullable_to_non_nullable
+              as HomChildData?,
+      relatedBookings: freezed == relatedBookings
+          ? _value.relatedBookings
+          : relatedBookings // ignore: cast_nullable_to_non_nullable
+              as List<HomRelatedBooking>?,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $HomChildDataCopyWith<$Res>? get forChild {
+    if (_value.forChild == null) {
+      return null;
+    }
+
+    return $HomChildDataCopyWith<$Res>(_value.forChild!, (value) {
+      return _then(_value.copyWith(forChild: value) as $Val);
+    });
   }
 }
 
@@ -2371,11 +2612,21 @@ abstract class _$$HomUpcomingClassImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? classId,
+      String? scheduleId,
+      String? bookingId,
       String? className,
       String? branchName,
       String? branchAddress,
+      String? categoryName,
       DateTime? startTime,
-      DateTime? endTime});
+      DateTime? endTime,
+      int? count,
+      String? distance,
+      HomChildData? forChild,
+      List<HomRelatedBooking>? relatedBookings});
+
+  @override
+  $HomChildDataCopyWith<$Res>? get forChild;
 }
 
 /// @nodoc
@@ -2390,16 +2641,31 @@ class __$$HomUpcomingClassImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? classId = freezed,
+    Object? scheduleId = freezed,
+    Object? bookingId = freezed,
     Object? className = freezed,
     Object? branchName = freezed,
     Object? branchAddress = freezed,
+    Object? categoryName = freezed,
     Object? startTime = freezed,
     Object? endTime = freezed,
+    Object? count = freezed,
+    Object? distance = freezed,
+    Object? forChild = freezed,
+    Object? relatedBookings = freezed,
   }) {
     return _then(_$HomUpcomingClassImpl(
       classId: freezed == classId
           ? _value.classId
           : classId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scheduleId: freezed == scheduleId
+          ? _value.scheduleId
+          : scheduleId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bookingId: freezed == bookingId
+          ? _value.bookingId
+          : bookingId // ignore: cast_nullable_to_non_nullable
               as String?,
       className: freezed == className
           ? _value.className
@@ -2413,6 +2679,10 @@ class __$$HomUpcomingClassImplCopyWithImpl<$Res>
           ? _value.branchAddress
           : branchAddress // ignore: cast_nullable_to_non_nullable
               as String?,
+      categoryName: freezed == categoryName
+          ? _value.categoryName
+          : categoryName // ignore: cast_nullable_to_non_nullable
+              as String?,
       startTime: freezed == startTime
           ? _value.startTime
           : startTime // ignore: cast_nullable_to_non_nullable
@@ -2421,6 +2691,22 @@ class __$$HomUpcomingClassImplCopyWithImpl<$Res>
           ? _value.endTime
           : endTime // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      count: freezed == count
+          ? _value.count
+          : count // ignore: cast_nullable_to_non_nullable
+              as int?,
+      distance: freezed == distance
+          ? _value.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as String?,
+      forChild: freezed == forChild
+          ? _value.forChild
+          : forChild // ignore: cast_nullable_to_non_nullable
+              as HomChildData?,
+      relatedBookings: freezed == relatedBookings
+          ? _value._relatedBookings
+          : relatedBookings // ignore: cast_nullable_to_non_nullable
+              as List<HomRelatedBooking>?,
     ));
   }
 }
@@ -2431,11 +2717,19 @@ class __$$HomUpcomingClassImplCopyWithImpl<$Res>
 class _$HomUpcomingClassImpl implements _HomUpcomingClass {
   const _$HomUpcomingClassImpl(
       {this.classId,
+      this.scheduleId,
+      this.bookingId,
       this.className,
       this.branchName,
       this.branchAddress,
+      this.categoryName,
       this.startTime,
-      this.endTime});
+      this.endTime,
+      this.count,
+      this.distance,
+      this.forChild,
+      final List<HomRelatedBooking>? relatedBookings})
+      : _relatedBookings = relatedBookings;
 
   factory _$HomUpcomingClassImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomUpcomingClassImplFromJson(json);
@@ -2443,19 +2737,40 @@ class _$HomUpcomingClassImpl implements _HomUpcomingClass {
   @override
   final String? classId;
   @override
+  final String? scheduleId;
+  @override
+  final String? bookingId;
+  @override
   final String? className;
   @override
   final String? branchName;
   @override
   final String? branchAddress;
   @override
+  final String? categoryName;
+  @override
   final DateTime? startTime;
   @override
   final DateTime? endTime;
+  @override
+  final int? count;
+  @override
+  final String? distance;
+  @override
+  final HomChildData? forChild;
+  final List<HomRelatedBooking>? _relatedBookings;
+  @override
+  List<HomRelatedBooking>? get relatedBookings {
+    final value = _relatedBookings;
+    if (value == null) return null;
+    if (_relatedBookings is EqualUnmodifiableListView) return _relatedBookings;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'HomUpcomingClass(classId: $classId, className: $className, branchName: $branchName, branchAddress: $branchAddress, startTime: $startTime, endTime: $endTime)';
+    return 'HomUpcomingClass(classId: $classId, scheduleId: $scheduleId, bookingId: $bookingId, className: $className, branchName: $branchName, branchAddress: $branchAddress, categoryName: $categoryName, startTime: $startTime, endTime: $endTime, count: $count, distance: $distance, forChild: $forChild, relatedBookings: $relatedBookings)';
   }
 
   @override
@@ -2464,21 +2779,47 @@ class _$HomUpcomingClassImpl implements _HomUpcomingClass {
         (other.runtimeType == runtimeType &&
             other is _$HomUpcomingClassImpl &&
             (identical(other.classId, classId) || other.classId == classId) &&
+            (identical(other.scheduleId, scheduleId) ||
+                other.scheduleId == scheduleId) &&
+            (identical(other.bookingId, bookingId) ||
+                other.bookingId == bookingId) &&
             (identical(other.className, className) ||
                 other.className == className) &&
             (identical(other.branchName, branchName) ||
                 other.branchName == branchName) &&
             (identical(other.branchAddress, branchAddress) ||
                 other.branchAddress == branchAddress) &&
+            (identical(other.categoryName, categoryName) ||
+                other.categoryName == categoryName) &&
             (identical(other.startTime, startTime) ||
                 other.startTime == startTime) &&
-            (identical(other.endTime, endTime) || other.endTime == endTime));
+            (identical(other.endTime, endTime) || other.endTime == endTime) &&
+            (identical(other.count, count) || other.count == count) &&
+            (identical(other.distance, distance) ||
+                other.distance == distance) &&
+            (identical(other.forChild, forChild) ||
+                other.forChild == forChild) &&
+            const DeepCollectionEquality()
+                .equals(other._relatedBookings, _relatedBookings));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, classId, className, branchName,
-      branchAddress, startTime, endTime);
+  int get hashCode => Object.hash(
+      runtimeType,
+      classId,
+      scheduleId,
+      bookingId,
+      className,
+      branchName,
+      branchAddress,
+      categoryName,
+      startTime,
+      endTime,
+      count,
+      distance,
+      forChild,
+      const DeepCollectionEquality().hash(_relatedBookings));
 
   @JsonKey(ignore: true)
   @override
@@ -2498,11 +2839,18 @@ class _$HomUpcomingClassImpl implements _HomUpcomingClass {
 abstract class _HomUpcomingClass implements HomUpcomingClass {
   const factory _HomUpcomingClass(
       {final String? classId,
+      final String? scheduleId,
+      final String? bookingId,
       final String? className,
       final String? branchName,
       final String? branchAddress,
+      final String? categoryName,
       final DateTime? startTime,
-      final DateTime? endTime}) = _$HomUpcomingClassImpl;
+      final DateTime? endTime,
+      final int? count,
+      final String? distance,
+      final HomChildData? forChild,
+      final List<HomRelatedBooking>? relatedBookings}) = _$HomUpcomingClassImpl;
 
   factory _HomUpcomingClass.fromJson(Map<String, dynamic> json) =
       _$HomUpcomingClassImpl.fromJson;
@@ -2510,18 +2858,756 @@ abstract class _HomUpcomingClass implements HomUpcomingClass {
   @override
   String? get classId;
   @override
+  String? get scheduleId;
+  @override
+  String? get bookingId;
+  @override
   String? get className;
   @override
   String? get branchName;
   @override
   String? get branchAddress;
   @override
+  String? get categoryName;
+  @override
   DateTime? get startTime;
   @override
   DateTime? get endTime;
   @override
+  int? get count;
+  @override
+  String? get distance;
+  @override
+  HomChildData? get forChild;
+  @override
+  List<HomRelatedBooking>? get relatedBookings;
+  @override
   @JsonKey(ignore: true)
   _$$HomUpcomingClassImplCopyWith<_$HomUpcomingClassImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+HomChildData _$HomChildDataFromJson(Map<String, dynamic> json) {
+  return _HomChildData.fromJson(json);
+}
+
+/// @nodoc
+mixin _$HomChildData {
+  String? get id => throw _privateConstructorUsedError;
+  String? get parentId => throw _privateConstructorUsedError;
+  String? get firstName => throw _privateConstructorUsedError;
+  String? get lastName => throw _privateConstructorUsedError;
+  String? get type => throw _privateConstructorUsedError;
+  int? get age => throw _privateConstructorUsedError;
+  String? get childAgeType => throw _privateConstructorUsedError;
+  bool? get isEligible => throw _privateConstructorUsedError;
+  bool? get hasPhoto => throw _privateConstructorUsedError;
+  bool? get isVerified => throw _privateConstructorUsedError;
+  String? get createdAt => throw _privateConstructorUsedError;
+  String? get updatedAt => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $HomChildDataCopyWith<HomChildData> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $HomChildDataCopyWith<$Res> {
+  factory $HomChildDataCopyWith(
+          HomChildData value, $Res Function(HomChildData) then) =
+      _$HomChildDataCopyWithImpl<$Res, HomChildData>;
+  @useResult
+  $Res call(
+      {String? id,
+      String? parentId,
+      String? firstName,
+      String? lastName,
+      String? type,
+      int? age,
+      String? childAgeType,
+      bool? isEligible,
+      bool? hasPhoto,
+      bool? isVerified,
+      String? createdAt,
+      String? updatedAt});
+}
+
+/// @nodoc
+class _$HomChildDataCopyWithImpl<$Res, $Val extends HomChildData>
+    implements $HomChildDataCopyWith<$Res> {
+  _$HomChildDataCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = freezed,
+    Object? parentId = freezed,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
+    Object? type = freezed,
+    Object? age = freezed,
+    Object? childAgeType = freezed,
+    Object? isEligible = freezed,
+    Object? hasPhoto = freezed,
+    Object? isVerified = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
+  }) {
+    return _then(_value.copyWith(
+      id: freezed == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String?,
+      parentId: freezed == parentId
+          ? _value.parentId
+          : parentId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      firstName: freezed == firstName
+          ? _value.firstName
+          : firstName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastName: freezed == lastName
+          ? _value.lastName
+          : lastName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      age: freezed == age
+          ? _value.age
+          : age // ignore: cast_nullable_to_non_nullable
+              as int?,
+      childAgeType: freezed == childAgeType
+          ? _value.childAgeType
+          : childAgeType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isEligible: freezed == isEligible
+          ? _value.isEligible
+          : isEligible // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isVerified: freezed == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$HomChildDataImplCopyWith<$Res>
+    implements $HomChildDataCopyWith<$Res> {
+  factory _$$HomChildDataImplCopyWith(
+          _$HomChildDataImpl value, $Res Function(_$HomChildDataImpl) then) =
+      __$$HomChildDataImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String? id,
+      String? parentId,
+      String? firstName,
+      String? lastName,
+      String? type,
+      int? age,
+      String? childAgeType,
+      bool? isEligible,
+      bool? hasPhoto,
+      bool? isVerified,
+      String? createdAt,
+      String? updatedAt});
+}
+
+/// @nodoc
+class __$$HomChildDataImplCopyWithImpl<$Res>
+    extends _$HomChildDataCopyWithImpl<$Res, _$HomChildDataImpl>
+    implements _$$HomChildDataImplCopyWith<$Res> {
+  __$$HomChildDataImplCopyWithImpl(
+      _$HomChildDataImpl _value, $Res Function(_$HomChildDataImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = freezed,
+    Object? parentId = freezed,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
+    Object? type = freezed,
+    Object? age = freezed,
+    Object? childAgeType = freezed,
+    Object? isEligible = freezed,
+    Object? hasPhoto = freezed,
+    Object? isVerified = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
+  }) {
+    return _then(_$HomChildDataImpl(
+      id: freezed == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String?,
+      parentId: freezed == parentId
+          ? _value.parentId
+          : parentId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      firstName: freezed == firstName
+          ? _value.firstName
+          : firstName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastName: freezed == lastName
+          ? _value.lastName
+          : lastName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      age: freezed == age
+          ? _value.age
+          : age // ignore: cast_nullable_to_non_nullable
+              as int?,
+      childAgeType: freezed == childAgeType
+          ? _value.childAgeType
+          : childAgeType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isEligible: freezed == isEligible
+          ? _value.isEligible
+          : isEligible // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isVerified: freezed == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _$HomChildDataImpl implements _HomChildData {
+  const _$HomChildDataImpl(
+      {this.id,
+      this.parentId,
+      this.firstName,
+      this.lastName,
+      this.type,
+      this.age,
+      this.childAgeType,
+      this.isEligible,
+      this.hasPhoto,
+      this.isVerified,
+      this.createdAt,
+      this.updatedAt});
+
+  factory _$HomChildDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$HomChildDataImplFromJson(json);
+
+  @override
+  final String? id;
+  @override
+  final String? parentId;
+  @override
+  final String? firstName;
+  @override
+  final String? lastName;
+  @override
+  final String? type;
+  @override
+  final int? age;
+  @override
+  final String? childAgeType;
+  @override
+  final bool? isEligible;
+  @override
+  final bool? hasPhoto;
+  @override
+  final bool? isVerified;
+  @override
+  final String? createdAt;
+  @override
+  final String? updatedAt;
+
+  @override
+  String toString() {
+    return 'HomChildData(id: $id, parentId: $parentId, firstName: $firstName, lastName: $lastName, type: $type, age: $age, childAgeType: $childAgeType, isEligible: $isEligible, hasPhoto: $hasPhoto, isVerified: $isVerified, createdAt: $createdAt, updatedAt: $updatedAt)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$HomChildDataImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.parentId, parentId) ||
+                other.parentId == parentId) &&
+            (identical(other.firstName, firstName) ||
+                other.firstName == firstName) &&
+            (identical(other.lastName, lastName) ||
+                other.lastName == lastName) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.age, age) || other.age == age) &&
+            (identical(other.childAgeType, childAgeType) ||
+                other.childAgeType == childAgeType) &&
+            (identical(other.isEligible, isEligible) ||
+                other.isEligible == isEligible) &&
+            (identical(other.hasPhoto, hasPhoto) ||
+                other.hasPhoto == hasPhoto) &&
+            (identical(other.isVerified, isVerified) ||
+                other.isVerified == isVerified) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.updatedAt, updatedAt) ||
+                other.updatedAt == updatedAt));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      parentId,
+      firstName,
+      lastName,
+      type,
+      age,
+      childAgeType,
+      isEligible,
+      hasPhoto,
+      isVerified,
+      createdAt,
+      updatedAt);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$HomChildDataImplCopyWith<_$HomChildDataImpl> get copyWith =>
+      __$$HomChildDataImplCopyWithImpl<_$HomChildDataImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$HomChildDataImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _HomChildData implements HomChildData {
+  const factory _HomChildData(
+      {final String? id,
+      final String? parentId,
+      final String? firstName,
+      final String? lastName,
+      final String? type,
+      final int? age,
+      final String? childAgeType,
+      final bool? isEligible,
+      final bool? hasPhoto,
+      final bool? isVerified,
+      final String? createdAt,
+      final String? updatedAt}) = _$HomChildDataImpl;
+
+  factory _HomChildData.fromJson(Map<String, dynamic> json) =
+      _$HomChildDataImpl.fromJson;
+
+  @override
+  String? get id;
+  @override
+  String? get parentId;
+  @override
+  String? get firstName;
+  @override
+  String? get lastName;
+  @override
+  String? get type;
+  @override
+  int? get age;
+  @override
+  String? get childAgeType;
+  @override
+  bool? get isEligible;
+  @override
+  bool? get hasPhoto;
+  @override
+  bool? get isVerified;
+  @override
+  String? get createdAt;
+  @override
+  String? get updatedAt;
+  @override
+  @JsonKey(ignore: true)
+  _$$HomChildDataImplCopyWith<_$HomChildDataImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+HomRelatedBooking _$HomRelatedBookingFromJson(Map<String, dynamic> json) {
+  return _HomRelatedBooking.fromJson(json);
+}
+
+/// @nodoc
+mixin _$HomRelatedBooking {
+  String? get id => throw _privateConstructorUsedError;
+  String? get scheduleId => throw _privateConstructorUsedError;
+  String? get childId => throw _privateConstructorUsedError;
+  String? get bookingStatus => throw _privateConstructorUsedError;
+  num? get chargedCoinAmount => throw _privateConstructorUsedError;
+  bool? get isTrialBooking => throw _privateConstructorUsedError;
+  String? get attendanceStatus => throw _privateConstructorUsedError;
+  String? get createdAt => throw _privateConstructorUsedError;
+  String? get updatedAt => throw _privateConstructorUsedError;
+  String? get deletedAt => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $HomRelatedBookingCopyWith<HomRelatedBooking> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $HomRelatedBookingCopyWith<$Res> {
+  factory $HomRelatedBookingCopyWith(
+          HomRelatedBooking value, $Res Function(HomRelatedBooking) then) =
+      _$HomRelatedBookingCopyWithImpl<$Res, HomRelatedBooking>;
+  @useResult
+  $Res call(
+      {String? id,
+      String? scheduleId,
+      String? childId,
+      String? bookingStatus,
+      num? chargedCoinAmount,
+      bool? isTrialBooking,
+      String? attendanceStatus,
+      String? createdAt,
+      String? updatedAt,
+      String? deletedAt});
+}
+
+/// @nodoc
+class _$HomRelatedBookingCopyWithImpl<$Res, $Val extends HomRelatedBooking>
+    implements $HomRelatedBookingCopyWith<$Res> {
+  _$HomRelatedBookingCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = freezed,
+    Object? scheduleId = freezed,
+    Object? childId = freezed,
+    Object? bookingStatus = freezed,
+    Object? chargedCoinAmount = freezed,
+    Object? isTrialBooking = freezed,
+    Object? attendanceStatus = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
+    Object? deletedAt = freezed,
+  }) {
+    return _then(_value.copyWith(
+      id: freezed == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scheduleId: freezed == scheduleId
+          ? _value.scheduleId
+          : scheduleId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      childId: freezed == childId
+          ? _value.childId
+          : childId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bookingStatus: freezed == bookingStatus
+          ? _value.bookingStatus
+          : bookingStatus // ignore: cast_nullable_to_non_nullable
+              as String?,
+      chargedCoinAmount: freezed == chargedCoinAmount
+          ? _value.chargedCoinAmount
+          : chargedCoinAmount // ignore: cast_nullable_to_non_nullable
+              as num?,
+      isTrialBooking: freezed == isTrialBooking
+          ? _value.isTrialBooking
+          : isTrialBooking // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      attendanceStatus: freezed == attendanceStatus
+          ? _value.attendanceStatus
+          : attendanceStatus // ignore: cast_nullable_to_non_nullable
+              as String?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$HomRelatedBookingImplCopyWith<$Res>
+    implements $HomRelatedBookingCopyWith<$Res> {
+  factory _$$HomRelatedBookingImplCopyWith(_$HomRelatedBookingImpl value,
+          $Res Function(_$HomRelatedBookingImpl) then) =
+      __$$HomRelatedBookingImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String? id,
+      String? scheduleId,
+      String? childId,
+      String? bookingStatus,
+      num? chargedCoinAmount,
+      bool? isTrialBooking,
+      String? attendanceStatus,
+      String? createdAt,
+      String? updatedAt,
+      String? deletedAt});
+}
+
+/// @nodoc
+class __$$HomRelatedBookingImplCopyWithImpl<$Res>
+    extends _$HomRelatedBookingCopyWithImpl<$Res, _$HomRelatedBookingImpl>
+    implements _$$HomRelatedBookingImplCopyWith<$Res> {
+  __$$HomRelatedBookingImplCopyWithImpl(_$HomRelatedBookingImpl _value,
+      $Res Function(_$HomRelatedBookingImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = freezed,
+    Object? scheduleId = freezed,
+    Object? childId = freezed,
+    Object? bookingStatus = freezed,
+    Object? chargedCoinAmount = freezed,
+    Object? isTrialBooking = freezed,
+    Object? attendanceStatus = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
+    Object? deletedAt = freezed,
+  }) {
+    return _then(_$HomRelatedBookingImpl(
+      id: freezed == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scheduleId: freezed == scheduleId
+          ? _value.scheduleId
+          : scheduleId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      childId: freezed == childId
+          ? _value.childId
+          : childId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bookingStatus: freezed == bookingStatus
+          ? _value.bookingStatus
+          : bookingStatus // ignore: cast_nullable_to_non_nullable
+              as String?,
+      chargedCoinAmount: freezed == chargedCoinAmount
+          ? _value.chargedCoinAmount
+          : chargedCoinAmount // ignore: cast_nullable_to_non_nullable
+              as num?,
+      isTrialBooking: freezed == isTrialBooking
+          ? _value.isTrialBooking
+          : isTrialBooking // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      attendanceStatus: freezed == attendanceStatus
+          ? _value.attendanceStatus
+          : attendanceStatus // ignore: cast_nullable_to_non_nullable
+              as String?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _$HomRelatedBookingImpl implements _HomRelatedBooking {
+  const _$HomRelatedBookingImpl(
+      {this.id,
+      this.scheduleId,
+      this.childId,
+      this.bookingStatus,
+      this.chargedCoinAmount,
+      this.isTrialBooking,
+      this.attendanceStatus,
+      this.createdAt,
+      this.updatedAt,
+      this.deletedAt});
+
+  factory _$HomRelatedBookingImpl.fromJson(Map<String, dynamic> json) =>
+      _$$HomRelatedBookingImplFromJson(json);
+
+  @override
+  final String? id;
+  @override
+  final String? scheduleId;
+  @override
+  final String? childId;
+  @override
+  final String? bookingStatus;
+  @override
+  final num? chargedCoinAmount;
+  @override
+  final bool? isTrialBooking;
+  @override
+  final String? attendanceStatus;
+  @override
+  final String? createdAt;
+  @override
+  final String? updatedAt;
+  @override
+  final String? deletedAt;
+
+  @override
+  String toString() {
+    return 'HomRelatedBooking(id: $id, scheduleId: $scheduleId, childId: $childId, bookingStatus: $bookingStatus, chargedCoinAmount: $chargedCoinAmount, isTrialBooking: $isTrialBooking, attendanceStatus: $attendanceStatus, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$HomRelatedBookingImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.scheduleId, scheduleId) ||
+                other.scheduleId == scheduleId) &&
+            (identical(other.childId, childId) || other.childId == childId) &&
+            (identical(other.bookingStatus, bookingStatus) ||
+                other.bookingStatus == bookingStatus) &&
+            (identical(other.chargedCoinAmount, chargedCoinAmount) ||
+                other.chargedCoinAmount == chargedCoinAmount) &&
+            (identical(other.isTrialBooking, isTrialBooking) ||
+                other.isTrialBooking == isTrialBooking) &&
+            (identical(other.attendanceStatus, attendanceStatus) ||
+                other.attendanceStatus == attendanceStatus) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.updatedAt, updatedAt) ||
+                other.updatedAt == updatedAt) &&
+            (identical(other.deletedAt, deletedAt) ||
+                other.deletedAt == deletedAt));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      scheduleId,
+      childId,
+      bookingStatus,
+      chargedCoinAmount,
+      isTrialBooking,
+      attendanceStatus,
+      createdAt,
+      updatedAt,
+      deletedAt);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$HomRelatedBookingImplCopyWith<_$HomRelatedBookingImpl> get copyWith =>
+      __$$HomRelatedBookingImplCopyWithImpl<_$HomRelatedBookingImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$HomRelatedBookingImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _HomRelatedBooking implements HomRelatedBooking {
+  const factory _HomRelatedBooking(
+      {final String? id,
+      final String? scheduleId,
+      final String? childId,
+      final String? bookingStatus,
+      final num? chargedCoinAmount,
+      final bool? isTrialBooking,
+      final String? attendanceStatus,
+      final String? createdAt,
+      final String? updatedAt,
+      final String? deletedAt}) = _$HomRelatedBookingImpl;
+
+  factory _HomRelatedBooking.fromJson(Map<String, dynamic> json) =
+      _$HomRelatedBookingImpl.fromJson;
+
+  @override
+  String? get id;
+  @override
+  String? get scheduleId;
+  @override
+  String? get childId;
+  @override
+  String? get bookingStatus;
+  @override
+  num? get chargedCoinAmount;
+  @override
+  bool? get isTrialBooking;
+  @override
+  String? get attendanceStatus;
+  @override
+  String? get createdAt;
+  @override
+  String? get updatedAt;
+  @override
+  String? get deletedAt;
+  @override
+  @JsonKey(ignore: true)
+  _$$HomRelatedBookingImplCopyWith<_$HomRelatedBookingImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -2538,7 +3624,10 @@ mixin _$HomBranch {
   double? get latitude => throw _privateConstructorUsedError;
   String? get partnerId => throw _privateConstructorUsedError;
   String? get managerId => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
+  double? get distance => throw _privateConstructorUsedError;
   bool? get isActive => throw _privateConstructorUsedError;
+  bool? get hasPhoto => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -2562,7 +3651,10 @@ abstract class $HomBranchCopyWith<$Res> {
       double? latitude,
       String? partnerId,
       String? managerId,
+      String? description,
+      double? distance,
       bool? isActive,
+      bool? hasPhoto,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2588,7 +3680,10 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
     Object? latitude = freezed,
     Object? partnerId = freezed,
     Object? managerId = freezed,
+    Object? description = freezed,
+    Object? distance = freezed,
     Object? isActive = freezed,
+    Object? hasPhoto = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2622,9 +3717,21 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
           ? _value.managerId
           : managerId // ignore: cast_nullable_to_non_nullable
               as String?,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      distance: freezed == distance
+          ? _value.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double?,
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
               as bool?,
       createdAt: freezed == createdAt
           ? _value.createdAt
@@ -2658,7 +3765,10 @@ abstract class _$$HomBranchImplCopyWith<$Res>
       double? latitude,
       String? partnerId,
       String? managerId,
+      String? description,
+      double? distance,
       bool? isActive,
+      bool? hasPhoto,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2682,7 +3792,10 @@ class __$$HomBranchImplCopyWithImpl<$Res>
     Object? latitude = freezed,
     Object? partnerId = freezed,
     Object? managerId = freezed,
+    Object? description = freezed,
+    Object? distance = freezed,
     Object? isActive = freezed,
+    Object? hasPhoto = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2716,9 +3829,21 @@ class __$$HomBranchImplCopyWithImpl<$Res>
           ? _value.managerId
           : managerId // ignore: cast_nullable_to_non_nullable
               as String?,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      distance: freezed == distance
+          ? _value.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double?,
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      hasPhoto: freezed == hasPhoto
+          ? _value.hasPhoto
+          : hasPhoto // ignore: cast_nullable_to_non_nullable
               as bool?,
       createdAt: freezed == createdAt
           ? _value.createdAt
@@ -2748,7 +3873,10 @@ class _$HomBranchImpl implements _HomBranch {
       this.latitude,
       this.partnerId,
       this.managerId,
+      this.description,
+      this.distance,
       this.isActive,
+      this.hasPhoto,
       this.createdAt,
       this.updatedAt,
       this.deletedAt});
@@ -2771,7 +3899,13 @@ class _$HomBranchImpl implements _HomBranch {
   @override
   final String? managerId;
   @override
+  final String? description;
+  @override
+  final double? distance;
+  @override
   final bool? isActive;
+  @override
+  final bool? hasPhoto;
   @override
   final String? createdAt;
   @override
@@ -2781,7 +3915,7 @@ class _$HomBranchImpl implements _HomBranch {
 
   @override
   String toString() {
-    return 'HomBranch(id: $id, title: $title, address: $address, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomBranch(id: $id, title: $title, address: $address, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, description: $description, distance: $distance, isActive: $isActive, hasPhoto: $hasPhoto, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2800,8 +3934,14 @@ class _$HomBranchImpl implements _HomBranch {
                 other.partnerId == partnerId) &&
             (identical(other.managerId, managerId) ||
                 other.managerId == managerId) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.distance, distance) ||
+                other.distance == distance) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
+            (identical(other.hasPhoto, hasPhoto) ||
+                other.hasPhoto == hasPhoto) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -2821,7 +3961,10 @@ class _$HomBranchImpl implements _HomBranch {
       latitude,
       partnerId,
       managerId,
+      description,
+      distance,
       isActive,
+      hasPhoto,
       createdAt,
       updatedAt,
       deletedAt);
@@ -2849,7 +3992,10 @@ abstract class _HomBranch implements HomBranch {
       final double? latitude,
       final String? partnerId,
       final String? managerId,
+      final String? description,
+      final double? distance,
       final bool? isActive,
+      final bool? hasPhoto,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomBranchImpl;
@@ -2872,7 +4018,13 @@ abstract class _HomBranch implements HomBranch {
   @override
   String? get managerId;
   @override
+  String? get description;
+  @override
+  double? get distance;
+  @override
   bool? get isActive;
+  @override
+  bool? get hasPhoto;
   @override
   String? get createdAt;
   @override

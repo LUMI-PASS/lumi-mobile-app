@@ -1,16 +1,8 @@
-import 'dart:io';
-import 'dart:math';
-
-import 'package:auto_route/auto_route.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
-import 'package:lumi_pass/data/api_model/register/register_model.dart';
 import 'package:lumi_pass/data/base_model/token/tokens.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
-
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable(as: AuthRepository)
@@ -19,11 +11,6 @@ class AuthRepositoryImpl extends AuthRepository {
 
   final AuthApi _api;
   final Storage _storage;
-
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-  late String? token;
 
   @override
   Future<void> logout() async {
@@ -49,6 +36,12 @@ class AuthRepositoryImpl extends AuthRepository {
     final response = await _api.verify(phoneNumber, code, isReg);
     _storage.tokens.set(Tokens(access: response.data['data']['token']));
 
+    return response.data['success'] as bool;
+  }
+
+  @override
+  Future<bool> resendOtp(String phoneNumber) async {
+    final response = await _api.resendOtp(phone: phoneNumber);
     return response.data['success'] as bool;
   }
 

@@ -8,6 +8,7 @@ class RegisterBuildable with _$RegisterBuildable {
     @Default(false) bool isSelected,
     @Default(false) bool isLoading,
     @Default(null) String? errorPhone,
+    @Default(null) String? selectedDistrict,
   }) = _RegisterBuildable;
 }
 

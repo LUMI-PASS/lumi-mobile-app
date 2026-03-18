@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
@@ -18,7 +17,7 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
 
   void timerChange() {
     timer?.cancel();
-    build((buildable) => buildable.copyWith(timer: 59));
+    build((buildable) => buildable.copyWith(timer: 270));
     timer = Timer.periodic(
       const Duration(seconds: 1),
       (_) {
@@ -49,39 +48,16 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
         ),
         onErrorData: (error) => display.error(error),
         buildOnError: (error) {
-          final status = (error as DioException).response?.data['message'];
           return buildable.copyWith(error: Strings.invalidCode);
         },
         buildOnDone: () => buildable.copyWith(loading: false),
       );
 
-  Future<void> checkPhone(String phoneOrMail, bool isRegister) => callable(
-        future: _repo.checkNumber(phoneOrMail),
+  Future<void> resendOtp(String phoneNumber) => callable(
+        future: _repo.resendOtp(phoneNumber.replaceAll("-", "")),
         buildOnStart: () => buildable.copyWith(resetLoading: true),
-        invokeOnData: (data) {
-          return const VerifyListenable(
-            VerifyEffect.success,
-          );
-        },
+        onData: (data) => timerChange(),
         onErrorData: (error) => display.error(error),
         buildOnDone: () => buildable.copyWith(resetLoading: false),
       );
 }
-
-//
-//   Future<void> registerVerify(String phone, String code) => callable(
-//         future: _repo.verifyCode(phone, code),
-//         buildOnStart: () => buildable.copyWith(loading: true),
-//         invokeOnData: (data) => VerifyListenable(VerifyEffect.register),
-//         onErrorData: (error) => display.error(error, ),
-//         buildOnDone: () => buildable.copyWith(loading: false),
-//       );
-//
-//   Future<void> forgetPasswordVerify(String email, String code) => callable(
-//         future: _repo.resetPasswordConfirm(email, code),
-//         buildOnStart: () => buildable.copyWith(loading: true),
-//         invokeOnData: (data) => VerifyListenable(VerifyEffect.password),
-//         onErrorData: (error) => display.error(error,),
-//         buildOnDone: () => buildable.copyWith(loading: false),
-//       );
-//

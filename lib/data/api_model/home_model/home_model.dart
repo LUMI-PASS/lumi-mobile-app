@@ -87,8 +87,10 @@ class HomCategory with _$HomCategory {
     String? id,
     String? title,
     String? description,
+    bool? hasPhoto,
     String? createdAt,
     String? updatedAt,
+    String? deletedAt,
   }) = _HomCategory;
 
   factory HomCategory.fromJson(Map<String, dynamic> json) =>
@@ -130,11 +132,17 @@ class HomClass with _$HomClass {
     String? description,
     int? duration,
     num? price,
+    num? trialPrice,
+    bool? trialEnabled,
     int? minAge,
     int? maxAge,
+    String? gender,
     bool? isActive,
+    bool? hasPhoto,
+    double? distance,
     String? createdAt,
     String? updatedAt,
+    String? deletedAt,
   }) = _HomClass;
 
   factory HomClass.fromJson(Map<String, dynamic> json) =>
@@ -146,15 +154,64 @@ class HomUpcomingClass with _$HomUpcomingClass {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory HomUpcomingClass({
     String? classId,
+    String? scheduleId,
+    String? bookingId,
     String? className,
     String? branchName,
     String? branchAddress,
+    String? categoryName,
     DateTime? startTime,
     DateTime? endTime,
+    int? count,
+    String? distance,
+    HomChildData? forChild,
+    List<HomRelatedBooking>? relatedBookings,
   }) = _HomUpcomingClass;
 
   factory HomUpcomingClass.fromJson(Map<String, dynamic> json) =>
       _$HomUpcomingClassFromJson(json);
+}
+
+@freezed
+class HomChildData with _$HomChildData {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory HomChildData({
+    String? id,
+    String? parentId,
+    String? firstName,
+    String? lastName,
+    String? type,
+    int? age,
+    String? childAgeType,
+    bool? isEligible,
+    bool? hasPhoto,
+    bool? isVerified,
+    String? createdAt,
+    String? updatedAt,
+  }) = _HomChildData;
+
+  factory HomChildData.fromJson(Map<String, dynamic> json) =>
+      _$HomChildDataFromJson(json);
+}
+
+@freezed
+class HomRelatedBooking with _$HomRelatedBooking {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory HomRelatedBooking({
+    String? id,
+    String? scheduleId,
+    String? childId,
+    String? bookingStatus,
+    num? chargedCoinAmount,
+    bool? isTrialBooking,
+    String? attendanceStatus,
+    String? createdAt,
+    String? updatedAt,
+    String? deletedAt,
+  }) = _HomRelatedBooking;
+
+  factory HomRelatedBooking.fromJson(Map<String, dynamic> json) =>
+      _$HomRelatedBookingFromJson(json);
 }
 
 @freezed
@@ -168,7 +225,10 @@ class HomBranch with _$HomBranch {
     double? latitude,
     String? partnerId,
     String? managerId,
+    String? description,
+    double? distance,
     bool? isActive,
+    bool? hasPhoto,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,

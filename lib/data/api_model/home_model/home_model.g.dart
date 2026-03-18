@@ -128,8 +128,10 @@ _$HomCategoryImpl _$$HomCategoryImplFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String?,
       title: json['title'] as String?,
       description: json['description'] as String?,
+      hasPhoto: json['has_photo'] as bool?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
+      deletedAt: json['deleted_at'] as String?,
     );
 
 Map<String, dynamic> _$$HomCategoryImplToJson(_$HomCategoryImpl instance) =>
@@ -137,8 +139,10 @@ Map<String, dynamic> _$$HomCategoryImplToJson(_$HomCategoryImpl instance) =>
       'id': instance.id,
       'title': instance.title,
       'description': instance.description,
+      'has_photo': instance.hasPhoto,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
+      'deleted_at': instance.deletedAt,
     };
 
 _$HomClassPageImpl _$$HomClassPageImplFromJson(Map<String, dynamic> json) =>
@@ -185,11 +189,17 @@ _$HomClassImpl _$$HomClassImplFromJson(Map<String, dynamic> json) =>
       description: json['description'] as String?,
       duration: (json['duration'] as num?)?.toInt(),
       price: json['price'] as num?,
+      trialPrice: json['trial_price'] as num?,
+      trialEnabled: json['trial_enabled'] as bool?,
       minAge: (json['min_age'] as num?)?.toInt(),
       maxAge: (json['max_age'] as num?)?.toInt(),
+      gender: json['gender'] as String?,
       isActive: json['is_active'] as bool?,
+      hasPhoto: json['has_photo'] as bool?,
+      distance: (json['distance'] as num?)?.toDouble(),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
+      deletedAt: json['deleted_at'] as String?,
     );
 
 Map<String, dynamic> _$$HomClassImplToJson(_$HomClassImpl instance) =>
@@ -201,37 +211,123 @@ Map<String, dynamic> _$$HomClassImplToJson(_$HomClassImpl instance) =>
       'description': instance.description,
       'duration': instance.duration,
       'price': instance.price,
+      'trial_price': instance.trialPrice,
+      'trial_enabled': instance.trialEnabled,
       'min_age': instance.minAge,
       'max_age': instance.maxAge,
+      'gender': instance.gender,
       'is_active': instance.isActive,
+      'has_photo': instance.hasPhoto,
+      'distance': instance.distance,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
+      'deleted_at': instance.deletedAt,
     };
 
 _$HomUpcomingClassImpl _$$HomUpcomingClassImplFromJson(
         Map<String, dynamic> json) =>
     _$HomUpcomingClassImpl(
       classId: json['class_id'] as String?,
+      scheduleId: json['schedule_id'] as String?,
+      bookingId: json['booking_id'] as String?,
       className: json['class_name'] as String?,
       branchName: json['branch_name'] as String?,
       branchAddress: json['branch_address'] as String?,
+      categoryName: json['category_name'] as String?,
       startTime: json['start_time'] == null
           ? null
           : DateTime.parse(json['start_time'] as String),
       endTime: json['end_time'] == null
           ? null
           : DateTime.parse(json['end_time'] as String),
+      count: (json['count'] as num?)?.toInt(),
+      distance: json['distance'] as String?,
+      forChild: json['for_child'] == null
+          ? null
+          : HomChildData.fromJson(json['for_child'] as Map<String, dynamic>),
+      relatedBookings: (json['related_bookings'] as List<dynamic>?)
+          ?.map((e) => HomRelatedBooking.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$$HomUpcomingClassImplToJson(
         _$HomUpcomingClassImpl instance) =>
     <String, dynamic>{
       'class_id': instance.classId,
+      'schedule_id': instance.scheduleId,
+      'booking_id': instance.bookingId,
       'class_name': instance.className,
       'branch_name': instance.branchName,
       'branch_address': instance.branchAddress,
+      'category_name': instance.categoryName,
       'start_time': instance.startTime?.toIso8601String(),
       'end_time': instance.endTime?.toIso8601String(),
+      'count': instance.count,
+      'distance': instance.distance,
+      'for_child': instance.forChild,
+      'related_bookings': instance.relatedBookings,
+    };
+
+_$HomChildDataImpl _$$HomChildDataImplFromJson(Map<String, dynamic> json) =>
+    _$HomChildDataImpl(
+      id: json['id'] as String?,
+      parentId: json['parent_id'] as String?,
+      firstName: json['first_name'] as String?,
+      lastName: json['last_name'] as String?,
+      type: json['type'] as String?,
+      age: (json['age'] as num?)?.toInt(),
+      childAgeType: json['child_age_type'] as String?,
+      isEligible: json['is_eligible'] as bool?,
+      hasPhoto: json['has_photo'] as bool?,
+      isVerified: json['is_verified'] as bool?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+    );
+
+Map<String, dynamic> _$$HomChildDataImplToJson(_$HomChildDataImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'parent_id': instance.parentId,
+      'first_name': instance.firstName,
+      'last_name': instance.lastName,
+      'type': instance.type,
+      'age': instance.age,
+      'child_age_type': instance.childAgeType,
+      'is_eligible': instance.isEligible,
+      'has_photo': instance.hasPhoto,
+      'is_verified': instance.isVerified,
+      'created_at': instance.createdAt,
+      'updated_at': instance.updatedAt,
+    };
+
+_$HomRelatedBookingImpl _$$HomRelatedBookingImplFromJson(
+        Map<String, dynamic> json) =>
+    _$HomRelatedBookingImpl(
+      id: json['id'] as String?,
+      scheduleId: json['schedule_id'] as String?,
+      childId: json['child_id'] as String?,
+      bookingStatus: json['booking_status'] as String?,
+      chargedCoinAmount: json['charged_coin_amount'] as num?,
+      isTrialBooking: json['is_trial_booking'] as bool?,
+      attendanceStatus: json['attendance_status'] as String?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+      deletedAt: json['deleted_at'] as String?,
+    );
+
+Map<String, dynamic> _$$HomRelatedBookingImplToJson(
+        _$HomRelatedBookingImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'schedule_id': instance.scheduleId,
+      'child_id': instance.childId,
+      'booking_status': instance.bookingStatus,
+      'charged_coin_amount': instance.chargedCoinAmount,
+      'is_trial_booking': instance.isTrialBooking,
+      'attendance_status': instance.attendanceStatus,
+      'created_at': instance.createdAt,
+      'updated_at': instance.updatedAt,
+      'deleted_at': instance.deletedAt,
     };
 
 _$HomBranchImpl _$$HomBranchImplFromJson(Map<String, dynamic> json) =>
@@ -243,7 +339,10 @@ _$HomBranchImpl _$$HomBranchImplFromJson(Map<String, dynamic> json) =>
       latitude: (json['latitude'] as num?)?.toDouble(),
       partnerId: json['partner_id'] as String?,
       managerId: json['manager_id'] as String?,
+      description: json['description'] as String?,
+      distance: (json['distance'] as num?)?.toDouble(),
       isActive: json['is_active'] as bool?,
+      hasPhoto: json['has_photo'] as bool?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
@@ -258,7 +357,10 @@ Map<String, dynamic> _$$HomBranchImplToJson(_$HomBranchImpl instance) =>
       'latitude': instance.latitude,
       'partner_id': instance.partnerId,
       'manager_id': instance.managerId,
+      'description': instance.description,
+      'distance': instance.distance,
       'is_active': instance.isActive,
+      'has_photo': instance.hasPhoto,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
       'deleted_at': instance.deletedAt,

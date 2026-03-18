@@ -18,8 +18,24 @@ class HomeRepositoryImpl extends HomeRepository {
   HomeRepositoryImpl(this._api, this._storage);
 
   @override
-  Future<HomeModel> getHome() {
-    return _api.getHome().then((value) => HomeModel.fromJson(value.data));
+  Future<HomeModel> getHome({
+    int newClassesPage = 1,
+    int newClassesLimit = 10,
+    int categoryPage = 1,
+    int categoryLimit = 10,
+    int nearClassPage = 1,
+    int nearClassLimit = 10,
+  }) {
+    return _api
+        .getHome(
+          newClassesPage: newClassesPage,
+          newClassesLimit: newClassesLimit,
+          categoryPage: categoryPage,
+          categoryLimit: categoryLimit,
+          nearClassPage: nearClassPage,
+          nearClassLimit: nearClassLimit,
+        )
+        .then((value) => HomeModel.fromJson(value.data));
   }
 
   @override

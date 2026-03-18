@@ -141,7 +141,7 @@ class _$VerifyBuildableImpl implements _VerifyBuildable {
   const _$VerifyBuildableImpl(
       {this.loading = false,
       this.resetLoading = false,
-      this.timer = 59,
+      this.timer = 270,
       this.code = null,
       this.error = null});
 

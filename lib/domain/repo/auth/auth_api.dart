@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
-import 'package:lumi_pass/data/api_model/register/register_model.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
@@ -29,6 +28,10 @@ class AuthApi {
     required String phone,
   }) {
     return _dio.post('auth/check-number', data: {'phone_number': phone.trim()});
+  }
+
+  Future<Response> resendOtp({required String phone}) {
+    return _dio.post('auth/resend', data: {'phone_number': phone.trim()});
   }
 
   Future<Response> sendDeviceToken(String token) {

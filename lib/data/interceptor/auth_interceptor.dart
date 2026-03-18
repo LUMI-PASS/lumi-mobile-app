@@ -1,13 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:lumi_pass/data/base_model/token/tokens.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
-import 'package:lumi_pass/main.dart';
 import 'package:injectable/injectable.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:logger/web.dart';
-
-import '../../common/constants/constants.dart';
 
 @lazySingleton
 class AuthInterceptor extends QueuedInterceptor {

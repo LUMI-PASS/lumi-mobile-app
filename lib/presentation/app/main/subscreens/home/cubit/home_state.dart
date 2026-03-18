@@ -5,12 +5,23 @@ part 'home_state.freezed.dart';
 
 @freezed
 class HomeBuildable with _$HomeBuildable {
-  const factory HomeBuildable(
-      {@Default(false) bool isSelected,
-      @Default(false) bool isLoading,
-      @Default(false) bool success,
-      HomeModel? homeModel,
-      List<HomCategory>? categories}) = _HomeBuildable;
+  const factory HomeBuildable({
+    @Default(false) bool isSelected,
+    @Default(false) bool isLoading,
+    @Default(false) bool success,
+    HomeModel? homeModel,
+    List<HomCategory>? categories,
+    // Pagination for new classes
+    @Default([]) List<HomClass> newClassesList,
+    @Default(2) int newClassesPage,
+    @Default(false) bool isLoadingNewClasses,
+    @Default(true) bool hasMoreNewClasses,
+    // Pagination for near classes
+    @Default([]) List<HomClass> nearClassesList,
+    @Default(2) int nearClassesPage,
+    @Default(false) bool isLoadingNearClasses,
+    @Default(true) bool hasMoreNearClasses,
+  }) = _HomeBuildable;
 }
 
 @freezed

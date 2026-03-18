@@ -4,9 +4,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
-import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -37,6 +35,12 @@ class VerifyPage
 
   final storage = getIt<Storage>();
 
+  String _formatTimer(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
   @override
   void listener(BuildContext context, VerifyListenable state) {
     if (state.effect == VerifyEffect.success) {
@@ -66,13 +70,13 @@ class VerifyPage
             Center(
               child: BaseBox(
                 margin: const EdgeInsets.all(24),
-                backgroundColor: Color(0xFFA652C7).withOpacity(0.2),
+                backgroundColor: const Color(0xFFA652C7).withValues(alpha: 0.2),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    "Verofy phone number".s(24).w(500),
+                    "Verify phone number".s(24).w(500),
                     8.kh,
                     "We Have Sent Code To Your Phone Number"
                         .s(14)
@@ -82,22 +86,24 @@ class VerifyPage
                     phoneOrEmail.s(12).w(500),
                     16.kh,
                     CommonPinPut(
-                      onChanged: (text) => context
-                          .read<VerifyCubit>()
-                          .changeCode(int.parse(text)),
+                      onChanged: (text) {
+                        if (text.length == 4) {
+                          context
+                              .read<VerifyCubit>()
+                              .changeCode(int.tryParse(text));
+                        }
+                      },
                     ),
                     12.kh,
                     InkWell(
                         onTap: () {
                           if (state.timer == 0) {
-                            context.read<VerifyCubit>().timerChange();
-                            context.read<VerifyCubit>().checkPhone(
-                                phoneOrEmail.replaceAll("-", ""),
-                                verifyStatus == VerifyStatus.REGISTER);
+                            context.read<VerifyCubit>().resendOtp(
+                                phoneOrEmail.replaceAll("-", ""));
                           }
                         },
                         child: (state.timer != 0
-                                ? "00:${state.timer}"
+                                ? _formatTimer(state.timer)
                                 : "Resend code")
                             .s(14)
                             .w(600)

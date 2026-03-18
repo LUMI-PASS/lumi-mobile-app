@@ -19,6 +19,7 @@ mixin _$RegisterBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   String? get errorPhone => throw _privateConstructorUsedError;
+  String? get selectedDistrict => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $RegisterBuildableCopyWith<RegisterBuildable> get copyWith =>
@@ -31,7 +32,11 @@ abstract class $RegisterBuildableCopyWith<$Res> {
           RegisterBuildable value, $Res Function(RegisterBuildable) then) =
       _$RegisterBuildableCopyWithImpl<$Res, RegisterBuildable>;
   @useResult
-  $Res call({bool isSelected, bool isLoading, String? errorPhone});
+  $Res call(
+      {bool isSelected,
+      bool isLoading,
+      String? errorPhone,
+      String? selectedDistrict});
 }
 
 /// @nodoc
@@ -50,6 +55,7 @@ class _$RegisterBuildableCopyWithImpl<$Res, $Val extends RegisterBuildable>
     Object? isSelected = null,
     Object? isLoading = null,
     Object? errorPhone = freezed,
+    Object? selectedDistrict = freezed,
   }) {
     return _then(_value.copyWith(
       isSelected: null == isSelected
@@ -64,6 +70,10 @@ class _$RegisterBuildableCopyWithImpl<$Res, $Val extends RegisterBuildable>
           ? _value.errorPhone
           : errorPhone // ignore: cast_nullable_to_non_nullable
               as String?,
+      selectedDistrict: freezed == selectedDistrict
+          ? _value.selectedDistrict
+          : selectedDistrict // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -76,7 +86,11 @@ abstract class _$$RegisterBuildableImplCopyWith<$Res>
       __$$RegisterBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isSelected, bool isLoading, String? errorPhone});
+  $Res call(
+      {bool isSelected,
+      bool isLoading,
+      String? errorPhone,
+      String? selectedDistrict});
 }
 
 /// @nodoc
@@ -93,6 +107,7 @@ class __$$RegisterBuildableImplCopyWithImpl<$Res>
     Object? isSelected = null,
     Object? isLoading = null,
     Object? errorPhone = freezed,
+    Object? selectedDistrict = freezed,
   }) {
     return _then(_$RegisterBuildableImpl(
       isSelected: null == isSelected
@@ -107,6 +122,10 @@ class __$$RegisterBuildableImplCopyWithImpl<$Res>
           ? _value.errorPhone
           : errorPhone // ignore: cast_nullable_to_non_nullable
               as String?,
+      selectedDistrict: freezed == selectedDistrict
+          ? _value.selectedDistrict
+          : selectedDistrict // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -117,7 +136,8 @@ class _$RegisterBuildableImpl implements _RegisterBuildable {
   const _$RegisterBuildableImpl(
       {this.isSelected = false,
       this.isLoading = false,
-      this.errorPhone = null});
+      this.errorPhone = null,
+      this.selectedDistrict = null});
 
   @override
   @JsonKey()
@@ -128,10 +148,13 @@ class _$RegisterBuildableImpl implements _RegisterBuildable {
   @override
   @JsonKey()
   final String? errorPhone;
+  @override
+  @JsonKey()
+  final String? selectedDistrict;
 
   @override
   String toString() {
-    return 'RegisterBuildable(isSelected: $isSelected, isLoading: $isLoading, errorPhone: $errorPhone)';
+    return 'RegisterBuildable(isSelected: $isSelected, isLoading: $isLoading, errorPhone: $errorPhone, selectedDistrict: $selectedDistrict)';
   }
 
   @override
@@ -144,12 +167,14 @@ class _$RegisterBuildableImpl implements _RegisterBuildable {
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
             (identical(other.errorPhone, errorPhone) ||
-                other.errorPhone == errorPhone));
+                other.errorPhone == errorPhone) &&
+            (identical(other.selectedDistrict, selectedDistrict) ||
+                other.selectedDistrict == selectedDistrict));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isSelected, isLoading, errorPhone);
+  int get hashCode => Object.hash(
+      runtimeType, isSelected, isLoading, errorPhone, selectedDistrict);
 
   @JsonKey(ignore: true)
   @override
@@ -163,7 +188,8 @@ abstract class _RegisterBuildable implements RegisterBuildable {
   const factory _RegisterBuildable(
       {final bool isSelected,
       final bool isLoading,
-      final String? errorPhone}) = _$RegisterBuildableImpl;
+      final String? errorPhone,
+      final String? selectedDistrict}) = _$RegisterBuildableImpl;
 
   @override
   bool get isSelected;
@@ -171,6 +197,8 @@ abstract class _RegisterBuildable implements RegisterBuildable {
   bool get isLoading;
   @override
   String? get errorPhone;
+  @override
+  String? get selectedDistrict;
   @override
   @JsonKey(ignore: true)
   _$$RegisterBuildableImplCopyWith<_$RegisterBuildableImpl> get copyWith =>

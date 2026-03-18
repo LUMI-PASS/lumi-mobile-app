@@ -20,7 +20,17 @@ mixin _$HomeBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
   HomeModel? get homeModel => throw _privateConstructorUsedError;
-  List<HomCategory>? get categories => throw _privateConstructorUsedError;
+  List<HomCategory>? get categories =>
+      throw _privateConstructorUsedError; // Pagination for new classes
+  List<HomClass> get newClassesList => throw _privateConstructorUsedError;
+  int get newClassesPage => throw _privateConstructorUsedError;
+  bool get isLoadingNewClasses => throw _privateConstructorUsedError;
+  bool get hasMoreNewClasses =>
+      throw _privateConstructorUsedError; // Pagination for near classes
+  List<HomClass> get nearClassesList => throw _privateConstructorUsedError;
+  int get nearClassesPage => throw _privateConstructorUsedError;
+  bool get isLoadingNearClasses => throw _privateConstructorUsedError;
+  bool get hasMoreNearClasses => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $HomeBuildableCopyWith<HomeBuildable> get copyWith =>
@@ -38,7 +48,15 @@ abstract class $HomeBuildableCopyWith<$Res> {
       bool isLoading,
       bool success,
       HomeModel? homeModel,
-      List<HomCategory>? categories});
+      List<HomCategory>? categories,
+      List<HomClass> newClassesList,
+      int newClassesPage,
+      bool isLoadingNewClasses,
+      bool hasMoreNewClasses,
+      List<HomClass> nearClassesList,
+      int nearClassesPage,
+      bool isLoadingNearClasses,
+      bool hasMoreNearClasses});
 
   $HomeModelCopyWith<$Res>? get homeModel;
 }
@@ -61,6 +79,14 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? success = null,
     Object? homeModel = freezed,
     Object? categories = freezed,
+    Object? newClassesList = null,
+    Object? newClassesPage = null,
+    Object? isLoadingNewClasses = null,
+    Object? hasMoreNewClasses = null,
+    Object? nearClassesList = null,
+    Object? nearClassesPage = null,
+    Object? isLoadingNearClasses = null,
+    Object? hasMoreNearClasses = null,
   }) {
     return _then(_value.copyWith(
       isSelected: null == isSelected
@@ -83,6 +109,38 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
           ? _value.categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>?,
+      newClassesList: null == newClassesList
+          ? _value.newClassesList
+          : newClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      newClassesPage: null == newClassesPage
+          ? _value.newClassesPage
+          : newClassesPage // ignore: cast_nullable_to_non_nullable
+              as int,
+      isLoadingNewClasses: null == isLoadingNewClasses
+          ? _value.isLoadingNewClasses
+          : isLoadingNewClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
+      hasMoreNewClasses: null == hasMoreNewClasses
+          ? _value.hasMoreNewClasses
+          : hasMoreNewClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
+      nearClassesList: null == nearClassesList
+          ? _value.nearClassesList
+          : nearClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      nearClassesPage: null == nearClassesPage
+          ? _value.nearClassesPage
+          : nearClassesPage // ignore: cast_nullable_to_non_nullable
+              as int,
+      isLoadingNearClasses: null == isLoadingNearClasses
+          ? _value.isLoadingNearClasses
+          : isLoadingNearClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
+      hasMoreNearClasses: null == hasMoreNearClasses
+          ? _value.hasMoreNearClasses
+          : hasMoreNearClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -112,7 +170,15 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       bool isLoading,
       bool success,
       HomeModel? homeModel,
-      List<HomCategory>? categories});
+      List<HomCategory>? categories,
+      List<HomClass> newClassesList,
+      int newClassesPage,
+      bool isLoadingNewClasses,
+      bool hasMoreNewClasses,
+      List<HomClass> nearClassesList,
+      int nearClassesPage,
+      bool isLoadingNearClasses,
+      bool hasMoreNearClasses});
 
   @override
   $HomeModelCopyWith<$Res>? get homeModel;
@@ -134,6 +200,14 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? success = null,
     Object? homeModel = freezed,
     Object? categories = freezed,
+    Object? newClassesList = null,
+    Object? newClassesPage = null,
+    Object? isLoadingNewClasses = null,
+    Object? hasMoreNewClasses = null,
+    Object? nearClassesList = null,
+    Object? nearClassesPage = null,
+    Object? isLoadingNearClasses = null,
+    Object? hasMoreNearClasses = null,
   }) {
     return _then(_$HomeBuildableImpl(
       isSelected: null == isSelected
@@ -156,6 +230,38 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           ? _value._categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>?,
+      newClassesList: null == newClassesList
+          ? _value._newClassesList
+          : newClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      newClassesPage: null == newClassesPage
+          ? _value.newClassesPage
+          : newClassesPage // ignore: cast_nullable_to_non_nullable
+              as int,
+      isLoadingNewClasses: null == isLoadingNewClasses
+          ? _value.isLoadingNewClasses
+          : isLoadingNewClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
+      hasMoreNewClasses: null == hasMoreNewClasses
+          ? _value.hasMoreNewClasses
+          : hasMoreNewClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
+      nearClassesList: null == nearClassesList
+          ? _value._nearClassesList
+          : nearClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      nearClassesPage: null == nearClassesPage
+          ? _value.nearClassesPage
+          : nearClassesPage // ignore: cast_nullable_to_non_nullable
+              as int,
+      isLoadingNearClasses: null == isLoadingNearClasses
+          ? _value.isLoadingNearClasses
+          : isLoadingNearClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
+      hasMoreNearClasses: null == hasMoreNearClasses
+          ? _value.hasMoreNearClasses
+          : hasMoreNearClasses // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -168,8 +274,18 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.isLoading = false,
       this.success = false,
       this.homeModel,
-      final List<HomCategory>? categories})
-      : _categories = categories;
+      final List<HomCategory>? categories,
+      final List<HomClass> newClassesList = const [],
+      this.newClassesPage = 2,
+      this.isLoadingNewClasses = false,
+      this.hasMoreNewClasses = true,
+      final List<HomClass> nearClassesList = const [],
+      this.nearClassesPage = 2,
+      this.isLoadingNearClasses = false,
+      this.hasMoreNearClasses = true})
+      : _categories = categories,
+        _newClassesList = newClassesList,
+        _nearClassesList = nearClassesList;
 
   @override
   @JsonKey()
@@ -192,9 +308,50 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     return EqualUnmodifiableListView(value);
   }
 
+// Pagination for new classes
+  final List<HomClass> _newClassesList;
+// Pagination for new classes
+  @override
+  @JsonKey()
+  List<HomClass> get newClassesList {
+    if (_newClassesList is EqualUnmodifiableListView) return _newClassesList;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_newClassesList);
+  }
+
+  @override
+  @JsonKey()
+  final int newClassesPage;
+  @override
+  @JsonKey()
+  final bool isLoadingNewClasses;
+  @override
+  @JsonKey()
+  final bool hasMoreNewClasses;
+// Pagination for near classes
+  final List<HomClass> _nearClassesList;
+// Pagination for near classes
+  @override
+  @JsonKey()
+  List<HomClass> get nearClassesList {
+    if (_nearClassesList is EqualUnmodifiableListView) return _nearClassesList;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_nearClassesList);
+  }
+
+  @override
+  @JsonKey()
+  final int nearClassesPage;
+  @override
+  @JsonKey()
+  final bool isLoadingNearClasses;
+  @override
+  @JsonKey()
+  final bool hasMoreNearClasses;
+
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, newClassesList: $newClassesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -210,12 +367,41 @@ class _$HomeBuildableImpl implements _HomeBuildable {
             (identical(other.homeModel, homeModel) ||
                 other.homeModel == homeModel) &&
             const DeepCollectionEquality()
-                .equals(other._categories, _categories));
+                .equals(other._categories, _categories) &&
+            const DeepCollectionEquality()
+                .equals(other._newClassesList, _newClassesList) &&
+            (identical(other.newClassesPage, newClassesPage) ||
+                other.newClassesPage == newClassesPage) &&
+            (identical(other.isLoadingNewClasses, isLoadingNewClasses) ||
+                other.isLoadingNewClasses == isLoadingNewClasses) &&
+            (identical(other.hasMoreNewClasses, hasMoreNewClasses) ||
+                other.hasMoreNewClasses == hasMoreNewClasses) &&
+            const DeepCollectionEquality()
+                .equals(other._nearClassesList, _nearClassesList) &&
+            (identical(other.nearClassesPage, nearClassesPage) ||
+                other.nearClassesPage == nearClassesPage) &&
+            (identical(other.isLoadingNearClasses, isLoadingNearClasses) ||
+                other.isLoadingNearClasses == isLoadingNearClasses) &&
+            (identical(other.hasMoreNearClasses, hasMoreNearClasses) ||
+                other.hasMoreNearClasses == hasMoreNearClasses));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isSelected, isLoading, success,
-      homeModel, const DeepCollectionEquality().hash(_categories));
+  int get hashCode => Object.hash(
+      runtimeType,
+      isSelected,
+      isLoading,
+      success,
+      homeModel,
+      const DeepCollectionEquality().hash(_categories),
+      const DeepCollectionEquality().hash(_newClassesList),
+      newClassesPage,
+      isLoadingNewClasses,
+      hasMoreNewClasses,
+      const DeepCollectionEquality().hash(_nearClassesList),
+      nearClassesPage,
+      isLoadingNearClasses,
+      hasMoreNearClasses);
 
   @JsonKey(ignore: true)
   @override
@@ -230,7 +416,15 @@ abstract class _HomeBuildable implements HomeBuildable {
       final bool isLoading,
       final bool success,
       final HomeModel? homeModel,
-      final List<HomCategory>? categories}) = _$HomeBuildableImpl;
+      final List<HomCategory>? categories,
+      final List<HomClass> newClassesList,
+      final int newClassesPage,
+      final bool isLoadingNewClasses,
+      final bool hasMoreNewClasses,
+      final List<HomClass> nearClassesList,
+      final int nearClassesPage,
+      final bool isLoadingNearClasses,
+      final bool hasMoreNearClasses}) = _$HomeBuildableImpl;
 
   @override
   bool get isSelected;
@@ -242,6 +436,22 @@ abstract class _HomeBuildable implements HomeBuildable {
   HomeModel? get homeModel;
   @override
   List<HomCategory>? get categories;
+  @override // Pagination for new classes
+  List<HomClass> get newClassesList;
+  @override
+  int get newClassesPage;
+  @override
+  bool get isLoadingNewClasses;
+  @override
+  bool get hasMoreNewClasses;
+  @override // Pagination for near classes
+  List<HomClass> get nearClassesList;
+  @override
+  int get nearClassesPage;
+  @override
+  bool get isLoadingNearClasses;
+  @override
+  bool get hasMoreNearClasses;
   @override
   @JsonKey(ignore: true)
   _$$HomeBuildableImplCopyWith<_$HomeBuildableImpl> get copyWith =>

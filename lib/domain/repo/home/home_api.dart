@@ -9,9 +9,28 @@ class HomeApi {
 
   HomeApi(this._dio);
 
-  Future<Response> getHome() {
-    return _dio.get('discovery/feed/',
-        queryParameters: {'lat': 68.12, 'lng': 68.12322, 'lang': 'ru'});
+  Future<Response> getHome({
+    int newClassesPage = 1,
+    int newClassesLimit = 10,
+    int categoryPage = 1,
+    int categoryLimit = 10,
+    int nearClassPage = 1,
+    int nearClassLimit = 10,
+    double? lat,
+    double? lng,
+    String lang = 'ru',
+  }) {
+    return _dio.get('discovery/feed/', queryParameters: {
+      'new_classes_page': newClassesPage,
+      'new_classes_limit': newClassesLimit,
+      'category_page': categoryPage,
+      'category_limit': categoryLimit,
+      'near_class_page': nearClassPage,
+      'near_class_limit': nearClassLimit,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+      'lang': lang,
+    });
   }
 
   Future<Response> getSchedule() {
@@ -53,7 +72,7 @@ class HomeApi {
   Future<Response> getClassCategories(
       String childId, String fromDate, String toDate, String classId) {
     return _dio.get(
-        'schedules/class/c30dbba8-d55c-4be6-a750-baf192641b93/check-availability',
+        'schedules/class/$classId/check-availability',
         queryParameters: {
           'lang': 'ru',
           'child_id': childId,
