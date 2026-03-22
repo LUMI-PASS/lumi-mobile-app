@@ -1,0 +1,155 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_BUILDKIT: "1"
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  LATEST_TAG: $CI_REGISTRY_IMAGE:latest
+
+# Reusable bits
+.default-docker:
+  image: docker:24-cli
+  services: [ "docker:24-dind" ]
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+
+.build-script: &build_script
+  - |
+    echo "Building for $CI_ENVIRONMENT_NAME with:
+      NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+      NEXT_PUBLIC_API_PREFIX=$NEXT_PUBLIC_API_PREFIX"
+  - >
+    docker build
+    --file ./Dockerfile
+    --cache-from $CI_REGISTRY_IMAGE:latest
+    --build-arg BUILDKIT_INLINE_CACHE=1
+    --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL"
+    --build-arg NEXT_PUBLIC_API_PREFIX="$NEXT_PUBLIC_API_PREFIX"
+    -t "$IMAGE_TAG"
+    -t "$LATEST_TAG"
+    .
+  - docker push "$IMAGE_TAG"
+  - |
+    if [ "$PUSH_LATEST" = "1" ]; then
+      echo "Pushing latest tag"
+      docker push "$LATEST_TAG"
+    else
+      echo "Skipping latest tag push"
+    fi
+
+# -----------------------
+# DEVELOPMENT (auto)
+# -----------------------
+build_dev:
+  stage: build
+  extends: .default-docker
+  variables:
+    # Only dev should update :latest automatically
+    PUSH_LATEST: "1"
+  environment:
+    name: development
+  script: *build_script
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'   # main only
+      when: on_success
+    - when: never
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
+deploy_dev:
+  stage: deploy
+  image: alpine:3.21
+  variables:
+    SSH_OPTIONS: "-o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts -o LogLevel=ERROR"
+  before_script:
+    - apk add --no-cache openssh-client docker-cli-compose
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | tr -d '\r' > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - ssh-keyscan -t ed25519,rsa -H "$SSH_HOST" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - ssh $SSH_OPTIONS $SSH_USER@$SSH_HOST "echo 'SSH connection successful'"
+  script:
+    - |
+      ssh $SSH_OPTIONS $SSH_USER@$SSH_HOST << EOF
+        set -e
+
+        echo "Starting deployment of commit $CI_COMMIT_SHORT_SHA..."
+
+        export CI_REGISTRY="$CI_REGISTRY"
+        export CI_REGISTRY_USER="$CI_REGISTRY_USER"
+        export CI_REGISTRY_PASSWORD="$CI_REGISTRY_PASSWORD"
+        export IMAGE_TAG="$IMAGE_TAG"
+        export LATEST_TAG="$LATEST_TAG"
+        export DEPLOY_PATH="$DEPLOY_PATH"
+
+        echo "\$CI_REGISTRY_PASSWORD" | docker login "\$CI_REGISTRY" --username "\$CI_REGISTRY_USER" --password-stdin
+
+        echo "Pulling image: \$IMAGE_TAG"
+        docker pull "\$IMAGE_TAG"
+        docker tag "\$IMAGE_TAG" "\$LATEST_TAG"
+
+        cd "\$DEPLOY_PATH"
+        docker compose pull || true
+        docker compose up -d --remove-orphans
+
+        echo "Performing health check..."
+        for i in {1..30}; do
+          if docker compose ps | grep -q "Up"; then
+            echo "Application is running"
+            break
+          fi
+          echo "Waiting for application... ($i/30)"
+          sleep 2
+        done
+
+        echo "Cleaning up old images..."
+        docker images "$CI_REGISTRY_IMAGE" --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" \
+          | awk 'NR>5 {print $1}' | xargs -r docker rmi || true
+
+        echo "Deployment completed for $CI_COMMIT_SHORT_SHA"
+      EOF
+  environment:
+    name: development
+    url: $DEPLOY_URL
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
+    - when: never
+  needs: [ "build_dev" ]
+  retry:
+    max: 1
+    when:
+      - runner_system_failure
+  timeout: 10m
+
+# -----------------------
+# PRODUCTION (manual build only)
+# -----------------------
+build_prod:
+  stage: build
+  extends: .default-docker
+  variables:
+    # Never push :latest on prod job to avoid clobbering dev latest
+    PUSH_LATEST: "0"
+    # (Optional) give prod images a distinct tag, e.g., prod-latest
+    PROD_LATEST_TAG: $CI_REGISTRY_IMAGE:prod-latest
+  environment:
+    name: production
+  script:
+    - *build_script
+    - |
+      # (Optional) keep a prod-latest pointer alongside commit tag
+      docker tag "$IMAGE_TAG" "$PROD_LATEST_TAG"
+      docker push "$PROD_LATEST_TAG"
+  rules:
+    # manual trigger anytime (protect it so only maintainers can run)
+    - when: manual
+      allow_failure: false
+  # Make this job protected so only Maintainers can trigger (GitLab UI setting)
