@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
 class UpcomingClassWidget extends StatelessWidget {
@@ -34,20 +35,12 @@ class UpcomingClassWidget extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(22.r),
-          border: Border.all(color: Colors.white.withOpacity(0.9)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF3C539A).withOpacity(0.12),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+      child: Container3d(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
+        backgroundColor: Colors.white,
+        borderColor: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(22.r),
+        depth: 4,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

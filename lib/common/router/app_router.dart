@@ -2,7 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:lumi_pass/common/router/initial_guard.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
+import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
@@ -23,7 +25,11 @@ import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 import 'package:lumi_pass/presentation/start/onboard/onboard_page.dart';
 
 import '../../data/api_model/child_model/child_model.dart';
+import '../../presentation/app/profile/attendance/attendance_detail_page.dart';
+import '../../presentation/app/profile/attendance/attendance_history_page.dart';
 import '../../presentation/app/profile/children/add_child_page.dart';
+import '../../presentation/app/profile/faq/faq_page.dart';
+import '../../presentation/app/main/subscreens/calendar/widget/schedule_detail_page.dart';
 import 'empty_route.dart';
 
 part 'app_router.gr.dart';
@@ -62,6 +68,7 @@ class AppRouter extends _$AppRouter {
     ///Subscreens
 
     AutoRoute(page: ClassDetailRoute.page),
+    AutoRoute(page: BranchDetailRoute.page),
     AutoRoute(page: BookingCompleteRoute.page),
     AutoRoute(page: ProfileDetailRoute.page),
     AutoRoute(page: ChildrenRoute.page),
@@ -71,5 +78,9 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: AddNewCardRoute.page),
     AutoRoute(page: CheckoutRoute.page),
     AutoRoute(page: SearchUnifiedRoute.page),
+    AutoRoute(page: AttendanceHistoryRoute.page),
+    AutoRoute(page: AttendanceDetailRoute.page),
+    AutoRoute(page: FaqRoute.page),
+    AutoRoute(page: ScheduleDetailRoute.page),
   ];
 }

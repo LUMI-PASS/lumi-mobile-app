@@ -66,6 +66,8 @@ class $AssetsIconsGen {
   SvgGenImage get availablitiy =>
       const SvgGenImage('assets/icons/availablitiy.svg');
 
+  $AssetsIconsBackgroundGen get background => const $AssetsIconsBackgroundGen();
+
   /// File path: assets/icons/calendar.svg
   SvgGenImage get calendar => const SvgGenImage('assets/icons/calendar.svg');
 
@@ -136,6 +138,18 @@ class $AssetsIconsGen {
   /// File path: assets/icons/location_primary.svg
   SvgGenImage get locationPrimary =>
       const SvgGenImage('assets/icons/location_primary.svg');
+
+  /// File path: assets/icons/lumi_onboard1-removebg-preview.png
+  AssetGenImage get lumiOnboard1RemovebgPreview =>
+      const AssetGenImage('assets/icons/lumi_onboard1-removebg-preview.png');
+
+  /// File path: assets/icons/lumi_onboard2-removebg-preview.png
+  AssetGenImage get lumiOnboard2RemovebgPreview =>
+      const AssetGenImage('assets/icons/lumi_onboard2-removebg-preview.png');
+
+  /// File path: assets/icons/lumi_onboard3-removebg-preview.png
+  AssetGenImage get lumiOnboard3RemovebgPreview =>
+      const AssetGenImage('assets/icons/lumi_onboard3-removebg-preview.png');
 
   /// File path: assets/icons/map.svg
   SvgGenImage get map => const SvgGenImage('assets/icons/map.svg');
@@ -231,6 +245,9 @@ class $AssetsIconsGen {
         infoDis,
         location,
         locationPrimary,
+        lumiOnboard1RemovebgPreview,
+        lumiOnboard2RemovebgPreview,
+        lumiOnboard3RemovebgPreview,
         map,
         mastercard,
         notification,
@@ -252,6 +269,10 @@ class $AssetsIconsGen {
 
 class $AssetsImagesGen {
   const $AssetsImagesGen();
+
+  /// File path: assets/images/app_icon.jpg
+  AssetGenImage get appIcon =>
+      const AssetGenImage('assets/images/app_icon.jpg');
 
   /// File path: assets/images/congrats.png
   AssetGenImage get congrats =>
@@ -282,6 +303,7 @@ class $AssetsImagesGen {
 
   /// List of all assets
   List<AssetGenImage> get values => [
+        appIcon,
         congrats,
         defacultAvatar,
         defaultImage,
@@ -300,6 +322,59 @@ class $AssetsLocalizationGen {
 
   /// List of all assets
   List<String> get values => [translations];
+}
+
+class $AssetsIconsBackgroundGen {
+  const $AssetsIconsBackgroundGen();
+
+  /// File path: assets/icons/background/congrats_misc.svg
+  SvgGenImage get congratsMisc =>
+      const SvgGenImage('assets/icons/background/congrats_misc.svg');
+
+  /// File path: assets/icons/background/misc2.svg
+  SvgGenImage get misc2 =>
+      const SvgGenImage('assets/icons/background/misc2.svg');
+
+  /// File path: assets/icons/background/misc3.svg
+  SvgGenImage get misc3 =>
+      const SvgGenImage('assets/icons/background/misc3.svg');
+
+  /// File path: assets/icons/background/otp_misc.svg
+  SvgGenImage get otpMisc =>
+      const SvgGenImage('assets/icons/background/otp_misc.svg');
+
+  /// File path: assets/icons/background/payment_misc.svg
+  SvgGenImage get paymentMisc =>
+      const SvgGenImage('assets/icons/background/payment_misc.svg');
+
+  /// File path: assets/icons/background/payment_succes_misc.svg
+  SvgGenImage get paymentSuccesMisc =>
+      const SvgGenImage('assets/icons/background/payment_succes_misc.svg');
+
+  /// File path: assets/icons/background/phone_number_misc.svg
+  SvgGenImage get phoneNumberMisc =>
+      const SvgGenImage('assets/icons/background/phone_number_misc.svg');
+
+  /// File path: assets/icons/background/premium_misc.svg
+  SvgGenImage get premiumMisc =>
+      const SvgGenImage('assets/icons/background/premium_misc.svg');
+
+  /// File path: assets/icons/background/registration_misc.svg
+  SvgGenImage get registrationMisc =>
+      const SvgGenImage('assets/icons/background/registration_misc.svg');
+
+  /// List of all assets
+  List<SvgGenImage> get values => [
+        congratsMisc,
+        misc2,
+        misc3,
+        otpMisc,
+        paymentMisc,
+        paymentSuccesMisc,
+        phoneNumberMisc,
+        premiumMisc,
+        registrationMisc
+      ];
 }
 
 class Assets {

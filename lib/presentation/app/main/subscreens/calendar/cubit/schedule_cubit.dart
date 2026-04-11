@@ -16,21 +16,42 @@ class ScheduleCubit extends BaseCubit<ScheduleBuildable, ScheduleListenable> {
       future: _repo.getScheduleList(),
       buildOnStart: () => buildable.copyWith(isLoading: true),
       buildOnData: (data) {
-        return buildable.copyWith(homeModel: data);
+        // Filter out items where all related bookings are CANCELLED
+        final filtered = data.where((item) {
+          final bookings = item.relatedBookings ?? [];
+          if (bookings.isEmpty) return true;
+          return bookings.any((b) =>
+              b.bookingStatus?.toUpperCase() != 'CANCELLED');
+        }).toList();
+        return buildable.copyWith(homeModel: filtered);
       },
       onErrorData: (error) {
-        final status = (error as DioException);
-        if (status.response?.statusCode == 500 ||
-            status.response?.statusCode == 502) {
-          display.error(Strings.serverErrorTryLater);
-        } else if (status.type == DioExceptionType.connectionError ||
-            status.type == DioExceptionType.connectionTimeout) {
-          display.error(Strings.connectionError);
+        if (error is DioException) {
+          if (error.response?.statusCode == 500 ||
+              error.response?.statusCode == 502) {
+            display.error(Strings.serverErrorTryLater);
+          } else if (error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout) {
+            display.error(Strings.connectionError);
+          }
         }
-        display.error(error);
       },
       buildOnDone: () => buildable.copyWith(isLoading: false),
     );
+  }
+
+  /// Refresh without showing loading spinner (for tab switches)
+  Future<void> refreshSilently() async {
+    try {
+      final data = await _repo.getScheduleList();
+      final filtered = data.where((item) {
+        final bookings = item.relatedBookings ?? [];
+        if (bookings.isEmpty) return true;
+        return bookings.any((b) =>
+            b.bookingStatus?.toUpperCase() != 'CANCELLED');
+      }).toList();
+      build((b) => b.copyWith(homeModel: filtered));
+    } catch (_) {}
   }
 
   void changePhoneState(bool isMatched) {

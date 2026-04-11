@@ -10,7 +10,9 @@ class WalletBuildable with _$WalletBuildable {
       {@Default(false) bool isSelected,
       @Default(false) bool isLoading,
       @Default(false) bool success,
-      List<Tariff>? tariffs}) = _WalletBuildable;
+      @Default(0) num balance,
+      List<Tariff>? tariffs,
+      @Default([]) List<CoinFlow> coinHistory}) = _WalletBuildable;
 }
 
 @freezed

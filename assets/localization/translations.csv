@@ -21,6 +21,8 @@ reset_password_subtitle,Введите зарегистрированный ад
 email_or_phone_hint,Почта или номер телефона,Email yoki telefon raqami,Email or phone number
 continue_button,Далее,Davom etish,Continue
 verification_title,Верификация,Tasdiqlash,Verification
+verification_subtitle,Мы отправили код подтверждения на,Tasdiqlash kodi yuborildi,We have sent a verification code to
+verify_button,Подтвердить,Tasdiqlash,Verify
 resend_code,Отправить повторно,Qaytadan yuborish,Resend code
 new_password_title,Новый пароль,Yangi parol,New password
 new_password_subtitle,Пароль должен быть длиной не менее 8 символов,Parol kamida 8 ta belgidan iborat bo‘lishi kerak,Password must be at least 8 characters long
@@ -374,3 +376,129 @@ no_transports,"Вы еще не добавили транспорт. Пожал�
 input_car_desc,Введите номер автомобиля,Avtomobil davlat raqamini kiriting,Enter car license plate
 volume_unit,м³,m³,m³
 session_expired,"Учетная запись пользователя удалена, пожалуйста, войдите снова!",Foydalanuvchi akkounti o'chirilgan qayta login qiling!,"User account has been deleted, please log in again!"
+hello,Привет,Salom,Hello
+all_categories,Все категории,Barcha kategoriyalar,All Categories
+newly_added_classes,Новые классы,Yangi qo'shilgan sinflar,Newly Added Classes
+near_you,Рядом с вами,Sizga yaqin,Near You
+my_children,Мои дети,Bolalarim,My children
+no_children_yet,Детей пока нет,Hali bolalar yo'q,No children yet
+add_first_child,Добавьте первого ребёнка,Birinchi bolani qo'shing,Add your first child to get started
+add_child,Добавить ребёнка,Bola qo'shish,Add child
+free_trials,бесплатных занятий,bepul darslar,free trials
+update_photo,Обновить фото,Rasmni yangilash,Update photo
+update_child,Обновить ребёнка,Bolani yangilash,Update child
+add_photo,Добавить фото,Rasm qo'shish,Add photo
+child_info,Информация о ребёнке,Bola haqida,Child Info
+photo,Фото,Rasm,Photo
+first_name,Имя,Ism,First Name
+last_name,Фамилия,Familiya,Last Name
+enter_first_name,Введите имя,Ismni kiriting,Enter first name
+enter_last_name,Введите фамилию,Familiyani kiriting,Enter last name
+date_of_birth,Дата рождения,Tug'ilgan sana,Date of Birth
+select_dob,Выберите дату рождения,Tug'ilgan sanani tanlang,Select date of birth
+gender,Пол,Jinsi,Gender
+male,Мужской,Erkak,Male
+female,Женский,Ayol,Female
+cancel,Отмена,Bekor qilish,Cancel
+next,Далее,Keyingi,Next
+gallery,Галерея,Galereya,Gallery
+camera,Камера,Kamera,Camera
+upload_photo,Загрузить фото,Rasm yuklash,Upload Photo
+keep_current_photo,Оставить текущее фото,Hozirgi rasmni saqlash,Keep current photo
+change_photo,Изменить фото,Rasmni o'zgartirish,Change photo
+tap_to_add,Нажмите для добавления,Qo'shish uchun bosing,Tap to add
+field_required,{} обязательно,{} majburiy,{} is required
+max_50_chars,{} не более 50 символов,{} 50 belgidan oshmasligi kerak,{} must be 50 characters or less
+dob_required,Дата рождения обязательна,Tug'ilgan sana majburiy,Date of birth is required
+date_future_error,Дата не может быть в будущем,Sana kelajakda bo'lishi mumkin emas,Date cannot be in the future
+child_max_age,Ребёнку должно быть не более 16 лет,Bola 16 yoshdan katta bo'lmasligi kerak,Child must be 16 years old or younger
+invalid_birth_date,Некорректная дата рождения,Noto'g'ri tug'ilgan sana,Invalid birth date
+select_child,Выберите ребёнка,Bolani tanlang,Select Child
+could_not_check_eligibility,Не удалось проверить доступность,Muvofiqlikni tekshirib bo'lmadi,Could not check eligibility
+your_balance,ВАШ БАЛАНС,BALANSINGIZ,YOUR BALANCE
+no_coins_warning,"У вас нет монет. Купите, чтобы забронировать!",Sizda tangalar yo'q. Bron qilish uchun sotib oling!,"You have no coins. Purchase to book!"
+low_balance_warning,Баланс низкий. Некоторые занятия могут стоить дороже.,Balans kam. Ba'zi darslar qimmatroq bo'lishi mumkin.,Low balance. Some classes may cost more.
+trial_lessons,Пробные занятия,Sinov darslari,Trial Lessons
+earn_trials,Зарабатывайте пробные уроки тратя монеты,Tangalar sarflab sinov darslarini oling,Earn trial lessons by spending coins
+total_remaining_trials,Всего оставшихся пробных,Jami qolgan sinov darslari,Total Remaining Trials
+spend_coins_unlock,"Потратьте {} монет, чтобы открыть {} пробных уроков",{} tanga sarflab {} sinov darsini oching,"Spend {} coins to unlock {} trial lessons"
+choose_your_child,Выберите вашего ребёнка,Bolangizni tanlang,Choose your child
+no_children_add_first,Дети не найдены. Сначала добавьте ребёнка.,Bolalar topilmadi. Avval bola qo'shing.,No children found. Add a child first.
+not_enough_coins,"Монет недостаточно. Купите в один клик!","Tangalar yetarli emas. Bir bosishda sotib oling!","You don't have enough coins. Purchase in one click!"
+expected_charge,Ожидаемый расход,Kutilayotgan summa,Expected Charge
+uses_trial_price,Используется цена пробного урока,Sinov narxidan foydalaniladi,This booking uses trial price
+uses_full_price,Используется полная цена,To'liq narxdan foydalaniladi,This booking uses full price
+unlock_progress,Прогресс открытия,Ochish jarayoni,Unlock Progress
+coins_to_next_unlock,{} монет до следующего открытия,Keyingi ochishgacha {} tanga,{} coins to next unlock
+insufficient_balance,Недостаточно средств для этого ребёнка,Bu bola uchun balans yetarli emas,Insufficient balance for this child
+get_a_ticket,Получить билет,Chipta olish,Get a Ticket
+uses_trial,Цена пробного,Sinov narxi,Uses trial price
+uses_full,Полная цена,To'liq narx,Uses full price
+insufficient,Недостаточно средств,Balans yetarli emas,Insufficient balance
+seats_left,{} мест осталось,{} joy qoldi,{} seats left
+booked,Забронировано,Band qilingan,Booked
+full,Заполнено,To'lgan,Full
+na,Н/Д,Mavjud emas,N/A
+no_slots_for_date,Нет слотов на эту дату,Bu sanada joy yo'q,No slots for this date
+booking_loading,Бронирование...,Bron qilinmoqda...,Booking...
+book,ЗАБРОНИРОВАТЬ,BRON QILISH,BOOK
+explore,Обзор,Qidirish,Explore
+search,Поиск,Qidirish,Search
+classes,Классы,Sinflar,Classes
+centers,Центры,Markazlar,Centers
+categories,Категории,Kategoriyalar,Categories
+pick_category,Выберите категорию,Kategoriyani tanlang,Pick Category
+clear,Очистить,Tozalash,Clear
+open_branch,Открыть филиал,Filialni ochish,Open Branch
+location_not_specified,Местоположение не указано,Joylashuv ko'rsatilmagan,Location not specified
+centers_on_map,Центры на карте,Markazlar xaritada,Centers on Map
+no_centers_location,Нет центров с данными о местоположении,Joylashuv ma'lumotlari bo'lgan markazlar yo'q,No centers with location data
+today,Сегодня,Bugun,Today
+tomorrow,Завтра,Ertaga,Tomorrow
+this_week,На этой неделе,Shu hafta,This week
+custom,Другое,Boshqa,Custom
+boys,Мальчики,O'g'il bolalar,Boys
+girls,Девочки,Qiz bolalar,Girls
+refund,Возврат,Qaytarish,Refund
+get_started,Начать,Boshlash,Get Started
+booked_classes_appear_here,Забронированные занятия появятся здесь,Bron qilingan darslar bu yerda ko'rinadi,Booked classes will appear here
+tab_home,Главная,Bosh sahifa,Home
+tab_calendar,Расписание,Jadval,Schedule
+tab_explore,Обзор,Qidirish,Explore
+tab_wallet,Кошелёк,Hamyon,Wallet
+tab_profile,Профиль,Profil,Profile
+schedule_title,Расписание,Jadval,Schedule
+wallet_title,Кошелёк,Hamyon,Wallet
+your_balance_label,Ваш баланс,Balansingiz,Your Balance
+choose_top_up,Выберите для пополнения,To'ldirish uchun tanlang,Choose to top up
+transaction_history,История транзакций,Tranzaksiyalar tarixi,Transaction History
+no_transactions,Транзакций пока нет,Hali tranzaksiyalar yo'q,No transactions yet
+incoming,Пополнение,Kirim,Incoming
+withdraw,Списание,Chiqim,Withdraw
+my_account,Мой аккаунт,Mening akkauntim,My Account
+account_info,Информация аккаунта,Akkaunt ma'lumotlari,Account Information
+change_account_info,Измените данные аккаунта,Akkaunt ma'lumotlarini o'zgartiring,Change your account information
+your_children,Ваши дети,Bolalaringiz,Your children
+change_children_info,Измените данные о детях,Bolalar ma'lumotlarini o'zgartiring,Change your children information
+attendance_history,История посещений,Davomat tarixi,Attendance history
+view_attendance,Просмотр посещений,Davomatni ko'rish,View your attendance
+faq,Часто задаваемые вопросы,Ko'p so'raladigan savollar,FAQ
+faq_subtitle,Найдите ответ на все вопросы,Barcha savollaringizga javob toping,Find an answer to all your questions
+faq_q1,Что такое Lumi?,Lumi nima?,What is Lumi?
+faq_a1,"Lumi — это цифровая экосистема, которая объединяет все возможности для интеллектуального, творческого и физического развития вашего ребёнка. С помощью одного приложения родители могут находить и записываться на занятия в проверенных центрах — от спорта и искусства до языков и программирования.","Lumi — bu bolangizning intellektual, ijodiy va jismoniy rivojlanishi uchun barcha imkoniyatlarni birlashtiruvchi raqamli ekotizim. Bitta ilova orqali ota-onalar ishonchli markazlardagi mashg'ulotlarni topishi va yozilishi mumkin — sportdan san'atgacha, tillardan dasturlashgacha.","Lumi is a digital ecosystem that brings together all the opportunities for your child's intellectual, creative, and physical development. With one app, parents can discover and book classes at trusted centers — from sports and art to languages and coding."
+faq_q2,Как работает система подписки?,Obuna tizimi qanday ishlaydi?,How does the subscription system work?
+faq_a2,"В Lumi нет ежемесячных или годовых обязательств. Вы просто покупаете пакет монет и тратите их только на те занятия, которые посещает ваш ребёнок. Каждое занятие имеет свою цену в монетах, и вы можете свободно комбинировать активности.","Lumida oylik yoki yillik majburiyatlar yo'q. Siz shunchaki tanga paketini sotib olasiz va tangalarni faqat bolangiz qatnashadigan mashg'ulotlarga sarflaysiz. Har bir mashg'ulotning tanga narxi bor va siz faoliyatlarni erkin aralashtirishingiz mumkin.","At Lumi, there are no monthly or yearly commitments. You simply buy a coin package and spend coins only on the classes your child attends. Each class has a coin price, and you can mix and match activities freely."
+faq_q3,Срок действия пакетов монет?,Tanga paketlari qancha vaqt amal qiladi?,How long are coin packages valid?
+faq_a3,"Монеты не имеют срока действия — вы можете использовать их в любое время. Нет необходимости торопиться с их тратой, планируйте в своём ритме.","Tangalar muddatsiz — ularni istalgan vaqtda ishlatishingiz mumkin. Ularni sarflashga shoshilish shart emas, o'z sur'atingizda rejalashtiring.","Coins never expire — you can use them anytime. There's no rush to spend them, so you can plan at your own pace."
+faq_q4,Может ли мой ребёнок ходить только в один центр?,Bolam faqat bitta markazga bora oladimi?,Can my child attend just one center?
+faq_a4,"Нет. Lumi даёт вам доступ к различным центрам и активностям. Ваш ребёнок может пробовать разные места, преподавателей и дисциплины — всё через одну платформу.","Yo'q. Lumi sizga turli markazlar va faoliyatlarga kirish imkonini beradi. Bolangiz turli joylar, o'qituvchilar va fanlarni sinab ko'rishi mumkin — barchasi bitta platforma orqali.","No. Lumi gives you access to a variety of centers and activities. Your child can try different places, teachers, and disciplines — all through the same platform."
+faq_q5,Какие активности доступны в Lumi?,Lumida qanday mashg'ulotlar mavjud?,What activities are available at Lumi?
+faq_a5,"Более 200 вариантов: танцы, спорт, IT, языки, искусство, шахматы, музыка, театр, мастер-классы и даже игровые зоны. Новые активности добавляются регулярно.","200 dan ortiq variant: raqs, sport, IT, tillar, san'at, shaxmat, musiqa, teatr, master-klasslar va hatto o'yin zonalari. Yangi mashg'ulotlar muntazam ravishda qo'shilmoqda.","Over 200 options: dance, sports, IT, languages, art, chess, music, drama, workshops, and even play zones. New activities are being added regularly."
+faq_q6,Как забронировать занятие?,Mashg'ulotni qanday bron qilish mumkin?,How do I book a class?
+faq_a6,"Скачайте приложение, отфильтруйте по интересам, возрасту или местоположению и забронируйте занятие за секунды.","Ilovani yuklab oling, qiziqish, yosh yoki joylashuv bo'yicha filtrlang va mashg'ulotni bir necha soniyada bron qiling.","Download the app, filter by interest, age, or location, and book an activity in seconds."
+faq_q7,Как я могу быть уверен в качестве центров?,Markazlar sifatiga qanday ishonch hosil qilaman?,How can I trust the quality of the centers?
+faq_a7,"Lumi сотрудничает только с проверенными центрами, рекомендованными родителями. Скоро в приложении появятся отзывы родителей, чтобы помочь вам делать ещё более обоснованный выбор.","Lumi faqat ota-onalar tomonidan tavsiya etilgan ishonchli markazlar bilan hamkorlik qiladi. Tez orada ilovada ota-onalar sharhlari paydo bo'ladi, bu sizga yanada asosli tanlov qilishga yordam beradi.","Lumi partners only with trusted centers recommended by parents. Soon, parent reviews will be available in the app to help you make even more informed choices."
+faqs_title,Часто задаваемые вопросы,Ko'p so'raladigan savollar,FAQs
+failed_to_pick_photo,Не удалось выбрать фото,Rasmni tanlab bo'lmadi,Failed to pick photo
+log_out,Выйти,Chiqish,Log out
+log_out_subtitle,Выйти из аккаунта,Akkauntdan chiqish,Log out from your account

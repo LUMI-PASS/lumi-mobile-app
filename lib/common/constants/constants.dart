@@ -1,6 +1,6 @@
 class Constants {
-  static const baseUrl = 'https://dev-api.lumipass.uz/api/v1/';
-  static const assetsUrl = 'https://dev-api.lumipass.uz/api/v1/assets/files/';
+  static const baseUrl = 'https://api.lumipass.uz/api/v1/';
+  static const assetsUrl = 'https://api.lumipass.uz/api/v1/assets/files/';
 
   static const tashkentDistricts = [
     'Bektemir',

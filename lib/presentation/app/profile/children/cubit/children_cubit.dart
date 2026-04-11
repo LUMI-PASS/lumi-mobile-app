@@ -1,10 +1,12 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
-import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
-import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
+import 'package:lumi_pass/data/api_model/eligibility/eligibility_model.dart';
+import 'package:lumi_pass/data/api_model/booking/booking_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'children_state.dart';
@@ -16,10 +18,40 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
 
   Future<void> getChildren() {
     return callable(
-      future: _repo.getChildren(),
+      future: _repo.getParentProfile(),
       buildOnStart: () => buildable.copyWith(isLoading: true),
-      buildOnData: (data) {
-        return buildable.copyWith(childrenList: data);
+      buildOnData: (ParentProfileResult data) {
+        // Merge trial data into children (same as webapp)
+        final trialSummary = data.trialSummary;
+        final trialByChildId = <String, TrialSummaryChild>{};
+        if (trialSummary != null) {
+          for (final entry in trialSummary.children) {
+            if (entry.childId != null) {
+              trialByChildId[entry.childId!] = entry;
+            }
+          }
+        }
+
+        final children = data.children.map((child) {
+          final trial = trialByChildId[child.id];
+          if (trial != null) {
+            return child.copyWith(
+              remainingTrials: trial.remainingTrials,
+              coinsIntoUnlockCycle: trial.coinsIntoUnlockCycle,
+              coinsToNextUnlock: trial.coinsToNextUnlock,
+              nextUnlockAtTotalPaidCoins: trial.nextUnlockAtTotalPaidCoins,
+              unlockThresholdCoin: trialSummary?.unlockThresholdCoin,
+            );
+          }
+          return child;
+        }).toList();
+
+        return buildable.copyWith(
+          childrenList: children,
+          trialSummary: trialSummary,
+          parentCity: data.parentCity ?? 'Tashkent',
+          parentDistrict: data.parentDistrict ?? '',
+        );
       },
       onErrorData: (error) {
         final status = (error as DioException);
@@ -36,14 +68,16 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
     );
   }
 
-  Future<void> getClassScheduleList(
-      String childId, String fromDate, String toDate, String classId) {
+  Future<void> checkClassEligibility(String classId) {
     return callable(
-      future: _repo.getCLassSchedules(childId, fromDate, toDate, classId),
-      buildOnStart: () => buildable.copyWith(isLoading: true),
-      buildOnData: (List<TimeSlot> data) {
-        return buildable.copyWith(timeSlots: data); // Changed from slots to timeSlots
+      future: _repo.checkClassEligibility(classId),
+      buildOnStart: () => buildable.copyWith(eligibilityLoading: true),
+      buildOnData: (ClassEligibilityData data) {
+        return buildable.copyWith(eligibilityData: data);
       },
+      invokeOnData: (data) => const ChildrenListenable(
+        effect: ChildrenEffect.eligibilityLoaded,
+      ),
       onErrorData: (error) {
         final status = (error as DioException);
         if (status.response?.statusCode == 500 ||
@@ -54,6 +88,58 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
           display.error(Strings.connectionError);
         }
         display.error(error);
+      },
+      buildOnDone: () => buildable.copyWith(eligibilityLoading: false),
+    );
+  }
+
+  Future<void> createBooking(
+      String scheduleId, String childId, String subscriptionId) {
+    return callable(
+      future: _repo.createBooking(scheduleId, childId, subscriptionId),
+      buildOnStart: () => buildable.copyWith(bookingLoading: true),
+      invokeOnData: (BookingResponse data) => ChildrenListenable(
+        effect: ChildrenEffect.bookingSuccess,
+        bookingId: data.id,
+      ),
+      onErrorData: (error) {
+        final status = (error as DioException);
+        if (status.response?.statusCode == 500 ||
+            status.response?.statusCode == 502) {
+          display.error(Strings.serverErrorTryLater);
+        } else if (status.type == DioExceptionType.connectionError ||
+            status.type == DioExceptionType.connectionTimeout) {
+          display.error(Strings.connectionError);
+        } else {
+          display.error("Booking failed. Please try again.");
+        }
+      },
+      buildOnDone: () => buildable.copyWith(bookingLoading: false),
+    );
+  }
+
+  Future<void> getClassScheduleList(
+      String childId, String fromDate, String toDate, String classId) {
+    return callable(
+      future: _repo.getCLassSchedules(childId, fromDate, toDate, classId),
+      buildOnStart: () => buildable.copyWith(isLoading: true),
+      buildOnData: (List<TimeSlot> data) {
+        return buildable.copyWith(timeSlots: data);
+      },
+      onErrorData: (error) {
+        if (error is DioException) {
+          if (error.response?.statusCode == 500 ||
+              error.response?.statusCode == 502) {
+            display.error(Strings.serverErrorTryLater);
+          } else if (error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout) {
+            display.error(Strings.connectionError);
+          } else {
+            display.error(error);
+          }
+        } else {
+          display.error(error);
+        }
       },
       buildOnDone: () => buildable.copyWith(isLoading: false),
     );
@@ -77,9 +163,61 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
         display.error(error);
       },
       invokeOnData: (data) =>
-      const ChildrenListenable(effect: ChildrenEffect.verify),
+          const ChildrenListenable(effect: ChildrenEffect.verify),
       buildOnDone: () => buildable.copyWith(buttonLoading: false),
     );
+  }
+
+  /// Add child and get back the child ID (for stepper flow)
+  Future<void> addChildAndGetId(ChildModel childModel) {
+    return callable(
+      future: _repo.addChildAndGetId(childModel),
+      buildOnStart: () => buildable.copyWith(buttonLoading: true),
+      buildOnData: (String childId) {
+        return buildable.copyWith(newChildId: childId, currentStep: 1);
+      },
+      invokeOnData: (String childId) => const ChildrenListenable(
+        effect: ChildrenEffect.childCreated,
+      ),
+      onErrorData: (error) {
+        if (error is DioException) {
+          if (error.response?.statusCode == 500 ||
+              error.response?.statusCode == 502) {
+            display.error(Strings.serverErrorTryLater);
+          } else if (error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout) {
+            display.error(Strings.connectionError);
+          } else {
+            display.error(error);
+          }
+        }
+      },
+      buildOnDone: () => buildable.copyWith(buttonLoading: false),
+    );
+  }
+
+  /// Upload child photo
+  Future<void> uploadChildPhoto(String childId, File photo) {
+    return callable(
+      future: _repo.uploadChildPhoto(childId, photo),
+      buildOnStart: () => buildable.copyWith(buttonLoading: true),
+      invokeOnData: (_) => const ChildrenListenable(
+        effect: ChildrenEffect.photoUploaded,
+      ),
+      onErrorData: (error) {
+        if (error is DioException) {
+          display.error("Failed to upload photo");
+        }
+        invoke(const ChildrenListenable(
+          effect: ChildrenEffect.photoUploadError,
+        ));
+      },
+      buildOnDone: () => buildable.copyWith(buttonLoading: false),
+    );
+  }
+
+  void setStep(int step) {
+    build((buildable) => buildable.copyWith(currentStep: step));
   }
 
   void changeGender(String isMatched) {
@@ -94,27 +232,31 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
     build((buildable) => buildable.copyWith(selectedIndex: index));
   }
 
+  void selectChild(String? childId) {
+    build((buildable) => buildable.copyWith(selectedChildId: childId));
+  }
+
   // Ticket booking selection methods
   void selectDate(DateTime date) {
     build((buildable) => buildable.copyWith(
-      selectedDate: date,
-      selectedTimeIndex: -1, // Reset time selection when date changes
-      selectedScheduleId: null,
-    ));
+          selectedDate: date,
+          selectedTimeIndex: -1,
+          selectedScheduleId: null,
+        ));
   }
 
   void selectTimeSlot(int timeIndex, String scheduleId) {
     build((buildable) => buildable.copyWith(
-      selectedTimeIndex: timeIndex,
-      selectedScheduleId: scheduleId,
-    ));
+          selectedTimeIndex: timeIndex,
+          selectedScheduleId: scheduleId,
+        ));
   }
 
   void resetTicketSelection() {
     build((buildable) => buildable.copyWith(
-      selectedDate: null,
-      selectedTimeIndex: -1,
-      selectedScheduleId: null,
-    ));
+          selectedDate: null,
+          selectedTimeIndex: -1,
+          selectedScheduleId: null,
+        ));
   }
 }

@@ -50,6 +50,9 @@ class _CommonPinPutState extends State<CommonPinPut> {
         separatorBuilder: (index) => const SizedBox(width: 8),
         hapticFeedbackType: HapticFeedbackType.lightImpact,
         onChanged: widget.onChanged,
+        androidSmsAutofillMethod: AndroidSmsAutofillMethod.smsUserConsentApi,
+        listenForMultipleSmsOnAndroid: true,
+        smsCodeMatcher: PinputConstants.defaultSmsCodeMatcher,
         cursor: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [

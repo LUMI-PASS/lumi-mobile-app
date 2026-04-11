@@ -36,8 +36,12 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit
     as _i386;
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart'
     as _i868;
+import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart'
+    as _i999;
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_cubit.dart'
     as _i405;
+import 'package:lumi_pass/presentation/app/profile/attendance/cubit/attendance_cubit.dart'
+    as _i24;
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart'
     as _i239;
 import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_detail_cubit.dart'
@@ -103,8 +107,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i386.HomeCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i526.HomeRepository>()));
+    gh.factory<_i999.SearchCubit>(
+        () => _i999.SearchCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i405.WalletCubit>(
         () => _i405.WalletCubit(gh<_i526.HomeRepository>()));
+    gh.factory<_i24.AttendanceCubit>(
+        () => _i24.AttendanceCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i915.AppCubit>(
         () => _i915.AppCubit(gh<_i652.AuthRepository>()));
     gh.factory<_i749.VerifyCubit>(

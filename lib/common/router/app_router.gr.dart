@@ -32,10 +32,36 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const AddNewCardPage(),
       );
     },
+    AttendanceDetailRoute.name: (routeData) {
+      final args = routeData.argsAs<AttendanceDetailRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: AttendanceDetailPage(
+          key: args.key,
+          childModel: args.childModel,
+        ),
+      );
+    },
+    AttendanceHistoryRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const AttendanceHistoryPage(),
+      );
+    },
     BookingCompleteRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const BookingCompletePage(),
+      );
+    },
+    BranchDetailRoute.name: (routeData) {
+      final args = routeData.argsAs<BranchDetailRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: BranchDetailPage(
+          key: args.key,
+          branch: args.branch,
+        ),
       );
     },
     CalendarRoute.name: (routeData) {
@@ -70,6 +96,12 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const EmptyRouterPage(),
+      );
+    },
+    FaqRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const FaqPage(),
       );
     },
     HomeRoute.name: (routeData) {
@@ -133,6 +165,16 @@ abstract class _$AppRouter extends RootStackRouter {
         child: RegisterPage(
           key: args.key,
           phoneOrMail: args.phoneOrMail,
+        ),
+      );
+    },
+    ScheduleDetailRoute.name: (routeData) {
+      final args = routeData.argsAs<ScheduleDetailRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: ScheduleDetailPage(
+          key: args.key,
+          scheduleItem: args.scheduleItem,
         ),
       );
     },
@@ -233,6 +275,58 @@ class AddNewCardRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [AttendanceDetailPage]
+class AttendanceDetailRoute extends PageRouteInfo<AttendanceDetailRouteArgs> {
+  AttendanceDetailRoute({
+    Key? key,
+    required ChildModel childModel,
+    List<PageRouteInfo>? children,
+  }) : super(
+          AttendanceDetailRoute.name,
+          args: AttendanceDetailRouteArgs(
+            key: key,
+            childModel: childModel,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'AttendanceDetailRoute';
+
+  static const PageInfo<AttendanceDetailRouteArgs> page =
+      PageInfo<AttendanceDetailRouteArgs>(name);
+}
+
+class AttendanceDetailRouteArgs {
+  const AttendanceDetailRouteArgs({
+    this.key,
+    required this.childModel,
+  });
+
+  final Key? key;
+
+  final ChildModel childModel;
+
+  @override
+  String toString() {
+    return 'AttendanceDetailRouteArgs{key: $key, childModel: $childModel}';
+  }
+}
+
+/// generated route for
+/// [AttendanceHistoryPage]
+class AttendanceHistoryRoute extends PageRouteInfo<void> {
+  const AttendanceHistoryRoute({List<PageRouteInfo>? children})
+      : super(
+          AttendanceHistoryRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'AttendanceHistoryRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [BookingCompletePage]
 class BookingCompleteRoute extends PageRouteInfo<void> {
   const BookingCompleteRoute({List<PageRouteInfo>? children})
@@ -244,6 +338,44 @@ class BookingCompleteRoute extends PageRouteInfo<void> {
   static const String name = 'BookingCompleteRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [BranchDetailPage]
+class BranchDetailRoute extends PageRouteInfo<BranchDetailRouteArgs> {
+  BranchDetailRoute({
+    Key? key,
+    required HomBranch branch,
+    List<PageRouteInfo>? children,
+  }) : super(
+          BranchDetailRoute.name,
+          args: BranchDetailRouteArgs(
+            key: key,
+            branch: branch,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'BranchDetailRoute';
+
+  static const PageInfo<BranchDetailRouteArgs> page =
+      PageInfo<BranchDetailRouteArgs>(name);
+}
+
+class BranchDetailRouteArgs {
+  const BranchDetailRouteArgs({
+    this.key,
+    required this.branch,
+  });
+
+  final Key? key;
+
+  final HomBranch branch;
+
+  @override
+  String toString() {
+    return 'BranchDetailRouteArgs{key: $key, branch: $branch}';
+  }
 }
 
 /// generated route for
@@ -336,6 +468,20 @@ class EmptyRouterRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'EmptyRouterRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [FaqPage]
+class FaqRoute extends PageRouteInfo<void> {
+  const FaqRoute({List<PageRouteInfo>? children})
+      : super(
+          FaqRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'FaqRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }
@@ -531,6 +677,44 @@ class RegisterRouteArgs {
   @override
   String toString() {
     return 'RegisterRouteArgs{key: $key, phoneOrMail: $phoneOrMail}';
+  }
+}
+
+/// generated route for
+/// [ScheduleDetailPage]
+class ScheduleDetailRoute extends PageRouteInfo<ScheduleDetailRouteArgs> {
+  ScheduleDetailRoute({
+    Key? key,
+    required ScheduleItem scheduleItem,
+    List<PageRouteInfo>? children,
+  }) : super(
+          ScheduleDetailRoute.name,
+          args: ScheduleDetailRouteArgs(
+            key: key,
+            scheduleItem: scheduleItem,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'ScheduleDetailRoute';
+
+  static const PageInfo<ScheduleDetailRouteArgs> page =
+      PageInfo<ScheduleDetailRouteArgs>(name);
+}
+
+class ScheduleDetailRouteArgs {
+  const ScheduleDetailRouteArgs({
+    this.key,
+    required this.scheduleItem,
+  });
+
+  final Key? key;
+
+  final ScheduleItem scheduleItem;
+
+  @override
+  String toString() {
+    return 'ScheduleDetailRouteArgs{key: $key, scheduleItem: $scheduleItem}';
   }
 }
 

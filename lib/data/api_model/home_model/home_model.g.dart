@@ -330,6 +330,22 @@ Map<String, dynamic> _$$HomRelatedBookingImplToJson(
       'deleted_at': instance.deletedAt,
     };
 
+_$CoinFlowImpl _$$CoinFlowImplFromJson(Map<String, dynamic> json) =>
+    _$CoinFlowImpl(
+      id: json['id'] as String?,
+      amount: json['amount'] as num?,
+      type: json['type'] as String?,
+      createdAt: json['created_at'] as String?,
+    );
+
+Map<String, dynamic> _$$CoinFlowImplToJson(_$CoinFlowImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'amount': instance.amount,
+      'type': instance.type,
+      'created_at': instance.createdAt,
+    };
+
 _$HomBranchImpl _$$HomBranchImplFromJson(Map<String, dynamic> json) =>
     _$HomBranchImpl(
       id: json['id'] as String?,

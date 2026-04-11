@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/widget/common_button.dart';
+import 'package:lumi_pass/common/widget/container_3d.dart';
 
-enum DatePreset { today, tomorrow, thisWeek, custom }
+enum DatePreset { none, today, tomorrow, thisWeek, custom }
 
 enum Gender { any, boy, girl }
 
@@ -13,24 +15,30 @@ enum PricePreset { any, custom }
 
 class FilterResult {
   final DatePreset datePreset;
-  final DateTime? customDate;
+  final DateTime? fromDate;
+  final DateTime? toDate;
   final int? ageYears;
   final Gender gender;
   final PricePreset pricePreset;
   final RangeValues priceRange;
 
   const FilterResult({
-    this.datePreset = DatePreset.tomorrow,
-    this.customDate,
+    this.datePreset = DatePreset.none,
+    this.fromDate,
+    this.toDate,
     this.ageYears,
     this.gender = Gender.any,
     this.pricePreset = PricePreset.any,
-    this.priceRange = const RangeValues(10, 34),
+    this.priceRange = const RangeValues(0, 100),
   });
+
+  // Keep backward compat
+  DateTime? get customDate => fromDate;
 
   FilterResult copyWith({
     DatePreset? datePreset,
-    DateTime? customDate,
+    DateTime? fromDate,
+    DateTime? toDate,
     int? ageYears,
     Gender? gender,
     PricePreset? pricePreset,
@@ -38,7 +46,8 @@ class FilterResult {
   }) {
     return FilterResult(
       datePreset: datePreset ?? this.datePreset,
-      customDate: customDate ?? this.customDate,
+      fromDate: fromDate ?? this.fromDate,
+      toDate: toDate ?? this.toDate,
       ageYears: ageYears ?? this.ageYears,
       gender: gender ?? this.gender,
       pricePreset: pricePreset ?? this.pricePreset,
@@ -75,11 +84,12 @@ class FilterBottomSheet extends StatefulWidget {
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late DatePreset _datePreset;
-  DateTime? _customDate;
-  int? _ageYears;
+  DateTime? _fromDate;
+  DateTime? _toDate;
+  final TextEditingController _ageController = TextEditingController();
   Gender _gender = Gender.any;
-  PricePreset _pricePreset = PricePreset.any;
-  RangeValues _range = const RangeValues(10, 34);
+  RangeValues _range = const RangeValues(0, 100);
+  bool _showCustomDates = false;
 
   static const double _minPrice = 0;
   static const double _maxPrice = 100;
@@ -89,38 +99,68 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     super.initState();
     final init = widget.initial ?? const FilterResult();
     _datePreset = init.datePreset;
-    _customDate = init.customDate;
-    _ageYears = init.ageYears;
+    _fromDate = init.fromDate;
+    _toDate = init.toDate;
     _gender = init.gender;
-    _pricePreset = init.pricePreset;
     _range = init.priceRange;
+    if (init.ageYears != null) {
+      _ageController.text = '${init.ageYears}';
+    }
+    _showCustomDates = _datePreset == DatePreset.custom;
+  }
+
+  @override
+  void dispose() {
+    _ageController.dispose();
+    super.dispose();
   }
 
   void _reset() {
     setState(() {
-      _datePreset = DatePreset.tomorrow;
-      _customDate = null;
-      _ageYears = null;
+      _datePreset = DatePreset.none;
+      _fromDate = null;
+      _toDate = null;
+      _ageController.clear();
       _gender = Gender.any;
-      _pricePreset = PricePreset.any;
-      _range = const RangeValues(10, 34);
+      _range = const RangeValues(0, 100);
+      _showCustomDates = false;
     });
   }
 
+  int? get _parsedAge {
+    final text = _ageController.text.trim();
+    if (text.isEmpty) return null;
+    final val = int.tryParse(text);
+    if (val == null || val < 1 || val > 16) return null;
+    return val;
+  }
+
+  bool get _isPriceChanged =>
+      _range.start != _minPrice || _range.end != _maxPrice;
+
   FilterResult _buildResult() => FilterResult(
         datePreset: _datePreset,
-        customDate: _customDate,
-        ageYears: _ageYears,
+        fromDate: _fromDate,
+        toDate: _toDate,
+        ageYears: _parsedAge,
         gender: _gender,
-        pricePreset: _pricePreset,
+        pricePreset: _isPriceChanged ? PricePreset.custom : PricePreset.any,
         priceRange: _range,
       );
 
+  void _selectDatePreset(DatePreset preset) {
+    setState(() {
+      _datePreset = preset;
+      _showCustomDates = false;
+      _fromDate = null;
+      _toDate = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.primaryColor;
-    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black87;
+    final primary = context.colors.primary;
+    final textColor = const Color(0xFF1E293B);
 
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -129,208 +169,410 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          10.kh,
+          // Handle bar
+          12.kh,
           Container(
-            width: 56,
+            width: 48,
             height: 5,
             decoration: BoxDecoration(
-              color: Colors.black12,
+              color: Colors.grey.shade300,
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          12.kh,
+          16.kh,
+
+          // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Stack(
               alignment: Alignment.center,
               children: [
+                Center(
+                  child: 'Filters'.s(24).w(700).c(textColor),
+                ),
                 Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: Assets.icons.arrowLeftIos.svg(),
-                    onPressed: () => Navigator.of(context).pop(),
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 36.w,
+                      height: 36.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, size: 20),
+                    ),
                   ),
                 ),
-                'Filter'.s(24).w(700).c(theme.textTheme.titleLarge?.color ?? textColor),
               ],
             ),
           ),
-          46.kh,
+          24.kh,
+
+          // Scrollable content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Segmented(
-                    items: const ['Today', 'Tomorrow', 'This week'],
-                    index: {
-                      DatePreset.today: 0,
-                      DatePreset.tomorrow: 1,
-                      DatePreset.thisWeek: 2,
-                      DatePreset.custom: 1,
-                    }[_datePreset]!,
-                    primary: primary,
-                    onChanged: (i) {
-                      setState(() {
-                        _datePreset = [DatePreset.today, DatePreset.tomorrow, DatePreset.thisWeek][i];
-                        if (_datePreset != DatePreset.custom) _customDate = null;
-                      });
-                    },
-                  ),
+                  // ─── Date Section ───
+                  _SectionLabel('Date'),
                   12.kh,
-                  _PillButton(
-                    leading: Assets.icons.calendar.svg(
-                      colorFilter: ColorFilter.mode(primary, BlendMode.srcIn),
-                    ),
-                    label: _customDate == null ? 'Choose from calendar' : 'Chosen: ${_fmtDate(_customDate!)}',
-                    trailing: const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Color(0xFF807A7A),
-                    ),
-                    onTap: () async {
-                      final now = DateTime.now();
-                      final picked = await showDatePicker(
-                        context: context,
-                        barrierColor: Colors.black54,
-                        initialDate: _customDate ?? now,
-                        firstDate: DateTime(now.year - 1),
-                        lastDate: DateTime(now.year + 2),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _customDate = picked;
-                          _datePreset = DatePreset.custom;
-                        });
-                      }
-                    },
-                  ),
-                  20.kh,
                   Row(
                     children: [
+                      _DateChip(
+                        text: 'Today',
+                        selected: _datePreset == DatePreset.today,
+                        onTap: () => _selectDatePreset(DatePreset.today),
+                      ),
+                      8.kw,
+                      _DateChip(
+                        text: 'Tomorrow',
+                        selected: _datePreset == DatePreset.tomorrow,
+                        onTap: () => _selectDatePreset(DatePreset.tomorrow),
+                      ),
+                      8.kw,
+                      _DateChip(
+                        text: 'This week',
+                        selected: _datePreset == DatePreset.thisWeek,
+                        onTap: () => _selectDatePreset(DatePreset.thisWeek),
+                      ),
+                    ],
+                  ),
+                  12.kh,
+
+                  // Custom date toggle
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showCustomDates = !_showCustomDates;
+                        if (_showCustomDates) {
+                          _datePreset = DatePreset.custom;
+                        }
+                      });
+                    },
+                    child: Container3d(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 14.w, vertical: 12.h),
+                      depth: 2,
+                      backgroundColor: Colors.white,
+                      borderColor: _showCustomDates
+                          ? primary.withOpacity(0.3)
+                          : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(14.r),
+                      child: Row(
+                        children: [
+                          Assets.icons.calendar.svg(
+                            colorFilter: ColorFilter.mode(
+                                primary, BlendMode.srcIn),
+                            width: 20.w,
+                            height: 20.h,
+                          ),
+                          10.kw,
+                          Expanded(
+                            child: 'Choose from calendar'
+                                .s(14)
+                                .w(500)
+                                .c(const Color(0xFF64748B)),
+                          ),
+                          AnimatedRotation(
+                            duration: const Duration(milliseconds: 200),
+                            turns: _showCustomDates ? 0.5 : 0,
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: const Color(0xFF64748B),
+                              size: 22.w,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // From/To date pickers
+                  if (_showCustomDates) ...[
+                    12.kh,
+                    Container(
+                      padding: EdgeInsets.all(14.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _DatePickerField(
+                              label: 'From',
+                              date: _fromDate,
+                              hint: 'Start date',
+                              onPick: () async {
+                                final picked = await _pickDate(_fromDate);
+                                if (picked != null) {
+                                  setState(() => _fromDate = picked);
+                                }
+                              },
+                            ),
+                          ),
+                          16.kw,
+                          Expanded(
+                            child: _DatePickerField(
+                              label: 'To',
+                              date: _toDate,
+                              hint: 'End date',
+                              onPick: () async {
+                                final picked =
+                                    await _pickDate(_toDate ?? _fromDate);
+                                if (picked != null) {
+                                  setState(() => _toDate = picked);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  28.kh,
+
+                  // ─── Age & Gender Section ───
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Age input
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _Label('Age', color: textColor),
+                            _SectionLabel('Age'),
                             8.kh,
-                            _PillButton(
-                              leading: Assets.icons.outlinedCalendar.svg(),
-                              label: _ageYears == null ? 'Any age' : '${_ageYears!} years',
-                              onTap: () async {
-                                final v = await _pickAge(context, _ageYears);
-                                if (v != null) setState(() => _ageYears = v);
-                              },
+                            Container(
+                              height: 52.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14.r),
+                                border:
+                                    Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _ageController,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(2),
+                                      ],
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: textColor,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: '3',
+                                        hintStyle: TextStyle(
+                                          color: const Color(0xFFBDBDBD),
+                                          fontSize: 15.sp,
+                                        ),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 14.w),
+                                        border: InputBorder.none,
+                                      ),
+                                      onChanged: (_) => setState(() {}),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(right: 14.w),
+                                    child: 'years'
+                                        .s(13)
+                                        .w(500)
+                                        .c(const Color(0xFF94A3B8)),
+                                  ),
+                                ],
+                              ),
                             ),
+                            if (_ageController.text.isNotEmpty &&
+                                _parsedAge == null)
+                              Padding(
+                                padding: EdgeInsets.only(top: 4.h),
+                                child: '1-16 only'
+                                    .s(11)
+                                    .w(500)
+                                    .c(const Color(0xFFEF4444)),
+                              ),
                           ],
                         ),
                       ),
                       14.kw,
+                      // Gender selector
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _Label('Gender', color: textColor),
+                            _SectionLabel('Gender'),
                             8.kh,
-                            _PillButton(
-                              leading: Assets.icons.outlinedPerson.svg(),
-                              label: {
-                                Gender.any: 'Any',
-                                Gender.boy: 'boy',
-                                Gender.girl: 'girl',
-                              }[_gender]!,
-                              onTap: () async {
-                                final v = await _pickGender(context, _gender);
-                                if (v != null) setState(() => _gender = v);
-                              },
+                            _GenderSelector(
+                              value: _gender,
+                              onChanged: (g) => setState(() => _gender = g),
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  20.kh,
-                  _Label('Price Range', color: textColor),
-                  8.kh,
-                  _PillDropdown<PricePreset>(
-                    value: _pricePreset,
-                    items: [
-                      DropdownMenuItem(value: PricePreset.any, child: 'Any price'.w(600)),
-                      DropdownMenuItem(value: PricePreset.custom, child: 'Custom'.w(600)),
-                    ],
-                    onChanged: (v) => setState(() => _pricePreset = v ?? PricePreset.any),
+
+                  28.kh,
+
+                  // ─── Price Range Section ───
+                  _SectionLabel('Price Range'),
+                  16.kh,
+
+                  // Range slider
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      const fraction = (_maxPrice - _minPrice);
+                      final startX =
+                          (_range.start - _minPrice) / fraction;
+                      final endX = (_range.end - _minPrice) / fraction;
+                      return Column(
+                        children: [
+                          SizedBox(
+                            height: 50,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Positioned(
+                                //   left: (width * startX - 16)
+                                //       .clamp(0, width - 40),
+                                //   top: 0,
+                                //   child:
+                                //       _CoinLabel(value: _range.start.toInt()),
+                                // ),
+                                // Positioned(
+                                //   left: (width * endX - 16)
+                                //       .clamp(40, width - 10),
+                                //   top: 0,
+                                //   child:
+                                //       _CoinLabel(value: _range.end.toInt()),
+                                // ),
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: SliderTheme(
+                                    data: SliderTheme.of(context).copyWith(
+                                      rangeThumbShape:
+                                          _RoundThumbShape(primary: primary),
+                                      thumbColor: Colors.white,
+                                      activeTrackColor: primary,
+                                      inactiveTrackColor:
+                                          primary.withOpacity(0.15),
+                                      overlayColor:
+                                          primary.withOpacity(0.15),
+                                      trackHeight: 6,
+                                      showValueIndicator:
+                                          ShowValueIndicator.never,
+                                    ),
+                                    child: RangeSlider(
+                                      min: _minPrice,
+                                      max: _maxPrice,
+                                      divisions: 100,
+                                      values: _range,
+                                      onChanged: (v) =>
+                                          setState(() => _range = v),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          8.kh,
+                          // Min / Max labels
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  '${_range.start.toInt()}'
+                                      .s(14)
+                                      .w(700)
+                                      .c(const Color(0xFFFBBF24)),
+                                  4.kw,
+                                  Assets.icons.coinLumi
+                                      .image(width: 18.w, height: 18.h),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  '${_range.end.toInt()}'
+                                      .s(14)
+                                      .w(700)
+                                      .c(const Color(0xFFFBBF24)),
+                                  4.kw,
+                                  Assets.icons.coinLumi
+                                      .image(width: 18.w, height: 18.h),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                  if (_pricePreset == PricePreset.custom) ...[
-                    33.kh,
-                    _Label('Select price', color: textColor),
-                    46.kh,
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final width = constraints.maxWidth;
-                        const fraction = (_maxPrice - _minPrice);
-                        final startX = (_range.start - _minPrice) / fraction;
-                        final endX = (_range.end - _minPrice) / fraction;
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            // Value labels above thumbs
-                            Positioned(
-                              left: width * startX - 12,
-                              top: -30,
-                              child: _PriceLabel(value: _range.start),
-                            ),
-                            Positioned(
-                              left: width * endX - 12,
-                              top: -30,
-                              child: _PriceLabel(value: _range.end),
-                            ),
-                            SliderTheme(
-                              data: theme.sliderTheme.copyWith(
-                                rangeThumbShape: _RectChevronThumbShape(primary: primary),
-                                thumbColor: Colors.white,
-                                activeTrackColor: primary,
-                                inactiveTrackColor: primary.withValues(alpha: 0.2),
-                                overlayColor: primary.withValues(alpha: 0.2),
-                                trackHeight: 6,
-                                showValueIndicator: ShowValueIndicator.never,
-                              ),
-                              child: RangeSlider(
-                                min: _minPrice,
-                                max: _maxPrice,
-                                values: _range,
-                                onChanged: (v) => setState(() => _range = v),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
+
+                  30.kh,
                 ],
               ),
             ),
           ),
+
+          // ─── Action Buttons ───
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0).copyWith(bottom: 30),
+            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 30.h),
             child: Row(
               children: [
                 Expanded(
-                  child: CommonButton.outlined(
-                    text: "RESET",
-                    onPressed: _reset,
-                    textColor: context.colors.black,
+                  child: Container3d(
+                    onTap: () {
+                      _reset();
+                      Navigator.of(context).pop();
+                    },
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    depth: 3,
+                    backgroundColor: Colors.white,
+                    borderColor: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(14.r),
+                    child: Center(
+                      child: 'RESET'.s(14).w(700).c(textColor),
+                    ),
                   ),
-                  // _GhostButton(
-                  //   text: 'RESET',
-                  //   onTap: _reset,
-                  // ),
                 ),
                 14.kw,
                 Expanded(
-                  child: CommonButton.elevated(
-                    text: "APPLY",
-                    onPressed: () => Navigator.of(context).pop(_buildResult()),
+                  child: Container3d(
+                    onTap: () =>
+                        Navigator.of(context).pop(_buildResult()),
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    depth: 4,
+                    backgroundColor: primary,
+                    borderColor: primary,
+                    borderRadius: BorderRadius.circular(14.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withOpacity(0.34),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                    child: Center(
+                      child: 'APPLY'.s(14).w(700).c(Colors.white),
+                    ),
                   ),
                 ),
               ],
@@ -338,244 +580,207 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<DateTime?> _pickDate(DateTime? initial) async {
+    final now = DateTime.now();
+    return showDatePicker(
+      context: context,
+      barrierColor: Colors.black54,
+      initialDate: initial ?? now,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 2),
+    );
+  }
+}
+
+// ─── Section label ───
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return text.s(15).w(700).c(const Color(0xFF1E293B));
+  }
+}
+
+// ─── Date preset chip ───
+
+class _DateChip extends StatelessWidget {
+  const _DateChip({
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = context.colors.primary;
+    return Expanded(
+      child: Container3d(
+        onTap: onTap,
+        padding: EdgeInsets.symmetric(vertical: 10.h),
+        depth: selected ? 3 : 2,
+        backgroundColor: selected ? primary : Colors.white,
+        borderColor: selected ? primary : Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(14.r),
+        child: Center(
+          child: text.s(13).w(600).c(selected ? Colors.white : const Color(0xFF475569)),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Date picker field ───
+
+class _DatePickerField extends StatelessWidget {
+  const _DatePickerField({
+    required this.label,
+    required this.date,
+    required this.hint,
+    required this.onPick,
+  });
+
+  final String label;
+  final DateTime? date;
+  final String hint;
+  final VoidCallback onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        label.s(11).w(600).c(const Color(0xFF94A3B8)),
+        6.kh,
+        GestureDetector(
+          onTap: onPick,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_outlined,
+                    size: 16.w, color: context.colors.primary),
+                8.kw,
+                Expanded(
+                  child: Text(
+                    date != null ? _fmtDate(date!) : hint,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
+                      color: date != null
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFBDBDBD),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   static String _fmtDate(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-  // Legacy helper no longer used
-
-  Future<int?> _pickAge(BuildContext ctx, int? current) async {
-    int temp = current ?? 7;
-    return showDialog<int>(
-      context: ctx,
-      builder: (_) => AlertDialog(
-        title: const Text('Select age'),
-        content: StatefulBuilder(
-          builder: (context, setState) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$temp years', style: const TextStyle(fontWeight: FontWeight.w600)),
-              Slider(
-                min: 1,
-                max: 18,
-                divisions: 17,
-                value: temp.toDouble(),
-                thumbColor: context.colors.primary,
-                overlayColor: WidgetStateProperty.all(context.colors.primary.withValues(alpha: 0.2)),
-                inactiveColor: context.colors.primary.withValues(alpha: 0.2),
-                activeColor: context.colors.primary,
-                onChanged: (v) => setState(() => temp = v.toInt()),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CommonButton.elevated(text: "Select", onPressed: () => Navigator.pop(ctx, temp)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<Gender?> _pickGender(BuildContext ctx, Gender current) async {
-    Gender temp = current;
-    return showDialog<Gender>(
-      context: ctx,
-      builder: (_) => AlertDialog(
-        title: const Text('Select gender'),
-        content: StatefulBuilder(
-          builder: (context, setState) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: Gender.values
-                .map((g) => RadioListTile<Gender>(
-                      activeColor: context.colors.primary,
-                      value: g,
-                      groupValue: temp,
-                      onChanged: (v) => setState(() => temp = v ?? temp),
-                      title: Text({Gender.any: 'Any', Gender.boy: 'boy', Gender.girl: 'girl'}[g]!),
-                    ))
-                .toList(),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CommonButton.elevated(text: "Select", onPressed: () => Navigator.pop(ctx, temp)),
-          ),
-        ],
-      ),
-    );
-  }
+      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 }
 
-class _Label extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _Label(this.text, {required this.color});
+// ─── Gender selector ───
+
+class _GenderSelector extends StatelessWidget {
+  const _GenderSelector({required this.value, required this.onChanged});
+  final Gender value;
+  final ValueChanged<Gender> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return text.w(700).c(color);
-  }
-}
-
-class _Segmented extends StatelessWidget {
-  final List<String> items;
-  final int index;
-  final ValueChanged<int> onChanged;
-  final Color primary;
-
-  const _Segmented({
-    required this.items,
-    required this.index,
-    required this.onChanged,
-    required this.primary,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: List.generate(items.length, (i) {
-        final selected = i == index;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: i == items.length - 1 ? 0 : 10),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              curve: Curves.easeOut,
-              height: 44,
-              decoration: BoxDecoration(
-                color: selected ? primary : theme.cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: selected ? primary : theme.dividerColor),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => onChanged(i),
-                child: Center(
-                  child:
-                      items[i].w(600).c(selected ? Colors.white : (theme.textTheme.bodyLarge?.color ?? Colors.black87)),
-                ),
-              ),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _PillButton extends StatelessWidget {
-  final Widget? leading;
-  final String label;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-
-  const _PillButton({
-    this.leading,
-    required this.label,
-    this.trailing,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              if (leading != null) ...[
-                leading!,
-                10.kw,
-              ],
-              Expanded(
-                child: label.s(15).w(400).c(
-                      const Color(0xFF807A7A),
-                    ),
-              ),
-              if (trailing != null) trailing!,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PillDropdown<T> extends StatelessWidget {
-  final T value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
-
-  const _PillDropdown({
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 52.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.dividerColor),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Theme.of(context).cardColor,
-              border: Border.all(
-                width: 3,
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Assets.icons.dollarRounded.svg(),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Gender>(
+          isExpanded: true,
+          value: value,
+          icon: Icon(Icons.keyboard_arrow_down_rounded,
+              color: const Color(0xFF64748B), size: 22.w),
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
           ),
-          10.kw,
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<T>(
-                isExpanded: true,
-                value: value,
-                items: items,
-                onChanged: onChanged,
-              ),
-            ),
-          ),
-        ],
+          items: [
+            _genderItem(Gender.any, 'Both', const Color(0xFF7C3AED)),
+            _genderItem(Gender.boy, 'Boys', const Color(0xFF4F46E5)),
+            _genderItem(Gender.girl, 'Girls', const Color(0xFFEC4899)),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+
+  DropdownMenuItem<Gender> _genderItem(Gender g, String label, Color color) {
+    return DropdownMenuItem(
+      value: g,
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 }
 
-// Unused legacy button classes removed.
+// ─── Coin label above thumb ───
 
-class _RectChevronThumbShape extends RangeSliderThumbShape {
-  final double thumbSize = 36;
-  final Color primary;
-  const _RectChevronThumbShape({required this.primary});
+class _CoinLabel extends StatelessWidget {
+  const _CoinLabel({required this.value});
+  final int value;
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size(thumbSize, thumbSize);
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        '$value'.s(13).w(700).c(const Color(0xFFFBBF24)),
+        3.kw,
+        Assets.icons.coinLumi.image(width: 14.w, height: 14.h),
+      ],
+    );
+  }
+}
+
+// ─── Round thumb shape for range slider ───
+
+class _RoundThumbShape extends RangeSliderThumbShape {
+  final Color primary;
+  const _RoundThumbShape({required this.primary});
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size(28, 28);
 
   @override
   void paint(
@@ -594,63 +799,31 @@ class _RectChevronThumbShape extends RangeSliderThumbShape {
     Size? sizeWithOverflow,
   }) {
     final Canvas canvas = context.canvas;
+    const double radius = 14;
 
-    final RRect rect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: center, width: thumbSize, height: thumbSize),
-      const Radius.circular(10),
+    // Shadow
+    canvas.drawCircle(
+      center + const Offset(0, 2),
+      radius + 1,
+      Paint()
+        ..color = Colors.black.withOpacity(0.08)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    // Thumb body
-    final Paint thumbPaint = Paint()..color = Colors.white;
-    canvas.drawRRect(rect, thumbPaint);
+    // White circle
+    canvas.drawCircle(center, radius, Paint()..color = Colors.white);
 
     // Border
-    final Paint borderPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = primary.withValues(alpha: 0.12);
-    canvas.drawRRect(rect, borderPaint);
-
-    // Inner chevrons
-    const double iconSize = 10;
-    final Path left = Path();
-    final Path right = Path();
-    const double gap = 4;
-
-    final Offset leftCenter = center.translate(-gap, 0);
-    final Offset rightCenter = center.translate(gap, 0);
-
-    // Draw small triangles to suggest chevrons
-    left.moveTo(leftCenter.dx + iconSize / 2, leftCenter.dy - iconSize / 2);
-    left.lineTo(leftCenter.dx - iconSize / 2, leftCenter.dy);
-    left.lineTo(leftCenter.dx + iconSize / 2, leftCenter.dy + iconSize / 2);
-    left.close();
-
-    right.moveTo(rightCenter.dx - iconSize / 2, rightCenter.dy - iconSize / 2);
-    right.lineTo(rightCenter.dx + iconSize / 2, rightCenter.dy);
-    right.lineTo(rightCenter.dx - iconSize / 2, rightCenter.dy + iconSize / 2);
-    right.close();
-
-    final Paint chevronPaint = Paint()..color = primary;
-    canvas.drawPath(left, chevronPaint);
-    canvas.drawPath(right, chevronPaint);
-  }
-}
-
-class _PriceLabel extends StatelessWidget {
-  final double value;
-  const _PriceLabel({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        value.toInt().toString().w(700).c(const Color(0xFFFF9F0A)),
-        4.kw,
-        Assets.icons.dollar.svg(),
-      ],
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = primary,
     );
+
+    // Inner dot
+    canvas.drawCircle(center, 4, Paint()..color = primary);
   }
 }

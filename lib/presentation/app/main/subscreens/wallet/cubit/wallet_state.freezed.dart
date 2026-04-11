@@ -19,7 +19,9 @@ mixin _$WalletBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
+  num get balance => throw _privateConstructorUsedError;
   List<Tariff>? get tariffs => throw _privateConstructorUsedError;
+  List<CoinFlow> get coinHistory => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $WalletBuildableCopyWith<WalletBuildable> get copyWith =>
@@ -33,7 +35,12 @@ abstract class $WalletBuildableCopyWith<$Res> {
       _$WalletBuildableCopyWithImpl<$Res, WalletBuildable>;
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, List<Tariff>? tariffs});
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      num balance,
+      List<Tariff>? tariffs,
+      List<CoinFlow> coinHistory});
 }
 
 /// @nodoc
@@ -52,7 +59,9 @@ class _$WalletBuildableCopyWithImpl<$Res, $Val extends WalletBuildable>
     Object? isSelected = null,
     Object? isLoading = null,
     Object? success = null,
+    Object? balance = null,
     Object? tariffs = freezed,
+    Object? coinHistory = null,
   }) {
     return _then(_value.copyWith(
       isSelected: null == isSelected
@@ -67,10 +76,18 @@ class _$WalletBuildableCopyWithImpl<$Res, $Val extends WalletBuildable>
           ? _value.success
           : success // ignore: cast_nullable_to_non_nullable
               as bool,
+      balance: null == balance
+          ? _value.balance
+          : balance // ignore: cast_nullable_to_non_nullable
+              as num,
       tariffs: freezed == tariffs
           ? _value.tariffs
           : tariffs // ignore: cast_nullable_to_non_nullable
               as List<Tariff>?,
+      coinHistory: null == coinHistory
+          ? _value.coinHistory
+          : coinHistory // ignore: cast_nullable_to_non_nullable
+              as List<CoinFlow>,
     ) as $Val);
   }
 }
@@ -84,7 +101,12 @@ abstract class _$$WalletBuildableImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, List<Tariff>? tariffs});
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      num balance,
+      List<Tariff>? tariffs,
+      List<CoinFlow> coinHistory});
 }
 
 /// @nodoc
@@ -101,7 +123,9 @@ class __$$WalletBuildableImplCopyWithImpl<$Res>
     Object? isSelected = null,
     Object? isLoading = null,
     Object? success = null,
+    Object? balance = null,
     Object? tariffs = freezed,
+    Object? coinHistory = null,
   }) {
     return _then(_$WalletBuildableImpl(
       isSelected: null == isSelected
@@ -116,10 +140,18 @@ class __$$WalletBuildableImplCopyWithImpl<$Res>
           ? _value.success
           : success // ignore: cast_nullable_to_non_nullable
               as bool,
+      balance: null == balance
+          ? _value.balance
+          : balance // ignore: cast_nullable_to_non_nullable
+              as num,
       tariffs: freezed == tariffs
           ? _value._tariffs
           : tariffs // ignore: cast_nullable_to_non_nullable
               as List<Tariff>?,
+      coinHistory: null == coinHistory
+          ? _value._coinHistory
+          : coinHistory // ignore: cast_nullable_to_non_nullable
+              as List<CoinFlow>,
     ));
   }
 }
@@ -131,8 +163,11 @@ class _$WalletBuildableImpl implements _WalletBuildable {
       {this.isSelected = false,
       this.isLoading = false,
       this.success = false,
-      final List<Tariff>? tariffs})
-      : _tariffs = tariffs;
+      this.balance = 0,
+      final List<Tariff>? tariffs,
+      final List<CoinFlow> coinHistory = const []})
+      : _tariffs = tariffs,
+        _coinHistory = coinHistory;
 
   @override
   @JsonKey()
@@ -143,6 +178,9 @@ class _$WalletBuildableImpl implements _WalletBuildable {
   @override
   @JsonKey()
   final bool success;
+  @override
+  @JsonKey()
+  final num balance;
   final List<Tariff>? _tariffs;
   @override
   List<Tariff>? get tariffs {
@@ -153,9 +191,18 @@ class _$WalletBuildableImpl implements _WalletBuildable {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<CoinFlow> _coinHistory;
+  @override
+  @JsonKey()
+  List<CoinFlow> get coinHistory {
+    if (_coinHistory is EqualUnmodifiableListView) return _coinHistory;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_coinHistory);
+  }
+
   @override
   String toString() {
-    return 'WalletBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, tariffs: $tariffs)';
+    return 'WalletBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, balance: $balance, tariffs: $tariffs, coinHistory: $coinHistory)';
   }
 
   @override
@@ -168,12 +215,21 @@ class _$WalletBuildableImpl implements _WalletBuildable {
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
             (identical(other.success, success) || other.success == success) &&
-            const DeepCollectionEquality().equals(other._tariffs, _tariffs));
+            (identical(other.balance, balance) || other.balance == balance) &&
+            const DeepCollectionEquality().equals(other._tariffs, _tariffs) &&
+            const DeepCollectionEquality()
+                .equals(other._coinHistory, _coinHistory));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isSelected, isLoading, success,
-      const DeepCollectionEquality().hash(_tariffs));
+  int get hashCode => Object.hash(
+      runtimeType,
+      isSelected,
+      isLoading,
+      success,
+      balance,
+      const DeepCollectionEquality().hash(_tariffs),
+      const DeepCollectionEquality().hash(_coinHistory));
 
   @JsonKey(ignore: true)
   @override
@@ -188,7 +244,9 @@ abstract class _WalletBuildable implements WalletBuildable {
       {final bool isSelected,
       final bool isLoading,
       final bool success,
-      final List<Tariff>? tariffs}) = _$WalletBuildableImpl;
+      final num balance,
+      final List<Tariff>? tariffs,
+      final List<CoinFlow> coinHistory}) = _$WalletBuildableImpl;
 
   @override
   bool get isSelected;
@@ -197,7 +255,11 @@ abstract class _WalletBuildable implements WalletBuildable {
   @override
   bool get success;
   @override
+  num get balance;
+  @override
   List<Tariff>? get tariffs;
+  @override
+  List<CoinFlow> get coinHistory;
   @override
   @JsonKey(ignore: true)
   _$$WalletBuildableImplCopyWith<_$WalletBuildableImpl> get copyWith =>

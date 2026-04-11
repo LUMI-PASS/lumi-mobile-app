@@ -21,6 +21,9 @@ mixin _$HomeBuildable {
   bool get success => throw _privateConstructorUsedError;
   HomeModel? get homeModel => throw _privateConstructorUsedError;
   List<HomCategory>? get categories =>
+      throw _privateConstructorUsedError; // Location
+  double? get lat => throw _privateConstructorUsedError;
+  double? get lng =>
       throw _privateConstructorUsedError; // Pagination for new classes
   List<HomClass> get newClassesList => throw _privateConstructorUsedError;
   int get newClassesPage => throw _privateConstructorUsedError;
@@ -49,6 +52,8 @@ abstract class $HomeBuildableCopyWith<$Res> {
       bool success,
       HomeModel? homeModel,
       List<HomCategory>? categories,
+      double? lat,
+      double? lng,
       List<HomClass> newClassesList,
       int newClassesPage,
       bool isLoadingNewClasses,
@@ -79,6 +84,8 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? success = null,
     Object? homeModel = freezed,
     Object? categories = freezed,
+    Object? lat = freezed,
+    Object? lng = freezed,
     Object? newClassesList = null,
     Object? newClassesPage = null,
     Object? isLoadingNewClasses = null,
@@ -109,6 +116,14 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
           ? _value.categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>?,
+      lat: freezed == lat
+          ? _value.lat
+          : lat // ignore: cast_nullable_to_non_nullable
+              as double?,
+      lng: freezed == lng
+          ? _value.lng
+          : lng // ignore: cast_nullable_to_non_nullable
+              as double?,
       newClassesList: null == newClassesList
           ? _value.newClassesList
           : newClassesList // ignore: cast_nullable_to_non_nullable
@@ -171,6 +186,8 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       bool success,
       HomeModel? homeModel,
       List<HomCategory>? categories,
+      double? lat,
+      double? lng,
       List<HomClass> newClassesList,
       int newClassesPage,
       bool isLoadingNewClasses,
@@ -200,6 +217,8 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? success = null,
     Object? homeModel = freezed,
     Object? categories = freezed,
+    Object? lat = freezed,
+    Object? lng = freezed,
     Object? newClassesList = null,
     Object? newClassesPage = null,
     Object? isLoadingNewClasses = null,
@@ -230,6 +249,14 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           ? _value._categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>?,
+      lat: freezed == lat
+          ? _value.lat
+          : lat // ignore: cast_nullable_to_non_nullable
+              as double?,
+      lng: freezed == lng
+          ? _value.lng
+          : lng // ignore: cast_nullable_to_non_nullable
+              as double?,
       newClassesList: null == newClassesList
           ? _value._newClassesList
           : newClassesList // ignore: cast_nullable_to_non_nullable
@@ -275,6 +302,8 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.success = false,
       this.homeModel,
       final List<HomCategory>? categories,
+      this.lat = null,
+      this.lng = null,
       final List<HomClass> newClassesList = const [],
       this.newClassesPage = 2,
       this.isLoadingNewClasses = false,
@@ -308,6 +337,13 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     return EqualUnmodifiableListView(value);
   }
 
+// Location
+  @override
+  @JsonKey()
+  final double? lat;
+  @override
+  @JsonKey()
+  final double? lng;
 // Pagination for new classes
   final List<HomClass> _newClassesList;
 // Pagination for new classes
@@ -351,7 +387,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, newClassesList: $newClassesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, lat: $lat, lng: $lng, newClassesList: $newClassesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -368,6 +404,8 @@ class _$HomeBuildableImpl implements _HomeBuildable {
                 other.homeModel == homeModel) &&
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
+            (identical(other.lat, lat) || other.lat == lat) &&
+            (identical(other.lng, lng) || other.lng == lng) &&
             const DeepCollectionEquality()
                 .equals(other._newClassesList, _newClassesList) &&
             (identical(other.newClassesPage, newClassesPage) ||
@@ -394,6 +432,8 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       success,
       homeModel,
       const DeepCollectionEquality().hash(_categories),
+      lat,
+      lng,
       const DeepCollectionEquality().hash(_newClassesList),
       newClassesPage,
       isLoadingNewClasses,
@@ -417,6 +457,8 @@ abstract class _HomeBuildable implements HomeBuildable {
       final bool success,
       final HomeModel? homeModel,
       final List<HomCategory>? categories,
+      final double? lat,
+      final double? lng,
       final List<HomClass> newClassesList,
       final int newClassesPage,
       final bool isLoadingNewClasses,
@@ -436,6 +478,10 @@ abstract class _HomeBuildable implements HomeBuildable {
   HomeModel? get homeModel;
   @override
   List<HomCategory>? get categories;
+  @override // Location
+  double? get lat;
+  @override
+  double? get lng;
   @override // Pagination for new classes
   List<HomClass> get newClassesList;
   @override

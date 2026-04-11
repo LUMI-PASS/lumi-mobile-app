@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
@@ -18,7 +21,6 @@ class HomeApi {
     int nearClassLimit = 10,
     double? lat,
     double? lng,
-    String lang = 'ru',
   }) {
     return _dio.get('discovery/feed/', queryParameters: {
       'new_classes_page': newClassesPage,
@@ -29,44 +31,44 @@ class HomeApi {
       'near_class_limit': nearClassLimit,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
-      'lang': lang,
+      'lang': currentLang,
     });
   }
 
   Future<Response> getSchedule() {
-    return _dio.get('schedules/parent/', queryParameters: {'lang': 'ru'});
+    return _dio.get('schedules/parent/', queryParameters: {'lang': currentLang});
   }
 
   Future<Response> getProfileData() {
-    return _dio.get('users/parents/profile/', queryParameters: {'lang': 'ru'});
+    return _dio.get('users/parents/profile/', queryParameters: {'lang': currentLang});
   }
 
   Future<Response> addChild(ChildModel childModel, String parentId) {
     return _dio.post('users/parents/profile/children',
-        queryParameters: {'parent_id': parentId, 'lang': 'ru'},
+        queryParameters: {'parent_id': parentId, 'lang': currentLang},
         data: childModel.toJson()..remove("id"));
   }
 
   Future<Response> updateChild(ChildModel childModel, String parentId) {
     return _dio.patch('users/parents/profile/children/${childModel.id}',
-        queryParameters: {'parent_id': parentId, 'lang': 'ru'},
+        queryParameters: {'parent_id': parentId, 'lang': currentLang},
         data: childModel.toJson());
   }
 
   Future<Response> updateChildData() {
-    return _dio.get('users/parents/profile/', queryParameters: {'lang': 'ru'});
+    return _dio.get('users/parents/profile/', queryParameters: {'lang': currentLang});
   }
 
   Future<Response> getChildren() {
-    return _dio.get('users/children/', queryParameters: {'lang': 'ru'});
+    return _dio.get('users/children/', queryParameters: {'lang': currentLang});
   }
 
   Future<Response> getTariffs() {
-    return _dio.get('tariffs/', queryParameters: {'lang': 'ru'});
+    return _dio.get('tariffs/', queryParameters: {'lang': currentLang});
   }
 
   Future<Response> getCategories() {
-    return _dio.get('categories/', queryParameters: {'lang': 'ru'});
+    return _dio.get('categories/', queryParameters: {'lang': currentLang});
   }
 
   Future<Response> getClassCategories(
@@ -74,7 +76,7 @@ class HomeApi {
     return _dio.get(
         'schedules/class/$classId/check-availability',
         queryParameters: {
-          'lang': 'ru',
+          'lang': currentLang,
           'child_id': childId,
           'from_date': fromDate,
           'to_date': toDate,
@@ -83,15 +85,94 @@ class HomeApi {
 
   Future<Response> purchaseSubscription(String tariffId) {
     return _dio.post('transaction/subscriptions/', queryParameters: {
-      'lang': 'ru'
+      'lang': currentLang
     }, data: {
       'tariff_id': tariffId,
+      'payment_method': 'PAYME',
     });
   }
 
   Future<Response> updateProfileData(HomForUser user) {
     return _dio.patch("users/parents/profile",
-        queryParameters: {'profile_id': user.id, 'lang': 'ru'},
+        queryParameters: {'profile_id': user.id, 'lang': currentLang},
         data: user.toJson()..remove("id"));
+  }
+
+  Future<Response> checkClassEligibility(String classId) {
+    return _dio.get('classes/$classId/check-eligibility',
+        queryParameters: {'lang': currentLang});
+  }
+
+  Future<Response> createBooking(Map<String, dynamic> bookingData) {
+    return _dio.post('bookings/',
+        queryParameters: {'lang': currentLang}, data: bookingData);
+  }
+
+  Future<Response> getUserBalance() {
+    return _dio.get('transaction/wallets/me', queryParameters: {'lang': currentLang});
+  }
+
+  Future<Response> getCoinHistory() {
+    return _dio.get('transaction/coin-flows/me', queryParameters: {'lang': currentLang});
+  }
+
+  Future<Response> uploadChildPhoto(String childId, File photo) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(photo.path,
+          filename: photo.path.split('/').last),
+    });
+    return _dio.post('assets/files/child-photo/$childId',
+        queryParameters: {'lang': currentLang}, data: formData);
+  }
+
+  Future<Response> getChildDetails(String childId) {
+    return _dio.get('users/parents/profile/children/$childId',
+        queryParameters: {'lang': currentLang});
+  }
+
+  Future<Response> getChildAttendanceHistory(String childId) {
+    return _dio.get('attendance/history/child/$childId',
+        queryParameters: {'lang': currentLang});
+  }
+
+  Future<Response> cancelBooking(String bookingId, String reason) {
+    return _dio.patch('bookings/$bookingId/cancel',
+        queryParameters: {'lang': currentLang},
+        data: {'reason': reason});
+  }
+
+  Future<Response> explore({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? categoryId,
+    String? fromDate,
+    String? toDate,
+    int? age,
+    String? classGender,
+    num? minPrice,
+    num? maxPrice,
+    String? branchId,
+    String? sortBy,
+    double? lat,
+    double? lng,
+  }) {
+    return _dio.get('discovery/explore', queryParameters: {
+      'page': page,
+      'limit': limit,
+      'lang': currentLang,
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (categoryId != null) 'category_id': categoryId,
+      if (fromDate != null) 'from_date': fromDate,
+      if (toDate != null) 'to_date': toDate,
+      if (age != null) 'age': age,
+      if (classGender != null) 'class_gender': classGender,
+      if (minPrice != null) 'min_price': minPrice,
+      if (maxPrice != null) 'max_price': maxPrice,
+      if (branchId != null) 'branch_id': branchId,
+      if (sortBy != null) 'sort_by': sortBy,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+    });
   }
 }

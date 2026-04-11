@@ -35,6 +35,8 @@ class Storage {
 
   BaseStorage<String?> get currencyCode => BaseStorage(_box, 'currencyCode');
 
+  BaseStorage<String?> get localeCode => BaseStorage(_box, 'localeCode');
+
   Future<void> logout() async {
     await tokens.set(null);
     await code.set(null);

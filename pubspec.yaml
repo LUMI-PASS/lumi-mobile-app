@@ -3,7 +3,7 @@ description: "Lumi project"
 
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.5.4
@@ -16,6 +16,9 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+  location:
+    path: packages/location
+  geolocator: ^14.0.0
   auto_route: ^8.0.3
   get_it: ^7.6.8
   injectable: ^2.4.1
@@ -57,6 +60,8 @@ dependencies:
   flutter_polyline_points: ^2.1.0
   firebase_core: ^3.13.1
   firebase_messaging: ^15.2.6
+  firebase_remote_config: ^5.3.0
+  package_info_plus: ^8.3.0
   flutter_local_notifications: ^19.2.1
   dropdown_button2: ^2.3.9
   provider: ^6.1.5
@@ -97,6 +102,7 @@ flutter:
 
   assets:
     - assets/icons/
+    - assets/icons/background/
     - assets/images/
     - assets/localization/
 
@@ -109,7 +115,6 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: 'assets/images/app_icon.png'
-  adaptive_icon_background: "assets/images/app_icon.png"
-  adaptive_icon_foreground: "assets/images/app_icon.png"
-  adaptive_icon_background_color: "#061D2B"
+  image_path: 'assets/images/app_icon.jpg'
+  adaptive_icon_background_color: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/app_icon.jpg"

@@ -11,6 +11,9 @@ class HomeBuildable with _$HomeBuildable {
     @Default(false) bool success,
     HomeModel? homeModel,
     List<HomCategory>? categories,
+    // Location
+    @Default(null) double? lat,
+    @Default(null) double? lng,
     // Pagination for new classes
     @Default([]) List<HomClass> newClassesList,
     @Default(2) int newClassesPage,

@@ -215,6 +215,34 @@ class HomRelatedBooking with _$HomRelatedBooking {
 }
 
 @freezed
+class CoinFlow with _$CoinFlow {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory CoinFlow({
+    String? id,
+    num? amount,
+    String? type,
+    String? createdAt,
+  }) = _CoinFlow;
+
+  factory CoinFlow.fromJson(Map<String, dynamic> json) =>
+      _$CoinFlowFromJson(json);
+}
+
+class ExploreResult {
+  final List<HomClass> classes;
+  final int classesPages;
+  final List<HomBranch> branches;
+  final int branchesPages;
+
+  const ExploreResult({
+    required this.classes,
+    required this.classesPages,
+    required this.branches,
+    required this.branchesPages,
+  });
+}
+
+@freezed
 class HomBranch with _$HomBranch {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory HomBranch({
