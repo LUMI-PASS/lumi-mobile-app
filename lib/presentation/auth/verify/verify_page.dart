@@ -44,6 +44,14 @@ class VerifyPage
   }
 
   @override
+  void init(BuildContext context) {
+    super.init(context);
+    if (code != null) {
+      context.read<VerifyCubit>().setOtpCode(code);
+    }
+  }
+
+  @override
   void listener(BuildContext context, VerifyListenable state) {
     if (state.effect == VerifyEffect.success) {
       context.router.replaceAll(const [MainRoute()]);
@@ -421,6 +429,17 @@ class VerifyPage
               ),
             ),
           ),
+          // Top SMS code snackbar
+          if (state.otpCode != null)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _TopSmsBanner(
+                key: ValueKey(state.otpCode),
+                code: state.otpCode!,
+              ),
+            ),
         ],
       ),
     );
@@ -505,6 +524,147 @@ class _PulsingImageState extends State<_PulsingImage>
         );
       },
       child: widget.child,
+    );
+  }
+}
+
+class _TopSmsBanner extends StatefulWidget {
+  const _TopSmsBanner({super.key, required this.code});
+
+  final int code;
+
+  @override
+  State<_TopSmsBanner> createState() => _TopSmsBannerState();
+}
+
+class _TopSmsBannerState extends State<_TopSmsBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _fade;
+  bool _dismissed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _dismiss() async {
+    await _controller.reverse();
+    if (mounted) setState(() => _dismissed = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+    final topPadding = MediaQuery.of(context).viewPadding.top;
+    return SlideTransition(
+      position: _slide,
+      child: FadeTransition(
+        opacity: _fade,
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: topPadding + 8.h,
+            left: 16.w,
+            right: 16.w,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFA652C7),
+                    Color(0xFFC97DE0),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFA652C7).withValues(alpha: 0.3),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36.r,
+                    height: 36.r,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    child: Icon(
+                      Icons.sms_rounded,
+                      color: Colors.white,
+                      size: 20.r,
+                    ),
+                  ),
+                  12.kw,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        'sms_code_title'.tr()
+                            .s(12)
+                            .w(500)
+                            .c(Colors.white.withValues(alpha: 0.85)),
+                        2.kh,
+                        widget.code
+                            .toString()
+                            .s(18)
+                            .w(700)
+                            .c(Colors.white),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _dismiss,
+                    child: Container(
+                      padding: EdgeInsets.all(6.r),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.15),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                        size: 16.r,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -45,14 +45,22 @@ class HomeApi {
 
   Future<Response> addChild(ChildModel childModel, String parentId) {
     return _dio.post('users/parents/profile/children',
-        queryParameters: {'parent_id': parentId, 'lang': currentLang},
-        data: childModel.toJson()..remove("id"));
+        queryParameters: {'lang': currentLang},
+        data: _childWritePayload(childModel));
   }
 
   Future<Response> updateChild(ChildModel childModel, String parentId) {
     return _dio.patch('users/parents/profile/children/${childModel.id}',
-        queryParameters: {'parent_id': parentId, 'lang': currentLang},
-        data: childModel.toJson());
+        queryParameters: {'lang': currentLang},
+        data: _childWritePayload(childModel));
+  }
+
+  /// Backend only needs first_name + dob; everything else is stripped.
+  Map<String, dynamic> _childWritePayload(ChildModel c) {
+    return <String, dynamic>{
+      if ((c.firstName ?? '').isNotEmpty) 'first_name': c.firstName,
+      if ((c.dob ?? '').isNotEmpty) 'dob': c.dob,
+    };
   }
 
   Future<Response> updateChildData() {
@@ -170,6 +178,60 @@ class HomeApi {
       if (minPrice != null) 'min_price': minPrice,
       if (maxPrice != null) 'max_price': maxPrice,
       if (branchId != null) 'branch_id': branchId,
+      if (sortBy != null) 'sort_by': sortBy,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+    });
+  }
+
+  Future<Response> discoveryClasses({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? categoryId,
+    String? fromDate,
+    String? toDate,
+    int? age,
+    String? classGender,
+    num? minPrice,
+    num? maxPrice,
+    String? branchId,
+    String? sortBy,
+    double? lat,
+    double? lng,
+  }) {
+    return _dio.get('discovery/classes', queryParameters: {
+      'page': page,
+      'limit': limit,
+      'lang': currentLang,
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (categoryId != null) 'category_id': categoryId,
+      if (fromDate != null) 'from_date': fromDate,
+      if (toDate != null) 'to_date': toDate,
+      if (age != null) 'age': age,
+      if (classGender != null) 'class_gender': classGender,
+      if (minPrice != null) 'min_price': minPrice,
+      if (maxPrice != null) 'max_price': maxPrice,
+      if (branchId != null) 'branch_id': branchId,
+      if (sortBy != null) 'sort_by': sortBy,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+    });
+  }
+
+  Future<Response> discoveryBranches({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? sortBy,
+    double? lat,
+    double? lng,
+  }) {
+    return _dio.get('discovery/branches', queryParameters: {
+      'page': page,
+      'limit': limit,
+      'lang': currentLang,
+      if (search != null && search.isNotEmpty) 'search': search,
       if (sortBy != null) 'sort_by': sortBy,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,

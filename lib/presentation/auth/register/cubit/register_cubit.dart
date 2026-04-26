@@ -18,7 +18,11 @@ class RegisterCubit extends BaseCubit<RegisterBuildable, RegisterListenable> {
   }
 
   Future<void> register(ProfileModel registerModel) => callable(
-        future: _repo.register(registerModel),
+        future: _repo.register(
+          phone: registerModel.phoneNumber ?? '',
+          firstName: registerModel.firstName ?? '',
+          lastName: registerModel.lastName ?? '',
+        ),
         buildOnStart: () => buildable.copyWith(isLoading: true),
         invokeOnData: (data) => const RegisterListenable(
           effect: RegisterEffect.main,

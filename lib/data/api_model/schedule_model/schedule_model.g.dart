@@ -134,6 +134,8 @@ _$RelatedBookingImpl _$$RelatedBookingImplFromJson(Map<String, dynamic> json) =>
       isTrialBooking: json['is_trial_booking'] as bool?,
       attendanceStatus: json['attendance_status'] as String?,
       cancelledAt: json['cancelled_at'] as String?,
+      ticketNo: json['ticket_no'] as String?,
+      ticketDate: json['ticket_date'] as String?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );
@@ -149,6 +151,8 @@ Map<String, dynamic> _$$RelatedBookingImplToJson(
       'is_trial_booking': instance.isTrialBooking,
       'attendance_status': instance.attendanceStatus,
       'cancelled_at': instance.cancelledAt,
+      'ticket_no': instance.ticketNo,
+      'ticket_date': instance.ticketDate,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
     };

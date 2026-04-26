@@ -907,6 +907,7 @@ mixin _$HomBanner {
   String? get id => throw _privateConstructorUsedError;
   String? get title => throw _privateConstructorUsedError;
   String? get url => throw _privateConstructorUsedError;
+  String? get image => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
 
@@ -925,6 +926,7 @@ abstract class $HomBannerCopyWith<$Res> {
       {String? id,
       String? title,
       String? url,
+      String? image,
       String? createdAt,
       String? updatedAt});
 }
@@ -945,6 +947,7 @@ class _$HomBannerCopyWithImpl<$Res, $Val extends HomBanner>
     Object? id = freezed,
     Object? title = freezed,
     Object? url = freezed,
+    Object? image = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -960,6 +963,10 @@ class _$HomBannerCopyWithImpl<$Res, $Val extends HomBanner>
       url: freezed == url
           ? _value.url
           : url // ignore: cast_nullable_to_non_nullable
+              as String?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
@@ -985,6 +992,7 @@ abstract class _$$HomBannerImplCopyWith<$Res>
       {String? id,
       String? title,
       String? url,
+      String? image,
       String? createdAt,
       String? updatedAt});
 }
@@ -1003,6 +1011,7 @@ class __$$HomBannerImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = freezed,
     Object? url = freezed,
+    Object? image = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -1018,6 +1027,10 @@ class __$$HomBannerImplCopyWithImpl<$Res>
       url: freezed == url
           ? _value.url
           : url // ignore: cast_nullable_to_non_nullable
+              as String?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
@@ -1036,7 +1049,12 @@ class __$$HomBannerImplCopyWithImpl<$Res>
 @JsonSerializable(fieldRename: FieldRename.snake)
 class _$HomBannerImpl implements _HomBanner {
   const _$HomBannerImpl(
-      {this.id, this.title, this.url, this.createdAt, this.updatedAt});
+      {this.id,
+      this.title,
+      this.url,
+      this.image,
+      this.createdAt,
+      this.updatedAt});
 
   factory _$HomBannerImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomBannerImplFromJson(json);
@@ -1048,13 +1066,15 @@ class _$HomBannerImpl implements _HomBanner {
   @override
   final String? url;
   @override
+  final String? image;
+  @override
   final String? createdAt;
   @override
   final String? updatedAt;
 
   @override
   String toString() {
-    return 'HomBanner(id: $id, title: $title, url: $url, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'HomBanner(id: $id, title: $title, url: $url, image: $image, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -1065,6 +1085,7 @@ class _$HomBannerImpl implements _HomBanner {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.url, url) || other.url == url) &&
+            (identical(other.image, image) || other.image == image) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -1074,7 +1095,7 @@ class _$HomBannerImpl implements _HomBanner {
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, title, url, createdAt, updatedAt);
+      Object.hash(runtimeType, id, title, url, image, createdAt, updatedAt);
 
   @JsonKey(ignore: true)
   @override
@@ -1095,6 +1116,7 @@ abstract class _HomBanner implements HomBanner {
       {final String? id,
       final String? title,
       final String? url,
+      final String? image,
       final String? createdAt,
       final String? updatedAt}) = _$HomBannerImpl;
 
@@ -1107,6 +1129,8 @@ abstract class _HomBanner implements HomBanner {
   String? get title;
   @override
   String? get url;
+  @override
+  String? get image;
   @override
   String? get createdAt;
   @override
@@ -1308,6 +1332,7 @@ mixin _$HomCategory {
   String? get id => throw _privateConstructorUsedError;
   String? get title => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
+  String? get image => throw _privateConstructorUsedError;
   bool? get hasPhoto => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
@@ -1329,6 +1354,7 @@ abstract class $HomCategoryCopyWith<$Res> {
       {String? id,
       String? title,
       String? description,
+      String? image,
       bool? hasPhoto,
       String? createdAt,
       String? updatedAt,
@@ -1351,6 +1377,7 @@ class _$HomCategoryCopyWithImpl<$Res, $Val extends HomCategory>
     Object? id = freezed,
     Object? title = freezed,
     Object? description = freezed,
+    Object? image = freezed,
     Object? hasPhoto = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -1368,6 +1395,10 @@ class _$HomCategoryCopyWithImpl<$Res, $Val extends HomCategory>
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
               as String?,
       hasPhoto: freezed == hasPhoto
           ? _value.hasPhoto
@@ -1401,6 +1432,7 @@ abstract class _$$HomCategoryImplCopyWith<$Res>
       {String? id,
       String? title,
       String? description,
+      String? image,
       bool? hasPhoto,
       String? createdAt,
       String? updatedAt,
@@ -1421,6 +1453,7 @@ class __$$HomCategoryImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = freezed,
     Object? description = freezed,
+    Object? image = freezed,
     Object? hasPhoto = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -1438,6 +1471,10 @@ class __$$HomCategoryImplCopyWithImpl<$Res>
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
               as String?,
       hasPhoto: freezed == hasPhoto
           ? _value.hasPhoto
@@ -1467,6 +1504,7 @@ class _$HomCategoryImpl implements _HomCategory {
       {this.id,
       this.title,
       this.description,
+      this.image,
       this.hasPhoto,
       this.createdAt,
       this.updatedAt,
@@ -1482,6 +1520,8 @@ class _$HomCategoryImpl implements _HomCategory {
   @override
   final String? description;
   @override
+  final String? image;
+  @override
   final bool? hasPhoto;
   @override
   final String? createdAt;
@@ -1492,7 +1532,7 @@ class _$HomCategoryImpl implements _HomCategory {
 
   @override
   String toString() {
-    return 'HomCategory(id: $id, title: $title, description: $description, hasPhoto: $hasPhoto, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomCategory(id: $id, title: $title, description: $description, image: $image, hasPhoto: $hasPhoto, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -1504,6 +1544,7 @@ class _$HomCategoryImpl implements _HomCategory {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
+            (identical(other.image, image) || other.image == image) &&
             (identical(other.hasPhoto, hasPhoto) ||
                 other.hasPhoto == hasPhoto) &&
             (identical(other.createdAt, createdAt) ||
@@ -1516,8 +1557,8 @@ class _$HomCategoryImpl implements _HomCategory {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, title, description, hasPhoto,
-      createdAt, updatedAt, deletedAt);
+  int get hashCode => Object.hash(runtimeType, id, title, description, image,
+      hasPhoto, createdAt, updatedAt, deletedAt);
 
   @JsonKey(ignore: true)
   @override
@@ -1538,6 +1579,7 @@ abstract class _HomCategory implements HomCategory {
       {final String? id,
       final String? title,
       final String? description,
+      final String? image,
       final bool? hasPhoto,
       final String? createdAt,
       final String? updatedAt,
@@ -1552,6 +1594,8 @@ abstract class _HomCategory implements HomCategory {
   String? get title;
   @override
   String? get description;
+  @override
+  String? get image;
   @override
   bool? get hasPhoto;
   @override
@@ -1948,6 +1992,7 @@ mixin _$HomClass {
   String? get gender => throw _privateConstructorUsedError;
   bool? get isActive => throw _privateConstructorUsedError;
   bool? get hasPhoto => throw _privateConstructorUsedError;
+  String? get image => throw _privateConstructorUsedError;
   double? get distance => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
@@ -1979,6 +2024,7 @@ abstract class $HomClassCopyWith<$Res> {
       String? gender,
       bool? isActive,
       bool? hasPhoto,
+      String? image,
       double? distance,
       String? createdAt,
       String? updatedAt,
@@ -2014,6 +2060,7 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? gender = freezed,
     Object? isActive = freezed,
     Object? hasPhoto = freezed,
+    Object? image = freezed,
     Object? distance = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -2076,6 +2123,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.hasPhoto
           : hasPhoto // ignore: cast_nullable_to_non_nullable
               as bool?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
+              as String?,
       distance: freezed == distance
           ? _value.distance
           : distance // ignore: cast_nullable_to_non_nullable
@@ -2131,6 +2182,7 @@ abstract class _$$HomClassImplCopyWith<$Res>
       String? gender,
       bool? isActive,
       bool? hasPhoto,
+      String? image,
       double? distance,
       String? createdAt,
       String? updatedAt,
@@ -2165,6 +2217,7 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? gender = freezed,
     Object? isActive = freezed,
     Object? hasPhoto = freezed,
+    Object? image = freezed,
     Object? distance = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -2227,6 +2280,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.hasPhoto
           : hasPhoto // ignore: cast_nullable_to_non_nullable
               as bool?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
+              as String?,
       distance: freezed == distance
           ? _value.distance
           : distance // ignore: cast_nullable_to_non_nullable
@@ -2266,6 +2323,7 @@ class _$HomClassImpl implements _HomClass {
       this.gender,
       this.isActive,
       this.hasPhoto,
+      this.image,
       this.distance,
       this.createdAt,
       this.updatedAt,
@@ -2303,6 +2361,8 @@ class _$HomClassImpl implements _HomClass {
   @override
   final bool? hasPhoto;
   @override
+  final String? image;
+  @override
   final double? distance;
   @override
   final String? createdAt;
@@ -2313,7 +2373,7 @@ class _$HomClassImpl implements _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, distance: $distance, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2342,6 +2402,7 @@ class _$HomClassImpl implements _HomClass {
                 other.isActive == isActive) &&
             (identical(other.hasPhoto, hasPhoto) ||
                 other.hasPhoto == hasPhoto) &&
+            (identical(other.image, image) || other.image == image) &&
             (identical(other.distance, distance) ||
                 other.distance == distance) &&
             (identical(other.createdAt, createdAt) ||
@@ -2354,26 +2415,28 @@ class _$HomClassImpl implements _HomClass {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      branch,
-      category,
-      title,
-      description,
-      duration,
-      price,
-      trialPrice,
-      trialEnabled,
-      minAge,
-      maxAge,
-      gender,
-      isActive,
-      hasPhoto,
-      distance,
-      createdAt,
-      updatedAt,
-      deletedAt);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        branch,
+        category,
+        title,
+        description,
+        duration,
+        price,
+        trialPrice,
+        trialEnabled,
+        minAge,
+        maxAge,
+        gender,
+        isActive,
+        hasPhoto,
+        image,
+        distance,
+        createdAt,
+        updatedAt,
+        deletedAt
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -2405,6 +2468,7 @@ abstract class _HomClass implements HomClass {
       final String? gender,
       final bool? isActive,
       final bool? hasPhoto,
+      final String? image,
       final double? distance,
       final String? createdAt,
       final String? updatedAt,
@@ -2441,6 +2505,8 @@ abstract class _HomClass implements HomClass {
   bool? get isActive;
   @override
   bool? get hasPhoto;
+  @override
+  String? get image;
   @override
   double? get distance;
   @override

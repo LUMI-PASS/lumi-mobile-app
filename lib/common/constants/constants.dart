@@ -1,6 +1,6 @@
 class Constants {
-  static const baseUrl = 'https://api.lumipass.uz/api/v1/';
-  static const assetsUrl = 'https://api.lumipass.uz/api/v1/assets/files/';
+  static const baseUrl = 'https://lumi-mobile-backend.onrender.com/api/';
+  static const assetsUrl = 'https://lumi-mobile-backend.onrender.com';
 
   static const tashkentDistricts = [
     'Bektemir',

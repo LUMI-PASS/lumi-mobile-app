@@ -18,77 +18,18 @@ class PhotoService {
     return '${Constants.assetsUrl}$entityId';
   }
 
-  /// Get optimized photo URLs for a class.
-  Future<List<String>> getClassPhotos(String classId, {int limit = 1}) async {
-    final cacheKey = 'class|$classId|$limit';
-    if (_cache.containsKey(cacheKey)) return _cache[cacheKey]!;
+  // Backend now returns image URLs inline in list/detail responses.
+  // These probe methods are kept as no-ops so existing call sites compile.
+  Future<List<String>> getClassPhotos(String classId, {int limit = 1}) async =>
+      const [];
 
-    final routeBuilders = [
-      '/assets/files/class-gallery/$classId?optimize=true&limit=$limit',
-      '/assets/files/class-photos/$classId?optimize=true&limit=$limit',
-      '/assets/files/class-photo/$classId?optimize=true&limit=$limit',
-      '/assets/files/classes/$classId/gallery?optimize=true&limit=$limit',
-      '/assets/files/classes/$classId/photos?optimize=true&limit=$limit',
-      '/assets/files/class/$classId/photos?optimize=true&limit=$limit',
-      '/assets/files?entity=CLASS&entity_id=$classId&optimize=true&limit=$limit',
-    ];
-
-    final urls = await _tryRoutes(routeBuilders, _preferredClassRoute, (i) {
-      _preferredClassRoute = i;
-    });
-
-    _cache[cacheKey] = urls;
-    return urls;
-  }
-
-  /// Get optimized photo URLs for a category.
   Future<List<String>> getCategoryPhotos(String categoryId,
-      {int limit = 1}) async {
-    final cacheKey = 'category|$categoryId|$limit';
-    if (_cache.containsKey(cacheKey)) return _cache[cacheKey]!;
+          {int limit = 1}) async =>
+      const [];
 
-    final routeBuilders = [
-      '/assets/files/category-gallery/$categoryId?optimize=true&limit=$limit',
-      '/assets/files/category-photos/$categoryId?optimize=true&limit=$limit',
-      '/assets/files/category-photo/$categoryId?optimize=true&limit=$limit',
-      '/assets/files/categories/$categoryId/gallery?optimize=true&limit=$limit',
-      '/assets/files/categories/$categoryId/photos?optimize=true&limit=$limit',
-      '/assets/files/category/$categoryId/photos?optimize=true&limit=$limit',
-      '/assets/files?entity=CATEGORY&entity_id=$categoryId&optimize=true&limit=$limit',
-    ];
-
-    final urls =
-        await _tryRoutes(routeBuilders, _preferredCategoryRoute, (i) {
-      _preferredCategoryRoute = i;
-    });
-
-    _cache[cacheKey] = urls;
-    return urls;
-  }
-
-  /// Get optimized photo URLs for a branch.
   Future<List<String>> getBranchPhotos(String branchId,
-      {int limit = 1}) async {
-    final cacheKey = 'branch|$branchId|$limit';
-    if (_cache.containsKey(cacheKey)) return _cache[cacheKey]!;
-
-    final routeBuilders = [
-      '/assets/files/branch-gallery/$branchId?optimize=true&limit=$limit',
-      '/assets/files/branch-photos/$branchId?optimize=true&limit=$limit',
-      '/assets/files/branch-photo/$branchId?optimize=true&limit=$limit',
-      '/assets/files/branches/$branchId/gallery?optimize=true&limit=$limit',
-      '/assets/files/branches/$branchId/photos?optimize=true&limit=$limit',
-      '/assets/files/branch/$branchId/photos?optimize=true&limit=$limit',
-      '/assets/files?entity=BRANCH&entity_id=$branchId&optimize=true&limit=$limit',
-    ];
-
-    final urls = await _tryRoutes(routeBuilders, _preferredBranchRoute, (i) {
-      _preferredBranchRoute = i;
-    });
-
-    _cache[cacheKey] = urls;
-    return urls;
-  }
+          {int limit = 1}) async =>
+      const [];
 
   int? _preferredBranchRoute;
 

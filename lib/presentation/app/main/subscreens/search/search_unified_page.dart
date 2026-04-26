@@ -5,7 +5,6 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 
@@ -34,53 +33,178 @@ class _SearchUnifiedPageState extends State<SearchUnifiedPage> {
     _selectedCategory = widget.initialCategory;
   }
 
+  static const _trendItems = [
+    "Bahor ta'til playgroundlar",
+    '3D modellashtirish',
+    'Bepul tadbirlar',
+    'Trampolin park',
+  ];
+
+  static const _segmentLabels = ['Hammasi', 'Playground', 'Masterclass', 'Tadbir'];
+
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).primaryColor;
+    final primary = const Color(0xFF6C4EF2);
+    final isSearchEmpty = _searchCtrl.text.trim().isEmpty;
 
     return Scaffold(
-      appBar: const BaseAppBar(),
+      backgroundColor: const Color(0xFFFDFAF5),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            20.kh,
+            // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+              child: Text(
+                'Qidiruv',
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0E0C2B),
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+            12.kh,
+            // Search bar + filter
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Row(
                 children: [
                   Expanded(
-                    child: CommonTextField(
-                      controller: _searchCtrl,
-                      prefixIcon: Assets.icons.search.svg(),
-                      hint: "Search",
-                      onChanged: (t) {
-                        setState(() {});
-                      },
+                    child: Container(
+                      height: 50.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: const Color(0xFFE8E4F6)),
+                      ),
+                      child: CommonTextField(
+                        controller: _searchCtrl,
+                        prefixIcon: Assets.icons.search.svg(),
+                        hint: "Search",
+                        onChanged: (t) {
+                          setState(() {});
+                        },
+                      ),
                     ),
                   ),
                   10.kw,
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 15.0),
-                    child: _FilterWithBadge(
-                      count: _filterCount,
-                      onTap: () {
-                        FilterBottomSheet.show(context);
-                      },
-                    ),
+                  _FilterWithBadge(
+                    count: _filterCount,
+                    onTap: () {
+                      FilterBottomSheet.show(context);
+                    },
                   ),
                 ],
               ),
             ),
-            16.kh,
-            if (_selectedCategory == null) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: "Popular Searches".s(16).w(700).c(context.colors.black),
+            12.kh,
+            // Segment pills
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Row(
+                children: List.generate(_segmentLabels.length, (i) {
+                  final selected = _tab == i;
+                  return Padding(
+                    padding: EdgeInsets.only(right: 8.w),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _tab = i),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? const Color(0xFF6C4EF2)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(9999),
+                          border: Border.all(
+                            color: selected
+                                ? const Color(0xFF6C4EF2)
+                                : const Color(0xFFE8E4F6),
+                          ),
+                        ),
+                        child: Text(
+                          _segmentLabels[i],
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: selected
+                                ? Colors.white
+                                : const Color(0xFF6B6899),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               ),
-              16.kh,
-            ] else ...[
+            ),
+            12.kh,
+            // Trend section — shown only when search is empty
+            if (isSearchEmpty) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Text(
+                  'Trend',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1A1535),
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ),
+              8.kh,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Wrap(
+                  spacing: 8.w,
+                  runSpacing: 8.h,
+                  children: _trendItems.map((item) {
+                    return GestureDetector(
+                      onTap: () {
+                        _searchCtrl.text = item;
+                        setState(() {});
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 14.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEDE8FF),
+                          borderRadius: BorderRadius.circular(9999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.trending_up_rounded,
+                                size: 14.sp,
+                                color: const Color(0xFF6C4EF2)),
+                            6.kw,
+                            Text(
+                              item,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF4A2FD4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              12.kh,
+            ],
+            // Selected category chip
+            if (_selectedCategory != null) ...[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: _TagChip(
@@ -89,36 +213,27 @@ class _SearchUnifiedPageState extends State<SearchUnifiedPage> {
                   ),
                 ),
               ),
-              16.kh,
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _SegmentedButton(
-                        text: "Classes",
-                        selected: _tab == 0,
-                        onTap: () => setState(() => _tab = 0),
-                      ),
-                    ),
-                    12.kw,
-                    Expanded(
-                      child: _SegmentedButton(
-                        text: "Centers",
-                        selected: _tab == 1,
-                        onTap: () => setState(() => _tab = 1),
-                      ),
-                    ),
-                  ],
+              12.kh,
+            ],
+            // Results count
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Text(
+                '6 ta natija topildi',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF6B6899),
                 ),
               ),
-              16.kh,
-            ],
+            ),
+            8.kh,
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 physics: const BouncingScrollPhysics(),
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 itemCount: 6,
                 separatorBuilder: (_, __) => 16.kh,
                 itemBuilder: (_, i) {
@@ -127,7 +242,9 @@ class _SearchUnifiedPageState extends State<SearchUnifiedPage> {
                       ? (_tab == 0 ? "Chess class" : "Chess center")
                       : (i == 0 ? "Creative Party Muse" : "Design workshop");
 
-                  final metaTop = isCategoryMode ? "Education, Music  •  15-17 y.o" : "Education, Music  •  15-17 y.o";
+                  final metaTop = isCategoryMode
+                      ? "Education, Music  •  15-17 y.o"
+                      : "Education, Music  •  15-17 y.o";
 
                   const location = "Ko'kcha st, 69 (1.9 km)";
                   final price = (10 + i).toString();

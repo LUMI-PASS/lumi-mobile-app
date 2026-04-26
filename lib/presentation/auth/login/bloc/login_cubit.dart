@@ -11,15 +11,13 @@ class LoginCubit extends BaseCubit<LoginBuildable, LoginListenable> {
   final AuthRepository _repo;
 
   Future<void> login(String phoneOrEmail) {
+    final phone = phoneOrEmail.replaceAll("-", "");
     return callable(
-      future: _repo.checkNumber(phoneOrEmail.replaceAll("-", "")),
+      future: _repo.sendOtp(phone),
       buildOnStart: () => buildable.copyWith(isLoading: true),
-      invokeOnData: (data) => LoginListenable(
-        effect: data ? LoginEffect.verify : LoginEffect.reg,
-      ),
-      buildOnData: (data) {
-        return buildable.copyWith(isSelected: data);
-      },
+      invokeOnData: (code) =>
+          LoginListenable(effect: LoginEffect.verify, code: code),
+      buildOnData: (_) => buildable.copyWith(isSelected: true),
       onErrorData: (error) {
         final status = (error as DioException);
         if (status.response?.statusCode == 500 ||

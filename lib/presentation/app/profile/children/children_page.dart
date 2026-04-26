@@ -7,10 +7,10 @@ import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
+import 'package:lumi_pass/presentation/app/profile/children/widgets/child_bottomsheet.dart';
 import 'package:lumi_pass/presentation/app/profile/children/widgets/profile_child_widget.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_state.dart';
@@ -88,10 +88,9 @@ class ChildrenPage
                                     padding: EdgeInsets.only(bottom: 12.h),
                                     child: ProfileChildWidget(
                                       childModel: child,
-                                      onTap: () => context.router.push(
-                                        AddChildRoute(
-                                            childModel: child,
-                                            parentId: null),
+                                      onTap: () => ChildBottomsheet.show(
+                                        context,
+                                        childModel: child,
                                       ),
                                     ),
                                   )),
@@ -106,9 +105,7 @@ class ChildrenPage
                       child: SizedBox(
                         width: double.infinity,
                         child: CommonButton.outlined(
-                          onPressed: () => context.router.push(
-                            AddChildRoute(childModel: null, parentId: null),
-                          ),
+                          onPressed: () => ChildBottomsheet.show(context),
                           text: 'add_child'.tr(),
                           textColor: context.colors.primary,
                           borderColor: context.colors.primary.withOpacity(0.3),

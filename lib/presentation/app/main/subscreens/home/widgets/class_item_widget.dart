@@ -2,12 +2,14 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
+import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ClassItemWidget extends StatefulWidget {
@@ -17,12 +19,14 @@ class ClassItemWidget extends StatefulWidget {
     this.width,
     this.showDescription = true,
     this.wrapBranch = true,
+    this.onViewAsReels,
   });
 
   final HomClass? homClass;
   final double? width;
   final bool showDescription;
   final bool wrapBranch;
+  final VoidCallback? onViewAsReels;
 
   @override
   State<ClassItemWidget> createState() => _ClassItemWidgetState();
@@ -47,36 +51,11 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
   }
 
   Future<void> _resolveImage() async {
-    final classId = widget.homClass?.id;
-    final hasPhoto = widget.homClass?.hasPhoto == true;
-
-    // Set initial fallback
-    final fallback =
-        (hasPhoto && classId != null) ? PhotoService.getImageUrl(classId) : null;
-
+    final url = sanitizeImageUrl(widget.homClass?.image);
     setState(() {
-      _resolvedImageUrl = fallback;
-      _isLoadingImage = true;
+      _resolvedImageUrl = url;
+      _isLoadingImage = false;
     });
-
-    // Try to resolve optimized photo via API (like webapp)
-    if (classId != null) {
-      try {
-        final photos =
-            await PhotoService.instance.getClassPhotos(classId, limit: 1);
-        if (mounted && photos.isNotEmpty) {
-          setState(() {
-            _resolvedImageUrl = photos.first;
-            _isLoadingImage = false;
-          });
-          return;
-        }
-      } catch (_) {}
-    }
-
-    if (mounted) {
-      setState(() => _isLoadingImage = false);
-    }
   }
 
   @override
@@ -102,9 +81,16 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
       padding: EdgeInsets.all(8.w),
       alignment: Alignment.topLeft,
       backgroundColor: Colors.white,
-      borderColor: Colors.grey.shade200,
-      borderRadius: BorderRadius.circular(22.r),
-      depth: 4,
+      borderColor: const Color(0xFFE8E4F6),
+      borderRadius: BorderRadius.circular(20.r),
+      depth: 3,
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x1A6C4EF2),
+          blurRadius: 24,
+          offset: Offset(0, 4),
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -112,9 +98,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
           // Image with overlays
           ClipRRect(
             borderRadius: BorderRadius.circular(12.r),
-            child: SizedBox(
-              height: widget.wrapBranch ? 140.h : 160.h,
-              width: double.infinity,
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -152,29 +137,19 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                       height: double.infinity,
                     ),
 
-                  // Top-left chips (category + duration + gender)
+                  // Top-left chips (category + gender) — no right constraint so video button doesn't overlap
                   Positioned(
                     left: 8.w,
                     top: 8.h,
-                    right: 8.w,
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         if (category.isNotEmpty)
                           _buildChip(
                             text: category,
-                            bgColor: Colors.white.withOpacity(0.75),
-                            textColor: const Color(0xFFA652C7),
+                            bgColor: Colors.white.withOpacity(0.92),
+                            textColor: const Color(0xFF4A2FD4),
                             borderColor: Colors.white.withOpacity(0.8),
-                          ),
-                        if (category.isNotEmpty && duration != null) 4.kw,
-                        if (duration != null)
-                          _buildChip(
-                            icon: Icons.access_time_rounded,
-                            text: _formatDuration(duration),
-                            bgColor:
-                                const Color(0xFF21376D).withOpacity(0.65),
-                            textColor: Colors.white,
-                            borderColor: Colors.white.withOpacity(0.65),
                           ),
                         if (hc?.gender != null) ...[
                           4.kw,
@@ -184,72 +159,66 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                     ),
                   ),
 
-                  // Price pill bottom-right
-                  if (fullPrice != null)
+                  // Video button (top-right) — taps open Shorts tab
+                  if (widget.onViewAsReels != null)
                     Positioned(
+                      top: 8.h,
                       right: 8.w,
-                      bottom: 8.h,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12.r),
-                          border:
-                              Border.all(color: const Color(0xFFA7F3D0)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: widget.onViewAsReels,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFA652C7), Color(0xFFFF7093)],
                             ),
-                          ],
-                        ),
-                        child: showTrialSale
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '$fullPrice',
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade600,
-                                      decoration:
-                                          TextDecoration.lineThrough,
-                                      decorationThickness: 1.5,
-                                    ),
-                                  ),
-                                  Assets.icons.coinLumi.image(
-                                      width: 12.w, height: 12.h),
-                                  8.kw,
-                                  Text(
-                                    '$trialPrice',
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF047857),
-                                    ),
-                                  ),
-                                  Assets.icons.coinLumi.image(
-                                      width: 16.w, height: 16.h),
-                                ],
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '$fullPrice',
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF2E3D5D),
-                                    ),
-                                  ),
-                                  2.kw,
-                                  Assets.icons.coinLumi.image(
-                                      width: 16.w, height: 16.h),
-                                ],
+                            borderRadius: BorderRadius.circular(20.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    const Color(0xFFA652C7).withOpacity(0.35),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
                               ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 16.sp,
+                              ),
+                              2.kw,
+                              Text(
+                                'Video',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // Duration chip bottom-left with blur effect
+                  if (duration != null)
+                    Positioned(
+                      left: 8.w,
+                      bottom: 8.h,
+                      child: _buildChip(
+                        icon: Icons.access_time_rounded,
+                        text: _formatDuration(duration),
+                        bgColor: const Color(0x990E0C2B),
+                        textColor: Colors.white,
+                        borderColor: Colors.white.withOpacity(0.3),
                       ),
                     ),
                 ],
@@ -264,9 +233,9 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF2E3D5D),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1A1535),
             ),
           ),
           6.kh,
@@ -387,7 +356,111 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
               ],
             ),
           ],
+
+          // Price divider + row
+          Builder(builder: (context) {
+            final snap = ClassPricingCache.get(hc?.id);
+            final effectivePrice = (snap != null && snap.priceMin > 0)
+                ? snap.priceMin
+                : (fullPrice ?? 0);
+            if (effectivePrice <= 0) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                10.kh,
+                Container(height: 1, color: const Color(0xFFE8E4F6)),
+                10.kh,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInlinePrice(
+                        fullPrice: fullPrice ?? 0,
+                        trialPrice: trialPrice,
+                        showTrialSale: showTrialSale,
+                        snap: snap,
+                      ),
+                    ),
+                    if (snap?.scheduleCount != null && snap!.scheduleCount! > 0)
+                      _buildChip(
+                        icon: Icons.event_repeat_rounded,
+                        text: '${snap.scheduleCount} slots',
+                        bgColor: const Color(0xFFEDE8FF),
+                        textColor: const Color(0xFF6C4EF2),
+                        borderColor: const Color(0xFFD6CDFF),
+                      )
+                    else
+                      Text(
+                        '1 ticket',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF6B6899),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          }),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInlinePrice({
+    required num fullPrice,
+    required num? trialPrice,
+    required bool showTrialSale,
+    required ClassPricingSnapshot? snap,
+  }) {
+    // Always prefer snapshot price when available
+    final effectivePrice =
+        (snap != null && snap.priceMin > 0) ? snap.priceMin : fullPrice;
+    final showFrom = snap != null &&
+        (snap.hasMultiplePrices || snap.rangeCount > 1);
+
+    if (showFrom) {
+      return Text(
+        'from ${effectivePrice.toRawUzsPrice()}',
+        style: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF4A2FD4),
+        ),
+      );
+    }
+    if (showTrialSale && trialPrice != null && trialPrice > 0) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            effectivePrice.toUzsPrice(),
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF6B6899),
+              decoration: TextDecoration.lineThrough,
+              decorationThickness: 1.5,
+            ),
+          ),
+          6.kw,
+          Text(
+            trialPrice.toUzsPrice(),
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF4A2FD4),
+            ),
+          ),
+        ],
+      );
+    }
+    return Text(
+      effectivePrice.toRawUzsPrice(),
+      style: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w900,
+        color: const Color(0xFF4A2FD4),
       ),
     );
   }

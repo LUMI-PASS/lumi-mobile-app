@@ -20,6 +20,7 @@ mixin _$VerifyBuildable {
   bool get resetLoading => throw _privateConstructorUsedError;
   int get timer => throw _privateConstructorUsedError;
   int? get code => throw _privateConstructorUsedError;
+  int? get otpCode => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -34,7 +35,12 @@ abstract class $VerifyBuildableCopyWith<$Res> {
       _$VerifyBuildableCopyWithImpl<$Res, VerifyBuildable>;
   @useResult
   $Res call(
-      {bool loading, bool resetLoading, int timer, int? code, String? error});
+      {bool loading,
+      bool resetLoading,
+      int timer,
+      int? code,
+      int? otpCode,
+      String? error});
 }
 
 /// @nodoc
@@ -54,6 +60,7 @@ class _$VerifyBuildableCopyWithImpl<$Res, $Val extends VerifyBuildable>
     Object? resetLoading = null,
     Object? timer = null,
     Object? code = freezed,
+    Object? otpCode = freezed,
     Object? error = freezed,
   }) {
     return _then(_value.copyWith(
@@ -73,6 +80,10 @@ class _$VerifyBuildableCopyWithImpl<$Res, $Val extends VerifyBuildable>
           ? _value.code
           : code // ignore: cast_nullable_to_non_nullable
               as int?,
+      otpCode: freezed == otpCode
+          ? _value.otpCode
+          : otpCode // ignore: cast_nullable_to_non_nullable
+              as int?,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -90,7 +101,12 @@ abstract class _$$VerifyBuildableImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool loading, bool resetLoading, int timer, int? code, String? error});
+      {bool loading,
+      bool resetLoading,
+      int timer,
+      int? code,
+      int? otpCode,
+      String? error});
 }
 
 /// @nodoc
@@ -108,6 +124,7 @@ class __$$VerifyBuildableImplCopyWithImpl<$Res>
     Object? resetLoading = null,
     Object? timer = null,
     Object? code = freezed,
+    Object? otpCode = freezed,
     Object? error = freezed,
   }) {
     return _then(_$VerifyBuildableImpl(
@@ -127,6 +144,10 @@ class __$$VerifyBuildableImplCopyWithImpl<$Res>
           ? _value.code
           : code // ignore: cast_nullable_to_non_nullable
               as int?,
+      otpCode: freezed == otpCode
+          ? _value.otpCode
+          : otpCode // ignore: cast_nullable_to_non_nullable
+              as int?,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -143,6 +164,7 @@ class _$VerifyBuildableImpl implements _VerifyBuildable {
       this.resetLoading = false,
       this.timer = 270,
       this.code = null,
+      this.otpCode = null,
       this.error = null});
 
   @override
@@ -159,11 +181,14 @@ class _$VerifyBuildableImpl implements _VerifyBuildable {
   final int? code;
   @override
   @JsonKey()
+  final int? otpCode;
+  @override
+  @JsonKey()
   final String? error;
 
   @override
   String toString() {
-    return 'VerifyBuildable(loading: $loading, resetLoading: $resetLoading, timer: $timer, code: $code, error: $error)';
+    return 'VerifyBuildable(loading: $loading, resetLoading: $resetLoading, timer: $timer, code: $code, otpCode: $otpCode, error: $error)';
   }
 
   @override
@@ -176,12 +201,13 @@ class _$VerifyBuildableImpl implements _VerifyBuildable {
                 other.resetLoading == resetLoading) &&
             (identical(other.timer, timer) || other.timer == timer) &&
             (identical(other.code, code) || other.code == code) &&
+            (identical(other.otpCode, otpCode) || other.otpCode == otpCode) &&
             (identical(other.error, error) || other.error == error));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, loading, resetLoading, timer, code, error);
+  int get hashCode => Object.hash(
+      runtimeType, loading, resetLoading, timer, code, otpCode, error);
 
   @JsonKey(ignore: true)
   @override
@@ -197,6 +223,7 @@ abstract class _VerifyBuildable implements VerifyBuildable {
       final bool resetLoading,
       final int timer,
       final int? code,
+      final int? otpCode,
       final String? error}) = _$VerifyBuildableImpl;
 
   @override
@@ -207,6 +234,8 @@ abstract class _VerifyBuildable implements VerifyBuildable {
   int get timer;
   @override
   int? get code;
+  @override
+  int? get otpCode;
   @override
   String? get error;
   @override

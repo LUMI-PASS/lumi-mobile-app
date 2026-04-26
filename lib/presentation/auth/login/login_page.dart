@@ -36,11 +36,9 @@ class LoginPage extends BasePage<LoginCubit, LoginBuildable, LoginListenable> {
       context.router.push(
         VerifyRoute(
             verifyStatus: VerifyStatus.LOGIN,
-            phoneOrEmail: "+998${_phoneController.text}"),
+            phoneOrEmail: "+998${_phoneController.text}",
+            code: state.code),
       );
-    } else {
-      context.router.push(
-          RegisterRoute(phoneOrMail: "+998${_phoneController.text}"));
     }
     super.listener(context, state);
   }

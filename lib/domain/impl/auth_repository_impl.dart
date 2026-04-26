@@ -19,30 +19,59 @@ class AuthRepositoryImpl extends AuthRepository {
   }
 
   @override
-  Future<bool> checkNumber(String phoneNumber) async {
-    final response = await _api.checkNumber(phone: phoneNumber);
-    return response.data['data']['is_user_found'] as bool;
+  Future<int?> sendOtp(String phone) async {
+    final response = await _api.sendOtp(phone);
+    final data = response.data['data'];
+    if (data is Map<String, dynamic>) {
+      final code = data['code'];
+      if (code is int) return code;
+      if (code is String) return int.tryParse(code);
+      if (code is num) return code.toInt();
+    }
+    return null;
   }
 
   @override
-  Future<ProfileModel> register(ProfileModel registerModel) async {
-    final response = await _api.register(registerModel);
-
-    return ProfileModel.fromJson(response.data['data']);
+  Future<VerifyOtpResult> verifyOtp(String phone, String code) async {
+    final response = await _api.verifyOtp(phone, code);
+    final data = response.data['data'] as Map<String, dynamic>;
+    final isNewUser = data['is_new_user'] as bool? ?? false;
+    final token = data['access_token'] as String?;
+    if (token != null) {
+      await _storage.tokens.set(Tokens(access: token));
+    }
+    final userJson = data['user'];
+    return VerifyOtpResult(
+      isNewUser: isNewUser,
+      accessToken: token,
+      user: userJson is Map<String, dynamic>
+          ? ProfileModel.fromJson(userJson)
+          : null,
+    );
   }
 
   @override
-  Future<bool> verifyNumber(String phoneNumber, String code, bool isReg) async {
-    final response = await _api.verify(phoneNumber, code, isReg);
-    _storage.tokens.set(Tokens(access: response.data['data']['token']));
-
-    return response.data['success'] as bool;
-  }
-
-  @override
-  Future<bool> resendOtp(String phoneNumber) async {
-    final response = await _api.resendOtp(phone: phoneNumber);
-    return response.data['success'] as bool;
+  Future<ProfileModel> register({
+    required String phone,
+    required String firstName,
+    required String lastName,
+  }) async {
+    final response = await _api.register(
+      phone: phone,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    final token = data['access_token'] as String?;
+    if (token != null) {
+      await _storage.tokens.set(Tokens(access: token));
+    }
+    final userJson = data['user'] as Map<String, dynamic>?;
+    if (userJson != null) {
+      final userId = (userJson['_id'] ?? userJson['id'])?.toString();
+      if (userId != null) await _storage.userId.set(userId);
+    }
+    return userJson != null ? ProfileModel.fromJson(userJson) : const ProfileModel();
   }
 
 //

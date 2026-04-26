@@ -9,6 +9,7 @@ class VerifyBuildable with _$VerifyBuildable {
       @Default(false) bool resetLoading,
       @Default(270) int timer,
       @Default(null) int? code,
+      @Default(null) int? otpCode,
       @Default(null) String? error}) = _VerifyBuildable;
 }
 

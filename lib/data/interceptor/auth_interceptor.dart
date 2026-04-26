@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/web.dart';
 
@@ -35,6 +37,10 @@ class AuthInterceptor extends QueuedInterceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.response?.statusCode == 401) {
+      await _storage.logout();
+      getIt<AppRouter>().replaceAll([LoginRoute()]);
+    }
     return handler.next(err);
   }
 }

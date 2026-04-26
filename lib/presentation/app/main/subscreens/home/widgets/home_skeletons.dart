@@ -124,19 +124,20 @@ class _SectionTitleSkeleton extends StatelessWidget {
 class _CategoriesRowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return SizedBox(
-      height: 130.h,
+      height: screenWidth * 0.37,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.only(left: 16.w),
         itemCount: 4,
         itemBuilder: (_, __) => Container(
-          width: 150.w,
+          width: screenWidth * 0.285,
           margin: EdgeInsets.only(right: 12.w),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(22.r),
+            borderRadius: BorderRadius.circular(18.r),
           ),
         ),
       ),
@@ -147,28 +148,32 @@ class _CategoriesRowSkeleton extends StatelessWidget {
 class _ClassCardsRowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth * 0.68;
     return SizedBox(
-      height: 300.h,
+      height: MediaQuery.of(context).size.height * 0.48,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.only(left: 16.w),
         itemCount: 3,
         itemBuilder: (_, __) => Container(
-          width: 0.68.sw,
+          width: cardWidth,
           margin: EdgeInsets.only(right: 12.w),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(22.r),
+            borderRadius: BorderRadius.circular(20.r),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                height: 140.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.r),
+              AspectRatio(
+                aspectRatio: 4 / 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
                 ),
               ),
               Padding(

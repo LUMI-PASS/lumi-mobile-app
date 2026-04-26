@@ -36,3 +36,18 @@ extension PriceStringFormatter on String {
     return formattedInteger;
   }
 }
+
+extension PriceNumFormatter on num {
+  /// Coin amount → `"50 000 so'm"` style string.
+  String toUzsPrice() => "${toString().toFormattedPrice()} so'm";
+
+  /// Raw UZS amount (already in soums) → `"250 000 so'm"`.
+  /// Use this for prices that are NOT stored in coins/tiyin.
+  String toRawUzsPrice() {
+    final formatted = toInt().toString().replaceAllMapped(
+          RegExp(r'\B(?=(\d{3})+(?!\d))'),
+          (match) => ' ',
+        );
+    return "$formatted so'm";
+  }
+}

@@ -78,6 +78,32 @@ abstract class HomeRepository {
 
   Future<void> cancelBooking(String bookingId, String reason);
 
+  Future<ClassesPage> getDiscoveryClasses({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? categoryId,
+    String? fromDate,
+    String? toDate,
+    int? age,
+    String? classGender,
+    num? minPrice,
+    num? maxPrice,
+    String? branchId,
+    String? sortBy,
+    double? lat,
+    double? lng,
+  });
+
+  Future<BranchesPage> getDiscoveryBranches({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? sortBy,
+    double? lat,
+    double? lng,
+  });
+
   Future<ExploreResult> explore({
     int page = 1,
     int limit = 10,

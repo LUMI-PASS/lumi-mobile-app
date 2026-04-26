@@ -1455,6 +1455,10 @@ mixin _$RelatedBooking {
   String? get attendanceStatus => throw _privateConstructorUsedError;
   @JsonKey(name: 'cancelled_at')
   String? get cancelledAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'ticket_no')
+  String? get ticketNo => throw _privateConstructorUsedError;
+  @JsonKey(name: 'ticket_date')
+  String? get ticketDate => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   String? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
@@ -1481,6 +1485,8 @@ abstract class $RelatedBookingCopyWith<$Res> {
       @JsonKey(name: 'is_trial_booking') bool? isTrialBooking,
       @JsonKey(name: 'attendance_status') String? attendanceStatus,
       @JsonKey(name: 'cancelled_at') String? cancelledAt,
+      @JsonKey(name: 'ticket_no') String? ticketNo,
+      @JsonKey(name: 'ticket_date') String? ticketDate,
       @JsonKey(name: 'created_at') String? createdAt,
       @JsonKey(name: 'updated_at') String? updatedAt});
 }
@@ -1506,6 +1512,8 @@ class _$RelatedBookingCopyWithImpl<$Res, $Val extends RelatedBooking>
     Object? isTrialBooking = freezed,
     Object? attendanceStatus = freezed,
     Object? cancelledAt = freezed,
+    Object? ticketNo = freezed,
+    Object? ticketDate = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -1542,6 +1550,14 @@ class _$RelatedBookingCopyWithImpl<$Res, $Val extends RelatedBooking>
           ? _value.cancelledAt
           : cancelledAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      ticketNo: freezed == ticketNo
+          ? _value.ticketNo
+          : ticketNo // ignore: cast_nullable_to_non_nullable
+              as String?,
+      ticketDate: freezed == ticketDate
+          ? _value.ticketDate
+          : ticketDate // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -1571,6 +1587,8 @@ abstract class _$$RelatedBookingImplCopyWith<$Res>
       @JsonKey(name: 'is_trial_booking') bool? isTrialBooking,
       @JsonKey(name: 'attendance_status') String? attendanceStatus,
       @JsonKey(name: 'cancelled_at') String? cancelledAt,
+      @JsonKey(name: 'ticket_no') String? ticketNo,
+      @JsonKey(name: 'ticket_date') String? ticketDate,
       @JsonKey(name: 'created_at') String? createdAt,
       @JsonKey(name: 'updated_at') String? updatedAt});
 }
@@ -1594,6 +1612,8 @@ class __$$RelatedBookingImplCopyWithImpl<$Res>
     Object? isTrialBooking = freezed,
     Object? attendanceStatus = freezed,
     Object? cancelledAt = freezed,
+    Object? ticketNo = freezed,
+    Object? ticketDate = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -1630,6 +1650,14 @@ class __$$RelatedBookingImplCopyWithImpl<$Res>
           ? _value.cancelledAt
           : cancelledAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      ticketNo: freezed == ticketNo
+          ? _value.ticketNo
+          : ticketNo // ignore: cast_nullable_to_non_nullable
+              as String?,
+      ticketDate: freezed == ticketDate
+          ? _value.ticketDate
+          : ticketDate // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -1655,6 +1683,8 @@ class _$RelatedBookingImpl implements _RelatedBooking {
       @JsonKey(name: 'is_trial_booking') this.isTrialBooking,
       @JsonKey(name: 'attendance_status') this.attendanceStatus,
       @JsonKey(name: 'cancelled_at') this.cancelledAt,
+      @JsonKey(name: 'ticket_no') this.ticketNo,
+      @JsonKey(name: 'ticket_date') this.ticketDate,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt});
 
@@ -1685,6 +1715,12 @@ class _$RelatedBookingImpl implements _RelatedBooking {
   @JsonKey(name: 'cancelled_at')
   final String? cancelledAt;
   @override
+  @JsonKey(name: 'ticket_no')
+  final String? ticketNo;
+  @override
+  @JsonKey(name: 'ticket_date')
+  final String? ticketDate;
+  @override
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @override
@@ -1693,7 +1729,7 @@ class _$RelatedBookingImpl implements _RelatedBooking {
 
   @override
   String toString() {
-    return 'RelatedBooking(id: $id, scheduleId: $scheduleId, childId: $childId, bookingStatus: $bookingStatus, chargedCoinAmount: $chargedCoinAmount, isTrialBooking: $isTrialBooking, attendanceStatus: $attendanceStatus, cancelledAt: $cancelledAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'RelatedBooking(id: $id, scheduleId: $scheduleId, childId: $childId, bookingStatus: $bookingStatus, chargedCoinAmount: $chargedCoinAmount, isTrialBooking: $isTrialBooking, attendanceStatus: $attendanceStatus, cancelledAt: $cancelledAt, ticketNo: $ticketNo, ticketDate: $ticketDate, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -1715,6 +1751,10 @@ class _$RelatedBookingImpl implements _RelatedBooking {
                 other.attendanceStatus == attendanceStatus) &&
             (identical(other.cancelledAt, cancelledAt) ||
                 other.cancelledAt == cancelledAt) &&
+            (identical(other.ticketNo, ticketNo) ||
+                other.ticketNo == ticketNo) &&
+            (identical(other.ticketDate, ticketDate) ||
+                other.ticketDate == ticketDate) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -1733,6 +1773,8 @@ class _$RelatedBookingImpl implements _RelatedBooking {
       isTrialBooking,
       attendanceStatus,
       cancelledAt,
+      ticketNo,
+      ticketDate,
       createdAt,
       updatedAt);
 
@@ -1761,6 +1803,8 @@ abstract class _RelatedBooking implements RelatedBooking {
           @JsonKey(name: 'is_trial_booking') final bool? isTrialBooking,
           @JsonKey(name: 'attendance_status') final String? attendanceStatus,
           @JsonKey(name: 'cancelled_at') final String? cancelledAt,
+          @JsonKey(name: 'ticket_no') final String? ticketNo,
+          @JsonKey(name: 'ticket_date') final String? ticketDate,
           @JsonKey(name: 'created_at') final String? createdAt,
           @JsonKey(name: 'updated_at') final String? updatedAt}) =
       _$RelatedBookingImpl;
@@ -1791,6 +1835,12 @@ abstract class _RelatedBooking implements RelatedBooking {
   @override
   @JsonKey(name: 'cancelled_at')
   String? get cancelledAt;
+  @override
+  @JsonKey(name: 'ticket_no')
+  String? get ticketNo;
+  @override
+  @JsonKey(name: 'ticket_date')
+  String? get ticketDate;
   @override
   @JsonKey(name: 'created_at')
   String? get createdAt;

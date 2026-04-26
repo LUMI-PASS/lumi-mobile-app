@@ -9,6 +9,8 @@ class SearchBuildable with _$SearchBuildable {
   const factory SearchBuildable({
     @Default(false) bool isLoading,
     @Default(false) bool isLoadingMore,
+    @Default(false) bool classesLoaded,
+    @Default(false) bool branchesLoaded,
     @Default(0) int activeTab,
     @Default('') String searchTerm,
     @Default([]) List<HomClass> classes,

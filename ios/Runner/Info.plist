@@ -28,12 +28,12 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to take photos for your child's profile.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to your photo library to select photos for your child's profile.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to your location even in background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to your location.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select photos for your child's profile.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

@@ -16,10 +16,8 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$ScheduleBuildable {
-  bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
-  bool get success => throw _privateConstructorUsedError;
-  List<ScheduleItem>? get homeModel => throw _privateConstructorUsedError;
+  List<UserOrder> get orders => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ScheduleBuildableCopyWith<ScheduleBuildable> get copyWith =>
@@ -32,11 +30,7 @@ abstract class $ScheduleBuildableCopyWith<$Res> {
           ScheduleBuildable value, $Res Function(ScheduleBuildable) then) =
       _$ScheduleBuildableCopyWithImpl<$Res, ScheduleBuildable>;
   @useResult
-  $Res call(
-      {bool isSelected,
-      bool isLoading,
-      bool success,
-      List<ScheduleItem>? homeModel});
+  $Res call({bool isLoading, List<UserOrder> orders});
 }
 
 /// @nodoc
@@ -52,28 +46,18 @@ class _$ScheduleBuildableCopyWithImpl<$Res, $Val extends ScheduleBuildable>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? isSelected = null,
     Object? isLoading = null,
-    Object? success = null,
-    Object? homeModel = freezed,
+    Object? orders = null,
   }) {
     return _then(_value.copyWith(
-      isSelected: null == isSelected
-          ? _value.isSelected
-          : isSelected // ignore: cast_nullable_to_non_nullable
-              as bool,
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
               as bool,
-      success: null == success
-          ? _value.success
-          : success // ignore: cast_nullable_to_non_nullable
-              as bool,
-      homeModel: freezed == homeModel
-          ? _value.homeModel
-          : homeModel // ignore: cast_nullable_to_non_nullable
-              as List<ScheduleItem>?,
+      orders: null == orders
+          ? _value.orders
+          : orders // ignore: cast_nullable_to_non_nullable
+              as List<UserOrder>,
     ) as $Val);
   }
 }
@@ -86,11 +70,7 @@ abstract class _$$ScheduleBuildableImplCopyWith<$Res>
       __$$ScheduleBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {bool isSelected,
-      bool isLoading,
-      bool success,
-      List<ScheduleItem>? homeModel});
+  $Res call({bool isLoading, List<UserOrder> orders});
 }
 
 /// @nodoc
@@ -104,28 +84,18 @@ class __$$ScheduleBuildableImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? isSelected = null,
     Object? isLoading = null,
-    Object? success = null,
-    Object? homeModel = freezed,
+    Object? orders = null,
   }) {
     return _then(_$ScheduleBuildableImpl(
-      isSelected: null == isSelected
-          ? _value.isSelected
-          : isSelected // ignore: cast_nullable_to_non_nullable
-              as bool,
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
               as bool,
-      success: null == success
-          ? _value.success
-          : success // ignore: cast_nullable_to_non_nullable
-              as bool,
-      homeModel: freezed == homeModel
-          ? _value._homeModel
-          : homeModel // ignore: cast_nullable_to_non_nullable
-              as List<ScheduleItem>?,
+      orders: null == orders
+          ? _value._orders
+          : orders // ignore: cast_nullable_to_non_nullable
+              as List<UserOrder>,
     ));
   }
 }
@@ -134,34 +104,24 @@ class __$$ScheduleBuildableImplCopyWithImpl<$Res>
 
 class _$ScheduleBuildableImpl implements _ScheduleBuildable {
   const _$ScheduleBuildableImpl(
-      {this.isSelected = false,
-      this.isLoading = false,
-      this.success = false,
-      final List<ScheduleItem>? homeModel})
-      : _homeModel = homeModel;
+      {this.isLoading = false, final List<UserOrder> orders = const []})
+      : _orders = orders;
 
   @override
   @JsonKey()
-  final bool isSelected;
-  @override
-  @JsonKey()
   final bool isLoading;
+  final List<UserOrder> _orders;
   @override
   @JsonKey()
-  final bool success;
-  final List<ScheduleItem>? _homeModel;
-  @override
-  List<ScheduleItem>? get homeModel {
-    final value = _homeModel;
-    if (value == null) return null;
-    if (_homeModel is EqualUnmodifiableListView) return _homeModel;
+  List<UserOrder> get orders {
+    if (_orders is EqualUnmodifiableListView) return _orders;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
+    return EqualUnmodifiableListView(_orders);
   }
 
   @override
   String toString() {
-    return 'ScheduleBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
+    return 'ScheduleBuildable(isLoading: $isLoading, orders: $orders)';
   }
 
   @override
@@ -169,18 +129,14 @@ class _$ScheduleBuildableImpl implements _ScheduleBuildable {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ScheduleBuildableImpl &&
-            (identical(other.isSelected, isSelected) ||
-                other.isSelected == isSelected) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
-            (identical(other.success, success) || other.success == success) &&
-            const DeepCollectionEquality()
-                .equals(other._homeModel, _homeModel));
+            const DeepCollectionEquality().equals(other._orders, _orders));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isSelected, isLoading, success,
-      const DeepCollectionEquality().hash(_homeModel));
+  int get hashCode => Object.hash(
+      runtimeType, isLoading, const DeepCollectionEquality().hash(_orders));
 
   @JsonKey(ignore: true)
   @override
@@ -192,19 +148,13 @@ class _$ScheduleBuildableImpl implements _ScheduleBuildable {
 
 abstract class _ScheduleBuildable implements ScheduleBuildable {
   const factory _ScheduleBuildable(
-      {final bool isSelected,
-      final bool isLoading,
-      final bool success,
-      final List<ScheduleItem>? homeModel}) = _$ScheduleBuildableImpl;
+      {final bool isLoading,
+      final List<UserOrder> orders}) = _$ScheduleBuildableImpl;
 
-  @override
-  bool get isSelected;
   @override
   bool get isLoading;
   @override
-  bool get success;
-  @override
-  List<ScheduleItem>? get homeModel;
+  List<UserOrder> get orders;
   @override
   @JsonKey(ignore: true)
   _$$ScheduleBuildableImplCopyWith<_$ScheduleBuildableImpl> get copyWith =>

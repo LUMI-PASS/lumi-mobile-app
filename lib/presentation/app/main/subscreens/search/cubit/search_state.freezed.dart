@@ -18,6 +18,8 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$SearchBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
   bool get isLoadingMore => throw _privateConstructorUsedError;
+  bool get classesLoaded => throw _privateConstructorUsedError;
+  bool get branchesLoaded => throw _privateConstructorUsedError;
   int get activeTab => throw _privateConstructorUsedError;
   String get searchTerm => throw _privateConstructorUsedError;
   List<HomClass> get classes => throw _privateConstructorUsedError;
@@ -46,6 +48,8 @@ abstract class $SearchBuildableCopyWith<$Res> {
   $Res call(
       {bool isLoading,
       bool isLoadingMore,
+      bool classesLoaded,
+      bool branchesLoaded,
       int activeTab,
       String searchTerm,
       List<HomClass> classes,
@@ -78,6 +82,8 @@ class _$SearchBuildableCopyWithImpl<$Res, $Val extends SearchBuildable>
   $Res call({
     Object? isLoading = null,
     Object? isLoadingMore = null,
+    Object? classesLoaded = null,
+    Object? branchesLoaded = null,
     Object? activeTab = null,
     Object? searchTerm = null,
     Object? classes = null,
@@ -100,6 +106,14 @@ class _$SearchBuildableCopyWithImpl<$Res, $Val extends SearchBuildable>
       isLoadingMore: null == isLoadingMore
           ? _value.isLoadingMore
           : isLoadingMore // ignore: cast_nullable_to_non_nullable
+              as bool,
+      classesLoaded: null == classesLoaded
+          ? _value.classesLoaded
+          : classesLoaded // ignore: cast_nullable_to_non_nullable
+              as bool,
+      branchesLoaded: null == branchesLoaded
+          ? _value.branchesLoaded
+          : branchesLoaded // ignore: cast_nullable_to_non_nullable
               as bool,
       activeTab: null == activeTab
           ? _value.activeTab
@@ -180,6 +194,8 @@ abstract class _$$SearchBuildableImplCopyWith<$Res>
   $Res call(
       {bool isLoading,
       bool isLoadingMore,
+      bool classesLoaded,
+      bool branchesLoaded,
       int activeTab,
       String searchTerm,
       List<HomClass> classes,
@@ -211,6 +227,8 @@ class __$$SearchBuildableImplCopyWithImpl<$Res>
   $Res call({
     Object? isLoading = null,
     Object? isLoadingMore = null,
+    Object? classesLoaded = null,
+    Object? branchesLoaded = null,
     Object? activeTab = null,
     Object? searchTerm = null,
     Object? classes = null,
@@ -233,6 +251,14 @@ class __$$SearchBuildableImplCopyWithImpl<$Res>
       isLoadingMore: null == isLoadingMore
           ? _value.isLoadingMore
           : isLoadingMore // ignore: cast_nullable_to_non_nullable
+              as bool,
+      classesLoaded: null == classesLoaded
+          ? _value.classesLoaded
+          : classesLoaded // ignore: cast_nullable_to_non_nullable
+              as bool,
+      branchesLoaded: null == branchesLoaded
+          ? _value.branchesLoaded
+          : branchesLoaded // ignore: cast_nullable_to_non_nullable
               as bool,
       activeTab: null == activeTab
           ? _value.activeTab
@@ -296,6 +322,8 @@ class _$SearchBuildableImpl implements _SearchBuildable {
   const _$SearchBuildableImpl(
       {this.isLoading = false,
       this.isLoadingMore = false,
+      this.classesLoaded = false,
+      this.branchesLoaded = false,
       this.activeTab = 0,
       this.searchTerm = '',
       final List<HomClass> classes = const [],
@@ -319,6 +347,12 @@ class _$SearchBuildableImpl implements _SearchBuildable {
   @override
   @JsonKey()
   final bool isLoadingMore;
+  @override
+  @JsonKey()
+  final bool classesLoaded;
+  @override
+  @JsonKey()
+  final bool branchesLoaded;
   @override
   @JsonKey()
   final int activeTab;
@@ -377,7 +411,7 @@ class _$SearchBuildableImpl implements _SearchBuildable {
 
   @override
   String toString() {
-    return 'SearchBuildable(isLoading: $isLoading, isLoadingMore: $isLoadingMore, activeTab: $activeTab, searchTerm: $searchTerm, classes: $classes, branches: $branches, classesPage: $classesPage, branchesPage: $branchesPage, classesTotalPages: $classesTotalPages, branchesTotalPages: $branchesTotalPages, categories: $categories, selectedCategory: $selectedCategory, filter: $filter, lat: $lat, lng: $lng)';
+    return 'SearchBuildable(isLoading: $isLoading, isLoadingMore: $isLoadingMore, classesLoaded: $classesLoaded, branchesLoaded: $branchesLoaded, activeTab: $activeTab, searchTerm: $searchTerm, classes: $classes, branches: $branches, classesPage: $classesPage, branchesPage: $branchesPage, classesTotalPages: $classesTotalPages, branchesTotalPages: $branchesTotalPages, categories: $categories, selectedCategory: $selectedCategory, filter: $filter, lat: $lat, lng: $lng)';
   }
 
   @override
@@ -389,6 +423,10 @@ class _$SearchBuildableImpl implements _SearchBuildable {
                 other.isLoading == isLoading) &&
             (identical(other.isLoadingMore, isLoadingMore) ||
                 other.isLoadingMore == isLoadingMore) &&
+            (identical(other.classesLoaded, classesLoaded) ||
+                other.classesLoaded == classesLoaded) &&
+            (identical(other.branchesLoaded, branchesLoaded) ||
+                other.branchesLoaded == branchesLoaded) &&
             (identical(other.activeTab, activeTab) ||
                 other.activeTab == activeTab) &&
             (identical(other.searchTerm, searchTerm) ||
@@ -417,6 +455,8 @@ class _$SearchBuildableImpl implements _SearchBuildable {
       runtimeType,
       isLoading,
       isLoadingMore,
+      classesLoaded,
+      branchesLoaded,
       activeTab,
       searchTerm,
       const DeepCollectionEquality().hash(_classes),
@@ -443,6 +483,8 @@ abstract class _SearchBuildable implements SearchBuildable {
   const factory _SearchBuildable(
       {final bool isLoading,
       final bool isLoadingMore,
+      final bool classesLoaded,
+      final bool branchesLoaded,
       final int activeTab,
       final String searchTerm,
       final List<HomClass> classes,
@@ -461,6 +503,10 @@ abstract class _SearchBuildable implements SearchBuildable {
   bool get isLoading;
   @override
   bool get isLoadingMore;
+  @override
+  bool get classesLoaded;
+  @override
+  bool get branchesLoaded;
   @override
   int get activeTab;
   @override

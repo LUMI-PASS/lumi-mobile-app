@@ -229,6 +229,7 @@ abstract class _LoginBuildable implements LoginBuildable {
 /// @nodoc
 mixin _$LoginListenable {
   LoginEffect get effect => throw _privateConstructorUsedError;
+  int? get code => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $LoginListenableCopyWith<LoginListenable> get copyWith =>
@@ -241,7 +242,7 @@ abstract class $LoginListenableCopyWith<$Res> {
           LoginListenable value, $Res Function(LoginListenable) then) =
       _$LoginListenableCopyWithImpl<$Res, LoginListenable>;
   @useResult
-  $Res call({LoginEffect effect});
+  $Res call({LoginEffect effect, int? code});
 }
 
 /// @nodoc
@@ -258,12 +259,17 @@ class _$LoginListenableCopyWithImpl<$Res, $Val extends LoginListenable>
   @override
   $Res call({
     Object? effect = null,
+    Object? code = freezed,
   }) {
     return _then(_value.copyWith(
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
               as LoginEffect,
+      code: freezed == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -276,7 +282,7 @@ abstract class _$$LoginListenableImplCopyWith<$Res>
       __$$LoginListenableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({LoginEffect effect});
+  $Res call({LoginEffect effect, int? code});
 }
 
 /// @nodoc
@@ -291,12 +297,17 @@ class __$$LoginListenableImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? effect = null,
+    Object? code = freezed,
   }) {
     return _then(_$LoginListenableImpl(
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
               as LoginEffect,
+      code: freezed == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -304,14 +315,17 @@ class __$$LoginListenableImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$LoginListenableImpl implements _LoginListenable {
-  const _$LoginListenableImpl({required this.effect});
+  const _$LoginListenableImpl({required this.effect, this.code = null});
 
   @override
   final LoginEffect effect;
+  @override
+  @JsonKey()
+  final int? code;
 
   @override
   String toString() {
-    return 'LoginListenable(effect: $effect)';
+    return 'LoginListenable(effect: $effect, code: $code)';
   }
 
   @override
@@ -319,11 +333,12 @@ class _$LoginListenableImpl implements _LoginListenable {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LoginListenableImpl &&
-            (identical(other.effect, effect) || other.effect == effect));
+            (identical(other.effect, effect) || other.effect == effect) &&
+            (identical(other.code, code) || other.code == code));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, effect);
+  int get hashCode => Object.hash(runtimeType, effect, code);
 
   @JsonKey(ignore: true)
   @override
@@ -334,11 +349,14 @@ class _$LoginListenableImpl implements _LoginListenable {
 }
 
 abstract class _LoginListenable implements LoginListenable {
-  const factory _LoginListenable({required final LoginEffect effect}) =
-      _$LoginListenableImpl;
+  const factory _LoginListenable(
+      {required final LoginEffect effect,
+      final int? code}) = _$LoginListenableImpl;
 
   @override
   LoginEffect get effect;
+  @override
+  int? get code;
   @override
   @JsonKey(ignore: true)
   _$$LoginListenableImplCopyWith<_$LoginListenableImpl> get copyWith =>

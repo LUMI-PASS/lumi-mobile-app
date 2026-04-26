@@ -31,7 +31,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     await _resolveLocation();
     await Future.wait([
       _fetchCategories(),
-      _explore(page: 1, append: false),
+      _fetchTab(buildable.activeTab, page: 1, append: false),
     ]);
     build((b) => b.copyWith(isLoading: false));
     applyPendingCategory();
@@ -78,8 +78,16 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     });
   }
 
-  void setTab(int tab) {
+  Future<void> setTab(int tab) async {
+    if (buildable.activeTab == tab) return;
     build((b) => b.copyWith(activeTab: tab));
+    final alreadyLoaded =
+        tab == 0 ? buildable.classesLoaded : buildable.branchesLoaded;
+    if (!alreadyLoaded) {
+      build((b) => b.copyWith(isLoading: true));
+      await _fetchTab(tab, page: 1, append: false);
+      build((b) => b.copyWith(isLoading: false));
+    }
   }
 
   void selectCategory(HomCategory? category) {
@@ -98,122 +106,153 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   }
 
   Future<void> refresh() async {
-    build((b) => b.copyWith(isLoading: true));
-    await _explore(page: 1, append: false);
+    build((b) => b.copyWith(
+          isLoading: true,
+          classesLoaded: false,
+          branchesLoaded: false,
+          classes: [],
+          branches: [],
+        ));
+    await _fetchTab(buildable.activeTab, page: 1, append: false);
     build((b) => b.copyWith(isLoading: false));
   }
 
   Future<void> loadMore() async {
     if (buildable.isLoadingMore) return;
 
-    final isClassesTab = buildable.activeTab == 0;
+    final tab = buildable.activeTab;
     final currentPage =
-        isClassesTab ? buildable.classesPage : buildable.branchesPage;
+        tab == 0 ? buildable.classesPage : buildable.branchesPage;
     final totalPages =
-        isClassesTab ? buildable.classesTotalPages : buildable.branchesTotalPages;
+        tab == 0 ? buildable.classesTotalPages : buildable.branchesTotalPages;
 
     if (currentPage > totalPages) return;
 
     build((b) => b.copyWith(isLoadingMore: true));
-    await _explore(page: currentPage, append: true);
+    await _fetchTab(tab, page: currentPage, append: true);
     build((b) => b.copyWith(isLoadingMore: false));
   }
 
-  Future<void> _explore({required int page, required bool append}) async {
+  Future<void> _fetchTab(int tab,
+      {required int page, required bool append}) async {
     try {
-      String? fromDate;
-      String? toDate;
-      int? age;
-      String? classGender;
-      num? minPrice;
-      num? maxPrice;
+      final search =
+          buildable.searchTerm.isEmpty ? null : buildable.searchTerm;
 
-      final filter = buildable.filter;
-      if (filter != null) {
-        age = filter.ageYears;
+      if (tab == 0) {
+        String? fromDate;
+        String? toDate;
+        int? age;
+        String? classGender;
+        num? minPrice;
+        num? maxPrice;
 
-        if (filter.gender == Gender.boy) {
-          classGender = 'MALE';
-        } else if (filter.gender == Gender.girl) {
-          classGender = 'FEMALE';
+        final filter = buildable.filter;
+        if (filter != null) {
+          age = filter.ageYears;
+
+          if (filter.gender == Gender.boy) {
+            classGender = 'MALE';
+          } else if (filter.gender == Gender.girl) {
+            classGender = 'FEMALE';
+          }
+
+          if (filter.pricePreset == PricePreset.custom) {
+            minPrice = filter.priceRange.start.toInt();
+            maxPrice = filter.priceRange.end.toInt();
+          }
+
+          final now = DateTime.now();
+          switch (filter.datePreset) {
+            case DatePreset.none:
+              break;
+            case DatePreset.today:
+              fromDate = _fmtDate(now);
+              toDate = _fmtDate(now);
+              break;
+            case DatePreset.tomorrow:
+              final tmr = now.add(const Duration(days: 1));
+              fromDate = _fmtDate(tmr);
+              toDate = _fmtDate(tmr);
+              break;
+            case DatePreset.thisWeek:
+              fromDate = _fmtDate(now);
+              toDate = _fmtDate(now
+                  .add(Duration(days: DateTime.daysPerWeek - now.weekday)));
+              break;
+            case DatePreset.custom:
+              if (filter.fromDate != null) {
+                fromDate = _fmtDate(filter.fromDate!);
+                toDate = filter.toDate != null
+                    ? _fmtDate(filter.toDate!)
+                    : _fmtDate(filter.fromDate!);
+              }
+              break;
+          }
         }
 
-        if (filter.pricePreset == PricePreset.custom) {
-          minPrice = filter.priceRange.start.toInt();
-          maxPrice = filter.priceRange.end.toInt();
+        final result = await _repo.getDiscoveryClasses(
+          page: page,
+          limit: _pageLimit,
+          search: search,
+          categoryId: buildable.selectedCategory?.id,
+          fromDate: fromDate,
+          toDate: toDate,
+          age: age,
+          classGender: classGender,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          lat: _lat,
+          lng: _lng,
+        );
+
+        if (append) {
+          final existingIds = buildable.classes.map((c) => c.id).toSet();
+          final unique = result.classes
+              .where((c) => !existingIds.contains(c.id))
+              .toList();
+          build((b) => b.copyWith(
+                classes: [...b.classes, ...unique],
+                classesPage: page + 1,
+                classesTotalPages: result.totalPages,
+                classesLoaded: true,
+              ));
+        } else {
+          build((b) => b.copyWith(
+                classes: result.classes,
+                classesPage: 2,
+                classesTotalPages: result.totalPages,
+                classesLoaded: true,
+              ));
         }
-
-        final now = DateTime.now();
-        switch (filter.datePreset) {
-          case DatePreset.none:
-            break;
-          case DatePreset.today:
-            fromDate = _fmtDate(now);
-            toDate = _fmtDate(now);
-            break;
-          case DatePreset.tomorrow:
-            final tmr = now.add(const Duration(days: 1));
-            fromDate = _fmtDate(tmr);
-            toDate = _fmtDate(tmr);
-            break;
-          case DatePreset.thisWeek:
-            fromDate = _fmtDate(now);
-            toDate = _fmtDate(
-                now.add(Duration(days: DateTime.daysPerWeek - now.weekday)));
-            break;
-          case DatePreset.custom:
-            if (filter.fromDate != null) {
-              fromDate = _fmtDate(filter.fromDate!);
-              toDate = filter.toDate != null
-                  ? _fmtDate(filter.toDate!)
-                  : _fmtDate(filter.fromDate!);
-            }
-            break;
-        }
-      }
-
-      final result = await _repo.explore(
-        page: page,
-        limit: _pageLimit,
-        search: buildable.searchTerm.isEmpty ? null : buildable.searchTerm,
-        categoryId: buildable.selectedCategory?.id,
-        fromDate: fromDate,
-        toDate: toDate,
-        age: age,
-        classGender: classGender,
-        minPrice: minPrice,
-        maxPrice: maxPrice,
-        lat: _lat,
-        lng: _lng,
-      );
-
-      if (append) {
-        final existingClassIds = buildable.classes.map((c) => c.id).toSet();
-        final uniqueClasses =
-            result.classes.where((c) => !existingClassIds.contains(c.id)).toList();
-        final existingBranchIds = buildable.branches.map((b) => b.id).toSet();
-        final uniqueBranches = result.branches
-            .where((b) => !existingBranchIds.contains(b.id))
-            .toList();
-
-        build((b) => b.copyWith(
-              classes: [...b.classes, ...uniqueClasses],
-              branches: [...b.branches, ...uniqueBranches],
-              classesPage: buildable.activeTab == 0 ? page + 1 : b.classesPage,
-              branchesPage:
-                  buildable.activeTab == 1 ? page + 1 : b.branchesPage,
-              classesTotalPages: result.classesPages,
-              branchesTotalPages: result.branchesPages,
-            ));
       } else {
-        build((b) => b.copyWith(
-              classes: result.classes,
-              branches: result.branches,
-              classesPage: 2,
-              branchesPage: 2,
-              classesTotalPages: result.classesPages,
-              branchesTotalPages: result.branchesPages,
-            ));
+        final result = await _repo.getDiscoveryBranches(
+          page: page,
+          limit: _pageLimit,
+          search: search,
+          lat: _lat,
+          lng: _lng,
+        );
+
+        if (append) {
+          final existingIds = buildable.branches.map((b) => b.id).toSet();
+          final unique = result.branches
+              .where((br) => !existingIds.contains(br.id))
+              .toList();
+          build((b) => b.copyWith(
+                branches: [...b.branches, ...unique],
+                branchesPage: page + 1,
+                branchesTotalPages: result.totalPages,
+                branchesLoaded: true,
+              ));
+        } else {
+          build((b) => b.copyWith(
+                branches: result.branches,
+                branchesPage: 2,
+                branchesTotalPages: result.totalPages,
+                branchesLoaded: true,
+              ));
+        }
       }
     } on DioException catch (error) {
       if (error.response?.statusCode == 500 ||

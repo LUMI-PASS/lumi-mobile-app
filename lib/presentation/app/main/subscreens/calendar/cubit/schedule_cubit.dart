@@ -1,30 +1,28 @@
 import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
-import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
-import 'package:injectable/injectable.dart';
-import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+
 import 'schedule_state.dart';
 
+/// Cubit that backs the Bookings tab (previously Calendar). One list item =
+/// one order/transaction. Renamed internally: the class name stays as
+/// `ScheduleCubit` so the generated DI config continues to compile without
+/// a rebuild.
 @injectable
 class ScheduleCubit extends BaseCubit<ScheduleBuildable, ScheduleListenable> {
-  ScheduleCubit(this._repo) : super(const ScheduleBuildable());
-  final HomeRepository _repo;
+  ScheduleCubit(this._ordersApi) : super(const ScheduleBuildable());
 
-  Future<void> getSchedule() {
+  final OrdersApi _ordersApi;
+
+  Future<void> loadBookings() {
     return callable(
-      future: _repo.getScheduleList(),
+      future: _ordersApi.getOrders(),
       buildOnStart: () => buildable.copyWith(isLoading: true),
-      buildOnData: (data) {
-        // Filter out items where all related bookings are CANCELLED
-        final filtered = data.where((item) {
-          final bookings = item.relatedBookings ?? [];
-          if (bookings.isEmpty) return true;
-          return bookings.any((b) =>
-              b.bookingStatus?.toUpperCase() != 'CANCELLED');
-        }).toList();
-        return buildable.copyWith(homeModel: filtered);
-      },
+      buildOnData: (orders) => buildable.copyWith(
+        orders: orders,
+      ),
       onErrorData: (error) {
         if (error is DioException) {
           if (error.response?.statusCode == 500 ||
@@ -40,21 +38,11 @@ class ScheduleCubit extends BaseCubit<ScheduleBuildable, ScheduleListenable> {
     );
   }
 
-  /// Refresh without showing loading spinner (for tab switches)
+  /// Silent refresh (used on tab focus) — no spinner.
   Future<void> refreshSilently() async {
     try {
-      final data = await _repo.getScheduleList();
-      final filtered = data.where((item) {
-        final bookings = item.relatedBookings ?? [];
-        if (bookings.isEmpty) return true;
-        return bookings.any((b) =>
-            b.bookingStatus?.toUpperCase() != 'CANCELLED');
-      }).toList();
-      build((b) => b.copyWith(homeModel: filtered));
+      final orders = await _ordersApi.getOrders();
+      build((b) => b.copyWith(orders: orders));
     } catch (_) {}
-  }
-
-  void changePhoneState(bool isMatched) {
-    build((buildable) => buildable.copyWith(isSelected: isMatched));
   }
 }

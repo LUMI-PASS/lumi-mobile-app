@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
+import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -40,122 +41,104 @@ class _CategoryItemWidgetState extends State<CategoryItemWidget> {
   }
 
   Future<void> _resolveImage() async {
-    final cat = widget.homeCategoryModel;
-    final catId = cat?.id;
-    final hasPhoto = cat?.hasPhoto == true;
-
-    final fallback =
-        (hasPhoto && catId != null) ? PhotoService.getImageUrl(catId) : null;
-
+    final url = sanitizeImageUrl(widget.homeCategoryModel?.image);
     setState(() {
-      _resolvedImageUrl = fallback;
-      _imageOk = fallback != null;
-      _isLoading = true;
+      _resolvedImageUrl = url;
+      _imageOk = url != null;
+      _isLoading = false;
     });
-
-    if (catId != null) {
-      try {
-        final photos = await PhotoService.instance
-            .getCategoryPhotos(catId, limit: 1);
-        if (mounted && photos.isNotEmpty) {
-          setState(() {
-            _resolvedImageUrl = photos.first;
-            _imageOk = true;
-            _isLoading = false;
-          });
-          return;
-        }
-      } catch (_) {}
-    }
-
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container3d(
       onTap: widget.onTap,
-      width: 150.w,
+      width: MediaQuery.of(context).size.width * 0.285,
       margin: EdgeInsets.only(left: 16.w),
       padding: EdgeInsets.zero,
       backgroundColor: Colors.white,
-      borderColor: Colors.grey.shade200,
-      borderRadius: BorderRadius.circular(22.r),
+      borderColor: const Color(0xFFE8E4F6),
+      borderRadius: BorderRadius.circular(18.r),
       depth: 4,
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x1A6C4EF2),
+          blurRadius: 20,
+          offset: Offset(0, 4),
+        ),
+      ],
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16.r),
-            child: SizedBox(
-              height: 112.h,
-              width: double.infinity,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Shimmer while loading
-                  if (_isLoading && !_imageOk)
-                    Shimmer.fromColors(
-                      baseColor: Colors.grey.shade200,
-                      highlightColor: Colors.grey.shade50,
-                      child: Container(color: Colors.white),
-                    ),
-
-                  if (_imageOk && _resolvedImageUrl != null)
-                    CachedNetworkImage(
-                      imageUrl: _resolvedImageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Shimmer.fromColors(
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16.r),
+              child: SizedBox.expand(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Shimmer while loading
+                    if (_isLoading && !_imageOk)
+                      Shimmer.fromColors(
                         baseColor: Colors.grey.shade200,
                         highlightColor: Colors.grey.shade50,
                         child: Container(color: Colors.white),
                       ),
-                      errorWidget: (_, __, ___) =>
-                          _buildGradientFallback(),
-                    )
-                  else if (!_isLoading)
-                    _buildGradientFallback(),
 
-                  // Gradient overlay at bottom
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      padding:
-                          EdgeInsets.fromLTRB(4.w, 32.h, 4.w, 8.h),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.3),
-                            Colors.black.withOpacity(0.7),
-                          ],
+                    if (_imageOk && _resolvedImageUrl != null)
+                      CachedNetworkImage(
+                        imageUrl: _resolvedImageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Shimmer.fromColors(
+                          baseColor: Colors.grey.shade200,
+                          highlightColor: Colors.grey.shade50,
+                          child: Container(color: Colors.white),
                         ),
-                      ),
-                      child: Text(
-                        widget.homeCategoryModel?.title ?? '',
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          shadows: const [
-                            Shadow(
-                                blurRadius: 4,
-                                color: Colors.black54),
-                          ],
+                        errorWidget: (_, __, ___) =>
+                            _buildGradientFallback(),
+                      )
+                    else if (!_isLoading)
+                      _buildGradientFallback(),
+
+                    // Gradient overlay at bottom
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding:
+                            EdgeInsets.fromLTRB(4.w, 32.h, 4.w, 8.h),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.3),
+                              Colors.black.withOpacity(0.7),
+                            ],
+                          ),
+                        ),
+                        child: Text(
+                          widget.homeCategoryModel?.title ?? '',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            shadows: const [
+                              Shadow(
+                                  blurRadius: 4,
+                                  color: Colors.black54),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

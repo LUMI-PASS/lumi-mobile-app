@@ -139,6 +139,10 @@ class $AssetsIconsGen {
   SvgGenImage get locationPrimary =>
       const SvgGenImage('assets/icons/location_primary.svg');
 
+  /// File path: assets/icons/lumi_logo.png
+  AssetGenImage get lumiLogo =>
+      const AssetGenImage('assets/icons/lumi_logo.png');
+
   /// File path: assets/icons/lumi_onboard1-removebg-preview.png
   AssetGenImage get lumiOnboard1RemovebgPreview =>
       const AssetGenImage('assets/icons/lumi_onboard1-removebg-preview.png');
@@ -245,6 +249,7 @@ class $AssetsIconsGen {
         infoDis,
         location,
         locationPrimary,
+        lumiLogo,
         lumiOnboard1RemovebgPreview,
         lumiOnboard2RemovebgPreview,
         lumiOnboard3RemovebgPreview,
@@ -324,6 +329,16 @@ class $AssetsLocalizationGen {
   List<String> get values => [translations];
 }
 
+class $AssetsLottiesGen {
+  const $AssetsLottiesGen();
+
+  /// File path: assets/lotties/premium.json
+  String get premium => 'assets/lotties/premium.json';
+
+  /// List of all assets
+  List<String> get values => [premium];
+}
+
 class $AssetsIconsBackgroundGen {
   const $AssetsIconsBackgroundGen();
 
@@ -383,6 +398,7 @@ class Assets {
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
   static const $AssetsLocalizationGen localization = $AssetsLocalizationGen();
+  static const $AssetsLottiesGen lotties = $AssetsLottiesGen();
 }
 
 class AssetGenImage {

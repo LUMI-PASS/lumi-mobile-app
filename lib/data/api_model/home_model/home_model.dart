@@ -60,6 +60,7 @@ class HomBanner with _$HomBanner {
     String? id,
     String? title,
     String? url,
+    String? image,
     String? createdAt,
     String? updatedAt,
   }) = _HomBanner;
@@ -87,6 +88,7 @@ class HomCategory with _$HomCategory {
     String? id,
     String? title,
     String? description,
+    String? image,
     bool? hasPhoto,
     String? createdAt,
     String? updatedAt,
@@ -139,6 +141,7 @@ class HomClass with _$HomClass {
     String? gender,
     bool? isActive,
     bool? hasPhoto,
+    String? image,
     double? distance,
     String? createdAt,
     String? updatedAt,
@@ -226,6 +229,20 @@ class CoinFlow with _$CoinFlow {
 
   factory CoinFlow.fromJson(Map<String, dynamic> json) =>
       _$CoinFlowFromJson(json);
+}
+
+class ClassesPage {
+  final List<HomClass> classes;
+  final int totalPages;
+
+  const ClassesPage({required this.classes, required this.totalPages});
+}
+
+class BranchesPage {
+  final List<HomBranch> branches;
+  final int totalPages;
+
+  const BranchesPage({required this.branches, required this.totalPages});
 }
 
 class ExploreResult {

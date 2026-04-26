@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
@@ -8,43 +7,26 @@ class AuthApi {
 
   AuthApi(this._dio);
 
-  Future<Response> register(ProfileModel registerModel) {
-    final request = registerModel.toJson()
-      ..removeWhere(
-          (key, value) => value == null || (value.toString()).isEmpty);
-    return _dio.post('auth/register', data: request);
+  Future<Response> sendOtp(String phone) {
+    return _dio.post('auth/send-otp', data: {'phone': phone.trim()});
   }
 
-  Future<Response> verify(String contact, String code, bool isReg) {
-    final request = {
-      'phone_number': contact.replaceAll("-", ""),
-      'code': int.parse(code)
-    };
-    return _dio.post(!isReg ? 'auth/verify-login' : 'auth/verify',
-        data: request);
+  Future<Response> verifyOtp(String phone, String code) {
+    return _dio.post('auth/verify-otp', data: {
+      'phone': phone.trim(),
+      'code': code,
+    });
   }
 
-  Future<Response> checkNumber({
+  Future<Response> register({
     required String phone,
+    required String firstName,
+    required String lastName,
   }) {
-    return _dio.post('auth/check-number', data: {'phone_number': phone.trim()});
-  }
-
-  Future<Response> resendOtp({required String phone}) {
-    return _dio.post('auth/resend', data: {'phone_number': phone.trim()});
-  }
-
-  Future<Response> sendDeviceToken(String token) {
-    return _dio
-        .post("notification/subscribe", data: {'notification_token': token});
-  }
-
-  Future<Response> deleteToken(String token) {
-    return _dio.post("notification/unsubscribe");
-  }
-
-  Future<Response> unsubscribeToken(String deviceToken) {
-    return _dio.post("notification/unsubscribe",
-        data: {'notification_token': deviceToken});
+    return _dio.post('auth/register', data: {
+      'phone': phone.trim(),
+      'first_name': firstName,
+      'last_name': lastName,
+    });
   }
 }

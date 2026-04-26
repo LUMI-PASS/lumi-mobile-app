@@ -1,10 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
@@ -68,7 +68,8 @@ class UpcomingClassWidget extends StatelessWidget {
                 if (chargedAmount != null)
                   _buildBadge(
                     context,
-                    text: '${isTrialBooking ? 'Trial' : 'Full'}: $chargedAmount',
+                    text:
+                        '${isTrialBooking ? 'Trial' : 'Full'}: ${chargedAmount.toUzsPrice()}',
                     bgColor: isTrialBooking
                         ? const Color(0xFFECFDF5)
                         : const Color(0xFFFFF7ED),
@@ -78,7 +79,6 @@ class UpcomingClassWidget extends StatelessWidget {
                     textColor: isTrialBooking
                         ? const Color(0xFF047857)
                         : const Color(0xFFC2410C),
-                    trailing: Assets.icons.coinLumi.image(width: 12.w, height: 12.h),
                   ),
               ],
             ),

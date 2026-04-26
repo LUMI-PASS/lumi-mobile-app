@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
 import 'package:lumi_pass/data/api_model/booking/booking_model.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
+import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/eligibility/eligibility_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
@@ -44,7 +45,21 @@ class HomeRepositoryImpl extends HomeRepository {
           lat: lat,
           lng: lng,
         )
-        .then((value) => HomeModel.fromJson(value.data));
+        .then((value) {
+      final raw = value.data;
+      final data = raw is Map ? raw['data'] : null;
+      if (data is Map) {
+        final newClasses = data['new_classes'];
+        if (newClasses is Map && newClasses['data'] is List) {
+          ClassPricingCache.mergeFromList(newClasses['data'] as List);
+        }
+        final nearClasses = data['near_classes'];
+        if (nearClasses is Map && nearClasses['data'] is List) {
+          ClassPricingCache.mergeFromList(nearClasses['data'] as List);
+        }
+      }
+      return HomeModel.fromJson(value.data);
+    });
   }
 
   @override
@@ -242,6 +257,83 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
+  Future<ClassesPage> getDiscoveryClasses({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? categoryId,
+    String? fromDate,
+    String? toDate,
+    int? age,
+    String? classGender,
+    num? minPrice,
+    num? maxPrice,
+    String? branchId,
+    String? sortBy,
+    double? lat,
+    double? lng,
+  }) {
+    return _api
+        .discoveryClasses(
+          page: page,
+          limit: limit,
+          search: search,
+          categoryId: categoryId,
+          fromDate: fromDate,
+          toDate: toDate,
+          age: age,
+          classGender: classGender,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          branchId: branchId,
+          sortBy: sortBy,
+          lat: lat,
+          lng: lng,
+        )
+        .then((value) {
+      final data = value.data['data'] ?? value.data;
+      final list = (data is Map ? data['data'] : data) ?? [];
+      final listView = list as List;
+      ClassPricingCache.mergeFromList(listView);
+      final pages = (data is Map ? data['pages'] : null) ?? 1;
+      return ClassesPage(
+        classes: listView.map((e) => HomClass.fromJson(e)).toList(),
+        totalPages: pages is int ? pages : int.tryParse('$pages') ?? 1,
+      );
+    });
+  }
+
+  @override
+  Future<BranchesPage> getDiscoveryBranches({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    String? sortBy,
+    double? lat,
+    double? lng,
+  }) {
+    return _api
+        .discoveryBranches(
+          page: page,
+          limit: limit,
+          search: search,
+          sortBy: sortBy,
+          lat: lat,
+          lng: lng,
+        )
+        .then((value) {
+      final data = value.data['data'] ?? value.data;
+      final list = (data is Map ? data['data'] : data) ?? [];
+      final pages = (data is Map ? data['pages'] : null) ?? 1;
+      return BranchesPage(
+        branches:
+            (list as List).map((e) => HomBranch.fromJson(e)).toList(),
+        totalPages: pages is int ? pages : int.tryParse('$pages') ?? 1,
+      );
+    });
+  }
+
+  @override
   Future<ExploreResult> explore({
     int page = 1,
     int limit = 10,
@@ -279,10 +371,11 @@ class HomeRepositoryImpl extends HomeRepository {
       final data = value.data['data'] ?? value.data;
       final classesData = data['classes'] ?? {};
       final branchesData = data['branches'] ?? {};
+      final classesList = (classesData['data'] ?? []) as List;
+      ClassPricingCache.mergeFromList(classesList);
       return ExploreResult(
-        classes: ((classesData['data'] ?? []) as List)
-            .map((e) => HomClass.fromJson(e))
-            .toList(),
+        classes:
+            classesList.map((e) => HomClass.fromJson(e)).toList(),
         classesPages: classesData['pages'] ?? 1,
         branches: ((branchesData['data'] ?? []) as List)
             .map((e) => HomBranch.fromJson(e))

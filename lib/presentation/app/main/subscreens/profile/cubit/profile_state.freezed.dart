@@ -17,6 +17,9 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$ProfileBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
+  HomForUser? get user => throw _privateConstructorUsedError;
+  List<ChildModel> get children => throw _privateConstructorUsedError;
+  ParentTrialSummary? get trialSummary => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ProfileBuildableCopyWith<ProfileBuildable> get copyWith =>
@@ -29,7 +32,14 @@ abstract class $ProfileBuildableCopyWith<$Res> {
           ProfileBuildable value, $Res Function(ProfileBuildable) then) =
       _$ProfileBuildableCopyWithImpl<$Res, ProfileBuildable>;
   @useResult
-  $Res call({bool isLoading});
+  $Res call(
+      {bool isLoading,
+      HomForUser? user,
+      List<ChildModel> children,
+      ParentTrialSummary? trialSummary});
+
+  $HomForUserCopyWith<$Res>? get user;
+  $ParentTrialSummaryCopyWith<$Res>? get trialSummary;
 }
 
 /// @nodoc
@@ -46,13 +56,52 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
   @override
   $Res call({
     Object? isLoading = null,
+    Object? user = freezed,
+    Object? children = null,
+    Object? trialSummary = freezed,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
               as bool,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as HomForUser?,
+      children: null == children
+          ? _value.children
+          : children // ignore: cast_nullable_to_non_nullable
+              as List<ChildModel>,
+      trialSummary: freezed == trialSummary
+          ? _value.trialSummary
+          : trialSummary // ignore: cast_nullable_to_non_nullable
+              as ParentTrialSummary?,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $HomForUserCopyWith<$Res>? get user {
+    if (_value.user == null) {
+      return null;
+    }
+
+    return $HomForUserCopyWith<$Res>(_value.user!, (value) {
+      return _then(_value.copyWith(user: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $ParentTrialSummaryCopyWith<$Res>? get trialSummary {
+    if (_value.trialSummary == null) {
+      return null;
+    }
+
+    return $ParentTrialSummaryCopyWith<$Res>(_value.trialSummary!, (value) {
+      return _then(_value.copyWith(trialSummary: value) as $Val);
+    });
   }
 }
 
@@ -64,7 +113,16 @@ abstract class _$$ProfileBuildableImplCopyWith<$Res>
       __$$ProfileBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isLoading});
+  $Res call(
+      {bool isLoading,
+      HomForUser? user,
+      List<ChildModel> children,
+      ParentTrialSummary? trialSummary});
+
+  @override
+  $HomForUserCopyWith<$Res>? get user;
+  @override
+  $ParentTrialSummaryCopyWith<$Res>? get trialSummary;
 }
 
 /// @nodoc
@@ -79,12 +137,27 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? isLoading = null,
+    Object? user = freezed,
+    Object? children = null,
+    Object? trialSummary = freezed,
   }) {
     return _then(_$ProfileBuildableImpl(
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
               as bool,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as HomForUser?,
+      children: null == children
+          ? _value._children
+          : children // ignore: cast_nullable_to_non_nullable
+              as List<ChildModel>,
+      trialSummary: freezed == trialSummary
+          ? _value.trialSummary
+          : trialSummary // ignore: cast_nullable_to_non_nullable
+              as ParentTrialSummary?,
     ));
   }
 }
@@ -92,15 +165,33 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$ProfileBuildableImpl implements _ProfileBuildable {
-  const _$ProfileBuildableImpl({this.isLoading = false});
+  const _$ProfileBuildableImpl(
+      {this.isLoading = false,
+      this.user,
+      final List<ChildModel> children = const [],
+      this.trialSummary})
+      : _children = children;
 
   @override
   @JsonKey()
   final bool isLoading;
+  @override
+  final HomForUser? user;
+  final List<ChildModel> _children;
+  @override
+  @JsonKey()
+  List<ChildModel> get children {
+    if (_children is EqualUnmodifiableListView) return _children;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_children);
+  }
+
+  @override
+  final ParentTrialSummary? trialSummary;
 
   @override
   String toString() {
-    return 'ProfileBuildable(isLoading: $isLoading)';
+    return 'ProfileBuildable(isLoading: $isLoading, user: $user, children: $children, trialSummary: $trialSummary)';
   }
 
   @override
@@ -109,11 +200,16 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
         (other.runtimeType == runtimeType &&
             other is _$ProfileBuildableImpl &&
             (identical(other.isLoading, isLoading) ||
-                other.isLoading == isLoading));
+                other.isLoading == isLoading) &&
+            (identical(other.user, user) || other.user == user) &&
+            const DeepCollectionEquality().equals(other._children, _children) &&
+            (identical(other.trialSummary, trialSummary) ||
+                other.trialSummary == trialSummary));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isLoading);
+  int get hashCode => Object.hash(runtimeType, isLoading, user,
+      const DeepCollectionEquality().hash(_children), trialSummary);
 
   @JsonKey(ignore: true)
   @override
@@ -124,11 +220,20 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
 }
 
 abstract class _ProfileBuildable implements ProfileBuildable {
-  const factory _ProfileBuildable({final bool isLoading}) =
-      _$ProfileBuildableImpl;
+  const factory _ProfileBuildable(
+      {final bool isLoading,
+      final HomForUser? user,
+      final List<ChildModel> children,
+      final ParentTrialSummary? trialSummary}) = _$ProfileBuildableImpl;
 
   @override
   bool get isLoading;
+  @override
+  HomForUser? get user;
+  @override
+  List<ChildModel> get children;
+  @override
+  ParentTrialSummary? get trialSummary;
   @override
   @JsonKey(ignore: true)
   _$$ProfileBuildableImplCopyWith<_$ProfileBuildableImpl> get copyWith =>

@@ -74,6 +74,7 @@ dependencies:
   flutter_phoenix: ^1.1.1
   shimmer: ^3.0.0
   carousel_slider: ^5.1.1
+  youtube_player_flutter: ^9.1.1
 
 
 dev_dependencies:
@@ -105,6 +106,7 @@ flutter:
     - assets/icons/background/
     - assets/images/
     - assets/localization/
+    - assets/lotties/
 
 flutter_gen:
   output: lib/common/gen

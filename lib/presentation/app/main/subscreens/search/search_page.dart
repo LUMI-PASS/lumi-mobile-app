@@ -16,6 +16,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/class_item_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/explore_map_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
@@ -551,6 +552,10 @@ class _ClassesList extends StatelessWidget {
             homClass: classes[index],
             width: 1.sw - 32.w,
             wrapBranch: false,
+            onViewAsReels: () {
+              ShortsFeed.set(classes, index);
+              context.tabsRouter.setActiveIndex(1);
+            },
           );
         },
       ),
@@ -941,7 +946,7 @@ class _FilterBadges extends StatelessWidget {
     if (filter.pricePreset == PricePreset.custom) {
       badges.add(_BadgeChip(
           text:
-              '${filter.priceRange.start.toInt()}-${filter.priceRange.end.toInt()} coins',
+              '${filter.priceRange.start.toInt()}-${filter.priceRange.end.toInt()} so\'m',
           color: const Color(0xFFF97316),
           onRemove: onClearFilter));
     }

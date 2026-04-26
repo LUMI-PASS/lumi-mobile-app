@@ -447,20 +447,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [
-                                // Positioned(
-                                //   left: (width * startX - 16)
-                                //       .clamp(0, width - 40),
-                                //   top: 0,
-                                //   child:
-                                //       _CoinLabel(value: _range.start.toInt()),
-                                // ),
-                                // Positioned(
-                                //   left: (width * endX - 16)
-                                //       .clamp(40, width - 10),
-                                //   top: 0,
-                                //   child:
-                                //       _CoinLabel(value: _range.end.toInt()),
-                                // ),
+                                Positioned(
+                                  left: (width * startX - 16)
+                                      .clamp(0, width - 40),
+                                  top: 0,
+                                  child:
+                                      _PriceLabel(value: _range.start.toInt()),
+                                ),
+                                Positioned(
+                                  left: (width * endX - 16)
+                                      .clamp(40, width - 10),
+                                  top: 0,
+                                  child:
+                                      _PriceLabel(value: _range.end.toInt()),
+                                ),
                                 Positioned(
                                   left: 0,
                                   right: 0,
@@ -497,28 +497,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  '${_range.start.toInt()}'
-                                      .s(14)
-                                      .w(700)
-                                      .c(const Color(0xFFFBBF24)),
-                                  4.kw,
-                                  Assets.icons.coinLumi
-                                      .image(width: 18.w, height: 18.h),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  '${_range.end.toInt()}'
-                                      .s(14)
-                                      .w(700)
-                                      .c(const Color(0xFFFBBF24)),
-                                  4.kw,
-                                  Assets.icons.coinLumi
-                                      .image(width: 18.w, height: 18.h),
-                                ],
-                              ),
+                              _PriceLabel(value: _range.start.toInt()),
+                              _PriceLabel(value: _range.end.toInt()),
                             ],
                           ),
                         ],
@@ -753,10 +733,10 @@ class _GenderSelector extends StatelessWidget {
   }
 }
 
-// ─── Coin label above thumb ───
+// ─── Price label ───
 
-class _CoinLabel extends StatelessWidget {
-  const _CoinLabel({required this.value});
+class _PriceLabel extends StatelessWidget {
+  const _PriceLabel({required this.value});
   final int value;
 
   @override
@@ -766,7 +746,7 @@ class _CoinLabel extends StatelessWidget {
       children: [
         '$value'.s(13).w(700).c(const Color(0xFFFBBF24)),
         3.kw,
-        Assets.icons.coinLumi.image(width: 14.w, height: 14.h),
+        'so\'m'.s(12).w(600).c(const Color(0xFFFBBF24)),
       ],
     );
   }

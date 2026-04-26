@@ -6,21 +6,38 @@ import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/main/widgets/onboarding_bottomsheet.dart';
 
 @RoutePage()
-class MainPage extends StatelessWidget {
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
   @override
-  Widget build(context) {
-    final isInReview = RemoteConfigService.instance.isInReview;
+  State<MainPage> createState() => _MainPageState();
+}
 
+class _MainPageState extends State<MainPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final storage = getIt<Storage>();
+      if (storage.needsOnboarding.call() == true) {
+        showOnboardingBottomsheet(context);
+      }
+    });
+  }
+
+  @override
+  Widget build(context) {
     final routes = <PageRouteInfo>[
       const HomeRoute(),
+      const ShortsRoute(),
       const CalendarRoute(),
       const SearchRoute(),
-      if (!isInReview) const WalletRoute(),
-      const ProfileRoute(),
+      ProfileRoute(),
     ];
 
     return AutoTabsScaffold(
@@ -44,37 +61,36 @@ class MainPage extends StatelessWidget {
           _NavItem(
             index: 1,
             currentIndex: tabsRouter.activeIndex,
-            activeIcon: Assets.icons.calendarSelected.svg(),
-            inactiveIcon: Assets.icons.calendar.svg(
-                colorFilter: ColorFilter.mode(inactive, BlendMode.srcIn)),
-            label: 'tab_calendar'.tr(),
+            activeIcon: Icon(Icons.play_circle_fill_rounded,
+                color: primary, size: 24),
+            inactiveIcon: Icon(Icons.play_circle_outline_rounded,
+                color: inactive, size: 24),
+            label: 'tab_shorts'.tr(),
             activeColor: primary,
             onTap: () => tabsRouter.setActiveIndex(1),
           ),
           _NavItem(
             index: 2,
             currentIndex: tabsRouter.activeIndex,
+            activeIcon: Assets.icons.calendarSelected.svg(),
+            inactiveIcon: Assets.icons.calendar.svg(
+                colorFilter: ColorFilter.mode(inactive, BlendMode.srcIn)),
+            label: 'tab_bookings'.tr(),
+            activeColor: primary,
+            onTap: () => tabsRouter.setActiveIndex(2),
+          ),
+          _NavItem(
+            index: 3,
+            currentIndex: tabsRouter.activeIndex,
             activeIcon: Assets.icons.searchSelected.svg(),
             inactiveIcon: Assets.icons.searchUnselected.svg(
                 colorFilter: ColorFilter.mode(inactive, BlendMode.srcIn)),
             label: 'tab_explore'.tr(),
             activeColor: primary,
-            onTap: () => tabsRouter.setActiveIndex(2),
+            onTap: () => tabsRouter.setActiveIndex(3),
           ),
-          if (!isInReview)
-            _NavItem(
-              index: 3,
-              currentIndex: tabsRouter.activeIndex,
-              activeIcon: Assets.icons.walletUnselected.svg(
-                  colorFilter: ColorFilter.mode(primary, BlendMode.srcIn)),
-              inactiveIcon: Assets.icons.walletUnselected.svg(
-                  colorFilter: ColorFilter.mode(inactive, BlendMode.srcIn)),
-              label: 'tab_wallet'.tr(),
-              activeColor: primary,
-              onTap: () => tabsRouter.setActiveIndex(3),
-            ),
           _NavItem(
-            index: isInReview ? 3 : 4,
+            index: 4,
             currentIndex: tabsRouter.activeIndex,
             activeIcon: Assets.icons.profilelUnselected.svg(
                 colorFilter: ColorFilter.mode(primary, BlendMode.srcIn)),
@@ -82,7 +98,7 @@ class MainPage extends StatelessWidget {
                 colorFilter: ColorFilter.mode(inactive, BlendMode.srcIn)),
             label: 'tab_profile'.tr(),
             activeColor: primary,
-            onTap: () => tabsRouter.setActiveIndex(isInReview ? 3 : 4),
+            onTap: () => tabsRouter.setActiveIndex(4),
           ),
         ];
 

@@ -37,11 +37,24 @@ class Storage {
 
   BaseStorage<String?> get localeCode => BaseStorage(_box, 'localeCode');
 
+  BaseStorage<bool> get needsOnboarding => BaseStorage(_box, 'needsOnboarding');
+
+  BaseStorage<String> get pendingPhone => BaseStorage(_box, 'pendingPhone');
+
+  BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
+
+  BaseStorage<String> get childName => BaseStorage(_box, 'childName');
+
+  BaseStorage<int> get childAge => BaseStorage(_box, 'childAge');
+
+  BaseStorage<bool> get hasPremium => BaseStorage(_box, 'hasPremium');
+
   Future<void> logout() async {
     await tokens.set(null);
     await code.set(null);
     await codeHash.set(null);
     await deviceToken.set(null);
+    await hasPremium.set(null);
   }
 // BaseStorage<String> get username => BaseStorage(_box, 'username');
 //

@@ -97,6 +97,33 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     );
   }
 
+  /// Silent refresh (used on tab focus) — no shimmer.
+  Future<void> refreshSilently() async {
+    try {
+      final data = await _repo.getHome(
+        newClassesPage: 1,
+        newClassesLimit: _pageLimit,
+        categoryPage: 1,
+        categoryLimit: _pageLimit,
+        nearClassPage: 1,
+        nearClassLimit: _pageLimit,
+        lat: _lat,
+        lng: _lng,
+      );
+      final newClasses = data.data?.newClasses?.data ?? [];
+      final nearClasses = data.data?.nearClasses?.data ?? [];
+      build((b) => b.copyWith(
+            homeModel: data,
+            newClassesList: newClasses,
+            nearClassesList: nearClasses,
+            newClassesPage: 2,
+            nearClassesPage: 2,
+            hasMoreNewClasses: newClasses.length >= _pageLimit,
+            hasMoreNearClasses: nearClasses.length >= _pageLimit,
+          ));
+    } catch (_) {}
+  }
+
   Future<void> loadMoreNewClasses() async {
     if (buildable.isLoadingNewClasses || !buildable.hasMoreNewClasses) return;
     build((b) => b.copyWith(isLoadingNewClasses: true));

@@ -6,12 +6,14 @@ import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
+import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_unified_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/wallet_page.dart';
 import 'package:lumi_pass/presentation/app/profile/children/children_page.dart';
 import 'package:lumi_pass/presentation/app/profile/payment/add_new_card_page.dart';
@@ -25,11 +27,14 @@ import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 import 'package:lumi_pass/presentation/start/onboard/onboard_page.dart';
 
 import '../../data/api_model/child_model/child_model.dart';
+import '../../data/api_model/order/user_order.dart';
 import '../../presentation/app/profile/attendance/attendance_detail_page.dart';
 import '../../presentation/app/profile/attendance/attendance_history_page.dart';
 import '../../presentation/app/profile/children/add_child_page.dart';
 import '../../presentation/app/profile/faq/faq_page.dart';
+import '../../presentation/app/profile/my_bookings/my_bookings_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/schedule_detail_page.dart';
+import '../../presentation/app/main/subscreens/calendar/widget/ticket_receipt_page.dart';
 import 'empty_route.dart';
 
 part 'app_router.gr.dart';
@@ -58,6 +63,7 @@ class AppRouter extends _$AppRouter {
       page: MainRoute.page,
       children: [
         AutoRoute(page: HomeRoute.page),
+        AutoRoute(page: ShortsRoute.page),
         AutoRoute(page: SearchRoute.page),
         AutoRoute(page: CalendarRoute.page),
         AutoRoute(page: WalletRoute.page),
@@ -81,6 +87,9 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: AttendanceHistoryRoute.page),
     AutoRoute(page: AttendanceDetailRoute.page),
     AutoRoute(page: FaqRoute.page),
-    AutoRoute(page: ScheduleDetailRoute.page),
+    AutoRoute(page: BookingDetailRoute.page),
+    AutoRoute(page: TicketReceiptRoute.page),
+    AutoRoute(page: MyBookingsRoute.page),
+    AutoRoute(page: PlansRoute.page),
   ];
 }

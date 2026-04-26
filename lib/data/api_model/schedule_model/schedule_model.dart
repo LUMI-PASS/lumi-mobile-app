@@ -93,6 +93,8 @@ class RelatedBooking with _$RelatedBooking {
     @JsonKey(name: 'is_trial_booking') bool? isTrialBooking,
     @JsonKey(name: 'attendance_status') String? attendanceStatus,
     @JsonKey(name: 'cancelled_at') String? cancelledAt,
+    @JsonKey(name: 'ticket_no') String? ticketNo,
+    @JsonKey(name: 'ticket_date') String? ticketDate,
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _RelatedBooking;

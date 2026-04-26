@@ -17,6 +17,7 @@ class LoginBuildable with _$LoginBuildable {
 class LoginListenable with _$LoginListenable {
   const factory LoginListenable({
     required LoginEffect effect,
+    @Default(null) int? code,
   }) = _LoginListenable;
 }
 

@@ -1,23 +1,27 @@
 import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
 
+class VerifyOtpResult {
+  final bool isNewUser;
+  final String? accessToken;
+  final ProfileModel? user;
+
+  VerifyOtpResult({
+    required this.isNewUser,
+    this.accessToken,
+    this.user,
+  });
+}
+
 abstract class AuthRepository {
-  Future<ProfileModel> register(ProfileModel registerModel);
+  Future<int?> sendOtp(String phone);
 
-  Future<bool> checkNumber(String phoneNumber);
+  Future<VerifyOtpResult> verifyOtp(String phone, String code);
 
-  Future<bool> verifyNumber(String phoneNumber, String code, bool isReg);
-
-  Future<bool> resendOtp(String phoneNumber);
+  Future<ProfileModel> register({
+    required String phone,
+    required String firstName,
+    required String lastName,
+  });
 
   Future<void> logout();
-
-// Future<void> getFirebaseToken();
-//
-// Future<void> firebaseInit();
-//
-// Future<void> sendDeviceToken();
-//
-// Future<void> deleteDeviceToken();
-//
-// void initializeFirebaseMessaging();
 }
