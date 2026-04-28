@@ -105,23 +105,31 @@ class _CalendarBodyState extends State<_CalendarBody> {
         Expanded(
           child: state.isLoading
               ? _BookingsShimmer()
-              : state.orders.isEmpty
-                  ? const _EmptyBookings()
-                  : RefreshIndicator(
-                      color: const Color(0xFF6C4EF2),
-                      onRefresh: widget.onRefresh,
-                      child: ListView.builder(
-                        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 20.h),
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: state.orders.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 12.h),
-                            child: BookingCard(order: state.orders[index]),
-                          );
-                        },
-                      ),
+              : Builder(builder: (context) {
+                  final filtered = _tab == 0
+                      ? state.orders
+                          .where((o) => !o.isCanceled)
+                          .toList()
+                      : state.orders
+                          .where((o) => o.isCanceled)
+                          .toList();
+                  if (filtered.isEmpty) return const _EmptyBookings();
+                  return RefreshIndicator(
+                    color: const Color(0xFF6C4EF2),
+                    onRefresh: widget.onRefresh,
+                    child: ListView.builder(
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 20.h),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: BookingCard(order: filtered[index]),
+                        );
+                      },
                     ),
+                  );
+                }),
         ),
       ],
     );

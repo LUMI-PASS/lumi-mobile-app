@@ -533,7 +533,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                         ),
                       ),
                     ],
-                    if (order.isPaid && detail.tickets.isNotEmpty) ...[
+                    if (detail.tickets.isNotEmpty) ...[
                       24.kh,
                       Row(
                         children: [
@@ -546,10 +546,22 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                               .w(700)
                               .c(const Color(0xFF1E293B)),
                           const Spacer(),
-                          '${detail.tickets.length}'
-                              .s(12)
-                              .w(600)
-                              .c(const Color(0xFF64748B)),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.w, vertical: 3.h),
+                            decoration: BoxDecoration(
+                              color: primary.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              '${detail.tickets.length} tickets',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w700,
+                                color: primary,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       12.kh,
@@ -813,24 +825,66 @@ class _TicketRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    ticket.ticketNo != null
-                        ? '#${ticket.ticketNo}'
-                        : 'Ticket pending',
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E293B),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          ticket.ticketNo != null
+                              ? '#${ticket.ticketNo}'
+                              : 'Ticket pending',
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 7.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          'ID: ${ticket.id.substring((ticket.id.length - 6).clamp(0, ticket.id.length))}',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  2.kh,
-                  Text(
-                    '${ticket.ticketDate}  ·  ${ticket.price.toRawUzsPrice()}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: const Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
-                    ),
+                  4.kh,
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded,
+                          size: 11.sp, color: const Color(0xFF94A3B8)),
+                      4.kw,
+                      Text(
+                        ticket.ticketDate,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      10.kw,
+                      Icon(Icons.payments_outlined,
+                          size: 11.sp, color: const Color(0xFF94A3B8)),
+                      4.kw,
+                      Text(
+                        ticket.price.toRawUzsPrice(),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

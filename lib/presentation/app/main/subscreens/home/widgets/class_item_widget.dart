@@ -98,8 +98,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
           // Image with overlays
           ClipRRect(
             borderRadius: BorderRadius.circular(12.r),
-            child: AspectRatio(
-              aspectRatio: 4 / 3,
+            child: SizedBox(
+              height: 130.h,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
