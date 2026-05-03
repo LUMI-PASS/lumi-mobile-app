@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/styles/ios_text_styles.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
@@ -62,21 +63,20 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
   Widget build(BuildContext context) {
     final hc = widget.homClass;
     final fullPrice = hc?.price;
-    final trialPrice = hc?.trialPrice;
-    final trialEnabled = hc?.trialEnabled ?? false;
-    final showTrialSale = fullPrice != null &&
-        trialPrice != null &&
-        trialEnabled &&
-        trialPrice.toDouble() < fullPrice.toDouble();
 
     final category = hc?.category ?? '';
     final duration = hc?.duration;
     final age = _formatAge(hc?.minAge, hc?.maxAge);
 
+    // Clamp card width so layout stays sensible across phones and tablets:
+    // narrow phones get a card that doesn't shrink below 240, tablets cap at 320.
+    final double resolvedWidth =
+        widget.width ?? (1.sw * 0.7).clamp(240.0, 320.0);
+
     return Container3d(
       onTap: () => context.router
           .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
-      width: widget.width ?? 1.sw * 0.68,
+      width: resolvedWidth,
       margin: EdgeInsets.only(left: 16.w),
       padding: EdgeInsets.all(8.w),
       alignment: Alignment.topLeft,
@@ -95,11 +95,12 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Image with overlays
+          // Image with overlays — aspect-ratio keeps it proportional to
+          // the (clamped) card width on every screen size.
           ClipRRect(
             borderRadius: BorderRadius.circular(12.r),
-            child: SizedBox(
-              height: 130.h,
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -232,11 +233,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
             hc?.title ?? '',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF1A1535),
-            ),
+            style: IOSText.headline(),
           ),
           6.kh,
 
@@ -375,8 +372,6 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                     Expanded(
                       child: _buildInlinePrice(
                         fullPrice: fullPrice ?? 0,
-                        trialPrice: trialPrice,
-                        showTrialSale: showTrialSale,
                         snap: snap,
                       ),
                     ),
@@ -409,11 +404,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
 
   Widget _buildInlinePrice({
     required num fullPrice,
-    required num? trialPrice,
-    required bool showTrialSale,
     required ClassPricingSnapshot? snap,
   }) {
-    // Always prefer snapshot price when available
     final effectivePrice =
         (snap != null && snap.priceMin > 0) ? snap.priceMin : fullPrice;
     final showFrom = snap != null &&
@@ -427,32 +419,6 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
           fontWeight: FontWeight.w900,
           color: const Color(0xFF4A2FD4),
         ),
-      );
-    }
-    if (showTrialSale && trialPrice != null && trialPrice > 0) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            effectivePrice.toUzsPrice(),
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF6B6899),
-              decoration: TextDecoration.lineThrough,
-              decorationThickness: 1.5,
-            ),
-          ),
-          6.kw,
-          Text(
-            trialPrice.toUzsPrice(),
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF4A2FD4),
-            ),
-          ),
-        ],
       );
     }
     return Text(

@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/ios_text_styles.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -340,30 +341,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                             ),
                           ),
 
-                          // Discount badge (top-right)
-                          if ((full?.discountPercentage ?? 0) > 0)
-                            Positioned(
-                              top: 10.h,
-                              right: 10.w,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w, vertical: 5.h),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEF4444),
-                                  borderRadius:
-                                      BorderRadius.circular(10.r),
-                                ),
-                                child: Text(
-                                  '-${full!.discountPercentage.toInt()}%',
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-
                           // Page indicators (bottom-center)
                           if (_galleryImages.length > 1)
                             Positioned(
@@ -445,28 +422,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Category + discount chips
-                        if (categoryName.isNotEmpty ||
-                            (full?.discountPercentage ?? 0) > 0)
+                        // Category chip
+                        if (categoryName.isNotEmpty)
                           Padding(
                             padding: EdgeInsets.only(bottom: 10.h),
                             child: Wrap(
                               spacing: 8.w,
                               runSpacing: 6.h,
                               children: [
-                                if (categoryName.isNotEmpty)
-                                  _PillChip(
-                                    label: categoryName,
-                                    bgColor: _brandLight,
-                                    textColor: _brandDark,
-                                  ),
-                                if ((full?.discountPercentage ?? 0) > 0)
-                                  _PillChip(
-                                    label:
-                                        '-${full!.discountPercentage.toInt()}% chegirma',
-                                    bgColor: const Color(0xFFFFEDED),
-                                    textColor: const Color(0xFFDC2626),
-                                  ),
+                                _PillChip(
+                                  label: categoryName,
+                                  bgColor: _brandLight,
+                                  textColor: _brandDark,
+                                ),
                               ],
                             ),
                           ),
@@ -474,12 +442,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         // Title
                         Text(
                           classModel.title ?? '',
-                          style: TextStyle(
-                            fontSize: 22.sp,
-                            fontWeight: FontWeight.w900,
-                            color: _navy,
-                            height: 1.2,
-                          ),
+                          style: IOSText.largeTitle(),
                         ),
 
                         12.kh,
@@ -506,11 +469,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                   Expanded(
                                     child: Text(
                                       branchTitle,
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: _textColor,
-                                      ),
+                                      style: IOSText.headline(),
                                     ),
                                   ),
                                   if (distanceStr.isNotEmpty) ...[
@@ -548,9 +507,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                       Expanded(
                                         child: Text(
                                           branchAddress,
-                                          style: TextStyle(
-                                              fontSize: 12.sp,
-                                              color: _muted),
+                                          style: IOSText.subhead(),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -571,9 +528,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                       Expanded(
                                         child: Text(
                                           branchLandmark,
-                                          style: TextStyle(
-                                            fontSize: 12.sp,
-                                            color: _muted,
+                                          style: IOSText.subhead().copyWith(
                                             fontStyle: FontStyle.italic,
                                           ),
                                           maxLines: 1,
@@ -782,20 +737,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                                 Expanded(
                                                   child: Text(
                                                     dur.durationLabel,
-                                                    style: TextStyle(
-                                                      fontSize: 13.sp,
-                                                      color: _textColor,
-                                                    ),
+                                                    style: IOSText.body(),
                                                   ),
                                                 ),
                                                 Text(
                                                   dur.price.toRawUzsPrice(),
-                                                  style: TextStyle(
-                                                    fontSize: 14.sp,
-                                                    fontWeight:
-                                                        FontWeight.w800,
-                                                    color: _brandDark,
-                                                  ),
+                                                  style: IOSText.bodyEmphasized(
+                                                      color: _brandDark),
                                                 ),
                                               ],
                                             ),
@@ -853,20 +801,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                           Expanded(
                                             child: Text(
                                               r.rangeLabel,
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.w600,
-                                                color: _textColor,
-                                              ),
+                                              style: IOSText.body(),
                                             ),
                                           ),
                                           Text(
                                             r.price.toRawUzsPrice(),
-                                            style: TextStyle(
-                                              fontSize: 15.sp,
-                                              fontWeight: FontWeight.w800,
-                                              color: _brandDark,
-                                            ),
+                                            style: IOSText.bodyEmphasized(
+                                                color: _brandDark),
                                           ),
                                         ],
                                       ),
@@ -895,11 +836,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         iconColor: _brand,
                         child: Text(
                           _cleanHtml(_localized(full.description)),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: _muted,
-                            height: 1.65,
-                          ),
+                          style: IOSText.body(color: IOSText.secondary),
                         ),
                       ),
                       16.kh,
@@ -911,11 +848,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         iconColor: _brand,
                         child: Text(
                           _cleanHtml(classModel.description!),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: _muted,
-                            height: 1.65,
-                          ),
+                          style: IOSText.body(color: IOSText.secondary),
                         ),
                       ),
                       16.kh,
@@ -931,11 +864,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         iconColor: const Color(0xFFD97706),
                         child: Text(
                           _cleanHtml(_localized(full.importantNotes)),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: _muted,
-                            height: 1.65,
-                          ),
+                          style: IOSText.body(color: IOSText.secondary),
                         ),
                       ),
                       16.kh,
@@ -951,11 +880,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         iconColor: const Color(0xFF0E7490),
                         child: Text(
                           _cleanHtml(_localized(full.requiredItems)),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: _muted,
-                            height: 1.65,
-                          ),
+                          style: IOSText.body(color: IOSText.secondary),
                         ),
                       ),
                       16.kh,
@@ -1020,19 +945,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                       Expanded(
                                         child: Text(
                                           s.day,
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            fontWeight: FontWeight.w700,
-                                            color: _textColor,
-                                          ),
+                                          style: IOSText.bodyEmphasized(),
                                         ),
                                       ),
                                       Text(
                                         '${s.startTime} – ${s.endTime}',
-                                        style: TextStyle(
-                                          fontSize: 13.sp,
-                                          color: _muted,
-                                        ),
+                                        style: IOSText.body(
+                                            color: IOSText.secondary),
                                       ),
                                     ],
                                   ),
@@ -1069,19 +988,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                       Expanded(
                                         child: Text(
                                           s.day,
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            fontWeight: FontWeight.w700,
-                                            color: _textColor,
-                                          ),
+                                          style: IOSText.bodyEmphasized(),
                                         ),
                                       ),
                                       Text(
                                         '${s.startTime} – ${s.endTime}',
-                                        style: TextStyle(
-                                          fontSize: 13.sp,
-                                          color: _muted,
-                                        ),
+                                        style: IOSText.body(
+                                            color: IOSText.secondary),
                                       ),
                                     ],
                                   ),
@@ -1198,16 +1111,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (full.discountPercentage > 0)
-                                    Text(
-                                      full.priceMax.toRawUzsPrice(),
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: _muted,
-                                        decoration:
-                                            TextDecoration.lineThrough,
-                                      ),
-                                    ),
                                   Text(
                                     full.priceMin.toRawUzsPrice(),
                                     style: TextStyle(
@@ -1391,14 +1294,7 @@ class _DetailSection extends StatelessWidget {
               ),
               10.kw,
               Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
-                    color: _textColor,
-                  ),
-                ),
+                child: Text(title, style: IOSText.headline()),
               ),
             ],
           ),

@@ -340,72 +340,6 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             },
           ),
         ),
-        18.kh,
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: GestureDetector(
-            onTap: () => context.router.push(const PlansRoute()),
-            child: Container(
-              padding: EdgeInsets.all(14.h),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFB830), Color(0xFFFF8A30)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF8A30).withOpacity(0.35),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44.w,
-                    height: 44.w,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.workspace_premium_rounded,
-                          color: Colors.white, size: 24),
-                    ),
-                  ),
-                  12.kw,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Premium · 30% chegirma',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          'Barcha masterclass va playgroundlarda',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, color: Colors.white),
-                ],
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -430,31 +364,39 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             }
             return false;
           },
-          child: SizedBox(
-            // card width × (3/4 image) + body rows ≈ dynamic card height
-            height: 1.sw * 0.68 * 0.75 + 148.h,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.only(bottom: 8.h, right: 16.w),
-              itemCount: state.newClassesList.length +
-                  (state.isLoadingNewClasses ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == state.newClassesList.length) {
-                  return Padding(
-                    padding: EdgeInsets.only(left: 16.w),
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                }
-                return ClassItemWidget(
-                  homClass: state.newClassesList[index],
-                  wrapBranch: true,
-                  onViewAsReels: () =>
-                      _openShorts(context, state.newClassesList, index),
-                );
-              },
-            ),
+          child: Builder(
+            builder: (context) {
+              // Card width tracks the same clamp used inside ClassItemWidget
+              // so the row height is in sync on every device.
+              final cardW = (1.sw * 0.7).clamp(240.0, 320.0);
+              // image is 4:3, plus card padding (8 + 8) and body block (~152)
+              final rowH = (cardW * 3 / 4) + 16 + 168.h;
+              return SizedBox(
+                height: rowH,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.only(bottom: 8.h, right: 16.w),
+                  itemCount: state.newClassesList.length +
+                      (state.isLoadingNewClasses ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == state.newClassesList.length) {
+                      return Padding(
+                        padding: EdgeInsets.only(left: 16.w),
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    }
+                    return ClassItemWidget(
+                      homClass: state.newClassesList[index],
+                      wrapBranch: true,
+                      onViewAsReels: () =>
+                          _openShorts(context, state.newClassesList, index),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ),
       ],
