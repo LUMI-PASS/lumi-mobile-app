@@ -427,28 +427,28 @@ class _OrderStatusPill extends StatelessWidget {
       case 'active':
         bg = const Color(0xFFECFDF5);
         fg = const Color(0xFF16A34A);
-        label = 'status_active'.tr(fallbackKey: 'order_paid');
+        label = 'status_active'.tr();
         break;
       case 'visited':
         bg = const Color(0xFFEFF6FF);
         fg = const Color(0xFF2563EB);
-        label = 'status_visited'.tr(fallbackKey: 'order_paid');
+        label = 'status_visited'.tr();
         break;
       case 'missed':
         bg = const Color(0xFFFFF3CD);
         fg = const Color(0xFF92400E);
-        label = 'status_missed'.tr(fallbackKey: 'past_bookings');
+        label = 'status_missed'.tr();
         break;
       case 'canceled':
       case 'cancelled':
         bg = const Color(0xFFFEF2F2);
         fg = const Color(0xFFDC2626);
-        label = 'status_cancelled'.tr(fallbackKey: 'order_cancelled');
+        label = 'status_cancelled'.tr();
         break;
       default: // pending
         bg = const Color(0xFFFFF7ED);
         fg = const Color(0xFFB45309);
-        label = 'status_pending'.tr(fallbackKey: 'order_pending');
+        label = 'status_pending'.tr();
     }
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
