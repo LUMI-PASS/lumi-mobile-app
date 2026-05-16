@@ -993,4 +993,11 @@ class Strings {
 
   // session
   static String get sessionExpired => 'session_expired'.tr();
+
+  // notifications
+  static String get notificationsTitle => 'notifications_title'.tr();
+  static String get notificationsEmpty => 'notifications_empty'.tr();
+  static String get notificationsMarkAllRead => 'notifications_mark_all_read'.tr();
+  static String get notificationToday => 'notification_today'.tr();
+  static String get notificationYesterday => 'notification_yesterday'.tr();
 }

@@ -5,7 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/widget/schedule_widget.dart';
@@ -54,33 +57,80 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     }
   }
 
-  bool _isActive(UserOrder o) {
-    if (o.isCanceled) return false;
-    // Pending orders stay "active" until the user cancels or pays; paid
-    // orders stay active until they're in the past.
-    final updated = o.updatedAt ?? o.createdAt;
-    if (o.isPending) {
-      // Pending older than 24h are effectively stale — still show as active;
-      // the user might want to retry payment.
-      return true;
-    }
-    if (updated == null) return o.isPaid;
-    try {
-      final d = DateTime.parse(updated);
-      final now = DateTime.now();
-      // Paid orders remain active for 24h after update as a coarse filter;
-      // backend doesn't yet expose a per-order future/past flag.
-      return d.isAfter(now.subtract(const Duration(days: 1))) || o.isPaid;
-    } catch (_) {
-      return o.isPaid;
-    }
-  }
+  /// Active = paid or cancelled with a ticket date today or in the future.
+  bool _isActive(UserOrder o) => (o.isPaid || o.isCanceled) && o.hasFutureTicket;
+
+  bool get _hasRealToken =>
+      getIt<Storage>().tokens.call()?.access != null;
+
+  bool get _showLoginPrompt =>
+      RemoteConfigService.instance.isInReview && !_hasRealToken;
 
   @override
   Widget build(BuildContext context) {
     final primary = context.colors.primary;
-    final active = _orders.where(_isActive).toList();
-    final past = _orders.where((o) => !_isActive(o) || o.isCanceled).toList();
+    final visible = _orders.where((o) => !o.isPending).toList();
+    final active = visible.where(_isActive).toList();
+    final past = visible.where((o) => !_isActive(o)).toList();
+
+    if (_showLoginPrompt) {
+      return Scaffold(
+        backgroundColor: context.colors.window,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: const Color(0xFF1E293B),
+          title: 'my_bookings'.tr().s(18).w(700),
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80.w,
+                  height: 80.w,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.receipt_long_rounded,
+                      size: 40.w, color: primary.withOpacity(0.4)),
+                ),
+                20.kh,
+                'login_to_view_bookings'
+                    .tr()
+                    .s(15)
+                    .w(600)
+                    .c(const Color(0xFF1E293B)),
+                20.kh,
+                GestureDetector(
+                  onTap: () => context.router.replaceAll([LoginRoute()]),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 32.w, vertical: 14.h),
+                    decoration: BoxDecoration(
+                      color: primary,
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    child: Text(
+                      'login_button'.tr(),
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return DefaultTabController(
       length: 2,
