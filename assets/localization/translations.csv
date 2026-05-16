@@ -1,13 +1,315 @@
 str,ru_RU,uz_UZ,en_EN
 skip,Пропустить,O‘tkazish,Skip
-onboard1_title,Полная прозрачность транзакций,To‘liq shaffof tranzaksiyalar,Full transparency of transactions
-onboard1_subtitle,Полная прозрачность транзакций,To‘liq shaffof tranzaksiyalar,Full transparency of transactions
-onboard2_title,Надёжные партнёры,Ishonchli hamkorlar,Reliable partners
-onboard2_subtitle,Сотрудничество с проверенными и доверенными компаниями,Tekshirilgan va ishonchli kompaniyalar bilan hamkorlik,Cooperation with verified and trusted companies
-onboard3_title,Защита данных,Ma’lumotlarni himoyalash,Data protection
-onboard3_subtitle,Надёжность и безопасность вашей информации,Ma’lumotlaringizning ishonchliligi va xavfsizligi,Reliability and security of your information
-next_button,Далее,Keyingi,Next
+onboard1_title,Активности и события для детей,Bolalar uchun faoliyat va tadbirlar,Activities & Events for Kids
+onboard1_subtitle,Всё лучшее для вашего ребёнка в одном месте,Farzandingiz uchun hamma narsa bir joyda,Everything for your child in one place
+onboard2_title,Найдите идеальное занятие,Mukammal mashg’ulot toping,Find the Perfect Activity
+onboard2_subtitle,Подбор занятий по возрасту и интересам ребёнка,Yosh va qiziqishlar bo’yicha mashg’ulot tanlang,Activities matched to your child’s age and interests
+onboard3_title,Бронируйте в пару касаний,Bir necha qadamda bron qiling,Book in Just a Few Clicks
+onboard3_subtitle,Управляйте записями и не пропустите занятие,Darslarni boshqaring va hech birini o’tkazib yubormang,Manage bookings and never miss a session
+save_button,Сохранить,Saqlash,Save
+payment_label,Оплата,To'lov,Payment
+cancel_button,Отменить,Bekor qilish,Cancel
+delete_button,Удалить,O‘chirish,Delete
+cannot_be_undone,Это действие не может быть отменено.,Bu harakatni tiklab bo'lmaydi,This action cannot be undone
+select_language,Выберите язык,Tilni tanlang,Select language
+without_nds,Без НДС,QQS siz,VAT Not Included
+notification_title,Уведомления,Xabarnomalar,Notifcations
+duplicate_title,Дубликат,Duplikat,Duplicate
+telegram_channel,Telegram канал,Telegram kanali,Telegram channel
+tiktok,TikTok,TikTok,TikTok
+youtube,YouTube,YouTube,YouTube
+volume_unit,м³,m³,m³
+session_expired,"Учетная запись пользователя удалена, пожалуйста, войдите снова!",Foydalanuvchi akkounti o'chirilgan qayta login qiling!,"User account has been deleted, please log in again!"
+tab_home,Главная,Bosh sahifa,Home
+tab_shorts,Видео,Videolar,Shorts
+tab_bookings,Брони,Bronlar,Bookings
+tab_explore,Поиск,Qidirish,Explore
+tab_profile,Профиль,Profil,Profile
+hello,ПРИВЕТ,SALOM,HELLO
+all_categories,Все категории,Barcha kategoriyalar,All Categories
+newly_added_classes,Новые занятия,Yangi mashg'ulotlar,New Activities
+near_you,Рядом с вами,Yaqiningizda,Near You
+my_account,Мой аккаунт,Mening akkauntim,My Account
+account_info,Информация аккаунта,Akkaunt ma'lumotlari,Account Information
+change_account_info,Изменить данные аккаунта,Hisob ma'lumotlarini o'zgartirish,Change account details
+your_children,Ваши дети,Farzandlaringiz,Your Children
+change_children_info,Изменить информацию о детях,Bolalar ma'lumotini o'zgartirish,Change children info
+faq,Часто задаваемые вопросы,Ko'p beriladigan savollar,FAQ
+faq_subtitle,Вопросы и ответы,Savol va javoblar,Question and Answers
+faqs_title,Вопросы,Savollar,Questions
+faq_q1,В каких городах работает LUMI?,LUMI qaysi shaharlarda ishlaydi?,Which cities does LUMI operate in?
+faq_a1,"Пока работает в Ташкенте; в скором времени планируется расширение на другие города. Загрузите приложение, чтобы быть в курсе новостей.",Hozircha Toshkentda ishlaydi; tez orada boshqa shaharlarga kengayish rejasi bor. Yangiliklar uchun ilovani yuklab oling.,Currently operating in Tashkent; expansion to other cities is planned soon. Download the app to stay updated.
+faq_q2,Регистрация и поиск бесплатны?,Ro'yxatdan o'tish va qidiruv bepulmi?,Is registration and search free?
+faq_a2,"Да, совершенно бесплатно. Пользователи платят только за выбранные занятия — без дополнительных сборов или подписок.","Ha, mutlaqo bepul. Foydalanuvchilar faqat tanlagan mashg'ulotlari uchun to'laydi — qo'shimcha to'lov yoki obuna yo'q.","Yes, completely free. Users only pay for selected activities — no additional fees or subscriptions."
+faq_q3,Как производится оплата?,To'lov qanday amalga oshiriladi?,How is payment processed?
+faq_a3,"Оплата производится прямо в приложении через банковскую карту или мобильный кошелёк (Payme, Click).","To'lovlar ilova ichida bank kartasi yoki mobil hamyon (Payme, Click) orqali amalga oshiriladi.","Payments are made within the app via bank card or mobile wallet (Payme, Click)."
+faq_q4,"Если я отменю бронирование, вернут ли деньги?","Bron qilingan mashg'ulotni bekor qilsam, pul qaytadimi?","If I cancel a booking, will I get a refund?"
+faq_a4,"Да, полный возврат средств; действуют условия по срокам отмены.","Ha, to'liq qaytariladi; bekor qilish muddatiga oid shartlar qo'llaniladi.","Yes, full refunds apply; cancellation timing conditions apply."
+faq_q5,Как проверяются партнёры?,Hamkorlar qanday tekshiriladi?,How are partners verified?
+faq_a5,"Команда LUMI проверяет документы, стандарты безопасности и оборудование — в список включаются только одобренные центры.","LUMI jamoasi hujjatlarni, xavfsizlik standartlarini va jihozlarni tekshiradi; faqat tasdiqlangan joylar ro'yxatga olinadi.","The LUMI team verifies documentation, safety standards, and equipment; only approved venues are listed."
+faq_q6,Как найти занятия по возрасту ребёнка?,Bolaning yoshiga mos mashg'ulotni qanday topaman?,How do I find age-appropriate activities for my child?
+faq_a6,Используйте возрастные фильтры при поиске или добавьте профиль ребёнка для персональных рекомендаций.,Yosh filtrlari yordamida qidiring yoki shaxsiylashtirilgan tavsiyalar olish uchun bola profilini qo'shing.,"Use age filters to search, or add a child profile to receive personalized recommendations."
+faq_q7,Можно ли использовать LUMI через Telegram?,Telegram'dan foydalanish mumkinmi?,Can I use LUMI via Telegram?
+faq_a7,"Да, приложение доступно как Telegram Mini App — без отдельной установки.","Ha, alohida o'rnatmasdan Telegram Mini App sifatida mavjud.","Yes, it is available as a Telegram Mini App without a separate installation."
+log_out,Выйти,Chiqish,Log Out
+log_out_subtitle,До скорой встречи,Tez orada ko'rishguncha,See you soon
+my_bookings,Мои брони,Mening bronlarim,My Bookings
+my_children,Мои дети,Mening farzandlarim,My Children
+active_bookings,Активные,Faol,Active
+past_bookings,Прошедшие,O'tgan,Past
+no_bookings_yet,Бронирований пока нет,Hozircha buyurtmalar yo'q,No bookings yet
+booked_classes_appear_here,Ваши забронированные занятия появятся здесь,Buyurtma qilingan darslaringiz shu yerda ko'rinadi,Your booked classes will appear here
+pay_now,Оплатить,To'lash,Pay Now
+amount_due,Сумма к оплате,To'lanadigan summa,Amount Due
+amount_paid,Оплачено,To'langan,Amount Paid
+booking_id,ID бронирования,Buyurtma ID,Booking ID
+ticket_id,ID билета,Chipta ID,Ticket ID
+add_child,Добавить ребенка,Bola qo'shish,Add Child
+update_child,Обновить данные,Ma'lumotni yangilash,Update Child
+add_first_child,Добавить первого ребенка,Birinchi bolani qo'shish,Add First Child
+no_children_yet,Детей еще нет,Hozircha bolalar yo'q,No children yet
+no_children_add_first,У вас еще нет детей. Добавьте первого,Sizda hali bolalar yo'q. Birinchisini qo'shing,You have no children yet. Add the first one
+children,детей,bola,children
+first_name,Имя,Ism,First Name
+enter_first_name,Введите имя,Ismni kiriting,Enter first name
+last_name,Фамилия,Familiya,Last Name
+age,Возраст,Yosh,Age
+enter_age,Введите возраст,Yoshni kiriting,Enter age
+child_max_age,Ребенок должен быть от 1 до 17 лет,Bola 1 dan 17 yoshgacha bo'lishi kerak,Child must be between 1 and 17
+gender,Пол,Jinsi,Gender
+male,Мужской,Erkak,Male
+female,Женский,Ayol,Female
+boys,Мальчики,O'g'il bolalar,Boys
+girls,Девочки,Qiz bolalar,Girls
+free_trials,Бесплатные пробные,Bepul sinov darslari,Free trials
+required,Обязательно,Majburiy,Required
+save,Сохранить,Saqlash,Save
+cancel,Отмена,Bekor qilish,Cancel
+explore,Поиск,Qidirish,Explore
+centers,Центры,Markazlar,Centers
+classes,Занятия,Darslar,Classes
+categories,Категории,Kategoriyalar,Categories
+centers_on_map,Центры на карте,Xaritadagi markazlar,Centers on Map
+open_in_map,Открыть на карте,Xaritada ochish,Open in Map
+filter_by_category,Фильтр по категории,Kategoriya bo'yicha filtr,Filter by category
+pick_category,Выберите категорию,Kategoriyani tanlang,Pick a Category
+clear,Очистить,Tozalash,Clear
+no_data,Нет данных,Ma'lumot yo'q,No data
+today,Сегодня,Bugun,Today
+tomorrow,Завтра,Ertaga,Tomorrow
+this_week,На этой неделе,Bu hafta,This Week
+custom,Другое,Boshqa,Custom
+open_branch,Открыть филиал,Filialni ochish,Open Branch
+location_not_specified,Местоположение не указано,Manzil ko'rsatilmagan,Location not specified
+get_a_ticket,Получить билет,Chipta olish,Get a Ticket
+book,Забронировать,Band qilish,Book
+booking_loading,Бронирование...,Band qilinmoqda...,Booking...
+select_child,Выбрать ребенка,Bolani tanlang,Select Child
+choose_your_child,Выберите вашего ребенка,Farzandingizni tanlang,Choose Your Child
+could_not_check_eligibility,Не удалось проверить доступность,Mumkinligini tekshira olmadik,Could not check eligibility
+trial_lessons,Пробные уроки,Sinov darslari,Trial Lessons
+earn_trials,Получить пробные,Sinov darslarini olish,Earn Trials
+total_remaining_trials,Всего осталось пробных,Jami qolgan sinov darslari,Total Remaining Trials
+expected_charge,Ожидаемая плата,Kutilayotgan to'lov,Expected Charge
+uses_trial,Использует пробный,Sinovdan foydalanadi,Uses trial
+uses_full,Полная оплата,To'liq to'lov,Uses full
+uses_trial_price,Цена пробного,Sinov narxi,Uses trial price
+uses_full_price,Полная цена,To'liq narx,Uses full price
+unlock_progress,Открыть прогресс,Muvaffaqiyatni ochish,Unlock Progress
+insufficient,Недостаточно,Yetarli emas,Insufficient
+insufficient_balance,Недостаточно средств,Balans yetarli emas,Insufficient balance
+no_coins_warning,Недостаточно монет,Tangalar yetarli emas,Not enough coins
+low_balance_warning,У вас низкий баланс,Balansingiz past,Your balance is low
+not_enough_coins,Недостаточно монет,Yetarli tangalar yo'q,Not enough coins
+your_balance,Ваш баланс,Balansingiz,Your Balance
+next,Далее,Keyingi,Next
+no_slots_for_date,Нет доступных слотов на эту дату,Bu sanada bo'sh joy yo'q,No slots available for this date
+full,Занято,To'la,Full
+na,Н/Д,Mavjud emas,N/A
+plans_title,Тарифы,Tariflar,Plans
+plans_subtitle,Выберите подходящий тариф,Mos tarifni tanlang,Choose your plan
+choose_plan,Выбрать тариф,Tarifni tanlash,Choose Plan
+popular,ПОПУЛЯРНЫЙ,MASHHUR,POPULAR
+days,дней,kun,days
+no_plans_yet,Тарифов пока нет,Hozircha tariflar yo'q,No plans yet
+no_plans_hint,Скоро появятся,Tez orada paydo bo'ladi,Check back soon
+premium_badge,ПРЕМИУМ,PREMIUM,PREMIUM
+wallet_title,Кошелек,Hamyon,Wallet
+your_balance_label,Ваш баланс,Balansingiz,Your Balance
+transaction_history,История транзакций,Tranzaksiyalar tarixi,Transaction History
+no_transactions,Нет транзакций,Tranzaksiyalar yo'q,No transactions
+choose_top_up,Выберите пополнение,To'ldirishni tanlang,Choose Top-up
+refund,Возврат,Qaytarilgan,Refund
+withdraw,Списание,Yechib olish,Withdraw
+incoming,Пополнение,To'ldirish,Incoming
+onboarding_title,Добро пожаловать в Lumi!,Lumi'ga xush kelibsiz!,Welcome to Lumi!
+onboarding_subtitle,Настройте профиль за несколько секунд,Profilingizni bir necha soniyada sozlang,Set up your profile in seconds
+onboarding_step1_title,Как вас зовут?,Ismingiz nima?,What's your name?
+onboarding_step2_title,Расскажите о вашем ребёнке,Farzandingiz haqida ayting,Tell us about your child
+onboarding_parent_name,Ваше полное имя,To'liq ismingiz,Your full name
+onboarding_child_name,Имя ребёнка,Farzandingizning ismi,Child's name
+onboarding_child_age,Возраст ребёнка (лет),Farzandingizning yoshi,Child's age (years)
+onboarding_next,Далее,Keyingi,Next
+onboarding_finish,Начнём!,Boshlash!,Let's Go!
+back,Назад,Orqaga,Back
+continue,Продолжить,Davom etish,Continue
+get_started,Начать,Boshlash,Get Started
+shorts_empty_title,Видео нет,Videolar yo'q,No shorts
+shorts_empty_subtitle,Возвращайтесь позже,Keyinroq qayting,Check back later
+swipe_up_for_next,Смахните вверх для следующего,Keyingisi uchun yuqoriga suring,Swipe up for next
+view_details,Подробнее,Batafsil,View Details
+sms_code_title,SMS код,SMS kod,SMS Code
+verification_subtitle,Мы отправили код для подтверждения,Tasdiqlash uchun kod yubordik,We sent a code to verify
+verify_button,Подтвердить,Tasdiqlash,Verify
+book_select_tickets,Выберите билеты,Chiptalarni tanlang,Select tickets
+book_age_tier_subtitle,Подберите возраст и продолжительность,Yosh va davomiylikni tanlang,Pick the age tier and duration
+book_flat_subtitle,Подберите количество билетов по возрастной группе,Yosh guruhi bo‘yicha chiptalar sonini tanlang,Pick the number of tickets per age group
+book_add_ticket,Добавьте хотя бы один билет,Kamida bitta chipta qo‘shing,Add at least one ticket
+book_at_least_one,Выберите хотя бы один билет,Kamida bitta chipta tanlang,Select at least one ticket
+book_pick_date,Выберите дату,Sana tanlang,Pick a date
+book_pick_slot,Выберите время,Vaqtni tanlang,Pick a time
+book_select_date,Выберите дату,Sana tanlang,Select date
+book_loading_slots,Загрузка времени...,Vaqtlar yuklanmoqda...,Loading times...
+book_loading_prices,"Цены загружаются, подождите","Narxlar yuklanmoqda, iltimos kuting","Loading prices, please wait"
+book_no_slots_for_day,На выбранный день расписание отсутствует,Tanlangan kunda jadval mavjud emas,No schedule for the selected day
+book_no_schedule,Нет расписания,Jadval mavjud emas,No schedule
+book_day_unavailable,В этот день занятий нет,Bu kuni mashg'ulot yo‘q,No activities on this day
+book_available_times,Доступное время,Mavjud vaqtlar,Available times
+book_available_window,Открыто: {},Ochiq: {},Open: {}
+book_ticket_index,Билет №{},Chipta №{},Ticket #{}
+book_tickets,Билеты,Chiptalar,Tickets
+book_tickets_count,Количество билетов: {},Chiptalar soni: {},Tickets: {}
+book_grand_total,Итого,Jami,Total
+book_continue,Продолжить,Davom etish,Continue
+book_go_back,Назад,Orqaga,Back
+book_confirm_order,Подтвердить бронирование,Bronni tasdiqlash,Confirm booking
+book_secure_paycom,Безопасная оплата через Payme,Payme orqali xavfsiz to‘lov,Secure payment via Payme
+book_network_error,Ошибка сети,Tarmoq xatosi,Network error
+booking_about,Об активности,Mashg‘ulot haqida,About the activity
+booking_id,ID бронирования,Buyurtma IDsi,Booking ID
+booking_seats,Количество мест,Joylar soni,Seats
+booking_status,Статус,Holati,Status
+booking_loading,Загрузка...,Yuklanmoqda...,Loading...
+booking_location,Локация,Manzil,Location
+booking_duration,Длительность,Davomiyligi,Duration
+booking_gender_age,Пол и возраст,Jins va yosh,Gender & age
+booking_age_years_old,От {} до {} лет,{} dan {} yoshgacha,{}–{} years old
+booking_cancel_title,Отменить бронирование,Bronni bekor qilish,Cancel booking
+booking_cancel_confirm,"Вы уверены, что хотите отменить бронирование?",Bronni bekor qilishga ishonchingiz komilmi?,Are you sure you want to cancel this booking?
+booking_keep,Оставить,Qoldirish,Keep
+booking_cancel_action,Отменить,Bekor qilish,Cancel
+booking_cancelling,Отмена...,Bekor qilinmoqda...,Cancelling...
+booking_cancelled_label,Бронирование отменено,Bron bekor qilindi,Booking cancelled
+booking_cancel_failed,Не удалось отменить: {},Bekor qilinmadi: {},Could not cancel: {}
+booking_could_not_load,Не удалось загрузить бронирование,Bronni yuklab bo‘lmadi,Could not load booking
+booking_retry,Повторить,Qayta urinish,Retry
+amount_due,К оплате,To‘lov uchun,Amount due
+amount_due_short,К оплате,To‘lov,Due
+amount_paid,Оплачено,To‘langan,Paid
+order_total,Итого по заказу,Jami buyurtma,Order total
+order_id,Номер заказа,Buyurtma raqami,Order ID
+order_paid,Оплачен,To’langan,Paid
+order_pending,В ожидании,Kutilmoqda,Pending
+order_cancelled,Отменён,Bekor qilingan,Cancelled
+status_active,Активна,Faol,Active
+status_visited,Посещено,Tashrif buyurilgan,Visited
+status_missed,Пропущено,O’tkazib yuborilgan,Missed
+status_cancelled,Отменена,Bekor qilingan,Cancelled
+status_pending,Ожидание,Kutilmoqda,Pending
+your_tickets,Ваши билеты,Chiptalaringiz,Your tickets
+tickets_count,{} билет(ов),{} chipta,{} tickets
+seats_count_one,{} место,{} joy,{} seat
+seats_count_many,{} мест,{} joy,{} seats
+ticket_label,БИЛЕТ,CHIPTA,TICKET
+ticket_class,Занятие,Mashg‘ulot,Activity
+ticket_venue,Место,Manzil,Venue
+ticket_age_label,Возраст,Yosh,Age
+ticket_age_value,От {} до {} лет,{} dan {} yoshgacha,{}–{} years
+ticket_id,ID,ID,ID
+ticket_no,Номер билета,Chipta raqami,Ticket number
+ticket_numbers,Номера билетов,Chipta raqamlari,Ticket numbers
+ticket_date,Дата,Sana,Date
+ticket_receipt,Билет,Chipta,Ticket
+ticket_present_at_venue,Покажите этот билет на входе,Ushbu chiptani kirishda ko‘rsating,Show this ticket at the venue
+ticket_confirmed,Подтверждён,Tasdiqlangan,Confirmed
+ticket_pending,Ожидает,Kutilmoqda,Pending
+ticket_pending_label,Билет в обработке,Chipta tayyorlanmoqda,Pending ticket
+time_from,С,Dan,From
+time_to,До,Gacha,To
+duration_unbounded,Не ограничено,Cheklanmagan,Unlimited
+empty_value_dash,—,—,—
+opening_payment,Открываем оплату...,To‘lov ochilmoqda...,Opening payment...
+pay_now,Оплатить,To‘lash,Pay now
+plans_title,Тарифы,Tariflar,Plans
+my_bookings,Мои бронирования,Mening bronlarim,My bookings
+no_bookings_yet,Бронирований пока нет,Hali bronlar yo‘q,No bookings yet
+active_bookings,Активные,Faol,Active
+past_bookings,Прошедшие,Tugagan,Past
+booked,Забронировано,Band qilingan,Booked
+booked_classes_appear_here,Здесь появятся забронированные активности,Band qilingan mashg'ulotlar shu yerda ko‘rinadi,Booked activities will appear here
+view_details,Подробнее,Batafsil,View details
+weekday_full_1,Понедельник,Dushanba,Monday
+weekday_full_2,Вторник,Seshanba,Tuesday
+weekday_full_3,Среда,Chorshanba,Wednesday
+weekday_full_4,Четверг,Payshanba,Thursday
+weekday_full_5,Пятница,Juma,Friday
+weekday_full_6,Суббота,Shanba,Saturday
+weekday_full_7,Воскресенье,Yakshanba,Sunday
+weekday_short_1,Пн,Du,Mon
+weekday_short_2,Вт,Se,Tue
+weekday_short_3,Ср,Cho,Wed
+weekday_short_4,Чт,Pa,Thu
+weekday_short_5,Пт,Ju,Fri
+weekday_short_6,Сб,Sha,Sat
+weekday_short_7,Вс,Ya,Sun
+month_full_1,Январь,Yanvar,January
+month_full_2,Февраль,Fevral,February
+month_full_3,Март,Mart,March
+month_full_4,Апрель,Aprel,April
+month_full_5,Май,May,May
+month_full_6,Июнь,Iyun,June
+month_full_7,Июль,Iyul,July
+month_full_8,Август,Avgust,August
+month_full_9,Сентябрь,Sentyabr,September
+month_full_10,Октябрь,Oktyabr,October
+month_full_11,Ноябрь,Noyabr,November
+month_full_12,Декабрь,Dekabr,December
+month_short_1,Янв,Yan,Jan
+month_short_2,Фев,Fev,Feb
+month_short_3,Мар,Mar,Mar
+month_short_4,Апр,Apr,Apr
+month_short_5,Май,May,May
+month_short_6,Июн,Iyun,Jun
+month_short_7,Июл,Iyul,Jul
+month_short_8,Авг,Avg,Aug
+month_short_9,Сен,Sen,Sep
+month_short_10,Окт,Okt,Oct
+month_short_11,Ноя,Noy,Nov
+month_short_12,Дек,Dek,Dec
+branch_classes,Занятия в центре,Markazdagi mashg’ulotlar,Center classes
+branch_failed_classes,Не удалось загрузить занятия,Mashg’ulotlarni yuklab bo’lmadi,Failed to load classes
+branch_no_address,Адрес не указан,Manzil ko’rsatilmagan,No address
+branch_address,Адрес,Manzil,Address
+branch_landmark,Ориентир,Mo'ljal,Landmark
+branch_view_on_maps,Посмотреть на карте,Xaritada ko’rish,View on map
+branch_build_route,Построить маршрут,Yo’nalish qurish,Build route
+branch_about,О центре,Markaz haqida,About
+branch_no_classes,Занятий пока нет,Mashg’ulotlar hali yo’q ,No classes yet
+branch_load_more_classes,Загрузить ещё,Ko’proq yuklash,Load more
+share_app,Поделиться приложением,Ilovani ulashing,Share app
+share_app_subtitle,Расскажи друзьям о LumiPass,Do’stlarga LumiPass haqida ayting,Tell your friends about LumiPass
+seats_left,Осталось мест,Joylar qoldi,Seats left
+max_50_chars,Не более 50 символов,Eng ko‘pi 50 ta belgi,Max 50 characters
+coins_to_next_unlock,Ещё {} монет до следующей разблокировки,Keyingi ochilishgacha yana {} tanga,{} more coins until next unlock
+spend_coins_unlock,"Потратьте {} монет, чтобы разблокировать",Ochish uchun {} tanga sarflang,Spend {} coins to unlock
+book_slots_left,Осталось: {} мест,Qoldi: {} joy,{} spots left
+book_slot_full,Мест нет,Joy yo'q,Full
+book_max_capacity_reached,Максимум {} мест для этого слота,Bu slot uchun maksimum {} joy,Max {} spots for this slot
+book_pay_cta,Оплатить {},To'lash {},Pay {}
 back_button,Назад,Orqaga,Back
+oferta_agree_prefix,Я соглашаюсь с ,Men ,I agree with the
+oferta_link_text,публичной офертой,ommaviy offerta,public offer
+oferta_agree_suffix, , shartlariga roziman,
 login_title,Авторизация,Avtorizatsiya,Authorization
 login_subtitle,Войдите в свой аккаунт для продолжения работы,Hisobingizga kirish uchun login qiling,Log in to your account to continue
 phone_hint,Номер телефона,Telefon raqami,Phone number
@@ -187,8 +489,6 @@ meter_unit,м,m,m
 additional_data,Дополнительные данные,Qo'shimcha ma'lumotlar,Additional Data
 select_permits,Выберите разрешения,Ruxsatnoma tanlang,Select Permits
 select_adr_option,Выберите ADR,ADR tanlang,Select ADR
-save_button,Сохранить,Saqlash,Save
-payment_label,Оплата,To'lov,Payment
 min_rate,Мин. ставка,Minimal stavka,Min. Rate
 possible_bargain,Возможен торг,Kelishish mumkin,Negotiable
 usd_currency,USD,USD,USD
@@ -287,16 +587,6 @@ edit_title,Изменить,Tahrirlash,Update
 invalid_number,Неверный формат,Noto'g'ri format,Invalid format
 delete_load_title,Вы действительно хотите удалить эту загрузку?,Siz rostdan ham bu yukni o‘chirib tashlamoqchimisiz?,Are you sure you want to delete this load?
 delete_truck_title,Вы действительно хотите удалить этот грузовик?,Siz rostdan ham bu yuk mashinasini o‘chirib tashlamoqchimisiz?,Are you sure you want to delete this truck?
-cancel_button,Отменить,Bekor qilish,Cancel
-delete_button,Удалить,O‘chirish,Delete
-cannot_be_undone,Это действие не может быть отменено.,Bu harakatni tiklab bo'lmaydi,This action cannot be undone
-select_language,Выберите язык,Tilni tanlang,Select language
-without_nds,Без НДС,QQS siz,VAT Not Included
-notification_title,Уведомления,Xabarnomalar,Notifcations
-duplicate_title,Дубликат,Duplikat,Duplicate
-telegram_channel,Telegram канал,Telegram kanali,Telegram channel
-tiktok,TikTok,TikTok,TikTok
-youtube,YouTube,YouTube,YouTube
 delete_transport_title,"Вы уверены, что хотите удалить этот транспорт?",Siz rostan ham bu transportni o'chirishni xohlaysizmi?,You really want to delete this transport?
 select_currency,Выберите валюту,Valyutani tanlang,Select currency
 payment_term,Уcловия оплаты,To'lov shartlari,Payent terms
@@ -372,123 +662,65 @@ truck_new_tab,Транспорт,Transport,Transport
 no_loads,"Вы еще не добавили груз. Пожалуйста, добавьте груз, чтобы оставить заявку.","Siz hali yuk qo‘shmagansiz. Iltimos, ariza yuborish uchun yuk qo‘shing.",You have not added any loads yet. Please add a load to leave a request.
 no_transports,"Вы еще не добавили транспорт. Пожалуйста, добавьте транспорт, чтобы оставить заявку.","Siz hali transport qo‘shmagansiz. Iltimos, ariza yuborish uchun transport qo‘shing.",You have not added any transports yet. Please add a transport to leave a request.
 input_car_desc,Введите номер автомобиля,Avtomobil davlat raqamini kiriting,Enter car license plate
-volume_unit,м³,m³,m³
-session_expired,"Учетная запись пользователя удалена, пожалуйста, войдите снова!",Foydalanuvchi akkounti o'chirilgan qayta login qiling!,"User account has been deleted, please log in again!"
-tab_home,Главная,Bosh sahifa,Home
-tab_shorts,Видео,Videolar,Shorts
-tab_bookings,Бронирования,Buyurtmalar,Bookings
-tab_explore,Поиск,Qidirish,Explore
-tab_profile,Профиль,Profil,Profile
-hello,ПРИВЕТ,SALOM,HELLO
-all_categories,Все категории,Barcha kategoriyalar,All Categories
-newly_added_classes,Новые занятия,Yangi qo'shilgan darslar,Newly Added Classes
-near_you,Рядом с вами,Siz bilan yaqin,Near You
+newly_added_classes,Новые занятия,Yangi qo'shilgan mashg'ulotlar,Newly Added Activities
+near_you,Рядом с вами,Sizga yaqin,Near You
 my_account,Мой аккаунт,Mening hisobim,My Account
 account_info,Информация аккаунта,Hisob ma'lumotlari,Account Information
-change_account_info,Изменить данные аккаунта,Hisob ma'lumotlarini o'zgartirish,Change account details
-your_children,Ваши дети,Farzandlaringiz,Your Children
-change_children_info,Изменить информацию о детях,Bolalar ma'lumotini o'zgartirish,Change children info
-faq,Часто задаваемые вопросы,Ko'p beriladigan savollar,FAQ
 faq_subtitle,Вопросы и ответы,Savollar va javoblar,Frequently asked questions
 faqs_title,Вопросы,Savollar,FAQ
-log_out,Выйти,Chiqish,Log Out
-log_out_subtitle,До скорой встречи,Tez orada ko'rishguncha,See you soon
-my_bookings,Мои бронирования,Mening buyurtmalarim,My Bookings
-my_children,Мои дети,Mening farzandlarim,My Children
-active_bookings,Активные,Faol,Active
-past_bookings,Прошедшие,O'tgan,Past
-no_bookings_yet,Бронирований пока нет,Hozircha buyurtmalar yo'q,No bookings yet
-booked_classes_appear_here,Ваши забронированные занятия появятся здесь,Buyurtma qilingan darslaringiz shu yerda ko'rinadi,Your booked classes will appear here
-pay_now,Оплатить,To'lash,Pay Now
-amount_due,Сумма к оплате,To'lanadigan summa,Amount Due
-amount_paid,Оплачено,To'langan,Amount Paid
-booking_id,ID бронирования,Buyurtma ID,Booking ID
-ticket_id,ID билета,Chipta ID,Ticket ID
-add_child,Добавить ребенка,Bola qo'shish,Add Child
-update_child,Обновить данные,Ma'lumotni yangilash,Update Child
-add_first_child,Добавить первого ребенка,Birinchi bolani qo'shish,Add First Child
-no_children_yet,Детей еще нет,Hozircha bolalar yo'q,No children yet
-no_children_add_first,У вас еще нет детей. Добавьте первого,Sizda hali bolalar yo'q. Birinchisini qo'shing,You have no children yet. Add the first one
-children,детей,bola,children
-first_name,Имя,Ism,First Name
-enter_first_name,Введите имя,Ismni kiriting,Enter first name
-last_name,Фамилия,Familiya,Last Name
-age,Возраст,Yosh,Age
-enter_age,Введите возраст,Yoshni kiriting,Enter age
-child_max_age,Ребенок должен быть от 1 до 17 лет,Bola 1 dan 17 yoshgacha bo'lishi kerak,Child must be between 1 and 17
-gender,Пол,Jinsi,Gender
-male,Мужской,Erkak,Male
-female,Женский,Ayol,Female
-boys,Мальчики,O'g'il bolalar,Boys
-girls,Девочки,Qiz bolalar,Girls
-free_trials,Бесплатные пробные,Bepul sinov darslari,Free trials
-required,Обязательно,Majburiy,Required
-save,Сохранить,Saqlash,Save
-cancel,Отмена,Bekor qilish,Cancel
-explore,Поиск,Qidirish,Explore
-centers,Центры,Markazlar,Centers
-classes,Занятия,Darslar,Classes
-categories,Категории,Kategoriyalar,Categories
-centers_on_map,Центры на карте,Xaritadagi markazlar,Centers on Map
-pick_category,Выберите категорию,Kategoriyani tanlang,Pick a Category
-clear,Очистить,Tozalash,Clear
-today,Сегодня,Bugun,Today
-tomorrow,Завтра,Ertaga,Tomorrow
-this_week,На этой неделе,Bu hafta,This Week
-custom,Другое,Boshqa,Custom
-open_branch,Открыть филиал,Filialni ochish,Open Branch
-location_not_specified,Местоположение не указано,Manzil ko'rsatilmagan,Location not specified
-get_a_ticket,Получить билет,Chipta olish,Get a Ticket
-book,Забронировать,Band qilish,Book
-booking_loading,Бронирование...,Band qilinmoqda...,Booking...
-select_child,Выбрать ребенка,Bolani tanlang,Select Child
-choose_your_child,Выберите вашего ребенка,Farzandingizni tanlang,Choose Your Child
-could_not_check_eligibility,Не удалось проверить доступность,Mumkinligini tekshira olmadik,Could not check eligibility
-trial_lessons,Пробные уроки,Sinov darslari,Trial Lessons
-earn_trials,Получить пробные,Sinov darslarini olish,Earn Trials
-total_remaining_trials,Всего осталось пробных,Jami qolgan sinov darslari,Total Remaining Trials
-expected_charge,Ожидаемая плата,Kutilayotgan to'lov,Expected Charge
-uses_trial,Использует пробный,Sinovdan foydalanadi,Uses trial
-uses_full,Полная оплата,To'liq to'lov,Uses full
-uses_trial_price,Цена пробного,Sinov narxi,Uses trial price
-uses_full_price,Полная цена,To'liq narx,Uses full price
-unlock_progress,Открыть прогресс,Muvaffaqiyatni ochish,Unlock Progress
-insufficient,Недостаточно,Yetarli emas,Insufficient
-insufficient_balance,Недостаточно средств,Balans yetarli emas,Insufficient balance
-no_coins_warning,Недостаточно монет,Tangalar yetarli emas,Not enough coins
-low_balance_warning,У вас низкий баланс,Balansingiz past,Your balance is low
-not_enough_coins,Недостаточно монет,Yetarli tangalar yo'q,Not enough coins
-your_balance,Ваш баланс,Balansingiz,Your Balance
-next,Далее,Keyingi,Next
-no_slots_for_date,Нет доступных слотов на эту дату,Bu sanada bo'sh joy yo'q,No slots available for this date
-full,Занято,To'la,Full
-na,Н/Д,Mavjud emas,N/A
-plans_title,Тарифы,Tariflar,Plans
-plans_subtitle,Выберите подходящий тариф,Mos tarifni tanlang,Choose your plan
-choose_plan,Выбрать тариф,Tarifni tanlash,Choose Plan
-popular,ПОПУЛЯРНЫЙ,MASHHUR,POPULAR
-days,дней,kun,days
-no_plans_yet,Тарифов пока нет,Hozircha tariflar yo'q,No plans yet
-no_plans_hint,Скоро появятся,Tez orada paydo bo'ladi,Check back soon
-premium_badge,ПРЕМИУМ,PREMIUM,PREMIUM
-wallet_title,Кошелек,Hamyon,Wallet
-your_balance_label,Ваш баланс,Balansingiz,Your Balance
-transaction_history,История транзакций,Tranzaksiyalar tarixi,Transaction History
-no_transactions,Нет транзакций,Tranzaksiyalar yo'q,No transactions
-choose_top_up,Выберите пополнение,To'ldirishni tanlang,Choose Top-up
-refund,Возврат,Qaytarilgan,Refund
-withdraw,Списание,Yechib olish,Withdraw
-incoming,Пополнение,To'ldirish,Incoming
-onboarding_title,Добро пожаловать,Xush kelibsiz,Welcome
-onboarding_parent_name,Имя родителя,Ota-ona ismi,Parent's name
-onboarding_child_name,Имя ребенка,Bola ismi,Child's name
-onboarding_child_age,Возраст ребенка,Bola yoshi,Child's age
-continue,Продолжить,Davom etish,Continue
-get_started,Начать,Boshlash,Get Started
-shorts_empty_title,Видео нет,Videolar yo'q,No shorts
-shorts_empty_subtitle,Возвращайтесь позже,Keyinroq qayting,Check back later
-swipe_up_for_next,Смахните вверх для следующего,Keyingisi uchun yuqoriga suring,Swipe up for next
-view_details,Подробнее,Batafsil,View Details
-sms_code_title,SMS код,SMS kod,SMS Code
-verification_subtitle,Мы отправили код для подтверждения,Tasdiqlash uchun kod yubordik,We sent a code to verify
-verify_button,Подтвердить,Tasdiqlash,Verify
+filter_title,Фильтры,Filtrlar,Filters
+filter_date,Дата,Sana,Date
+filter_choose_calendar,Из календаря,Kalendardan,From calendar
+filter_start_date,Дата начала,Boshlanish sanasi,Start date
+filter_end_date,Дата окончания,Tugash sanasi,End date
+filter_years_label,лет,yosh,years
+filter_age_hint,1-16 только,Faqat 1-16,1-16 only
+filter_price_range,Диапазон цен,Narx diapazoni,Price Range
+filter_apply,ПРИМЕНИТЬ,QOLLASH,APPLY
+filter_both,Все,Hammasi,Both
+filter_filtering,Фильтрация...,Filtrlanmoqda...,Filtering...
+price_from,от {},{} dan,from {}
+price_free,Бесплатно,Bepul,Free
+gender_male_only,Только для мальчиков,Faqat o'g'il bolalar,Boys only
+gender_female_only,Только для девочек,Faqat qizlar,Girls only
+gender_all,Для всех,Hamma uchun,For everyone
+detail_prices_by_age,Цены по возрасту,Yoshga qarab narxlar,Prices by age
+detail_prices,Цены,Narxlar,Prices
+detail_duration_label,Длительность,Davomiylik,Duration
+detail_about,О занятии,Tadbir haqida,About
+detail_notes,Важные заметки,Muhim eslatmalar,Important notes
+detail_bring,Что взять с собой,Nima olib kelish kerak,What to bring
+detail_language,Язык обучения,Ta'lim tili,Language
+detail_hours,Часы работы,Ish vaqti,Working hours
+cta_loading,Загрузка...,Yuklanmoqda...,Loading...
+cta_buy_ticket,Купить билет,Chipta sotib olish,Buy ticket
+video_watch,Смотреть видео,Video ko'rish,Watch video
+video_shorts_cta,Смотреть в Shorts,Shorts sifatida tomosha qiling,Watch as Shorts
+delete_account,Удалить аккаунт,Akkauntni o'chirish,Delete account
+delete_account_subtitle,"Это действие необратимо. Все ваши данные будут удалены навсегда.","Bu amalni qaytarib bo'lmaydi. Barcha ma'lumotlaringiz butunlay o'chiriladi.","This action is irreversible. All your data will be permanently deleted."
+login_to_view_bookings,Войдите чтобы увидеть бронирования,Bronlashlaringizni ko'rish uchun tizimga kiring,Log in to view your bookings
+account_deleted_info,Аккаунт удалён. Вы вошли как гость.,Akkaunt o'chirildi. Siz mehmon sifatida kiryapsiz.,Account deleted. You're browsing as a guest.
+notifications_title,Уведомления,Bildirishnomalar,Notifications
+notifications_empty,Нет уведомлений,Bildirishnomalar yo'q,No notifications
+notifications_mark_all_read,Прочитать все,Barchasini o'qish,Mark all read
+notification_today,Сегодня,Bugun,Today
+notification_yesterday,Вчера,Kecha,Yesterday
+retry,Повторить,Qayta urinish,Retry
+notifications_empty_sub,Здесь будут появляться уведомления о бронированиях,Bronlashlar haqida bildirishnomalar bu yerda ko'rinadi,Booking notifications will appear here
+coupons_title,Купоны,Kuponlar,Coupons
+coupons_subtitle,Введите промокод и получите скидку,Promokod kiriting va chegirma oling,Enter a promo code to get a discount
+coupon_enter_code,Промокод,Promokod,Promo Code
+coupon_check_btn,Проверить,Tekshirish,Check
+coupon_valid_title,Купон действителен!,Kupon to'g'ri!,Coupon Valid!
+coupon_invalid_title,Неверный купон,Noto'g'ri kupon,Invalid Coupon
+coupon_discount_off,скидка,chegirma,off
+coupon_apply_at_checkout,Используйте код при оформлении бронирования,Bron qilishda ushbu kodni ishlating,Use this code when completing your booking
+coupon_how_title,Как использовать купон?,Kuponni qanday ishlatish kerak?,How to use a coupon?
+coupon_step1,Скопируйте или запомните код купона от партнёра,Hamkordan kupon kodini nusxa oling yoki eslab qoling,Copy or note the coupon code from the partner
+coupon_step2,Введите код выше и нажмите «Проверить»,Yuqorida kodni kiriting va «Tekshirish» ni bosing,Enter the code above and tap Check
+coupon_step3,При бронировании введите код для получения скидки,Bron qilishda chegirma olish uchun kodni kiriting,Enter the code at booking to receive your discount
+discount_on_activities,Скидка на занятия,Mashg'ulotlarga chegirma,Discount on activities
+activities_limit,Лимит занятий,Mashg'ulotlar limiti,Activities limit
+coupon_plans_title,Купоны со скидками,Chegirmali kuponlar,Discount Coupons
+coupon_plans_subtitle,Купите купон и получайте скидку при бронировании занятий,Kupon sotib oling va mashg'ulotlarni bron qilishda chegirma oling,Buy a coupon and save on activity bookings
+get_coupon,Получить купон,Kupon olish,Get Coupon

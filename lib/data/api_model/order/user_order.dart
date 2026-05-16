@@ -1,3 +1,6 @@
+import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/common/utils/image_url.dart';
+
 /// Plain Dart models for the user-facing orders API.
 ///
 /// An [UserOrder] = one transaction (one Paycom checkout) that may contain
@@ -15,6 +18,10 @@ class UserOrder {
   final String? activityImage;
   final num? activityPrice;
   final List<OrderLineItem> items;
+  /// Lightweight ticket summary returned by the orders list endpoint —
+  /// enough to render times / ticket numbers on the card without a
+  /// follow-up detail fetch.
+  final List<OrderTicketSummary> ticketSummaries;
   final String? createdAt;
   final String? updatedAt;
 
@@ -28,6 +35,7 @@ class UserOrder {
     required this.activityImage,
     required this.activityPrice,
     required this.items,
+    required this.ticketSummaries,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -36,6 +44,38 @@ class UserOrder {
   bool get isPending => status.toLowerCase() == 'pending';
   bool get isPaid => status.toLowerCase() == 'paid';
   bool get isCanceled => status.toLowerCase() == 'canceled';
+
+  /// Semantic display status: 'active' | 'visited' | 'missed' | 'cancelled' | 'pending'
+  String get effectiveDisplayStatus {
+    if (isCanceled) return 'cancelled';
+    if (isPending) return 'pending';
+    if (ticketSummaries.isEmpty) return 'active';
+    final anyAttended =
+        ticketSummaries.any((t) => t.attendanceStatus == 'attended');
+    if (anyAttended) return 'visited';
+    final now = DateTime.now();
+    final todayKey =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final allPast = ticketSummaries.every((t) {
+      final d = t.ticketDate;
+      if (d == null || d.isEmpty) return false;
+      return d.compareTo(todayKey) < 0;
+    });
+    return allPast ? 'missed' : 'active';
+  }
+
+  /// True when any ticket date is today or in the future.
+  bool get hasFutureTicket {
+    if (ticketSummaries.isEmpty) return isPaid;
+    final now = DateTime.now();
+    final todayKey =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    return ticketSummaries.any((t) {
+      final d = t.ticketDate;
+      if (d == null || d.isEmpty) return false;
+      return d.compareTo(todayKey) >= 0;
+    });
+  }
 
   factory UserOrder.fromJson(Map<String, dynamic> json) {
     final activity = json['activity_id'];
@@ -49,6 +89,7 @@ class UserOrder {
     }
 
     final itemsRaw = (json['items'] as List?) ?? const [];
+    final ticketsRaw = (json['tickets'] as List?) ?? const [];
     return UserOrder(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       status: json['status']?.toString() ?? 'pending',
@@ -56,14 +97,50 @@ class UserOrder {
       paidAmount: (json['paid_amount'] as num?) ?? 0,
       activityId: activityId,
       activityName: _readLocalized(activityMap?['name']),
-      activityImage: activityMap?['image']?.toString(),
+      activityImage: sanitizeImageUrl(activityMap?['image']?.toString()),
       activityPrice: activityMap?['price'] as num?,
       items: itemsRaw
           .whereType<Map>()
           .map((e) => OrderLineItem.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
+      ticketSummaries: ticketsRaw
+          .whereType<Map>()
+          .map((e) =>
+              OrderTicketSummary.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
+    );
+  }
+}
+
+/// Slim per-ticket payload included on the orders list endpoint so the card
+/// can render booked times / ticket numbers inline.
+class OrderTicketSummary {
+  final String? ticketNo;
+  final String? ticketDate;
+  final String? startTime;
+  final String? endTime;
+  final String status;
+  final String? attendanceStatus; // 'attended' | 'not_attended' | null
+
+  const OrderTicketSummary({
+    required this.ticketNo,
+    required this.ticketDate,
+    required this.startTime,
+    required this.endTime,
+    required this.status,
+    this.attendanceStatus,
+  });
+
+  factory OrderTicketSummary.fromJson(Map<String, dynamic> json) {
+    return OrderTicketSummary(
+      ticketNo: json['ticket_no']?.toString(),
+      ticketDate: json['ticket_date']?.toString(),
+      startTime: json['start_time']?.toString(),
+      endTime: json['end_time']?.toString(),
+      status: json['status']?.toString() ?? 'pending',
+      attendanceStatus: json['attendance_status']?.toString(),
     );
   }
 }
@@ -175,7 +252,9 @@ String? _readLocalized(dynamic value) {
   if (value == null) return null;
   if (value is String) return value;
   if (value is Map) {
-    for (final key in ['ru', 'en', 'uz']) {
+    final lang = currentLang;
+    // Current lang first, then fallback chain
+    for (final key in [lang, 'ru', 'en', 'uz']) {
       final v = value[key];
       if (v is String && v.isNotEmpty) return v;
     }

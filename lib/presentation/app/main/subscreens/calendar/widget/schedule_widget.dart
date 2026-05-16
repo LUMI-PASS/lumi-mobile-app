@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
@@ -10,7 +11,6 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
-import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:shimmer/shimmer.dart';
@@ -92,13 +92,10 @@ class BookingCard extends StatelessWidget {
     if (iso == null) return '';
     try {
       final d = DateTime.parse(iso).toLocal();
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ];
+      final month = 'month_short_${d.month}'.tr();
       final hh = d.hour.toString().padLeft(2, '0');
       final mm = d.minute.toString().padLeft(2, '0');
-      return '${months[d.month - 1]} ${d.day}, $hh:$mm';
+      return '$month ${d.day}, $hh:$mm';
     } catch (_) {
       return iso;
     }
@@ -107,8 +104,9 @@ class BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = context.colors.primary;
-    final imageUrl = order.activityId != null
-        ? PhotoService.getImageUrl(order.activityId!)
+    final imageUrl = (order.activityImage != null &&
+            order.activityImage!.isNotEmpty)
+        ? order.activityImage
         : null;
     final seats = order.totalSeats;
 
@@ -184,7 +182,8 @@ class BookingCard extends StatelessWidget {
                                 ),
                               ),
                               8.kw,
-                              _OrderStatusPill(status: order.status),
+                              _OrderStatusPill(
+                                  status: order.effectiveDisplayStatus),
                             ],
                           ),
                           6.kh,
@@ -194,7 +193,10 @@ class BookingCard extends StatelessWidget {
                                   size: 12.sp, color: const Color(0xFF64748B)),
                               4.kw,
                               Text(
-                                '$seats ${seats == 1 ? 'person' : 'people'}',
+                                (seats == 1
+                                        ? 'seats_count_one'
+                                        : 'seats_count_many')
+                                    .tr(args: ['$seats']),
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: const Color(0xFF475569),
@@ -226,12 +228,18 @@ class BookingCard extends StatelessWidget {
                 ),
               ),
               Divider(height: 1, color: Colors.grey.shade100),
+              if (order.ticketSummaries.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 0),
+                  child: _OrderTimesRow(order: order),
+                ),
               Padding(
                 padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 12.h),
                 child: Row(
                   children: [
                     Text(
-                      order.isPending ? 'Amount due' : 'Total',
+                      (order.isPending ? 'amount_due_short' : 'order_total')
+                          .tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: const Color(0xFF64748B),
@@ -262,7 +270,7 @@ class BookingCard extends StatelessWidget {
                   child: Row(
                     children: [
                       const Spacer(),
-                      'View details'.s(12).w(600).c(primary),
+                      'view_details'.tr().s(12).w(600).c(primary),
                       4.kw,
                       Icon(Icons.arrow_forward_rounded,
                           size: 14.sp, color: primary),
@@ -336,7 +344,7 @@ class _PayNowFooterState extends State<_PayNowFooter> {
                 Icon(Icons.payments_rounded,
                     size: 16.sp, color: Colors.white),
               8.kw,
-              (_launching ? 'Opening...' : 'Pay now')
+              (_launching ? 'opening_payment'.tr() : 'pay_now'.tr())
                   .s(13)
                   .w(700)
                   .c(Colors.white),
@@ -344,6 +352,63 @@ class _PayNowFooterState extends State<_PayNowFooter> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OrderTimesRow extends StatelessWidget {
+  const _OrderTimesRow({required this.order});
+
+  final UserOrder order;
+
+  static String _fmtDate(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
+    try {
+      final d = DateTime.parse(iso).toLocal();
+      final month = 'month_short_${d.month}'.tr();
+      return '$month ${d.day}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Collapse identical windows so a 3-ticket order with the same time only
+    // shows it once. Falls back to ticketDate when no start/end times.
+    final seen = <String>{};
+    final entries = <String>[];
+    for (final t in order.ticketSummaries) {
+      final s = t.startTime;
+      final e = t.endTime;
+      final date = _fmtDate(t.ticketDate);
+      final hasTimes = s != null && s.isNotEmpty && e != null && e.isNotEmpty;
+      if (hasTimes) {
+        final label = date.isNotEmpty ? '$date, $s – $e' : '$s – $e';
+        if (seen.add(label)) entries.add(label);
+      } else if (date.isNotEmpty) {
+        if (seen.add(date)) entries.add(date);
+      }
+    }
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: [
+        Icon(Icons.access_time_rounded,
+            size: 12.sp, color: const Color(0xFF64748B)),
+        4.kw,
+        Expanded(
+          child: Text(
+            entries.join(', '),
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: const Color(0xFF475569),
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -359,21 +424,31 @@ class _OrderStatusPill extends StatelessWidget {
     final Color fg;
     final String label;
     switch (status.toLowerCase()) {
-      case 'paid':
+      case 'active':
         bg = const Color(0xFFECFDF5);
         fg = const Color(0xFF16A34A);
-        label = 'Paid';
+        label = 'status_active'.tr();
+        break;
+      case 'visited':
+        bg = const Color(0xFFEFF6FF);
+        fg = const Color(0xFF2563EB);
+        label = 'status_visited'.tr();
+        break;
+      case 'missed':
+        bg = const Color(0xFFFFF3CD);
+        fg = const Color(0xFF92400E);
+        label = 'status_missed'.tr();
         break;
       case 'canceled':
       case 'cancelled':
         bg = const Color(0xFFFEF2F2);
         fg = const Color(0xFFDC2626);
-        label = 'Cancelled';
+        label = 'status_cancelled'.tr();
         break;
-      default:
+      default: // pending
         bg = const Color(0xFFFFF7ED);
         fg = const Color(0xFFB45309);
-        label = 'Pending';
+        label = 'status_pending'.tr();
     }
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),

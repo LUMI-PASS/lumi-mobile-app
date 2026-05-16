@@ -1,4 +1,4 @@
-import 'package:auto_route/annotations.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +6,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'cubit/schedule_cubit.dart';
@@ -29,13 +34,105 @@ class CalendarPage
     super.onFocusGained(context);
   }
 
+  bool get _showLoginPrompt {
+    final hasRealToken =
+        getIt<Storage>().tokens.call()?.access != null;
+    return RemoteConfigService.instance.isInReview && !hasRealToken;
+  }
+
   @override
   Widget builder(BuildContext context, ScheduleBuildable state) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDFAF5),
-      body: _CalendarBody(
-        state: state,
-        onRefresh: () => context.read<ScheduleCubit>().refreshSilently(),
+      body: _showLoginPrompt
+          ? _LoginPrompt(
+              onLogin: () => context.router.replaceAll([LoginRoute()]),
+            )
+          : _CalendarBody(
+              state: state,
+              onRefresh: () => context.read<ScheduleCubit>().refreshSilently(),
+            ),
+    );
+  }
+}
+
+class _LoginPrompt extends StatelessWidget {
+  const _LoginPrompt({required this.onLogin});
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = context.colors.primary;
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              top: 16.h,
+              left: 16.w,
+              right: 16.w,
+              bottom: 12.h,
+            ),
+            child: Text(
+              'tab_bookings'.tr(),
+              style: TextStyle(
+                fontSize: 24.sp,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF0E0C2B),
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 80.w,
+                      height: 80.w,
+                      decoration: BoxDecoration(
+                        color: primary.withOpacity(0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.receipt_long_rounded,
+                          size: 40.w, color: primary.withOpacity(0.4)),
+                    ),
+                    20.kh,
+                    'login_to_view_bookings'
+                        .tr()
+                        .s(15)
+                        .w(600)
+                        .c(const Color(0xFF1E293B)),
+                    20.kh,
+                    GestureDetector(
+                      onTap: onLogin,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 32.w, vertical: 14.h),
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        child: Text(
+                          'login_button'.tr(),
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -52,8 +149,6 @@ class _CalendarBody extends StatefulWidget {
 }
 
 class _CalendarBodyState extends State<_CalendarBody> {
-  int _tab = 0;
-
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
@@ -65,7 +160,7 @@ class _CalendarBodyState extends State<_CalendarBody> {
             top: MediaQuery.of(context).viewPadding.top + 16.h,
             left: 16.w,
             right: 16.w,
-            bottom: 8.h,
+            bottom: 12.h,
           ),
           child: Text(
             'tab_bookings'.tr(),
@@ -77,48 +172,23 @@ class _CalendarBodyState extends State<_CalendarBody> {
             ),
           ),
         ),
-        Padding(
-          padding: EdgeInsets.only(left: 16.w, bottom: 8.h),
-          child: Container(
-            padding: EdgeInsets.all(4.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEDE8FF),
-              borderRadius: BorderRadius.circular(9999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _TabPill(
-                  label: 'Faol',
-                  selected: _tab == 0,
-                  onTap: () => setState(() => _tab = 0),
-                ),
-                _TabPill(
-                  label: 'Tarix',
-                  selected: _tab == 1,
-                  onTap: () => setState(() => _tab = 1),
-                ),
-              ],
-            ),
-          ),
-        ),
         Expanded(
           child: state.isLoading
               ? _BookingsShimmer()
               : Builder(builder: (context) {
-                  final filtered = _tab == 0
-                      ? state.orders
-                          .where((o) => !o.isCanceled)
-                          .toList()
-                      : state.orders
-                          .where((o) => o.isCanceled)
-                          .toList();
+                  // Show paid bookings with future dates AND cancelled
+                  // bookings that haven't happened yet. Hide past cancelled
+                  // and pending (unpaid) orders.
+                  final filtered = state.orders
+                      .where((o) =>
+                          (o.isPaid || o.isCanceled) && o.hasFutureTicket)
+                      .toList();
                   if (filtered.isEmpty) return const _EmptyBookings();
                   return RefreshIndicator(
                     color: const Color(0xFF6C4EF2),
                     onRefresh: widget.onRefresh,
                     child: ListView.builder(
-                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 20.h),
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 20.h + 64.0 + MediaQuery.of(context).viewPadding.bottom),
                       physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
@@ -132,52 +202,6 @@ class _CalendarBodyState extends State<_CalendarBody> {
                 }),
         ),
       ],
-    );
-  }
-}
-
-class _TabPill extends StatelessWidget {
-  const _TabPill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(9999),
-          boxShadow: selected
-              ? [
-                  const BoxShadow(
-                    color: Color(0x1A6C4EF2),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w800,
-            color: selected
-                ? const Color(0xFF4A2FD4)
-                : const Color(0xFF6B6899),
-          ),
-        ),
-      ),
     );
   }
 }

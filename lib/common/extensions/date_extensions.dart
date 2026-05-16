@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/utils/app_locale.dart';
 
 extension RussianDateFormat on DateTime {
   String toRussianShortFormat(BuildContext context) {
@@ -37,9 +38,20 @@ extension PriceStringFormatter on String {
   }
 }
 
+String _uzsCurrencyLabel() {
+  switch (currentLang) {
+    case 'ru':
+      return 'сум';
+    case 'uz':
+      return "so'm";
+    default:
+      return 'sum';
+  }
+}
+
 extension PriceNumFormatter on num {
   /// Coin amount → `"50 000 so'm"` style string.
-  String toUzsPrice() => "${toString().toFormattedPrice()} so'm";
+  String toUzsPrice() => "${toString().toFormattedPrice()} ${_uzsCurrencyLabel()}";
 
   /// Raw UZS amount (already in soums) → `"250 000 so'm"`.
   /// Use this for prices that are NOT stored in coins/tiyin.
@@ -48,6 +60,6 @@ extension PriceNumFormatter on num {
           RegExp(r'\B(?=(\d{3})+(?!\d))'),
           (match) => ' ',
         );
-    return "$formatted so'm";
+    return "$formatted ${_uzsCurrencyLabel()}";
   }
 }

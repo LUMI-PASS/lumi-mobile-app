@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,13 +14,13 @@ import 'package:lumi_pass/common/styles/ios_text_styles.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_bottomsheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const _brand = Color(0xFF6C4EF2);
@@ -25,7 +29,6 @@ const _brandLight = Color(0xFFEDE8FF);
 const _cream = Color(0xFFFDFAF5);
 const _border = Color(0xFFE8E4F6);
 const _navy = Color(0xFF0E0C2B);
-const _textColor = Color(0xFF1A1535);
 const _muted = Color(0xFF6B6899);
 const _success = Color(0xFF16A34A);
 
@@ -52,6 +55,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
   ClassFullModel? _full;
+  Timer? _slideTimer;
 
   @override
   void initState() {
@@ -63,6 +67,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   @override
   void dispose() {
+    _slideTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -73,42 +78,43 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     try {
       final full = await getIt<OrdersApi>().getClassFull(id);
       if (!mounted) return;
-      setState(() => _full = full);
+      setState(() {
+        _full = full;
+        _galleryImages = _resolveGallery(full);
+        _isLoadingImages = false;
+      });
     } catch (_) {
-      // Soft-fail: keep base HomClass info visible.
+      if (mounted) setState(() => _isLoadingImages = false);
     }
   }
 
-  Future<void> _loadImages() async {
-    final classId = widget.classModel.id;
-    if (classId == null) {
-      setState(() => _isLoadingImages = false);
-      return;
+  List<String> _resolveGallery(ClassFullModel full) {
+    final out = <String>[];
+    final cover = full.imageUrl;
+    if (cover != null && cover.isNotEmpty) out.add(cover);
+    for (final s in full.images) {
+      if (s.isNotEmpty && !out.contains(s)) out.add(s);
     }
+    if (out.isEmpty) {
+      final listImage = widget.classModel.image;
+      if (listImage != null && listImage.isNotEmpty) out.add(listImage);
+    }
+    return out;
+  }
 
-    if (widget.classModel.hasPhoto == true) {
+  void _loadImages() {
+    final initial = widget.classModel.image;
+    if (initial != null && initial.isNotEmpty) {
       setState(() {
-        _galleryImages = [PhotoService.getImageUrl(classId)];
+        _galleryImages = [initial];
+        _isLoadingImages = false;
       });
     }
-
-    try {
-      final photos =
-          await PhotoService.instance.getClassPhotos(classId, limit: 5);
-      if (mounted && photos.isNotEmpty) {
-        setState(() {
-          _galleryImages = photos;
-          _isLoadingImages = false;
-        });
-        return;
-      }
-    } catch (_) {}
-
-    if (mounted) setState(() => _isLoadingImages = false);
   }
 
   void _startAutoSlide() {
-    Future.delayed(const Duration(seconds: 5), () {
+    _slideTimer?.cancel();
+    _slideTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted || _galleryImages.length <= 1) return;
       final next = (_currentImageIndex + 1) % _galleryImages.length;
       _pageController.animateToPage(
@@ -116,18 +122,34 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOut,
       );
-      _startAutoSlide();
     });
+  }
+
+  void _onGallerySwipe(DragEndDetails details) {
+    if (_galleryImages.length <= 1) return;
+    final v = details.primaryVelocity ?? 0;
+    if (v < -150) {
+      final next = (_currentImageIndex + 1) % _galleryImages.length;
+      _pageController.animateToPage(next,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut);
+    } else if (v > 150) {
+      final prev =
+          (_currentImageIndex - 1 + _galleryImages.length) % _galleryImages.length;
+      _pageController.animateToPage(prev,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut);
+    }
   }
 
   String _getGenderText() {
     switch ((_full?.gender ?? widget.classModel.gender)?.toUpperCase()) {
       case 'MALE':
-        return 'Faqat o\'g\'il bolalar';
+        return 'gender_male_only'.tr();
       case 'FEMALE':
-        return 'Faqat qizlar';
+        return 'gender_female_only'.tr();
       default:
-        return 'Hamma uchun';
+        return 'gender_all'.tr();
     }
   }
 
@@ -153,7 +175,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
   }
 
-  String _formatDuration(int? minutes) {
+  String _formatDuration(_Duration? d) {
+    if (d == null) return '—';
+    if (d.unbounded) return 'duration_unbounded'.tr();
+    final minutes = d.minutes;
     if (minutes == null || minutes == 0) return '—';
     final h = minutes ~/ 60;
     final m = minutes % 60;
@@ -162,18 +187,45 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return '$m min';
   }
 
-  /// Effective duration: prefer list-level field, then derive max from ageTiers.
-  int? _effectiveDuration(ClassFullModel? full) {
-    final listMin = widget.classModel.duration;
-    if (listMin != null && listMin > 0) return listMin;
-    if (full == null) return listMin;
-    final finite = full.ageTiers
-        .expand((t) => t.durations)
+  _Duration? _effectiveDuration(ClassFullModel? full) {
+    final tierDurs = full?.ageTiers.expand((t) => t.durations).toList() ?? [];
+    final hasUnbounded = tierDurs.any((d) => d.duration == null);
+    final finite = tierDurs
         .where((d) => d.duration != null && d.duration! > 0)
         .map((d) => d.duration!)
         .toList();
-    if (finite.isNotEmpty) return finite.reduce((a, b) => a > b ? a : b);
-    return listMin;
+    final listMin = widget.classModel.duration;
+    final maxFinite = finite.isNotEmpty
+        ? finite.reduce((a, b) => a > b ? a : b)
+        : (listMin != null && listMin > 0 ? listMin : null);
+    if (hasUnbounded) return _Duration.unbounded(maxFinite);
+    if (maxFinite == null) return null;
+    return _Duration.finite(maxFinite);
+  }
+
+  ({int from, int to})? _effectiveAgeRange(ClassFullModel? full) {
+    final cm = widget.classModel;
+    final listFrom = cm.minAge ?? 0;
+    final listTo = cm.maxAge ?? 0;
+    if (listFrom > 0 || listTo > 0) {
+      return (from: listFrom, to: listTo == 0 ? listFrom : listTo);
+    }
+    if (full != null) {
+      if (full.ageFrom > 0 || full.ageTo > 0) {
+        return (
+          from: full.ageFrom,
+          to: full.ageTo == 0 ? full.ageFrom : full.ageTo,
+        );
+      }
+      if (full.ageTiers.isNotEmpty) {
+        final tiers = full.ageTiers;
+        final from = tiers.map((t) => t.ageFrom).reduce((a, b) => a < b ? a : b);
+        final tos = tiers.map((t) => t.ageTo ?? 99).toList();
+        final to = tos.reduce((a, b) => a > b ? a : b);
+        return (from: from, to: to);
+      }
+    }
+    return null;
   }
 
   String _formatDistance(double? distanceMeters) {
@@ -208,12 +260,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         .trim();
   }
 
+  void _shareClass() {
+    final title = widget.classModel.title ?? '';
+    final branch = widget.classModel.branch?.title ?? '';
+    final text = branch.isNotEmpty ? '$title — $branch' : title;
+    Share.share(text);
+  }
+
   void _openBookingSheet() {
     final full = _full;
     if (full == null ||
         (full.pricesSummary.isEmpty && full.ageTiers.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Narxlar yuklanmoqda, iltimos kuting')),
+        SnackBar(content: Text('cta_loading'.tr())),
       );
       return;
     }
@@ -221,6 +280,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useSafeArea: false,
       builder: (_) => BookingBottomsheet(clazz: full),
     );
   }
@@ -240,21 +300,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   Widget build(BuildContext context) {
     final classModel = widget.classModel;
     final full = _full;
-    final statusBarH = MediaQuery.of(context).viewPadding.top;
     final safeBottom = MediaQuery.of(context).viewPadding.bottom;
 
     final categoryName = _getCategoryName();
     final branchTitle = full?.branch?.title ?? classModel.branch?.title;
-    final branchAddress =
-        (full?.branch?.address.isNotEmpty == true)
-            ? _localized(full!.branch!.address)
-            : classModel.branch?.address;
-    final branchLandmark = full?.branch?.landmark;
     final distanceStr =
         _formatDistance(classModel.branch?.distance ?? classModel.distance);
-    final languages = (full?.activityLanguages ?? []);
-    final hasMap =
-        full?.branch?.lat != null && full?.branch?.lng != null;
 
     return Scaffold(
       backgroundColor: _cream,
@@ -262,423 +313,325 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         children: [
           CustomScrollView(
             slivers: [
-              // ─── [1] Hero image section ───────────────────────────────────
-              // Status bar spacer for floating buttons
-              SliverToBoxAdapter(
-                child: SizedBox(height: statusBarH + 64.h),
-              ),
-
-              // Hero image card with rounded borders
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20.r),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Stack(
-                        children: [
-                          // Gallery images
-                          Positioned.fill(
-                            child: _galleryImages.isNotEmpty
-                                ? PageView.builder(
-                                    controller: _pageController,
-                                    itemCount: _galleryImages.length,
-                                    onPageChanged: (i) => setState(
-                                        () => _currentImageIndex = i),
-                                    itemBuilder: (_, i) =>
-                                        CachedNetworkImage(
-                                      imageUrl: _galleryImages[i],
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      placeholder: (_, __) =>
-                                          Shimmer.fromColors(
-                                        baseColor: Colors.grey.shade200,
-                                        highlightColor:
-                                            Colors.grey.shade50,
-                                        child:
-                                            Container(color: Colors.white),
-                                      ),
-                                      errorWidget: (_, __, ___) =>
-                                          Assets.images.defaultImage
-                                              .image(
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                      ),
-                                    ),
-                                  )
-                                : _isLoadingImages
-                                    ? Shimmer.fromColors(
-                                        baseColor: Colors.grey.shade200,
-                                        highlightColor:
-                                            Colors.grey.shade50,
-                                        child: Container(
-                                            color: Colors.white),
-                                      )
-                                    : Assets.images.defaultImage.image(
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                      ),
-                          ),
-
-                          // Bottom vignette
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    const Color(0xAA0E0C2B),
-                                  ],
-                                  stops: const [0.5, 1.0],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Page indicators (bottom-center)
-                          if (_galleryImages.length > 1)
-                            Positioned(
-                              bottom: 10.h,
-                              left: 0,
-                              right: 0,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
-                                children: List.generate(
-                                  _galleryImages.length,
-                                  (i) => AnimatedContainer(
-                                    duration: const Duration(
-                                        milliseconds: 300),
-                                    margin:
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 3),
-                                    width:
-                                        _currentImageIndex == i ? 16 : 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: _currentImageIndex == i
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.5),
-                                      borderRadius:
-                                          BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                          // Category chip (bottom-left)
-                          if (categoryName.isNotEmpty)
-                            Positioned(
-                              bottom: 10.h,
-                              left: 10.w,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w, vertical: 5.h),
-                                decoration: BoxDecoration(
-                                  color:
-                                      Colors.white.withOpacity(0.2),
-                                  borderRadius:
-                                      BorderRadius.circular(20.r),
-                                  border: Border.all(
-                                      color: Colors.white
-                                          .withOpacity(0.4)),
-                                ),
-                                child: Text(
-                                  categoryName,
-                                  style: TextStyle(
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+              // ─── [1] Hero SliverAppBar ─────────────────────────────────────
+              SliverAppBar(
+                expandedHeight: 310.h,
+                pinned: true,
+                stretch: true,
+                backgroundColor: _cream,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                automaticallyImplyLeading: false,
+                leadingWidth: 72.w,
+                toolbarHeight: 60.h,
+                leading: Padding(
+                  padding: EdgeInsets.only(left: 16.w, top: 6.h, bottom: 6.h),
+                  child: _FrostedCircleButton(
+                    onTap: () => context.router.pop(),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: _navy,
+                      size: 18,
                     ),
+                  ),
+                ),
+                actions: [
+                  _FrostedCircleButton(
+                    onTap: _shareClass,
+                    child: const Icon(Icons.share_rounded, color: _navy, size: 18),
+                  ),
+                  8.kw,
+                  _FrostedCircleButton(
+                    onTap: () => setState(() => _isFavorite = !_isFavorite),
+                    child: Icon(
+                      _isFavorite
+                          ? CupertinoIcons.heart_fill
+                          : CupertinoIcons.heart,
+                      color: _isFavorite ? const Color(0xFFEF4444) : _navy,
+                      size: 18,
+                    ),
+                  ),
+                  16.kw,
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.parallax,
+                  stretchModes: const [StretchMode.zoomBackground],
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Gallery images — GestureDetector handles horizontal
+                      // swipes because PageView inside SliverAppBar's
+                      // FlexibleSpaceBar doesn't receive them reliably.
+                      _galleryImages.isNotEmpty
+                          ? GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onHorizontalDragEnd: _onGallerySwipe,
+                              child: PageView.builder(
+                              controller: _pageController,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _galleryImages.length,
+                              onPageChanged: (i) =>
+                                  setState(() => _currentImageIndex = i),
+                              itemBuilder: (_, i) => CachedNetworkImage(
+                                imageUrl: _galleryImages[i],
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                placeholder: (_, __) => Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade200,
+                                  highlightColor: Colors.grey.shade50,
+                                  child: Container(color: Colors.white),
+                                ),
+                                errorWidget: (_, __, ___) =>
+                                    Assets.images.defaultImage.image(
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+                              ),
+                            ),
+                          )
+                          : _isLoadingImages
+                              ? Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade200,
+                                  highlightColor: Colors.grey.shade50,
+                                  child: Container(color: Colors.white),
+                                )
+                              : Assets.images.defaultImage.image(
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+
+                      // Top vignette — keeps nav buttons legible over any image
+                      const Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0x880E0C2B), Colors.transparent],
+                              stops: [0.0, 0.38],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Bottom vignette
+                      const Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Color(0xBB0E0C2B),
+                              ],
+                              stops: [0.5, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Page indicators
+                      if (_galleryImages.length > 1)
+                        Positioned(
+                          bottom: 14.h,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              _galleryImages.length,
+                              (i) => AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 3),
+                                width: _currentImageIndex == i ? 16 : 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: _currentImageIndex == i
+                                      ? Colors.white
+                                      : Colors.white.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Category chip
+                      if (categoryName.isNotEmpty)
+                        Positioned(
+                          bottom: 14.h,
+                          left: 16.w,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.w, vertical: 5.h),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20.r),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.4)),
+                            ),
+                            child: Text(
+                              categoryName,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
 
-              // ─── [2] Info card (overlaps hero by -24px) ──────────────────
-              // Info card – no overlap, standard margin below hero
+              // ─── [2] Info card ─────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                  padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(24.r),
                       boxShadow: [_cardShadow],
                     ),
-                    padding: EdgeInsets.all(18.w),
+                    padding: EdgeInsets.all(20.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Category chip
-                        if (categoryName.isNotEmpty)
-                          Padding(
-                            padding: EdgeInsets.only(bottom: 10.h),
-                            child: Wrap(
-                              spacing: 8.w,
-                              runSpacing: 6.h,
-                              children: [
-                                _PillChip(
-                                  label: categoryName,
-                                  bgColor: _brandLight,
-                                  textColor: _brandDark,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        // Title
                         Text(
                           classModel.title ?? '',
                           style: IOSText.largeTitle(),
                         ),
+                        14.kh,
 
-                        12.kh,
-
-                        // Branch / location section
-                        if (branchTitle != null && branchTitle.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 30.w,
-                                    height: 30.h,
-                                    decoration: BoxDecoration(
-                                      color: _brandLight,
-                                      borderRadius:
-                                          BorderRadius.circular(8.r),
-                                    ),
-                                    child: Icon(Icons.apartment_rounded,
-                                        color: _brand, size: 16.sp),
-                                  ),
-                                  8.kw,
-                                  Expanded(
-                                    child: Text(
-                                      branchTitle,
-                                      style: IOSText.headline(),
-                                    ),
-                                  ),
-                                  if (distanceStr.isNotEmpty) ...[
-                                    6.kw,
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 8.w, vertical: 4.h),
-                                      decoration: BoxDecoration(
-                                        color: _brandLight,
-                                        borderRadius:
-                                            BorderRadius.circular(8.r),
-                                      ),
-                                      child: Text(
-                                        distanceStr,
-                                        style: TextStyle(
-                                          fontSize: 10.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: _brandDark,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              if (branchAddress != null &&
-                                  branchAddress.isNotEmpty)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      top: 4.h, left: 38.w),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.location_on_outlined,
-                                          size: 13.sp, color: _muted),
-                                      4.kw,
-                                      Expanded(
-                                        child: Text(
-                                          branchAddress,
-                                          style: IOSText.subhead(),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              if (branchLandmark != null &&
-                                  branchLandmark.isNotEmpty)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      top: 2.h, left: 38.w),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.near_me_outlined,
-                                          size: 13.sp, color: _muted),
-                                      4.kw,
-                                      Expanded(
-                                        child: Text(
-                                          branchLandmark,
-                                          style: IOSText.subhead().copyWith(
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              if (hasMap)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      top: 8.h, left: 38.w),
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      final f = full!;
-                                      final lat = f.branch!.lat!;
-                                      final lng = f.branch!.lng!;
-                                      final uri = Uri.parse(
-                                          'https://maps.google.com/?q=$lat,$lng');
-                                      await launchUrl(uri,
-                                          mode: LaunchMode
-                                              .externalApplication);
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 12.w, vertical: 7.h),
-                                      decoration: BoxDecoration(
-                                        color: _brandLight,
-                                        borderRadius:
-                                            BorderRadius.circular(10.r),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.map_rounded,
-                                              size: 13.sp,
-                                              color: _brandDark),
-                                          5.kw,
-                                          Text(
-                                            "Xaritada ko'rish",
-                                            style: TextStyle(
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: _brandDark,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
+                        if (branchTitle != null &&
+                            branchTitle.isNotEmpty &&
+                            classModel.branch != null)
+                          _BranchNavCard(
+                            title: branchTitle,
+                            distance: distanceStr,
+                            onTap: () => context.router.push(
+                              BranchDetailRoute(branch: classModel.branch!),
+                            ),
                           ),
 
-                        14.kh,
+                        16.kh,
                         Divider(color: _border, height: 1),
-                        14.kh,
+                        16.kh,
 
-                        // Stats row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _StatItem(
-                              icon: Icons.access_time_rounded,
-                              iconColor: _brand,
-                              value: _formatDuration(_effectiveDuration(full)),
-                              label: 'Davomiylik',
+                        // Stats as tinted chip cards
+                        Builder(builder: (_) {
+                          final ageRange = _effectiveAgeRange(full);
+                          final ageLabel = ageRange == null
+                              ? null
+                              : (ageRange.from == ageRange.to
+                                  ? '${ageRange.from} yosh'
+                                  : '${ageRange.from}–${ageRange.to} yosh');
+
+                          final stats = <(IconData, Color, String, String)>[
+                            (
+                              Icons.access_time_rounded,
+                              _brand,
+                              _formatDuration(_effectiveDuration(full)),
+                              'detail_duration_label'.tr(),
                             ),
-                            _StatItem(
-                              icon: Icons.child_care_rounded,
-                              iconColor: _success,
-                              value:
-                                  '${classModel.minAge ?? full?.ageFrom ?? 0}–${classModel.maxAge ?? full?.ageTo ?? 0} yosh',
-                              label: 'Yosh',
-                            ),
-                            _StatItem(
-                              icon: _getGenderIcon(),
-                              iconColor: _getGenderColor(),
-                              value: _getGenderText(),
-                              label: 'Jinsi',
-                            ),
-                            if (languages.isNotEmpty)
-                              _StatItem(
-                                icon: Icons.translate_rounded,
-                                iconColor: _muted,
-                                value: languages.join('/'),
-                                label: 'Til',
+                            if (ageLabel != null)
+                              (
+                                Icons.child_care_rounded,
+                                _success,
+                                ageLabel,
+                                'age'.tr(),
                               ),
-                          ],
-                        ),
+                            (
+                              _getGenderIcon(),
+                              _getGenderColor(),
+                              _getGenderText(),
+                              'gender'.tr(),
+                            ),
+                          ];
+
+                          return Row(
+                            children: stats.asMap().entries.map((e) {
+                              final idx = e.key;
+                              final s = e.value;
+                              return Expanded(
+                                child: Container(
+                                  margin: EdgeInsets.only(
+                                      right: idx < stats.length - 1
+                                          ? 8.w
+                                          : 0),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 12.h, horizontal: 6.w),
+                                  decoration: BoxDecoration(
+                                    color: s.$2.withOpacity(0.07),
+                                    borderRadius:
+                                        BorderRadius.circular(14.r),
+                                    border: Border.all(
+                                        color: s.$2.withOpacity(0.14)),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(s.$1,
+                                          size: 20.sp, color: s.$2),
+                                      6.kh,
+                                      Text(
+                                        s.$3,
+                                        style: TextStyle(
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: _navy,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      2.kh,
+                                      Text(
+                                        s.$4,
+                                        style: TextStyle(
+                                            fontSize: 10.sp,
+                                            color: _muted),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }),
                       ],
                     ),
                   ),
                 ),
               ),
 
-              // ─── [3] Content sections ─────────────────────────────────────
+              // ─── [3] Content sections ──────────────────────────────────────
               SliverPadding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    // Loading indicator
-                    if (full == null)
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32.h),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: _brand,
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                      ),
+                    if (full == null) _DetailShimmer(),
 
-                    // Prices section
                     if (full != null &&
                         (full.hasAgeTierPricing ||
                             full.pricesSummary.isNotEmpty)) ...[
                       _DetailSection(
                         title: full.hasAgePricing
-                            ? 'Yoshga qarab narxlar'
-                            : 'Narxlar',
+                            ? 'detail_prices_by_age'.tr()
+                            : 'detail_prices'.tr(),
                         icon: Icons.sell_rounded,
                         iconColor: _brand,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (full.hasMultiplePrices)
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 10.h),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.info_outline_rounded,
-                                        size: 13.sp, color: _muted),
-                                    5.kw,
-                                    Expanded(
-                                      child: Text(
-                                        'Narx bolaning yoshiga qarab farqlanadi',
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          color: _muted,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                            // ── New nested age-tier format ──
                             if (full.hasAgeTierPricing)
                               ...List.generate(full.ageTiers.length, (i) {
                                 final tier = full.ageTiers[i];
@@ -688,7 +641,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.start,
                                   children: [
-                                    // Age tier header
                                     Padding(
                                       padding: EdgeInsets.symmetric(
                                           vertical: 8.h),
@@ -715,7 +667,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                         ],
                                       ),
                                     ),
-                                    // Duration rows for this tier
                                     ...List.generate(
                                         tier.durations.length, (j) {
                                       final dur = tier.durations[j];
@@ -742,8 +693,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                                 ),
                                                 Text(
                                                   dur.price.toRawUzsPrice(),
-                                                  style: IOSText.bodyEmphasized(
-                                                      color: _brandDark),
+                                                  style:
+                                                      IOSText.bodyEmphasized(
+                                                          color: _brandDark),
                                                 ),
                                               ],
                                             ),
@@ -765,7 +717,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                 );
                               })
                             else
-                              // ── Legacy flat format ──
                               ...List.generate(full.pricesSummary.length,
                                   (i) {
                                 final r = full.pricesSummary[i];
@@ -826,12 +777,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       16.kh,
                     ],
 
-                    // About section
                     if (full != null &&
                         _cleanHtml(_localized(full.description))
                             .isNotEmpty) ...[
                       _DetailSection(
-                        title: 'Tadbir haqida',
+                        title: 'detail_about'.tr(),
                         icon: Icons.info_outline_rounded,
                         iconColor: _brand,
                         child: Text(
@@ -843,7 +793,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     ] else if (full == null &&
                         (classModel.description ?? '').isNotEmpty) ...[
                       _DetailSection(
-                        title: 'Tadbir haqida',
+                        title: 'detail_about'.tr(),
                         icon: Icons.info_outline_rounded,
                         iconColor: _brand,
                         child: Text(
@@ -854,12 +804,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       16.kh,
                     ],
 
-                    // Important notes
                     if (full != null &&
                         _cleanHtml(_localized(full.importantNotes))
                             .isNotEmpty) ...[
                       _DetailSection(
-                        title: 'Muhim eslatmalar',
+                        title: 'detail_notes'.tr(),
                         icon: Icons.priority_high_rounded,
                         iconColor: const Color(0xFFD97706),
                         child: Text(
@@ -870,12 +819,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       16.kh,
                     ],
 
-                    // What to bring
                     if (full != null &&
                         _cleanHtml(_localized(full.requiredItems))
                             .isNotEmpty) ...[
                       _DetailSection(
-                        title: 'Nima olib kelish kerak',
+                        title: 'detail_bring'.tr(),
                         icon: Icons.checklist_rounded,
                         iconColor: const Color(0xFF0E7490),
                         child: Text(
@@ -886,10 +834,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       16.kh,
                     ],
 
-                    // Languages
-                    if (full != null && full.activityLanguages.isNotEmpty) ...[
+                    if (full != null &&
+                        full.activityLanguages.isNotEmpty) ...[
                       _DetailSection(
-                        title: 'Ta\'lim tili',
+                        title: 'detail_language'.tr(),
                         icon: Icons.translate_rounded,
                         iconColor: _muted,
                         child: Wrap(
@@ -902,7 +850,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                       horizontal: 12.w, vertical: 6.h),
                                   decoration: BoxDecoration(
                                     color: _brandLight,
-                                    borderRadius: BorderRadius.circular(10.r),
+                                    borderRadius:
+                                        BorderRadius.circular(10.r),
                                   ),
                                   child: Text(
                                     lang,
@@ -920,53 +869,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       16.kh,
                     ],
 
-                    // Schedule
-                    if (full != null && full.schedule.isNotEmpty) ...[
-                      _DetailSection(
-                        title: 'Dars jadvali',
-                        icon: Icons.calendar_today_rounded,
-                        iconColor: const Color(0xFF0EA5E9),
-                        child: Column(
-                          children: full.schedule
-                              .map(
-                                (s) => Padding(
-                                  padding: EdgeInsets.only(bottom: 8.h),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 8.w,
-                                        height: 8.h,
-                                        decoration: BoxDecoration(
-                                          color: _brand,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      8.kw,
-                                      Expanded(
-                                        child: Text(
-                                          s.day,
-                                          style: IOSText.bodyEmphasized(),
-                                        ),
-                                      ),
-                                      Text(
-                                        '${s.startTime} – ${s.endTime}',
-                                        style: IOSText.body(
-                                            color: IOSText.secondary),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      16.kh,
-                    ],
-
-                    // Working hours
                     if (full != null && full.workHours.isNotEmpty) ...[
                       _DetailSection(
-                        title: 'Ish vaqti',
+                        title: 'detail_hours'.tr(),
                         icon: Icons.schedule_rounded,
                         iconColor: const Color(0xFF059669),
                         child: Column(
@@ -1006,13 +911,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       16.kh,
                     ],
 
-                    // Video card
                     if (full?.effectiveVideoUrl != null) ...[
-                      _VideoCard(onTap: () async {
-                        final url =
-                            Uri.parse(full!.effectiveVideoUrl!);
-                        await launchUrl(url,
-                            mode: LaunchMode.externalApplication);
+                      _VideoCard(onTap: () {
+                        ShortsFeed.set([widget.classModel], 0);
+                        context.tabsRouter.setActiveIndex(1);
                       }),
                       16.kh,
                     ],
@@ -1024,47 +926,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             ],
           ),
 
-          // ─── Fixed top action buttons ─────────────────────────────────────
-          Positioned(
-            top: statusBarH + 8.h,
-            left: 16.w,
-            right: 16.w,
-            child: Row(
-              children: [
-                _FrostedCircleButton(
-                  onTap: () => context.router.pop(),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: _navy,
-                    size: 18,
-                  ),
-                ),
-                const Spacer(),
-                _FrostedCircleButton(
-                  onTap: () {},
-                  child: const Icon(
-                    Icons.share_rounded,
-                    color: _navy,
-                    size: 18,
-                  ),
-                ),
-                8.kw,
-                _FrostedCircleButton(
-                  onTap: () => setState(() => _isFavorite = !_isFavorite),
-                  child: Icon(
-                    _isFavorite
-                        ? CupertinoIcons.heart_fill
-                        : CupertinoIcons.heart,
-                    color:
-                        _isFavorite ? const Color(0xFFEF4444) : _navy,
-                    size: 18,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ─── Positioned CTA bar at bottom ─────────────────────────────────
+          // ─── CTA bar at bottom ─────────────────────────────────────────────
           if (!RemoteConfigService.instance.isInReview)
             Positioned(
               bottom: 0,
@@ -1086,7 +948,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 padding: EdgeInsets.fromLTRB(
                     16.w, 20.h, 16.w, safeBottom + 16.h),
                 child: full == null
-                    // Loading shimmer for CTA
                     ? Shimmer.fromColors(
                         baseColor: Colors.grey.shade200,
                         highlightColor: Colors.grey.shade50,
@@ -1100,37 +961,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       )
                     : full.pricesSummary.isEmpty && full.ageTiers.isEmpty
                         ? _CtaButton(
-                            label: 'Yuklanmoqda...',
+                            label: 'cta_loading'.tr(),
                             enabled: false,
                             onTap: null,
                           )
-                        : Row(
-                            children: [
-                              // Price column
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    full.priceMin.toRawUzsPrice(),
-                                    style: TextStyle(
-                                      fontSize: 20.sp,
-                                      fontWeight: FontWeight.w900,
-                                      color: _brandDark,
-                                      height: 1.1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              16.kw,
-                              // CTA button
-                              Expanded(
-                                child: _CtaGradientButton(
-                                  label: 'Chipta sotib olish',
-                                  onTap: _openBookingSheet,
-                                ),
-                              ),
-                            ],
+                        : _CtaGradientButton(
+                            label: 'cta_buy_ticket'.tr(),
+                            onTap: _openBookingSheet,
                           ),
               ),
             ),
@@ -1140,7 +977,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 }
 
-// ─── Frosted circle button (hero top buttons) ──────────────────────────────
+// ─── Frosted circle button ─────────────────────────────────────────────────────
 
 class _FrostedCircleButton extends StatelessWidget {
   const _FrostedCircleButton({required this.onTap, required this.child});
@@ -1154,20 +991,20 @@ class _FrostedCircleButton extends StatelessWidget {
       height: 42.h,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(14.r),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(14.r),
           onTap: onTap,
           child: Center(child: child),
         ),
@@ -1176,84 +1013,79 @@ class _FrostedCircleButton extends StatelessWidget {
   }
 }
 
-// ─── Pill chip ─────────────────────────────────────────────────────────────
+// ─── Branch navigation card ────────────────────────────────────────────────────
 
-class _PillChip extends StatelessWidget {
-  const _PillChip({
-    required this.label,
-    required this.bgColor,
-    required this.textColor,
+class _BranchNavCard extends StatelessWidget {
+  const _BranchNavCard({
+    required this.title,
+    required this.distance,
+    required this.onTap,
   });
-  final String label;
-  final Color bgColor;
-  final Color textColor;
+
+  final String title;
+  final String distance;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w700,
-          color: textColor,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: _brandLight.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36.w,
+              height: 36.h,
+              decoration: BoxDecoration(
+                color: _brandLight,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(Icons.apartment_rounded, color: _brand, size: 18.sp),
+            ),
+            10.kw,
+            Expanded(
+              child: Text(
+                title,
+                style: IOSText.headline(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (distance.isNotEmpty) ...[
+              6.kw,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: _brandLight,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  distance,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: _brandDark,
+                  ),
+                ),
+              ),
+            ],
+            6.kw,
+            Icon(Icons.arrow_forward_ios_rounded, size: 14.sp, color: _muted),
+          ],
         ),
       ),
     );
   }
 }
 
-// ─── Stat item ─────────────────────────────────────────────────────────────
-
-class _StatItem extends StatelessWidget {
-  const _StatItem({
-    required this.icon,
-    required this.iconColor,
-    required this.value,
-    required this.label,
-  });
-  final IconData icon;
-  final Color iconColor;
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18.sp, color: iconColor),
-        4.kh,
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w700,
-            color: _navy,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        2.kh,
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: _muted,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Detail section ────────────────────────────────────────────────────────
+// ─── Detail section ────────────────────────────────────────────────────────────
 
 class _DetailSection extends StatelessWidget {
   const _DetailSection({
@@ -1273,7 +1105,7 @@ class _DetailSection extends StatelessWidget {
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
+        borderRadius: BorderRadius.circular(20.r),
         boxShadow: [_cardShadow],
       ),
       child: Column(
@@ -1306,7 +1138,7 @@ class _DetailSection extends StatelessWidget {
   }
 }
 
-// ─── Video card ────────────────────────────────────────────────────────────
+// ─── Video card ────────────────────────────────────────────────────────────────
 
 class _VideoCard extends StatelessWidget {
   const _VideoCard({required this.onTap});
@@ -1325,7 +1157,7 @@ class _VideoCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(18.r),
+          borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
               color: _brand.withOpacity(0.35),
@@ -1342,8 +1174,7 @@ class _VideoCard extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.2),
-                border:
-                    Border.all(color: Colors.white.withOpacity(0.35)),
+                border: Border.all(color: Colors.white.withOpacity(0.35)),
               ),
               child: Icon(
                 Icons.play_arrow_rounded,
@@ -1358,7 +1189,7 @@ class _VideoCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Video ko\'rish',
+                    'video_watch'.tr(),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15.sp,
@@ -1368,7 +1199,7 @@ class _VideoCard extends StatelessWidget {
                   ),
                   2.kh,
                   Text(
-                    'Shorts sifatida tomosha qiling',
+                    'video_shorts_cta'.tr(),
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.85),
                       fontSize: 12.sp,
@@ -1390,7 +1221,7 @@ class _VideoCard extends StatelessWidget {
   }
 }
 
-// ─── CTA button (disabled state) ──────────────────────────────────────────
+// ─── CTA button (disabled state) ──────────────────────────────────────────────
 
 class _CtaButton extends StatelessWidget {
   const _CtaButton({
@@ -1409,8 +1240,7 @@ class _CtaButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              enabled ? _brandDark : const Color(0xFFCBD5E1),
+          backgroundColor: enabled ? _brandDark : const Color(0xFFCBD5E1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.r),
           ),
@@ -1428,7 +1258,7 @@ class _CtaButton extends StatelessWidget {
   }
 }
 
-// ─── CTA gradient button ──────────────────────────────────────────────────
+// ─── CTA gradient button ───────────────────────────────────────────────────────
 
 class _CtaGradientButton extends StatelessWidget {
   const _CtaGradientButton({required this.label, required this.onTap});
@@ -1469,4 +1299,63 @@ class _CtaGradientButton extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─── Detail shimmer skeleton ───────────────────────────────────────────────────
+
+class _DetailShimmer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade200,
+      highlightColor: Colors.grey.shade50,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          16.kh,
+          _shimmerBox(height: 20.h, width: 120.w, radius: 6.r),
+          12.kh,
+          _shimmerBox(height: 80.h, width: double.infinity, radius: 14.r),
+          16.kh,
+          _shimmerBox(height: 20.h, width: 160.w, radius: 6.r),
+          12.kh,
+          _shimmerBox(height: 120.h, width: double.infinity, radius: 14.r),
+          16.kh,
+          _shimmerBox(height: 20.h, width: 100.w, radius: 6.r),
+          12.kh,
+          _shimmerBox(height: 80.h, width: double.infinity, radius: 14.r),
+          20.kh,
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmerBox(
+      {required double height,
+      required double width,
+      required double radius}) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+}
+
+// ─── Effective duration value ──────────────────────────────────────────────────
+
+class _Duration {
+  const _Duration._({required this.unbounded, this.minutes});
+
+  final bool unbounded;
+  final int? minutes;
+
+  factory _Duration.finite(int minutes) =>
+      _Duration._(unbounded: false, minutes: minutes);
+
+  factory _Duration.unbounded(int? longestFinite) =>
+      _Duration._(unbounded: true, minutes: longestFinite);
 }

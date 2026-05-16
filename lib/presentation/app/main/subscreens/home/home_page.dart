@@ -1,7 +1,9 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,7 +16,7 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 
 import 'package:lumi_pass/common/widget/container_3d.dart';
-import 'package:lumi_pass/common/widget/language_bottom_sheet.dart';
+import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -37,17 +39,14 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   @override
   void init(BuildContext context) {
+    // Seed the header name from storage so it shows immediately before the API loads.
+    final storage = getIt<Storage>();
+    final stored = storage.parentName.call();
+    if (stored != null && stored.isNotEmpty && displayNameNotifier.value == null) {
+      displayNameNotifier.value = stored;
+    }
     context.read<HomeCubit>().initWithLocation();
     super.init(context);
-  }
-
-  @override
-  void onFocusGained(BuildContext context) {
-    // Silent refresh so the premium badge picks up any change made off-screen
-    // (e.g. after completing a subscription purchase) — without flashing the
-    // shimmer over already-loaded content.
-    context.read<HomeCubit>().refreshSilently();
-    super.onFocusGained(context);
   }
 
   @override
@@ -126,38 +125,91 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               Expanded(
                 child: state.isLoading
                     ? const HomeShimmer()
-                    : NotificationListener<ScrollNotification>(
-                        onNotification: (scrollInfo) {
-                          if (scrollInfo.metrics.pixels >=
-                              scrollInfo.metrics.maxScrollExtent - 200) {
-                            context.read<HomeCubit>().loadMoreNearClasses();
-                          }
-                          return false;
-                        },
-                        child: SingleChildScrollView(
-                          padding: EdgeInsets.only(top: 4.h, bottom: 20.h),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                    : RefreshIndicator(
+                        onRefresh: () => context.read<HomeCubit>().getHome(),
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: (scrollInfo) {
+                            if (scrollInfo.metrics.axis == Axis.vertical &&
+                                scrollInfo.metrics.pixels >=
+                                    scrollInfo.metrics.maxScrollExtent - 300) {
+                              context.read<HomeCubit>().loadMoreNearClasses();
+                            }
+                            return false;
+                          },
+                          child: CustomScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [
+                              SliverToBoxAdapter(child: SizedBox(height: 4.h)),
                               if (state.homeModel?.data?.upcomingClass != null)
-                                UpcomingClassWidget(
-                                  upcomingClass:
-                                      state.homeModel!.data!.upcomingClass!,
+                                SliverToBoxAdapter(
+                                  child: UpcomingClassWidget(
+                                    upcomingClass:
+                                        state.homeModel!.data!.upcomingClass!,
+                                  ),
                                 ),
                               if ((state.homeModel?.data?.banners ?? [])
                                   .isNotEmpty) ...[
-                                4.kh,
-                                _buildBannerSlider(context, state),
+                                SliverToBoxAdapter(child: SizedBox(height: 4.h)),
+                                SliverToBoxAdapter(
+                                  child: _buildBannerSlider(context, state),
+                                ),
                               ],
-                              // _buildQuickFilters(context),
                               if ((state.homeModel?.data?.categories?.data ??
                                       [])
                                   .isNotEmpty)
-                                _buildCategoriesSection(context, state),
+                                SliverToBoxAdapter(
+                                  child: _buildCategoriesSection(context, state),
+                                ),
                               if (state.newClassesList.isNotEmpty)
-                                _buildNewClassesSection(context, state),
-                              if (state.nearClassesList.isNotEmpty)
-                                _buildNearYouSection(context, state),
+                                SliverToBoxAdapter(
+                                  child: _buildNewClassesSection(context, state),
+                                ),
+                              if (state.nearClassesList.isNotEmpty) ...[
+                                SliverToBoxAdapter(
+                                  child: _buildNearYouHeader(context),
+                                ),
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) => Padding(
+                                      padding: EdgeInsets.only(bottom: 16.h, right: 16.w),
+                                      child: ClassItemWidget(
+                                        key: ValueKey(
+                                            state.nearClassesList[index].id ??
+                                                index),
+                                        homClass: state.nearClassesList[index],
+                                        width: 1.sw - 32.w,
+                                        imageHeight: 190.h,
+                                        wrapBranch: false,
+                                        onViewAsReels: () => _openShorts(
+                                            context,
+                                            state.nearClassesList,
+                                            index),
+                                      ),
+                                    ),
+                                    childCount: state.nearClassesList.length,
+                                  ),
+                                ),
+                                if (state.isLoadingNearClasses)
+                                  SliverToBoxAdapter(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: 12.h),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                              SliverToBoxAdapter(
+                                child: SizedBox(
+                                  height: 20.h +
+                                      64.0 +
+                                      MediaQuery.of(context)
+                                          .viewPadding
+                                          .bottom,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -172,9 +224,6 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   Widget _buildHeader(BuildContext context, HomeBuildable state) {
     final storage = getIt<Storage>();
-    final firstName = state.homeModel?.data?.forUser?.firstName
-        ?? storage.parentName.call()
-        ?? 'User';
     final isPremium = storage.hasPremium() == true;
 
     return Padding(
@@ -183,84 +232,61 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         children: [
           Flexible(
             fit: FlexFit.loose,
-            child: Container3d(
-              padding: EdgeInsets.fromLTRB(10.w, 8.h, 14.w, 8.h),
-              backgroundColor: Colors.white,
-              borderColor: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(30.r),
-              depth: 3,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _PremiumProfileIcon(isPremium: isPremium),
-                  10.kw,
-                  Flexible(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'hello'.tr().toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF91A2C3),
-                            letterSpacing: 1.0,
-                          ),
+            child: ValueListenableBuilder<String?>(
+              valueListenable: displayNameNotifier,
+              builder: (_, nameOverride, __) {
+                final firstName = nameOverride
+                    ?? state.homeModel?.data?.forUser?.firstName
+                    ?? storage.parentName.call()
+                    ?? 'User';
+                return Container3d(
+                  padding: EdgeInsets.fromLTRB(10.w, 8.h, 14.w, 8.h),
+                  backgroundColor: Colors.white,
+                  borderColor: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(30.r),
+                  depth: 3,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _PremiumProfileIcon(isPremium: isPremium),
+                      10.kw,
+                      Flexible(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'hello'.tr().toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF91A2C3),
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            Text(
+                              firstName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF2E3D5D),
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          firstName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF2E3D5D),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
           const Spacer(),
-          if (!isPremium) ...[
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => context.router.push(const PlansRoute()),
-              child: SizedBox(
-                width: 52.w,
-                height: 52.w,
-                child: Lottie.asset(
-                  'assets/lotties/premium.json',
-                  repeat: true,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            6.kw,
-          ],
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => showLanguageBottomSheet(
-              context,
-              onChanged: () => context.read<HomeCubit>().getHome(),
-            ),
-            child: Container3d(
-              padding: EdgeInsets.all(8.w),
-              backgroundColor: Colors.white,
-              borderColor: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(14.r),
-              depth: 3,
-              child: Icon(
-                Icons.translate_rounded,
-                size: 18.sp,
-                color: const Color(0xFFFF7093),
-              ),
-            ),
-          ),
+          _CouponIconButton(onTap: () => context.router.push(const PlansRoute())),
+          8.kw,
+          const _BellIconButton(),
         ],
       ),
     );
@@ -316,6 +342,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   Widget _buildCategoriesSection(BuildContext context, HomeBuildable state) {
     final categories = state.homeModel?.data?.categories?.data ?? [];
+    if (categories.isNotEmpty) SearchCubit.cachedCategories = categories;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,13 +351,14 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         _sectionHeader(context, 'all_categories'.tr()),
         12.kh,
         SizedBox(
-          height: MediaQuery.of(context).size.width * 0.37,
+          height: MediaQuery.of(context).size.width * 0.25,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.only(bottom: 8.h, right: 16.w),
             itemCount: categories.length,
             itemBuilder: (context, index) {
               return CategoryItemWidget(
+                key: ValueKey(categories[index].id ?? index),
                 homeCategoryModel: categories[index],
                 onTap: () {
                   SearchCubit.pendingCategory = categories[index];
@@ -358,42 +386,46 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         12.kh,
         NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
-            if (scrollInfo.metrics.pixels >=
-                scrollInfo.metrics.maxScrollExtent - 8) {
+            if (scrollInfo.metrics.axis == Axis.horizontal &&
+                scrollInfo.metrics.pixels >=
+                    scrollInfo.metrics.maxScrollExtent - 8) {
               context.read<HomeCubit>().loadMoreNewClasses();
             }
-            return false;
+            return scrollInfo.metrics.axis == Axis.horizontal;
           },
           child: Builder(
             builder: (context) {
-              // Card width tracks the same clamp used inside ClassItemWidget
-              // so the row height is in sync on every device.
-              final cardW = (1.sw * 0.7).clamp(240.0, 320.0);
-              // image is 4:3, plus card padding (8 + 8) and body block (~152)
-              final rowH = (cardW * 3 / 4) + 16 + 168.h;
+              // image height + card padding (8+8) + body block
+              const imgH = 100.0;
+              final rowH = imgH.h + 16 + 168.h;
               return SizedBox(
                 height: rowH,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.only(bottom: 8.h, right: 16.w),
-                  itemCount: state.newClassesList.length +
-                      (state.isLoadingNewClasses ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == state.newClassesList.length) {
-                      return Padding(
-                        padding: EdgeInsets.only(left: 16.w),
+                child: Stack(
+                  children: [
+                    ListView.builder(
+                      key: const PageStorageKey('new-classes-list'),
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.only(bottom: 8.h, right: 16.w),
+                      itemCount: state.newClassesList.length,
+                      itemBuilder: (context, index) => ClassItemWidget(
+                        key: ValueKey(state.newClassesList[index].id ?? index),
+                        homClass: state.newClassesList[index],
+                        imageHeight: 130.h,
+                        wrapBranch: true,
+                        onViewAsReels: () =>
+                            _openShorts(context, state.newClassesList, index),
+                      ),
+                    ),
+                    if (state.isLoadingNewClasses)
+                      Positioned(
+                        right: 16.w,
+                        top: 0,
+                        bottom: 8.h,
                         child: const Center(
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                      );
-                    }
-                    return ClassItemWidget(
-                      homClass: state.newClassesList[index],
-                      wrapBranch: true,
-                      onViewAsReels: () =>
-                          _openShorts(context, state.newClassesList, index),
-                    );
-                  },
+                      ),
+                  ],
                 ),
               );
             },
@@ -465,37 +497,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     );
   }
 
-  Widget _buildNearYouSection(BuildContext context, HomeBuildable state) {
+  Widget _buildNearYouHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         18.kh,
         _sectionHeader(context, 'near_you'.tr()),
         12.kh,
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 0.w),
-          child: Column(
-            children: [
-              ...state.nearClassesList.asMap().entries.map((entry) => Padding(
-                    padding: EdgeInsets.only(bottom: 16.h),
-                    child: ClassItemWidget(
-                      homClass: entry.value,
-                      width: 1.sw - 32.w,
-                      wrapBranch: false,
-                      onViewAsReels: () => _openShorts(
-                          context, state.nearClassesList, entry.key),
-                    ),
-                  )),
-              if (state.isLoadingNearClasses)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -533,8 +541,8 @@ class _PremiumProfileIcon extends StatelessWidget {
             : null,
       ),
       child: Icon(
-        Icons.person_rounded,
-        size: 20.sp,
+        CupertinoIcons.person_fill,
+        size: 22.sp,
         color: isPremium ? Colors.white : primary,
       ),
     );
@@ -571,13 +579,129 @@ class _PremiumProfileIcon extends StatelessWidget {
                   ),
                 ),
                 child: Icon(
-                  Icons.workspace_premium_rounded,
+                  CupertinoIcons.star_fill,
                   size: 9.sp,
                   color: Colors.white,
                 ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Coupon icon button ───────────────────────────────────────────────────────
+
+class _CouponIconButton extends StatelessWidget {
+  const _CouponIconButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: 42.w,
+        height: 42.w,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 14,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Icon(
+          CupertinoIcons.ticket_fill,
+          size: 20.sp,
+          color: const Color(0xFFFF7093),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Bell icon with unread badge ─────────────────────────────────────────────
+
+class _BellIconButton extends StatefulWidget {
+  const _BellIconButton();
+
+  @override
+  State<_BellIconButton> createState() => _BellIconButtonState();
+}
+
+class _BellIconButtonState extends State<_BellIconButton> {
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCount();
+  }
+
+  Future<void> _fetchCount() async {
+    try {
+      final count = await getIt<NotificationsApi>().getUnreadCount();
+      if (mounted) setState(() => _unreadCount = count);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        await context.router.push(const NotificationsRoute());
+        _fetchCount();
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container3d(
+            padding: EdgeInsets.all(8.w),
+            backgroundColor: Colors.white,
+            borderColor: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(14.r),
+            depth: 3,
+            child: Icon(
+              CupertinoIcons.bell,
+              size: 20.sp,
+              color: const Color(0xFF2E3D5D),
+            ),
+          ),
+          if (_unreadCount > 0)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                padding: EdgeInsets.all(2.r),
+                constraints: BoxConstraints(
+                  minWidth: 16.w,
+                  minHeight: 16.w,
+                ),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF7093),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  _unreadCount > 99 ? '99+' : '$_unreadCount',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 8.sp,
+                    fontWeight: FontWeight.bold,
+                    height: 1.0,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
         ],
       ),
     );
