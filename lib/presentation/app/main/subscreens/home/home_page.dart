@@ -28,6 +28,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/banner_l
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/class_item_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_skeletons.dart';
+import 'package:shimmer/shimmer.dart';
 
 // Tab indices inside the main AutoTabsScaffold.
 const int _kShortsTabIndex = 1;
@@ -348,7 +349,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   }
 
   Widget _buildCategoriesSection(BuildContext context, HomeBuildable state) {
-    final categories = state.homeModel?.data?.categories?.data ?? [];
+    // Prefer the full list loaded from the unlimited /categories endpoint;
+    // fall back to whatever the home feed returned (capped at 10).
+    final categories = (state.categories?.isNotEmpty == true)
+        ? state.categories!
+        : (state.homeModel?.data?.categories?.data ?? []);
     if (categories.isNotEmpty) SearchCubit.cachedCategories = categories;
 
     return Column(
@@ -417,7 +422,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                       itemBuilder: (context, index) => ClassItemWidget(
                         key: ValueKey(state.newClassesList[index].id ?? index),
                         homClass: state.newClassesList[index],
-                        imageHeight: 130.h,
+                        imageHeight: 170.h,
                         wrapBranch: true,
                         onViewAsReels: () =>
                             _openShorts(context, state.newClassesList, index),
@@ -757,10 +762,16 @@ class _BannerSliderState extends State<_BannerSlider> {
                   width: double.infinity,
                   fit: BoxFit.cover,
                   imageUrl: src,
-                  placeholder: (_, __) =>
-                      Container(color: Colors.grey.shade200),
-                  errorWidget: (_, __, ___) =>
-                      Assets.images.defaultImage.image(fit: BoxFit.cover),
+                  placeholder: (_, __) => Shimmer.fromColors(
+                    baseColor: Colors.grey.shade200,
+                    highlightColor: Colors.grey.shade50,
+                    child: Container(color: Colors.white),
+                  ),
+                  errorWidget: (_, __, ___) => Shimmer.fromColors(
+                    baseColor: Colors.grey.shade200,
+                    highlightColor: Colors.grey.shade50,
+                    child: Container(color: Colors.white),
+                  ),
                 ),
               );
             }).toList(),

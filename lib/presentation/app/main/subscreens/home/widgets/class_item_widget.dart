@@ -40,7 +40,6 @@ class ClassItemWidget extends StatefulWidget {
 
 class _ClassItemWidgetState extends State<ClassItemWidget> {
   String? _resolvedImageUrl;
-  bool _isLoadingImage = true;
 
   @override
   void initState() {
@@ -58,10 +57,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
 
   Future<void> _resolveImage() async {
     final url = sanitizeImageUrl(widget.homClass?.image);
-    setState(() {
-      _resolvedImageUrl = url;
-      _isLoadingImage = false;
-    });
+    if (mounted) setState(() => _resolvedImageUrl = url);
   }
 
   @override
@@ -122,38 +118,23 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Shimmer placeholder shown while loading
-                  if (_isLoadingImage && _resolvedImageUrl == null)
-                    Shimmer.fromColors(
-                      baseColor: Colors.grey.shade200,
-                      highlightColor: Colors.grey.shade50,
-                      child: Container(color: Colors.white),
-                    ),
+                  // Shimmer is always the base layer — shown while the
+                  // network image loads and remains if the URL is null or
+                  // the fetch fails (no static fallback image).
+                  Shimmer.fromColors(
+                    baseColor: Colors.grey.shade200,
+                    highlightColor: Colors.grey.shade50,
+                    child: Container(color: Colors.white),
+                  ),
                   if (_resolvedImageUrl != null)
-                    SizedBox.expand(
-                      child: CachedNetworkImage(
-                        imageUrl: _resolvedImageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: 80,
-                        placeholder: (_, __) => Shimmer.fromColors(
-                          baseColor: Colors.grey.shade200,
-                          highlightColor: Colors.grey.shade50,
-                          child: Container(color: Colors.white),
-                        ),
-                        errorWidget: (_, __, ___) =>
-                            Assets.images.defaultImage.image(
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                      ),
-                    )
-                  else if (!_isLoadingImage)
-                    Assets.images.defaultImage.image(
+                    CachedNetworkImage(
+                      imageUrl: _resolvedImageUrl!,
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
+                      fadeInDuration: const Duration(milliseconds: 200),
+                      // On error: SizedBox.shrink() lets the shimmer show through.
+                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
                     ),
 
                   // Top bar: categories (left, expands) + video button (right)

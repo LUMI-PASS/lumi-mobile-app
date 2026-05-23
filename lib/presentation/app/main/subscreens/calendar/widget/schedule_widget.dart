@@ -152,12 +152,17 @@ class BookingCard extends StatelessWidget {
                                   highlightColor: Colors.grey.shade50,
                                   child: Container(color: Colors.white),
                                 ),
-                                errorWidget: (_, __, ___) =>
-                                    Assets.images.defaultImage.image(
-                                        fit: BoxFit.cover),
+                                errorWidget: (_, __, ___) => Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade200,
+                                  highlightColor: Colors.grey.shade50,
+                                  child: Container(color: Colors.white),
+                                ),
                               )
-                            : Assets.images.defaultImage.image(
-                                fit: BoxFit.cover),
+                            : Shimmer.fromColors(
+                                baseColor: Colors.grey.shade200,
+                                highlightColor: Colors.grey.shade50,
+                                child: Container(color: Colors.white),
+                              ),
                       ),
                     ),
                     12.kw,

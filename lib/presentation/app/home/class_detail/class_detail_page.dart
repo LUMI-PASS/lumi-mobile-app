@@ -72,6 +72,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     super.dispose();
   }
 
+  void _startAutoSlide() {
+    _slideTimer?.cancel();
+    _slideTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || _galleryImages.length <= 1) return;
+      final next = (_currentImageIndex + 1) % _galleryImages.length;
+      _pageController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
   Future<void> _loadFull() async {
     final id = widget.classModel.id;
     if (id == null) return;
@@ -109,36 +122,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         _galleryImages = [initial];
         _isLoadingImages = false;
       });
-    }
-  }
-
-  void _startAutoSlide() {
-    _slideTimer?.cancel();
-    _slideTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!mounted || _galleryImages.length <= 1) return;
-      final next = (_currentImageIndex + 1) % _galleryImages.length;
-      _pageController.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
-      );
-    });
-  }
-
-  void _onGallerySwipe(DragEndDetails details) {
-    if (_galleryImages.length <= 1) return;
-    final v = details.primaryVelocity ?? 0;
-    if (v < -150) {
-      final next = (_currentImageIndex + 1) % _galleryImages.length;
-      _pageController.animateToPage(next,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut);
-    } else if (v > 150) {
-      final prev =
-          (_currentImageIndex - 1 + _galleryImages.length) % _galleryImages.length;
-      _pageController.animateToPage(prev,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut);
     }
   }
 
@@ -182,9 +165,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     if (minutes == null || minutes == 0) return '—';
     final h = minutes ~/ 60;
     final m = minutes % 60;
-    if (h > 0 && m > 0) return '${h}h ${m}m';
-    if (h > 0) return '${h} soat';
-    return '$m min';
+    final hUnit = 'duration_h_unit'.tr();
+    final mUnit = 'duration_min_unit'.tr();
+    if (h > 0 && m > 0) return '$h$hUnit $m$mUnit';
+    if (h > 0) return '$h $hUnit';
+    return '$m $mUnit';
   }
 
   _Duration? _effectiveDuration(ClassFullModel? full) {
@@ -360,16 +345,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Gallery images — GestureDetector handles horizontal
-                      // swipes because PageView inside SliverAppBar's
-                      // FlexibleSpaceBar doesn't receive them reliably.
                       _galleryImages.isNotEmpty
-                          ? GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onHorizontalDragEnd: _onGallerySwipe,
-                              child: PageView.builder(
+                          ? PageView.builder(
                               controller: _pageController,
-                              physics: const NeverScrollableScrollPhysics(),
                               itemCount: _galleryImages.length,
                               onPageChanged: (i) =>
                                   setState(() => _currentImageIndex = i),
@@ -383,26 +361,18 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                   highlightColor: Colors.grey.shade50,
                                   child: Container(color: Colors.white),
                                 ),
-                                errorWidget: (_, __, ___) =>
-                                    Assets.images.defaultImage.image(
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                ),
-                              ),
-                            ),
-                          )
-                          : _isLoadingImages
-                              ? Shimmer.fromColors(
+                                errorWidget: (_, __, ___) => Shimmer.fromColors(
                                   baseColor: Colors.grey.shade200,
                                   highlightColor: Colors.grey.shade50,
                                   child: Container(color: Colors.white),
-                                )
-                              : Assets.images.defaultImage.image(
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
                                 ),
+                              ),
+                            )
+                          : Shimmer.fromColors(
+                              baseColor: Colors.grey.shade200,
+                              highlightColor: Colors.grey.shade50,
+                              child: Container(color: Colors.white),
+                            ),
 
                       // Top vignette — keeps nav buttons legible over any image
                       const Positioned.fill(
@@ -529,11 +499,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         // Stats as tinted chip cards
                         Builder(builder: (_) {
                           final ageRange = _effectiveAgeRange(full);
+                          final ageUnit = 'filter_years_label'.tr();
                           final ageLabel = ageRange == null
                               ? null
                               : (ageRange.from == ageRange.to
-                                  ? '${ageRange.from} yosh'
-                                  : '${ageRange.from}–${ageRange.to} yosh');
+                                  ? '${ageRange.from} $ageUnit'
+                                  : '${ageRange.from}–${ageRange.to} $ageUnit');
 
                           final stats = <(IconData, Color, String, String)>[
                             (

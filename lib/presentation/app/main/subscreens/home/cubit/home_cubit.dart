@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
@@ -33,7 +35,18 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     _lastLang = currentLang;
     _lastKnownHasPremium = _storage.hasPremium() == true;
     _lastKnownCouponPct = _storage.planDiscountPercentage() ?? 0;
-    await getHome();
+    // Load home feed and the full category list concurrently.
+    await Future.wait([getHome(), _loadAllCategories()]);
+  }
+
+  /// Fetches the complete category list from the unlimited /categories endpoint
+  /// and stores it in state. Called concurrently with [getHome] so categories
+  /// are not limited to the 10-item page that the home feed returns.
+  Future<void> _loadAllCategories() async {
+    try {
+      final cats = await _repo.getAllCategories();
+      if (cats.isNotEmpty) build((b) => b.copyWith(categories: cats));
+    } catch (_) {}
   }
 
   Future<void> refreshIfLanguageChanged() async {
@@ -113,6 +126,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
 
   /// Silent refresh (used on tab focus) — no shimmer.
   Future<void> refreshSilently() async {
+    // Reload categories in parallel so they stay up-to-date on language change.
+    unawaited(_loadAllCategories());
     try {
       final data = await _repo.getHome(
         newClassesPage: 1,

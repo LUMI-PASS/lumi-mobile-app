@@ -9,9 +9,9 @@ import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/strip_html.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
-import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:shimmer/shimmer.dart';
@@ -35,7 +35,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   ClassFullModel? _classFull;
   bool _loading = true;
   bool _launchingPayment = false;
-  bool _cancelling = false;
+  bool _cancelledLocally = false;
   String? _error;
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
@@ -52,11 +52,13 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final api = getIt<OrdersApi>();
       final detail = await api.getOrderDetail(widget.orderId);
@@ -70,15 +72,35 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       setState(() {
         _detail = detail;
         _classFull = full;
-        _loading = false;
+        if (!silent) _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      if (!silent) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
+  }
+
+  /// Computed display status taking into account required_booking logic and
+  /// local optimistic cancel state.
+  String get _effectiveStatus {
+    if (_cancelledLocally) return 'cancelled';
+    final order = _detail!.order;
+    final requiresBooking =
+        _classFull?.category?.requiresBookingTimeSlot == true;
+    if (requiresBooking && order.isPending) return 'in_process';
+    if (requiresBooking && order.isCanceled) return 'canceled_by_centre';
+    return order.effectiveDisplayStatus;
+  }
+
+  /// Immediately reflects cancellation in the UI then silently reloads.
+  void _onCancelled() {
+    setState(() => _cancelledLocally = true);
+    _load(silent: true);
   }
 
   bool _canCancel() {
@@ -100,61 +122,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       } else {
         bookingDt = date;
       }
-      return bookingDt.difference(DateTime.now()).inHours >= 12;
+      return bookingDt.difference(DateTime.now()).inMinutes > 12 * 60;
     } catch (_) {
       return false;
-    }
-  }
-
-  Future<void> _cancel() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r)),
-        title: Text(
-          'Cancel Booking',
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
-        ),
-        content: Text(
-          'Are you sure you want to cancel this booking?\nThis action cannot be undone.',
-          style: TextStyle(fontSize: 14.sp, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Keep Booking',
-                style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Cancel',
-                style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFEF4444))),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    setState(() => _cancelling = true);
-    try {
-      await getIt<OrdersApi>().cancelOrder(_detail!.order.id);
-      await _load();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not cancel: ${e.toString()}'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
-        setState(() => _cancelling = false);
-      }
     }
   }
 
@@ -168,65 +138,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     }
   }
 
-  String _formatDate(String? iso) {
-    if (iso == null || iso.isEmpty) return '';
-    try {
-      final d = DateTime.parse(iso);
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ];
-      const days = [
-        'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
-      ];
-      return '${days[d.weekday - 1]}, ${months[d.month - 1]} ${d.day}, ${d.year}';
-    } catch (_) {
-      return iso;
-    }
-  }
-
-  String _formatDuration(int? minutes) {
-    if (minutes == null || minutes == 0) return '—';
-    final h = minutes ~/ 60;
-    final m = minutes % 60;
-    if (h > 0 && m > 0) return '${h}h ${m}m';
-    if (h > 0) return '$h hour${h > 1 ? 's' : ''}';
-    return '$m min';
-  }
-
-  String _genderLabel() {
-    switch (_classFull?.gender?.toUpperCase()) {
-      case 'MALE':
-        return 'Boys only';
-      case 'FEMALE':
-        return 'Girls only';
-      default:
-        return 'Everyone';
-    }
-  }
-
-  Color _genderColor() {
-    switch (_classFull?.gender?.toUpperCase()) {
-      case 'MALE':
-        return const Color(0xFF3B82F6);
-      case 'FEMALE':
-        return const Color(0xFF7C3AED);
-      default:
-        return const Color(0xFFA652C7);
-    }
-  }
-
-  IconData _genderIcon() {
-    switch (_classFull?.gender?.toUpperCase()) {
-      case 'MALE':
-        return Icons.male_rounded;
-      case 'FEMALE':
-        return Icons.female_rounded;
-      default:
-        return Icons.people_rounded;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final primary = context.colors.primary;
@@ -234,7 +145,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     if (_loading) {
       return Scaffold(
         backgroundColor: context.colors.window,
-        body: const Center(child: CircularProgressIndicator()),
+        body: const _BookingDetailShimmer(),
       );
     }
     if (_error != null || _detail == null) {
@@ -257,7 +168,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 Icon(Icons.error_outline,
                     size: 48.w, color: Colors.red.shade400),
                 16.kh,
-                'Could not load booking'.s(16).w(600),
+                'booking_could_not_load'.tr().s(16).w(600),
                 8.kh,
                 Text(
                   _error ?? '',
@@ -265,7 +176,10 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                   style: TextStyle(fontSize: 13.sp, color: Colors.grey),
                 ),
                 16.kh,
-                TextButton(onPressed: _load, child: const Text('Retry')),
+                TextButton(
+                  onPressed: _load,
+                  child: Text('booking_retry'.tr()),
+                ),
               ],
             ),
           ),
@@ -309,13 +223,18 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                                       highlightColor: Colors.grey.shade50,
                                       child: Container(color: Colors.white),
                                     ),
-                                    errorWidget: (_, __, ___) => Assets
-                                        .images.defaultImage
-                                        .image(fit: BoxFit.cover),
+                                    errorWidget: (_, __, ___) => Shimmer.fromColors(
+                                      baseColor: Colors.grey.shade200,
+                                      highlightColor: Colors.grey.shade50,
+                                      child: Container(color: Colors.white),
+                                    ),
                                   ),
                                 )
-                              : Assets.images.defaultImage.image(
-                                  fit: BoxFit.cover),
+                              : Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade200,
+                                  highlightColor: Colors.grey.shade50,
+                                  child: Container(color: Colors.white),
+                                ),
                         ),
                       ),
                       Positioned.fill(
@@ -346,7 +265,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                       Positioned(
                         top: MediaQuery.of(context).viewPadding.top + 14.h,
                         right: 16.w,
-                        child: _StatusBadge(status: order.status),
+                        child: _StatusBadge(status: _effectiveStatus),
                       ),
                       if (images.length > 1)
                         Positioned(
@@ -401,26 +320,59 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     16.kh,
-                    _buildQuickChips(),
-                    20.kh,
-                    _InfoCard(
-                      icon: Icons.confirmation_number_outlined,
-                      iconBg: primary.withOpacity(0.08),
-                      iconColor: primary,
-                      label: 'booking_id'.tr(),
-                      value: '#${order.id.substring(
-                          (order.id.length - 8).clamp(0, order.id.length))}',
-                    ),
-                    12.kh,
-                    _InfoCard(
-                      icon: Icons.people_alt_outlined,
-                      iconBg: const Color(0xFFEEF2FF),
-                      iconColor: const Color(0xFF4338CA),
-                      label: 'Seats',
-                      value:
-                          '${order.totalSeats} ${order.totalSeats == 1 ? 'person' : 'people'}',
-                    ),
-                    12.kh,
+                    if (detail.tickets.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(Icons.confirmation_number_rounded,
+                              color: primary, size: 20.w),
+                          8.kw,
+                          'your_tickets'
+                              .tr()
+                              .s(16)
+                              .w(700)
+                              .c(const Color(0xFF1E293B)),
+                          const Spacer(),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.w, vertical: 3.h),
+                            decoration: BoxDecoration(
+                              color: primary.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              'tickets_count'
+                                  .tr(args: ['${detail.tickets.length}']),
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w700,
+                                color: primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      12.kh,
+                      ...detail.tickets.map((t) {
+                            final ticketCancelled = _cancelledLocally ||
+                                order.isCanceled ||
+                                t.status.toLowerCase() == 'canceled';
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 10.h),
+                              child: _TicketRow(
+                                ticket: t,
+                                className:
+                                    _classFullTitle() ?? order.activityName,
+                                branch: _branchTitle(),
+                                primary: primary,
+                                orderId: order.id,
+                                canCancel: _canCancel(),
+                                isCancelled: ticketCancelled,
+                                onCanceled: _onCancelled,
+                              ),
+                            );
+                          }),
+                      8.kh,
+                    ],
                     _InfoCard(
                       icon: Icons.payments_outlined,
                       iconBg: order.isPending
@@ -449,41 +401,12 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                         icon: Icons.location_on_outlined,
                         iconBg: const Color(0xFFF5F3FF),
                         iconColor: const Color(0xFF7C3AED),
-                        label: 'Location',
+                        label: 'booking_location'.tr(),
                         value: _branchTitle()!,
                       ),
                     ],
-                    if (_classFull?.duration() != null) ...[
-                      20.kh,
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _DetailCard(
-                              icon: Icons.timer_outlined,
-                              iconBg: const Color(0xFF3B82F6).withOpacity(0.1),
-                              iconColor: const Color(0xFF3B82F6),
-                              label: 'Duration',
-                              value: _formatDuration(_classFull?.duration()),
-                            ),
-                          ),
-                          12.kw,
-                          Expanded(
-                            child: _DetailCard(
-                              icon: _genderIcon(),
-                              iconBg: _genderColor().withOpacity(0.1),
-                              iconColor: _genderColor(),
-                              label: 'Gender & Age',
-                              value: _genderLabel(),
-                              subtitle:
-                                  '${_classFull?.ageFrom ?? 0}-${_classFull?.ageTo ?? 0} years old',
-                              subtitleColor: _genderColor(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                     if (_classDescription() != null) ...[
-                      24.kh,
+                      20.kh,
                       Container(
                         padding: EdgeInsets.all(16.w),
                         decoration: BoxDecoration(
@@ -513,7 +436,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                                       color: primary, size: 18.w),
                                 ),
                                 10.kw,
-                                'About this class'
+                                'booking_about'
+                                    .tr()
                                     .s(16)
                                     .w(700)
                                     .c(const Color(0xFF1E293B)),
@@ -532,49 +456,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                           ],
                         ),
                       ),
-                    ],
-                    if (detail.tickets.isNotEmpty) ...[
-                      24.kh,
-                      Row(
-                        children: [
-                          Icon(Icons.confirmation_number_rounded,
-                              color: primary, size: 20.w),
-                          8.kw,
-                          'your_tickets'
-                              .tr()
-                              .s(16)
-                              .w(700)
-                              .c(const Color(0xFF1E293B)),
-                          const Spacer(),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 3.h),
-                            decoration: BoxDecoration(
-                              color: primary.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Text(
-                              '${detail.tickets.length} tickets',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w700,
-                                color: primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      12.kh,
-                      ...detail.tickets.map((t) => Padding(
-                            padding: EdgeInsets.only(bottom: 10.h),
-                            child: _TicketRow(
-                              ticket: t,
-                              className:
-                                  _classFullTitle() ?? order.activityName,
-                              branch: _branchTitle(),
-                              primary: primary,
-                            ),
-                          )),
                     ],
                     140.kh,
                   ]),
@@ -615,9 +496,29 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
   Widget _buildCta(Color primary) {
     final order = _detail!.order;
-    if (order.isPending) {
+
+    if (_cancelledLocally || order.isCanceled) {
       return _CtaButton(
-        label: _launchingPayment ? 'Opening...' : 'pay_now'.tr(),
+        label: 'booking_cancelled_label'.tr(),
+        color: Colors.grey.shade400,
+        icon: Icons.cancel_outlined,
+        enabled: false,
+      );
+    }
+
+    if (order.isPending) {
+      final requiresBooking =
+          _classFull?.category?.requiresBookingTimeSlot == true;
+      if (requiresBooking) {
+        return _CtaButton(
+          label: 'status_in_process'.tr(),
+          color: const Color(0xFF7C3AED),
+          icon: Icons.hourglass_empty_rounded,
+          enabled: false,
+        );
+      }
+      return _CtaButton(
+        label: _launchingPayment ? 'opening_payment'.tr() : 'pay_now'.tr(),
         color: primary,
         icon: Icons.payments_rounded,
         enabled: !_launchingPayment,
@@ -625,103 +526,26 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         onTap: _pay,
       );
     }
-    if (order.isCanceled) {
-      return _CtaButton(
-        label: 'Cancelled',
-        color: Colors.grey.shade400,
-        icon: Icons.cancel_outlined,
-        enabled: false,
-      );
-    }
-    // Paid order: show cancel button only when ≥ 12 hours before the booking.
-    if (_canCancel()) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _CtaButton(
-            label: _cancelling ? 'Cancelling...' : 'Cancel Booking',
-            color: const Color(0xFFEF4444),
-            icon: Icons.cancel_outlined,
-            enabled: !_cancelling,
-            loading: _cancelling,
-            onTap: _cancel,
-          ),
-          8.kh,
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 10.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle_outline,
-                    color: const Color(0xFF16A34A), size: 16.w),
-                6.kw,
-                'Paid'.s(13).w(600).c(const Color(0xFF16A34A)),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
+
     return _CtaButton(
-      label: 'Paid',
+      label: 'order_paid'.tr(),
       color: const Color(0xFF16A34A),
       icon: Icons.check_circle_outline,
       enabled: false,
     );
   }
 
-  Widget _buildQuickChips() {
-    final detail = _detail!;
-    final firstTicket = detail.tickets.firstOrNull;
-    final ticketDate = firstTicket?.ticketDate;
-    final firstSchedule = _classFull?.schedule.firstOrNull;
-    return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
-      children: [
-        if (ticketDate != null && ticketDate.isNotEmpty)
-          _QuickChip(
-            icon: Icons.calendar_today_rounded,
-            label: _formatDate(ticketDate),
-            bgColor: const Color(0xFFEEF2FF),
-            iconColor: const Color(0xFF4338CA),
-            textColor: const Color(0xFF4338CA),
-          ),
-        if (firstSchedule != null)
-          _QuickChip(
-            icon: Icons.access_time_rounded,
-            label:
-                '${firstSchedule.startTime} - ${firstSchedule.endTime}',
-            bgColor: const Color(0xFFF8FAFC),
-            iconColor: const Color(0xFF475569),
-            textColor: const Color(0xFF475569),
-          ),
-        if (_classFull != null)
-          _QuickChip(
-            icon: Icons.child_care_rounded,
-            label: '${_classFull!.ageFrom}-${_classFull!.ageTo} y.o',
-            bgColor: const Color(0xFFF0FDF4),
-            iconColor: const Color(0xFF16A34A),
-            textColor: const Color(0xFF15803D),
-          ),
-        _QuickChip(
-          icon: _genderIcon(),
-          label: _genderLabel(),
-          bgColor: _genderColor().withOpacity(0.08),
-          iconColor: _genderColor(),
-          textColor: _genderColor(),
-        ),
-      ],
-    );
-  }
-
   List<String> _resolveImages() {
     final imgs = <String>[];
     final classImages = _classFull?.images ?? const [];
-    imgs.addAll(classImages);
-    final activityId = _detail!.order.activityId;
-    if (imgs.isEmpty && activityId != null) {
-      imgs.add(PhotoService.getImageUrl(activityId));
+    imgs.addAll(classImages.where((s) => s.isNotEmpty));
+    final classCover = _classFull?.imageUrl;
+    if (classCover != null && classCover.isNotEmpty && !imgs.contains(classCover)) {
+      imgs.insert(0, classCover);
+    }
+    final orderImage = _detail!.order.activityImage;
+    if (imgs.isEmpty && orderImage != null && orderImage.isNotEmpty) {
+      imgs.add(orderImage);
     }
     return imgs;
   }
@@ -736,7 +560,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     final desc = _classFull?.description;
     if (desc == null || desc.isEmpty) return null;
     final v = _readLang(desc);
-    return (v != null && v.isNotEmpty) ? v : null;
+    if (v == null || v.isEmpty) return null;
+    final clean = stripHtml(v).trim();
+    return clean.isEmpty ? null : clean;
   }
 
   String? _branchTitle() {
@@ -750,150 +576,167 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   }
 }
 
-extension _ClassFullDuration on ClassFullModel {
-  int? duration() {
-    // Prefer schedule-derived duration when slots exist.
-    if (schedule.isNotEmpty) {
-      final s = schedule.first;
-      try {
-        final start = s.startTime.split(':');
-        final end = s.endTime.split(':');
-        if (start.length >= 2 && end.length >= 2) {
-          final startMin = int.parse(start[0]) * 60 + int.parse(start[1]);
-          final endMin = int.parse(end[0]) * 60 + int.parse(end[1]);
-          final diff = endMin - startMin;
-          if (diff > 0) return diff;
-        }
-      } catch (_) {}
-    }
-    // Fallback: max finite duration across all age-tier duration options.
-    final finiteDurations = ageTiers
-        .expand((t) => t.durations)
-        .where((d) => d.duration != null && d.duration! > 0)
-        .map((d) => d.duration!)
-        .toList();
-    if (finiteDurations.isNotEmpty) {
-      return finiteDurations.reduce((a, b) => a > b ? a : b);
-    }
-    return null;
-  }
-}
-
 class _TicketRow extends StatelessWidget {
   const _TicketRow({
     required this.ticket,
     required this.className,
     required this.branch,
     required this.primary,
+    this.orderId,
+    this.canCancel = false,
+    this.isCancelled = false,
+    this.onCanceled,
   });
 
   final OrderTicket ticket;
   final String? className;
   final String? branch;
   final Color primary;
+  final String? orderId;
+  final bool canCancel;
+  final bool isCancelled;
+  final VoidCallback? onCanceled;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => context.router.push(TicketReceiptRoute(
-        ticket: ticket,
-        className: className,
-        branch: branch,
-      )),
-      child: Container(
-        padding: EdgeInsets.all(14.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+    final iconColor =
+        isCancelled ? Colors.grey.shade400 : primary;
+    final iconBg = isCancelled
+        ? Colors.grey.shade100
+        : primary.withOpacity(0.08);
+    final titleColor = isCancelled
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF1E293B);
+    final subColor = isCancelled
+        ? const Color(0xFFCBD5E1)
+        : const Color(0xFF64748B);
+
+    final card = Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: isCancelled ? const Color(0xFFF8FAFC) : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isCancelled
+              ? const Color(0xFFE2E8F0)
+              : const Color(0xFFE2E8F0),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 44.w,
-              height: 44.w,
-              decoration: BoxDecoration(
-                color: primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(Icons.confirmation_number_rounded,
-                  color: primary, size: 22.w),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44.w,
+            height: 44.w,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(12.r),
             ),
-            12.kw,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          ticket.ticketNo != null
-                              ? '#${ticket.ticketNo}'
-                              : 'Ticket pending',
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 7.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Text(
-                          'ID: ${ticket.id.substring((ticket.id.length - 6).clamp(0, ticket.id.length))}',
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF64748B),
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ),
-                    ],
+            child: Icon(Icons.confirmation_number_rounded,
+                color: iconColor, size: 22.w),
+          ),
+          12.kw,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ticket.ticketNo != null
+                      ? '#${ticket.ticketNo}'
+                      : 'ticket_pending_label'.tr(),
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: titleColor,
                   ),
+                ),
+                4.kh,
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today_rounded,
+                        size: 11.sp, color: subColor),
+                    4.kw,
+                    Text(
+                      ticket.ticketDate,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: subColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    10.kw,
+                    Icon(Icons.payments_outlined,
+                        size: 11.sp, color: subColor),
+                    4.kw,
+                    Text(
+                      ticket.price.toRawUzsPrice(),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: subColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                if (ticket.startTime != null && ticket.endTime != null) ...[
                   4.kh,
                   Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded,
-                          size: 11.sp, color: const Color(0xFF94A3B8)),
+                      Icon(Icons.access_time_rounded,
+                          size: 11.sp, color: subColor),
                       4.kw,
                       Text(
-                        ticket.ticketDate,
+                        '${ticket.startTime} – ${ticket.endTime}',
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: const Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      10.kw,
-                      Icon(Icons.payments_outlined,
-                          size: 11.sp, color: const Color(0xFF94A3B8)),
-                      4.kw,
-                      Text(
-                        ticket.price.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: const Color(0xFF64748B),
+                          color: subColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ],
-              ),
+              ],
             ),
+          ),
+          if (isCancelled)
+            Container(
+              padding:
+                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(
+                'order_cancelled'.tr(),
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFEF4444),
+                ),
+              ),
+            )
+          else
             Icon(Icons.arrow_forward_ios_rounded,
                 size: 14.sp, color: const Color(0xFF94A3B8)),
-          ],
-        ),
+        ],
       ),
+    );
+
+    if (isCancelled) return card;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        final result = await context.router.push(TicketReceiptRoute(
+          ticket: ticket,
+          className: className,
+          branch: branch,
+          orderId: orderId,
+          canCancel: canCancel,
+        ));
+        if (result == true) onCanceled?.call();
+      },
+      child: card,
     );
   }
 }
@@ -941,18 +784,35 @@ class _StatusBadge extends StatelessWidget {
     final Color color;
     final String label;
     switch (status.toLowerCase()) {
+      case 'active':
       case 'paid':
         color = const Color(0xFF16A34A);
-        label = 'Paid';
+        label = 'status_active'.tr();
+        break;
+      case 'visited':
+        color = const Color(0xFF2563EB);
+        label = 'status_visited'.tr();
+        break;
+      case 'missed':
+        color = const Color(0xFFF59E0B);
+        label = 'status_missed'.tr();
+        break;
+      case 'in_process':
+        color = const Color(0xFF7C3AED);
+        label = 'status_in_process'.tr();
+        break;
+      case 'canceled_by_centre':
+        color = const Color(0xFFEF4444);
+        label = 'status_canceled_by_centre'.tr();
         break;
       case 'canceled':
       case 'cancelled':
         color = const Color(0xFFEF4444);
-        label = 'Cancelled';
+        label = 'order_cancelled'.tr();
         break;
       default:
         color = const Color(0xFFF59E0B);
-        label = 'Pending';
+        label = 'order_pending'.tr();
     }
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
@@ -973,40 +833,6 @@ class _StatusBadge extends StatelessWidget {
                   BoxDecoration(shape: BoxShape.circle, color: color)),
           6.kw,
           label.s(12).w(600).c(color),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickChip extends StatelessWidget {
-  const _QuickChip({
-    required this.icon,
-    required this.label,
-    required this.bgColor,
-    required this.iconColor,
-    required this.textColor,
-  });
-  final IconData icon;
-  final String label;
-  final Color bgColor, iconColor, textColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      decoration:
-          BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12.r)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16.w, color: iconColor),
-          6.kw,
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: textColor)),
         ],
       ),
     );
@@ -1068,55 +894,50 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _DetailCard extends StatelessWidget {
-  const _DetailCard({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.label,
-    required this.value,
-    this.subtitle,
-    this.subtitleColor,
-  });
-  final IconData icon;
-  final Color iconBg, iconColor;
-  final String label, value;
-  final String? subtitle;
-  final Color? subtitleColor;
+class _BookingDetailShimmer extends StatelessWidget {
+  const _BookingDetailShimmer();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-              color: const Color(0xFF3C539A).withOpacity(0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 8))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-                color: iconBg, borderRadius: BorderRadius.circular(12.r)),
-            child: Icon(icon, color: iconColor, size: 20.w),
-          ),
-          10.kh,
-          label.s(11).w(500).c(const Color(0xFF64748B)),
-          4.kh,
-          value.s(14).w(700).c(const Color(0xFF1E293B)),
-          if (subtitle != null) ...[
-            2.kh,
-            subtitle!.s(12).w(500).c(subtitleColor ?? const Color(0xFF64748B))
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade200,
+      highlightColor: Colors.grey.shade50,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              height: 300.h,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(28.r),
+                  bottomRight: Radius.circular(28.r),
+                ),
+              ),
+            ),
+            16.kh,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Column(
+                children: List.generate(
+                  4,
+                  (_) => Padding(
+                    padding: EdgeInsets.only(bottom: 12.h),
+                    child: Container(
+                      height: 76.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18.r),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
-        ],
+        ),
       ),
     );
   }

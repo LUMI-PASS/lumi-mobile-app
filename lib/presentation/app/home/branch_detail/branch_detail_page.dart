@@ -1,14 +1,15 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/styles/ios_text_styles.dart';
+import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/common/utils/strip_html.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/class_item_widget.dart';
@@ -27,7 +28,6 @@ class BranchDetailPage extends StatefulWidget {
 
 class _BranchDetailPageState extends State<BranchDetailPage> {
   List<String> _galleryImages = [];
-  bool _isLoadingImages = true;
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
 
@@ -41,7 +41,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
   @override
   void initState() {
     super.initState();
-    _loadImages();
+    _galleryImages = _resolveImagesFromBranch(widget.branch);
     _loadClasses();
     _startAutoSlide();
   }
@@ -52,32 +52,18 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
     super.dispose();
   }
 
-  Future<void> _loadImages() async {
-    final branchId = widget.branch.id;
-    if (branchId == null) {
-      setState(() => _isLoadingImages = false);
-      return;
+  List<String> _resolveImagesFromBranch(HomBranch? branch) {
+    final out = <String>[];
+    if (branch == null) return out;
+    for (final s in branch.images ?? const []) {
+      final url = sanitizeImageUrl(s);
+      if (url != null && url.isNotEmpty && !out.contains(url)) out.add(url);
     }
-
-    if (widget.branch.hasPhoto == true) {
-      setState(() {
-        _galleryImages = [PhotoService.getImageUrl(branchId)];
-      });
+    final cover = sanitizeImageUrl(branch.image);
+    if (cover != null && cover.isNotEmpty && !out.contains(cover)) {
+      out.insert(0, cover);
     }
-
-    try {
-      final photos =
-          await PhotoService.instance.getBranchPhotos(branchId, limit: 5);
-      if (mounted && photos.isNotEmpty) {
-        setState(() {
-          _galleryImages = photos;
-          _isLoadingImages = false;
-        });
-        return;
-      }
-    } catch (_) {}
-
-    if (mounted) setState(() => _isLoadingImages = false);
+    return out;
   }
 
   void _startAutoSlide() {
@@ -105,10 +91,10 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
 
     try {
       final repo = getIt<HomeRepository>();
-      final result = await repo.explore(
+      final result = await repo.getBranchClasses(
+        branchId,
         page: page,
         limit: 10,
-        branchId: branchId,
       );
       if (mounted) {
         setState(() {
@@ -122,12 +108,20 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
           _classesError = null;
           _isLoadingClasses = false;
           _isLoadingMore = false;
+
+          // If the navigation-passed branch had no images, backfill from the
+          // first class's branch — the classes endpoint returns full branch
+          // data including image/images on each class object.
+          if (!append && _galleryImages.isEmpty && _classes.isNotEmpty) {
+            final enriched = _resolveImagesFromBranch(_classes.first.branch);
+            if (enriched.isNotEmpty) _galleryImages = enriched;
+          }
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _classesError = 'Failed to load classes';
+          _classesError = 'branch_failed_classes'.tr();
           _isLoadingClasses = false;
           _isLoadingMore = false;
         });
@@ -190,19 +184,18 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                                   highlightColor: Colors.grey.shade50,
                                   child: Container(color: Colors.white),
                                 ),
-                                errorWidget: (_, __, ___) => Assets
-                                    .images.defaultImage
-                                    .image(fit: BoxFit.cover),
-                              ),
-                            )
-                          : _isLoadingImages
-                              ? Shimmer.fromColors(
+                                errorWidget: (_, __, ___) => Shimmer.fromColors(
                                   baseColor: Colors.grey.shade200,
                                   highlightColor: Colors.grey.shade50,
                                   child: Container(color: Colors.white),
-                                )
-                              : Assets.images.defaultImage
-                                  .image(fit: BoxFit.cover),
+                                ),
+                              ),
+                            )
+                          : Shimmer.fromColors(
+                              baseColor: Colors.grey.shade200,
+                              highlightColor: Colors.grey.shade50,
+                              child: Container(color: Colors.white),
+                            ),
                     ),
                   ),
 
@@ -335,15 +328,37 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            "Address"
+                            'branch_address'
+                                .tr()
                                 .s(12)
                                 .w(600)
                                 .c(const Color(0xFF6B7280)),
                             4.kh,
-                            (branch.address ?? "No address")
+                            (branch.address ?? 'branch_no_address'.tr())
                                 .s(14)
                                 .w(500)
                                 .c(primary),
+                            if ((branch.landmark ?? '').isNotEmpty) ...[
+                              4.kh,
+                              Row(
+                                children: [
+                                  Icon(Icons.place_outlined,
+                                      size: 13.w,
+                                      color: const Color(0xFF6B7280)),
+                                  4.kw,
+                                  Expanded(
+                                    child: Text(
+                                      branch.landmark!,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: const Color(0xFF6B7280),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -386,7 +401,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              "View on Maps"
+                              'branch_view_on_maps'
+                                  .tr()
                                   .s(12)
                                   .w(600)
                                   .c(const Color(0xFF6B7280)),
@@ -405,7 +421,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                                         border: Border.all(
                                             color: const Color(0xFFE0E7FF)),
                                       ),
-                                      child: "Build Route"
+                                      child: 'branch_build_route'
+                                          .tr()
                                           .s(12)
                                           .w(600)
                                           .c(const Color(0xFF4F46E5)),
@@ -455,7 +472,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                 20.kh,
 
                 // About section
-                if ((branch.description ?? "").isNotEmpty)
+                if (stripHtml(branch.description).isNotEmpty)
                   Container(
                     padding: EdgeInsets.all(16.w),
                     decoration: BoxDecoration(
@@ -487,7 +504,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                               ),
                             ),
                             10.kw,
-                            "About"
+                            'branch_about'
+                                .tr()
                                 .s(16)
                                 .w(700)
                                 .c(const Color(0xFF1E293B)),
@@ -495,7 +513,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                         ),
                         14.kh,
                         Text(
-                          branch.description ?? "",
+                          stripHtml(branch.description),
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w400,
@@ -507,10 +525,10 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                     ),
                   ),
 
-                if ((branch.description ?? "").isNotEmpty) 20.kh,
+                if (stripHtml(branch.description).isNotEmpty) 20.kh,
 
                 // Classes section header
-                "Classes".s(18).w(700).c(const Color(0xFF1E293B)),
+                'branch_classes'.tr().s(18).w(700).c(const Color(0xFF1E293B)),
                 12.kh,
               ]),
             ),
@@ -568,7 +586,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                             border: Border.all(
                                 color: primary.withOpacity(0.2)),
                           ),
-                          child: "Retry".s(14).w(600).c(primary),
+                          child: 'booking_retry'.tr().s(14).w(600).c(primary),
                         ),
                       ),
                     ],
@@ -593,7 +611,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                       ),
                     ],
                   ),
-                  child: "No classes available"
+                  child: 'branch_no_classes'
+                      .tr()
                       .s(14)
                       .w(500)
                       .c(const Color(0xFF6B7280)),
@@ -611,6 +630,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                       child: ClassItemWidget(
                         homClass: _classes[index],
                         width: 1.sw - 32.w,
+                        imageHeight: 190.h,
                         wrapBranch: false,
                         showDescription: false,
                       ),
@@ -656,7 +676,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : "Load more classes"
+                          : 'branch_load_more_classes'
+                              .tr()
                               .s(14)
                               .w(600)
                               .c(Colors.white),
