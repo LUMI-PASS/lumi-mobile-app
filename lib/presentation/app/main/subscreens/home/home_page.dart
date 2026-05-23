@@ -50,6 +50,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   }
 
   @override
+  void onFocusGained(BuildContext context) {
+    context.read<HomeCubit>().refreshIfLanguageChanged();
+    super.onFocusGained(context);
+  }
+
+  @override
   Widget builder(context, state) {
     final primary = context.colors.primary;
     return Scaffold(
@@ -162,7 +168,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                                 ),
                               if (state.newClassesList.isNotEmpty)
                                 SliverToBoxAdapter(
-                                  child: _buildNewClassesSection(context, state),
+                                  child: _buildPopularClassesSection(context, state),
                                 ),
                               if (state.nearClassesList.isNotEmpty) ...[
                                 SliverToBoxAdapter(
@@ -377,12 +383,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     context.tabsRouter.setActiveIndex(_kShortsTabIndex);
   }
 
-  Widget _buildNewClassesSection(BuildContext context, HomeBuildable state) {
+  Widget _buildPopularClassesSection(BuildContext context, HomeBuildable state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         18.kh,
-        _sectionHeader(context, 'newly_added_classes'.tr()),
+        _sectionHeader(context, 'popular_activities'.tr()),
         12.kh,
         NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {

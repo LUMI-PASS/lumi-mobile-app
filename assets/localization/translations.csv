@@ -28,6 +28,7 @@ tab_profile,Профиль,Profil,Profile
 hello,ПРИВЕТ,SALOM,HELLO
 all_categories,Все категории,Barcha kategoriyalar,All Categories
 newly_added_classes,Новые занятия,Yangi mashg'ulotlar,New Activities
+popular_activities,Популярные занятия,Mashhur mashg'ulotlar,Popular Activities
 near_you,Рядом с вами,Yaqiningizda,Near You
 my_account,Мой аккаунт,Mening akkauntim,My Account
 account_info,Информация аккаунта,Akkaunt ma'lumotlari,Account Information
@@ -215,6 +216,8 @@ status_active,Активна,Faol,Active
 status_visited,Посещено,Tashrif buyurilgan,Visited
 status_missed,Пропущено,O’tkazib yuborilgan,Missed
 status_cancelled,Отменена,Bekor qilingan,Cancelled
+status_in_process,В обработке,Ko'rib chiqilmoqda,In Process
+status_canceled_by_centre,Отменено центром,Markaz tomonidan bekor qilingan,Cancelled by Centre
 status_pending,Ожидание,Kutilmoqda,Pending
 your_tickets,Ваши билеты,Chiptalaringiz,Your tickets
 tickets_count,{} билет(ов),{} chipta,{} tickets
@@ -237,6 +240,8 @@ ticket_pending_label,Билет в обработке,Chipta tayyorlanmoqda,Pend
 time_from,С,Dan,From
 time_to,До,Gacha,To
 duration_unbounded,Не ограничено,Cheklanmagan,Unlimited
+duration_h_unit,ч,soat,h
+duration_min_unit,мин,daq,min
 empty_value_dash,—,—,—
 opening_payment,Открываем оплату...,To‘lov ochilmoqda...,Opening payment...
 pay_now,Оплатить,To‘lash,Pay now
@@ -724,3 +729,7 @@ activities_limit,Лимит занятий,Mashg'ulotlar limiti,Activities limit
 coupon_plans_title,Купоны со скидками,Chegirmali kuponlar,Discount Coupons
 coupon_plans_subtitle,Купите купон и получайте скидку при бронировании занятий,Kupon sotib oling va mashg'ulotlarni bron qilishda chegirma oling,Buy a coupon and save on activity bookings
 get_coupon,Получить купон,Kupon olish,Get Coupon
+book_pending_title,Заявка отправлена!,Ariza yuborildi!,Booking Request Sent!
+book_pending_subtitle,"Центр рассмотрит вашу заявку и подтвердит бронирование. Вы получите уведомление, когда оно будет одобрено.","Markaz so'rovingizni ko'rib chiqadi va bronni tasdiqlaydi. Tasdiqlanganda bildirishnoma olasiz.","The centre will review your request and confirm the booking. You'll be notified once it's approved."
+book_pending_note,"После подтверждения вы получите уведомление для оплаты.","Tasdiqlangandan so'ng to'lov uchun bildirishnoma olasiz.","After approval, you'll receive a notification to complete payment."
+book_pending_done,Понятно!,Tushunarli!,Got it!
