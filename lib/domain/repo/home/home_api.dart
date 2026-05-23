@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.dart';
 
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
@@ -75,6 +75,13 @@ class HomeApi {
     return _dio.get('tariffs/', queryParameters: {'lang': currentLang});
   }
 
+  Future<Response> getPremiumPlans({int page = 1, int limit = 12}) {
+    return _dio.get(
+      'https://api.adminka.lumipass.uz/api/premium-plans',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+  }
+
   Future<Response> getCategories() {
     return _dio.get('categories/', queryParameters: {'lang': currentLang});
   }
@@ -147,6 +154,24 @@ class HomeApi {
     return _dio.patch('bookings/$bookingId/cancel',
         queryParameters: {'lang': currentLang},
         data: {'reason': reason});
+  }
+
+  /// Dedicated endpoint for the branch-detail screen — pulls only the classes
+  /// for one branch instead of routing through the full /discovery/explore
+  /// (which also fetches categories, banners, and unrelated branch data).
+  Future<Response> getBranchClasses(
+    String branchId, {
+    int page = 1,
+    int limit = 10,
+  }) {
+    return _dio.get(
+      'branches/$branchId/classes',
+      queryParameters: {
+        'page': page,
+        'limit': limit,
+        'lang': currentLang,
+      },
+    );
   }
 
   Future<Response> explore({
@@ -223,6 +248,7 @@ class HomeApi {
     int page = 1,
     int limit = 10,
     String? search,
+    String? categoryId,
     String? sortBy,
     double? lat,
     double? lng,
@@ -232,9 +258,19 @@ class HomeApi {
       'limit': limit,
       'lang': currentLang,
       if (search != null && search.isNotEmpty) 'search': search,
+      if (categoryId != null) 'category_id': categoryId,
       if (sortBy != null) 'sort_by': sortBy,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
+    });
+  }
+
+  /// Returns the count of activities that have a discount_percentage >= [minDiscount].
+  /// Used on the coupon success screen to tell the user how many activities
+  /// their plan applies to.
+  Future<Response> getEligibleCount(int minDiscount) {
+    return _dio.get('discovery/eligible-count', queryParameters: {
+      'min_discount': minDiscount,
     });
   }
 }

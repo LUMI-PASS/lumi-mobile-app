@@ -733,3 +733,10 @@ book_pending_title,Заявка отправлена!,Ariza yuborildi!,Booking R
 book_pending_subtitle,"Центр рассмотрит вашу заявку и подтвердит бронирование. Вы получите уведомление, когда оно будет одобрено.","Markaz so'rovingizni ko'rib chiqadi va bronni tasdiqlaydi. Tasdiqlanganda bildirishnoma olasiz.","The centre will review your request and confirm the booking. You'll be notified once it's approved."
 book_pending_note,"После подтверждения вы получите уведомление для оплаты.","Tasdiqlangandan so'ng to'lov uchun bildirishnoma olasiz.","After approval, you'll receive a notification to complete payment."
 book_pending_done,Понятно!,Tushunarli!,Got it!
+coupon_activated_title,Купон активирован!,Kupon faollashtirildi!,Coupon Activated!
+coupon_activated_badge,КУПОН АКТИВЕН,KUPON FAOL,COUPON ACTIVE
+coupon_discount_label,скидка на занятия,mashg'ulotlarga chegirma,off on activities
+coupon_eligible_count,Доступно для {count} занятий,{count} ta mashg'ulot uchun mavjud,Available for {count} activities
+coupon_eligible_loading,Считаем занятия...,Mashg'ulotlar hisoblanmoqda...,Counting activities...
+coupon_start_exploring,Начать поиск,Qidiruvni boshlash,Start Exploring
+coupon_activated_subtitle,Ваш план активирован. Бронируйте занятия со скидкой {percent}%.,Rejangiz faollashtirildi. {percent}% chegirma bilan mashg'ulotlarni bron qiling.,Your plan is active. Book activities with {percent}% off.

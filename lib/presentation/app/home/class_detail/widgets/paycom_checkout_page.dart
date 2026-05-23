@@ -12,6 +12,7 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
+import 'package:lumi_pass/presentation/app/home/plans/coupon_success_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -99,9 +100,22 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
         await getIt<Storage>().planDiscountPercentage.set(widget.planDiscountPercentage!);
       }
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const PremiumSuccessPage()),
-      );
+      // If the plan carries a coupon discount, show the coupon success screen
+      // (which also fetches and displays the eligible activity count).
+      // For plans without a discount, fall back to the generic premium success.
+      if (widget.planDiscountPercentage != null && widget.planDiscountPercentage! > 0) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => CouponSuccessPage(
+              discountPercentage: widget.planDiscountPercentage!,
+            ),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const PremiumSuccessPage()),
+        );
+      }
       return;
     }
     if (!mounted) return;
