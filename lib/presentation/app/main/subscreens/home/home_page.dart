@@ -402,9 +402,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           },
           child: Builder(
             builder: (context) {
-              // image height + card padding (8+8) + body block
-              const imgH = 100.0;
-              final rowH = imgH.h + 16 + 168.h;
+              // imageHeight passed to ClassItemWidget + card padding (8+8) + body.
+              // Extra 20.h added so the two-line discounted price row is never clipped.
+              final rowH = 130.h + 16 + 188.h;
               return SizedBox(
                 height: rowH,
                 child: Stack(

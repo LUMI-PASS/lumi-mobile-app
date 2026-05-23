@@ -73,9 +73,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     final storage = getIt<Storage>();
     final hasPremium = storage.hasPremium() == true;
     final couponPct = storage.planDiscountPercentage() ?? 0;
-    final partnerPct = hc?.discountPercentage ?? 0;
-    // Show badge only when user has a coupon AND partner discount > coupon discount.
-    final showDiscountBadge = hasPremium && couponPct > 0 && partnerPct > couponPct;
+    // Show badge on every activity when the user has an active coupon.
+    final showDiscountBadge = hasPremium && couponPct > 0;
 
     // Parse comma-separated categories into individual labels.
     final categories = (hc?.category ?? '')
@@ -485,9 +484,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     final storage = getIt<Storage>();
     final hasPremium = storage.hasPremium() == true;
     final planPct = storage.planDiscountPercentage() ?? 0;
-    // Show discounted price only when user has a coupon AND partner discount
-    // is strictly greater than the coupon discount.
-    if (!hasPremium || planPct <= 0 || discountPct <= planPct) {
+    // Show discounted price for every activity when the user has an active coupon.
+    if (!hasPremium || planPct <= 0) {
       return originalWidget;
     }
     final discounted = originalPrice * (1 - planPct / 100);
