@@ -69,6 +69,14 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     final hc = widget.homClass;
     final fullPrice = hc?.price;
 
+    // Coupon (plan) discount state — used for badge and price display.
+    final storage = getIt<Storage>();
+    final hasPremium = storage.hasPremium() == true;
+    final couponPct = storage.planDiscountPercentage() ?? 0;
+    final partnerPct = hc?.discountPercentage ?? 0;
+    // Show badge only when user has a coupon AND partner discount > coupon discount.
+    final showDiscountBadge = hasPremium && couponPct > 0 && partnerPct > couponPct;
+
     // Parse comma-separated categories into individual labels.
     final categories = (hc?.category ?? '')
         .split(',')
@@ -229,8 +237,12 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                       ),
                     ),
 
-                  // Discount badge — bottom-left of image
-                  if ((hc?.discountPercentage ?? 0) > 0)
+                  // Discount badge — bottom-left of image.
+                  // Only shown when the user has bought a coupon AND the
+                  // partner's discount is strictly greater than the coupon
+                  // discount. The badge shows the coupon discount (not the
+                  // partner discount).
+                  if (showDiscountBadge)
                     Positioned(
                       left: 8.w,
                       bottom: 8.h,
@@ -251,7 +263,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                           ],
                         ),
                         child: Text(
-                          '−${hc!.discountPercentage}%',
+                          '−$couponPct%',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11.sp,
@@ -447,9 +459,14 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
       return Text('price_free'.tr(), style: priceStyle);
     }
     if (showFrom) {
-      return Text(
-        'price_from'.tr(args: [effectivePrice.toRawUzsPrice()]),
-        style: priceStyle,
+      return _applyPlanDiscount(
+        originalWidget: Text(
+          'price_from'.tr(args: [effectivePrice.toRawUzsPrice()]),
+          style: priceStyle,
+        ),
+        originalPrice: effectivePrice,
+        discountPct: discountPct,
+        showFrom: true,
       );
     }
     return _applyPlanDiscount(
@@ -463,20 +480,30 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     required Widget originalWidget,
     required num originalPrice,
     required int discountPct,
+    bool showFrom = false,
   }) {
     final storage = getIt<Storage>();
     final hasPremium = storage.hasPremium() == true;
     final planPct = storage.planDiscountPercentage() ?? 0;
-    if (!hasPremium || planPct <= 0 || discountPct < planPct) {
+    // Show discounted price only when user has a coupon AND partner discount
+    // is strictly greater than the coupon discount.
+    if (!hasPremium || planPct <= 0 || discountPct <= planPct) {
       return originalWidget;
     }
     final discounted = originalPrice * (1 - planPct / 100);
+    // Build the label strings, prefixing "from" when applicable.
+    final originalLabel = showFrom
+        ? 'price_from'.tr(args: [originalPrice.toRawUzsPrice()])
+        : originalPrice.toRawUzsPrice();
+    final discountedLabel = showFrom
+        ? 'price_from'.tr(args: [discounted.toRawUzsPrice()])
+        : discounted.toRawUzsPrice();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          originalPrice.toRawUzsPrice(),
+          originalLabel,
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w500,
@@ -486,7 +513,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
           ),
         ),
         Text(
-          discounted.toRawUzsPrice(),
+          discountedLabel,
           style: TextStyle(
             fontSize: 16.sp,
             fontWeight: FontWeight.w900,

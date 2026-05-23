@@ -51,7 +51,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   @override
   void onFocusGained(BuildContext context) {
-    context.read<HomeCubit>().refreshIfLanguageChanged();
+    // Handles language changes AND post-coupon-purchase discount refresh.
+    context.read<HomeCubit>().refreshOnFocusGained();
     super.onFocusGained(context);
   }
 

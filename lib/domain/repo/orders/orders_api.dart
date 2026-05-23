@@ -19,6 +19,49 @@ class OrdersApi {
     return ClassFullModel.fromJson(data);
   }
 
+  /// Returns the bookable days inside [from, to] for an activity. Each entry
+  /// holds the slots that apply on that date — empty when the class doesn't
+  /// run that day. Powers the calendar carousel without dumping the full
+  /// recurring schedule.
+  Future<List<ScheduleDay>> getScheduleDays(
+    String activityId, {
+    required String from,
+    required String to,
+  }) async {
+    final response = await _dio.get(
+      'schedules/activity/$activityId/days',
+      queryParameters: {'from': from, 'to': to},
+    );
+    final raw = response.data;
+    final list = raw is Map && raw['data'] is List
+        ? raw['data'] as List
+        : (raw is List ? raw : const []);
+    return list
+        .whereType<Map>()
+        .map((e) => ScheduleDay.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  /// Returns the slots for a single concrete date. Empty when the class
+  /// doesn't run that day or the date is outside every active window.
+  Future<List<ScheduleSlotInfo>> getScheduleSlotsForDate(
+    String activityId, {
+    required String date,
+  }) async {
+    final response = await _dio.get(
+      'schedules/activity/$activityId/slots',
+      queryParameters: {'date': date},
+    );
+    final raw = response.data;
+    final list = raw is Map && raw['slots'] is List
+        ? raw['slots'] as List
+        : const [];
+    return list
+        .whereType<Map>()
+        .map((e) => ScheduleSlotInfo.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
   /// Paginated list of the authenticated user's orders (= transactions). The
   /// top-level payload is not wrapped in `data:`; pagination fields sit at
   /// the root.
@@ -91,6 +134,20 @@ class OrdersApi {
       'orders/$orderId/cancel',
       data: {'reason': reason},
     );
+  }
+
+  /// Returns the current user's active subscription (including
+  /// [discount_percentage]) so the app can sync premium status across devices
+  /// on startup. Returns null when no subscription is active (server answered
+  /// with `data: null`). Throws on network / auth errors — callers should
+  /// catch and keep the existing local state.
+  Future<Map<String, dynamic>?> getActiveSubscription() async {
+    final response = await _dio.get('transaction/subscriptions/active');
+    final raw = response.data;
+    if (raw is Map && raw['data'] is Map) {
+      return Map<String, dynamic>.from(raw['data'] as Map);
+    }
+    return null;
   }
 
   /// Kicks off a subscription purchase. Creates a PENDING order on the

@@ -1,58 +1,67 @@
 import 'package:dio/dio.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'home_state.dart';
 
 @injectable
 class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
-  HomeCubit(this._repo) : super(const HomeBuildable());
+  HomeCubit(this._repo, this._storage) : super(const HomeBuildable());
   final HomeRepository _repo;
+  final Storage _storage;
+
+  String _lastLang = '';
+  // Track premium/coupon state so we can detect changes on focus regain.
+  bool _lastKnownHasPremium = false;
+  int _lastKnownCouponPct = 0;
 
   // Store location as instance fields so they're available immediately
   double? _lat;
   double? _lng;
 
+  // Sync guards to prevent re-entrant load-more calls
+  bool _newLoadLock = false;
+  bool _nearLoadLock = false;
+
   static const int _pageLimit = 10;
 
-  /// Request location permission and fetch position, then load home feed.
   Future<void> initWithLocation() async {
-    await _resolveLocation();
+    _lastLang = currentLang;
+    _lastKnownHasPremium = _storage.hasPremium() == true;
+    _lastKnownCouponPct = _storage.planDiscountPercentage() ?? 0;
     await getHome();
   }
 
-  Future<void> _resolveLocation() async {
-    try {
-      // Check if location services are enabled
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
+  Future<void> refreshIfLanguageChanged() async {
+    final lang = currentLang;
+    if (_lastLang == lang) return;
+    _lastLang = lang;
+    await refreshSilently();
+  }
 
-      // Check / request permission
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return;
-      }
+  /// Called when the home tab regains focus. Silently refreshes when language
+  /// OR coupon/premium status has changed since the last load, so discount
+  /// badges and prices update immediately after a plan purchase.
+  Future<void> refreshOnFocusGained() async {
+    final lang = currentLang;
+    final hasPremium = _storage.hasPremium() == true;
+    final couponPct = _storage.planDiscountPercentage() ?? 0;
 
-      // Try last known first (instant), fall back to current
-      final position = await Geolocator.getLastKnownPosition() ??
-          await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.high,
-              timeLimit: Duration(seconds: 10),
-            ),
-          );
-      _lat = position.latitude;
-      _lng = position.longitude;
-      build((b) => b.copyWith(lat: _lat, lng: _lng));
-    } catch (_) {
-      // Location unavailable - proceed without it
-    }
+    final langChanged = _lastLang != lang;
+    final couponChanged =
+        _lastKnownHasPremium != hasPremium || _lastKnownCouponPct != couponPct;
+
+    if (!langChanged && !couponChanged) return;
+
+    _lastLang = lang;
+    _lastKnownHasPremium = hasPremium;
+    _lastKnownCouponPct = couponPct;
+
+    await refreshSilently();
   }
 
   Future<void> getHome() async {
@@ -71,6 +80,11 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       buildOnData: (data) {
         final newClasses = data.data?.newClasses?.data ?? [];
         final nearClasses = data.data?.nearClasses?.data ?? [];
+        final firstName = data.data?.forUser?.firstName;
+        if (firstName != null && firstName.isNotEmpty) {
+          _storage.parentName.set(firstName);
+          displayNameNotifier.value = firstName;
+        }
         return buildable.copyWith(
           homeModel: data,
           newClassesList: newClasses,
@@ -112,6 +126,11 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       );
       final newClasses = data.data?.newClasses?.data ?? [];
       final nearClasses = data.data?.nearClasses?.data ?? [];
+      final silentName = data.data?.forUser?.firstName;
+      if (silentName != null && silentName.isNotEmpty) {
+        _storage.parentName.set(silentName);
+        displayNameNotifier.value = silentName;
+      }
       build((b) => b.copyWith(
             homeModel: data,
             newClassesList: newClasses,
@@ -125,7 +144,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   }
 
   Future<void> loadMoreNewClasses() async {
-    if (buildable.isLoadingNewClasses || !buildable.hasMoreNewClasses) return;
+    if (_newLoadLock || buildable.isLoadingNewClasses || !buildable.hasMoreNewClasses) return;
+    _newLoadLock = true;
     build((b) => b.copyWith(isLoadingNewClasses: true));
 
     try {
@@ -148,11 +168,14 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
           ));
     } catch (_) {
       build((b) => b.copyWith(isLoadingNewClasses: false));
+    } finally {
+      _newLoadLock = false;
     }
   }
 
   Future<void> loadMoreNearClasses() async {
-    if (buildable.isLoadingNearClasses || !buildable.hasMoreNearClasses) return;
+    if (_nearLoadLock || buildable.isLoadingNearClasses || !buildable.hasMoreNearClasses) return;
+    _nearLoadLock = true;
     build((b) => b.copyWith(isLoadingNearClasses: true));
 
     try {
@@ -175,6 +198,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
           ));
     } catch (_) {
       build((b) => b.copyWith(isLoadingNearClasses: false));
+    } finally {
+      _nearLoadLock = false;
     }
   }
 
