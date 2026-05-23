@@ -49,12 +49,15 @@ class Storage {
 
   BaseStorage<bool> get hasPremium => BaseStorage(_box, 'hasPremium');
 
+  BaseStorage<int> get planDiscountPercentage => BaseStorage(_box, 'planDiscountPercentage');
+
   Future<void> logout() async {
     await tokens.set(null);
     await code.set(null);
     await codeHash.set(null);
     await deviceToken.set(null);
     await hasPremium.set(null);
+    await planDiscountPercentage.set(null);
   }
 // BaseStorage<String> get username => BaseStorage(_box, 'username');
 //

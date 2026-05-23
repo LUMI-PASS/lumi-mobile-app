@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,6 +10,7 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,29 +20,84 @@ class PaycomCheckoutPage extends StatefulWidget {
     super.key,
     required this.result,
     this.isSubscription = false,
+    this.planDiscountPercentage,
   });
 
   final CheckoutResult result;
   final bool isSubscription;
+  final int? planDiscountPercentage;
 
   @override
   State<PaycomCheckoutPage> createState() => _PaycomCheckoutPageState();
 }
 
-class _PaycomCheckoutPageState extends State<PaycomCheckoutPage> {
+class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
+    with WidgetsBindingObserver {
   bool _launching = false;
   bool _launched = false;
+  bool _navigated = false;
   String? _error;
+  Timer? _pollTimer;
+
+  // Polling cadence after the user returns from Paycom. We tick fast initially
+  // so the success screen feels instantaneous, then back off — Paycom's
+  // PerformTransaction webhook usually arrives within a couple of seconds.
+  static const _pollInterval = Duration(seconds: 2);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _openPaycom());
   }
 
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Paycom opens externally; the only way back is the OS resuming this app.
+    // Treat resume as the trigger to poll the order status and auto-advance.
+    if (state == AppLifecycleState.resumed && _launched) {
+      _checkPaymentStatus();
+      _startPolling();
+    } else if (state == AppLifecycleState.paused) {
+      _pollTimer?.cancel();
+    }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) => _checkPaymentStatus());
+  }
+
+  Future<void> _checkPaymentStatus() async {
+    if (_navigated || !mounted) return;
+    final orderId = widget.result.orderId;
+    if (orderId.isEmpty) return;
+    try {
+      final detail = await getIt<OrdersApi>().getOrderDetail(orderId);
+      if (detail.order.isPaid) {
+        await _finishSuccess();
+      }
+    } catch (_) {
+      // Network hiccups during polling are non-fatal — the next tick retries.
+    }
+  }
+
   Future<void> _finishSuccess() async {
+    if (_navigated) return;
+    _navigated = true;
+    _pollTimer?.cancel();
     if (widget.isSubscription) {
       await getIt<Storage>().hasPremium.set(true);
+      if (widget.planDiscountPercentage != null) {
+        await getIt<Storage>().planDiscountPercentage.set(widget.planDiscountPercentage!);
+      }
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const PremiumSuccessPage()),
@@ -65,6 +123,7 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage> {
         setState(() => _error = 'Could not open Paycom checkout.');
       } else {
         setState(() => _launched = true);
+        _startPolling();
       }
     } catch (e) {
       setState(() => _error = e.toString());
@@ -170,32 +229,30 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage> {
                     12.kh,
                   ],
                   const Spacer(),
+                  if (_launched) ...[
+                    _StatusIndicator(
+                      message: isSub
+                          ? 'Waiting for payment confirmation. Your subscription will activate automatically.'
+                          : 'Waiting for payment confirmation. Your booking will appear automatically.',
+                    ),
+                    16.kh,
+                  ],
                   _PrimaryGradientButton(
-                    label: _launched
-                        ? 'Open Paycom again'
-                        : 'Open Paycom',
+                    label: _launched ? 'Open Paycom again' : 'Open Paycom',
                     loading: _launching,
                     onTap: _launching ? null : _openPaycom,
                   ),
-                  12.kh,
-                  _SecondaryButton(
-                    label: isSub
-                        ? 'I completed the payment'
-                        : 'I completed the payment',
-                    onTap: _finishSuccess,
-                  ),
                   14.kh,
-                  Text(
-                    _launched
-                        ? 'Once you finish in Paycom, tap “I completed the payment”. Your ${isSub ? 'subscription' : 'booking'} will activate after confirmation.'
-                        : 'You will be redirected to Paycom to complete payment.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: const Color(0xFF64748B),
-                      height: 1.4,
+                  if (!_launched)
+                    Text(
+                      'You will be redirected to Paycom to complete payment.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: const Color(0xFF64748B),
+                        height: 1.4,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -393,33 +450,44 @@ class _PrimaryGradientButton extends StatelessWidget {
   }
 }
 
-class _SecondaryButton extends StatelessWidget {
-  const _SecondaryButton({required this.label, required this.onTap});
+class _StatusIndicator extends StatelessWidget {
+  const _StatusIndicator({required this.message});
 
-  final String label;
-  final VoidCallback onTap;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF475569),
+    final primary = context.colors.primary;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 16.w,
+            height: 16.w,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(primary),
             ),
           ),
-        ),
+          12.kw,
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: const Color(0xFF475569),
+                height: 1.4,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

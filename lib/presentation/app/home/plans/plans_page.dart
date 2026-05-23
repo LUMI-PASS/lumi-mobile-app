@@ -7,7 +7,7 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
+import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -24,7 +24,7 @@ class PlansPage extends StatefulWidget {
 class _PlansPageState extends State<PlansPage> {
   final HomeRepository _repo = getIt<HomeRepository>();
 
-  List<Tariff> _tariffs = [];
+  List<PremiumPlan> _plans = [];
   bool _isLoading = true;
   String? _purchasingId;
 
@@ -37,9 +37,9 @@ class _PlansPageState extends State<PlansPage> {
   Future<void> _load() async {
     setState(() => _isLoading = true);
     try {
-      final data = await _repo.getTariffs();
+      final data = await _repo.getPremiumPlans();
       if (!mounted) return;
-      setState(() => _tariffs = data);
+      setState(() => _plans = data.where((p) => p.isActive != false).toList());
     } catch (_) {
       // Leave empty list — empty state will render.
     } finally {
@@ -47,19 +47,22 @@ class _PlansPageState extends State<PlansPage> {
     }
   }
 
-  Future<void> _purchase(Tariff t) async {
-    if (t.id == null || _purchasingId != null) return;
-    setState(() => _purchasingId = t.id);
+  Future<void> _purchase(PremiumPlan plan) async {
+    if (plan.id == null || _purchasingId != null) return;
+    setState(() => _purchasingId = plan.id);
     try {
       final checkout = await getIt<OrdersApi>().checkoutSubscription(
-        tariffId: t.id!,
+        tariffId: plan.id!,
         test: true, // TODO: flip to false before production
       );
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) =>
-              PaycomCheckoutPage(result: checkout, isSubscription: true),
+          builder: (_) => PaycomCheckoutPage(
+            result: checkout,
+            isSubscription: true,
+            planDiscountPercentage: plan.discountPercentage?.round(),
+          ),
         ),
       );
     } catch (e) {
@@ -92,7 +95,7 @@ class _PlansPageState extends State<PlansPage> {
                     child: CircularProgressIndicator(strokeWidth: 2.5),
                   ),
                 )
-              else if (_tariffs.isEmpty)
+              else if (_plans.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: _EmptyState(),
@@ -101,19 +104,19 @@ class _PlansPageState extends State<PlansPage> {
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 32.h),
                   sliver: SliverList.separated(
-                    itemCount: _tariffs.length,
+                    itemCount: _plans.length,
                     separatorBuilder: (_, __) => 14.kh,
                     itemBuilder: (context, index) {
-                      final t = _tariffs[index];
-                      final popularIndex = _tariffs.length >= 2
-                          ? (_tariffs.length ~/ 2)
+                      final plan = _plans[index];
+                      final popularIndex = _plans.length >= 2
+                          ? (_plans.length ~/ 2)
                           : -1;
                       return _PlanCard(
-                        tariff: t,
+                        plan: plan,
                         isPopular: index == popularIndex,
-                        isPurchasing: _purchasingId == t.id,
-                        disabled: _purchasingId != null && _purchasingId != t.id,
-                        onChoose: () => _purchase(t),
+                        isPurchasing: _purchasingId == plan.id,
+                        disabled: _purchasingId != null && _purchasingId != plan.id,
+                        onChoose: () => _purchase(plan),
                       );
                     },
                   ),
@@ -200,7 +203,7 @@ class _Header extends StatelessWidget {
                                 color: Colors.white.withOpacity(0.35)),
                           ),
                           child: Text(
-                            'plans_title'.tr().toUpperCase(),
+                            'coupon_plans_title'.tr().toUpperCase(),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10.sp,
@@ -211,7 +214,7 @@ class _Header extends StatelessWidget {
                         ),
                         14.kh,
                         Text(
-                          'plans_title'.tr(),
+                          'coupon_plans_title'.tr(),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 30.sp,
@@ -222,7 +225,7 @@ class _Header extends StatelessWidget {
                         ),
                         10.kh,
                         Text(
-                          'plans_subtitle'.tr(),
+                          'coupon_plans_subtitle'.tr(),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.85),
                             fontSize: 14.sp,
@@ -267,14 +270,14 @@ class _Header extends StatelessWidget {
 
 class _PlanCard extends StatelessWidget {
   const _PlanCard({
-    required this.tariff,
+    required this.plan,
     required this.isPopular,
     required this.isPurchasing,
     required this.disabled,
     required this.onChoose,
   });
 
-  final Tariff tariff;
+  final PremiumPlan plan;
   final bool isPopular;
   final bool isPurchasing;
   final bool disabled;
@@ -283,11 +286,15 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = context.colors.primary;
-    final features = (tariff.description ?? '')
-        .split(RegExp(r'[\r\n]+'))
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final discount = plan.discountPercentage ?? 0;
+    final features = <String>[
+      if ((plan.activitiesLimit ?? 0) > 0)
+        '${plan.activitiesLimit} ${'activities_limit'.tr()}',
+      if ((plan.durationDays ?? 0) > 0)
+        '${plan.durationDays} ${'days'.tr()}',
+      if (discount > 0)
+        '${'discount_on_activities'.tr()}: ${discount.toStringAsFixed(discount % 1 == 0 ? 0 : 1)}%',
+    ];
 
     final card = Container(
       padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 20.h),
@@ -315,7 +322,7 @@ class _PlanCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  tariff.title ?? '',
+                  plan.localizedTitle,
                   style: TextStyle(
                     fontSize: 17.sp,
                     fontWeight: FontWeight.w800,
@@ -359,7 +366,7 @@ class _PlanCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                (tariff.price ?? 0).toRawUzsPrice(),
+                (plan.price ?? 0).toRawUzsPrice(),
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w900,
@@ -369,15 +376,22 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
               8.kw,
-              if (tariff.validDays != null)
+              if (discount > 0)
                 Padding(
                   padding: EdgeInsets.only(bottom: 6.h),
-                  child: Text(
-                    '/ ${tariff.validDays} ${'days'.tr()}',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade500,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF16A34A).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Text(
+                      '-${discount.toStringAsFixed(discount % 1 == 0 ? 0 : 1)}%',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF16A34A),
+                      ),
                     ),
                   ),
                 ),
@@ -500,7 +514,7 @@ class _ChooseButton extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'choose_plan'.tr(),
+                      'get_coupon'.tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w800,

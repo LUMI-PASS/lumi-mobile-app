@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
@@ -11,6 +12,8 @@ import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ClassItemWidget extends StatefulWidget {
@@ -18,6 +21,7 @@ class ClassItemWidget extends StatefulWidget {
     super.key,
     required this.homClass,
     this.width,
+    this.imageHeight,
     this.showDescription = true,
     this.wrapBranch = true,
     this.onViewAsReels,
@@ -25,6 +29,7 @@ class ClassItemWidget extends StatefulWidget {
 
   final HomClass? homClass;
   final double? width;
+  final double? imageHeight;
   final bool showDescription;
   final bool wrapBranch;
   final VoidCallback? onViewAsReels;
@@ -64,14 +69,19 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     final hc = widget.homClass;
     final fullPrice = hc?.price;
 
-    final category = hc?.category ?? '';
+    // Parse comma-separated categories into individual labels.
+    final categories = (hc?.category ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
     final duration = hc?.duration;
     final age = _formatAge(hc?.minAge, hc?.maxAge);
 
     // Clamp card width so layout stays sensible across phones and tablets:
     // narrow phones get a card that doesn't shrink below 240, tablets cap at 320.
     final double resolvedWidth =
-        widget.width ?? (1.sw * 0.7).clamp(240.0, 320.0);
+        widget.width ?? (1.sw * 0.58).clamp(195.0, 255.0);
 
     return Container3d(
       onTap: () => context.router
@@ -99,8 +109,9 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
           // the (clamped) card width on every screen size.
           ClipRRect(
             borderRadius: BorderRadius.circular(12.r),
-            child: AspectRatio(
-              aspectRatio: 4 / 3,
+            child: SizedBox(
+              width: double.infinity,
+              height: widget.imageHeight ?? 130.h,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -117,7 +128,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                         imageUrl: _resolvedImageUrl!,
                         fit: BoxFit.cover,
                         width: double.infinity,
-                        height: double.infinity,
+                        height: 80,
                         placeholder: (_, __) => Shimmer.fromColors(
                           baseColor: Colors.grey.shade200,
                           highlightColor: Colors.grey.shade50,
@@ -138,88 +149,116 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                       height: double.infinity,
                     ),
 
-                  // Top-left chips (category + gender) — no right constraint so video button doesn't overlap
-                  Positioned(
-                    left: 8.w,
-                    top: 8.h,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (category.isNotEmpty)
-                          _buildChip(
-                            text: category,
-                            bgColor: Colors.white.withOpacity(0.92),
-                            textColor: const Color(0xFF4A2FD4),
-                            borderColor: Colors.white.withOpacity(0.8),
-                          ),
-                        if (hc?.gender != null) ...[
-                          4.kw,
-                          _buildGenderChip(hc!.gender!),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  // Video button (top-right) — taps open Shorts tab
-                  if (widget.onViewAsReels != null)
+                  // Top bar: categories (left, expands) + video button (right)
+                  if (categories.isNotEmpty || widget.onViewAsReels != null)
                     Positioned(
-                      top: 8.h,
+                      left: 8.w,
                       right: 8.w,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: widget.onViewAsReels,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10.w, vertical: 6.h),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFA652C7), Color(0xFFFF7093)],
+                      top: 8.h,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (categories.isNotEmpty)
+                            Flexible(
+                              child: widget.wrapBranch
+                                  // Horizontal carousel: first category only, capped width, truncated
+                                  ? ConstrainedBox(
+                                      constraints: BoxConstraints(maxWidth: 100.w),
+                                      child: _buildChip(
+                                        text: categories.first,
+                                        bgColor: Colors.white.withOpacity(0.92),
+                                        textColor: const Color(0xFF4A2FD4),
+                                        borderColor: Colors.white.withOpacity(0.8),
+                                        truncate: true,
+                                      ),
+                                    )
+                                  // Vertical full-width list: all categories, full text
+                                  : Wrap(
+                                      spacing: 4.w,
+                                      runSpacing: 4.h,
+                                      children: categories.map((cat) => _buildChip(
+                                        text: cat,
+                                        bgColor: Colors.white.withOpacity(0.92),
+                                        textColor: const Color(0xFF4A2FD4),
+                                        borderColor: Colors.white.withOpacity(0.8),
+                                      )).toList(),
+                                    ),
                             ),
-                            borderRadius: BorderRadius.circular(20.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    const Color(0xFFA652C7).withOpacity(0.35),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.play_arrow_rounded,
-                                color: Colors.white,
-                                size: 16.sp,
-                              ),
-                              2.kw,
-                              Text(
-                                'Video',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
+                          if (widget.onViewAsReels != null) ...[
+                            if (categories.isNotEmpty) SizedBox(width: 6.w),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: widget.onViewAsReels,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w, vertical: 6.h),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFA652C7), Color(0xFFFF7093)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFA652C7).withOpacity(0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.play_arrow_rounded,
+                                        color: Colors.white, size: 16.sp),
+                                    2.kw,
+                                    Text(
+                                      'Video',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
 
-                  // Duration chip bottom-left with blur effect
-                  if (duration != null)
+                  // Discount badge — bottom-left of image
+                  if ((hc?.discountPercentage ?? 0) > 0)
                     Positioned(
                       left: 8.w,
                       bottom: 8.h,
-                      child: _buildChip(
-                        icon: Icons.access_time_rounded,
-                        text: _formatDuration(duration),
-                        bgColor: const Color(0x990E0C2B),
-                        textColor: Colors.white,
-                        borderColor: Colors.white.withOpacity(0.3),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF6B35), Color(0xFFFF3366)],
+                          ),
+                          borderRadius: BorderRadius.circular(10.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF3366).withOpacity(0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '−${hc!.discountPercentage}%',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -357,9 +396,12 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
           // Price divider + row
           Builder(builder: (context) {
             final snap = ClassPricingCache.get(hc?.id);
-            final effectivePrice = (snap != null && snap.priceMin > 0)
-                ? snap.priceMin
-                : (fullPrice ?? 0);
+            final hasFreeAndPaid = snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
+            final effectivePrice = hasFreeAndPaid
+                ? snap!.priceMinPaid
+                : (snap != null && snap.priceMin > 0)
+                    ? snap.priceMin
+                    : (fullPrice ?? 0);
             if (effectivePrice <= 0) return const SizedBox.shrink();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,32 +409,10 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                 10.kh,
                 Container(height: 1, color: const Color(0xFFE8E4F6)),
                 10.kh,
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInlinePrice(
-                        fullPrice: fullPrice ?? 0,
-                        snap: snap,
-                      ),
-                    ),
-                    if (snap?.scheduleCount != null && snap!.scheduleCount! > 0)
-                      _buildChip(
-                        icon: Icons.event_repeat_rounded,
-                        text: '${snap.scheduleCount} slots',
-                        bgColor: const Color(0xFFEDE8FF),
-                        textColor: const Color(0xFF6C4EF2),
-                        borderColor: const Color(0xFFD6CDFF),
-                      )
-                    else
-                      Text(
-                        '1 ticket',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6B6899),
-                        ),
-                      ),
-                  ],
+                _buildInlinePrice(
+                  fullPrice: fullPrice ?? 0,
+                  snap: snap,
+                  discountPct: hc?.discountPercentage ?? 0,
                 ),
               ],
             );
@@ -405,29 +425,75 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
   Widget _buildInlinePrice({
     required num fullPrice,
     required ClassPricingSnapshot? snap,
+    required int discountPct,
   }) {
-    final effectivePrice =
-        (snap != null && snap.priceMin > 0) ? snap.priceMin : fullPrice;
-    final showFrom = snap != null &&
-        (snap.hasMultiplePrices || snap.rangeCount > 1);
+    // If the cheapest tier is free but paid tiers exist, show the lowest paid price.
+    final hasFreeAndPaid = snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
+    final effectivePrice = hasFreeAndPaid
+        ? snap!.priceMinPaid
+        : (snap != null && snap.priceMin > 0)
+            ? snap.priceMin
+            : fullPrice;
+    final showFrom = hasFreeAndPaid ||
+        (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
 
+    final priceStyle = TextStyle(
+      fontSize: 16.sp,
+      fontWeight: FontWeight.w900,
+      color: const Color(0xFF4A2FD4),
+    );
+
+    if (effectivePrice < 100) {
+      return Text('price_free'.tr(), style: priceStyle);
+    }
     if (showFrom) {
       return Text(
-        'from ${effectivePrice.toRawUzsPrice()}',
-        style: TextStyle(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w900,
-          color: const Color(0xFF4A2FD4),
-        ),
+        'price_from'.tr(args: [effectivePrice.toRawUzsPrice()]),
+        style: priceStyle,
       );
     }
-    return Text(
-      effectivePrice.toRawUzsPrice(),
-      style: TextStyle(
-        fontSize: 16.sp,
-        fontWeight: FontWeight.w900,
-        color: const Color(0xFF4A2FD4),
-      ),
+    return _applyPlanDiscount(
+      originalWidget: Text(effectivePrice.toRawUzsPrice(), style: priceStyle),
+      originalPrice: effectivePrice,
+      discountPct: discountPct,
+    );
+  }
+
+  Widget _applyPlanDiscount({
+    required Widget originalWidget,
+    required num originalPrice,
+    required int discountPct,
+  }) {
+    final storage = getIt<Storage>();
+    final hasPremium = storage.hasPremium() == true;
+    final planPct = storage.planDiscountPercentage() ?? 0;
+    if (!hasPremium || planPct <= 0 || discountPct < planPct) {
+      return originalWidget;
+    }
+    final discounted = originalPrice * (1 - planPct / 100);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          originalPrice.toRawUzsPrice(),
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF9CA3AF),
+            decoration: TextDecoration.lineThrough,
+            decorationColor: const Color(0xFF9CA3AF),
+          ),
+        ),
+        Text(
+          discounted.toRawUzsPrice(),
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF16A34A),
+          ),
+        ),
+      ],
     );
   }
 
@@ -437,6 +503,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     required Color bgColor,
     required Color textColor,
     required Color borderColor,
+    bool truncate = false,
   }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
@@ -452,14 +519,28 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
             Icon(icon, size: 12.sp, color: textColor),
             SizedBox(width: 4.w),
           ],
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w500,
-              color: textColor,
+          if (truncate)
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
+              ),
+            )
+          else
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -470,7 +551,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     if (g == 'MALE') {
       return _buildChip(
         icon: Icons.male_rounded,
-        text: 'Boys',
+        text: 'boys'.tr(),
         bgColor: const Color(0xFF3B82F6).withOpacity(0.85),
         textColor: Colors.white,
         borderColor: Colors.white.withOpacity(0.65),
@@ -479,7 +560,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     if (g == 'FEMALE') {
       return _buildChip(
         icon: Icons.female_rounded,
-        text: 'Girls',
+        text: 'girls'.tr(),
         bgColor: const Color(0xFFEC4899).withOpacity(0.85),
         textColor: Colors.white,
         borderColor: Colors.white.withOpacity(0.65),
@@ -488,7 +569,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     // Both / All
     return _buildChip(
       icon: Icons.people_rounded,
-      text: 'Both',
+      text: 'filter_both'.tr(),
       bgColor: const Color(0xFF8B5CF6).withOpacity(0.85),
       textColor: Colors.white,
       borderColor: Colors.white.withOpacity(0.65),

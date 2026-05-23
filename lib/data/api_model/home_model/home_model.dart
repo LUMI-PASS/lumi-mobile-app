@@ -143,6 +143,9 @@ class HomClass with _$HomClass {
     bool? hasPhoto,
     String? image,
     double? distance,
+    String? videoUrl,
+    String? videoProvider,
+    int? discountPercentage,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,
@@ -259,6 +262,18 @@ class ExploreResult {
   });
 }
 
+/// Slim payload for the branch-detail "Classes" list — no categories or
+/// banners, just paginated classes for one branch.
+class BranchClassesPage {
+  final List<HomClass> classes;
+  final int classesPages;
+
+  const BranchClassesPage({
+    required this.classes,
+    required this.classesPages,
+  });
+}
+
 @freezed
 class HomBranch with _$HomBranch {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -266,6 +281,7 @@ class HomBranch with _$HomBranch {
     String? id,
     String? title,
     String? address,
+    String? landmark,
     double? longitude,
     double? latitude,
     String? partnerId,
@@ -274,6 +290,8 @@ class HomBranch with _$HomBranch {
     double? distance,
     bool? isActive,
     bool? hasPhoto,
+    String? image,
+    List<String>? images,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,

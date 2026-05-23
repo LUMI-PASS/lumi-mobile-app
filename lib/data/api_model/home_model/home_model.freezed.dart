@@ -1994,6 +1994,9 @@ mixin _$HomClass {
   bool? get hasPhoto => throw _privateConstructorUsedError;
   String? get image => throw _privateConstructorUsedError;
   double? get distance => throw _privateConstructorUsedError;
+  String? get videoUrl => throw _privateConstructorUsedError;
+  String? get videoProvider => throw _privateConstructorUsedError;
+  int? get discountPercentage => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -2026,6 +2029,9 @@ abstract class $HomClassCopyWith<$Res> {
       bool? hasPhoto,
       String? image,
       double? distance,
+      String? videoUrl,
+      String? videoProvider,
+      int? discountPercentage,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2062,6 +2068,9 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? distance = freezed,
+    Object? videoUrl = freezed,
+    Object? videoProvider = freezed,
+    Object? discountPercentage = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2131,6 +2140,18 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.distance
           : distance // ignore: cast_nullable_to_non_nullable
               as double?,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      videoProvider: freezed == videoProvider
+          ? _value.videoProvider
+          : videoProvider // ignore: cast_nullable_to_non_nullable
+              as String?,
+      discountPercentage: freezed == discountPercentage
+          ? _value.discountPercentage
+          : discountPercentage // ignore: cast_nullable_to_non_nullable
+              as int?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2184,6 +2205,9 @@ abstract class _$$HomClassImplCopyWith<$Res>
       bool? hasPhoto,
       String? image,
       double? distance,
+      String? videoUrl,
+      String? videoProvider,
+      int? discountPercentage,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2219,6 +2243,9 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? distance = freezed,
+    Object? videoUrl = freezed,
+    Object? videoProvider = freezed,
+    Object? discountPercentage = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2288,6 +2315,18 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.distance
           : distance // ignore: cast_nullable_to_non_nullable
               as double?,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      videoProvider: freezed == videoProvider
+          ? _value.videoProvider
+          : videoProvider // ignore: cast_nullable_to_non_nullable
+              as String?,
+      discountPercentage: freezed == discountPercentage
+          ? _value.discountPercentage
+          : discountPercentage // ignore: cast_nullable_to_non_nullable
+              as int?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2325,6 +2364,9 @@ class _$HomClassImpl implements _HomClass {
       this.hasPhoto,
       this.image,
       this.distance,
+      this.videoUrl,
+      this.videoProvider,
+      this.discountPercentage,
       this.createdAt,
       this.updatedAt,
       this.deletedAt});
@@ -2365,6 +2407,12 @@ class _$HomClassImpl implements _HomClass {
   @override
   final double? distance;
   @override
+  final String? videoUrl;
+  @override
+  final String? videoProvider;
+  @override
+  final int? discountPercentage;
+  @override
   final String? createdAt;
   @override
   final String? updatedAt;
@@ -2373,7 +2421,7 @@ class _$HomClassImpl implements _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2405,6 +2453,12 @@ class _$HomClassImpl implements _HomClass {
             (identical(other.image, image) || other.image == image) &&
             (identical(other.distance, distance) ||
                 other.distance == distance) &&
+            (identical(other.videoUrl, videoUrl) ||
+                other.videoUrl == videoUrl) &&
+            (identical(other.videoProvider, videoProvider) ||
+                other.videoProvider == videoProvider) &&
+            (identical(other.discountPercentage, discountPercentage) ||
+                other.discountPercentage == discountPercentage) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -2433,6 +2487,9 @@ class _$HomClassImpl implements _HomClass {
         hasPhoto,
         image,
         distance,
+        videoUrl,
+        videoProvider,
+        discountPercentage,
         createdAt,
         updatedAt,
         deletedAt
@@ -2470,6 +2527,9 @@ abstract class _HomClass implements HomClass {
       final bool? hasPhoto,
       final String? image,
       final double? distance,
+      final String? videoUrl,
+      final String? videoProvider,
+      final int? discountPercentage,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomClassImpl;
@@ -2509,6 +2569,12 @@ abstract class _HomClass implements HomClass {
   String? get image;
   @override
   double? get distance;
+  @override
+  String? get videoUrl;
+  @override
+  String? get videoProvider;
+  @override
+  int? get discountPercentage;
   @override
   String? get createdAt;
   @override
@@ -3875,6 +3941,7 @@ mixin _$HomBranch {
   String? get id => throw _privateConstructorUsedError;
   String? get title => throw _privateConstructorUsedError;
   String? get address => throw _privateConstructorUsedError;
+  String? get landmark => throw _privateConstructorUsedError;
   double? get longitude => throw _privateConstructorUsedError;
   double? get latitude => throw _privateConstructorUsedError;
   String? get partnerId => throw _privateConstructorUsedError;
@@ -3883,6 +3950,8 @@ mixin _$HomBranch {
   double? get distance => throw _privateConstructorUsedError;
   bool? get isActive => throw _privateConstructorUsedError;
   bool? get hasPhoto => throw _privateConstructorUsedError;
+  String? get image => throw _privateConstructorUsedError;
+  List<String>? get images => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -3902,6 +3971,7 @@ abstract class $HomBranchCopyWith<$Res> {
       {String? id,
       String? title,
       String? address,
+      String? landmark,
       double? longitude,
       double? latitude,
       String? partnerId,
@@ -3910,6 +3980,8 @@ abstract class $HomBranchCopyWith<$Res> {
       double? distance,
       bool? isActive,
       bool? hasPhoto,
+      String? image,
+      List<String>? images,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -3931,6 +4003,7 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
     Object? id = freezed,
     Object? title = freezed,
     Object? address = freezed,
+    Object? landmark = freezed,
     Object? longitude = freezed,
     Object? latitude = freezed,
     Object? partnerId = freezed,
@@ -3939,6 +4012,8 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
     Object? distance = freezed,
     Object? isActive = freezed,
     Object? hasPhoto = freezed,
+    Object? image = freezed,
+    Object? images = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -3955,6 +4030,10 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
       address: freezed == address
           ? _value.address
           : address // ignore: cast_nullable_to_non_nullable
+              as String?,
+      landmark: freezed == landmark
+          ? _value.landmark
+          : landmark // ignore: cast_nullable_to_non_nullable
               as String?,
       longitude: freezed == longitude
           ? _value.longitude
@@ -3988,6 +4067,14 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
           ? _value.hasPhoto
           : hasPhoto // ignore: cast_nullable_to_non_nullable
               as bool?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
+              as String?,
+      images: freezed == images
+          ? _value.images
+          : images // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -4016,6 +4103,7 @@ abstract class _$$HomBranchImplCopyWith<$Res>
       {String? id,
       String? title,
       String? address,
+      String? landmark,
       double? longitude,
       double? latitude,
       String? partnerId,
@@ -4024,6 +4112,8 @@ abstract class _$$HomBranchImplCopyWith<$Res>
       double? distance,
       bool? isActive,
       bool? hasPhoto,
+      String? image,
+      List<String>? images,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -4043,6 +4133,7 @@ class __$$HomBranchImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = freezed,
     Object? address = freezed,
+    Object? landmark = freezed,
     Object? longitude = freezed,
     Object? latitude = freezed,
     Object? partnerId = freezed,
@@ -4051,6 +4142,8 @@ class __$$HomBranchImplCopyWithImpl<$Res>
     Object? distance = freezed,
     Object? isActive = freezed,
     Object? hasPhoto = freezed,
+    Object? image = freezed,
+    Object? images = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -4067,6 +4160,10 @@ class __$$HomBranchImplCopyWithImpl<$Res>
       address: freezed == address
           ? _value.address
           : address // ignore: cast_nullable_to_non_nullable
+              as String?,
+      landmark: freezed == landmark
+          ? _value.landmark
+          : landmark // ignore: cast_nullable_to_non_nullable
               as String?,
       longitude: freezed == longitude
           ? _value.longitude
@@ -4100,6 +4197,14 @@ class __$$HomBranchImplCopyWithImpl<$Res>
           ? _value.hasPhoto
           : hasPhoto // ignore: cast_nullable_to_non_nullable
               as bool?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
+              as String?,
+      images: freezed == images
+          ? _value._images
+          : images // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -4124,6 +4229,7 @@ class _$HomBranchImpl implements _HomBranch {
       {this.id,
       this.title,
       this.address,
+      this.landmark,
       this.longitude,
       this.latitude,
       this.partnerId,
@@ -4132,9 +4238,12 @@ class _$HomBranchImpl implements _HomBranch {
       this.distance,
       this.isActive,
       this.hasPhoto,
+      this.image,
+      final List<String>? images,
       this.createdAt,
       this.updatedAt,
-      this.deletedAt});
+      this.deletedAt})
+      : _images = images;
 
   factory _$HomBranchImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomBranchImplFromJson(json);
@@ -4145,6 +4254,8 @@ class _$HomBranchImpl implements _HomBranch {
   final String? title;
   @override
   final String? address;
+  @override
+  final String? landmark;
   @override
   final double? longitude;
   @override
@@ -4162,6 +4273,18 @@ class _$HomBranchImpl implements _HomBranch {
   @override
   final bool? hasPhoto;
   @override
+  final String? image;
+  final List<String>? _images;
+  @override
+  List<String>? get images {
+    final value = _images;
+    if (value == null) return null;
+    if (_images is EqualUnmodifiableListView) return _images;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  @override
   final String? createdAt;
   @override
   final String? updatedAt;
@@ -4170,7 +4293,7 @@ class _$HomBranchImpl implements _HomBranch {
 
   @override
   String toString() {
-    return 'HomBranch(id: $id, title: $title, address: $address, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, description: $description, distance: $distance, isActive: $isActive, hasPhoto: $hasPhoto, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomBranch(id: $id, title: $title, address: $address, landmark: $landmark, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, description: $description, distance: $distance, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, images: $images, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -4181,6 +4304,8 @@ class _$HomBranchImpl implements _HomBranch {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.address, address) || other.address == address) &&
+            (identical(other.landmark, landmark) ||
+                other.landmark == landmark) &&
             (identical(other.longitude, longitude) ||
                 other.longitude == longitude) &&
             (identical(other.latitude, latitude) ||
@@ -4197,6 +4322,8 @@ class _$HomBranchImpl implements _HomBranch {
                 other.isActive == isActive) &&
             (identical(other.hasPhoto, hasPhoto) ||
                 other.hasPhoto == hasPhoto) &&
+            (identical(other.image, image) || other.image == image) &&
+            const DeepCollectionEquality().equals(other._images, _images) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -4212,6 +4339,7 @@ class _$HomBranchImpl implements _HomBranch {
       id,
       title,
       address,
+      landmark,
       longitude,
       latitude,
       partnerId,
@@ -4220,6 +4348,8 @@ class _$HomBranchImpl implements _HomBranch {
       distance,
       isActive,
       hasPhoto,
+      image,
+      const DeepCollectionEquality().hash(_images),
       createdAt,
       updatedAt,
       deletedAt);
@@ -4243,6 +4373,7 @@ abstract class _HomBranch implements HomBranch {
       {final String? id,
       final String? title,
       final String? address,
+      final String? landmark,
       final double? longitude,
       final double? latitude,
       final String? partnerId,
@@ -4251,6 +4382,8 @@ abstract class _HomBranch implements HomBranch {
       final double? distance,
       final bool? isActive,
       final bool? hasPhoto,
+      final String? image,
+      final List<String>? images,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomBranchImpl;
@@ -4264,6 +4397,8 @@ abstract class _HomBranch implements HomBranch {
   String? get title;
   @override
   String? get address;
+  @override
+  String? get landmark;
   @override
   double? get longitude;
   @override
@@ -4280,6 +4415,10 @@ abstract class _HomBranch implements HomBranch {
   bool? get isActive;
   @override
   bool? get hasPhoto;
+  @override
+  String? get image;
+  @override
+  List<String>? get images;
   @override
   String? get createdAt;
   @override
