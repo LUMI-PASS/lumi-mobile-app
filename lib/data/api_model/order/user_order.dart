@@ -44,6 +44,10 @@ class UserOrder {
   bool get isPending => status.toLowerCase() == 'pending';
   bool get isPaid => status.toLowerCase() == 'paid';
   bool get isCanceled => status.toLowerCase() == 'canceled';
+  /// True when this order is for an activity booking (not a subscription
+  /// purchase). Subscription orders have a null activityId and must not
+  /// appear in the bookings list.
+  bool get isActivityOrder => activityId != null && activityId!.isNotEmpty;
 
   /// Semantic display status: 'active' | 'visited' | 'missed' | 'cancelled' | 'pending'
   String get effectiveDisplayStatus {

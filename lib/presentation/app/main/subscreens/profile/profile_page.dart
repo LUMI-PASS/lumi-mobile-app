@@ -1,6 +1,11 @@
+import 'dart:io' show Platform;
+
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
@@ -8,6 +13,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
@@ -40,7 +46,27 @@ class ProfilePage
   @override
   void listener(BuildContext context, ProfileListenable state) {
     if (state.effect == ProfileEffect.login) {
-      context.router.replaceAll([LoginRoute()]);
+      if (!RemoteConfigService.instance.isInReview) {
+        context.router.replaceAll([LoginRoute()]);
+      }
+    } else if (state.effect == ProfileEffect.deleted) {
+      if (RemoteConfigService.instance.isInReview) {
+        if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+        context.read<ProfileCubit>().load();
+      } else {
+        context.router.replaceAll([LoginRoute()]);
+      }
+    }
+  }
+
+  Future<void> _shareApp() async {
+    final uri = Uri.parse(
+      Platform.isIOS
+          ? 'https://apps.apple.com/us/app/lumipass/id6761327966'
+          : 'https://play.google.com/store/apps/details?id=uz.freelance.lumi_general.lumi_general&pcampaignid=web_share',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -144,10 +170,34 @@ class ProfilePage
     );
   }
 
+  bool get _hasRealToken => storage.tokens.call()?.access != null;
+
+  bool get _isReviewGuest =>
+      RemoteConfigService.instance.isInReview && !_hasRealToken;
+
+  static const _privilegedPhones = {
+    '+998940286169',
+    '+998920233421',
+    '+998123456789',
+  };
+
+  bool _isPrivilegedPhone(String? phone) {
+    if (phone == null) return false;
+    final digits = phone.replaceAll(RegExp(r'[^\d]'), '');
+    return _privilegedPhones.any(
+      (p) => p.replaceAll(RegExp(r'[^\d]'), '') == digits,
+    );
+  }
+
   @override
   Widget builder(BuildContext context, ProfileBuildable state) {
     // Read locale to ensure rebuild when language changes
     context.locale;
+
+    final primary = context.colors.primary;
+    final showGuest = _isReviewGuest;
+    final cubit = context.read<ProfileCubit>();
+    final showBanner = cubit.showDeletedBanner;
 
     final user = state.user;
     final fullName = [user?.firstName, user?.lastName]
@@ -172,104 +222,239 @@ class ProfilePage
                 width: 240.w,
                 height: 240.w,
                 colorFilter: ColorFilter.mode(
-                  context.colors.primary,
+                  primary,
                   BlendMode.srcIn,
                 ),
               ),
             ),
           ),
           SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (showBanner)
+                  _DeletedInfoBar(
+                    onDismiss: () => cubit.dismissDeletedBanner(),
+                  ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        32.kh,
+                        if (showGuest) ...[
+                          _GuestProfileHeader(
+                            onLogin: () => context.router.replaceAll([LoginRoute()]),
+                          ),
+                        ] else ...[
+                          _ProfileHeader(
+                            name: greetingTitle,
+                            phone: user?.phoneNumber,
+                            isPremium: false,
+                          ),
+                        ],
+                        32.kh,
+                        Expanded(
+                          child: RefreshIndicator(
+                            color: primary,
+                            onRefresh: () => context.read<ProfileCubit>().load(),
+                            child: SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.only(bottom: 64.0),
+                              child: Column(
+                                children: [
+                                  if (!showGuest) ...[
+                                    _buildProfileCatalog(
+                                      Assets.icons.profile.svg(),
+                                      'account_info'.tr(),
+                                      'change_account_info'.tr(),
+                                      false,
+                                      context,
+                                      onTap: () => ProfileDetailBottomsheet.show(context),
+                                    ),
+                                    16.kh,
+                                    _buildProfileCatalog(
+                                      Assets.icons.group.svg(),
+                                      'your_children'.tr(),
+                                      childrenSubtitle,
+                                      false,
+                                      context,
+                                      onTap: () => context.router.push(const ChildrenRoute()),
+                                    ),
+                                    16.kh,
+                                    _buildProfileCatalog(
+                                      Icon(Icons.receipt_long_rounded,
+                                          color: primary, size: 24.w),
+                                      'my_bookings'.tr(),
+                                      'booked_classes_appear_here'.tr(),
+                                      false,
+                                      context,
+                                      onTap: () => context.router.push(const MyBookingsRoute()),
+                                    ),
+                                    16.kh,
+                                  ],
+                                  _buildProfileCatalog(
+                                    Icon(Icons.translate_rounded,
+                                        color: primary, size: 24.w),
+                                    'select_language'.tr(),
+                                    context.locale.languageCode.toUpperCase(),
+                                    false,
+                                    context,
+                                    onTap: () => showLanguageBottomSheet(
+                                      context,
+                                      onChanged: () => setState(() {}),
+                                    ),
+                                  ),
+                                  16.kh,
+                                  _buildProfileCatalog(
+                                    Icon(Icons.help_outline,
+                                        color: primary, size: 24.w),
+                                    'faq'.tr(),
+                                    'faq_subtitle'.tr(),
+                                    false,
+                                    context,
+                                    onTap: () {
+                                      context.router.push(const FaqRoute());
+                                    },
+                                  ),
+                                  16.kh,
+                                  _buildProfileCatalog(
+                                    Icon(Icons.share_rounded,
+                                        color: primary, size: 24.w),
+                                    'share_app'.tr(),
+                                    'share_app_subtitle'.tr(),
+                                    false,
+                                    context,
+                                    onTap: () => _shareApp(),
+                                  ),
+                                  if (!showGuest) ...[
+                                    16.kh,
+                                    _buildProfileCatalog(
+                                      Icon(Icons.logout,
+                                          color: primary, size: 24.w),
+                                      'log_out'.tr(),
+                                      'log_out_subtitle'.tr(),
+                                      true,
+                                      context,
+                                      onTap: () => _showLogoutSheet(context),
+                                    ),
+                                  ],
+                                  if (!showGuest && _isPrivilegedPhone(user?.phoneNumber)) ...[
+                                    16.kh,
+                                    const _FcmTokenTile(),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+}
+
+class _DeletedInfoBar extends StatelessWidget {
+  const _DeletedInfoBar({required this.onDismiss});
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      color: const Color(0xFFFFF3CD),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_outline_rounded,
+            size: 18.w,
+            color: const Color(0xFFD97706),
+          ),
+          10.kw,
+          Expanded(
+            child: Text(
+              'account_deleted_info'.tr(),
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF92400E),
+              ),
+            ),
+          ),
+          8.kw,
+          GestureDetector(
+            onTap: onDismiss,
+            child: Icon(
+              Icons.close_rounded,
+              size: 16.w,
+              color: const Color(0xFF92400E).withOpacity(0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuestProfileHeader extends StatelessWidget {
+  const _GuestProfileHeader({required this.onLogin});
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = context.colors.primary;
+    return Row(
+      children: [
+        Container(
+          width: 72.w,
+          height: 72.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: primary.withOpacity(0.1),
+          ),
+          child: Icon(Icons.person_outline_rounded,
+              size: 36.sp, color: primary.withOpacity(0.5)),
+        ),
+        16.kw,
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              32.kh,
-              _ProfileHeader(
-                name: greetingTitle,
-                phone: user?.phoneNumber,
-                isPremium: storage.hasPremium() == true,
+              Text(
+                'my_account'.tr(),
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.colors.black ?? Colors.black,
+                ),
               ),
-              32.kh,
-              Expanded(
-                child: RefreshIndicator(
-                  color: context.colors.primary,
-                  onRefresh: () => context.read<ProfileCubit>().load(),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      children: [
-                      if (storage.hasPremium() != true)
-                        _buildPremiumCTABanner(context),
-                      if (storage.hasPremium() != true) 12.kh,
-                      _buildStatsGrid(context),
-                      16.kh,
-                      _buildProfileCatalog(
-                        Assets.icons.profile.svg(),
-                        'account_info'.tr(),
-                        'change_account_info'.tr(),
-                        false,
-                        context,
-                        onTap: () => ProfileDetailBottomsheet.show(context),
-                      ),
-                      16.kh,
-                      _buildProfileCatalog(
-                        Assets.icons.group.svg(),
-                        'your_children'.tr(),
-                        childrenSubtitle,
-                        false,
-                        context,
-                        onTap: () => context.router.push(const ChildrenRoute()),
-                      ),
-                      16.kh,
-                      _buildProfileCatalog(
-                        Icon(Icons.receipt_long_rounded,
-                            color: context.colors.primary, size: 24.w),
-                        'my_bookings'.tr(),
-                        'booked_classes_appear_here'.tr(),
-                        false,
-                        context,
-                        onTap: () =>
-                            context.router.push(const MyBookingsRoute()),
-                      ),
-                      16.kh,
-                      _buildProfileCatalog(
-                        Icon(Icons.translate_rounded,
-                            color: context.colors.primary, size: 24.w),
-                        'select_language'.tr(),
-                        context.locale.languageCode.toUpperCase(),
-                        false,
-                        context,
-                        onTap: () => showLanguageBottomSheet(
-                          context,
-                          onChanged: () => setState(() {}),
-                        ),
-                      ),
-                      16.kh,
-                      _buildProfileCatalog(
-                        Icon(Icons.help_outline,
-                            color: context.colors.primary, size: 24.w),
-                        'faq'.tr(),
-                        'faq_subtitle'.tr(),
-                        false,
-                        context,
-                        onTap: () {
-                          context.router.push(const FaqRoute());
-                        },
-                      ),
-                      16.kh,
-
-                      // Log out
-                      _buildProfileCatalog(
-                        Icon(Icons.logout,
-                            color: context.colors.primary, size: 24.w),
-                        'log_out'.tr(),
-                        'log_out_subtitle'.tr(),
-                        true,
-                        context,
-                        onTap: () => _showLogoutSheet(context),
-                      ),
-                      ],
+              8.kh,
+              GestureDetector(
+                onTap: onLogin,
+                child: Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: primary,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    'login_button'.tr(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -277,128 +462,9 @@ class ProfilePage
             ],
           ),
         ),
-          ),
-        ],
-      ),
+      ],
     );
   }
-
-  Widget _buildStatsGrid(BuildContext context) {
-    final stats = [
-      ('12', 'tashrif'),
-      ('8', 'chipta'),
-      ('235k', 'tejov'),
-    ];
-    return Row(
-      children: stats.map((s) {
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 4.w),
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14.r),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1A6C4EF2),
-                  blurRadius: 24,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Text(
-                  s.$1,
-                  style: TextStyle(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF4A2FD4),
-                    height: 1,
-                  ),
-                ),
-                4.kh,
-                Text(
-                  s.$2,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF6B6899),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-Widget _buildPremiumCTABanner(BuildContext context) {
-  return GestureDetector(
-    onTap: () => context.router.push(const PlansRoute()),
-    child: Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.h),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFB830), Color(0xFFFF8A30)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFF8A30).withOpacity(0.35),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44.w,
-            height: 44.w,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: const Center(
-              child: Icon(Icons.workspace_premium_rounded,
-                  color: Colors.white, size: 24),
-            ),
-          ),
-          12.kw,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Premium'ga o'tish",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  '30% chegirma · 7 kun bepul',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.white),
-        ],
-      ),
-    ),
-  );
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -546,6 +612,105 @@ class _ProfileHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FcmTokenTile extends StatefulWidget {
+  const _FcmTokenTile();
+
+  @override
+  State<_FcmTokenTile> createState() => _FcmTokenTileState();
+}
+
+class _FcmTokenTileState extends State<_FcmTokenTile> {
+  String? _token;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseMessaging.instance.getToken().then((t) {
+      if (mounted) setState(() => _token = t);
+    }).catchError((Object e) {
+      if (mounted) setState(() => _error = e.toString());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final token = _token;
+    final error = _error;
+    final hasError = error != null;
+    final copyText = error ?? token;
+    return GestureDetector(
+      onTap: copyText == null
+          ? null
+          : () {
+              Clipboard.setData(ClipboardData(text: copyText));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(hasError ? 'Error copied' : 'FCM token copied'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: hasError ? Colors.red.shade50 : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: hasError ? Colors.red.shade200 : Colors.grey.shade300,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  hasError
+                      ? Icons.error_outline
+                      : Icons.notifications_active_outlined,
+                  size: 15.w,
+                  color: hasError ? Colors.red.shade400 : Colors.grey.shade600,
+                ),
+                6.kw,
+                Text(
+                  'FCM Token',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        hasError ? Colors.red.shade400 : Colors.grey.shade600,
+                  ),
+                ),
+                const Spacer(),
+                if (copyText != null)
+                  Icon(
+                    Icons.copy_outlined,
+                    size: 14.w,
+                    color: hasError
+                        ? Colors.red.shade300
+                        : Colors.grey.shade500,
+                  ),
+              ],
+            ),
+            8.kh,
+            Text(
+              copyText ?? '...',
+              style: TextStyle(
+                fontSize: 10.sp,
+                color: hasError ? Colors.red.shade700 : Colors.grey.shade700,
+                fontFamily: 'monospace',
+              ),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

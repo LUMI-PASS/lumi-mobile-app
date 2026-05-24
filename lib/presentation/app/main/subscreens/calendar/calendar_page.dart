@@ -30,7 +30,7 @@ class CalendarPage
 
   @override
   void onFocusGained(BuildContext context) {
-    context.read<ScheduleCubit>().refreshSilently();
+    context.read<ScheduleCubit>().refreshIfLanguageChanged();
     super.onFocusGained(context);
   }
 
@@ -181,7 +181,9 @@ class _CalendarBodyState extends State<_CalendarBody> {
                   // and pending (unpaid) orders.
                   final filtered = state.orders
                       .where((o) =>
-                          (o.isPaid || o.isCanceled) && o.hasFutureTicket)
+                          o.isActivityOrder &&
+                          (o.isPaid || o.isCanceled) &&
+                          o.hasFutureTicket)
                       .toList();
                   if (filtered.isEmpty) return const _EmptyBookings();
                   return RefreshIndicator(

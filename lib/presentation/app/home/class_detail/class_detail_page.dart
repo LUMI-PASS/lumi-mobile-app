@@ -15,6 +15,7 @@ import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_bottomsheet.dart';
@@ -56,6 +57,42 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   int _currentImageIndex = 0;
   ClassFullModel? _full;
   Timer? _slideTimer;
+
+  // ─── Coupon discount helpers ──────────────────────────────────────────────
+  int get _couponPct {
+    final s = getIt<Storage>();
+    return s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
+  }
+
+  /// Returns a Widget showing the price. When the user has an active coupon,
+  /// renders the original price struck-through above the green discounted price.
+  Widget _priceText(num price) {
+    final pct = _couponPct;
+    if (pct <= 0) {
+      return Text(price.toRawUzsPrice(),
+          style: IOSText.bodyEmphasized(color: _brandDark));
+    }
+    final discounted = (price * (100 - pct) / 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          price.toRawUzsPrice(),
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: _muted,
+            fontWeight: FontWeight.w500,
+            decoration: TextDecoration.lineThrough,
+          ),
+        ),
+        Text(
+          discounted.toRawUzsPrice(),
+          style: IOSText.bodyEmphasized(color: _success),
+        ),
+      ],
+    );
+  }
 
   @override
   void initState() {
@@ -662,12 +699,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                                     style: IOSText.body(),
                                                   ),
                                                 ),
-                                                Text(
-                                                  dur.price.toRawUzsPrice(),
-                                                  style:
-                                                      IOSText.bodyEmphasized(
-                                                          color: _brandDark),
-                                                ),
+                                                _priceText(dur.price),
                                               ],
                                             ),
                                           ),
@@ -726,11 +758,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                               style: IOSText.body(),
                                             ),
                                           ),
-                                          Text(
-                                            r.price.toRawUzsPrice(),
-                                            style: IOSText.bodyEmphasized(
-                                                color: _brandDark),
-                                          ),
+                                          _priceText(r.price),
                                         ],
                                       ),
                                     ),
