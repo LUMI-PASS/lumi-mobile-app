@@ -740,3 +740,16 @@ coupon_eligible_count,Доступно для {count} занятий,{count} ta 
 coupon_eligible_loading,Считаем занятия...,Mashg'ulotlar hisoblanmoqda...,Counting activities...
 coupon_start_exploring,Начать поиск,Qidiruvni boshlash,Start Exploring
 coupon_activated_subtitle,Ваш план активирован. Бронируйте занятия со скидкой {percent}%.,Rejangiz faollashtirildi. {percent}% chegirma bilan mashg'ulotlarni bron qiling.,Your plan is active. Book activities with {percent}% off.
+coupon_tab_plans,Тарифы,Tariflar,Plans
+coupon_tab_history,История,Tarix,History
+sub_history_empty,Покупок пока нет,Xaridlar yo'q hali,No purchases yet
+sub_history_empty_hint,Купите тариф — здесь появится история,Tarif sotib oling — tarix shu yerda paydo bo'ladi,Buy a plan and your history will appear here
+sub_status_active,Активен,Faol,Active
+sub_status_expired,Истёк,Tugagan,Expired
+sub_status_canceled,Отменён,Bekor qilingan,Canceled
+sub_paid,Оплачено,To'langan,Paid
+sub_activities_used,использовано,ishlatildi,used
+sub_activities_of,из,dan,of
+sub_activities_label,занятий,mashg'ulot,activities
+sub_valid_from,с,dan,from
+sub_valid_until,до,gacha,until

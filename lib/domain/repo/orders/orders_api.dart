@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
+import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
 
 @injectable
 class OrdersApi {
@@ -148,6 +149,26 @@ class OrdersApi {
       return Map<String, dynamic>.from(raw['data'] as Map);
     }
     return null;
+  }
+
+  /// Returns all of the authenticated user's subscription purchases, newest
+  /// first. Each entry includes [usedCount] — the number of discounted activity
+  /// bookings made during that subscription's validity window.
+  Future<List<SubscriptionRecord>> getSubscriptionHistory() async {
+    final response = await _dio.get('transaction/subscriptions');
+    final raw = response.data;
+    final List list;
+    if (raw is Map && raw['data'] is List) {
+      list = raw['data'] as List;
+    } else if (raw is List) {
+      list = raw;
+    } else {
+      list = const [];
+    }
+    return list
+        .whereType<Map>()
+        .map((e) => SubscriptionRecord.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
   }
 
   /// Kicks off a subscription purchase. Creates a PENDING order on the
