@@ -594,7 +594,10 @@ class _HistoryCard extends StatelessWidget {
                 6.kw,
                 Expanded(
                   child: Text(
-                    '${r.usedCount} ${'sub_activities_used'.tr()} ${'sub_activities_of'.tr()} ${r.activitiesLimit} ${'sub_activities_label'.tr()}',
+                    'sub_activities_progress'.tr(namedArgs: {
+                      'used': '${r.usedCount}',
+                      'total': '${r.activitiesLimit}',
+                    }),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: _grey,
@@ -603,7 +606,7 @@ class _HistoryCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${r.remaining} left',
+                  '${r.remaining} ${'sub_activities_remaining'.tr()}',
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,

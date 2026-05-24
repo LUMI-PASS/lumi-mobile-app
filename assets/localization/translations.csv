@@ -753,3 +753,5 @@ sub_activities_of,из,dan,of
 sub_activities_label,занятий,mashg'ulot,activities
 sub_valid_from,с,dan,from
 sub_valid_until,до,gacha,until
+sub_activities_remaining,осталось,qoldi,left
+sub_activities_progress,Использовано {used} из {total},Ishlatildi {used}/{total},Used {used} of {total}

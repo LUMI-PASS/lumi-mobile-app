@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
@@ -155,7 +156,10 @@ class OrdersApi {
   /// first. Each entry includes [usedCount] — the number of discounted activity
   /// bookings made during that subscription's validity window.
   Future<List<SubscriptionRecord>> getSubscriptionHistory() async {
-    final response = await _dio.get('transaction/subscriptions');
+    final response = await _dio.get(
+      'transaction/subscriptions',
+      queryParameters: {'lang': currentLang},
+    );
     final raw = response.data;
     final List list;
     if (raw is Map && raw['data'] is List) {
