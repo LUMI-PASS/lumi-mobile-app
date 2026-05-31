@@ -1,6 +1,8 @@
+import 'package:lumi_pass/common/env/app_env.dart';
+
 class Constants {
-  static const baseUrl = 'https://lumi-mobile-backend.onrender.com/api/';
-  static const assetsUrl = 'https://lumi-mobile-backend.onrender.com';
+  static const baseUrl = AppEnv.baseUrl;
+  static const assetsUrl = AppEnv.assetsUrl;
 
   static const tashkentDistricts = [
     'Bektemir',

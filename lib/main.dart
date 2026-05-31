@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -9,99 +8,71 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/fixed_csv_asset_loader.dart';
 import 'package:lumi_pass/common/widget/display/display_widget.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/data/service/deeplink_service.dart';
+import 'package:lumi_pass/data/service/push_notification_manager.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/firebase_options.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'common/base/base_page.dart';
+import 'common/env/app_env.dart';
+import 'common/env/runtime_env.dart';
 import 'common/router/app_router.dart';
 import 'data/base_model/material_colors.dart';
 import 'presentation/app/cubit/app_cubit.dart';
 import 'presentation/app/cubit/app_state.dart';
 
-final navigatorContext = getIt<AppRouter>().navigatorKey;
-
-// ─── Push notification helpers ──────────────────────────────────────────────
-
-const _kChannelId = 'lumi_channel';
-const _kChannelName = 'Lumi Notifications';
-
-final _localNotifications = FlutterLocalNotificationsPlugin();
-
-Future<void> _initLocalNotifications() async {
-  const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const ios = DarwinInitializationSettings(
-    requestAlertPermission: false,
-    requestBadgePermission: false,
-    requestSoundPermission: false,
-  );
-  await _localNotifications.initialize(
-    const InitializationSettings(android: android, iOS: ios),
-    onDidReceiveNotificationResponse: _onLocalNotificationTap,
-  );
-  await _localNotifications
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(const AndroidNotificationChannel(
-        _kChannelId,
-        _kChannelName,
-        importance: Importance.high,
-      ));
+// Ensures EasyLocalization defaults to uz_UZ on first launch instead of
+// picking up the device locale (which may be English on test/dev devices).
+Future<void> _seedDefaultLocale() async {
+  final prefs = await SharedPreferences.getInstance();
+  if (!prefs.containsKey('locale')) {
+    await prefs.setString('locale', 'uz_UZ');
+  }
 }
 
-void _onLocalNotificationTap(NotificationResponse response) {
-  _navigateForNotification(response.payload ?? '');
+// ─── FCM background handler (must be top-level, annotated vm:entry-point) ────
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // ignore: avoid_print
+  print('[FCM] background — title:${message.notification?.title} data:${message.data}');
 }
 
-void _navigateForNotification(String type) {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final ctx = navigatorContext.currentContext;
-    if (ctx == null) return;
-    ctx.router.navigate(const CalendarRoute());
-  });
+// ─── Native deep-link interceptor ────────────────────────────────────────────
+// Prevents auto_route from processing lumi:// and /share/class/ URLs itself.
+// DeeplinkService handles the actual navigation; auto_route just sees the normal
+// root route so the InitialGuard runs and the app starts cleanly.
+
+DeepLink _nativeDeepLink(PlatformDeepLink link) {
+  final uri = link.uri;
+  if (uri.scheme == 'lumi' ||
+      (uri.host == 'mobile-api.lumipass.uz' &&
+          uri.path.contains('/share/class/'))) {
+    return DeepLink.single(EmptyRouterRoute());
+  }
+  return link;
 }
 
-Future<void> _showForegroundNotification(RemoteMessage message) async {
-  final n = message.notification;
-  if (n == null) return;
-  await _localNotifications.show(
-    n.hashCode,
-    n.title,
-    n.body,
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        _kChannelId,
-        _kChannelName,
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      ),
-    ),
-    payload: message.data['type'] as String? ?? '',
-  );
-}
+// ─── Web deep-link helper ─────────────────────────────────────────────────────
 
-// One-shot flag: override the first (Telegram launch) URL with the correct
-// app route; pass all subsequent URL changes through unchanged.
 bool _webInitialNavDone = false;
 
 DeepLink _initialWebDeepLink(PlatformDeepLink link) {
   // ignore: avoid_print
   print('[lumi] deepLink uri: ${link.uri}');
   if (_webInitialNavDone) return link;
-  _webInitialNavDone = true;
+  _webInitialNavDone
+  = true;
   try {
     final storage = getIt<Storage>();
     final showOnboard = storage.showOnboard();
@@ -117,10 +88,7 @@ DeepLink _initialWebDeepLink(PlatformDeepLink link) {
   }
 }
 
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-}
+// ─── Entry points ─────────────────────────────────────────────────────────────
 
 void main() async {
   if (kIsWeb) {
@@ -146,6 +114,7 @@ Future<void> _runWeb() async {
 
       log('2 localization');
       await EasyLocalization.ensureInitialized();
+      await _seedDefaultLocale();
 
       log('3 firebase');
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -153,13 +122,16 @@ Future<void> _runWeb() async {
       log('4 remoteconfig');
       await RemoteConfigService.instance.init();
 
-      log('5 di');
+      log('5 runtime env');
+      await RuntimeEnv.load();
+
+      log('6 di');
       await configureDependencies();
 
-      log('6 locale');
-      initLangIfNeeded('en');
+      log('7 locale');
+      initLangIfNeeded('uz');
 
-      log('7 runApp');
+      log('8 runApp');
       runApp(
         EasyLocalization(
           supportedLocales: Strings.supportedLocales,
@@ -188,34 +160,22 @@ Future<void> _runWeb() async {
 Future<void> _runNative() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await _seedDefaultLocale();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await _initLocalNotifications();
-
-  // iOS: show notification banner even when app is in foreground
-  if (Platform.isIOS) {
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-  }
-
-  // Android: show a local notification when message arrives in foreground
-  FirebaseMessaging.onMessage.listen((message) async {
-    if (Platform.isAndroid) {
-      await _showForegroundNotification(message);
-    }
-  });
-
-  // Navigate to Calendar when user taps a notification (app was in background)
-  FirebaseMessaging.onMessageOpenedApp.listen((message) {
-    _navigateForNotification(message.data['type'] as String? ?? '');
-  });
 
   await RemoteConfigService.instance.init();
+  await RuntimeEnv.load();
   await configureDependencies();
-  initLangIfNeeded('en');
+
+  // Do NOT await — getInitialMessage() inside requires the Flutter plugin to
+  // be registered, which only happens after runApp() with
+  // FlutterImplicitEngineDelegate. Fire and forget; all listeners are wired
+  // up synchronously before runApp returns, so no messages are missed.
+  unawaited(getIt<PushNotificationManager>().initializeNotification());
+  unawaited(getIt<DeeplinkService>().init());
+
+  initLangIfNeeded('uz');
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       systemNavigationBarColor: Colors.transparent,
@@ -237,6 +197,8 @@ Future<void> _runNative() async {
     ),
   );
 }
+
+// ─── App widget ───────────────────────────────────────────────────────────────
 
 class _LumiScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -262,10 +224,10 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
       child: ScreenUtilInit(
         designSize: const Size(414, 896),
         child: MaterialApp.router(
-          title: 'lumi_pass',
-          debugShowCheckedModeBanner: false,
+          title: AppEnv.isDev ? 'Lumi [DEV]' : 'lumi_pass',
+          debugShowCheckedModeBanner: AppEnv.isDev,
           routerConfig: getIt<AppRouter>().config(
-            deepLinkBuilder: kIsWeb ? _initialWebDeepLink : null,
+            deepLinkBuilder: kIsWeb ? _initialWebDeepLink : _nativeDeepLink,
           ),
           scrollBehavior: _LumiScrollBehavior(),
           color: context.colors.primary,

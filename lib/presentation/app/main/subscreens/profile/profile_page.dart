@@ -5,10 +5,11 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
+import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
@@ -59,15 +60,14 @@ class ProfilePage
     }
   }
 
-  Future<void> _shareApp() async {
-    final uri = Uri.parse(
-      Platform.isIOS
-          ? 'https://apps.apple.com/us/app/lumipass/id6761327966'
-          : 'https://play.google.com/store/apps/details?id=uz.freelance.lumi_general.lumi_general&pcampaignid=web_share',
-    );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  Future<void> _shareApp(BuildContext context) async {
+    final storeUrl = Platform.isIOS
+        ? 'https://apps.apple.com/uz/app/lumipass/id6761327966'
+        : 'https://play.google.com/store/apps/details?id=uz.lumi.mobileapp';
+    final text = '${'share_app_text'.tr()}\n$storeUrl';
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+    await Share.share(text, subject: 'share_app'.tr(), sharePositionOrigin: origin);
   }
 
   void _showLogoutSheet(BuildContext context) {
@@ -326,7 +326,7 @@ class ProfilePage
                                     'share_app_subtitle'.tr(),
                                     false,
                                     context,
-                                    onTap: () => _shareApp(),
+                                    onTap: () => _shareApp(context),
                                   ),
                                   if (!showGuest) ...[
                                     16.kh,
@@ -338,6 +338,14 @@ class ProfilePage
                                       true,
                                       context,
                                       onTap: () => _showLogoutSheet(context),
+                                    ),
+                                  ],
+                                  if (!showGuest && RuntimeEnv.isSwitcherPhone(user?.phoneNumber)) ...[
+                                    16.kh,
+                                    _DevEnvToggleTile(
+                                      onSwitch: () async {
+                                        await context.read<ProfileCubit>().logout();
+                                      },
                                     ),
                                   ],
                                   if (!showGuest && _isPrivilegedPhone(user?.phoneNumber)) ...[
@@ -710,6 +718,143 @@ class _FcmTokenTileState extends State<_FcmTokenTile> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DevEnvToggleTile extends StatefulWidget {
+  const _DevEnvToggleTile({required this.onSwitch});
+  final Future<void> Function() onSwitch;
+
+  @override
+  State<_DevEnvToggleTile> createState() => _DevEnvToggleTileState();
+}
+
+class _DevEnvToggleTileState extends State<_DevEnvToggleTile> {
+  bool _loading = false;
+
+  Future<void> _toggle(bool toDev) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
+        title: Row(
+          children: [
+            Icon(Icons.swap_horiz_rounded,
+                color: toDev ? Colors.orange : Colors.green, size: 24.w),
+            8.kw,
+            Text(
+              toDev ? 'Switch to DEV' : 'Switch to PROD',
+              style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        content: Text(
+          toDev
+              ? 'You will be switched to the development server (dev-mobile-api.lumipass.uz) and logged out. OTP will always be 1234.'
+              : 'You will be switched to the production server (mobile-api.lumipass.uz) and logged out.',
+          style: TextStyle(fontSize: 14.sp, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              toDev ? 'Switch to DEV' : 'Switch to PROD',
+              style: TextStyle(
+                color: toDev ? Colors.orange : Colors.green,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _loading = true);
+    await RuntimeEnv.setDev(toDev);
+    await widget.onSwitch();
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDev = RuntimeEnv.isDev;
+    final primary = context.colors.primary;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: isDev
+            ? Colors.orange.shade50
+            : Colors.green.shade50,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color: isDev ? Colors.orange.shade200 : Colors.green.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48.w,
+            height: 48.w,
+            decoration: BoxDecoration(
+              color: (isDev ? Colors.orange : Colors.green).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.developer_mode_rounded,
+                size: 24.w,
+                color: isDev ? Colors.orange.shade700 : Colors.green.shade700,
+              ),
+            ),
+          ),
+          16.kw,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Server Environment',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: context.colors.black ?? Colors.black,
+                  ),
+                ),
+                4.kh,
+                Text(
+                  isDev ? '🟠 DEV — dev-mobile-api.lumipass.uz' : '🟢 PROD — mobile-api.lumipass.uz',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: isDev ? Colors.orange.shade700 : Colors.green.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _loading
+              ? SizedBox(
+                  width: 28.w,
+                  height: 28.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: isDev ? Colors.orange : Colors.green,
+                  ),
+                )
+              : Switch.adaptive(
+                  value: isDev,
+                  activeColor: Colors.orange,
+                  inactiveThumbColor: Colors.green.shade600,
+                  inactiveTrackColor: Colors.green.shade100,
+                  onChanged: _toggle,
+                ),
+        ],
       ),
     );
   }
