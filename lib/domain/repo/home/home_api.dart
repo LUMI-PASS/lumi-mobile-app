@@ -77,7 +77,7 @@ class HomeApi {
 
   Future<Response> getPremiumPlans({int page = 1, int limit = 12}) {
     return _dio.get(
-      'https://api.adminka.lumipass.uz/api/premium-plans',
+      'tariffs/',
       queryParameters: {'page': page, 'limit': limit},
     );
   }
