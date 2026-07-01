@@ -29,7 +29,7 @@ hello,ПРИВЕТ,SALOM,HELLO
 all_categories,Все категории,Barcha kategoriyalar,All Categories
 newly_added_classes,Новые занятия,Yangi mashg'ulotlar,New Activities
 popular_activities,Популярные занятия,Mashhur mashg'ulotlar,Popular Activities
-near_you,Рядом с вами,Yaqiningizda,Near You
+near_you,Для вас,Siz uchun,For You
 my_account,Мой аккаунт,Mening akkauntim,My Account
 account_info,Информация аккаунта,Akkaunt ma'lumotlari,Account Information
 change_account_info,Изменить данные аккаунта,Hisob ma'lumotlarini o'zgartirish,Change account details
@@ -303,6 +303,7 @@ branch_no_classes,Занятий пока нет,Mashg’ulotlar hali yo’q ,No
 branch_load_more_classes,Загрузить ещё,Ko’proq yuklash,Load more
 share_app,Поделиться приложением,Ilovani ulashing,Share app
 share_app_subtitle,Расскажи друзьям о LumiPass,Do’stlarga LumiPass haqida ayting,Tell your friends about LumiPass
+share_app_text,Попробуй Lumi — бронируй занятия для детей легко и быстро!,Lumi orqali bolalar uchun mashg’ulotlarni tez va oson buyurtma qiling!,Try Lumi — book amazing activities for your kids!
 seats_left,Осталось мест,Joylar qoldi,Seats left
 max_50_chars,Не более 50 символов,Eng ko‘pi 50 ta belgi,Max 50 characters
 coins_to_next_unlock,Ещё {} монет до следующей разблокировки,Keyingi ochilishgacha yana {} tanga,{} more coins until next unlock
@@ -668,7 +669,7 @@ no_loads,"Вы еще не добавили груз. Пожалуйста, до
 no_transports,"Вы еще не добавили транспорт. Пожалуйста, добавьте транспорт, чтобы оставить заявку.","Siz hali transport qo‘shmagansiz. Iltimos, ariza yuborish uchun transport qo‘shing.",You have not added any transports yet. Please add a transport to leave a request.
 input_car_desc,Введите номер автомобиля,Avtomobil davlat raqamini kiriting,Enter car license plate
 newly_added_classes,Новые занятия,Yangi qo'shilgan mashg'ulotlar,Newly Added Activities
-near_you,Рядом с вами,Sizga yaqin,Near You
+near_you,Для вас,Siz uchun,For You
 my_account,Мой аккаунт,Mening hisobim,My Account
 account_info,Информация аккаунта,Hisob ma'lumotlari,Account Information
 faq_subtitle,Вопросы и ответы,Savollar va javoblar,Frequently asked questions
@@ -724,6 +725,14 @@ coupon_how_title,Как использовать купон?,Kuponni qanday ishl
 coupon_step1,Скопируйте или запомните код купона от партнёра,Hamkordan kupon kodini nusxa oling yoki eslab qoling,Copy or note the coupon code from the partner
 coupon_step2,Введите код выше и нажмите «Проверить»,Yuqorida kodni kiriting va «Tekshirish» ni bosing,Enter the code above and tap Check
 coupon_step3,При бронировании введите код для получения скидки,Bron qilishda chegirma olish uchun kodni kiriting,Enter the code at booking to receive your discount
+promo_hint,Введите промокод,Promokodni kiriting,Enter promo code
+promo_apply,Применить,Qo'llash,Apply
+promo_applied_saved,Сэкономлено {},Tejadingiz {},You saved {}
+promo_invalid,Промокод недействителен,Promokod yaroqsiz,Invalid promo code
+plan_how_title,Как это работает,Bu qanday ishlaydi,How it works
+plan_step1,Выберите подходящий купон,O'zingizga mos kuponni tanlang,Choose the coupon that fits you
+plan_step2,Оплатите купон и активируйте его,Kuponni to'lang va faollashtiring,Pay for the coupon and activate it
+plan_step3,Получайте скидку при бронировании занятий,Mashg'ulotlarni bron qilishda chegirma oling,Get a discount when booking activities
 discount_on_activities,Скидка на занятия,Mashg'ulotlarga chegirma,Discount on activities
 activities_limit,Лимит занятий,Mashg'ulotlar limiti,Activities limit
 coupon_plans_title,Купоны со скидками,Chegirmali kuponlar,Discount Coupons
@@ -737,6 +746,9 @@ coupon_activated_title,Купон активирован!,Kupon faollashtirildi!
 coupon_activated_badge,КУПОН АКТИВЕН,KUPON FAOL,COUPON ACTIVE
 coupon_discount_label,скидка на занятия,mashg'ulotlarga chegirma,off on activities
 coupon_eligible_count,Доступно для {count} занятий,{count} ta mashg'ulot uchun mavjud,Available for {count} activities
+booking_coupon_saved,Сэкономлено,Tejadi,Saved
+booking_coupon_discount,Скидка по купону,Kupon chegirmasi,Coupon discount
+booking_original_price,Цена без скидки,Chegirmasiz narx,Original price
 coupon_eligible_loading,Считаем занятия...,Mashg'ulotlar hisoblanmoqda...,Counting activities...
 coupon_start_exploring,Начать поиск,Qidiruvni boshlash,Start Exploring
 coupon_activated_subtitle,Ваш план активирован. Бронируйте занятия со скидкой {percent}%.,Rejangiz faollashtirildi. {percent}% chegirma bilan mashg'ulotlarni bron qiling.,Your plan is active. Book activities with {percent}% off.
@@ -755,3 +767,8 @@ sub_valid_from,с,dan,from
 sub_valid_until,до,gacha,until
 sub_activities_remaining,осталось,qoldi,left
 sub_activities_progress,Использовано {used} из {total},Ishlatildi {used}/{total},Used {used} of {total}
+fiscal_receipt,Фискальный чек,Fiskal chek,Fiscal Receipt
+fiscal_receipt_subtitle,Чек ОФД (Soliq),OFD cheki (Soliq),OFD receipt (Soliq)
+fiscal_receipt_error,Не удалось загрузить чек,Chekni yuklab bo‘lmadi,Couldn’t load the receipt
+fiscal_receipt_unavailable,Чек пока недоступен,Chek hozircha mavjud emas,Receipt isn’t available yet
+fiscal_receipt_open_browser,Открыть в браузере,Brauzerda ochish,Open in browser
