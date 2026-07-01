@@ -13,6 +13,11 @@ class UserOrder {
   final String status; // pending | paid | canceled
   final num totalAmount;
   final num paidAmount;
+  /// Original subtotal before any coupon/promocode discount. Equals
+  /// [totalAmount] when no discount was applied.
+  final num subtotalAmount;
+  /// Amount saved via coupon or promocode. 0 when no discount was applied.
+  final num discountAmount;
   final String? activityId;
   final String? activityName;
   final String? activityImage;
@@ -25,11 +30,17 @@ class UserOrder {
   final String? createdAt;
   final String? updatedAt;
 
+  /// The promocode applied to this order, if any. Null when the discount came
+  /// from a coupon plan (or when there was no discount).
+  final String? promocodeCode;
+
   const UserOrder({
     required this.id,
     required this.status,
     required this.totalAmount,
     required this.paidAmount,
+    required this.subtotalAmount,
+    required this.discountAmount,
     required this.activityId,
     required this.activityName,
     required this.activityImage,
@@ -38,7 +49,15 @@ class UserOrder {
     required this.ticketSummaries,
     required this.createdAt,
     required this.updatedAt,
+    this.promocodeCode,
   });
+
+  /// True when a coupon or promocode discount was applied to this order.
+  bool get hasDiscount => discountAmount > 0;
+
+  /// True when the discount came from a promocode (vs an auto coupon plan).
+  bool get isPromocodeDiscount =>
+      promocodeCode != null && promocodeCode!.isNotEmpty;
 
   int get totalSeats => items.fold<int>(0, (sum, it) => sum + it.count);
   bool get isPending => status.toLowerCase() == 'pending';
@@ -94,11 +113,18 @@ class UserOrder {
 
     final itemsRaw = (json['items'] as List?) ?? const [];
     final ticketsRaw = (json['tickets'] as List?) ?? const [];
+    final totalAmt = (json['total_amount'] as num?) ?? 0;
+    final subtotalAmt = (json['subtotal_amount'] as num?) ?? totalAmt;
     return UserOrder(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       status: json['status']?.toString() ?? 'pending',
-      totalAmount: (json['total_amount'] as num?) ?? 0,
+      totalAmount: totalAmt,
       paidAmount: (json['paid_amount'] as num?) ?? 0,
+      subtotalAmount: subtotalAmt,
+      discountAmount: (json['discount_amount'] as num?) ?? 0,
+      promocodeCode: (json['promocode_code']?.toString().isNotEmpty ?? false)
+          ? json['promocode_code'].toString()
+          : null,
       activityId: activityId,
       activityName: _readLocalized(activityMap?['name']),
       activityImage: sanitizeImageUrl(activityMap?['image']?.toString()),
@@ -219,12 +245,26 @@ class OrderDetail {
   final UserOrder order;
   final List<OrderTicket> tickets;
   final String? checkoutUrl;
+  /// OFD/Soliq fiscal receipt URL for a PAID order — the `fiscal_data.qr_code_url`
+  /// Payme returns once the payment is fiscalized (e.g. `https://ofd.soliq.uz/check?...`).
+  /// Null while the order is unpaid or the backend hasn't fiscalized it yet.
+  final String? receiptUrl;
+
+  /// Hours before the activity start time during which this order can still be
+  /// cancelled (with automatic refund). Backend-configured; defaults to 12.
+  final int cancellationWindowHours;
 
   const OrderDetail({
     required this.order,
     required this.tickets,
     required this.checkoutUrl,
+    this.receiptUrl,
+    this.cancellationWindowHours = 12,
   });
+
+  /// True when a fiscal receipt is available to show for this (paid) order.
+  bool get hasReceipt =>
+      order.isPaid && receiptUrl != null && receiptUrl!.isNotEmpty;
 
   String? get earliestTicketDate {
     if (tickets.isEmpty) return null;
@@ -248,8 +288,26 @@ class OrderDetail {
           .map((e) => OrderTicket.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
       checkoutUrl: json['checkout_url']?.toString(),
+      receiptUrl: _readReceiptUrl(json, orderRaw),
+      cancellationWindowHours:
+          (json['cancellation_window_hours'] as num?)?.toInt() ?? 12,
     );
   }
+}
+
+/// Pulls the OFD/Soliq fiscal receipt URL out of the order-detail payload.
+/// The backend may attach it at the detail root or on the order object, under
+/// any of a few field names — read defensively so the feature lights up
+/// whichever shape the backend ships.
+String? _readReceiptUrl(Map<String, dynamic> detail, Map<String, dynamic> order) {
+  const keys = ['receipt_url', 'ofd_url', 'fiscal_url', 'qr_code_url', 'check_url'];
+  for (final source in [detail, order]) {
+    for (final key in keys) {
+      final v = source[key];
+      if (v is String && v.isNotEmpty) return v;
+    }
+  }
+  return null;
 }
 
 String? _readLocalized(dynamic value) {

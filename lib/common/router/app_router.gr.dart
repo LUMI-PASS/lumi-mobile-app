@@ -102,6 +102,12 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    CouponsRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const CouponsPage(),
+      );
+    },
     EmptyRouterRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -112,6 +118,17 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const FaqPage(),
+      );
+    },
+    FiscalReceiptRoute.name: (routeData) {
+      final args = routeData.argsAs<FiscalReceiptRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: FiscalReceiptPage(
+          key: args.key,
+          orderId: args.orderId,
+          initialUrl: args.initialUrl,
+        ),
       );
     },
     HomeRoute.name: (routeData) {
@@ -138,6 +155,12 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const MyBookingsPage(),
+      );
+    },
+    NotificationsRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const NotificationsPage(),
       );
     },
     OnboardingRoute.name: (routeData) {
@@ -224,6 +247,10 @@ abstract class _$AppRouter extends RootStackRouter {
           ticket: args.ticket,
           className: args.className,
           branch: args.branch,
+          orderId: args.orderId,
+          canCancel: args.canCancel,
+          paidPrice: args.paidPrice,
+          fromPromocode: args.fromPromocode,
         ),
       );
     },
@@ -529,6 +556,20 @@ class ClassDetailRouteArgs {
 }
 
 /// generated route for
+/// [CouponsPage]
+class CouponsRoute extends PageRouteInfo<void> {
+  const CouponsRoute({List<PageRouteInfo>? children})
+      : super(
+          CouponsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'CouponsRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [EmptyRouterPage]
 class EmptyRouterRoute extends PageRouteInfo<void> {
   const EmptyRouterRoute({List<PageRouteInfo>? children})
@@ -554,6 +595,49 @@ class FaqRoute extends PageRouteInfo<void> {
   static const String name = 'FaqRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [FiscalReceiptPage]
+class FiscalReceiptRoute extends PageRouteInfo<FiscalReceiptRouteArgs> {
+  FiscalReceiptRoute({
+    Key? key,
+    required String orderId,
+    String? initialUrl,
+    List<PageRouteInfo>? children,
+  }) : super(
+          FiscalReceiptRoute.name,
+          args: FiscalReceiptRouteArgs(
+            key: key,
+            orderId: orderId,
+            initialUrl: initialUrl,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'FiscalReceiptRoute';
+
+  static const PageInfo<FiscalReceiptRouteArgs> page =
+      PageInfo<FiscalReceiptRouteArgs>(name);
+}
+
+class FiscalReceiptRouteArgs {
+  const FiscalReceiptRouteArgs({
+    this.key,
+    required this.orderId,
+    this.initialUrl,
+  });
+
+  final Key? key;
+
+  final String orderId;
+
+  final String? initialUrl;
+
+  @override
+  String toString() {
+    return 'FiscalReceiptRouteArgs{key: $key, orderId: $orderId, initialUrl: $initialUrl}';
+  }
 }
 
 /// generated route for
@@ -622,6 +706,20 @@ class MyBookingsRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'MyBookingsRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [NotificationsPage]
+class NotificationsRoute extends PageRouteInfo<void> {
+  const NotificationsRoute({List<PageRouteInfo>? children})
+      : super(
+          NotificationsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'NotificationsRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }
@@ -867,6 +965,10 @@ class TicketReceiptRoute extends PageRouteInfo<TicketReceiptRouteArgs> {
     required OrderTicket ticket,
     String? className,
     String? branch,
+    String? orderId,
+    bool canCancel = false,
+    num? paidPrice,
+    bool fromPromocode = false,
     List<PageRouteInfo>? children,
   }) : super(
           TicketReceiptRoute.name,
@@ -875,6 +977,10 @@ class TicketReceiptRoute extends PageRouteInfo<TicketReceiptRouteArgs> {
             ticket: ticket,
             className: className,
             branch: branch,
+            orderId: orderId,
+            canCancel: canCancel,
+            paidPrice: paidPrice,
+            fromPromocode: fromPromocode,
           ),
           initialChildren: children,
         );
@@ -891,6 +997,10 @@ class TicketReceiptRouteArgs {
     required this.ticket,
     this.className,
     this.branch,
+    this.orderId,
+    this.canCancel = false,
+    this.paidPrice,
+    this.fromPromocode = false,
   });
 
   final Key? key;
@@ -901,9 +1011,17 @@ class TicketReceiptRouteArgs {
 
   final String? branch;
 
+  final String? orderId;
+
+  final bool canCancel;
+
+  final num? paidPrice;
+
+  final bool fromPromocode;
+
   @override
   String toString() {
-    return 'TicketReceiptRouteArgs{key: $key, ticket: $ticket, className: $className, branch: $branch}';
+    return 'TicketReceiptRouteArgs{key: $key, ticket: $ticket, className: $className, branch: $branch, orderId: $orderId, canCancel: $canCancel, paidPrice: $paidPrice, fromPromocode: $fromPromocode}';
   }
 }
 

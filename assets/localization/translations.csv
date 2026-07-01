@@ -747,7 +747,8 @@ coupon_activated_badge,КУПОН АКТИВЕН,KUPON FAOL,COUPON ACTIVE
 coupon_discount_label,скидка на занятия,mashg'ulotlarga chegirma,off on activities
 coupon_eligible_count,Доступно для {count} занятий,{count} ta mashg'ulot uchun mavjud,Available for {count} activities
 booking_coupon_saved,Сэкономлено,Tejadi,Saved
-booking_coupon_discount,Скидка,Chegirma,Discount
+booking_coupon_discount,Скидка по купону,Kupon chegirmasi,Coupon discount
+booking_promocode_discount,Скидка по промокоду,Promokod chegirmasi,Promo code discount
 booking_original_price,Цена без скидки,Chegirmasiz narx,Original price
 coupon_eligible_loading,Считаем занятия...,Mashg'ulotlar hisoblanmoqda...,Counting activities...
 coupon_start_exploring,Начать поиск,Qidiruvni boshlash,Start Exploring

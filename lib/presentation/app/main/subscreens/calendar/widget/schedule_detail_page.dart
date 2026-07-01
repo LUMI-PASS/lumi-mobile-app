@@ -1,7 +1,9 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
@@ -12,6 +14,7 @@ import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/strip_html.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:shimmer/shimmer.dart';
@@ -37,6 +40,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   bool _launchingPayment = false;
   bool _cancelledLocally = false;
   String? _error;
+  bool _viewLogged = false;
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
 
@@ -74,6 +78,19 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         _classFull = full;
         if (!silent) _loading = false;
       });
+      if (!_viewLogged) {
+        _viewLogged = true;
+        getIt<AnalyticsService>().logEvent(
+          AnalyticsEvent.activityDetailViewed,
+          params: {
+            'order_id': widget.orderId,
+            if (detail.order.activityId != null)
+              'activity_id': detail.order.activityId!,
+            if (full?.name != null) 'class_title': full!.name!,
+            'status': detail.order.effectiveDisplayStatus,
+          },
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       if (!silent) {
@@ -122,7 +139,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       } else {
         bookingDt = date;
       }
-      return bookingDt.difference(DateTime.now()).inMinutes > 12 * 60;
+      return bookingDt.difference(DateTime.now()).inMinutes >
+          _detail!.cancellationWindowHours * 60;
     } catch (_) {
       return false;
     }
@@ -136,6 +154,37 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     } finally {
       if (mounted) setState(() => _launchingPayment = false);
     }
+  }
+
+  /// Opens the OFD/Soliq fiscal receipt for a paid order. On mobile this pushes
+  /// a full-page in-app WebView; on web (where webview_flutter has no renderer)
+  /// it opens the receipt in a new browser tab.
+  Future<void> _openReceipt() async {
+    final url = _detail?.receiptUrl;
+    if (kIsWeb) {
+      var target = url;
+      if (target == null || target.isEmpty) {
+        try {
+          target = await getIt<OrdersApi>().getOrderReceipt(widget.orderId);
+        } catch (_) {/* handled below */}
+      }
+      if (target != null && target.isNotEmpty) {
+        await launchUrl(
+          Uri.parse(target),
+          mode: LaunchMode.externalApplication,
+          webOnlyWindowName: '_blank',
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('fiscal_receipt_unavailable'.tr())),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    context.router.push(
+      FiscalReceiptRoute(orderId: widget.orderId, initialUrl: url),
+    );
   }
 
   @override
@@ -356,6 +405,17 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                             final ticketCancelled = _cancelledLocally ||
                                 order.isCanceled ||
                                 t.status.toLowerCase() == 'canceled';
+                            // Per-ticket paid price: scale ticket.price by the
+                            // order-level discount ratio so each age-tier gets
+                            // the correct share.
+                            num? paidPerTicket;
+                            if (order.hasDiscount &&
+                                order.subtotalAmount > 0) {
+                              paidPerTicket = (t.price *
+                                      order.totalAmount /
+                                      order.subtotalAmount)
+                                  .round();
+                            }
                             return Padding(
                               padding: EdgeInsets.only(bottom: 10.h),
                               child: _TicketRow(
@@ -368,6 +428,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                                 canCancel: _canCancel(),
                                 isCancelled: ticketCancelled,
                                 onCanceled: _onCancelled,
+                                paidPrice: paidPerTicket,
+                                fromPromocode: order.isPromocodeDiscount,
                               ),
                             );
                           }),
@@ -384,17 +446,65 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                       label: order.isPending
                           ? 'amount_due'.tr()
                           : 'amount_paid'.tr(),
-                      valueWidget: Text(
-                        order.totalAmount.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w800,
-                          color: order.isPending
-                              ? const Color(0xFFEA580C)
-                              : const Color(0xFF059669),
-                        ),
+                      valueWidget: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (order.hasDiscount)
+                            Text(
+                              order.subtotalAmount.toRawUzsPrice(),
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF94A3B8),
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          Text(
+                            order.totalAmount.toRawUzsPrice(),
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w800,
+                              color: order.isPending
+                                  ? const Color(0xFFEA580C)
+                                  : const Color(0xFF059669),
+                            ),
+                          ),
+                          if (order.hasDiscount)
+                            Container(
+                              margin: EdgeInsets.only(top: 4.h),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w, vertical: 3.h),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.local_offer_rounded,
+                                      size: 11.sp,
+                                      color: const Color(0xFF16A34A)),
+                                  4.kw,
+                                  Text(
+                                    '${'booking_coupon_saved'.tr()} ${order.discountAmount.toRawUzsPrice()}',
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     ),
+                    if (order.isPaid &&
+                        !_cancelledLocally &&
+                        !order.isCanceled) ...[
+                      12.kh,
+                      _ReceiptCard(primary: primary, onTap: _openReceipt),
+                    ],
                     if (_branchTitle() != null) ...[
                       12.kh,
                       _InfoCard(
@@ -586,6 +696,8 @@ class _TicketRow extends StatelessWidget {
     this.canCancel = false,
     this.isCancelled = false,
     this.onCanceled,
+    this.paidPrice,
+    this.fromPromocode = false,
   });
 
   final OrderTicket ticket;
@@ -596,6 +708,10 @@ class _TicketRow extends StatelessWidget {
   final bool canCancel;
   final bool isCancelled;
   final VoidCallback? onCanceled;
+  /// True when the discount came from a promocode (vs an auto coupon plan).
+  final bool fromPromocode;
+  /// Per-ticket amount actually paid (after coupon discount). Null = no discount.
+  final num? paidPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -667,14 +783,34 @@ class _TicketRow extends StatelessWidget {
                     Icon(Icons.payments_outlined,
                         size: 11.sp, color: subColor),
                     4.kw,
-                    Text(
-                      ticket.price.toRawUzsPrice(),
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: subColor,
-                        fontWeight: FontWeight.w600,
+                    if (paidPrice != null && paidPrice != ticket.price) ...[
+                      Text(
+                        ticket.price.toRawUzsPrice(),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: subColor,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.lineThrough,
+                        ),
                       ),
-                    ),
+                      4.kw,
+                      Text(
+                        paidPrice!.toRawUzsPrice(),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: const Color(0xFF16A34A),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ] else
+                      Text(
+                        ticket.price.toRawUzsPrice(),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: subColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                   ],
                 ),
                 if (ticket.startTime != null && ticket.endTime != null) ...[
@@ -733,6 +869,8 @@ class _TicketRow extends StatelessWidget {
           branch: branch,
           orderId: orderId,
           canCancel: canCancel,
+          paidPrice: paidPrice,
+          fromPromocode: fromPromocode,
         ));
         if (result == true) onCanceled?.call();
       },
@@ -889,6 +1027,70 @@ class _InfoCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Tappable card on the paid-order detail that opens the official OFD/Soliq
+/// fiscal receipt (full page on mobile, new tab on web).
+class _ReceiptCard extends StatelessWidget {
+  const _ReceiptCard({required this.primary, required this.onTap});
+  final Color primary;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withOpacity(0.9),
+      borderRadius: BorderRadius.circular(18.r),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.r),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3C539A).withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48.w,
+                height: 48.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+                child: Icon(Icons.receipt_long_rounded,
+                    color: const Color(0xFF2563EB), size: 22.w),
+              ),
+              12.kw,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    'fiscal_receipt'.tr().s(14).w(700).c(const Color(0xFF1E293B)),
+                    4.kh,
+                    'fiscal_receipt_subtitle'
+                        .tr()
+                        .s(11)
+                        .w(500)
+                        .c(const Color(0xFF64748B)),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 14.sp, color: const Color(0xFF94A3B8)),
+            ],
+          ),
+        ),
       ),
     );
   }
