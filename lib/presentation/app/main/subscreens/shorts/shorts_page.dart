@@ -676,21 +676,24 @@ class _PlayPauseTapLayerState extends State<_PlayPauseTapLayer> {
 
   @override
   Widget build(BuildContext context) {
-    // When paused, YouTube reveals its own chrome (channel header + "Shorts"
-    // badge + share) which we can't remove from the cross-origin iframe. Cover
-    // the whole video with our own scrim + play button so that chrome is hidden.
-    // While playing the scrim is fully transparent, so the video is untouched.
+    // Just a centred play glyph while paused — no full-screen scrim (the
+    // zoom-crop already hides YouTube's edge chrome). Tap anywhere to toggle.
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _toggle,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 150),
         opacity: _paused ? 1 : 0,
-        child: Container(
-          color: Colors.black.withOpacity(0.86),
-          alignment: Alignment.center,
-          child: Icon(Icons.play_arrow_rounded,
-              color: Colors.white, size: 64.sp),
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.all(14.r),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.4),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.play_arrow_rounded,
+                color: Colors.white, size: 44.sp),
+          ),
         ),
       ),
     );
