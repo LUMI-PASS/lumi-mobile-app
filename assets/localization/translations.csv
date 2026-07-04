@@ -729,6 +729,7 @@ promo_hint,Введите промокод,Promokodni kiriting,Enter promo code
 promo_apply,Применить,Qo'llash,Apply
 promo_applied_saved,Сэкономлено {},Tejadingiz {},You saved {}
 promo_invalid,Промокод недействителен,Promokod yaroqsiz,Invalid promo code
+promo_max_order,Промокод действует только для заказов до {},Promokod faqat {} gacha buyurtmalar uchun amal qiladi,This promocode is valid only for orders up to {}
 plan_how_title,Как это работает,Bu qanday ishlaydi,How it works
 plan_step1,Выберите подходящий купон,O'zingizga mos kuponni tanlang,Choose the coupon that fits you
 plan_step2,Оплатите купон и активируйте его,Kuponni to'lang va faollashtiring,Pay for the coupon and activate it

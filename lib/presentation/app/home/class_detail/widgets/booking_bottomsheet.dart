@@ -109,15 +109,10 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
       });
     } on DioException catch (e) {
       final data = e.response?.data;
-      final msg = data is Map && data['message'] != null
-          ? (data['message'] is List
-              ? (data['message'] as List).join(', ')
-              : data['message'].toString())
-          : 'promo_invalid'.tr();
       if (!mounted) return;
       setState(() {
         _appliedPromo = null;
-        _promoError = msg;
+        _promoError = _promoErrorMessage(data);
         _promoLoading = false;
       });
     } catch (_) {
@@ -128,6 +123,25 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
         _promoLoading = false;
       });
     }
+  }
+
+  /// Turns a backend promocode error into a localized, user-facing message.
+  /// Known structured errors (with an `error_code`) are localized here; anything
+  /// else falls back to the server message, then a generic invalid string.
+  String _promoErrorMessage(dynamic data) {
+    if (data is Map) {
+      final code = data['error_code'];
+      if (code == 'promo_max_order') {
+        final raw = data['max_order_amount'];
+        final amount = raw is num ? raw : num.tryParse('$raw') ?? 0;
+        return 'promo_max_order'.tr(args: [amount.toRawUzsPrice()]);
+      }
+      final message = data['message'];
+      if (message != null) {
+        return message is List ? message.join(', ') : message.toString();
+      }
+    }
+    return 'promo_invalid'.tr();
   }
 
   void _removePromo() {
