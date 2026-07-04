@@ -371,7 +371,39 @@ class _ShortSlide extends StatelessWidget {
             child: Center(
               child: AspectRatio(
                 aspectRatio: 9 / 16,
-                child: player,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    player,
+                    // YouTube shows the video title / channel / "Shorts" chrome
+                    // at the top of the embed on start. That lives inside a
+                    // cross-origin iframe (can't be hidden via CSS or player
+                    // vars), so mask the top strip: solid at the very top,
+                    // fading into the video.
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 92.h,
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black,
+                                Colors.black,
+                                Colors.black.withOpacity(0.0),
+                              ],
+                              stops: const [0.0, 0.55, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           )
