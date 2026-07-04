@@ -7,6 +7,7 @@ import 'package:focus_detector/focus_detector.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -23,6 +24,8 @@ const YoutubePlayerFlags _kPlayerFlags = YoutubePlayerFlags(
   mute: false,
   loop: true,
   hideControls: true,
+  hideThumbnail: true,
+  enableCaption: false,
   disableDragSeek: true,
 );
 
@@ -300,6 +303,7 @@ class _ShortsPageState extends State<ShortsPage> {
                   hc: _classes[index],
                   isActive: index == _currentIndex,
                   player: playerWidget,
+                  controller: controller,
                   showSwipeHint:
                       index == 0 && _showSwipeHint && _classes.length > 1,
                   bottomInset: bottomInset,
@@ -318,6 +322,7 @@ class _ShortSlide extends StatelessWidget {
     required this.hc,
     required this.isActive,
     required this.player,
+    required this.controller,
     required this.showSwipeHint,
     required this.bottomInset,
   });
@@ -325,8 +330,31 @@ class _ShortSlide extends StatelessWidget {
   final HomClass hc;
   final bool isActive;
   final Widget player;
+  final YoutubePlayerController controller;
   final bool showSwipeHint;
   final double bottomInset;
+
+  // Mirrors the home cards: when the cheapest tier is free but paid tiers
+  // exist, show the lowest paid price; show a "from" price when there are
+  // multiple tiers. Falls back to the flat price. Returns null when there's
+  // nothing meaningful to show.
+  String? _priceLabel() {
+    final snap = ClassPricingCache.get(hc.id);
+    final hasFreeAndPaid =
+        snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
+    final effectivePrice = hasFreeAndPaid
+        ? snap.priceMinPaid
+        : (snap != null && snap.priceMin > 0)
+            ? snap.priceMin
+            : (hc.price ?? 0);
+    final showFrom = hasFreeAndPaid ||
+        (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
+    if (effectivePrice < 100) return 'price_free'.tr();
+    if (showFrom) {
+      return 'price_from'.tr(args: [effectivePrice.toRawUzsPrice()]);
+    }
+    return effectivePrice.toRawUzsPrice();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -362,8 +390,20 @@ class _ShortSlide extends StatelessWidget {
             padding: EdgeInsets.only(bottom: bottomInset),
             child: Container(color: Colors.grey.shade900),
           ),
+        // Tap anywhere on the video to pause/resume (native controls are
+        // hidden). Sits above the player but below the text/buttons so those
+        // stay tappable.
+        if (isActive)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: bottomInset,
+            child: _PlayPauseTapLayer(controller: controller),
+          ),
         Positioned.fill(
-          child: DecoratedBox(
+          child: IgnorePointer(
+            child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -375,6 +415,7 @@ class _ShortSlide extends StatelessWidget {
                 ],
                 stops: const [0.0, 0.4, 1.0],
               ),
+            ),
             ),
           ),
         ),
@@ -480,7 +521,7 @@ class _ShortSlide extends StatelessWidget {
             ],
           ),
         ),
-        if (hc.price != null)
+        if (_priceLabel() != null)
           Positioned(
             right: 12.w,
             bottom: 32.h + bottomInset,
@@ -491,7 +532,7 @@ class _ShortSlide extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14.r),
               ),
               child: Text(
-                hc.price!.toUzsPrice(),
+                _priceLabel()!,
                 style: TextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w800,
@@ -584,6 +625,67 @@ class _SwipeUpHintState extends State<_SwipeUpHint>
           ),
         );
       },
+    );
+  }
+}
+
+// Transparent gesture layer over the video: tap toggles play/pause and shows a
+// centred play glyph while paused. Listens to the controller so the glyph
+// tracks the real playback state (e.g. buffering / focus changes).
+class _PlayPauseTapLayer extends StatefulWidget {
+  const _PlayPauseTapLayer({required this.controller});
+
+  final YoutubePlayerController controller;
+
+  @override
+  State<_PlayPauseTapLayer> createState() => _PlayPauseTapLayerState();
+}
+
+class _PlayPauseTapLayerState extends State<_PlayPauseTapLayer> {
+  bool _paused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onValue);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onValue);
+    super.dispose();
+  }
+
+  void _onValue() {
+    final paused = !widget.controller.value.isPlaying;
+    if (paused != _paused && mounted) setState(() => _paused = paused);
+  }
+
+  void _toggle() {
+    final c = widget.controller;
+    c.value.isPlaying ? c.pause() : c.play();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _toggle,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: _paused ? 1 : 0,
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.all(14.r),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.45),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.play_arrow_rounded,
+                color: Colors.white, size: 44.sp),
+          ),
+        ),
+      ),
     );
   }
 }
