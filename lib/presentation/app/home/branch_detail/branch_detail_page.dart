@@ -10,6 +10,7 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/strip_html.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/class_item_widget.dart';
@@ -44,6 +45,16 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
     _galleryImages = _resolveImagesFromBranch(widget.branch);
     _loadClasses();
     _startAutoSlide();
+    final b = widget.branch;
+    getIt<AnalyticsService>().logEvent(
+      AnalyticsEvent.branchDetailViewed,
+      params: {
+        if (b.id != null) 'branch_id': b.id!,
+        if (b.title != null) 'branch_title': b.title!,
+        if (b.address != null) 'address': b.address!,
+        if (b.distance != null) 'distance': b.distance!,
+      },
+    );
   }
 
   @override

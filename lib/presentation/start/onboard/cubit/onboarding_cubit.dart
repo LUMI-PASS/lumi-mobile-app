@@ -1,6 +1,7 @@
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_state.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,7 @@ class OnboardingCubit
     if (index == 3) {
       await _storage.showOnboard.set(false);
       final tokens = _storage.tokens.call();
-      if (tokens == null) {
+      if (tokens == null && !RemoteConfigService.instance.isInReview) {
         invoke(const OnboardingListenable(effect: OnboardEffect.login));
         return;
       }
@@ -31,7 +32,7 @@ class OnboardingCubit
   void skipAll() async {
     await _storage.showOnboard.set(false);
     final tokens = _storage.tokens.call();
-    if (tokens == null) {
+    if (tokens == null && !RemoteConfigService.instance.isInReview) {
       invoke(const OnboardingListenable(effect: OnboardEffect.login));
       return;
     }

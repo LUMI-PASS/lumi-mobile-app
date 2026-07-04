@@ -279,6 +279,18 @@ class $AssetsImagesGen {
   AssetGenImage get appIcon =>
       const AssetGenImage('assets/images/app_icon.jpg');
 
+  /// File path: assets/images/carousel1.png
+  AssetGenImage get carousel1 =>
+      const AssetGenImage('assets/images/carousel1.png');
+
+  /// File path: assets/images/carousel2.png
+  AssetGenImage get carousel2 =>
+      const AssetGenImage('assets/images/carousel2.png');
+
+  /// File path: assets/images/carousel3.png
+  AssetGenImage get carousel3 =>
+      const AssetGenImage('assets/images/carousel3.png');
+
   /// File path: assets/images/congrats.png
   AssetGenImage get congrats =>
       const AssetGenImage('assets/images/congrats.png');
@@ -309,6 +321,9 @@ class $AssetsImagesGen {
   /// List of all assets
   List<AssetGenImage> get values => [
         appIcon,
+        carousel1,
+        carousel2,
+        carousel3,
         congrats,
         defacultAvatar,
         defaultImage,

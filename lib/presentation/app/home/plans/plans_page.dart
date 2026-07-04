@@ -9,6 +9,7 @@ import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
 import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -103,6 +104,14 @@ class _PlansPageState extends State<PlansPage>
   Future<void> _purchase(PremiumPlan plan) async {
     if (plan.id == null || _purchasingId != null) return;
     setState(() => _purchasingId = plan.id);
+    getIt<AnalyticsService>().logEvent(
+      AnalyticsEvent.planPurchaseStarted,
+      params: {
+        'plan_id': plan.id!,
+        if (plan.discountPercentage != null)
+          'discount_percentage': plan.discountPercentage!.round(),
+      },
+    );
     try {
       final checkout = await _api.checkoutSubscription(
         tariffId: plan.id!,
@@ -378,22 +387,24 @@ class _PlansTab extends StatelessWidget {
     if (plans.isEmpty) {
       return _EmptyPlans();
     }
-    return ListView.separated(
+    final popularIndex = plans.length >= 2 ? (plans.length ~/ 2) : -1;
+    return ListView(
       padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 32.h),
-      itemCount: plans.length,
-      separatorBuilder: (_, __) => 14.kh,
-      itemBuilder: (context, index) {
-        final plan = plans[index];
-        final popularIndex =
-            plans.length >= 2 ? (plans.length ~/ 2) : -1;
-        return _PlanCard(
-          plan: plan,
-          isPopular: index == popularIndex,
-          isPurchasing: purchasingId == plan.id,
-          disabled: purchasingId != null && purchasingId != plan.id,
-          onChoose: () => onChoose(plan),
-        );
-      },
+      children: [
+        for (int index = 0; index < plans.length; index++) ...[
+          _PlanCard(
+            plan: plans[index],
+            isPopular: index == popularIndex,
+            isPurchasing: purchasingId == plans[index].id,
+            disabled:
+                purchasingId != null && purchasingId != plans[index].id,
+            onChoose: () => onChoose(plans[index]),
+          ),
+          if (index != plans.length - 1) 14.kh,
+        ],
+        24.kh,
+        const _HowItWorks(),
+      ],
     );
   }
 }
@@ -779,13 +790,11 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = context.colors.primary;
     final discount = plan.discountPercentage ?? 0;
-    final features = <String>[
-      if ((plan.activitiesLimit ?? 0) > 0)
-        '${plan.activitiesLimit} ${'activities_limit'.tr()}',
-      if ((plan.durationDays ?? 0) > 0) '${plan.durationDays} ${'days'.tr()}',
-      if (discount > 0)
-        '${'discount_on_activities'.tr()}: ${discount.toStringAsFixed(discount % 1 == 0 ? 0 : 1)}%',
-    ];
+    final activities = plan.activitiesLimit ?? 0;
+    final duration = plan.durationDays ?? 0;
+    final discountLabel = discount > 0
+        ? '${discount.toStringAsFixed(discount % 1 == 0 ? 0 : 1)}%'
+        : '—';
 
     final card = Container(
       padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 20.h),
@@ -848,82 +857,71 @@ class _PlanCard extends StatelessWidget {
                 ),
             ],
           ),
-          14.kh,
+          16.kh,
+          // ── Hero stats: discount + activities as tinted tiles ────────────
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                (plan.price ?? 0).toRawUzsPrice(),
-                style: TextStyle(
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w900,
-                  color: primary,
-                  height: 1.1,
-                  letterSpacing: -0.5,
+              Expanded(
+                child: _HeroStat(
+                  icon: Icons.sell_rounded,
+                  value: discountLabel,
+                  label: 'discount_on_activities'.tr(),
+                  primary: primary,
                 ),
               ),
-              8.kw,
-              if (discount > 0)
-                Padding(
-                  padding: EdgeInsets.only(bottom: 6.h),
-                  child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF16A34A).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Text(
-                      '-${discount.toStringAsFixed(discount % 1 == 0 ? 0 : 1)}%',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF16A34A),
-                      ),
-                    ),
-                  ),
+              10.kw,
+              Expanded(
+                child: _HeroStat(
+                  icon: Icons.confirmation_number_rounded,
+                  value: activities > 0 ? '$activities' : '—',
+                  label: 'activities_limit'.tr(),
+                  primary: primary,
                 ),
+              ),
             ],
           ),
-          if (features.isNotEmpty) ...[
-            16.kh,
-            ...features.map(
-              (f) => Padding(
-                padding: EdgeInsets.only(bottom: 6.h),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(top: 3.h),
-                      padding: EdgeInsets.all(2.w),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.check_rounded,
-                          size: 12.sp, color: primary),
+          if (duration > 0) ...[
+            12.kh,
+            // ── Duration chip ──────────────────────────────────────────────
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.schedule_rounded, size: 14.sp, color: _grey),
+                  6.kw,
+                  Text(
+                    '$duration ${'days'.tr()}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: _navy,
                     ),
-                    8.kw,
-                    Expanded(
-                      child: Text(
-                        f,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: const Color(0xFF4B5563),
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
-          16.kh,
+          14.kh,
+          _DashedLine(color: Colors.grey.shade300),
+          12.kh,
+          // ── Price (subtle) ───────────────────────────────────────────────
+          Text(
+            (plan.price ?? 0).toRawUzsPrice(),
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: _grey,
+            ),
+          ),
+          12.kh,
           SizedBox(
             width: double.infinity,
             child: _ChooseButton(
-              isPopular: isPopular,
               isLoading: isPurchasing,
               disabled: disabled,
               onPressed: onChoose,
@@ -946,15 +944,271 @@ class _PlanCard extends StatelessWidget {
   }
 }
 
+// ─── Animated "How it works" ──────────────────────────────────────────────────
+
+class _HowItWorks extends StatefulWidget {
+  const _HowItWorks();
+
+  @override
+  State<_HowItWorks> createState() => _HowItWorksState();
+}
+
+class _HowItWorksState extends State<_HowItWorks>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  static const _steps = <(IconData, String)>[
+    (Icons.touch_app_rounded, 'plan_step1'),
+    (Icons.lock_rounded, 'plan_step2'),
+    (Icons.local_offer_rounded, 'plan_step3'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = context.colors.primary;
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32.w,
+                height: 32.w,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [primary, const Color(0xFFFF7093)],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.auto_awesome_rounded,
+                    size: 16.sp, color: Colors.white),
+              ),
+              10.kw,
+              Text(
+                'plan_how_title'.tr(),
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w800,
+                  color: _navy,
+                ),
+              ),
+            ],
+          ),
+          18.kh,
+          ...List.generate(_steps.length, (i) {
+            final isLast = i == _steps.length - 1;
+            // Each step fades + slides in, staggered.
+            final start = i * 0.22;
+            final anim = CurvedAnimation(
+              parent: _controller,
+              curve: Interval(start, (start + 0.55).clamp(0.0, 1.0),
+                  curve: Curves.easeOutCubic),
+            );
+            return AnimatedBuilder(
+              animation: anim,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: anim.value,
+                  child: Transform.translate(
+                    offset: Offset(20 * (1 - anim.value), 0),
+                    child: child,
+                  ),
+                );
+              },
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      children: [
+                        Container(
+                          width: 36.w,
+                          height: 36.w,
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.10),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(_steps[i].$1, size: 18.sp, color: primary),
+                        ),
+                        if (!isLast)
+                          Expanded(
+                            child: Container(
+                              width: 2,
+                              margin: EdgeInsets.symmetric(vertical: 4.h),
+                              color: primary.withValues(alpha: 0.15),
+                            ),
+                          ),
+                      ],
+                    ),
+                    12.kw,
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                            top: 7.h, bottom: isLast ? 0 : 18.h),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w900,
+                                color: primary,
+                              ),
+                            ),
+                            8.kw,
+                            Expanded(
+                              child: Text(
+                                _steps[i].$2.tr(),
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF4B5563),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Hero stat tile (icon + big number + label) ───────────────────────────────
+
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.primary,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: primary.withValues(alpha: 0.10)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18.sp, color: primary),
+          8.kh,
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 26.sp,
+              fontWeight: FontWeight.w900,
+              color: primary,
+              height: 1.0,
+              letterSpacing: -0.5,
+            ),
+          ),
+          6.kh,
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: _grey,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Dashed separator (coupon ticket feel) ────────────────────────────────────
+
+class _DashedLine extends StatelessWidget {
+  const _DashedLine({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const dashWidth = 6.0;
+        const dashGap = 4.0;
+        final count = (constraints.maxWidth / (dashWidth + dashGap)).floor();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(
+            count,
+            (_) => Container(
+              width: dashWidth,
+              height: 1.4,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _ChooseButton extends StatelessWidget {
   const _ChooseButton({
-    required this.isPopular,
     required this.isLoading,
     required this.disabled,
     required this.onPressed,
   });
 
-  final bool isPopular;
   final bool isLoading;
   final bool disabled;
   final VoidCallback onPressed;
@@ -968,31 +1222,26 @@ class _ChooseButton extends StatelessWidget {
       onTap: (isLoading || disabled) ? null : onPressed,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(vertical: 13.h),
+        padding: EdgeInsets.symmetric(vertical: 15.h),
         decoration: BoxDecoration(
-          gradient: isPopular ? gradient : null,
-          color: isPopular ? null : primary.withValues(alpha: 0.1),
+          gradient: gradient,
           borderRadius: BorderRadius.circular(16.r),
-          boxShadow: isPopular
-              ? [
-                  BoxShadow(
-                    color: primary.withValues(alpha: 0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
+          boxShadow: [
+            BoxShadow(
+              color: primary.withValues(alpha: 0.32),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Center(
           child: isLoading
               ? SizedBox(
                   width: 18.w,
                   height: 18.w,
-                  child: CircularProgressIndicator(
+                  child: const CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(
-                      isPopular ? Colors.white : primary,
-                    ),
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
                   ),
                 )
               : Row(
@@ -1003,7 +1252,7 @@ class _ChooseButton extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w800,
-                        color: isPopular ? Colors.white : primary,
+                        color: Colors.white,
                         letterSpacing: 0.2,
                       ),
                     ),
@@ -1011,7 +1260,7 @@ class _ChooseButton extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward_rounded,
                       size: 16.sp,
-                      color: isPopular ? Colors.white : primary,
+                      color: Colors.white,
                     ),
                   ],
                 ),

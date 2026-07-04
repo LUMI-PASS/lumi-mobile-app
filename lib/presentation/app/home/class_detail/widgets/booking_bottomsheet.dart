@@ -9,9 +9,11 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 
 const _kLookaheadDays = 30;
@@ -63,6 +65,214 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
   num _applyDiscount(num price) =>
       _hasCoupon ? (price * (100 - _couponPct) / 100).round() : price;
   num get _discountedTotal => _applyDiscount(_total);
+
+  // ─── Promocode ─────────────────────────────────────────────────────────────
+  // Coupon plans and promocodes never stack, so this whole block is hidden
+  // (and never sent) whenever [_hasCoupon] is true. Only customers without an
+  // active coupon plan can enter a promocode.
+  final TextEditingController _promoCtrl = TextEditingController();
+  PromocodePreview? _appliedPromo;
+  bool _promoLoading = false;
+  String? _promoError;
+
+  num get _promoDiscount => _appliedPromo?.discountAmount ?? 0;
+
+  /// The amount the user actually pays. A coupon plan and a promocode are
+  /// mutually exclusive: the coupon plan auto-discounts (and hides the promo
+  /// field); otherwise an applied promocode reduces the total.
+  num get _payableTotal {
+    if (_hasCoupon) return _discountedTotal;
+    final t = _total - _promoDiscount;
+    return t < 0 ? 0 : t;
+  }
+
+  /// Validate the entered code against the current subtotal and show a preview
+  /// of the new total. The discount is re-checked server-side at checkout.
+  Future<void> _applyPromo() async {
+    final code = _promoCtrl.text.trim();
+    if (code.isEmpty || _promoLoading) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _promoLoading = true;
+      _promoError = null;
+    });
+    try {
+      final preview = await getIt<OrdersApi>().validatePromocode(
+        code: code,
+        subtotal: _total,
+        activityId: widget.clazz.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _appliedPromo = preview;
+        _promoLoading = false;
+      });
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final msg = data is Map && data['message'] != null
+          ? (data['message'] is List
+              ? (data['message'] as List).join(', ')
+              : data['message'].toString())
+          : 'promo_invalid'.tr();
+      if (!mounted) return;
+      setState(() {
+        _appliedPromo = null;
+        _promoError = msg;
+        _promoLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _appliedPromo = null;
+        _promoError = 'promo_invalid'.tr();
+        _promoLoading = false;
+      });
+    }
+  }
+
+  void _removePromo() {
+    setState(() {
+      _appliedPromo = null;
+      _promoError = null;
+      _promoCtrl.clear();
+    });
+  }
+
+  /// Drop a previewed promocode whenever the order subtotal changes — the
+  /// cached discount would otherwise be stale. The user re-applies on step 1.
+  void _resetPromoOnChange() {
+    if (_appliedPromo != null || _promoError != null) {
+      _appliedPromo = null;
+      _promoError = null;
+    }
+  }
+
+  Widget _buildPromoSection() {
+    final applied = _appliedPromo;
+    if (applied != null) {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF7EE),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: const Color(0xFFB7E4C7)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.local_offer_rounded,
+                size: 18.sp, color: const Color(0xFF16A34A)),
+            8.kw,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    applied.code,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: _textColor,
+                    ),
+                  ),
+                  Text(
+                    'promo_applied_saved'
+                        .tr(args: [applied.discountAmount.toRawUzsPrice()]),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF16A34A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: _removePromo,
+              behavior: HitTestBehavior.opaque,
+              child: Icon(Icons.close_rounded, size: 18.sp, color: _muted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 46.h,
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF6F4FE),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: _border),
+                ),
+                child: TextField(
+                  controller: _promoCtrl,
+                  enabled: !_promoLoading,
+                  textCapitalization: TextCapitalization.characters,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _applyPromo(),
+                  style: TextStyle(fontSize: 14.sp, color: _textColor),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    hintText: 'promo_hint'.tr(),
+                    hintStyle: TextStyle(fontSize: 14.sp, color: _muted),
+                  ),
+                ),
+              ),
+            ),
+            10.kw,
+            GestureDetector(
+              onTap: _promoLoading ? null : _applyPromo,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                height: 46.h,
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _brandLight,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: _promoLoading
+                    ? SizedBox(
+                        width: 18.w,
+                        height: 18.h,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(_brandDark),
+                        ),
+                      )
+                    : Text(
+                        'promo_apply'.tr(),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: _brandDark,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+        if (_promoError != null) ...[
+          6.kh,
+          Text(
+            _promoError!,
+            style:
+                TextStyle(fontSize: 12.sp, color: const Color(0xFFDC2626)),
+          ),
+        ],
+      ],
+    );
+  }
 
   // ── Required-booking flow ──────────────────────────────────────────────────
   // For classes whose category is `required_booking`, every individual ticket
@@ -424,6 +634,12 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
     });
   }
 
+  @override
+  void dispose() {
+    _promoCtrl.dispose();
+    super.dispose();
+  }
+
   List<_AvailableDate> _buildLookaheadDates() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -542,6 +758,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
       }
       _tierCounts[t][d] = next;
       _syncCustomWindows();
+      _resetPromoOnChange();
       _error = null;
     });
   }
@@ -559,6 +776,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
       }
       _flatCounts[i] = next;
       _syncCustomWindows();
+      _resetPromoOnChange();
       _error = null;
     });
   }
@@ -696,8 +914,23 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
         activityId: id,
         items: items,
         ticketDate: _selectedDate!.isoKey,
+        // Coupon plan and promocode never stack — only send a code when the
+        // user has no coupon plan (the promo field is hidden in that case).
+        promoCode: _hasCoupon ? null : _appliedPromo?.code,
       );
       if (!mounted) return;
+      // Snapshot before we close: was a coupon slot consumed for this order?
+      final usedCoupon = _hasCoupon;
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.bookingCheckoutStarted,
+        params: {
+          'activity_id': id,
+          'ticket_count': _totalTickets,
+          'ticket_date': _selectedDate!.isoKey,
+          'used_coupon': usedCoupon.toString(),
+          'requires_booking_slot': _requiresBookingSlot.toString(),
+        },
+      );
       Navigator.of(context).pop();
       if (!RemoteConfigService.instance.isInReview) {
         await Navigator.of(context).push(
@@ -706,7 +939,17 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
           ),
         );
       }
+      // Re-sync premium status so the discount badge disappears immediately
+      // when the last coupon activity slot was consumed (coins hit 0 at
+      // checkout time — the server already reflects the new state).
+      if (usedCoupon) {
+        getIt<AppCubit>().syncSubscription();
+      }
       if (_requiresBookingSlot && mounted) {
+        getIt<AnalyticsService>().logEvent(
+          AnalyticsEvent.bookingRequested,
+          params: {'activity_id': id},
+        );
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const _BookingRequestedPage(),
@@ -720,8 +963,21 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
               e.message)
           : (e.message ?? 'book_network_error'.tr());
       setState(() => _error = msg);
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.bookingCheckoutFailed,
+        params: {
+          'activity_id': id,
+          'reason': 'dio',
+          if (e.response?.statusCode != null)
+            'status_code': e.response!.statusCode!,
+        },
+      );
     } catch (e) {
       setState(() => _error = e.toString());
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.bookingCheckoutFailed,
+        params: {'activity_id': id, 'reason': 'unknown'},
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -1386,6 +1642,12 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                       );
                     }),
 
+                  // Promocode entry — only for customers without a coupon plan.
+                  if (!_hasCoupon) ...[
+                    Divider(height: 16.h, color: _border),
+                    _buildPromoSection(),
+                  ],
+
                   Divider(height: 16.h, color: _border),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1398,7 +1660,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                           color: _textColor,
                         ),
                       ),
-                      _hasCoupon
+                      (_hasCoupon || _appliedPromo != null)
                           ? Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
@@ -1412,7 +1674,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                                   ),
                                 ),
                                 Text(
-                                  _discountedTotal.toRawUzsPrice(),
+                                  _payableTotal.toRawUzsPrice(),
                                   style: TextStyle(
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w800,
@@ -1480,7 +1742,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                             )
                           : Text(
                               'book_pay_cta'
-                                  .tr(args: [_discountedTotal.toRawUzsPrice()]),
+                                  .tr(args: [_payableTotal.toRawUzsPrice()]),
                               style: TextStyle(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.w800,

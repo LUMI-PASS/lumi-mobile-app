@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "909673011800",
-    "project_id": "lumipass-d4e90",
-    "storage_bucket": "lumipass-d4e90.firebasestorage.app"
+    "project_number": "853491388305",
+    "project_id": "lumi-app-29c94",
+    "storage_bucket": "lumi-app-29c94.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:909673011800:android:6eac4fed5667afad57082d",
+        "mobilesdk_app_id": "1:853491388305:android:f0f65f2cfd80c41e479430",
         "android_client_info": {
           "package_name": "uz.lumi.mobileapp"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCs7S_qidzrRRSt_Zv9GV2KF0r0ASMqXCU"
+          "current_key": "AIzaSyAVKKWY4dRzT3yV4lDagxTeB1CtFb8yN2A"
         }
       ],
       "services": {

@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
@@ -18,23 +18,37 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
 
   double? _lat;
   double? _lng;
+  String _lastLang = '';
 
   /// Pending category set from outside (e.g. home page).
   /// Picked up on next [applyPendingCategory] call.
   static HomCategory? pendingCategory;
 
+  /// Categories cached from the home feed (have resolved title strings).
+  /// Used by search so we don't depend on the raw categories/ endpoint.
+  static List<HomCategory> cachedCategories = [];
+
   static const int _pageLimit = 10;
   Timer? _debounce;
 
   Future<void> init() async {
+    _lastLang = currentLang;
     build((b) => b.copyWith(isLoading: true));
-    await _resolveLocation();
     await Future.wait([
       _fetchCategories(),
       _fetchTab(buildable.activeTab, page: 1, append: false),
     ]);
     build((b) => b.copyWith(isLoading: false));
     applyPendingCategory();
+  }
+
+  /// Re-fetches categories and results when the app language has changed.
+  Future<void> refreshIfLanguageChanged() async {
+    final lang = currentLang;
+    if (_lastLang == lang) return;
+    _lastLang = lang;
+    cachedCategories = [];
+    await Future.wait([_fetchCategories(), refresh()]);
   }
 
   /// Check if a category was set externally and apply it.
@@ -46,26 +60,17 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     }
   }
 
-  Future<void> _resolveLocation() async {
-    try {
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) return;
-      final position = await Geolocator.getLastKnownPosition() ??
-          await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.high,
-              timeLimit: Duration(seconds: 5),
-            ),
-          );
-      _lat = position.latitude;
-      _lng = position.longitude;
-    } catch (_) {}
-  }
 
   Future<void> _fetchCategories() async {
+    if (cachedCategories.isNotEmpty) {
+      build((b) => b.copyWith(categories: cachedCategories));
+      return;
+    }
     try {
       final categories = await _repo.getAllCategories();
+      if (categories.isNotEmpty) {
+        cachedCategories = categories;
+      }
       build((b) => b.copyWith(categories: categories));
     } catch (_) {}
   }
@@ -230,6 +235,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           page: page,
           limit: _pageLimit,
           search: search,
+          categoryId: buildable.selectedCategory?.id,
           lat: _lat,
           lng: _lng,
         );

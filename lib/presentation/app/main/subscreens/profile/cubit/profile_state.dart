@@ -21,4 +21,4 @@ class ProfileListenable with _$ProfileListenable {
   }) = _ProfileListenable;
 }
 
-enum ProfileEffect { login }
+enum ProfileEffect { login, deleted }

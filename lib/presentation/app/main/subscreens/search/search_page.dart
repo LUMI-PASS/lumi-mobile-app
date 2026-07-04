@@ -1,9 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
@@ -13,12 +16,14 @@ import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/class_item_widget.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/explore_map_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/widgets/empty_view.dart';
 import 'package:shimmer/shimmer.dart';
@@ -34,7 +39,9 @@ class SearchPage
 
   @override
   void onFocusGained(BuildContext context) {
-    context.read<SearchCubit>().applyPendingCategory();
+    final cubit = context.read<SearchCubit>();
+    cubit.applyPendingCategory();
+    cubit.refreshIfLanguageChanged();
     super.onFocusGained(context);
   }
 
@@ -46,7 +53,6 @@ class SearchPage
       body: SafeArea(
         child: Stack(
           children: [
-            // Background decoration
             Positioned(
               bottom: -40,
               right: -50,
@@ -56,9 +62,7 @@ class SearchPage
                   width: 260.w,
                   height: 260.w,
                   colorFilter: ColorFilter.mode(
-                    context.colors.primary,
-                    BlendMode.srcIn,
-                  ),
+                      context.colors.primary, BlendMode.srcIn),
                 ),
               ),
             ),
@@ -72,7 +76,6 @@ class SearchPage
                     children: [
                       'explore'.tr().s(30).w(600).c(context.colors.black),
                       20.kh,
-                      // Search bar + filter button
                       Row(
                         children: [
                           Expanded(
@@ -100,15 +103,12 @@ class SearchPage
                                   context,
                                   initial: state.filter,
                                 );
-                                if (result != null) {
-                                  cubit.applyFilter(result);
-                                }
+                                if (result != null) cubit.applyFilter(result);
                               },
                             ),
                           ),
                         ],
                       ),
-                      // Active filter badges
                       if (state.filter != null) ...[
                         4.kh,
                         _FilterBadges(
@@ -117,7 +117,6 @@ class SearchPage
                         ),
                         8.kh,
                       ],
-                      // Selected category chip
                       if (state.selectedCategory != null) ...[
                         _TagChip(
                           text: state.selectedCategory!.title ?? '',
@@ -125,7 +124,6 @@ class SearchPage
                         ),
                         12.kh,
                       ],
-                      // Tabs: Classes | Centers
                       Row(
                         children: [
                           Expanded(
@@ -146,15 +144,19 @@ class SearchPage
                         ],
                       ),
                       12.kh,
-                      // Categories button (Classes tab only)
-                      if (state.activeTab == 0 &&
-                          state.categories.isNotEmpty &&
+                      // "Open in map" button — visible on both tabs
+                      if (state.categories.isNotEmpty &&
                           state.selectedCategory == null)
                         Padding(
                           padding: EdgeInsets.only(bottom: 8.h),
                           child: GestureDetector(
-                            onTap: () => _showCategoriesSheet(
-                                context, state.categories, cubit),
+                            onTap: () async {
+                              final cat = await _ExploreMapSheet.show(
+                                context,
+                                categories: state.categories,
+                              );
+                              if (cat != null) cubit.selectCategory(cat);
+                            },
                             child: Container(
                               padding: EdgeInsets.symmetric(
                                   horizontal: 14.w, vertical: 10.h),
@@ -169,11 +171,12 @@ class SearchPage
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.grid_view_rounded,
+                                  Icon(Icons.map_rounded,
                                       size: 16.w,
                                       color: context.colors.primary),
                                   6.kw,
-                                  'categories'.tr()
+                                  'open_in_map'
+                                      .tr()
                                       .s(13)
                                       .w(600)
                                       .c(context.colors.primary),
@@ -189,7 +192,6 @@ class SearchPage
                     ],
                   ),
                 ),
-                // Results
                 Expanded(
                   child: state.isLoading
                       ? _SearchResultShimmer()
@@ -199,318 +201,933 @@ class SearchPage
                               isLoadingMore: state.isLoadingMore,
                               onLoadMore: () => cubit.loadMore(),
                             )
-                          : _BranchesList(
+                          : _BranchesWithMap(
                               branches: state.branches,
+                              categories: state.categories,
                               isLoadingMore: state.isLoadingMore,
                               onLoadMore: () => cubit.loadMore(),
+                              onOpenMap: () async {
+                                final cat = await _ExploreMapSheet.show(
+                                  context,
+                                  categories: state.categories,
+                                );
+                                if (cat != null) cubit.selectCategory(cat);
+                              },
                             ),
                 ),
               ],
-            ),
-            // Floating map button
-            Positioned(
-              right: 16,
-              bottom: 16,
-              child: Container3d(
-                onTap: () => ExploreMapSheet.show(context, state.branches),
-                width: 56,
-                height: 56,
-                depth: 4,
-                padding: EdgeInsets.zero,
-                backgroundColor: context.colors.primary,
-                borderColor: context.colors.primary,
-                borderRadius: BorderRadius.circular(16),
-                child: Center(
-                  child: Assets.icons.map.svg(
-                    width: 24,
-                    height: 24,
-                    colorFilter: const ColorFilter.mode(
-                      Colors.white,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-              ),
             ),
           ],
         ),
       ),
     );
   }
-
-  void _showCategoriesSheet(
-      BuildContext context, List<HomCategory> categories, SearchCubit cubit) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      builder: (_) => _CategoriesSheet(
-        categories: categories,
-        selectedId: cubit.buildable.selectedCategory?.id,
-        onSelect: (cat) {
-          cubit.selectCategory(cat);
-          Navigator.pop(context);
-        },
-        onClear: () {
-          cubit.selectCategory(null);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
 }
 
-// --- Categories bottom sheet (webapp-style 2-col grid with images) ---
+// ─────────────────────────────────────────────────────────────────────────────
+// Full-screen map sheet — map on top, category filter chips at bottom.
+// Category selection filters map markers; sheet only closes via close/back.
+// Returns a HomCategory if the user wants to apply it to the search list.
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _CategoriesSheet extends StatelessWidget {
-  const _CategoriesSheet({
-    required this.categories,
-    required this.onSelect,
-    required this.onClear,
-    this.selectedId,
-  });
+class _ExploreMapSheet extends StatefulWidget {
+  const _ExploreMapSheet({required this.categories});
 
   final List<HomCategory> categories;
-  final String? selectedId;
-  final ValueChanged<HomCategory> onSelect;
-  final VoidCallback onClear;
+
+  static Future<HomCategory?> show(
+    BuildContext context, {
+    required List<HomCategory> categories,
+  }) {
+    return showModalBottomSheet<HomCategory>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ExploreMapSheet(categories: categories),
+    );
+  }
+
+  @override
+  State<_ExploreMapSheet> createState() => _ExploreMapSheetState();
+}
+
+class _ExploreMapSheetState extends State<_ExploreMapSheet> {
+  final _repo = getIt<HomeRepository>();
+  final _mapCtrl = MapController();
+
+  LatLng? _userLocation;
+  String? _focusedBranchId;
+  bool _mapReady = false;
+  bool _isBranchesLoading = true;
+
+  HomCategory? _selectedCategory;
+  bool _isFilterLoading = false;
+  bool _showCatOverlay = false;
+
+  // All branches that have valid GPS coordinates
+  List<HomBranch> _validBranches = [];
+  // Subset shown on the map (changes when a category is active)
+  List<HomBranch> _mapBranches = [];
+  // Own categories list — fetched fresh so titles are always resolved
+  List<HomCategory> _categories = [];
+
+  static const _defaultCenter = LatLng(41.3111, 69.2797);
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed from caller so the list is ready immediately if available
+    _categories = widget.categories
+        .where((c) => (c.title ?? '').isNotEmpty)
+        .toList();
+    _fetchBranches();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final cats = await _repo.getAllCategories();
+      final valid = cats.where((c) => (c.title ?? '').isNotEmpty).toList();
+      if (mounted && valid.isNotEmpty) {
+        setState(() => _categories = valid);
+        // Update the shared cache too
+        SearchCubit.cachedCategories = valid;
+      }
+    } catch (_) {}
+  }
+
+  bool _hasValidCoords(HomBranch b) {
+    return b.latitude != null &&
+        b.longitude != null &&
+        b.latitude! != 0 &&
+        b.longitude! != 0;
+  }
+
+  Future<void> _fetchBranches() async {
+    try {
+      final result =
+          await _repo.getDiscoveryBranches(page: 1, limit: 100);
+      if (!mounted) return;
+      final valid =
+          result.branches.where(_hasValidCoords).toList();
+      setState(() {
+        _validBranches = valid;
+        _mapBranches = valid;
+        _isBranchesLoading = false;
+      });
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _fitToMarkers());
+    } catch (_) {
+      if (mounted) setState(() => _isBranchesLoading = false);
+    }
+  }
+
+
+  void _onMapReady() {
+    _mapReady = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
+  }
+
+  void _fitToMarkers() {
+    if (!_mapReady) return;
+    final pts = _mapBranches
+        .map((b) => LatLng(b.latitude!, b.longitude!))
+        .toList();
+    if (pts.isEmpty) {
+      _mapCtrl.move(_defaultCenter, 12);
+    } else if (pts.length == 1) {
+      _mapCtrl.move(pts.first, 14);
+    } else {
+      _mapCtrl.fitCamera(CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints(pts),
+        padding: EdgeInsets.all(52.w),
+        maxZoom: 14,
+      ));
+    }
+  }
+
+  Future<void> _selectCategory(HomCategory cat) async {
+    // Tapping the active category clears the filter
+    if (_selectedCategory != null && cat.id != null && _selectedCategory!.id == cat.id) {
+      setState(() {
+        _selectedCategory = null;
+        _mapBranches = _validBranches;
+        _focusedBranchId = null;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
+      return;
+    }
+
+    setState(() {
+      _selectedCategory = cat;
+      _isFilterLoading = true;
+      _focusedBranchId = null;
+    });
+
+    try {
+      // Fetch classes in this category to find which branches have them
+      final result = await _repo.getDiscoveryClasses(
+        page: 1,
+        limit: 100,
+        categoryId: cat.id,
+      );
+      final branchIds = result.classes
+          .where((c) => c.branch?.id != null)
+          .map((c) => c.branch!.id!)
+          .toSet();
+
+      if (!mounted) return;
+      setState(() {
+        _mapBranches = _validBranches
+            .where((b) => b.id != null && branchIds.contains(b.id))
+            .toList();
+        _isFilterLoading = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
+    } catch (_) {
+      if (mounted) setState(() => _isFilterLoading = false);
+    }
+  }
+
+  void _toggleCatOverlay() {
+    setState(() => _showCatOverlay = !_showCatOverlay);
+  }
+
+  void _pickCategory(HomCategory? cat) {
+    setState(() => _showCatOverlay = false);
+    if (cat == null) {
+      setState(() {
+        _selectedCategory = null;
+        _mapBranches = _validBranches;
+        _focusedBranchId = null;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
+    } else {
+      _selectCategory(cat);
+    }
+  }
+
+  void _tapMarker(HomBranch branch) {
+    setState(() => _focusedBranchId = branch.id);
+    final z = _mapCtrl.camera.zoom;
+    _mapCtrl.move(
+      LatLng(branch.latitude!, branch.longitude!),
+      z < 14 ? 14 : z,
+    );
+  }
+
+  void _zoom(double delta) {
+    if (!_mapReady) return;
+    final z = _mapCtrl.camera.zoom;
+    _mapCtrl.move(_mapCtrl.camera.center, (z + delta).clamp(3, 18));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints:
-          BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final screenH = MediaQuery.of(context).size.height;
+    final primary = context.colors.primary;
+
+    return Container(
+      height: screenH * 0.92,
+      decoration: BoxDecoration(
+        color: context.colors.window,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      child: Stack(
         children: [
-          12.kh,
-          Container(
-            width: 48, height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(3),
+          Column(
+        children: [
+          // ── Handle
+          Padding(
+            padding: EdgeInsets.only(top: 10.h),
+            child: Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
           ),
-          16.kh,
+
+          // ── Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 8.h),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                'pick_category'.tr().s(22).w(700),
-                if (selectedId != null)
-                  GestureDetector(
-                    onTap: onClear,
-                    child: 'clear'.tr()
-                        .s(14)
-                        .w(600)
-                        .c(context.colors.primary),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 34.w,
+                    height: 34.w,
+                    decoration: BoxDecoration(
+                      color: primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Icon(Icons.close_rounded, size: 18.w, color: primary),
+                  ),
+                ),
+                12.kw,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      'centers_on_map'.tr().s(16).w(700),
+                      if (_selectedCategory != null)
+                        Text(
+                          _selectedCategory!.title ?? '',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (_validBranches.isNotEmpty)
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    decoration: BoxDecoration(
+                      color: primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.location_on_rounded,
+                            size: 13.w, color: primary),
+                        4.kw,
+                        '${_mapBranches.length}/${_validBranches.length}'
+                            .s(12)
+                            .w(700)
+                            .c(primary),
+                      ],
+                    ),
                   ),
               ],
             ),
           ),
-          16.kh,
+
+          // ── Map
           Expanded(
-            child: GridView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12.h,
-                crossAxisSpacing: 12.w,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final cat = categories[index];
-                final isSelected = selectedId == cat.id;
-                return _CategoryCard(
-                  category: cat,
-                  isSelected: isSelected,
-                  onTap: () => onSelect(cat),
-                );
-              },
+            child: Stack(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: FlutterMap(
+                      mapController: _mapCtrl,
+                      options: MapOptions(
+                        initialCenter: _defaultCenter,
+                        initialZoom: 12,
+                        onMapReady: _onMapReady,
+                        onTap: (_, __) =>
+                            setState(() => _focusedBranchId = null),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.lumi.pass',
+                          maxZoom: 19,
+                        ),
+                        MarkerLayer(
+                          markers: _mapBranches.map((branch) {
+                            final focused = _focusedBranchId == branch.id;
+                            return Marker(
+                              point: LatLng(
+                                  branch.latitude!, branch.longitude!),
+                              width: focused ? 46 : 36,
+                              height: focused ? 46 : 36,
+                              child: GestureDetector(
+                                onTap: () => _tapMarker(branch),
+                                child: AnimatedContainer(
+                                  duration:
+                                      const Duration(milliseconds: 200),
+                                  decoration: BoxDecoration(
+                                    color: focused ? primary : Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: primary,
+                                        width: focused ? 3 : 2),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: primary.withOpacity(
+                                            focused ? 0.45 : 0.18),
+                                        blurRadius: focused ? 12 : 5,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.location_on_rounded,
+                                    size: focused ? 22 : 17,
+                                    color:
+                                        focused ? Colors.white : primary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        if (_userLocation != null)
+                          MarkerLayer(markers: [
+                            Marker(
+                              point: _userLocation!,
+                              width: 20,
+                              height: 20,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.blue.withOpacity(0.3),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ]),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Zoom controls
+                Positioned(
+                  right: 22.w,
+                  top: 12.h,
+                  child: Column(
+                    children: [
+                      _ZoomBtn(
+                          icon: Icons.add,
+                          onTap: () => _zoom(1),
+                          color: primary),
+                      4.kh,
+                      _ZoomBtn(
+                          icon: Icons.remove,
+                          onTap: () => _zoom(-1),
+                          color: primary),
+                    ],
+                  ),
+                ),
+
+                // Branches loading overlay
+                if (_isBranchesLoading)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: primary,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Category filter loading overlay
+                if (!_isBranchesLoading && _isFilterLoading)
+                  Positioned(
+                    top: 12.h,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 14.w,
+                              height: 14.w,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: primary,
+                              ),
+                            ),
+                            8.kw,
+                            Text(
+                              'filter_filtering'.tr(),
+                              style: TextStyle(
+                                  fontSize: 12.sp, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Focused branch callout
+                if (_focusedBranchId != null)
+                  Positioned(
+                    left: 22.w,
+                    right: 22.w,
+                    bottom: 12.h,
+                    child: _BranchCallout(
+                      branch: _mapBranches.firstWhere(
+                        (b) => b.id == _focusedBranchId,
+                        orElse: () => _mapBranches.first,
+                      ),
+                      onTap: () {
+                        final branch = _mapBranches.firstWhere(
+                          (b) => b.id == _focusedBranchId,
+                          orElse: () => _mapBranches.first,
+                        );
+                        Navigator.pop(context);
+                        context.router
+                            .push(BranchDetailRoute(branch: branch));
+                      },
+                      primary: primary,
+                    ),
+                  ),
+              ],
             ),
           ),
+
+          // ── Categories button row
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _toggleCatOverlay,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 14.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: _selectedCategory != null
+                            ? primary.withOpacity(0.08)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: _selectedCategory != null
+                              ? primary.withOpacity(0.25)
+                              : Colors.grey.shade200,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.category_rounded,
+                              size: 16.w, color: primary),
+                          8.kw,
+                          Expanded(
+                            child: Text(
+                              _selectedCategory?.title ??
+                                  'filter_by_category'.tr(),
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: _selectedCategory != null
+                                    ? primary
+                                    : const Color(0xFF1E293B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down_rounded,
+                              size: 18.w, color: primary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (_selectedCategory != null) ...[
+                  8.kw,
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedCategory = null;
+                        _mapBranches = _validBranches;
+                        _focusedBranchId = null;
+                      });
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _fitToMarkers());
+                    },
+                    child: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        color: primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Icon(Icons.close_rounded,
+                          size: 16.w, color: primary),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).viewPadding.bottom + 14.h),
+          ],
+        ),
+
+          // ── Category overlay (tap-outside-to-dismiss scrim + list panel)
+          if (_showCatOverlay) ...[
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _showCatOverlay = false),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.35),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20.r)),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: screenH * 0.55,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(20.r)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle
+                    Padding(
+                      padding: EdgeInsets.only(top: 10.h, bottom: 4.h),
+                      child: Center(
+                        child: Container(
+                          width: 40.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Title row
+                    Padding(
+                      padding:
+                          EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+                      child: Row(
+                        children: [
+                          'filter_by_category'
+                              .tr()
+                              .s(16)
+                              .w(700)
+                              .c(const Color(0xFF1E293B)),
+                          const Spacer(),
+                          if (_selectedCategory != null)
+                            GestureDetector(
+                              onTap: () => _pickCategory(null),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w, vertical: 4.h),
+                                decoration: BoxDecoration(
+                                  color: primary.withOpacity(0.08),
+                                  borderRadius:
+                                      BorderRadius.circular(10.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.close_rounded,
+                                        size: 12.w, color: primary),
+                                    4.kw,
+                                    'clear'.tr().s(12).w(600).c(primary),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, color: Colors.grey.shade100),
+                    // Category list
+                    Flexible(
+                      child: _categories.isEmpty
+                          ? Padding(
+                              padding: EdgeInsets.all(24.h),
+                              child: Center(
+                                child: Text(
+                                  'no_data'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              padding:
+                                  EdgeInsets.symmetric(vertical: 8.h),
+                              itemCount: _categories.length,
+                              separatorBuilder: (_, __) => Divider(
+                                  height: 1,
+                                  color: Colors.grey.shade100),
+                              itemBuilder: (context, i) {
+                                final cat = _categories[i];
+                                final isActive =
+                                    _selectedCategory != null &&
+                                        cat.id != null &&
+                                        _selectedCategory!.id == cat.id;
+                                return GestureDetector(
+                                  onTap: () => _pickCategory(
+                                      isActive ? null : cat),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 13.h),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            cat.title ?? '',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: isActive
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              color: isActive
+                                                  ? primary
+                                                  : const Color(
+                                                      0xFF1E293B),
+                                            ),
+                                          ),
+                                        ),
+                                        if (isActive)
+                                          Icon(Icons.check_rounded,
+                                              size: 18.w, color: primary),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    SizedBox(
+                        height:
+                            MediaQuery.of(context).viewPadding.bottom +
+                                8.h),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-// --- Category card with image overlay (webapp style) ---
-
-class _CategoryCard extends StatefulWidget {
-  const _CategoryCard({
-    required this.category,
-    required this.isSelected,
+// Branch callout shown when a map marker is tapped
+class _BranchCallout extends StatelessWidget {
+  const _BranchCallout({
+    required this.branch,
     required this.onTap,
+    required this.primary,
   });
 
-  final HomCategory category;
-  final bool isSelected;
+  final HomBranch branch;
   final VoidCallback onTap;
-
-  @override
-  State<_CategoryCard> createState() => _CategoryCardState();
-}
-
-class _CategoryCardState extends State<_CategoryCard> {
-  String? _imageUrl;
-  bool _isLoading = true;
-
-  static final List<LinearGradient> _gradients = [
-    const LinearGradient(colors: [Color(0xFFA652C7), Color(0xFFFF7093)]),
-    const LinearGradient(colors: [Color(0xFF307CE0), Color(0xFF24AE74)]),
-    const LinearGradient(colors: [Color(0xFFF6B53D), Color(0xFFE6465A)]),
-    const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
-    const LinearGradient(colors: [Color(0xFF14B8A6), Color(0xFF3B82F6)]),
-    const LinearGradient(colors: [Color(0xFFF43F5E), Color(0xFFF97316)]),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _resolveImage();
-  }
-
-  Future<void> _resolveImage() async {
-    final catId = widget.category.id;
-    if (catId == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
-
-    if (widget.category.hasPhoto == true) {
-      setState(() => _imageUrl = PhotoService.getImageUrl(catId));
-    }
-
-    try {
-      final photos =
-          await PhotoService.instance.getCategoryPhotos(catId, limit: 1);
-      if (mounted && photos.isNotEmpty) {
-        setState(() {
-          _imageUrl = photos.first;
-          _isLoading = false;
-        });
-        return;
-      }
-    } catch (_) {}
-
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  LinearGradient _fallbackGradient() {
-    final title = widget.category.title ?? '';
-    final charCode = title.isNotEmpty ? title.codeUnitAt(0) : 65;
-    return _gradients[(charCode + title.length) % _gradients.length];
-  }
+  final Color primary;
 
   @override
   Widget build(BuildContext context) {
-    return Container3d(
-      onTap: widget.onTap,
-      padding: EdgeInsets.zero,
-      depth: 3,
-      backgroundColor: Colors.white,
-      borderColor: widget.isSelected
-          ? context.colors.primary
-          : Colors.grey.shade200,
-      borderWidth: widget.isSelected ? 2 : 1,
-      borderRadius: BorderRadius.circular(18.r),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(17.r),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Image or gradient fallback
-            if (_imageUrl != null)
-              CachedNetworkImage(
-                imageUrl: _imageUrl!,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Shimmer.fromColors(
-                  baseColor: Colors.grey.shade200,
-                  highlightColor: Colors.grey.shade50,
-                  child: Container(color: Colors.white),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  decoration:
-                      BoxDecoration(gradient: _fallbackGradient()),
-                ),
-              )
-            else if (_isLoading)
-              Shimmer.fromColors(
-                baseColor: Colors.grey.shade200,
-                highlightColor: Colors.grey.shade50,
-                child: Container(color: Colors.white),
-              )
-            else
-              Container(
-                decoration: BoxDecoration(gradient: _fallbackGradient()),
-              ),
+    final imageUrl = sanitizeImageUrl(branch.image);
 
-            // Gradient overlay + title at bottom
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: EdgeInsets.fromLTRB(8.w, 28.h, 8.w, 10.h),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.35),
-                      Colors.black.withOpacity(0.7),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.13),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Photo
+            ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16.r),
+                bottomLeft: Radius.circular(16.r),
+              ),
+              child: SizedBox(
+                width: 70.w,
+                height: 70.w,
+                child: imageUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) =>
+                            _fallbackBox(branch.title),
+                      )
+                    : _fallbackBox(branch.title),
+              ),
+            ),
+            // Info
+            Expanded(
+              child: Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      branch.title ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                    if ((branch.address ?? '').isNotEmpty) ...[
+                      4.kh,
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 12.w,
+                              color: Colors.grey.shade500),
+                          3.kw,
+                          Expanded(
+                            child: Text(
+                              branch.address!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
-                  ),
-                ),
-                child: Text(
-                  widget.category.title ?? '',
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    shadows: const [
-                      Shadow(blurRadius: 4, color: Colors.black54),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),
-
-            // Selected indicator
-            if (widget.isSelected)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  width: 24.w,
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    color: context.colors.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child:
-                      Icon(Icons.check, color: Colors.white, size: 14.w),
+            // Arrow
+            Padding(
+              padding: EdgeInsets.only(right: 12.w),
+              child: Container(
+                width: 32.w,
+                height: 32.w,
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
+                child: Icon(Icons.arrow_forward_rounded,
+                    size: 16.w, color: primary),
               ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  Widget _fallbackBox(String? title) {
+    const gradients = [
+      [Color(0xFFA652C7), Color(0xFFFF7093)],
+      [Color(0xFF307CE0), Color(0xFF24AE74)],
+      [Color(0xFFF6B53D), Color(0xFFE6465A)],
+      [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    ];
+    final i = ((title?.isNotEmpty == true ? title!.codeUnitAt(0) : 65) +
+            (title?.length ?? 0)) %
+        gradients.length;
+    return Container(
+      decoration: BoxDecoration(
+        gradient:
+            LinearGradient(colors: gradients[i], begin: Alignment.topLeft, end: Alignment.bottomRight),
+      ),
+      child: Icon(Icons.business_rounded,
+          size: 28, color: Colors.white.withOpacity(0.7)),
+    );
+  }
 }
 
-// --- Classes list with infinite scroll ---
+class _ZoomBtn extends StatelessWidget {
+  const _ZoomBtn(
+      {required this.icon, required this.onTap, required this.color});
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36.w,
+        height: 36.w,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 18.w, color: color),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Classes list
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ClassesList extends StatelessWidget {
   const _ClassesList({
@@ -528,16 +1145,15 @@ class _ClassesList extends StatelessWidget {
     if (classes.isEmpty) return const EmptyView();
 
     return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification is ScrollEndNotification &&
-            notification.metrics.extentAfter < 300) {
+      onNotification: (n) {
+        if (n is ScrollEndNotification && n.metrics.extentAfter < 300) {
           onLoadMore();
         }
         return false;
       },
       child: ListView.separated(
-        padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 8.h),
-        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.only(top: 8.h, bottom: 8.h + 64.0 + MediaQuery.of(context).viewPadding.bottom),
+        physics: kIsWeb ? const ClampingScrollPhysics() : const BouncingScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         itemCount: classes.length + (isLoadingMore ? 1 : 0),
         separatorBuilder: (_, __) => 14.kh,
@@ -563,52 +1179,189 @@ class _ClassesList extends StatelessWidget {
   }
 }
 
-// --- Branches list with infinite scroll ---
+// ─────────────────────────────────────────────────────────────────────────────
+// Branches list with map header for Centres tab
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _BranchesList extends StatelessWidget {
-  const _BranchesList({
+class _BranchesWithMap extends StatelessWidget {
+  const _BranchesWithMap({
     required this.branches,
+    required this.categories,
     required this.isLoadingMore,
     required this.onLoadMore,
+    required this.onOpenMap,
   });
 
   final List<HomBranch> branches;
+  final List<HomCategory> categories;
   final bool isLoadingMore;
   final VoidCallback onLoadMore;
+  final VoidCallback onOpenMap;
 
   @override
   Widget build(BuildContext context) {
-    if (branches.isEmpty) return const EmptyView();
+    final primary = context.colors.primary;
 
     return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification is ScrollEndNotification &&
-            notification.metrics.extentAfter < 300) {
+      onNotification: (n) {
+        if (n is ScrollEndNotification && n.metrics.extentAfter < 300) {
           onLoadMore();
         }
         return false;
       },
-      child: ListView.separated(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        physics: const BouncingScrollPhysics(),
+      child: CustomScrollView(
+        physics: kIsWeb ? const ClampingScrollPhysics() : const BouncingScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        itemCount: branches.length + (isLoadingMore ? 1 : 0),
-        separatorBuilder: (_, __) => 14.kh,
-        itemBuilder: (context, index) {
-          if (index == branches.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-          return _BranchResultCard(branch: branches[index]);
-        },
+        slivers: [
+          // Map preview header
+          // SliverToBoxAdapter(
+          //   child: Padding(
+          //     padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
+          //     child: GestureDetector(
+          //       onTap: onOpenMap,
+          //       child: Container(
+          //         height: 160.h,
+          //         decoration: BoxDecoration(
+          //           borderRadius: BorderRadius.circular(16.r),
+          //           color: const Color(0xFFE8EFF9),
+          //           boxShadow: [
+          //             BoxShadow(
+          //               color: primary.withOpacity(0.08),
+          //               blurRadius: 12,
+          //               offset: const Offset(0, 4),
+          //             ),
+          //           ],
+          //         ),
+          //         child: ClipRRect(
+          //           borderRadius: BorderRadius.circular(16.r),
+          //           child: Stack(
+          //             children: [
+          //               // Static map background image
+          //               Positioned.fill(
+          //                 child: Image.network(
+          //                   'https://a.basemaps.cartocdn.com/rastertiles/voyager/12/2494/1423.png',
+          //                   fit: BoxFit.cover,
+          //                   errorBuilder: (_, __, ___) => Container(
+          //                     color: const Color(0xFFE8EFF9),
+          //                   ),
+          //                 ),
+          //               ),
+          //               // Overlay
+          //               Positioned.fill(
+          //                 child: Container(
+          //                   decoration: BoxDecoration(
+          //                     gradient: LinearGradient(
+          //                       begin: Alignment.topCenter,
+          //                       end: Alignment.bottomCenter,
+          //                       colors: [
+          //                         Colors.black.withOpacity(0.1),
+          //                         Colors.black.withOpacity(0.35),
+          //                       ],
+          //                     ),
+          //                   ),
+          //                 ),
+          //               ),
+          //               // Tap to open label
+          //               Center(
+          //                 child: Container(
+          //                   padding: EdgeInsets.symmetric(
+          //                       horizontal: 18.w, vertical: 10.h),
+          //                   decoration: BoxDecoration(
+          //                     color: Colors.white,
+          //                     borderRadius: BorderRadius.circular(24.r),
+          //                     boxShadow: [
+          //                       BoxShadow(
+          //                         color: Colors.black.withOpacity(0.12),
+          //                         blurRadius: 8,
+          //                         offset: const Offset(0, 2),
+          //                       ),
+          //                     ],
+          //                   ),
+          //                   child: Row(
+          //                     mainAxisSize: MainAxisSize.min,
+          //                     children: [
+          //                       Icon(Icons.map_rounded,
+          //                           size: 16.w, color: primary),
+          //                       6.kw,
+          //                       'open_in_map'
+          //                           .tr()
+          //                           .s(13)
+          //                           .w(700)
+          //                           .c(primary),
+          //                     ],
+          //                   ),
+          //                 ),
+          //               ),
+          //               // Branch count badge
+          //               if (branches.isNotEmpty)
+          //                 Positioned(
+          //                   top: 10.h,
+          //                   right: 10.w,
+          //                   child: Container(
+          //                     padding: EdgeInsets.symmetric(
+          //                         horizontal: 8.w, vertical: 4.h),
+          //                     decoration: BoxDecoration(
+          //                       color: Colors.white,
+          //                       borderRadius: BorderRadius.circular(10.r),
+          //                     ),
+          //                     child: Row(
+          //                       mainAxisSize: MainAxisSize.min,
+          //                       children: [
+          //                         Icon(Icons.location_on_rounded,
+          //                             size: 12.w, color: primary),
+          //                         4.kw,
+          //                         '${branches.length}'
+          //                             .s(11)
+          //                             .w(700)
+          //                             .c(primary),
+          //                       ],
+          //                     ),
+          //                   ),
+          //                 ),
+          //             ],
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+
+          // Branches list
+          if (branches.isEmpty)
+            const SliverFillRemaining(child: EmptyView())
+          else
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index == branches.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 14.h),
+                      child: _BranchResultCard(branch: branches[index]),
+                    );
+                  },
+                  childCount: branches.length + (isLoadingMore ? 1 : 0),
+                ),
+              ),
+            ),
+          SliverToBoxAdapter(
+            child: SizedBox(height: 64.0 + MediaQuery.of(context).viewPadding.bottom),
+          ),
+        ],
       ),
     );
   }
 }
 
-// --- Branch result card matching webapp's BranchCard ---
+// ─────────────────────────────────────────────────────────────────────────────
+// Branch card for the Centers list
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _BranchResultCard extends StatefulWidget {
   const _BranchResultCard({required this.branch});
@@ -633,14 +1386,12 @@ class _BranchResultCardState extends State<_BranchResultCard> {
 
   LinearGradient _fallbackGradient() {
     final title = widget.branch.title ?? '';
-    final i =
-        ((title.isNotEmpty ? title.codeUnitAt(0) : 65) + title.length) %
-            _gradients.length;
+    final i = ((title.isNotEmpty ? title.codeUnitAt(0) : 65) + title.length) %
+        _gradients.length;
     return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: _gradients[i],
-    );
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: _gradients[i]);
   }
 
   @override
@@ -650,26 +1401,22 @@ class _BranchResultCardState extends State<_BranchResultCard> {
   }
 
   Future<void> _resolveImage() async {
-    final branchId = widget.branch.id;
-    if (branchId == null) return;
-
-    if (widget.branch.hasPhoto == true) {
-      setState(() => _imageUrl = PhotoService.getImageUrl(branchId));
+    // Prefer the direct image URL returned by the API
+    final direct = sanitizeImageUrl(widget.branch.image);
+    if (direct != null && mounted) {
+      setState(() => _imageUrl = direct);
+      return;
     }
-
-    try {
-      final photos =
-          await PhotoService.instance.getBranchPhotos(branchId, limit: 1);
-      if (mounted && photos.isNotEmpty) {
-        setState(() => _imageUrl = photos.first);
-      }
-    } catch (_) {}
+    // Fallback: derive URL from branch ID when image field is absent
+    final id = widget.branch.id;
+    if (id != null && widget.branch.hasPhoto == true && mounted) {
+      setState(() => _imageUrl = PhotoService.getImageUrl(id));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final branch = widget.branch;
-    final distance = _formatDistance(branch.distance);
     final hasImage = _imageUrl != null && !_hasImageError;
 
     return Container3d(
@@ -682,7 +1429,6 @@ class _BranchResultCardState extends State<_BranchResultCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image with gradient fallback
           ClipRRect(
             borderRadius: BorderRadius.circular(14.r),
             child: AspectRatio(
@@ -701,9 +1447,8 @@ class _BranchResultCardState extends State<_BranchResultCard> {
                           if (mounted) setState(() => _hasImageError = true);
                         });
                         return Container(
-                          decoration:
-                              BoxDecoration(gradient: _fallbackGradient()),
-                        );
+                            decoration: BoxDecoration(
+                                gradient: _fallbackGradient()));
                       },
                     )
                   : Container(
@@ -711,120 +1456,66 @@ class _BranchResultCardState extends State<_BranchResultCard> {
                           BoxDecoration(gradient: _fallbackGradient()),
                       child: Center(
                         child: Icon(Icons.business_rounded,
-                            size: 40.w, color: Colors.white.withOpacity(0.5)),
+                            size: 40.w,
+                            color: Colors.white.withOpacity(0.5)),
                       ),
                     ),
             ),
           ),
-
           Padding(
             padding: EdgeInsets.fromLTRB(6.w, 10.h, 6.w, 4.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
-                (branch.title ?? '').s(16).w(700).c(const Color(0xFF1E293B)),
-
-                // Description
-                if (branch.description != null &&
-                    branch.description!.isNotEmpty) ...[
+                (branch.title ?? '')
+                    .s(16)
+                    .w(700)
+                    .c(const Color(0xFF1E293B)),
+                if ((branch.description ?? '').isNotEmpty) ...[
                   4.kh,
                   Text(
                     branch.description!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12.sp,
-                      color: const Color(0xFF6B7280),
-                    ),
+                        fontSize: 11.sp,
+                        color: const Color(0xFF9CA3AF),
+                        fontWeight: FontWeight.w400),
                   ),
                 ],
-
                 8.kh,
-
-                // Address + Distance row (side by side like webapp)
                 Row(
                   children: [
-                    // Address
                     Expanded(
                       child: Row(
                         children: [
                           Icon(Icons.location_on_outlined,
                               size: 14.w,
-                              color: const Color(0xFF312E81).withOpacity(0.9)),
+                              color: const Color(0xFF312E81)
+                                  .withOpacity(0.9)),
                           4.kw,
                           Expanded(
                             child: Text(
-                              branch.address ?? 'location_not_specified'.tr(),
+                              branch.address ??
+                                  'location_not_specified'.tr(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 12.sp,
-                                color: const Color(0xFF312E81).withOpacity(0.9),
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF312E81)
+                                    .withOpacity(0.9),
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    // Distance
-                    if (distance.isNotEmpty) ...[
+                    if ((branch.distance ?? 0) > 0) ...[
                       12.kw,
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.navigation_outlined,
-                              size: 14.w,
-                              color: const Color(0xFF312E81).withOpacity(0.9)),
-                          4.kw,
-                          Text(
-                            distance,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  const Color(0xFF312E81).withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _distanceChip(branch.distance!),
                     ],
                   ],
-                ),
-
-                10.kh,
-
-                // Open Branch button
-                SizedBox(
-                  width: double.infinity,
-                  child: Container3d(
-                    onTap: () => context.router
-                        .push(BranchDetailRoute(branch: branch)),
-                    padding:
-                        EdgeInsets.symmetric(vertical: 10.h),
-                    depth: 2,
-                    backgroundColor: context.colors.primary.withOpacity(0.06),
-                    borderColor: context.colors.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.open_in_new_rounded,
-                              size: 14.w, color: context.colors.primary),
-                          6.kw,
-                          Text(
-                            'open_branch'.tr(),
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w700,
-                              color: context.colors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -834,14 +1525,33 @@ class _BranchResultCardState extends State<_BranchResultCard> {
     );
   }
 
-  String _formatDistance(double? distanceMeters) {
-    if (distanceMeters == null || distanceMeters <= 0) return '';
-    if (distanceMeters < 1000) return '${distanceMeters.round()} m';
-    return '${(distanceMeters / 1000).round()} km';
+  Widget _distanceChip(double meters) {
+    final label = meters < 1000
+        ? '${meters.round()} m'
+        : '${(meters / 1000).round()} km';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.navigation_outlined,
+            size: 12.w,
+            color: const Color(0xFF312E81).withOpacity(0.9)),
+        4.kw,
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF312E81).withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
   }
 }
 
-// --- Filter button with badge ---
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared UI helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _FilterWithBadge extends StatelessWidget {
   const _FilterWithBadge({required this.count, this.onTap});
@@ -856,7 +1566,7 @@ class _FilterWithBadge extends StatelessWidget {
       children: [
         Container3d(
           onTap: onTap,
-          padding: const EdgeInsets.all(12),
+          padding:  EdgeInsets.all(12).copyWith(top: 8, bottom: 8),
           depth: 3,
           backgroundColor: primary,
           borderColor: primary,
@@ -879,14 +1589,11 @@ class _FilterWithBadge extends StatelessWidget {
                 border: Border.all(color: primary, width: 1.5),
               ),
               child: Center(
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
+                child: Text('$count',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black)),
               ),
             ),
           ),
@@ -894,8 +1601,6 @@ class _FilterWithBadge extends StatelessWidget {
     );
   }
 }
-
-// --- Filter badges row ---
 
 class _FilterBadges extends StatelessWidget {
   const _FilterBadges({required this.filter, required this.onClearFilter});
@@ -907,15 +1612,15 @@ class _FilterBadges extends StatelessWidget {
     final badges = <Widget>[];
 
     if (filter.datePreset != DatePreset.none) {
-      String dateLabel;
+      String label;
       if (filter.datePreset == DatePreset.custom && filter.fromDate != null) {
         final from = '${filter.fromDate!.day}.${filter.fromDate!.month}';
         final to = filter.toDate != null
-            ? ' \u2192 ${filter.toDate!.day}.${filter.toDate!.month}'
+            ? ' → ${filter.toDate!.day}.${filter.toDate!.month}'
             : '';
-        dateLabel = 'Date: $from$to';
+        label = 'Date: $from$to';
       } else {
-        dateLabel = {
+        label = {
           DatePreset.none: '',
           DatePreset.today: 'today'.tr(),
           DatePreset.tomorrow: 'tomorrow'.tr(),
@@ -923,7 +1628,6 @@ class _FilterBadges extends StatelessWidget {
           DatePreset.custom: 'custom'.tr(),
         }[filter.datePreset]!;
       }
-      final label = dateLabel;
       badges.add(_BadgeChip(
           text: label,
           color: const Color(0xFF6366F1),
@@ -944,9 +1648,12 @@ class _FilterBadges extends StatelessWidget {
           onRemove: onClearFilter));
     }
     if (filter.pricePreset == PricePreset.custom) {
+      final fmtPrice = (int v) => v
+          .toString()
+          .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ');
       badges.add(_BadgeChip(
           text:
-              '${filter.priceRange.start.toInt()}-${filter.priceRange.end.toInt()} so\'m',
+              '${fmtPrice(filter.priceRange.start.toInt())}–${fmtPrice(filter.priceRange.end.toInt())} so\'m',
           color: const Color(0xFFF97316),
           onRemove: onClearFilter));
     }
@@ -957,11 +1664,8 @@ class _FilterBadges extends StatelessWidget {
 }
 
 class _BadgeChip extends StatelessWidget {
-  const _BadgeChip({
-    required this.text,
-    required this.color,
-    required this.onRemove,
-  });
+  const _BadgeChip(
+      {required this.text, required this.color, required this.onRemove});
   final String text;
   final Color color;
   final VoidCallback onRemove;
@@ -982,16 +1686,13 @@ class _BadgeChip extends StatelessWidget {
                   fontSize: 12, fontWeight: FontWeight.w600, color: color)),
           4.kw,
           GestureDetector(
-            onTap: onRemove,
-            child: Icon(Icons.close, size: 14, color: color),
-          ),
+              onTap: onRemove,
+              child: Icon(Icons.close, size: 14, color: color)),
         ],
       ),
     );
   }
 }
-
-// --- Tag chip ---
 
 class _TagChip extends StatelessWidget {
   const _TagChip({required this.text, this.onClear});
@@ -1022,15 +1723,9 @@ class _TagChip extends StatelessWidget {
   }
 }
 
-// --- Segmented button ---
-
 class _SegmentedButton extends StatelessWidget {
-  const _SegmentedButton({
-    required this.text,
-    required this.selected,
-    required this.onTap,
-  });
-
+  const _SegmentedButton(
+      {required this.text, required this.selected, required this.onTap});
   final String text;
   final bool selected;
   final VoidCallback onTap;
@@ -1059,8 +1754,6 @@ class _SegmentedButton extends StatelessWidget {
   }
 }
 
-// --- Shimmer loading ---
-
 class _SearchResultShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -1083,13 +1776,11 @@ class _SearchResultShimmer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  height: 150.h,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
+                    height: 150.h,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12.r))),
                 12.kh,
                 Container(width: 100.w, height: 10.h, color: Colors.white),
                 8.kh,

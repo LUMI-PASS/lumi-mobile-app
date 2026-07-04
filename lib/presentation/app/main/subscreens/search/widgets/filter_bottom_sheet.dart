@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -29,7 +30,7 @@ class FilterResult {
     this.ageYears,
     this.gender = Gender.any,
     this.pricePreset = PricePreset.any,
-    this.priceRange = const RangeValues(0, 100),
+    this.priceRange = const RangeValues(10000, 400000),
   });
 
   // Keep backward compat
@@ -88,11 +89,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   DateTime? _toDate;
   final TextEditingController _ageController = TextEditingController();
   Gender _gender = Gender.any;
-  RangeValues _range = const RangeValues(0, 100);
+  RangeValues _range = const RangeValues(10000, 400000);
   bool _showCustomDates = false;
 
-  static const double _minPrice = 0;
-  static const double _maxPrice = 100;
+  static const double _minPrice = 10000;
+  static const double _maxPrice = 400000;
 
   @override
   void initState() {
@@ -122,7 +123,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _toDate = null;
       _ageController.clear();
       _gender = Gender.any;
-      _range = const RangeValues(0, 100);
+      _range = const RangeValues(10000, 400000);
       _showCustomDates = false;
     });
   }
@@ -188,7 +189,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               alignment: Alignment.center,
               children: [
                 Center(
-                  child: 'Filters'.s(24).w(700).c(textColor),
+                  child: 'filter_title'.tr().s(24).w(700).c(textColor),
                 ),
                 Align(
                   alignment: Alignment.centerRight,
@@ -219,24 +220,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ─── Date Section ───
-                  _SectionLabel('Date'),
+                  _SectionLabel('filter_date'.tr()),
                   12.kh,
                   Row(
                     children: [
                       _DateChip(
-                        text: 'Today',
+                        text: 'today'.tr(),
                         selected: _datePreset == DatePreset.today,
                         onTap: () => _selectDatePreset(DatePreset.today),
                       ),
                       8.kw,
                       _DateChip(
-                        text: 'Tomorrow',
+                        text: 'tomorrow'.tr(),
                         selected: _datePreset == DatePreset.tomorrow,
                         onTap: () => _selectDatePreset(DatePreset.tomorrow),
                       ),
                       8.kw,
                       _DateChip(
-                        text: 'This week',
+                        text: 'this_week'.tr(),
                         selected: _datePreset == DatePreset.thisWeek,
                         onTap: () => _selectDatePreset(DatePreset.thisWeek),
                       ),
@@ -273,7 +274,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           ),
                           10.kw,
                           Expanded(
-                            child: 'Choose from calendar'
+                            child: 'filter_choose_calendar'
+                                .tr()
                                 .s(14)
                                 .w(500)
                                 .c(const Color(0xFF64748B)),
@@ -306,9 +308,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         children: [
                           Expanded(
                             child: _DatePickerField(
-                              label: 'From',
+                              label: 'time_from'.tr(),
                               date: _fromDate,
-                              hint: 'Start date',
+                              hint: 'filter_start_date'.tr(),
                               onPick: () async {
                                 final picked = await _pickDate(_fromDate);
                                 if (picked != null) {
@@ -320,9 +322,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           16.kw,
                           Expanded(
                             child: _DatePickerField(
-                              label: 'To',
+                              label: 'time_to'.tr(),
                               date: _toDate,
-                              hint: 'End date',
+                              hint: 'filter_end_date'.tr(),
                               onPick: () async {
                                 final picked =
                                     await _pickDate(_toDate ?? _fromDate);
@@ -348,7 +350,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _SectionLabel('Age'),
+                            _SectionLabel('age'.tr()),
                             8.kh,
                             Container(
                               height: 52.h,
@@ -388,7 +390,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                                   ),
                                   Padding(
                                     padding: EdgeInsets.only(right: 14.w),
-                                    child: 'years'
+                                    child: 'filter_years_label'
+                                        .tr()
                                         .s(13)
                                         .w(500)
                                         .c(const Color(0xFF94A3B8)),
@@ -400,7 +403,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                                 _parsedAge == null)
                               Padding(
                                 padding: EdgeInsets.only(top: 4.h),
-                                child: '1-16 only'
+                                child: 'filter_age_hint'
+                                    .tr()
                                     .s(11)
                                     .w(500)
                                     .c(const Color(0xFFEF4444)),
@@ -414,7 +418,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _SectionLabel('Gender'),
+                            _SectionLabel('gender'.tr()),
                             8.kh,
                             _GenderSelector(
                               value: _gender,
@@ -429,7 +433,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   28.kh,
 
                   // ─── Price Range Section ───
-                  _SectionLabel('Price Range'),
+                  _SectionLabel('filter_price_range'.tr()),
                   16.kh,
 
                   // Range slider
@@ -437,30 +441,42 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     builder: (context, constraints) {
                       final width = constraints.maxWidth;
                       const fraction = (_maxPrice - _minPrice);
-                      final startX =
+                      final startFrac =
                           (_range.start - _minPrice) / fraction;
-                      final endX = (_range.end - _minPrice) / fraction;
+                      final endFrac =
+                          (_range.end - _minPrice) / fraction;
+
+                      // Label width estimate so we can clamp positions
+                      const labelW = 80.0;
+                      final startX =
+                          (width * startFrac - labelW / 2).clamp(0.0, width - labelW);
+                      final endX =
+                          (width * endFrac - labelW / 2).clamp(0.0, width - labelW);
+
                       return Column(
                         children: [
                           SizedBox(
-                            height: 50,
+                            height: 62,
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [
+                                // Start label
                                 Positioned(
-                                  left: (width * startX - 16)
-                                      .clamp(0, width - 40),
+                                  left: startX,
                                   top: 0,
-                                  child:
-                                      _PriceLabel(value: _range.start.toInt()),
+                                  child: _PriceLabel(
+                                      value: _range.start.toInt(),
+                                      primary: primary),
                                 ),
+                                // End label
                                 Positioned(
-                                  left: (width * endX - 16)
-                                      .clamp(40, width - 10),
+                                  left: endX,
                                   top: 0,
-                                  child:
-                                      _PriceLabel(value: _range.end.toInt()),
+                                  child: _PriceLabel(
+                                      value: _range.end.toInt(),
+                                      primary: primary),
                                 ),
+                                // Slider
                                 Positioned(
                                   left: 0,
                                   right: 0,
@@ -469,20 +485,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                                     data: SliderTheme.of(context).copyWith(
                                       rangeThumbShape:
                                           _RoundThumbShape(primary: primary),
-                                      thumbColor: Colors.white,
                                       activeTrackColor: primary,
                                       inactiveTrackColor:
-                                          primary.withOpacity(0.15),
+                                          primary.withOpacity(0.12),
                                       overlayColor:
-                                          primary.withOpacity(0.15),
-                                      trackHeight: 6,
+                                          primary.withOpacity(0.12),
+                                      trackHeight: 5,
                                       showValueIndicator:
                                           ShowValueIndicator.never,
+
                                     ),
                                     child: RangeSlider(
                                       min: _minPrice,
                                       max: _maxPrice,
-                                      divisions: 100,
                                       values: _range,
                                       onChanged: (v) =>
                                           setState(() => _range = v),
@@ -491,15 +506,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                                 ),
                               ],
                             ),
-                          ),
-                          8.kh,
-                          // Min / Max labels
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _PriceLabel(value: _range.start.toInt()),
-                              _PriceLabel(value: _range.end.toInt()),
-                            ],
                           ),
                         ],
                       );
@@ -521,7 +527,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   child: Container3d(
                     onTap: () {
                       _reset();
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(const FilterResult());
                     },
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     depth: 3,
@@ -529,7 +535,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     borderColor: Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(14.r),
                     child: Center(
-                      child: 'RESET'.s(14).w(700).c(textColor),
+                      child: 'clear'.tr().s(14).w(700).c(textColor),
                     ),
                   ),
                 ),
@@ -551,7 +557,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ],
                     child: Center(
-                      child: 'APPLY'.s(14).w(700).c(Colors.white),
+                      child: 'filter_apply'.tr().s(14).w(700).c(Colors.white),
                     ),
                   ),
                 ),
@@ -707,9 +713,9 @@ class _GenderSelector extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
           items: [
-            _genderItem(Gender.any, 'Both', const Color(0xFF7C3AED)),
-            _genderItem(Gender.boy, 'Boys', const Color(0xFF4F46E5)),
-            _genderItem(Gender.girl, 'Girls', const Color(0xFFEC4899)),
+            _genderItem(Gender.any, 'filter_both'.tr(), const Color(0xFF7C3AED)),
+            _genderItem(Gender.boy, 'boys'.tr(), const Color(0xFF4F46E5)),
+            _genderItem(Gender.girl, 'girls'.tr(), const Color(0xFFEC4899)),
           ],
           onChanged: (v) {
             if (v != null) onChanged(v);
@@ -736,18 +742,38 @@ class _GenderSelector extends StatelessWidget {
 // ─── Price label ───
 
 class _PriceLabel extends StatelessWidget {
-  const _PriceLabel({required this.value});
+  const _PriceLabel({required this.value, required this.primary});
   final int value;
+  final Color primary;
+
+  static String _fmt(int v) => v
+      .toString()
+      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ');
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        '$value'.s(13).w(700).c(const Color(0xFFFBBF24)),
-        3.kw,
-        'so\'m'.s(12).w(600).c(const Color(0xFFFBBF24)),
-      ],
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: primary.withOpacity(0.25)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        '${_fmt(value)} so\'m',
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF1E293B),
+        ),
+      ),
     );
   }
 }
@@ -760,7 +786,7 @@ class _RoundThumbShape extends RangeSliderThumbShape {
 
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
-      const Size(28, 28);
+      const Size(24, 24);
 
   @override
   void paint(
@@ -778,32 +804,32 @@ class _RoundThumbShape extends RangeSliderThumbShape {
     double? textScaleFactor,
     Size? sizeWithOverflow,
   }) {
-    final Canvas canvas = context.canvas;
-    const double radius = 14;
+    final canvas = context.canvas;
+    const r = 12.0;
 
-    // Shadow
+    // Soft drop shadow
     canvas.drawCircle(
       center + const Offset(0, 2),
-      radius + 1,
+      r + 1,
       Paint()
-        ..color = Colors.black.withOpacity(0.08)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..color = Colors.black.withOpacity(0.12)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
     );
 
-    // White circle
-    canvas.drawCircle(center, radius, Paint()..color = Colors.white);
+    // White fill
+    canvas.drawCircle(center, r, Paint()..color = Colors.white);
 
-    // Border
+    // Primary border
     canvas.drawCircle(
       center,
-      radius,
+      r,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
+        ..strokeWidth = 2.5
         ..color = primary,
     );
 
-    // Inner dot
-    canvas.drawCircle(center, 4, Paint()..color = primary);
+    // Center dot
+    canvas.drawCircle(center, 4.5, Paint()..color = primary);
   }
 }

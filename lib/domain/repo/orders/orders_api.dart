@@ -96,6 +96,22 @@ class OrdersApi {
     return OrderDetail.fromJson(data);
   }
 
+  /// Fetches the OFD/Soliq fiscal receipt URL for a PAID order on demand.
+  /// Used as a fallback when the order-detail payload didn't already carry it.
+  /// Returns null when no fiscal receipt exists yet (e.g. not fiscalized).
+  Future<String?> getOrderReceipt(String orderId) async {
+    final response = await _dio.get('orders/$orderId/receipt');
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map
+        ? Map<String, dynamic>.from(raw['data'] as Map)
+        : (raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{});
+    for (final key in ['receipt_url', 'ofd_url', 'fiscal_url', 'qr_code_url', 'url']) {
+      final v = data[key];
+      if (v is String && v.isNotEmpty) return v;
+    }
+    return null;
+  }
+
   Future<void> createChild({required String name, required int age}) async {
     await _dio.post('children', data: {'name': name, 'age': age, 'gender': 'any'});
   }
@@ -112,6 +128,7 @@ class OrdersApi {
     required String ticketDate,
     String? lang,
     String? returnUrl,
+    String? promoCode,
     bool test = false,
   }) async {
     final body = {
@@ -120,6 +137,8 @@ class OrdersApi {
       'ticket_date': ticketDate,
       if (lang != null) 'lang': lang,
       if (returnUrl != null) 'return_url': returnUrl,
+      if (promoCode != null && promoCode.trim().isNotEmpty)
+        'promocode': promoCode.trim(),
     };
     final response = await _dio.post('orders/checkout', data: body);
     final raw = response.data;
@@ -127,6 +146,28 @@ class OrdersApi {
         ? Map<String, dynamic>.from(raw['data'] as Map)
         : Map<String, dynamic>.from(raw as Map);
     return CheckoutResult.fromJson(data);
+  }
+
+  /// Previews a promocode against an order subtotal without committing it.
+  /// Backend re-runs every check (active window, scope, per-user limit, and
+  /// the "no coupon plan" rule) and returns the discount + new total. Throws a
+  /// [DioException] carrying the server's message when the code is invalid or
+  /// not allowed for this user.
+  Future<PromocodePreview> validatePromocode({
+    required String code,
+    required num subtotal,
+    String? activityId,
+  }) async {
+    final response = await _dio.post('promocodes/validate', data: {
+      'code': code.trim().toUpperCase(),
+      'subtotal': subtotal,
+      if (activityId != null) 'activity_id': activityId,
+    });
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map
+        ? Map<String, dynamic>.from(raw['data'] as Map)
+        : Map<String, dynamic>.from(raw as Map);
+    return PromocodePreview.fromJson(data);
   }
 
   /// Cancel a PAID order. Backend enforces the 12-hour cutoff; this call

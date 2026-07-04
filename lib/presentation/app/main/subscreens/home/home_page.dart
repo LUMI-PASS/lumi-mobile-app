@@ -148,6 +148,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                             physics: const AlwaysScrollableScrollPhysics(),
                             slivers: [
                               SliverToBoxAdapter(child: SizedBox(height: 4.h)),
+                              SliverToBoxAdapter(
+                                child: _CouponCtaBanner(
+                                  onTap: () => context.router
+                                      .push(const PlansRoute()),
+                                ),
+                              ),
                               if (state.homeModel?.data?.upcomingClass != null)
                                 SliverToBoxAdapter(
                                   child: UpcomingClassWidget(
@@ -630,12 +636,338 @@ class _CouponIconButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(
-          CupertinoIcons.ticket_fill,
-          size: 20.sp,
-          color: const Color(0xFFFF7093),
+        padding: EdgeInsets.all(5.w),
+        child: Lottie.asset(
+          'assets/lotties/premium.json',
+          fit: BoxFit.contain,
+          repeat: true,
         ),
       ),
+    );
+  }
+}
+
+// ─── Coupon call-to-action banner (tear-off ticket) ──────────────────────────
+
+class _CouponCtaBanner extends StatefulWidget {
+  const _CouponCtaBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_CouponCtaBanner> createState() => _CouponCtaBannerState();
+}
+
+class _CouponCtaBannerState extends State<_CouponCtaBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glint;
+
+  // Width of the right "tear-off" stub, in logical px.
+  static const double _stubWidth = 88.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _glint = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _glint.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = context.colors.primary;
+    final stub = _stubWidth.w;
+    final notchR = 9.r;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 4.h),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: ClipRRect(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          child: SizedBox(
+            height: 96.h,
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final w = c.maxWidth;
+                final notchX = w - stub;
+                return PhysicalShape(
+                  clipper:
+                      _TicketClipper(notchRadius: notchR, notchCenterX: notchX),
+                  elevation: 7,
+                  color: const Color(0xFFB14AE0),
+                  shadowColor: primary.withOpacity(0.45),
+                  child: Stack(
+                    children: [
+                      // Gradient base
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                primary,
+                                const Color(0xFFB14AE0),
+                                const Color(0xFFFF7093),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Decorative circles
+                      // Positioned(
+                      //   left: -18,
+                      //   top: -28,
+                      //   child: _circle(72.w, Colors.white.withOpacity(0.08)),
+                      // ),
+                      // Positioned(
+                      //   left: notchX - 140,
+                      //   bottom: -46,
+                      //   child: _circle(96.w, Colors.white.withOpacity(0.06)),
+                      // ),
+                      // Periodic light glint
+                      AnimatedBuilder(
+                        animation: _glint,
+                        builder: (context, _) {
+                          final t = Curves.easeInOut
+                              .transform((_glint.value / 0.45).clamp(0.0, 1.0));
+                          final x = -90.0 + t * (w + 180);
+                          return Positioned(
+                            left: x,
+                            top: -24,
+                            bottom: -24,
+                            child: Transform.rotate(
+                              angle: 0.36,
+                              child: Container(
+                                width: 34.w,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.white.withOpacity(0),
+                                      Colors.white.withOpacity(0.22),
+                                      Colors.white.withOpacity(0),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      // Main content
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: 14.w,
+                          top: 12.h,
+                          bottom: 12.h,
+                          right: stub + 10.w,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 46.w,
+                              height: 46.w,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.16),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.35),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Icon(
+                                CupertinoIcons.ticket_fill,
+                                size: 22.sp,
+                                color: Colors.white,
+                              ),
+                            ),
+                            12.kw,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'coupon_plans_title'.tr(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                  3.kh,
+                                  Text(
+                                    'coupon_plans_subtitle'.tr(),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11.5.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white.withOpacity(0.9),
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Perforation
+                      Positioned(
+                        left: notchX - 1,
+                        top: 16.h,
+                        bottom: 16.h,
+                        width: 2,
+                        child: _VerticalDashedLine(
+                          color: Colors.white.withOpacity(0.55),
+                        ),
+                      ),
+                      // Tear-off stub: CTA arrow
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: stub,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 42.w,
+                              height: 42.w,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.12),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 20.sp,
+                                color: primary,
+                              ),
+                            ),
+                            7.kh,
+                            Text(
+                              'get_coupon'.tr(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _circle(double size, Color color) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      );
+}
+
+// Ticket outline with circular notches punched at the top & bottom of the
+// perforation line, giving the classic tear-off coupon silhouette.
+class _TicketClipper extends CustomClipper<Path> {
+  _TicketClipper({required this.notchRadius, required this.notchCenterX});
+
+  final double notchRadius;
+  final double notchCenterX;
+
+  @override
+  Path getClip(Size size) {
+    final body = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Offset.zero & size,
+          const Radius.circular(20),
+        ),
+      );
+    final topNotch = Path()
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(notchCenterX, 0),
+          radius: notchRadius,
+        ),
+      );
+    final bottomNotch = Path()
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(notchCenterX, size.height),
+          radius: notchRadius,
+        ),
+      );
+    return Path.combine(
+      PathOperation.difference,
+      Path.combine(PathOperation.difference, body, topNotch),
+      bottomNotch,
+    );
+  }
+
+  @override
+  bool shouldReclip(covariant _TicketClipper old) =>
+      old.notchCenterX != notchCenterX || old.notchRadius != notchRadius;
+}
+
+class _VerticalDashedLine extends StatelessWidget {
+  const _VerticalDashedLine({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const dashHeight = 5.0;
+        const dashGap = 4.0;
+        final count = (constraints.maxHeight / (dashHeight + dashGap)).floor();
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(
+            count,
+            (_) => Container(
+              width: 1.6,
+              height: dashHeight,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

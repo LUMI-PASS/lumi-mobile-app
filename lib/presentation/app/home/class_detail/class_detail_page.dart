@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/styles/ios_text_styles.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -100,6 +101,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     _loadImages();
     _loadFull();
     _startAutoSlide();
+    final cm = widget.classModel;
+    getIt<AnalyticsService>().logEvent(
+      AnalyticsEvent.classDetailViewed,
+      params: {
+        if (cm.id != null) 'class_id': cm.id!,
+        if (cm.title != null) 'class_title': cm.title!,
+        if (cm.category != null) 'category': cm.category!,
+        if (cm.branch?.title != null) 'branch': cm.branch!.title!,
+        if (cm.price != null) 'price': cm.price!,
+        if (cm.discountPercentage != null)
+          'discount_percentage': cm.discountPercentage!,
+      },
+    );
   }
 
   @override
@@ -282,11 +296,37 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         .trim();
   }
 
-  void _shareClass() {
-    final title = widget.classModel.title ?? '';
-    final branch = widget.classModel.branch?.title ?? '';
-    final text = branch.isNotEmpty ? '$title — $branch' : title;
-    Share.share(text);
+  Future<void> _shareClass() async {
+    try {
+      final id = widget.classModel.id;
+      final title = widget.classModel.title ?? '';
+      final branch = widget.classModel.branch?.title ?? _full?.branch?.title ?? '';
+      final label = branch.isNotEmpty ? '$title — $branch' : title;
+
+      final String text;
+      if (id != null && id.isNotEmpty) {
+        final url = 'https://mobile-api.lumipass.uz/share/class/$id';
+        text = label.isNotEmpty ? '$label\n$url' : url;
+      } else if (label.isNotEmpty) {
+        text = label;
+      } else {
+        return;
+      }
+
+      final box = context.findRenderObject() as RenderBox?;
+      final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+      await Share.share(
+        text,
+        subject: title.isNotEmpty ? title : 'Lumi',
+        sharePositionOrigin: origin,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Share error: $e')),
+        );
+      }
+    }
   }
 
   void _openBookingSheet() {
@@ -298,6 +338,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       );
       return;
     }
+    getIt<AnalyticsService>().logEvent(
+      AnalyticsEvent.bookButtonTapped,
+      params: {
+        if (full.id != null) 'class_id': full.id!,
+        if (widget.classModel.title != null)
+          'class_title': widget.classModel.title!,
+      },
+    );
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -360,7 +408,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
                 actions: [
                   _FrostedCircleButton(
-                    onTap: _shareClass,
+                    onTap: () => _shareClass(),
                     child: const Icon(Icons.share_rounded, color: _navy, size: 18),
                   ),
                   8.kw,

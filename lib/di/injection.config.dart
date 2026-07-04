@@ -17,6 +17,8 @@ import 'package:lumi_pass/common/widget/display/display.dart' as _i755;
 import 'package:lumi_pass/common/widget/display/display_impl.dart' as _i426;
 import 'package:lumi_pass/data/base_model/default_theme_colors.dart' as _i64;
 import 'package:lumi_pass/data/interceptor/auth_interceptor.dart' as _i948;
+import 'package:lumi_pass/data/service/analytics_service.dart' as _i594;
+import 'package:lumi_pass/data/service/push_notification_service.dart' as _i361;
 import 'package:lumi_pass/data/storage/storage.dart' as _i279;
 import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
@@ -29,6 +31,8 @@ import 'package:lumi_pass/domain/repo/booking/booking_api.dart' as _i261;
 import 'package:lumi_pass/domain/repo/booking/booking_repository.dart' as _i760;
 import 'package:lumi_pass/domain/repo/home/home_api.dart' as _i433;
 import 'package:lumi_pass/domain/repo/home/home_repository.dart' as _i526;
+import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart'
+    as _i376;
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart' as _i748;
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart' as _i915;
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/cubit/schedule_cubit.dart'
@@ -81,12 +85,21 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i120.Logger>(),
         ));
     gh.factory<_i361.Dio>(() => networkModule.dio(gh<_i948.AuthInterceptor>()));
+    gh.lazySingleton<_i594.AnalyticsService>(
+        () => _i594.AnalyticsService(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
+    gh.lazySingleton<_i361.PushNotificationService>(
+        () => _i361.PushNotificationService(
+              gh<_i361.Dio>(),
+              gh<_i279.Storage>(),
+            ));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
     gh.factory<_i261.BookingApi>(() => _i261.BookingApi(gh<_i361.Dio>()));
     gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
+    gh.factory<_i376.NotificationsApi>(
+        () => _i376.NotificationsApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
     gh.factory<_i760.BookingRepository>(() => _i808.BookingRepositoryImpl(
@@ -100,6 +113,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i652.AuthRepository>(() => _i98.AuthRepositoryImpl(
           gh<_i79.AuthApi>(),
           gh<_i279.Storage>(),
+          gh<_i361.PushNotificationService>(),
+          gh<_i594.AnalyticsService>(),
         ));
     gh.factory<_i24.AttendanceCubit>(
         () => _i24.AttendanceCubit(gh<_i526.HomeRepository>()));
@@ -107,8 +122,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i133.ProfileDetailCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i239.ChildrenCubit>(
         () => _i239.ChildrenCubit(gh<_i526.HomeRepository>()));
-    gh.factory<_i386.HomeCubit>(
-        () => _i386.HomeCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i999.SearchCubit>(
         () => _i999.SearchCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i405.WalletCubit>(
@@ -117,8 +130,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i652.AuthRepository>(),
           gh<_i279.Storage>(),
         ));
-    gh.factory<_i915.AppCubit>(
-        () => _i915.AppCubit(gh<_i652.AuthRepository>()));
     gh.factory<_i567.RegisterCubit>(
         () => _i567.RegisterCubit(gh<_i652.AuthRepository>()));
     gh.factory<_i296.LoginCubit>(
@@ -126,6 +137,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
           gh<_i279.Storage>(),
           gh<_i526.HomeRepository>(),
+        ));
+    gh.factory<_i915.AppCubit>(() => _i915.AppCubit(
+          gh<_i652.AuthRepository>(),
+          gh<_i361.PushNotificationService>(),
+          gh<_i279.Storage>(),
+        ));
+    gh.factory<_i386.HomeCubit>(() => _i386.HomeCubit(
+          gh<_i526.HomeRepository>(),
+          gh<_i279.Storage>(),
         ));
     return this;
   }

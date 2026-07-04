@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
@@ -55,33 +54,12 @@ class _ExploreMapSheetState extends State<ExploreMapSheet> {
           b.longitude! >= _tashkentMinLng &&
           b.longitude! <= _tashkentMaxLng;
     }).toList();
-    _getUserLocation();
   }
 
   @override
   void dispose() {
     _listCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _getUserLocation() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-      final perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) return;
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
-      );
-      if (mounted) {
-        setState(
-            () => _userLocation = LatLng(pos.latitude, pos.longitude));
-      }
-    } catch (_) {}
   }
 
   void _onMapReady() {
@@ -149,19 +127,6 @@ class _ExploreMapSheetState extends State<ExploreMapSheet> {
   }
 
   String _formatDistance(HomBranch branch) {
-    if (_userLocation != null &&
-        branch.latitude != null &&
-        branch.longitude != null) {
-      final m = Geolocator.distanceBetween(
-        _userLocation!.latitude,
-        _userLocation!.longitude,
-        branch.latitude!,
-        branch.longitude!,
-      );
-      if (m <= 0) return '';
-      if (m < 1000) return '${m.round()} m';
-      return '${(m / 1000).round()} km';
-    }
     if (branch.distance != null && branch.distance! > 0) {
       final m = branch.distance!;
       if (m < 1000) return '${m.round()} m';

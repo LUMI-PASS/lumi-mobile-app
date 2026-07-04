@@ -1,3 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
+import 'package:lumi_pass/common/utils/image_url.dart';
+
 /// Plain (non-freezed) model for the full /api/classes/:id response.
 /// Supports both the legacy flat prices_summary format and the new
 /// age_tiers → durations nested format.
@@ -125,8 +128,11 @@ class ClassFullModel {
 
     return ClassFullModel(
       id: json['_id']?.toString() ?? json['id']?.toString(),
-      imageUrl: json['image']?.toString(),
-      images: imagesRaw.map((e) => e.toString()).toList(),
+      imageUrl: sanitizeImageUrl(json['image']?.toString()),
+      images: imagesRaw
+          .map((e) => sanitizeImageUrl(e.toString()))
+          .whereType<String>()
+          .toList(),
       name: _asMap(json['name']),
       description: _asMap(json['description']),
       importantNotes: _asMap(json['important_notes']),
@@ -183,11 +189,11 @@ class AgeTier {
     required this.durations,
   });
 
-  /// Human-readable age label (Uzbek).
+  /// Human-readable age label.
   String get rangeLabel {
-    if (ageTo == null) return '$ageFrom+ yosh';
-    if (ageFrom == ageTo) return '$ageFrom yosh';
-    return '$ageFrom–$ageTo yosh';
+    if (ageTo == null) return '$ageFrom+ ${'filter_years_label'.tr()}';
+    if (ageFrom == ageTo) return '$ageFrom ${'filter_years_label'.tr()}';
+    return '$ageFrom–$ageTo ${'filter_years_label'.tr()}';
   }
 
   factory AgeTier.fromJson(Map<String, dynamic> json) {
@@ -211,14 +217,14 @@ class AgeDuration {
 
   AgeDuration({required this.duration, required this.price});
 
-  /// Human-readable duration label (Uzbek).
+  /// Human-readable duration label.
   String get durationLabel {
-    if (duration == null) return "To'liq vaqt";
+    if (duration == null) return 'duration_unbounded'.tr();
     final h = duration! ~/ 60;
     final m = duration! % 60;
-    if (h > 0 && m > 0) return '${h}s ${m}d';
-    if (h > 0) return '${h} soat';
-    return '$m daqiqa';
+    if (h > 0 && m > 0) return '$h${'duration_h_unit'.tr()} $m${'duration_min_unit'.tr()}';
+    if (h > 0) return '$h ${'duration_h_unit'.tr()}';
+    return '$m ${'duration_min_unit'.tr()}';
   }
 
   factory AgeDuration.fromJson(Map<String, dynamic> json) {
@@ -250,8 +256,9 @@ class PriceRangeItem {
     );
   }
 
-  String get rangeLabel =>
-      ageFrom == ageTo ? '$ageFrom yosh' : '$ageFrom–$ageTo yosh';
+  String get rangeLabel => ageFrom == ageTo
+      ? '$ageFrom ${'filter_years_label'.tr()}'
+      : '$ageFrom–$ageTo ${'filter_years_label'.tr()}';
 }
 
 // ─── ScheduleSlot ────────────────────────────────────────────────────────────
@@ -272,6 +279,52 @@ class ScheduleSlot {
       day: json['day']?.toString() ?? '',
       startTime: json['start_time']?.toString() ?? '',
       endTime: json['end_time']?.toString() ?? '',
+    );
+  }
+}
+
+// ─── Per-date schedule (used by the booking calendar) ──────────────────────
+
+class ScheduleSlotInfo {
+  final String startTime;
+  final String endTime;
+  final int? capacity;
+  final int? availableSlots;
+
+  ScheduleSlotInfo({
+    required this.startTime,
+    required this.endTime,
+    this.capacity,
+    this.availableSlots,
+  });
+
+  bool get isFull => availableSlots != null && availableSlots! <= 0;
+
+  factory ScheduleSlotInfo.fromJson(Map<String, dynamic> json) {
+    return ScheduleSlotInfo(
+      startTime: json['start_time']?.toString() ?? '',
+      endTime: json['end_time']?.toString() ?? '',
+      capacity: (json['capacity'] as num?)?.toInt(),
+      availableSlots: (json['available_slots'] as num?)?.toInt(),
+    );
+  }
+}
+
+class ScheduleDay {
+  final String date; // YYYY-MM-DD
+  final List<ScheduleSlotInfo> slots;
+
+  ScheduleDay({required this.date, required this.slots});
+
+  factory ScheduleDay.fromJson(Map<String, dynamic> json) {
+    final raw = (json['slots'] as List?) ?? const [];
+    return ScheduleDay(
+      date: json['date']?.toString() ?? '',
+      slots: raw
+          .whereType<Map>()
+          .map((e) =>
+              ScheduleSlotInfo.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
     );
   }
 }
@@ -327,6 +380,11 @@ class CategorySummary {
     required this.type,
   });
 
+  /// True for the 'required_booking' category type — the user must pick a
+  /// concrete from/to time slot for each ticket rather than the class's
+  /// pre-defined recurring schedule.
+  bool get requiresBookingTimeSlot => type == 'required_booking';
+
   factory CategorySummary.fromJson(Map<String, dynamic> json) {
     return CategorySummary(
       id: json['_id']?.toString() ?? json['id']?.toString(),
@@ -343,6 +401,8 @@ class CategorySummary {
 class ClassPricingSnapshot {
   final num priceMin;
   final num priceMax;
+  /// Lowest price across paid (non-zero) age tiers. Zero means all tiers are free.
+  final num priceMinPaid;
   final bool hasMultiplePrices;
   final int rangeCount;
   final int? scheduleCount;
@@ -350,6 +410,7 @@ class ClassPricingSnapshot {
   const ClassPricingSnapshot({
     required this.priceMin,
     required this.priceMax,
+    required this.priceMinPaid,
     required this.hasMultiplePrices,
     required this.rangeCount,
     this.scheduleCount,
@@ -358,9 +419,20 @@ class ClassPricingSnapshot {
   factory ClassPricingSnapshot.fromJson(Map<String, dynamic> json) {
     final summary = (json['prices_summary'] as List?) ?? const [];
     final validRanges = summary.where((e) => e is Map && (e as Map).isNotEmpty).length;
+
+    // Find lowest non-zero price across age tiers.
+    num paidMin = 0;
+    for (final e in summary) {
+      if (e is Map) {
+        final p = e['price'] as num? ?? 0;
+        if (p > 0 && (paidMin == 0 || p < paidMin)) paidMin = p;
+      }
+    }
+
     return ClassPricingSnapshot(
       priceMin: (json['price_min'] as num?) ?? (json['price'] as num?) ?? 0,
       priceMax: (json['price_max'] as num?) ?? (json['price'] as num?) ?? 0,
+      priceMinPaid: paidMin,
       hasMultiplePrices: json['has_multiple_prices'] == true,
       rangeCount: validRanges,
       scheduleCount: (json['schedule_count'] as num?)?.toInt(),

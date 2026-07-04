@@ -1,9 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/web.dart';
+
+const _reviewToken =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiNjlmOWZiZDM2Y2M2NTAyNmU2MDBkM2YyIiwiaWF0IjoxNzc4MDQ1OTg5fQ.k4J3TY35bsbk-XZ9QOYxTYFBnx2j0T1zNMe3hmUGyj8';
 
 @lazySingleton
 class AuthInterceptor extends QueuedInterceptor {
@@ -12,32 +16,29 @@ class AuthInterceptor extends QueuedInterceptor {
 
   AuthInterceptor(this._storage, this.log);
 
-      @override
-      void onRequest(
-      RequestOptions options,
-      RequestInterceptorHandler handler,
-    ) async {
-      final tokens = _storage.tokens.call();
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final tokens = _storage.tokens.call();
+    String? access = tokens?.access;
 
-      if (tokens == null) return handler.next(options);
+    if (access == null && RemoteConfigService.instance.isInReview) {
+      access = _reviewToken;
+    }
 
-      String? access = tokens.access;
-      print("access ::: $access");
-      if (access == null) {
-        return handler.reject(DioException(requestOptions: options), true);
-      }
+    if (access == null) return handler.next(options);
 
-      options.headers.addAll({'Authorization': 'Bearer $access'});
-    options.headers.addAll({
-      // 'x-language-code': navigatorContext.currentContext!.locale.languageCode,
-      // 'x-currency-code': _storage.currencyCode.call() ?? 'usd' ,
-    });
+    print("access ::: $access");
+    options.headers.addAll({'Authorization': 'Bearer $access'});
     return handler.next(options);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401) {
+    if (err.response?.statusCode == 401 &&
+        !RemoteConfigService.instance.isInReview) {
       await _storage.logout();
       getIt<AppRouter>().replaceAll([LoginRoute()]);
     }

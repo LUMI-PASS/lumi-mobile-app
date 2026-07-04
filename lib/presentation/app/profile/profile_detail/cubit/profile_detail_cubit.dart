@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'profile_detail_state.dart';
@@ -43,6 +45,11 @@ class ProfileDetailCubit
       future: _repo.updateUser(user),
       buildOnStart: () => buildable.copyWith(success: true),
       invokeOnData: (data) {
+        final name = user.firstName ?? '';
+        if (name.isNotEmpty) {
+          displayNameNotifier.value = name;
+          getIt<Storage>().parentName.set(name);
+        }
         return const ProfileDetailListenable(
             effect: ProfileDetailEffect.verify);
       },

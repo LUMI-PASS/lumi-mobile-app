@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'login_state.dart';
@@ -9,6 +11,7 @@ import 'login_state.dart';
 class LoginCubit extends BaseCubit<LoginBuildable, LoginListenable> {
   LoginCubit(this._repo) : super(const LoginBuildable());
   final AuthRepository _repo;
+  final _analytics = getIt<AnalyticsService>();
 
   Future<void> login(String phoneOrEmail) {
     final phone = phoneOrEmail.replaceAll("-", "");
@@ -18,6 +21,10 @@ class LoginCubit extends BaseCubit<LoginBuildable, LoginListenable> {
       invokeOnData: (code) =>
           LoginListenable(effect: LoginEffect.verify, code: code),
       buildOnData: (_) => buildable.copyWith(isSelected: true),
+      onData: (_) => _analytics.logEvent(
+        AnalyticsEvent.otpRequested,
+        params: {'phone_number': phone},
+      ),
       onErrorData: (error) {
         final status = (error as DioException);
         if (status.response?.statusCode == 500 ||

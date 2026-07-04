@@ -15,6 +15,14 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
   final Storage _storage;
   final HomeRepository _repo;
 
+  bool _showDeletedBanner = false;
+  bool get showDeletedBanner => _showDeletedBanner;
+
+  void dismissDeletedBanner() {
+    _showDeletedBanner = false;
+    build((b) => b.copyWith());
+  }
+
   Future<void> load() => _load(silent: false);
 
   /// Silent refresh (used on tab focus) — no spinner.
@@ -79,6 +87,16 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
         buildOnStart: () => buildable.copyWith(isLoading: true),
         invokeOnData: (data) => const ProfileListenable(
           effect: ProfileEffect.login,
+        ),
+        onErrorData: (error) => display.error(error),
+        buildOnDone: () => buildable.copyWith(isLoading: false),
+      );
+
+  Future<void> deleteAccount() => callable(
+        future: _storage.logout().then((_) => _showDeletedBanner = true),
+        buildOnStart: () => buildable.copyWith(isLoading: true),
+        invokeOnData: (_) => const ProfileListenable(
+          effect: ProfileEffect.deleted,
         ),
         onErrorData: (error) => display.error(error),
         buildOnDone: () => buildable.copyWith(isLoading: false),

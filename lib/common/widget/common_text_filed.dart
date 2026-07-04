@@ -87,11 +87,18 @@ class _CommonTextFieldState extends State<CommonTextField> {
   late MaskTextInputFormatter maskFormatter;
   final FocusNode _textFieldFocusNode = FocusNode();
   List<TextInputFormatter> inputFormatters = [];
+  TextEditingController? _internalController;
+
+  TextEditingController get _effectiveController =>
+      widget.controller ?? _internalController!;
 
   @override
   void initState() {
     passwordVisible = widget.obscureText;
     super.initState();
+    if (widget.controller == null) {
+      _internalController = TextEditingController(text: widget.initialValue);
+    }
     maskFormatter = MaskTextInputFormatter(
       mask: widget.mask,
       filter: {"#": RegExp(r'[0-9]')},
@@ -107,7 +114,7 @@ class _CommonTextFieldState extends State<CommonTextField> {
   @override
   void dispose() {
     maskFormatter.clear();
-    widget.controller?.clear();
+    _internalController?.dispose();
     super.dispose();
   }
 
@@ -139,11 +146,17 @@ class _CommonTextFieldState extends State<CommonTextField> {
         ),
       );
     } else if (widget.suffix != null) {
-      return Container(
-        width: 48.w, // Fixed width for consistency
-        height: 64.h, // Match field height
-        alignment: Alignment.center,
-        child: widget.suffix,
+      return GestureDetector(
+        onTap: () {
+          _effectiveController.clear();
+          widget.suffixPressed?.call();
+        },
+        child: Container(
+          width: 48.w,
+          height: 64.h,
+          alignment: Alignment.center,
+          child: widget.suffix,
+        ),
       );
     }
     return const SizedBox.shrink();
@@ -169,10 +182,9 @@ class _CommonTextFieldState extends State<CommonTextField> {
             maxLines: widget.maxLines,
             minLines: widget.minLines,
             maxLength: widget.maxLength,
-            initialValue: widget.initialValue,
             autofocus: widget.autofocus,
             enabled: widget.enabled,
-            controller: widget.controller,
+            controller: _effectiveController,
             onTap: widget.onTap,
             keyboardType: widget.keyboardType,
             obscureText: passwordVisible,

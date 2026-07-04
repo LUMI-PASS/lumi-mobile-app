@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
 import 'package:lumi_pass/data/base_model/token/tokens.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
+import 'package:lumi_pass/data/service/push_notification_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
@@ -7,16 +11,24 @@ import 'package:injectable/injectable.dart';
 
 @Injectable(as: AuthRepository)
 class AuthRepositoryImpl extends AuthRepository {
-  AuthRepositoryImpl(this._api, this._storage);
+  AuthRepositoryImpl(this._api, this._storage, this._push, this._analytics);
 
   final AuthApi _api;
   final Storage _storage;
+  final PushNotificationService _push;
+  final AnalyticsService _analytics;
 
   @override
   Future<void> logout() async {
+    // Best-effort: unregister the FCM token while the access token is still
+    // valid, then clear local state.
+    await _analytics.logEvent(AnalyticsEvent.logout);
+    await _push.unregister();
     await _storage.tokens.set(null);
     await _storage.deviceToken.set(null);
+    await _analytics.clear();
   }
+
 
   @override
   Future<int?> sendOtp(String phone) async {
@@ -39,14 +51,33 @@ class AuthRepositoryImpl extends AuthRepository {
     final token = data['access_token'] as String?;
     if (token != null) {
       await _storage.tokens.set(Tokens(access: token));
+      // Fire-and-forget: registration runs in the background; the rest of
+      // the login flow shouldn't block on FCM.
+      unawaited(_push.registerCurrentDevice());
     }
     final userJson = data['user'];
+    final user =
+        userJson is Map<String, dynamic> ? ProfileModel.fromJson(userJson) : null;
+
+    // Persist identity so every analytics event can be stamped with the
+    // user's id + phone, even for returning users (register() is not hit).
+    if (user?.id != null && user!.id!.isNotEmpty) {
+      await _storage.userId.set(user.id);
+    }
+    final userPhone = user?.phoneNumber ?? phone;
+    if (userPhone.isNotEmpty) {
+      await _storage.userPhone.set(userPhone);
+    }
+    await _analytics.identify();
+    await _analytics.logEvent(
+      isNewUser ? AnalyticsEvent.signUp : AnalyticsEvent.login,
+      params: {'method': 'phone_otp'},
+    );
+
     return VerifyOtpResult(
       isNewUser: isNewUser,
       accessToken: token,
-      user: userJson is Map<String, dynamic>
-          ? ProfileModel.fromJson(userJson)
-          : null,
+      user: user,
     );
   }
 
@@ -65,12 +96,18 @@ class AuthRepositoryImpl extends AuthRepository {
     final token = data['access_token'] as String?;
     if (token != null) {
       await _storage.tokens.set(Tokens(access: token));
+      unawaited(_push.registerCurrentDevice());
     }
     final userJson = data['user'] as Map<String, dynamic>?;
     if (userJson != null) {
       final userId = (userJson['_id'] ?? userJson['id'])?.toString();
       if (userId != null) await _storage.userId.set(userId);
     }
+    // Persist the phone used to register so analytics events keep it after the
+    // transient pendingPhone is cleared on onboarding completion.
+    if (phone.isNotEmpty) await _storage.userPhone.set(phone);
+    await _analytics.identify();
+    await _analytics.logEvent(AnalyticsEvent.registrationCompleted);
     return userJson != null ? ProfileModel.fromJson(userJson) : const ProfileModel();
   }
 

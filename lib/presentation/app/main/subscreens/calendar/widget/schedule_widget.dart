@@ -252,17 +252,64 @@ class BookingCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
+                    if (order.hasDiscount) ...[
+                      Text(
+                        order.subtotalAmount.toRawUzsPrice(),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF94A3B8),
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      6.kw,
+                    ],
                     Text(
                       order.totalAmount.toRawUzsPrice(),
                       style: TextStyle(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1E293B),
+                        color: order.hasDiscount
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFF1E293B),
                       ),
                     ),
                   ],
                 ),
               ),
+              if (order.hasDiscount)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 3.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.local_offer_rounded,
+                                size: 11.sp,
+                                color: const Color(0xFF16A34A)),
+                            4.kw,
+                            Text(
+                              '${'booking_coupon_saved'.tr()} ${order.discountAmount.toRawUzsPrice()}',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF16A34A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               if (order.isPending)
                 _PayNowFooter(
                   order: order,

@@ -25,7 +25,7 @@ class DisplayImpl extends Display {
       if (description.type == DioExceptionType.connectionError) {
         _display(
           DisplayType.error,
-          Strings.checkInternetConnection,
+          "Strings.checkInternetConnection",
           title,
         );
       } else if (description.type == DioExceptionType.receiveTimeout ||
@@ -33,20 +33,20 @@ class DisplayImpl extends Display {
           description.type == DioExceptionType.connectionTimeout) {
         _display(
           DisplayType.error,
-          Strings.serverNotRespondingOrTimeout,
+          "Strings.serverNotRespondingOrTimeout",
           title,
         );
       } else if (description.response?.statusCode == 500 ||
           description.response?.statusCode == 502) {
         _display(
           DisplayType.error,
-          Strings.serverErrorTryLater,
+          "Strings.serverErrorTryLater",
           title,
         );
       } else {
         _display(
             DisplayType.error,
-            "${Strings.unknownError} : ${description.response?.data['message']}",
+            "${"Strings.unknownError"} : ${description.response?.data['message']}",
             title);
       }
     } else {

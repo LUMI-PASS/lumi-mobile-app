@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.dart';
 
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';

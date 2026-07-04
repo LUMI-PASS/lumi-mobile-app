@@ -1,20 +1,23 @@
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 
 class LoadingView extends StatelessWidget {
   const LoadingView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.width,
-      child: Stack(
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Align(
-            alignment: Alignment.center,
+          Assets.icons.lumiLogo.image(width: 72, height: 72),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: 24,
+            height: 24,
             child: CircularProgressIndicator(
+              strokeWidth: 2.5,
               color: context.colors.primary,
             ),
           ),

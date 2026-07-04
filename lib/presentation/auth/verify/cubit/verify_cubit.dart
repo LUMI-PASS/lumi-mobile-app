@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/display_name_notifier.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'verify_state.dart';
@@ -16,10 +19,11 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
   Timer? timer;
   final AuthRepository _repo;
   final Storage _storage;
+  final _analytics = getIt<AnalyticsService>();
 
   void timerChange() {
     timer?.cancel();
-    build((buildable) => buildable.copyWith(timer: 270));
+    build((buildable) => buildable.copyWith(timer: 60));
     timer = Timer.periodic(
       const Duration(seconds: 1),
       (_) {
@@ -51,6 +55,11 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
             (buildable.code ?? 0).toString()),
         buildOnStart: () => buildable.copyWith(loading: true),
         onData: (result) async {
+          final name = result.user?.firstName;
+          if (name != null && name.isNotEmpty) {
+            await _storage.parentName.set(name);
+            displayNameNotifier.value = name;
+          }
           if (result.isNewUser) {
             await _storage.needsOnboarding.set(true);
             await _storage.pendingPhone.set(phoneNumber.replaceAll("-", ""));
@@ -71,6 +80,10 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
         buildOnStart: () => buildable.copyWith(resetLoading: true),
         onData: (code) {
           timerChange();
+          _analytics.logEvent(
+            AnalyticsEvent.otpResent,
+            params: {'phone_number': phoneNumber.replaceAll("-", "")},
+          );
           if (code != null) {
             build((buildable) => buildable.copyWith(otpCode: code));
           }

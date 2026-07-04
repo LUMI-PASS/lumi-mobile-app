@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_cubit.dart';
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_state.dart';
@@ -21,9 +18,9 @@ class OnboardingPage
   final PageController _pageController = PageController();
 
   static const _imageAssets = [
-    'assets/icons/lumi_onboard1-removebg-preview.png',
-    'assets/icons/lumi_onboard2-removebg-preview.png',
-    'assets/icons/lumi_onboard3-removebg-preview.png',
+    'assets/images/onboard1.png',
+    'assets/images/onboard2.png',
+    'assets/images/onboard3.png',
   ];
 
   // Gradient pairs for each page background
@@ -295,7 +292,7 @@ class _OnboardContent extends StatelessWidget {
           16.kh,
           // Image area
           Expanded(
-            flex: 5,
+            flex: 7,
             child: TweenAnimationBuilder<double>(
               key: ValueKey('img-$index'),
               tween: Tween(begin: 0.0, end: 1.0),
@@ -308,38 +305,20 @@ class _OnboardContent extends StatelessWidget {
                   child: Opacity(opacity: v.clamp(0.0, 1.0), child: child),
                 ),
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Soft glow behind image
-                  Container(
-                    width: 260.w,
-                    height: 260.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          accent.withOpacity(0.12),
-                          accent.withOpacity(0.02),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                  // The actual image
-                  Image.asset(
-                    imagePath,
-                    height: 300.h,
-                    fit: BoxFit.contain,
-                  ),
-                ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28.r),
+                child: Image.asset(
+                  imagePath,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
 
           // Text area
           Expanded(
-            flex: 3,
+            flex: 2,
             child: TweenAnimationBuilder<double>(
               key: ValueKey('txt-$index'),
               tween: Tween(begin: 0.0, end: 1.0),

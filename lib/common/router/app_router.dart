@@ -1,11 +1,14 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart' hide CupertinoPageTransition;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:lumi_pass/common/router/initial_guard.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
+import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
@@ -35,18 +38,41 @@ import '../../presentation/app/profile/faq/faq_page.dart';
 import '../../presentation/app/profile/my_bookings/my_bookings_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/schedule_detail_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/ticket_receipt_page.dart';
+import '../../presentation/app/main/subscreens/calendar/widget/fiscal_receipt_page.dart';
+import '../../presentation/app/notifications/notifications_page.dart';
 import 'empty_route.dart';
 
 part 'app_router.gr.dart';
 
+/// Fade transition for web (fast), slide for mobile.
+Widget _webTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  if (kIsWeb) return FadeTransition(opacity: animation, child: child);
+  final tween = Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
+      .chain(CurveTween(curve: Curves.fastOutSlowIn));
+  return SlideTransition(position: animation.drive(tween), child: child);
+}
+
 @AutoRouterConfig(replaceInRouteName: 'Page,Route')
 class AppRouter extends _$AppRouter {
+  @override
+  RouteType get defaultRouteType => kIsWeb
+      ? RouteType.custom(
+          transitionsBuilder: _webTransition,
+          durationInMilliseconds: 120,
+          reverseDurationInMilliseconds: 100,
+        )
+      : const RouteType.cupertino();
+
   @override
   final List<AutoRoute> routes = [
     AutoRoute(
       page: EmptyRouterRoute.page,
       path: '/',
-      initial: true,
       guards: [InitialGuard()],
     ),
 
@@ -89,7 +115,10 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: FaqRoute.page),
     AutoRoute(page: BookingDetailRoute.page),
     AutoRoute(page: TicketReceiptRoute.page),
+    AutoRoute(page: FiscalReceiptRoute.page),
     AutoRoute(page: MyBookingsRoute.page),
     AutoRoute(page: PlansRoute.page),
+    AutoRoute(page: CouponsRoute.page),
+    AutoRoute(page: NotificationsRoute.page),
   ];
 }

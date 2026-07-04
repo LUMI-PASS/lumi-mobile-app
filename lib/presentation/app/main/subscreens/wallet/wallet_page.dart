@@ -29,6 +29,12 @@ class WalletPage
   }
 
   @override
+  void onFocusGained(BuildContext context) {
+    context.read<WalletCubit>().refreshIfLanguageChanged();
+    super.onFocusGained(context);
+  }
+
+  @override
   Widget builder(context, state) {
     return Scaffold(
       body: state.isLoading
@@ -202,7 +208,9 @@ class WalletPage
                   ),
 
                 // Bottom padding
-                SliverToBoxAdapter(child: SizedBox(height: 24.h)),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 24.h + 64.0 + MediaQuery.of(context).viewPadding.bottom),
+                ),
               ],
             ),
               ],

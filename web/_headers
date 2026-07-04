@@ -1,0 +1,41 @@
+/index.html
+  Cache-Control: no-store, no-cache
+
+/flutter_service_worker.js
+  Cache-Control: no-store, no-cache
+
+/flutter_bootstrap.js
+  Cache-Control: no-store, no-cache
+
+/main.dart.js
+  Cache-Control: no-cache
+
+# Explicit WASM Content-Type for every file — Cloudflare doesn't auto-detect
+/canvaskit/canvaskit.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/canvaskit/chromium/canvaskit.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/canvaskit/skwasm.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/canvaskit/skwasm_heavy.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/canvaskit/wimp.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/canvaskit/canvaskit.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/canvaskit/chromium/canvaskit.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*
+  Cache-Control: public, max-age=604800

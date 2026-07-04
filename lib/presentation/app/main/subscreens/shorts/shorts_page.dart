@@ -15,7 +15,9 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import 'shorts_feed.dart';
 
-const String kDefaultShortsVideoId = '6rKvoIy60MA';
+// Dummy init value — controller requires a non-empty ID but autoPlay is off
+// so this never plays; real videos load via _yt.load() once classes arrive.
+const String _kDummyInitVideoId = '6rKvoIy60MA';
 
 @RoutePage()
 class ShortsPage extends StatefulWidget {
@@ -38,9 +40,9 @@ class _ShortsPageState extends State<ShortsPage> {
   void initState() {
     super.initState();
     _yt = YoutubePlayerController(
-      initialVideoId: kDefaultShortsVideoId,
+      initialVideoId: _kDummyInitVideoId,
       flags: const YoutubePlayerFlags(
-        autoPlay: true,
+        autoPlay: false,
         mute: false,
         loop: true,
         hideControls: true,
@@ -54,11 +56,46 @@ class _ShortsPageState extends State<ShortsPage> {
     }
   }
 
+  static String? _extractVideoId(HomClass hc) {
+    final url = hc.videoUrl;
+    if (url == null || url.isEmpty) return null;
+    final id = YoutubePlayer.convertUrlToId(url);
+    return (id != null && id.isNotEmpty) ? id : null;
+  }
+
+  void _loadVideoForIndex(int index) {
+    if (index < 0 || index >= _classes.length) return;
+    final videoId = _extractVideoId(_classes[index])!;
+    if (_yt.metadata.videoId == videoId) {
+      _yt.seekTo(Duration.zero);
+      _yt.play();
+    } else {
+      _yt.load(videoId);
+    }
+  }
+
   void _applyPending() {
     if (!ShortsFeed.hasPending) return;
-    final classes = List<HomClass>.from(ShortsFeed.pendingClasses!);
-    final index = ShortsFeed.pendingIndex;
+    final allClasses = List<HomClass>.from(ShortsFeed.pendingClasses!);
+    final requestedIndex = ShortsFeed.pendingIndex;
     ShortsFeed.clear();
+
+    final classes = allClasses.where((c) => _extractVideoId(c) != null).toList();
+    if (classes.isEmpty) {
+      _loadDefaultFeed();
+      return;
+    }
+
+    // Prefer starting at the originally requested class if it has a video,
+    // otherwise fall back to the first class that does.
+    final requestedId = requestedIndex < allClasses.length
+        ? allClasses[requestedIndex].id
+        : null;
+    int index = requestedId != null
+        ? classes.indexWhere((c) => c.id == requestedId)
+        : -1;
+    if (index < 0) index = 0;
+
     _pageController?.dispose();
     setState(() {
       _classes = classes;
@@ -66,8 +103,7 @@ class _ShortsPageState extends State<ShortsPage> {
       _showSwipeHint = index == 0 && classes.length > 1;
       _pageController = PageController(initialPage: index);
     });
-    _yt.seekTo(Duration.zero);
-    _yt.play();
+    _loadVideoForIndex(index);
   }
 
   Future<void> _loadDefaultFeed() async {
@@ -76,15 +112,18 @@ class _ShortsPageState extends State<ShortsPage> {
     try {
       final result = await _repo.getDiscoveryClasses(page: 1, limit: 20);
       if (!mounted) return;
+      final classes = result.classes
+          .where((c) => _extractVideoId(c) != null)
+          .toList();
       _pageController?.dispose();
       setState(() {
-        _classes = result.classes;
+        _classes = classes;
         _currentIndex = 0;
-        _showSwipeHint = result.classes.length > 1;
-        _pageController = PageController(initialPage: 0);
+        _showSwipeHint = classes.length > 1;
+        _pageController =
+            classes.isNotEmpty ? PageController(initialPage: 0) : null;
       });
-      _yt.seekTo(Duration.zero);
-      _yt.play();
+      if (classes.isNotEmpty) _loadVideoForIndex(0);
     } catch (_) {
       // Swallow — empty state stays visible.
     } finally {
@@ -207,6 +246,11 @@ class _ShortsPageState extends State<ShortsPage> {
   }
 
   Widget _buildFeed() {
+    // Bottom nav bar floats over content (Scaffold.extendBody: true).
+    // Reserve its height + a little breathing room so the video and
+    // overlays sit fully above the bar.
+    final bottomInset =
+        MediaQuery.of(context).viewPadding.bottom + 56 + 4 + 12;
     return YoutubePlayerBuilder(
       player: YoutubePlayer(
         controller: _yt,
@@ -225,8 +269,7 @@ class _ShortsPageState extends State<ShortsPage> {
                   _currentIndex = i;
                   if (i > 0) _showSwipeHint = false;
                 });
-                _yt.seekTo(Duration.zero);
-                _yt.play();
+                _loadVideoForIndex(i);
               },
               itemBuilder: (context, index) {
                 return _ShortSlide(
@@ -235,6 +278,7 @@ class _ShortsPageState extends State<ShortsPage> {
                   player: playerWidget,
                   showSwipeHint:
                       index == 0 && _showSwipeHint && _classes.length > 1,
+                  bottomInset: bottomInset,
                 );
               },
             ),
@@ -251,12 +295,14 @@ class _ShortSlide extends StatelessWidget {
     required this.isActive,
     required this.player,
     required this.showSwipeHint,
+    required this.bottomInset,
   });
 
   final HomClass hc;
   final bool isActive;
   final Widget player;
   final bool showSwipeHint;
+  final double bottomInset;
 
   @override
   Widget build(BuildContext context) {
@@ -268,21 +314,30 @@ class _ShortSlide extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         if (isActive)
-          Center(
-            child: AspectRatio(
-              aspectRatio: 9 / 16,
-              child: player,
+          Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 9 / 16,
+                child: player,
+              ),
             ),
           )
         else if (imageUrl != null)
-          CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            errorWidget: (_, __, ___) =>
-                Container(color: Colors.grey.shade900),
+          Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) =>
+                  Container(color: Colors.grey.shade900),
+            ),
           )
         else
-          Container(color: Colors.grey.shade900),
+          Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: Container(color: Colors.grey.shade900),
+          ),
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -302,7 +357,7 @@ class _ShortSlide extends StatelessWidget {
         Positioned(
           left: 16.w,
           right: 80.w,
-          bottom: 32.h,
+          bottom: 32.h + bottomInset,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -404,7 +459,7 @@ class _ShortSlide extends StatelessWidget {
         if (hc.price != null)
           Positioned(
             right: 12.w,
-            bottom: 32.h,
+            bottom: 32.h + bottomInset,
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
@@ -425,7 +480,7 @@ class _ShortSlide extends StatelessWidget {
           Positioned(
             left: 0,
             right: 0,
-            bottom: 130.h,
+            bottom: 130.h + bottomInset,
             child: IgnorePointer(
               child: Center(
                 child: _SwipeUpHint(),

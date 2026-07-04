@@ -41,6 +41,11 @@ class Storage {
 
   BaseStorage<String> get pendingPhone => BaseStorage(_box, 'pendingPhone');
 
+  /// The logged-in user's phone number, persisted for the whole session
+  /// (unlike [pendingPhone], which is transient onboarding state). Used to
+  /// stamp every analytics event with the user's phone.
+  BaseStorage<String> get userPhone => BaseStorage(_box, 'user_phone');
+
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
   BaseStorage<String> get childName => BaseStorage(_box, 'childName');
@@ -51,6 +56,10 @@ class Storage {
 
   BaseStorage<int> get planDiscountPercentage => BaseStorage(_box, 'planDiscountPercentage');
 
+  /// Whether the one-time "get coupon" reward promo has been shown on home.
+  BaseStorage<bool> get couponPromoShown =>
+      BaseStorage(_box, 'couponPromoShown');
+
   Future<void> logout() async {
     await tokens.set(null);
     await code.set(null);
@@ -58,6 +67,8 @@ class Storage {
     await deviceToken.set(null);
     await hasPremium.set(null);
     await planDiscountPercentage.set(null);
+    await userId.set(null);
+    await userPhone.set(null);
   }
 // BaseStorage<String> get username => BaseStorage(_box, 'username');
 //

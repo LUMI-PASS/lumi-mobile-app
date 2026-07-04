@@ -53,7 +53,7 @@ class _CategoryItemWidgetState extends State<CategoryItemWidget> {
   Widget build(BuildContext context) {
     return Container3d(
       onTap: widget.onTap,
-      width: MediaQuery.of(context).size.width * 0.285,
+      width: MediaQuery.of(context).size.width * 0.25,
       margin: EdgeInsets.only(left: 16.w),
       padding: EdgeInsets.zero,
       backgroundColor: Colors.white,

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 
 import 'schedule_state.dart';
@@ -15,8 +16,10 @@ class ScheduleCubit extends BaseCubit<ScheduleBuildable, ScheduleListenable> {
   ScheduleCubit(this._ordersApi) : super(const ScheduleBuildable());
 
   final OrdersApi _ordersApi;
+  String _lastLang = '';
 
   Future<void> loadBookings() {
+    _lastLang = currentLang;
     return callable(
       future: _ordersApi.getOrders(),
       buildOnStart: () => buildable.copyWith(isLoading: true),
@@ -38,11 +41,18 @@ class ScheduleCubit extends BaseCubit<ScheduleBuildable, ScheduleListenable> {
     );
   }
 
-  /// Silent refresh (used on tab focus) — no spinner.
+  /// Silent refresh — no spinner.
   Future<void> refreshSilently() async {
     try {
       final orders = await _ordersApi.getOrders();
       build((b) => b.copyWith(orders: orders));
     } catch (_) {}
+  }
+
+  Future<void> refreshIfLanguageChanged() async {
+    final lang = currentLang;
+    if (_lastLang == lang) return;
+    _lastLang = lang;
+    await refreshSilently();
   }
 }

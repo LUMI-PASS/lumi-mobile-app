@@ -3,12 +3,18 @@ class CheckoutItem {
   final int? ageTo; // null = adult / no upper age limit
   final int count;
   final int? duration; // minutes; null = unlimited
+  // Required-booking categories: client-picked time window for the ticket(s).
+  // Both null for the standard recurring-schedule flow.
+  final String? startTime; // HH:mm
+  final String? endTime; // HH:mm
 
   const CheckoutItem({
     required this.ageFrom,
     required this.ageTo,
     required this.count,
     this.duration,
+    this.startTime,
+    this.endTime,
   });
 
   Map<String, dynamic> toJson() => {
@@ -16,12 +22,20 @@ class CheckoutItem {
         'age_to': ageTo,
         'count': count,
         if (duration != null) 'duration': duration,
+        if (startTime != null) 'start_time': startTime,
+        if (endTime != null) 'end_time': endTime,
       };
 }
 
 class CheckoutResult {
   final String orderId;
   final num totalAmount;
+  // Order subtotal before any discount, and the discount actually applied
+  // (from a coupon plan or a promocode). Both 0 when nothing was discounted.
+  final num subtotalAmount;
+  final num discountAmount;
+  // The promocode that was applied to this order, if any.
+  final String? promocodeCode;
   final String currency;
   final String status;
   final String checkoutUrl;
@@ -31,6 +45,9 @@ class CheckoutResult {
   const CheckoutResult({
     required this.orderId,
     required this.totalAmount,
+    this.subtotalAmount = 0,
+    this.discountAmount = 0,
+    this.promocodeCode,
     required this.currency,
     required this.status,
     required this.checkoutUrl,
@@ -40,14 +57,48 @@ class CheckoutResult {
 
   factory CheckoutResult.fromJson(Map<String, dynamic> json) {
     final ticketsRaw = (json['ticket_numbers'] as List?) ?? const [];
+    final code = json['promocode_code']?.toString();
     return CheckoutResult(
       orderId: json['order_id']?.toString() ?? '',
       totalAmount: (json['total_amount'] as num?) ?? 0,
+      subtotalAmount: (json['subtotal_amount'] as num?) ?? 0,
+      discountAmount: (json['discount_amount'] as num?) ?? 0,
+      promocodeCode: (code != null && code.isNotEmpty) ? code : null,
       currency: json['currency']?.toString() ?? 'UZS',
       status: json['status']?.toString() ?? 'pending',
       checkoutUrl: json['checkout_url']?.toString() ?? '',
       ticketDate: json['ticket_date']?.toString() ?? '',
       ticketNumbers: ticketsRaw.map((e) => e.toString()).toList(),
+    );
+  }
+}
+
+/// Preview of a promocode applied to a subtotal, returned by
+/// `POST /api/promocodes/validate`. Used by the checkout screen to show the
+/// new total before the user pays — the discount is re-validated server-side
+/// at checkout time.
+class PromocodePreview {
+  final String code;
+  final String discountType; // 'percent' | 'fixed'
+  final num discountValue;
+  final num discountAmount;
+  final num totalAmount;
+
+  const PromocodePreview({
+    required this.code,
+    required this.discountType,
+    required this.discountValue,
+    required this.discountAmount,
+    required this.totalAmount,
+  });
+
+  factory PromocodePreview.fromJson(Map<String, dynamic> json) {
+    return PromocodePreview(
+      code: json['code']?.toString() ?? '',
+      discountType: json['discount_type']?.toString() ?? 'percent',
+      discountValue: (json['discount_value'] as num?) ?? 0,
+      discountAmount: (json['discount_amount'] as num?) ?? 0,
+      totalAmount: (json['total_amount'] as num?) ?? 0,
     );
   }
 }

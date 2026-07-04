@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
@@ -20,7 +21,7 @@ class EmptyView extends StatelessWidget {
           50.kh,
           Assets.images.empty.image(width: 120.w, height: 120.h),
           8.kh,
-          (text ?? "Hech narsa topilmadi!").s(16).w(600).c(context.colors.primary),
+          (text ?? 'no_data'.tr()).s(16).w(600).c(context.colors.primary),
         ],
       ),
     );

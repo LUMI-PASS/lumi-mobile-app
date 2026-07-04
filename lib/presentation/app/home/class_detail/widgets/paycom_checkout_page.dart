@@ -8,6 +8,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -45,15 +46,34 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
   // PerformTransaction webhook usually arrives within a couple of seconds.
   static const _pollInterval = Duration(seconds: 2);
 
+  /// Common funnel params attached to every checkout/payment event so the
+  /// booking and subscription flows can be segmented in one funnel.
+  Map<String, Object?> get _funnelParams => {
+        'checkout_type': widget.isSubscription ? 'subscription' : 'booking',
+        'order_id': widget.result.orderId,
+        'amount': widget.result.totalAmount,
+        'currency': widget.result.currency,
+      };
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    getIt<AnalyticsService>()
+        .logEvent(AnalyticsEvent.checkoutPageOpened, params: _funnelParams);
     WidgetsBinding.instance.addPostFrameCallback((_) => _openPaycom());
   }
 
   @override
   void dispose() {
+    // The page leaves the tree without a confirmed payment → user backed out.
+    // (_navigated is only set once we route to a success screen.)
+    if (!_navigated) {
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.paymentAbandoned,
+        params: {..._funnelParams, 'reached_payme': _launched},
+      );
+    }
     _pollTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -94,6 +114,8 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
     if (_navigated) return;
     _navigated = true;
     _pollTimer?.cancel();
+    getIt<AnalyticsService>()
+        .logEvent(AnalyticsEvent.paymentSucceeded, params: _funnelParams);
     if (widget.isSubscription) {
       await getIt<Storage>().hasPremium.set(true);
       if (widget.planDiscountPercentage != null) {
@@ -135,12 +157,22 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok) {
         setState(() => _error = 'Could not open Paycom checkout.');
+        getIt<AnalyticsService>().logEvent(
+          AnalyticsEvent.paymeOpenFailed,
+          params: {..._funnelParams, 'reason': 'launch_returned_false'},
+        );
       } else {
         setState(() => _launched = true);
+        getIt<AnalyticsService>()
+            .logEvent(AnalyticsEvent.paymeRedirect, params: _funnelParams);
         _startPolling();
       }
     } catch (e) {
       setState(() => _error = e.toString());
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.paymeOpenFailed,
+        params: {..._funnelParams, 'reason': 'exception'},
+      );
     } finally {
       if (mounted) setState(() => _launching = false);
     }

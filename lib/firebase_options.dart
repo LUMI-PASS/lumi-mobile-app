@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -49,20 +46,31 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCPIahGtokJTGxDMV78rfgAPBigOJbqoHk',
+    appId: '1:853491388305:web:1558aec290ba9b14479430',
+    messagingSenderId: '853491388305',
+    projectId: 'lumi-app-29c94',
+    storageBucket: 'lumi-app-29c94.firebasestorage.app',
+    authDomain: 'lumi-app-29c94.firebaseapp.com',
+    measurementId: 'G-7K9DZ0K5EB',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCs7S_qidzrRRSt_Zv9GV2KF0r0ASMqXCU',
-    appId: '1:909673011800:android:6eac4fed5667afad57082d',
-    messagingSenderId: '909673011800',
-    projectId: 'lumipass-d4e90',
-    storageBucket: 'lumipass-d4e90.firebasestorage.app',
+    apiKey: 'AIzaSyAVKKWY4dRzT3yV4lDagxTeB1CtFb8yN2A',
+    appId: '1:853491388305:android:f0f65f2cfd80c41e479430',
+    messagingSenderId: '853491388305',
+    projectId: 'lumi-app-29c94',
+    storageBucket: 'lumi-app-29c94.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD3oTnNgQTfZTppnxO2n4Zs25ui3o7tWRE',
-    appId: '1:909673011800:ios:6b185f37b586209657082d',
-    messagingSenderId: '909673011800',
-    projectId: 'lumipass-d4e90',
-    storageBucket: 'lumipass-d4e90.firebasestorage.app',
+    apiKey: 'AIzaSyAlcOD8AcLyCHcDW2FYmoieaY5_KQoocDw',
+    appId: '1:853491388305:ios:ebacd14a60b7b97b479430',
+    messagingSenderId: '853491388305',
+    projectId: 'lumi-app-29c94',
+    storageBucket: 'lumi-app-29c94.firebasestorage.app',
     iosBundleId: 'uz.lumipass.mobile',
   );
+
 }

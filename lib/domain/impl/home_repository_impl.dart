@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.dart';
 
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
@@ -9,6 +9,7 @@ import 'package:lumi_pass/data/api_model/eligibility/eligibility_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
+import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
 import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 
@@ -149,6 +150,15 @@ class HomeRepositoryImpl extends HomeRepository {
       return (value.data['data'] as List)
           .map((e) => Tariff.fromJson(e))
           .toList();
+    });
+  }
+
+  @override
+  Future<List<PremiumPlan>> getPremiumPlans() {
+    return _api.getPremiumPlans().then((value) {
+      final list = value.data['data'];
+      if (list is! List) return [];
+      return list.map((e) => PremiumPlan.fromJson(e as Map<String, dynamic>)).toList();
     });
   }
 
@@ -308,6 +318,7 @@ class HomeRepositoryImpl extends HomeRepository {
     int page = 1,
     int limit = 10,
     String? search,
+    String? categoryId,
     String? sortBy,
     double? lat,
     double? lng,
@@ -317,6 +328,7 @@ class HomeRepositoryImpl extends HomeRepository {
           page: page,
           limit: limit,
           search: search,
+          categoryId: categoryId,
           sortBy: sortBy,
           lat: lat,
           lng: lng,
@@ -329,6 +341,23 @@ class HomeRepositoryImpl extends HomeRepository {
         branches:
             (list as List).map((e) => HomBranch.fromJson(e)).toList(),
         totalPages: pages is int ? pages : int.tryParse('$pages') ?? 1,
+      );
+    });
+  }
+
+  @override
+  Future<BranchClassesPage> getBranchClasses(
+    String branchId, {
+    int page = 1,
+    int limit = 10,
+  }) {
+    return _api.getBranchClasses(branchId, page: page, limit: limit).then((value) {
+      final body = value.data is Map ? value.data as Map : const {};
+      final list = (body['data'] ?? const []) as List;
+      ClassPricingCache.mergeFromList(list);
+      return BranchClassesPage(
+        classes: list.map((e) => HomClass.fromJson(e)).toList(),
+        classesPages: (body['pages'] as num?)?.toInt() ?? 1,
       );
     });
   }

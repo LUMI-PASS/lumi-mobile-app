@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/constants/constants.dart';
@@ -22,8 +23,8 @@ class ProfileChildWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = context.colors.primary;
     final age = childModel.age ?? getAge(childModel.dob);
-    final remainingTrials = childModel.remainingTrials;
     final unlockThreshold = childModel.unlockThresholdCoin;
     final coinsIntoCycle = childModel.coinsIntoUnlockCycle;
 
@@ -31,115 +32,88 @@ class ProfileChildWidget extends StatelessWidget {
         unlockThreshold > 0 &&
         coinsIntoCycle != null;
     final progressPercent = hasProgress
-        ? ((coinsIntoCycle! / unlockThreshold!) * 100).clamp(0.0, 100.0)
+        ? ((coinsIntoCycle / unlockThreshold) * 100).clamp(0.0, 100.0)
         : 0.0;
+
+    final fullName =
+        '${childModel.firstName ?? ''} ${childModel.lastName ?? ''}'.trim();
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: const Color(0xFF6C4EF2).withOpacity(0.07),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Row(
           children: [
-            // Photo / Avatar
-            Container(
-              width: 52.w,
-              height: 52.w,
-              decoration: BoxDecoration(
-                color: context.colors.primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(14.r),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: childModel.hasPhoto == true
-                  ? Image.network(
-                      _childPhotoUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _defaultAvatar(context),
-                    )
-                  : _defaultAvatar(context),
+            _Avatar(
+              photoUrl: childModel.hasPhoto == true ? _childPhotoUrl : null,
+              primary: primary,
             ),
-            12.kw,
-            // Name + badges
+            14.kw,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  "${childModel.firstName ?? ''} ${childModel.lastName ?? ''}"
-                      .s(15)
-                      .w(600),
+                  fullName.s(16).w(700).c(const Color(0xFF1E293B)),
                   6.kh,
-                  Row(
-                    children: [
-                      // Age badge with icon
-                      if (age != null)
-                        _IconBadge(
-                          icon: Icons.cake_outlined,
-                          text: "$age",
-                          color: const Color(0xFFFF94C7),
+                  if (age != null)
+                    _Chip(
+                      icon: CupertinoIcons.gift_fill,
+                      label: '$age yrs',
+                      color: const Color(0xFFEC4899),
+                    ),
+                  if (hasProgress) ...[
+                    10.kh,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4.r),
+                            child: LinearProgressIndicator(
+                              value: progressPercent / 100,
+                              backgroundColor: primary.withOpacity(0.10),
+                              valueColor: AlwaysStoppedAnimation(primary),
+                              minHeight: 5.h,
+                            ),
+                          ),
                         ),
-                      if (age != null) 6.kw,
-                      // Gender icon
-                      if (childModel.gender != null)
-                        Icon(
-                          childModel.gender?.toUpperCase() == 'MALE'
-                              ? Icons.male_rounded
-                              : Icons.female_rounded,
-                          size: 18.w,
-                          color: childModel.gender?.toUpperCase() == 'MALE'
-                              ? Colors.blue.shade300
-                              : Colors.pink.shade300,
-                        ),
-                      if (remainingTrials != null) ...[
-                        6.kw,
-                        _IconBadge(
-                          icon: Icons.card_giftcard_rounded,
-                          text: "$remainingTrials",
-                          color: context.colors.primary,
+                        8.kw,
+                        Text(
+                          '$coinsIntoCycle/$unlockThreshold',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            color: primary.withOpacity(0.6),
+                          ),
                         ),
                       ],
-                    ],
-                  ),
-                  // Compact progress bar
-                  if (hasProgress) ...[
-                    8.kh,
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3.r),
-                      child: LinearProgressIndicator(
-                        value: progressPercent / 100,
-                        backgroundColor:
-                            context.colors.primary.withOpacity(0.08),
-                        valueColor:
-                            AlwaysStoppedAnimation(context.colors.primary),
-                        minHeight: 4.h,
-                      ),
                     ),
                   ],
                 ],
               ),
             ),
             8.kw,
-            // Edit icon
             Container(
-              width: 36.w,
-              height: 36.w,
+              width: 34.w,
+              height: 34.w,
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Icon(
-                Icons.edit_outlined,
-                size: 18.w,
-                color: Colors.grey.shade500,
+                CupertinoIcons.pencil,
+                size: 16.w,
+                color: const Color(0xFF64748B),
               ),
             ),
           ],
@@ -147,43 +121,82 @@ class ProfileChildWidget extends StatelessWidget {
       ),
     );
   }
-
-  Widget _defaultAvatar(BuildContext context) {
-    return Center(
-      child: Icon(
-        Icons.person_rounded,
-        size: 26.w,
-        color: context.colors.primary.withOpacity(0.4),
-      ),
-    );
-  }
 }
 
-class _IconBadge extends StatelessWidget {
-  const _IconBadge({
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.photoUrl, required this.primary});
+
+  final String? photoUrl;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54.w,
+      height: 54.w,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primary.withOpacity(0.15),
+            primary.withOpacity(0.06),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: photoUrl != null
+          ? Image.network(
+              photoUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _placeholder(primary),
+            )
+          : _placeholder(primary),
+    );
+  }
+
+  Widget _placeholder(Color color) => Center(
+        child: Icon(
+          CupertinoIcons.person_fill,
+          size: 26.w,
+          color: color.withOpacity(0.45),
+        ),
+      );
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({
     required this.icon,
-    required this.text,
+    required this.label,
     required this.color,
   });
 
   final IconData icon;
-  final String text;
+  final String label;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(6.r),
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(8.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12.w, color: color),
-          3.kw,
-          text.s(10).w(700).c(color),
+          Icon(icon, size: 11.w, color: color),
+          4.kw,
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ],
       ),
     );

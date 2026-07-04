@@ -29,4 +29,5 @@ class AuthApi {
       'last_name': lastName,
     });
   }
+
 }

@@ -9,7 +9,7 @@ String get currentLang {
     final stored = getIt<Storage>().localeCode.call();
     if (stored != null && stored.isNotEmpty) return stored;
   } catch (_) {}
-  return 'en';
+  return 'uz';
 }
 
 /// Initialize the lang in storage if not yet set.
