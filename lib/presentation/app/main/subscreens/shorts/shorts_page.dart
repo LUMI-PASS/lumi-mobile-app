@@ -371,7 +371,15 @@ class _ShortSlide extends StatelessWidget {
             child: Center(
               child: AspectRatio(
                 aspectRatio: 9 / 16,
-                child: player,
+                // Zoom in slightly and clip: YouTube's channel header (top) and
+                // "Shorts"/share badge (bottom) sit at the video edges and can't
+                // be removed from the cross-origin iframe, so crop them off.
+                child: ClipRect(
+                  child: Transform.scale(
+                    scale: 1.22,
+                    child: player,
+                  ),
+                ),
               ),
             ),
           )
@@ -668,22 +676,21 @@ class _PlayPauseTapLayerState extends State<_PlayPauseTapLayer> {
 
   @override
   Widget build(BuildContext context) {
+    // When paused, YouTube reveals its own chrome (channel header + "Shorts"
+    // badge + share) which we can't remove from the cross-origin iframe. Cover
+    // the whole video with our own scrim + play button so that chrome is hidden.
+    // While playing the scrim is fully transparent, so the video is untouched.
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _toggle,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 150),
         opacity: _paused ? 1 : 0,
-        child: Center(
-          child: Container(
-            padding: EdgeInsets.all(14.r),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.45),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.play_arrow_rounded,
-                color: Colors.white, size: 44.sp),
-          ),
+        child: Container(
+          color: Colors.black.withOpacity(0.86),
+          alignment: Alignment.center,
+          child: Icon(Icons.play_arrow_rounded,
+              color: Colors.white, size: 64.sp),
         ),
       ),
     );
