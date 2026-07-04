@@ -244,6 +244,19 @@ class HomeApi {
     });
   }
 
+  /// Dedicated Shorts feed — the backend returns only activities that carry a
+  /// video link, so the client never has to page the whole catalogue.
+  Future<Response> discoveryShorts({
+    int page = 1,
+    int limit = 20,
+  }) {
+    return _dio.get('discovery/shorts', queryParameters: {
+      'page': page,
+      'limit': limit,
+      'lang': currentLang,
+    });
+  }
+
   Future<Response> discoveryBranches({
     int page = 1,
     int limit = 10,

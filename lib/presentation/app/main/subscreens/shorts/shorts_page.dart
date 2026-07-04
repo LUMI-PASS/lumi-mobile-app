@@ -15,9 +15,16 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import 'shorts_feed.dart';
 
-// Dummy init value — controller requires a non-empty ID but autoPlay is off
-// so this never plays; real videos load via _yt.load() once classes arrive.
-const String _kDummyInitVideoId = '6rKvoIy60MA';
+// Autoplay immediately (with sound) and loop — the plugin's WebView is
+// configured to not require a user gesture, so the first short plays without a
+// tap. Controls are hidden for a clean Reels-style surface.
+const YoutubePlayerFlags _kPlayerFlags = YoutubePlayerFlags(
+  autoPlay: true,
+  mute: false,
+  loop: true,
+  hideControls: true,
+  disableDragSeek: true,
+);
 
 @RoutePage()
 class ShortsPage extends StatefulWidget {
@@ -28,7 +35,10 @@ class ShortsPage extends StatefulWidget {
 }
 
 class _ShortsPageState extends State<ShortsPage> {
-  late final YoutubePlayerController _yt;
+  // Created lazily once the first video arrives, with that video as the
+  // initial id + autoPlay — so it starts playing the moment the player mounts
+  // instead of showing a static placeholder until the user interacts.
+  YoutubePlayerController? _yt;
   final HomeRepository _repo = getIt<HomeRepository>();
   PageController? _pageController;
   List<HomClass> _classes = [];
@@ -39,16 +49,6 @@ class _ShortsPageState extends State<ShortsPage> {
   @override
   void initState() {
     super.initState();
-    _yt = YoutubePlayerController(
-      initialVideoId: _kDummyInitVideoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-        loop: true,
-        hideControls: true,
-        disableDragSeek: true,
-      ),
-    );
     if (ShortsFeed.hasPending) {
       _applyPending();
     } else {
@@ -63,14 +63,33 @@ class _ShortsPageState extends State<ShortsPage> {
     return (id != null && id.isNotEmpty) ? id : null;
   }
 
-  void _loadVideoForIndex(int index) {
+  // Spins up the player on the given slide's video. Call inside setState so the
+  // feed rebuilds with a ready-to-autoplay controller.
+  void _createControllerFor(int index) {
     if (index < 0 || index >= _classes.length) return;
-    final videoId = _extractVideoId(_classes[index])!;
-    if (_yt.metadata.videoId == videoId) {
-      _yt.seekTo(Duration.zero);
-      _yt.play();
+    final videoId = _extractVideoId(_classes[index]);
+    if (videoId == null) return;
+    _yt?.dispose();
+    _yt = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: _kPlayerFlags,
+    );
+  }
+
+  // Switches the existing player to the slide's video (on swipe). Creates the
+  // controller if it doesn't exist yet.
+  void _showVideoAt(int index) {
+    if (index < 0 || index >= _classes.length) return;
+    final videoId = _extractVideoId(_classes[index]);
+    if (videoId == null) return;
+    final controller = _yt;
+    if (controller == null) {
+      setState(() => _createControllerFor(index));
+    } else if (controller.metadata.videoId == videoId) {
+      controller.seekTo(Duration.zero);
+      controller.play();
     } else {
-      _yt.load(videoId);
+      controller.load(videoId);
     }
   }
 
@@ -102,19 +121,22 @@ class _ShortsPageState extends State<ShortsPage> {
       _currentIndex = index;
       _showSwipeHint = index == 0 && classes.length > 1;
       _pageController = PageController(initialPage: index);
+      _createControllerFor(index);
     });
-    _loadVideoForIndex(index);
   }
 
   Future<void> _loadDefaultFeed() async {
     if (_isLoadingDefault) return;
     setState(() => _isLoadingDefault = true);
     try {
-      final result = await _repo.getDiscoveryClasses(page: 1, limit: 20);
+      // Dedicated backend feed: already scoped to activities that have a video,
+      // so a single request is enough — no client-side paging of the catalogue.
+      final result = await _repo.getDiscoveryShorts(page: 1, limit: 30);
       if (!mounted) return;
-      final classes = result.classes
-          .where((c) => _extractVideoId(c) != null)
-          .toList();
+      // Keep only what this player can actually play (YouTube ids). Vimeo/other
+      // providers are filtered here until the player supports them.
+      final classes =
+          result.classes.where((c) => _extractVideoId(c) != null).toList();
       _pageController?.dispose();
       setState(() {
         _classes = classes;
@@ -122,8 +144,8 @@ class _ShortsPageState extends State<ShortsPage> {
         _showSwipeHint = classes.length > 1;
         _pageController =
             classes.isNotEmpty ? PageController(initialPage: 0) : null;
+        if (classes.isNotEmpty) _createControllerFor(0);
       });
-      if (classes.isNotEmpty) _loadVideoForIndex(0);
     } catch (_) {
       // Swallow — empty state stays visible.
     } finally {
@@ -134,7 +156,7 @@ class _ShortsPageState extends State<ShortsPage> {
   @override
   void dispose() {
     _pageController?.dispose();
-    _yt.dispose();
+    _yt?.dispose();
     super.dispose();
   }
 
@@ -148,11 +170,11 @@ class _ShortsPageState extends State<ShortsPage> {
           if (_classes.isEmpty && !_isLoadingDefault) {
             _loadDefaultFeed();
           } else {
-            _yt.play();
+            _yt?.play();
           }
         }
       },
-      onFocusLost: () => _yt.pause(),
+      onFocusLost: () => _yt?.pause(),
       child: Scaffold(
         backgroundColor: Colors.black,
         body: _classes.isEmpty
@@ -251,9 +273,11 @@ class _ShortsPageState extends State<ShortsPage> {
     // overlays sit fully above the bar.
     final bottomInset =
         MediaQuery.of(context).viewPadding.bottom + 56 + 4 + 12;
+    final controller = _yt;
+    if (controller == null) return _buildLoadingState();
     return YoutubePlayerBuilder(
       player: YoutubePlayer(
-        controller: _yt,
+        controller: controller,
         showVideoProgressIndicator: false,
       ),
       builder: (context, playerWidget) {
@@ -269,7 +293,7 @@ class _ShortsPageState extends State<ShortsPage> {
                   _currentIndex = i;
                   if (i > 0) _showSwipeHint = false;
                 });
-                _loadVideoForIndex(i);
+                _showVideoAt(i);
               },
               itemBuilder: (context, index) {
                 return _ShortSlide(

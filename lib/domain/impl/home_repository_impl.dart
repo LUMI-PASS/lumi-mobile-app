@@ -314,6 +314,24 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
+  Future<ClassesPage> getDiscoveryShorts({
+    int page = 1,
+    int limit = 20,
+  }) {
+    return _api.discoveryShorts(page: page, limit: limit).then((value) {
+      final data = value.data['data'] ?? value.data;
+      final list = (data is Map ? data['data'] : data) ?? [];
+      final listView = list as List;
+      ClassPricingCache.mergeFromList(listView);
+      final pages = (data is Map ? data['pages'] : null) ?? 1;
+      return ClassesPage(
+        classes: listView.map((e) => HomClass.fromJson(e)).toList(),
+        totalPages: pages is int ? pages : int.tryParse('$pages') ?? 1,
+      );
+    });
+  }
+
+  @override
   Future<BranchesPage> getDiscoveryBranches({
     int page = 1,
     int limit = 10,

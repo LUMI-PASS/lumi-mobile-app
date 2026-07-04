@@ -98,6 +98,11 @@ abstract class HomeRepository {
     double? lng,
   });
 
+  Future<ClassesPage> getDiscoveryShorts({
+    int page = 1,
+    int limit = 20,
+  });
+
   Future<BranchesPage> getDiscoveryBranches({
     int page = 1,
     int limit = 10,
