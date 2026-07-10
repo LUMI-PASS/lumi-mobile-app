@@ -122,6 +122,15 @@ class OrdersApi {
     await _dio.patch('orders/$orderId/mock-pay');
   }
 
+  /// Creates a PENDING order and returns how to pay for it.
+  ///
+  /// When [paymentProvider] is null the backend keeps the default direct Payme
+  /// (Paycom) flow and returns a `checkout_url`. When set, the order is routed
+  /// through the Paylov (WLCM) aggregator:
+  ///  • redirect providers (payme/click/uzum/paylov) → `checkout_url` to open;
+  ///  • `card` → also send [cardNumber] + [expireDate] (MMYY); the result
+  ///    carries `transaction_id`/`cid` and the client confirms the OTP via
+  ///    [paylovConfirmCard].
   Future<CheckoutResult> checkout({
     required String activityId,
     required List<CheckoutItem> items,
@@ -129,6 +138,9 @@ class OrdersApi {
     String? lang,
     String? returnUrl,
     String? promoCode,
+    String? paymentProvider,
+    String? cardNumber,
+    String? expireDate,
     bool test = false,
   }) async {
     final body = {
@@ -139,6 +151,11 @@ class OrdersApi {
       if (returnUrl != null) 'return_url': returnUrl,
       if (promoCode != null && promoCode.trim().isNotEmpty)
         'promocode': promoCode.trim(),
+      if (paymentProvider != null) 'payment_provider': paymentProvider,
+      if (cardNumber != null && cardNumber.trim().isNotEmpty)
+        'card_number': cardNumber.replaceAll(RegExp(r'\s'), ''),
+      if (expireDate != null && expireDate.trim().isNotEmpty)
+        'expire_date': expireDate.replaceAll(RegExp(r'[^0-9]'), ''),
     };
     final response = await _dio.post('orders/checkout', data: body);
     final raw = response.data;
@@ -146,6 +163,26 @@ class OrdersApi {
         ? Map<String, dynamic>.from(raw['data'] as Map)
         : Map<String, dynamic>.from(raw as Map);
     return CheckoutResult.fromJson(data);
+  }
+
+  /// Confirms the OTP for a Paylov card payment
+  /// (`POST /api/paylov/card/confirm`). On success the order is marked paid
+  /// immediately; the Paylov webhook also arrives and is idempotent.
+  Future<PaylovCardConfirmResult> paylovConfirmCard({
+    required String transactionId,
+    required String cid,
+    required String otp,
+  }) async {
+    final response = await _dio.post('paylov/card/confirm', data: {
+      'transaction_id': transactionId,
+      'cid': cid,
+      'otp': otp.trim(),
+    });
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map
+        ? Map<String, dynamic>.from(raw['data'] as Map)
+        : Map<String, dynamic>.from(raw as Map);
+    return PaylovCardConfirmResult.fromJson(data);
   }
 
   /// Previews a promocode against an order subtotal without committing it.

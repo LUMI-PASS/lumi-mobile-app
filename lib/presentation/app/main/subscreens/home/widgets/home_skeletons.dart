@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
+
+/// Theme-aware shimmer palette for the home loading state.
+Color _shimmerBase(BuildContext c) => c.appColors.surface;
+Color _shimmerHi(BuildContext c) =>
+    c.appColors.isDark ? const Color(0xFF2E2E35) : Colors.white;
 
 class HomeShimmer extends StatelessWidget {
   const HomeShimmer({super.key});
@@ -8,20 +14,17 @@ class HomeShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade50,
+      baseColor: _shimmerBase(context),
+      highlightColor: _shimmerHi(context),
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.only(bottom: 20.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner skeleton
+            // Coupon banner skeleton
             _BannerSkeleton(),
-            16.verticalSpace,
-            // Upcoming class skeleton
-            _UpcomingClassSkeleton(),
-            16.verticalSpace,
+            24.verticalSpace,
             // Categories skeleton
             _SectionTitleSkeleton(),
             12.verticalSpace,
@@ -51,53 +54,8 @@ class _BannerSkeleton extends StatelessWidget {
       child: Container(
         height: 180.h,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _shimmerBase(context),
           borderRadius: BorderRadius.circular(24.r),
-        ),
-      ),
-    );
-  }
-}
-
-class _UpcomingClassSkeleton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22.r),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                    width: 80.w, height: 20.h, color: Colors.white),
-                SizedBox(width: 8.w),
-                Container(
-                    width: 60.w, height: 20.h, color: Colors.white),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            Container(
-                width: 200.w, height: 22.h, color: Colors.white),
-            SizedBox(height: 12.h),
-            Container(
-                width: 140.w, height: 16.h, color: Colors.white),
-            SizedBox(height: 16.h),
-            Container(
-              width: double.infinity,
-              height: 44.h,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -113,7 +71,7 @@ class _SectionTitleSkeleton extends StatelessWidget {
         width: 140.w,
         height: 24.h,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _shimmerBase(context),
           borderRadius: BorderRadius.circular(12.r),
         ),
       ),
@@ -136,7 +94,7 @@ class _CategoriesRowSkeleton extends StatelessWidget {
           width: screenWidth * 0.285,
           margin: EdgeInsets.only(right: 12.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _shimmerBase(context),
             borderRadius: BorderRadius.circular(18.r),
           ),
         ),
@@ -161,7 +119,7 @@ class _ClassCardsRowSkeleton extends StatelessWidget {
           width: cardWidth,
           margin: EdgeInsets.only(right: 12.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _shimmerBase(context),
             borderRadius: BorderRadius.circular(20.r),
           ),
           child: Column(
@@ -171,7 +129,7 @@ class _ClassCardsRowSkeleton extends StatelessWidget {
                 aspectRatio: 4 / 3,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _shimmerBase(context),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
@@ -184,17 +142,17 @@ class _ClassCardsRowSkeleton extends StatelessWidget {
                     Container(
                         width: 160.w,
                         height: 14.h,
-                        color: Colors.white),
+                        color: _shimmerBase(context)),
                     SizedBox(height: 8.h),
                     Container(
                         width: 100.w,
                         height: 12.h,
-                        color: Colors.white),
+                        color: _shimmerBase(context)),
                     SizedBox(height: 8.h),
                     Container(
                         width: 180.w,
                         height: 12.h,
-                        color: Colors.white),
+                        color: _shimmerBase(context)),
                   ],
                 ),
               ),
@@ -219,7 +177,7 @@ class _NearYouListSkeleton extends StatelessWidget {
             height: 220.h,
             margin: EdgeInsets.only(bottom: 16.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _shimmerBase(context),
               borderRadius: BorderRadius.circular(22.r),
             ),
             child: Column(
@@ -228,7 +186,7 @@ class _NearYouListSkeleton extends StatelessWidget {
                 Container(
                   height: 160.h,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _shimmerBase(context),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
@@ -240,12 +198,12 @@ class _NearYouListSkeleton extends StatelessWidget {
                       Container(
                           width: 200.w,
                           height: 14.h,
-                          color: Colors.white),
+                          color: _shimmerBase(context)),
                       SizedBox(height: 8.h),
                       Container(
                           width: 140.w,
                           height: 12.h,
-                          color: Colors.white),
+                          color: _shimmerBase(context)),
                     ],
                   ),
                 ),
@@ -274,13 +232,13 @@ class ShimmerImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade50,
+      baseColor: _shimmerBase(context),
+      highlightColor: _shimmerHi(context),
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _shimmerBase(context),
           borderRadius: borderRadius ?? BorderRadius.circular(12.r),
         ),
       ),

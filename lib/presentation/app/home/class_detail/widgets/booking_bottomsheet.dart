@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,9 +11,15 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
+import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 
 const _kLookaheadDays = 30;
 
@@ -23,14 +28,10 @@ String _isoDateStatic(DateTime d) {
   return '${d.year}-${two(d.month)}-${two(d.day)}';
 }
 
-// ─── Design tokens ───────────────────────────────────────────────────────────
-const _brand = Color(0xFF6C4EF2);
-const _brandDark = Color(0xFF4A2FD4);
-const _brandLight = Color(0xFFEDE8FF);
-const _navy = Color(0xFF0E0C2B);
-const _textColor = Color(0xFF1A1535);
-const _muted = Color(0xFF6B6899);
-const _border = Color(0xFFE8E4F6);
+// ─── Brand accents (theme-independent) ───────────────────────────────────────
+// Everything else now reads from `context.appColors` (dark/light aware).
+const _brand = Color(0xFFA752C8); // Color/Pink — primary accent / gradient end
+const _brandDark = Color(0xFFFC6F95); // brand pink — gradient start / emphasis
 
 class BookingBottomsheet extends StatefulWidget {
   const BookingBottomsheet({super.key, required this.clazz});
@@ -53,8 +54,8 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
   bool _loadingSlots = false;
   bool _slotsLoaded = false;
   bool _submitting = false;
+  PaymentRail _rail = PaymentRail.card; // selected payment rail (Figma row)
   String? _error;
-  int _step = 0;
 
   // ─── Coupon discount ──────────────────────────────────────────────────────
   int get _couponPct {
@@ -162,6 +163,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
   }
 
   Widget _buildPromoSection() {
+    final c = context.appColors;
     final applied = _appliedPromo;
     if (applied != null) {
       return Container(
@@ -186,7 +188,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
-                      color: _textColor,
+                      color: c.textPrimary,
                     ),
                   ),
                   Text(
@@ -204,7 +206,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
             GestureDetector(
               onTap: _removePromo,
               behavior: HitTestBehavior.opaque,
-              child: Icon(Icons.close_rounded, size: 18.sp, color: _muted),
+              child: Icon(Icons.close_rounded, size: 18.sp, color: c.textSecondary),
             ),
           ],
         ),
@@ -224,7 +226,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF6F4FE),
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: _border),
+                  border: Border.all(color: c.controlBorder),
                 ),
                 child: TextField(
                   controller: _promoCtrl,
@@ -232,12 +234,12 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                   textCapitalization: TextCapitalization.characters,
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _applyPromo(),
-                  style: TextStyle(fontSize: 14.sp, color: _textColor),
+                  style: TextStyle(fontSize: 14.sp, color: c.textPrimary),
                   decoration: InputDecoration(
                     isDense: true,
                     border: InputBorder.none,
                     hintText: 'promo_hint'.tr(),
-                    hintStyle: TextStyle(fontSize: 14.sp, color: _muted),
+                    hintStyle: TextStyle(fontSize: 14.sp, color: c.textSecondary),
                   ),
                 ),
               ),
@@ -251,7 +253,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                 padding: EdgeInsets.symmetric(horizontal: 18.w),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: _brandLight,
+                  color: c.control,
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: _promoLoading
@@ -541,10 +543,11 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        final c = context.appColors;
         return Container(
           height: 280.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: c.bg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
           ),
           child: SafeArea(
@@ -561,7 +564,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                         onPressed: () => Navigator.of(ctx).pop(),
                         child: Text(
                           'book_go_back'.tr(),
-                          style: TextStyle(color: _muted, fontSize: 14.sp),
+                          style: TextStyle(color: c.textSecondary, fontSize: 14.sp),
                         ),
                       ),
                       if (minTime != null || maxTime != null)
@@ -574,7 +577,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12.sp,
-                              color: _muted,
+                              color: c.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -598,7 +601,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                     ],
                   ),
                 ),
-                Divider(height: 1, color: _border),
+                Divider(height: 1, color: c.controlBorder),
                 Expanded(
                   child: CupertinoDatePicker(
                     mode: CupertinoDatePickerMode.time,
@@ -851,71 +854,37 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
     return '${d.date.day} $monthFull, $weekdayFull';
   }
 
-  Future<void> _submit() async {
-    if (_totalTickets == 0) {
-      setState(() => _error = 'book_at_least_one'.tr());
-      return;
-    }
-    if (_selectedDate == null) {
-      setState(() => _error = 'book_pick_date'.tr());
-      return;
-    }
-    final id = widget.clazz.id;
-    if (id == null) return;
-
-    setState(() {
-      _submitting = true;
-      _error = null;
-    });
-
-    try {
-      final api = getIt<OrdersApi>();
-      final items = <CheckoutItem>[];
-
-      if (_requiresBookingSlot) {
-        // Each ticket has its own time window — emit one CheckoutItem per
-        // ticket (count = 1) so the backend can record the window per
-        // booking row.
-        final descriptors = _ticketDescriptors();
-        for (var i = 0; i < descriptors.length; i++) {
-          final desc = descriptors[i];
-          final win = i < _customWindows.length
-              ? _customWindows[i]
-              : const _TicketWindow();
-          items.add(CheckoutItem(
-            ageFrom: desc.ageFrom,
-            ageTo: desc.ageTo,
-            count: 1,
-            duration: desc.duration,
-            startTime: win.start != null ? _fmtTime(win.start!) : null,
-            endTime: win.end != null ? _fmtTime(win.end!) : null,
-          ));
-        }
-      } else if (_hasAgeTiers) {
-        final tiers = widget.clazz.ageTiers;
-        for (var t = 0; t < _tierCounts.length; t++) {
-          for (var d = 0; d < _tierCounts[t].length; d++) {
-            if (_tierCounts[t][d] > 0) {
-              items.add(CheckoutItem(
-                ageFrom: tiers[t].ageFrom,
-                ageTo: tiers[t].ageTo,
-                count: _tierCounts[t][d],
-                duration: tiers[t].durations[d].duration,
-                // Send slot times so the backend can enforce capacity per slot
-                startTime: _selectedSlot?.startTime,
-                endTime: _selectedSlot?.endTime,
-              ));
-            }
-          }
-        }
-      } else {
-        final ranges = widget.clazz.pricesSummary;
-        for (var i = 0; i < _flatCounts.length; i++) {
-          if (_flatCounts[i] > 0) {
+  /// Builds the CheckoutItems for the current selection (age tiers, flat
+  /// ranges, or per-ticket time windows for required-booking categories).
+  List<CheckoutItem> _buildCheckoutItems() {
+    final items = <CheckoutItem>[];
+    if (_requiresBookingSlot) {
+      // Each ticket has its own time window — emit one CheckoutItem per
+      // ticket (count = 1) so the backend can record the window per booking.
+      final descriptors = _ticketDescriptors();
+      for (var i = 0; i < descriptors.length; i++) {
+        final desc = descriptors[i];
+        final win =
+            i < _customWindows.length ? _customWindows[i] : const _TicketWindow();
+        items.add(CheckoutItem(
+          ageFrom: desc.ageFrom,
+          ageTo: desc.ageTo,
+          count: 1,
+          duration: desc.duration,
+          startTime: win.start != null ? _fmtTime(win.start!) : null,
+          endTime: win.end != null ? _fmtTime(win.end!) : null,
+        ));
+      }
+    } else if (_hasAgeTiers) {
+      final tiers = widget.clazz.ageTiers;
+      for (var t = 0; t < _tierCounts.length; t++) {
+        for (var d = 0; d < _tierCounts[t].length; d++) {
+          if (_tierCounts[t][d] > 0) {
             items.add(CheckoutItem(
-              ageFrom: ranges[i].ageFrom,
-              ageTo: ranges[i].ageTo,
-              count: _flatCounts[i],
+              ageFrom: tiers[t].ageFrom,
+              ageTo: tiers[t].ageTo,
+              count: _tierCounts[t][d],
+              duration: tiers[t].durations[d].duration,
               // Send slot times so the backend can enforce capacity per slot
               startTime: _selectedSlot?.startTime,
               endTime: _selectedSlot?.endTime,
@@ -923,60 +892,82 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
           }
         }
       }
+    } else {
+      final ranges = widget.clazz.pricesSummary;
+      for (var i = 0; i < _flatCounts.length; i++) {
+        if (_flatCounts[i] > 0) {
+          items.add(CheckoutItem(
+            ageFrom: ranges[i].ageFrom,
+            ageTo: ranges[i].ageTo,
+            count: _flatCounts[i],
+            // Send slot times so the backend can enforce capacity per slot
+            startTime: _selectedSlot?.startTime,
+            endTime: _selectedSlot?.endTime,
+          ));
+        }
+      }
+    }
+    return items;
+  }
 
-      final result = await api.checkout(
+  /// Validates the selection before opening the payment sheet. Surfaces the
+  /// error inline and returns false when the user can't pay yet.
+  bool _validateForPayment() {
+    if (_totalTickets == 0) {
+      setState(() => _error = 'book_at_least_one'.tr());
+      return false;
+    }
+    if (_selectedDate == null) {
+      setState(() => _error = 'book_pick_date'.tr());
+      return false;
+    }
+    if (widget.clazz.id == null) return false;
+    setState(() => _error = null);
+    return true;
+  }
+
+  /// Creates the order and returns how to pay for it. [provider] null keeps the
+  /// direct Payme flow; 'click'/'uzum' route through Paylov; 'card' also sends
+  /// [cardNumber]+[expireDate]. Throws a [CheckoutFriendlyError] carrying the
+  /// server message so the payment sheet can show it inline.
+  Future<CheckoutResult> _runCheckout({
+    String? provider,
+    String? cardNumber,
+    String? expireDate,
+  }) async {
+    final id = widget.clazz.id!;
+    final items = _buildCheckoutItems();
+    try {
+      final result = await getIt<OrdersApi>().checkout(
         activityId: id,
         items: items,
         ticketDate: _selectedDate!.isoKey,
         // Coupon plan and promocode never stack — only send a code when the
         // user has no coupon plan (the promo field is hidden in that case).
         promoCode: _hasCoupon ? null : _appliedPromo?.code,
+        paymentProvider: provider,
+        cardNumber: cardNumber,
+        expireDate: expireDate,
       );
-      if (!mounted) return;
-      // Snapshot before we close: was a coupon slot consumed for this order?
-      final usedCoupon = _hasCoupon;
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutStarted,
         params: {
           'activity_id': id,
           'ticket_count': _totalTickets,
           'ticket_date': _selectedDate!.isoKey,
-          'used_coupon': usedCoupon.toString(),
+          'used_coupon': _hasCoupon.toString(),
           'requires_booking_slot': _requiresBookingSlot.toString(),
+          'provider': provider ?? 'payme',
         },
       );
-      Navigator.of(context).pop();
-      if (!RemoteConfigService.instance.isInReview) {
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => PaycomCheckoutPage(result: result),
-          ),
-        );
-      }
-      // Re-sync premium status so the discount badge disappears immediately
-      // when the last coupon activity slot was consumed (coins hit 0 at
-      // checkout time — the server already reflects the new state).
-      if (usedCoupon) {
-        getIt<AppCubit>().syncSubscription();
-      }
-      if (_requiresBookingSlot && mounted) {
-        getIt<AnalyticsService>().logEvent(
-          AnalyticsEvent.bookingRequested,
-          params: {'activity_id': id},
-        );
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const _BookingRequestedPage(),
-          ),
-        );
-      }
+      return result;
     } on DioException catch (e) {
       final msg = e.response?.data is Map
           ? (e.response?.data['message']?.toString() ??
               e.response?.statusMessage ??
-              e.message)
+              e.message ??
+              'book_network_error'.tr())
           : (e.message ?? 'book_network_error'.tr());
-      setState(() => _error = msg);
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutFailed,
         params: {
@@ -984,812 +975,539 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
           'reason': 'dio',
           if (e.response?.statusCode != null)
             'status_code': e.response!.statusCode!,
+          'provider': provider ?? 'payme',
         },
       );
-    } catch (e) {
-      setState(() => _error = e.toString());
-      getIt<AnalyticsService>().logEvent(
-        AnalyticsEvent.bookingCheckoutFailed,
-        params: {'activity_id': id, 'reason': 'unknown'},
-      );
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+      throw CheckoutFriendlyError(msg);
     }
   }
 
+  /// Redirect rails (Payme direct, Click/Uzum via Paylov): close the booking
+  /// sheet and open the checkout page, which launches the URL and polls for the
+  /// paid webhook.
+  Future<void> _completeRedirect(CheckoutResult result) async {
+    // Snapshot before we close: was a coupon slot consumed for this order?
+    final usedCoupon = _hasCoupon;
+    final requiresSlot = _requiresBookingSlot;
+    final id = widget.clazz.id;
+    if (!mounted) return;
+    Navigator.of(context).pop(); // close booking sheet
+    if (!RemoteConfigService.instance.isInReview) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => PaycomCheckoutPage(result: result, provider: _rail.name)),
+      );
+    }
+    // Re-sync premium status so the discount badge disappears immediately when
+    // the last coupon activity slot was consumed (coins hit 0 at checkout time).
+    if (usedCoupon) {
+      getIt<AppCubit>().syncSubscription();
+    }
+    if (requiresSlot && mounted) {
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.bookingRequested,
+        params: {'activity_id': id},
+      );
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const _BookingRequestedPage()),
+      );
+    }
+  }
+
+  /// Builds the order-details breakdown rows (date + per-tier tickets +
+  /// discount) shown on the success screen, mirroring [_breakdownSection].
+  List<OrderLine> _orderLines() {
+    const dir = 'assets/icons/detail';
+    final out = <OrderLine>[];
+    if (_selectedDate != null) {
+      final slot = _selectedSlot;
+      final time = slot != null ? ' ${slot.startTime}' : '';
+      out.add(OrderLine(
+        label: 'book_date_time'.tr(),
+        value:
+            '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
+        iconAsset: '$dir/iconsax-ai-calendar.svg',
+      ));
+    }
+    if (_hasAgeTiers) {
+      for (var t = 0; t < _tierCounts.length; t++) {
+        final tier = widget.clazz.ageTiers[t];
+        final durs = tier.durations;
+        for (var d = 0; d < _tierCounts[t].length; d++) {
+          final count = _tierCounts[t][d];
+          if (count <= 0) continue;
+          final sub =
+              (_hasCoupon ? _applyDiscount(durs[d].price) : durs[d].price) *
+                  count;
+          final adults = tier.ageFrom >= 6 || tier.ageTo == null;
+          out.add(OrderLine(
+            label: '${tier.rangeLabel} (${count}x)',
+            value: sub.toRawUzsPrice(),
+            iconAsset: '$dir/${adults ? 'iconsax-ai-users' : 'iconsax-baby'}.svg',
+          ));
+        }
+      }
+    } else {
+      for (var i = 0; i < _flatCounts.length; i++) {
+        final count = _flatCounts[i];
+        if (count <= 0) continue;
+        final r = widget.clazz.pricesSummary[i];
+        final sub = (_hasCoupon ? _applyDiscount(r.price) : r.price) * count;
+        final adults = r.ageFrom >= 6 || r.ageTo == null;
+        out.add(OrderLine(
+          label: '${r.rangeLabel} (${count}x)',
+          value: sub.toRawUzsPrice(),
+          iconAsset: '$dir/${adults ? 'iconsax-ai-users' : 'iconsax-baby'}.svg',
+        ));
+      }
+    }
+    if (!_hasCoupon && _promoDiscount > 0) {
+      out.add(OrderLine(
+        label: 'promo_discount'.tr(),
+        value: '−${_promoDiscount.toRawUzsPrice()}',
+        iconAsset: '$dir/iconsax-ticket-discount.svg',
+        negative: true,
+      ));
+    }
+    return out;
+  }
+
+  /// Card rail: the OTP was confirmed and the order is already paid — go
+  /// straight to the success screen (no external checkout redirect needed).
+  void _completeCardPaid(CheckoutResult result) {
+    final usedCoupon = _hasCoupon;
+    final requiresSlot = _requiresBookingSlot;
+    final id = widget.clazz.id;
+    final lines = _orderLines();
+    if (!mounted) return;
+    Navigator.of(context).pop(); // close booking sheet
+    if (requiresSlot) {
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.bookingRequested,
+        params: {'activity_id': id},
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const _BookingRequestedPage()),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => BookingCompletePage(
+            status: BookingResultStatus.paid,
+            result: result,
+            lines: lines,
+          ),
+        ),
+      );
+    }
+    if (usedCoupon) {
+      getIt<AppCubit>().syncSubscription();
+    }
+  }
+
+  // ─── Single-screen booking sheet (Figma 60:3665) ──────────────────────────
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: _step == 0 ? _buildStep0() : _buildStep1(),
+    final c = context.appColors;
+    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.bg,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      padding: EdgeInsets.only(
+        left: 16.w,
+        right: 16.w,
+        top: 8.h,
+        bottom: 16.h + viewInsets,
+      ),
+      child: SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: 0.92.sh),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 36.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                    color: c.control,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  _SheetIconButton(
+                    icon: 'arrow',
+                    onTap: () => Navigator.of(context).maybePop(),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'buy_tickets'.tr(),
+                      textAlign: TextAlign.center,
+                      style: AppText.bold18.copyWith(color: c.textPrimary),
+                    ),
+                  ),
+                  SizedBox(width: 32.w),
+                ],
+              ),
+              16.kh,
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!_requiresBookingSlot) ...[
+                        _datesSection(c),
+                        16.kh,
+                      ],
+                      _ticketSection(c),
+                      16.kh,
+                      if (_requiresBookingSlot) ...[
+                        _customWindowsSection(c),
+                        16.kh,
+                      ],
+                      _paymentMethodRow(c),
+                      if (!_hasCoupon) ...[
+                        16.kh,
+                        _promoSection(c),
+                      ],
+                      16.kh,
+                      _breakdownSection(c),
+                      if (_error != null) ...[
+                        12.kh,
+                        Text(_error!,
+                            style: AppText.regular12
+                                .copyWith(color: AppColors.error)),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              16.kh,
+              _payCta(c),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(AppColors c, String title) => Padding(
+        padding: EdgeInsets.only(bottom: 12.h),
+        child: Text(title, style: AppText.bold18.copyWith(color: c.textPrimary)),
+      );
+
+  // "Цены на билеты" — ticket steppers.
+  Widget _ticketSection(AppColors c) {
+    final rows = <Widget>[];
+    if (_hasAgeTiers) {
+      for (var t = 0; t < widget.clazz.ageTiers.length; t++) {
+        final tier = widget.clazz.ageTiers[t];
+        if (tier.durations.isEmpty) continue;
+        rows.add(Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+              decoration: BoxDecoration(
+                color: c.control,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(tier.rangeLabel,
+                  style: AppText.semibold12.copyWith(color: _brandDark)),
+            ),
+          ),
+        ));
+        for (var d = 0; d < tier.durations.length; d++) {
+          final dur = tier.durations[d];
+          rows.add(_DurationRow(
+            label: dur.durationLabel,
+            price: dur.price,
+            discountedPrice: _hasCoupon ? _applyDiscount(dur.price) : null,
+            count: _tierCounts[t][d],
+            onMinus: () => _bumpTier(t, d, -1),
+            onPlus: () => _bumpTier(t, d, 1),
+          ));
+          if (d != tier.durations.length - 1) {
+            rows.add(Divider(height: 1, color: c.controlBorder));
+          }
+        }
+      }
+    } else {
+      for (var i = 0; i < widget.clazz.pricesSummary.length; i++) {
+        final r = widget.clazz.pricesSummary[i];
+        rows.add(_DurationRow(
+          label: r.rangeLabel,
+          price: r.price,
+          discountedPrice: _hasCoupon ? _applyDiscount(r.price) : null,
+          count: _flatCounts[i],
+          onMinus: () => _bumpFlat(i, -1),
+          onPlus: () => _bumpFlat(i, 1),
+        ));
+        if (i != widget.clazz.pricesSummary.length - 1) {
+          rows.add(Divider(height: 1, color: c.controlBorder));
+        }
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'detail_prices'.tr()),
+        Container(
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows),
+        ),
+      ],
+    );
+  }
+
+  // "Доступное время" — date strip + slot chips.
+  Widget _datesSection(AppColors c) => _DateSection(
+        dates: _availableDates,
+        selected: _selectedDate,
+        selectedSlot: _selectedSlot,
+        loadingSlots: _loadingSlots,
+        slotsLoaded: _slotsLoaded,
+        onPickDate: _onDateTapped,
+        onPickSlot: (s) => setState(() {
+          _selectedSlot = s;
+          _error = null;
+        }),
+      );
+
+  Widget _customWindowsSection(AppColors c) => _CustomTimeWindowSection(
+        dates: _availableDates,
+        selected: _selectedDate,
+        tickets: _ticketDescriptors(),
+        windows: _customWindows,
+        loadingSlots: _loadingSlots,
+        slotsLoaded: _slotsLoaded,
+        scheduledDates: _scheduledDates,
+        prefetchingDays: _prefetchingDays,
+        onPickDate: _onDateTapped,
+        onPickStart: (i) => _pickTimeFor(i, start: true),
+        onPickEnd: (i) => _pickTimeFor(i, start: false),
+        fmt: _fmtTime,
+      );
+
+  // "Оплата" — payment method row (opens the Paylov payment-type sheet).
+  Widget _paymentMethodRow(AppColors c) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'book_payment_method'.tr()),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openPaymentFlow(validate: false),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Row(
+              children: [
+                _railLeading(c, _rail),
+                12.kw,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('book_pay_method_label'.tr(),
+                          style: AppText.regular12
+                              .copyWith(color: c.textSecondary)),
+                      2.kh,
+                      Text(_railName(_rail),
+                          style: AppText.semibold14
+                              .copyWith(color: c.textPrimary)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: c.control,
+                    borderRadius: BorderRadius.circular(40.r),
+                  ),
+                  child: Text('book_change'.tr(),
+                      style: AppText.medium13.copyWith(color: c.textPrimary)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _promoSection(AppColors c) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(c, 'promo_code_title'.tr()),
+          _buildPromoSection(),
+        ],
+      );
+
+  // "Оплата" — price breakdown card.
+  Widget _breakdownSection(AppColors c) {
+    final lines = <Widget>[];
+    Widget line(String label, String value, {Color? valueColor}) => Padding(
+          padding: EdgeInsets.only(bottom: 10.h),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(label,
+                    style: AppText.regular14.copyWith(color: c.textSecondary)),
+              ),
+              Text(value,
+                  style: AppText.semibold14
+                      .copyWith(color: valueColor ?? c.textPrimary)),
+            ],
+          ),
+        );
+
+    if (_hasAgeTiers) {
+      for (var t = 0; t < _tierCounts.length; t++) {
+        final durs = widget.clazz.ageTiers[t].durations;
+        for (var d = 0; d < _tierCounts[t].length; d++) {
+          final count = _tierCounts[t][d];
+          if (count <= 0) continue;
+          final dur = durs[d];
+          final sub = (_hasCoupon ? _applyDiscount(dur.price) : dur.price) * count;
+          lines.add(line(
+            '${widget.clazz.ageTiers[t].rangeLabel} (${count}x)',
+            sub.toRawUzsPrice(),
+          ));
+        }
+      }
+    } else {
+      for (var i = 0; i < _flatCounts.length; i++) {
+        final count = _flatCounts[i];
+        if (count <= 0) continue;
+        final r = widget.clazz.pricesSummary[i];
+        final sub = (_hasCoupon ? _applyDiscount(r.price) : r.price) * count;
+        lines.add(line('${r.rangeLabel} (${count}x)', sub.toRawUzsPrice()));
+      }
+    }
+    if (_selectedDate != null) {
+      final slot = _selectedSlot;
+      final time = slot != null ? ' ${slot.startTime}' : '';
+      lines.add(line('book_date_time'.tr(),
+          '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time'));
+    }
+    if (!_hasCoupon && _promoDiscount > 0) {
+      lines.add(line('promo_discount'.tr(), '−${_promoDiscount.toRawUzsPrice()}',
+          valueColor: AppColors.error));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'book_payment_summary'.tr()),
+        Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...lines,
+              Divider(height: 1, color: c.controlBorder),
+              10.kh,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('book_grand_total'.tr(),
+                        style: AppText.bold18.copyWith(color: c.textSecondary)),
+                  ),
+                  Text(_payableTotal.toRawUzsPrice(),
+                      style: AppText.bold18.copyWith(color: c.textPrimary)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _payCta(AppColors c) {
+    if (RemoteConfigService.instance.isInReview) return const SizedBox.shrink();
+    return GradientButton(
+      text: 'book_pay_cta'.tr(args: [_payableTotal.toRawUzsPrice()]),
+      loading: _submitting,
+      onPressed: _openPaymentFlow,
+    );
+  }
+
+  Widget _railLeading(AppColors c, PaymentRail r) {
+    switch (r) {
+      case PaymentRail.payme:
+        return Image.asset("assets/icons/pay/payme.png", height: 22.h);
+      case PaymentRail.click:
+        return Image.asset("assets/icons/pay/click.png", height: 20.h);
+      case PaymentRail.uzum:
+        return Image.asset("assets/icons/pay/uzum.png", height: 22.h);
+      case PaymentRail.card:
+        return Icon(Icons.credit_card_rounded, size: 22.sp, color: c.textPrimary);
+    }
+  }
+
+  String _railName(PaymentRail r) {
+    switch (r) {
+      case PaymentRail.payme:
+        return "Payme";
+      case PaymentRail.click:
+        return "Click";
+      case PaymentRail.uzum:
+        return "Uzum";
+      case PaymentRail.card:
+        return "pay_with_card".tr();
+    }
+  }
+
+  void _openPaymentFlow({bool validate = true}) {
+    if (validate && !_validateForPayment()) return;
+    showPaymentFlow(
+      context,
+      startCheckout: ({String? provider, String? cardNumber, String? expireDate}) =>
+          _runCheckout(
+        provider: provider,
+        cardNumber: cardNumber,
+        expireDate: expireDate,
+      ),
+      confirmCard: ({required String transactionId, required String cid, required String otp}) =>
+          getIt<OrdersApi>().paylovConfirmCard(
+        transactionId: transactionId,
+        cid: cid,
+        otp: otp,
+      ),
+      onRedirect: _completeRedirect,
+      onCardPaid: _completeCardPaid,
+      initial: _rail,
+      onRailChanged: (r) => setState(() => _rail = r),
     );
   }
 
   // ─── Step 0: ticket selection ──────────────────────────────────────────────
 
-  Widget _buildStep0() {
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    // For required-booking: day must have slots loaded AND non-empty so we
-    // know the valid window. For regular classes, a specific slot is required.
-    final dayBookable = _requiresBookingSlot
-        ? (_slotsLoaded && (_selectedDate?.slots.isNotEmpty ?? false))
-        : (_selectedDate?.slots.isNotEmpty ?? false);
-    final hasCustomWindow = _requiresBookingSlot &&
-        _customWindows.isNotEmpty &&
-        _customWindows.every((w) =>
-            w.start != null &&
-            w.end != null &&
-            _isWindowValid(w.start!, w.end!));
-    final canProceed = _totalTickets > 0 &&
-        dayBookable &&
-        (_requiresBookingSlot ? hasCustomWindow : _selectedSlot != null) &&
-        !_submitting;
 
-    final String ctaText;
-    if (_totalTickets == 0) {
-      ctaText = 'book_add_ticket'.tr();
-    } else if (_selectedDate == null) {
-      ctaText = 'book_pick_date'.tr();
-    } else if (_requiresBookingSlot && _loadingSlots) {
-      ctaText = 'book_loading_slots'.tr();
-    } else if (!dayBookable) {
-      ctaText = 'book_day_unavailable'.tr();
-    } else if (_requiresBookingSlot && !hasCustomWindow) {
-      ctaText = 'book_pick_slot'.tr();
-    } else if (!_requiresBookingSlot && _selectedSlot == null) {
-      ctaText = 'book_pick_slot'.tr();
-    } else {
-      ctaText = 'book_continue'.tr();
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 16.h,
-        bottom: 20.h + viewInsets,
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: _border,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-            ),
-            16.kh,
-
-            Text(
-              'book_select_tickets'.tr(),
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w800,
-                color: _navy,
-              ),
-            ),
-            6.kh,
-            Text(
-              _hasAgeTiers
-                  ? 'book_age_tier_subtitle'.tr()
-                  : 'book_flat_subtitle'.tr(),
-              style: TextStyle(fontSize: 12.sp, color: _muted),
-            ),
-            16.kh,
-
-            if (_hasAgeTiers)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: _border),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: List.generate(widget.clazz.ageTiers.length, (t) {
-                    final tier = widget.clazz.ageTiers[t];
-                    final durs = tier.durations;
-                    if (durs.isEmpty) return const SizedBox.shrink();
-                    final isLastTier = t == widget.clazz.ageTiers.length - 1;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 5.h),
-                            decoration: BoxDecoration(
-                              color: _brandLight,
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              tier.rangeLabel,
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w800,
-                                color: _brandDark,
-                              ),
-                            ),
-                          ),
-                        ),
-                        ...List.generate(durs.length, (d) {
-                          final dur = durs[d];
-                          final isLastDur = d == durs.length - 1;
-                          return Column(
-                            children: [
-                              _DurationRow(
-                                label: dur.durationLabel,
-                                price: dur.price,
-                                discountedPrice: _hasCoupon
-                                    ? _applyDiscount(dur.price)
-                                    : null,
-                                count: _tierCounts[t][d],
-                                onMinus: () => _bumpTier(t, d, -1),
-                                onPlus: () => _bumpTier(t, d, 1),
-                              ),
-                              if (!isLastDur)
-                                Divider(height: 1, color: _border),
-                            ],
-                          );
-                        }),
-                        if (!isLastTier)
-                          Divider(height: 1, color: _border, thickness: 1),
-                      ],
-                    );
-                  }),
-                ),
-              )
-            else
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: _border),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      List.generate(widget.clazz.pricesSummary.length, (i) {
-                    final r = widget.clazz.pricesSummary[i];
-                    final isLast = i == widget.clazz.pricesSummary.length - 1;
-                    return Column(
-                      children: [
-                        _DurationRow(
-                          label: r.rangeLabel,
-                          price: r.price,
-                          discountedPrice:
-                              _hasCoupon ? _applyDiscount(r.price) : null,
-                          count: _flatCounts[i],
-                          onMinus: () => _bumpFlat(i, -1),
-                          onPlus: () => _bumpFlat(i, 1),
-                        ),
-                        if (!isLast) Divider(height: 1, color: _border),
-                      ],
-                    );
-                  }),
-                ),
-              ),
-
-            16.kh,
-
-            if (_requiresBookingSlot)
-              _CustomTimeWindowSection(
-                dates: _availableDates,
-                selected: _selectedDate,
-                tickets: _ticketDescriptors(),
-                windows: _customWindows,
-                loadingSlots: _loadingSlots,
-                slotsLoaded: _slotsLoaded,
-                scheduledDates: _scheduledDates,
-                prefetchingDays: _prefetchingDays,
-                onPickDate: _onDateTapped,
-                onPickStart: (i) => _pickTimeFor(i, start: true),
-                onPickEnd: (i) => _pickTimeFor(i, start: false),
-                fmt: _fmtTime,
-              )
-            else
-              _DateSection(
-                dates: _availableDates,
-                selected: _selectedDate,
-                selectedSlot: _selectedSlot,
-                loadingSlots: _loadingSlots,
-                slotsLoaded: _slotsLoaded,
-                onPickDate: _onDateTapped,
-                onPickSlot: (s) => setState(() {
-                  _selectedSlot = s;
-                  _error = null;
-                }),
-              ),
-
-            16.kh,
-            Divider(height: 1, color: _border),
-            16.kh,
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'book_tickets_count'.tr(args: ['$_totalTickets']),
-                  style: TextStyle(fontSize: 13.sp, color: _muted),
-                ),
-                if (_hasCoupon && _totalTickets > 0)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _total.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: _muted,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      Text(
-                        _discountedTotal.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF16A34A),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Text(
-                    _total.toRawUzsPrice(),
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w800,
-                      color: _navy,
-                    ),
-                  ),
-              ],
-            ),
-
-            if (_error != null) ...[
-              10.kh,
-              Text(
-                _error!,
-                style: TextStyle(
-                    fontSize: 12.sp, color: const Color(0xFFDC2626)),
-              ),
-            ],
-
-            16.kh,
-
-            SizedBox(
-              width: double.infinity,
-              height: 52.h,
-              child: canProceed
-                  ? GestureDetector(
-                      onTap: () => setState(() {
-                        _step = 1;
-                        _error = null;
-                      }),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [_brandDark, _brand],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(14.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _brand.withValues(alpha: 0.35),
-                              blurRadius: 12,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            ctaText,
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  : ElevatedButton(
-                      onPressed: null,
-                      style: ElevatedButton.styleFrom(
-                        disabledBackgroundColor: const Color(0xFFCBD5E1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                      ),
-                      child: Text(
-                        ctaText,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-            ),
-          ],
-          ),
-        ),
-      ),
-    );
-  }
 
   // ─── Step 1: confirmation ─────────────────────────────────────────────────
 
-  Widget _buildStep1() {
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    final clazz = widget.clazz;
-    final selectedDate = _selectedDate;
-    final selectedSlot = _selectedSlot;
 
-    final timeLabel = _requiresBookingSlot
-        ? _windowSummary()
-        : (selectedSlot != null
-            ? '${selectedSlot.startTime} – ${selectedSlot.endTime}'
-            : '');
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 16.h,
-        bottom: 20.h + viewInsets,
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: _border,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-            ),
-            12.kh,
-
-            GestureDetector(
-              onTap: () => setState(() => _step = 0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.arrow_back_ios_new_rounded,
-                      size: 13.sp, color: _brand),
-                  4.kw,
-                  Text(
-                    'book_go_back'.tr(),
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: _brand,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            12.kh,
-
-            Text(
-              'book_confirm_order'.tr(),
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w800,
-                color: _navy,
-              ),
-            ),
-            16.kh,
-
-            Container(
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: _border),
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10.r),
-                    child: clazz.imageUrl != null &&
-                            clazz.imageUrl!.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: clazz.imageUrl!,
-                            width: 64.w,
-                            height: 64.h,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) =>
-                                _ThumbnailFallback(),
-                          )
-                        : _ThumbnailFallback(),
-                  ),
-                  12.kw,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _className(),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: _textColor,
-                            height: 1.3,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (clazz.branch?.title != null) ...[
-                          4.kh,
-                          Text(
-                            clazz.branch!.title!,
-                            style:
-                                TextStyle(fontSize: 12.sp, color: _muted),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            14.kh,
-
-            Container(
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: _border),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36.w,
-                    height: 36.h,
-                    decoration: BoxDecoration(
-                      color: _brandLight,
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: const Icon(Icons.calendar_today_rounded,
-                        color: _brand, size: 16),
-                  ),
-                  12.kw,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _formatSelectedDate(selectedDate),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: _textColor,
-                          ),
-                        ),
-                        if (timeLabel.isNotEmpty) ...[
-                          3.kh,
-                          Text(
-                            timeLabel,
-                            style: TextStyle(
-                                fontSize: 12.sp, color: _muted),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            14.kh,
-
-            Container(
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: _border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'book_tickets'.tr(),
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: _textColor,
-                    ),
-                  ),
-                  10.kh,
-
-                  if (_hasAgeTiers)
-                    ...widget.clazz.ageTiers.asMap().entries.expand((tEntry) {
-                      final t = tEntry.key;
-                      final tier = tEntry.value;
-                      return tier.durations.asMap().entries
-                          .where((dEntry) =>
-                              _tierCounts[t][dEntry.key] > 0)
-                          .map((dEntry) {
-                        final d = dEntry.key;
-                        final dur = tier.durations[d];
-                        final count = _tierCounts[t][d];
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: 8.h),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${tier.rangeLabel} · ${dur.durationLabel} × $count',
-                                  style: TextStyle(
-                                      fontSize: 12.sp, color: _muted),
-                                ),
-                              ),
-                              _hasCoupon
-                                  ? Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          (dur.price * count)
-                                              .toRawUzsPrice(),
-                                          style: TextStyle(
-                                            fontSize: 11.sp,
-                                            color: _muted,
-                                            decoration:
-                                                TextDecoration.lineThrough,
-                                          ),
-                                        ),
-                                        Text(
-                                          _applyDiscount(dur.price * count)
-                                              .toRawUzsPrice(),
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFF16A34A),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Text(
-                                      (dur.price * count).toRawUzsPrice(),
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: _textColor,
-                                      ),
-                                    ),
-                            ],
-                          ),
-                        );
-                      });
-                    })
-                  else
-                    ...List.generate(_flatCounts.length, (i) {
-                      if (_flatCounts[i] == 0) {
-                        return const SizedBox.shrink();
-                      }
-                      final r = widget.clazz.pricesSummary[i];
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 8.h),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${r.rangeLabel} × ${_flatCounts[i]}',
-                              style: TextStyle(
-                                  fontSize: 13.sp, color: _muted),
-                            ),
-                            _hasCoupon
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.end,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        (r.price * _flatCounts[i])
-                                            .toRawUzsPrice(),
-                                        style: TextStyle(
-                                          fontSize: 11.sp,
-                                          color: _muted,
-                                          decoration:
-                                              TextDecoration.lineThrough,
-                                        ),
-                                      ),
-                                      Text(
-                                        _applyDiscount(
-                                                r.price * _flatCounts[i])
-                                            .toRawUzsPrice(),
-                                        style: TextStyle(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF16A34A),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Text(
-                                    (r.price * _flatCounts[i])
-                                        .toRawUzsPrice(),
-                                    style: TextStyle(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: _textColor,
-                                    ),
-                                  ),
-                          ],
-                        ),
-                      );
-                    }),
-
-                  // Promocode entry — only for customers without a coupon plan.
-                  if (!_hasCoupon) ...[
-                    Divider(height: 16.h, color: _border),
-                    _buildPromoSection(),
-                  ],
-
-                  Divider(height: 16.h, color: _border),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'book_grand_total'.tr(),
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: _textColor,
-                        ),
-                      ),
-                      (_hasCoupon || _appliedPromo != null)
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _total.toRawUzsPrice(),
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: _muted,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
-                                Text(
-                                  _payableTotal.toRawUzsPrice(),
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF16A34A),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Text(
-                              _total.toRawUzsPrice(),
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w800,
-                                color: _brandDark,
-                              ),
-                            ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            16.kh,
-
-            if (_error != null) ...[
-              Text(
-                _error!,
-                style: TextStyle(
-                    fontSize: 12.sp, color: const Color(0xFFDC2626)),
-              ),
-              10.kh,
-            ],
-
-            if (!RemoteConfigService.instance.isInReview) ...[
-              SizedBox(
-                width: double.infinity,
-                height: 52.h,
-                child: GestureDetector(
-                  onTap: _submitting ? null : _submit,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [_brandDark, _brand],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _brand.withValues(alpha: 0.35),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: _submitting
-                          ? SizedBox(
-                              width: 22.w,
-                              height: 22.h,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white),
-                              ),
-                            )
-                          : Text(
-                              'book_pay_cta'
-                                  .tr(args: [_payableTotal.toRawUzsPrice()]),
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-              10.kh,
-
-              Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.lock_outline_rounded,
-                        size: 12.sp, color: _muted),
-                    4.kw,
-                    Text(
-                      'book_secure_paycom'.tr(),
-                      style: TextStyle(fontSize: 11.sp, color: _muted),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // ─── _ThumbnailFallback ───────────────────────────────────────────────────────
@@ -1884,6 +1602,7 @@ class _DateSectionState extends State<_DateSection> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     if (widget.dates.isEmpty) {
       return Container(
         padding: EdgeInsets.all(12.w),
@@ -1922,7 +1641,7 @@ class _DateSectionState extends State<_DateSection> {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w700,
-            color: _textColor,
+            color: c.textPrimary,
           ),
         ),
         8.kh,
@@ -1947,7 +1666,7 @@ class _DateSectionState extends State<_DateSection> {
         if (selected == null)
           Text(
             'book_pick_date'.tr(),
-            style: TextStyle(fontSize: 12.sp, color: _muted),
+            style: TextStyle(fontSize: 12.sp, color: c.textSecondary),
           )
         else if (widget.loadingSlots)
           Row(
@@ -1963,7 +1682,7 @@ class _DateSectionState extends State<_DateSection> {
               8.kw,
               Text(
                 'book_loading_slots'.tr(),
-                style: TextStyle(fontSize: 12.sp, color: _muted),
+                style: TextStyle(fontSize: 12.sp, color: c.textSecondary),
               ),
             ],
           )
@@ -2000,7 +1719,7 @@ class _DateSectionState extends State<_DateSection> {
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
-              color: _muted,
+              color: c.textSecondary,
             ),
           ),
           6.kh,
@@ -2016,9 +1735,9 @@ class _DateSectionState extends State<_DateSection> {
                   ? const Color(0xFFE2E8F0)
                   : isActive
                       ? _brand
-                      : _brandLight;
+                      : c.control;
               final textColor = isFull
-                  ? _muted
+                  ? c.textSecondary
                   : isActive
                       ? Colors.white
                       : _brandDark;
@@ -2035,7 +1754,7 @@ class _DateSectionState extends State<_DateSection> {
                           ? const Color(0xFFCBD5E1)
                           : isActive
                               ? _brand
-                              : _border,
+                              : c.controlBorder,
                     ),
                   ),
                   child: Row(
@@ -2072,7 +1791,7 @@ class _DateSectionState extends State<_DateSection> {
                                     ? const Color(0xFFDC2626)
                                     : isActive
                                         ? Colors.white.withValues(alpha: 0.85)
-                                        : _muted,
+                                        : c.textSecondary,
                               ),
                             ),
                         ],
@@ -2106,13 +1825,14 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final d = date.date;
     final monthShort = 'month_short_${d.month}'.tr();
     final weekdayShort = 'weekday_short_${d.weekday}'.tr();
-    final fg = isSelected ? Colors.white : _textColor.withValues(alpha: isUnavailable ? 0.45 : 1.0);
+    final fg = isSelected ? Colors.white : c.textPrimary.withValues(alpha: isUnavailable ? 0.45 : 1.0);
     final mutedColor = isSelected
         ? Colors.white.withValues(alpha: 0.85)
-        : _muted.withValues(alpha: isUnavailable ? 0.45 : 1.0);
+        : c.textSecondary.withValues(alpha: isUnavailable ? 0.45 : 1.0);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -2122,7 +1842,7 @@ class _DateChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? _brand : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: isSelected ? _brand : _border),
+          border: Border.all(color: isSelected ? _brand : c.controlBorder),
           boxShadow: isSelected && !isUnavailable
               ? [
                   BoxShadow(
@@ -2194,12 +1914,13 @@ class _DurationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final active = count > 0;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.h),
       child: Row(
         children: [
-          Icon(Icons.timelapse_rounded, size: 14.sp, color: _muted),
+          Icon(Icons.timelapse_rounded, size: 14.sp, color: c.textSecondary),
           6.kw,
           Expanded(
             child: Column(
@@ -2211,7 +1932,7 @@ class _DurationRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: _textColor,
+                    color: c.textPrimary,
                   ),
                 ),
                 2.kh,
@@ -2221,7 +1942,7 @@ class _DurationRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w500,
-                      color: _muted,
+                      color: c.textSecondary,
                       decoration: TextDecoration.lineThrough,
                     ),
                   ),
@@ -2259,7 +1980,7 @@ class _DurationRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
-                  color: active ? _brandDark : _textColor,
+                  color: active ? _brandDark : c.textPrimary,
                 ),
               ),
             ),
@@ -2281,9 +2002,10 @@ class _StepperButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final disabled = onTap == null;
     return Material(
-      color: disabled ? const Color(0xFFE2E8F0) : _brand,
+      color: disabled ? c.control : _brand,
       borderRadius: BorderRadius.circular(10.r),
       child: InkWell(
         borderRadius: BorderRadius.circular(10.r),
@@ -2291,7 +2013,9 @@ class _StepperButton extends StatelessWidget {
         child: SizedBox(
           width: 32.w,
           height: 32.h,
-          child: Icon(icon, size: 16.w, color: Colors.white),
+          child: Icon(icon,
+              size: 16.w,
+              color: disabled ? c.textSecondary : Colors.white),
         ),
       ),
     );
@@ -2333,6 +2057,7 @@ class _CustomTimeWindowSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final selectedSlots = selected?.slots ?? const <ScheduleSlotInfo>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2342,7 +2067,7 @@ class _CustomTimeWindowSection extends StatelessWidget {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w700,
-            color: _navy,
+            color: c.textPrimary,
           ),
         ),
         10.kh,
@@ -2401,14 +2126,14 @@ class _CustomTimeWindowSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
-              color: _navy,
+              color: c.textPrimary,
             ),
           ),
           if (tickets.isEmpty) ...[
             10.kh,
             Text(
               'book_add_ticket'.tr(),
-              style: TextStyle(fontSize: 12.sp, color: _muted),
+              style: TextStyle(fontSize: 12.sp, color: c.textSecondary),
             ),
           ] else
             for (var i = 0; i < tickets.length; i++) ...[
@@ -2447,6 +2172,7 @@ class _PerTicketWindowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final subtitle = [
       descriptor.ageLabel,
       if (descriptor.durationLabel != null) descriptor.durationLabel!,
@@ -2454,9 +2180,9 @@ class _PerTicketWindowCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: _border),
+        border: Border.all(color: c.controlBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2467,7 +2193,7 @@ class _PerTicketWindowCard extends StatelessWidget {
                 padding:
                     EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: _brandLight,
+                  color: c.control,
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
@@ -2486,7 +2212,7 @@ class _PerTicketWindowCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
-                    color: _muted,
+                    color: c.textSecondary,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -2557,15 +2283,16 @@ class _AvailabilityNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final color = isError ? const Color(0xFFB91C1C) : _brandDark;
-    final bg = isError ? const Color(0xFFFEF2F2) : _brandLight;
+    final bg = isError ? const Color(0xFFFEF2F2) : c.control;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: isError ? const Color(0xFFFECACA) : _border,
+          color: isError ? const Color(0xFFFECACA) : c.controlBorder,
         ),
       ),
       child: Row(
@@ -2601,22 +2328,23 @@ class _TimeBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: _brandLight,
+          color: c.control,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: _border),
+          border: Border.all(color: c.controlBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 11.sp, color: _muted),
+              style: TextStyle(fontSize: 11.sp, color: c.textSecondary),
             ),
             4.kh,
             Row(
@@ -2629,7 +2357,7 @@ class _TimeBox extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w800,
-                    color: _navy,
+                    color: c.textPrimary,
                   ),
                 ),
               ],
@@ -2651,8 +2379,9 @@ class _BookingRequestedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: c.bg,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 28.w),
@@ -2717,7 +2446,7 @@ class _BookingRequestedPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
-                  color: _navy,
+                  color: c.textPrimary,
                   height: 1.25,
                   letterSpacing: -0.4,
                 ),
@@ -2728,7 +2457,7 @@ class _BookingRequestedPage extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15.sp,
-                  color: _muted,
+                  color: c.textSecondary,
                   height: 1.55,
                 ),
               ),
@@ -2738,9 +2467,9 @@ class _BookingRequestedPage extends StatelessWidget {
                 padding: EdgeInsets.symmetric(
                     horizontal: 16.w, vertical: 14.h),
                 decoration: BoxDecoration(
-                  color: _brandLight,
+                  color: c.control,
                   borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: _border),
+                  border: Border.all(color: c.controlBorder),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2810,6 +2539,31 @@ class _BookingRequestedPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Small square icon button used in the booking-sheet header (Figma control).
+class _SheetIconButton extends StatelessWidget {
+  const _SheetIconButton({required this.icon, required this.onTap});
+  final String icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(8.w),
+        decoration: BoxDecoration(
+          color: c.control,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: c.controlBorder),
+        ),
+        child: HomeIcon(icon, size: 16, color: c.textPrimary),
       ),
     );
   }

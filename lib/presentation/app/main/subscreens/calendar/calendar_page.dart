@@ -5,17 +5,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/text_extensions.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
-import 'package:shimmer/shimmer.dart';
 
 import 'cubit/schedule_cubit.dart';
 import 'cubit/schedule_state.dart';
 import 'widget/schedule_widget.dart';
+
+/// The three booking filters shown as chips (Figma 96-3204).
+enum _BookingFilter { all, active, completed }
 
 /// The "Bookings" tab (originally named Calendar — the class name is kept so
 /// the generated router doesn't need to be re-emitted).
@@ -35,15 +38,15 @@ class CalendarPage
   }
 
   bool get _showLoginPrompt {
-    final hasRealToken =
-        getIt<Storage>().tokens.call()?.access != null;
+    final hasRealToken = getIt<Storage>().tokens.call()?.access != null;
     return RemoteConfigService.instance.isInReview && !hasRealToken;
   }
 
   @override
   Widget builder(BuildContext context, ScheduleBuildable state) {
+    final c = context.appColors;
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFAF5),
+      backgroundColor: c.bg,
       body: _showLoginPrompt
           ? _LoginPrompt(
               onLogin: () => context.router.replaceAll([LoginRoute()]),
@@ -52,88 +55,6 @@ class CalendarPage
               state: state,
               onRefresh: () => context.read<ScheduleCubit>().refreshSilently(),
             ),
-    );
-  }
-}
-
-class _LoginPrompt extends StatelessWidget {
-  const _LoginPrompt({required this.onLogin});
-  final VoidCallback onLogin;
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              top: 16.h,
-              left: 16.w,
-              right: 16.w,
-              bottom: 12.h,
-            ),
-            child: Text(
-              'tab_bookings'.tr(),
-              style: TextStyle(
-                fontSize: 24.sp,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF0E0C2B),
-                letterSpacing: -0.3,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.all(32.w),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 80.w,
-                      height: 80.w,
-                      decoration: BoxDecoration(
-                        color: primary.withOpacity(0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.receipt_long_rounded,
-                          size: 40.w, color: primary.withOpacity(0.4)),
-                    ),
-                    20.kh,
-                    'login_to_view_bookings'
-                        .tr()
-                        .s(15)
-                        .w(600)
-                        .c(const Color(0xFF1E293B)),
-                    20.kh,
-                    GestureDetector(
-                      onTap: onLogin,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 32.w, vertical: 14.h),
-                        decoration: BoxDecoration(
-                          color: primary,
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        child: Text(
-                          'login_button'.tr(),
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -149,8 +70,31 @@ class _CalendarBody extends StatefulWidget {
 }
 
 class _CalendarBodyState extends State<_CalendarBody> {
+  _BookingFilter _filter = _BookingFilter.all;
+
+  /// Paid or cancelled activity orders (subscriptions and unpaid drafts hidden).
+  List _visibleOrders() {
+    final base = widget.state.orders
+        .where((o) => o.isActivityOrder && (o.isPaid || o.isCanceled))
+        .toList();
+    switch (_filter) {
+      case _BookingFilter.all:
+        return base;
+      case _BookingFilter.active:
+        return base
+            .where((o) => o.effectiveDisplayStatus == 'active')
+            .toList();
+      case _BookingFilter.completed:
+        const done = {'visited', 'missed', 'cancelled'};
+        return base
+            .where((o) => done.contains(o.effectiveDisplayStatus))
+            .toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final state = widget.state;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,41 +108,54 @@ class _CalendarBodyState extends State<_CalendarBody> {
           ),
           child: Text(
             'tab_bookings'.tr(),
-            style: TextStyle(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF0E0C2B),
-              letterSpacing: -0.3,
-            ),
+            style: AppText.heading20.copyWith(color: c.textPrimary),
           ),
         ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Row(
+            children: [
+              _FilterChip(
+                label: 'filter_all'.tr(),
+                selected: _filter == _BookingFilter.all,
+                onTap: () => setState(() => _filter = _BookingFilter.all),
+              ),
+              8.kw,
+              _FilterChip(
+                label: 'filter_active'.tr(),
+                selected: _filter == _BookingFilter.active,
+                onTap: () => setState(() => _filter = _BookingFilter.active),
+              ),
+              8.kw,
+              _FilterChip(
+                label: 'filter_completed'.tr(),
+                selected: _filter == _BookingFilter.completed,
+                onTap: () => setState(() => _filter = _BookingFilter.completed),
+              ),
+            ],
+          ),
+        ),
+        12.kh,
         Expanded(
           child: state.isLoading
-              ? _BookingsShimmer()
+              ? const _BookingsShimmer()
               : Builder(builder: (context) {
-                  // Show paid bookings with future dates AND cancelled
-                  // bookings that haven't happened yet. Hide past cancelled
-                  // and pending (unpaid) orders.
-                  final filtered = state.orders
-                      .where((o) =>
-                          o.isActivityOrder &&
-                          (o.isPaid || o.isCanceled) &&
-                          o.hasFutureTicket)
-                      .toList();
+                  final filtered = _visibleOrders();
                   if (filtered.isEmpty) return const _EmptyBookings();
                   return RefreshIndicator(
-                    color: const Color(0xFF6C4EF2),
+                    color: AppColors.brandPurple,
                     onRefresh: widget.onRefresh,
                     child: ListView.builder(
-                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 20.h + 64.0 + MediaQuery.of(context).viewPadding.bottom),
+                      padding: EdgeInsets.fromLTRB(
+                        16.w,
+                        4.h,
+                        16.w,
+                        20.h + 64.0 + MediaQuery.of(context).viewPadding.bottom,
+                      ),
                       physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: 12.h),
-                          child: BookingCard(order: filtered[index]),
-                        );
-                      },
+                      itemBuilder: (context, index) =>
+                          BookingCard(order: filtered[index]),
                     ),
                   );
                 }),
@@ -208,11 +165,117 @@ class _CalendarBodyState extends State<_CalendarBody> {
   }
 }
 
+/// A pill filter chip — selected shows the brand blue→purple gradient, otherwise
+/// a muted surface fill (Figma 96-3204).
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          gradient: selected ? AppGradients.indigo : null,
+          color: selected ? null : c.surface,
+          borderRadius: BorderRadius.circular(40.r),
+        ),
+        child: Text(
+          label,
+          style: AppText.semibold12.copyWith(
+            color: selected ? Colors.white : c.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginPrompt extends StatelessWidget {
+  const _LoginPrompt({required this.onLogin});
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w, bottom: 12.h),
+            child: Text(
+              'tab_bookings'.tr(),
+              style: AppText.heading20.copyWith(color: c.textPrimary),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 80.w,
+                      height: 80.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.brandPurple.withOpacity(0.10),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.receipt_long_rounded,
+                          size: 40.w, color: AppColors.brandPurple),
+                    ),
+                    20.kh,
+                    Text(
+                      'login_to_view_bookings'.tr(),
+                      textAlign: TextAlign.center,
+                      style: AppText.medium16.copyWith(color: c.textPrimary),
+                    ),
+                    20.kh,
+                    GestureDetector(
+                      onTap: onLogin,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 14.h),
+                        decoration: BoxDecoration(
+                          gradient: AppGradients.brand,
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
+                        child: Text(
+                          'login_button'.tr(),
+                          style:
+                              AppText.medium16.copyWith(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EmptyBookings extends StatelessWidget {
   const _EmptyBookings();
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -220,25 +283,23 @@ class _EmptyBookings extends StatelessWidget {
           Container(
             width: 80.w,
             height: 80.w,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEDE8FF),
+            decoration: BoxDecoration(
+              color: AppColors.brandPurple.withOpacity(0.10),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.receipt_long_rounded,
-              size: 40.w,
-              color: Color(0xFF6C4EF2).withOpacity(0.5),
-            ),
+            child: Icon(Icons.receipt_long_rounded,
+                size: 40.w, color: AppColors.brandPurple),
           ),
           20.kh,
-          'no_bookings_yet'.tr().s(18).w(600).c(Colors.black),
+          Text('no_bookings_yet'.tr(),
+              style: AppText.bold18.copyWith(color: c.textPrimary)),
           8.kh,
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 32.w),
             child: Text(
               'booked_classes_appear_here'.tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14.sp, color: Colors.black),
+              style: AppText.regular14.copyWith(color: c.textSecondary),
             ),
           ),
         ],
@@ -248,23 +309,22 @@ class _EmptyBookings extends StatelessWidget {
 }
 
 class _BookingsShimmer extends StatelessWidget {
+  const _BookingsShimmer();
+
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade50,
-      child: ListView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-        itemCount: 4,
-        itemBuilder: (_, __) => Container(
-          width: double.infinity,
-          height: 150.h,
-          margin: EdgeInsets.only(bottom: 14.h),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
-          ),
+    final c = context.appColors;
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 0),
+      itemCount: 4,
+      itemBuilder: (_, __) => Container(
+        width: double.infinity,
+        height: 200.h,
+        margin: EdgeInsets.only(bottom: 8.h),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(12.r),
         ),
       ),
     );

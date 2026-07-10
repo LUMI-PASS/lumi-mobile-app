@@ -1,11 +1,8 @@
 import 'package:lumi_pass/common/base/base_cubit.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_state.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
@@ -56,17 +53,6 @@ extension LanguageExtensions on Onboard {
         return Strings.onboard2Title;
       case Onboard.third:
         return Strings.onboard3Title;
-    }
-  }
-
-  Widget get icon {
-    switch (this) {
-      case Onboard.first:
-        return Assets.images.onboard1.image(height: 337.h, width: 1.sw);
-      case Onboard.second:
-        return Assets.images.onboard2.image(height: 337.h, width: 1.sw);
-      case Onboard.third:
-        return Assets.images.onboard2.image(height: 337.h, width: 1.sw);
     }
   }
 

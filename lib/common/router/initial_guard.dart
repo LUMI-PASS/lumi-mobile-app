@@ -17,7 +17,7 @@ class InitialGuard extends AutoRouteGuard {
       final inReview = RemoteConfigService.instance.isInReview;
 
       if (showOnboard != false) {
-        resolver.redirect(OnboardingRoute());
+        resolver.redirect(const WelcomeRoute());
       } else if (token != null || inReview) {
         resolver.redirect(const MainRoute());
       } else {

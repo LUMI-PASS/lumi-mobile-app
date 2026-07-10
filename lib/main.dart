@@ -19,6 +19,7 @@ import 'package:lumi_pass/data/service/push_notification_manager.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/common/styles/theme_mode_notifier.dart';
 import 'package:lumi_pass/firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -127,6 +128,7 @@ Future<void> _runWeb() async {
 
       log('6 di');
       await configureDependencies();
+  initThemeMode();
 
       log('7 locale');
       initLangIfNeeded('uz');
@@ -167,6 +169,7 @@ Future<void> _runNative() async {
   await RemoteConfigService.instance.init();
   await RuntimeEnv.load();
   await configureDependencies();
+  initThemeMode();
 
   // Do NOT await — getInitialMessage() inside requires the Flutter plugin to
   // be registered, which only happens after runApp() with
@@ -243,6 +246,23 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
             shadowColor: context.colors.onPrimary,
             highlightColor: context.colors.onPrimary,
           ),
+          // User theme toggle: override the platform brightness that
+          // `context.appColors` reads, so the redesigned screens follow it.
+          builder: (context, child) {
+            return ValueListenableBuilder<ThemeMode>(
+              valueListenable: themeModeNotifier,
+              builder: (context, mode, _) {
+                final mq = MediaQuery.of(context);
+                return MediaQuery(
+                  data: mq.copyWith(
+                    platformBrightness:
+                        resolveBrightness(mode, mq.platformBrightness),
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+            );
+          },
         ),
       ),
     );

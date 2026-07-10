@@ -37,6 +37,9 @@ class Storage {
 
   BaseStorage<String?> get localeCode => BaseStorage(_box, 'localeCode');
 
+  /// User theme override for the redesigned screens: 'system' | 'light' | 'dark'.
+  BaseStorage<String?> get themeMode => BaseStorage(_box, 'themeMode');
+
   BaseStorage<bool> get needsOnboarding => BaseStorage(_box, 'needsOnboarding');
 
   BaseStorage<String> get pendingPhone => BaseStorage(_box, 'pendingPhone');

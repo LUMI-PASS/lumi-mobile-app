@@ -42,6 +42,16 @@ class CheckoutResult {
   final String ticketDate;
   final List<String> ticketNumbers;
 
+  // ── Paylov (WLCM) ──────────────────────────────────────────────────────────
+  // Populated only when the checkout was routed through Paylov. For redirect
+  // providers (payme/click/uzum/paylov) [checkoutUrl] is set and these stay
+  // null. For the card provider [checkoutUrl] is empty and the card fields are
+  // returned instead: the client collects the OTP and calls paylovConfirmCard.
+  final String? paymentProvider;
+  final String? transactionId;
+  final String? cid;
+  final String? otpSentPhone;
+
   const CheckoutResult({
     required this.orderId,
     required this.totalAmount,
@@ -53,11 +63,25 @@ class CheckoutResult {
     required this.checkoutUrl,
     required this.ticketDate,
     required this.ticketNumbers,
+    this.paymentProvider,
+    this.transactionId,
+    this.cid,
+    this.otpSentPhone,
   });
+
+  /// True when this is a Paylov card checkout awaiting an OTP confirmation
+  /// (no redirect URL, but a transaction to confirm).
+  bool get isCardOtpPending =>
+      checkoutUrl.isEmpty && (transactionId?.isNotEmpty ?? false);
 
   factory CheckoutResult.fromJson(Map<String, dynamic> json) {
     final ticketsRaw = (json['ticket_numbers'] as List?) ?? const [];
     final code = json['promocode_code']?.toString();
+    String? nonEmpty(Object? v) {
+      final s = v?.toString();
+      return (s != null && s.isNotEmpty) ? s : null;
+    }
+
     return CheckoutResult(
       orderId: json['order_id']?.toString() ?? '',
       totalAmount: (json['total_amount'] as num?) ?? 0,
@@ -69,6 +93,34 @@ class CheckoutResult {
       checkoutUrl: json['checkout_url']?.toString() ?? '',
       ticketDate: json['ticket_date']?.toString() ?? '',
       ticketNumbers: ticketsRaw.map((e) => e.toString()).toList(),
+      paymentProvider: nonEmpty(json['payment_provider']),
+      transactionId: nonEmpty(json['transaction_id']),
+      cid: nonEmpty(json['cid']),
+      otpSentPhone: nonEmpty(json['otp_sent_phone']),
+    );
+  }
+}
+
+/// Result of confirming a Paylov card OTP (`POST /api/paylov/card/confirm`).
+class PaylovCardConfirmResult {
+  final bool success;
+  final String orderId;
+  final String status;
+  final String? message;
+
+  const PaylovCardConfirmResult({
+    required this.success,
+    required this.orderId,
+    required this.status,
+    this.message,
+  });
+
+  factory PaylovCardConfirmResult.fromJson(Map<String, dynamic> json) {
+    return PaylovCardConfirmResult(
+      success: json['success'] == true,
+      orderId: json['order_id']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending',
+      message: json['message']?.toString(),
     );
   }
 }

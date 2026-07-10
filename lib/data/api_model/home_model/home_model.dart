@@ -238,14 +238,29 @@ class ClassesPage {
   final List<HomClass> classes;
   final int totalPages;
 
-  const ClassesPage({required this.classes, required this.totalPages});
+  /// Total number of matching items across all pages (for the "Все • N"
+  /// result count). Falls back to 0 when the API omits it.
+  final int total;
+
+  const ClassesPage({
+    required this.classes,
+    required this.totalPages,
+    this.total = 0,
+  });
 }
 
 class BranchesPage {
   final List<HomBranch> branches;
   final int totalPages;
 
-  const BranchesPage({required this.branches, required this.totalPages});
+  /// Total number of matching branches across all pages.
+  final int total;
+
+  const BranchesPage({
+    required this.branches,
+    required this.totalPages,
+    this.total = 0,
+  });
 }
 
 class ExploreResult {

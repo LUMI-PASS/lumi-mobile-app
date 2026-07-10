@@ -137,6 +137,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const HomePage(),
       );
     },
+    LanguageRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const LanguagePage(),
+      );
+    },
     LoginRoute.name: (routeData) {
       final args = routeData.argsAs<LoginRouteArgs>(
           orElse: () => const LoginRouteArgs());
@@ -215,6 +221,12 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    SearchComingSoonRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const SearchComingSoonPage(),
+      );
+    },
     SearchRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -271,6 +283,12 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const WalletPage(),
+      );
+    },
+    WelcomeRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const WelcomePage(),
       );
     },
   };
@@ -655,6 +673,20 @@ class HomeRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [LanguagePage]
+class LanguageRoute extends PageRouteInfo<void> {
+  const LanguageRoute({List<PageRouteInfo>? children})
+      : super(
+          LanguageRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'LanguageRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [LoginPage]
 class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
   LoginRoute({
@@ -892,6 +924,20 @@ class RegisterRouteArgs {
 }
 
 /// generated route for
+/// [SearchComingSoonPage]
+class SearchComingSoonRoute extends PageRouteInfo<void> {
+  const SearchComingSoonRoute({List<PageRouteInfo>? children})
+      : super(
+          SearchComingSoonRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'SearchComingSoonRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [SearchPage]
 class SearchRoute extends PageRouteInfo<void> {
   const SearchRoute({List<PageRouteInfo>? children})
@@ -1087,6 +1133,20 @@ class WalletRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'WalletRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [WelcomePage]
+class WelcomeRoute extends PageRouteInfo<void> {
+  const WelcomeRoute({List<PageRouteInfo>? children})
+      : super(
+          WelcomeRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'WelcomeRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }

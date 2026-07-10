@@ -80,6 +80,8 @@ dependencies:
   carousel_slider: ^5.1.1
   youtube_player_flutter: ^9.1.1
   webview_flutter: ^4.7.0
+  # Glass "pill" bottom navigation (same component nexus-mobile-app uses).
+  dynamic_glass_glmv: ^0.2.2
 
 
 dev_dependencies:
@@ -108,6 +110,11 @@ flutter:
 
   assets:
     - assets/icons/
+    - assets/icons/auth/
+    - assets/icons/home/
+    - assets/icons/main/
+    - assets/icons/detail/
+    - assets/icons/pay/
     - assets/icons/background/
     - assets/images/
     - assets/localization/

@@ -3,42 +3,27 @@ import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
-import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/styles/ios_text_styles.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
-import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_bottomsheet.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const _brand = Color(0xFF6C4EF2);
-const _brandDark = Color(0xFF4A2FD4);
-const _brandLight = Color(0xFFEDE8FF);
-const _cream = Color(0xFFFDFAF5);
-const _border = Color(0xFFE8E4F6);
-const _navy = Color(0xFF0E0C2B);
-const _muted = Color(0xFF6B6899);
-const _success = Color(0xFF16A34A);
-
-BoxShadow get _cardShadow => const BoxShadow(
-      color: Color(0x1A6C4EF2),
-      blurRadius: 24,
-      offset: Offset(0, 4),
-    );
 
 @RoutePage()
 class ClassDetailPage extends StatefulWidget {
@@ -53,7 +38,6 @@ class ClassDetailPage extends StatefulWidget {
 class _ClassDetailPageState extends State<ClassDetailPage> {
   bool _isFavorite = false;
   List<String> _galleryImages = [];
-  bool _isLoadingImages = true;
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
   ClassFullModel? _full;
@@ -63,36 +47,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   int get _couponPct {
     final s = getIt<Storage>();
     return s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
-  }
-
-  /// Returns a Widget showing the price. When the user has an active coupon,
-  /// renders the original price struck-through above the green discounted price.
-  Widget _priceText(num price) {
-    final pct = _couponPct;
-    if (pct <= 0) {
-      return Text(price.toRawUzsPrice(),
-          style: IOSText.bodyEmphasized(color: _brandDark));
-    }
-    final discounted = (price * (100 - pct) / 100).round();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          price.toRawUzsPrice(),
-          style: TextStyle(
-            fontSize: 11.sp,
-            color: _muted,
-            fontWeight: FontWeight.w500,
-            decoration: TextDecoration.lineThrough,
-          ),
-        ),
-        Text(
-          discounted.toRawUzsPrice(),
-          style: IOSText.bodyEmphasized(color: _success),
-        ),
-      ],
-    );
   }
 
   @override
@@ -145,10 +99,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       setState(() {
         _full = full;
         _galleryImages = _resolveGallery(full);
-        _isLoadingImages = false;
       });
     } catch (_) {
-      if (mounted) setState(() => _isLoadingImages = false);
+      // Keep whatever gallery/list image we already have.
     }
   }
 
@@ -169,10 +122,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   void _loadImages() {
     final initial = widget.classModel.image;
     if (initial != null && initial.isNotEmpty) {
-      setState(() {
-        _galleryImages = [initial];
-        _isLoadingImages = false;
-      });
+      _galleryImages = [initial];
     }
   }
 
@@ -184,28 +134,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         return 'gender_female_only'.tr();
       default:
         return 'gender_all'.tr();
-    }
-  }
-
-  Color _getGenderColor() {
-    switch ((_full?.gender ?? widget.classModel.gender)?.toUpperCase()) {
-      case 'MALE':
-        return const Color(0xFF3B82F6);
-      case 'FEMALE':
-        return const Color(0xFF7C3AED);
-      default:
-        return _brand;
-    }
-  }
-
-  IconData _getGenderIcon() {
-    switch ((_full?.gender ?? widget.classModel.gender)?.toUpperCase()) {
-      case 'MALE':
-        return Icons.male_rounded;
-      case 'FEMALE':
-        return Icons.female_rounded;
-      default:
-        return Icons.people_rounded;
     }
   }
 
@@ -264,13 +192,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return null;
   }
 
-  String _formatDistance(double? distanceMeters) {
-    if (distanceMeters == null || distanceMeters <= 0) return '';
-    if (distanceMeters < 1000) {
-      return '${distanceMeters.round()} m';
+  String _ageLabel() {
+    final r = _effectiveAgeRange(_full);
+    if (r == null) return '—';
+    if (r.to <= 0 || r.to == r.from) {
+      return '${r.from}+ ${'filter_years_label'.tr()}';
     }
-    final km = distanceMeters / 1000;
-    return '${km.toStringAsFixed(1)} km';
+    return '${r.from}-${r.to} ${'filter_years_label'.tr()}';
   }
 
   String _localized(Map<String, dynamic> map, {String fallback = ''}) {
@@ -300,7 +228,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     try {
       final id = widget.classModel.id;
       final title = widget.classModel.title ?? '';
-      final branch = widget.classModel.branch?.title ?? _full?.branch?.title ?? '';
+      final branch =
+          widget.classModel.branch?.title ?? _full?.branch?.title ?? '';
       final label = branch.isNotEmpty ? '$title — $branch' : title;
 
       final String text;
@@ -314,7 +243,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       }
 
       final box = context.findRenderObject() as RenderBox?;
-      final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+      final origin =
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size;
       await Share.share(
         text,
         subject: title.isNotEmpty ? title : 'Lumi',
@@ -331,8 +261,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   void _openBookingSheet() {
     final full = _full;
-    if (full == null ||
-        (full.pricesSummary.isEmpty && full.ageTiers.isEmpty)) {
+    if (full == null || (full.pricesSummary.isEmpty && full.ageTiers.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('cta_loading'.tr())),
       );
@@ -355,1054 +284,701 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
-  String _getCategoryName() {
+  /// Price tiers derived for display: one row per age tier (min price), or the
+  /// price-summary ranges as a fallback.
+  List<({String range, String subtitle, num price, String icon})> _priceRows() {
     final full = _full;
-    if (full?.category != null) {
-      final v = _localized(full!.category!.name);
-      if (v.isNotEmpty) return v;
+    final rows = <({String range, String subtitle, num price, String icon})>[];
+    if (full == null) return rows;
+    if (full.ageTiers.isNotEmpty) {
+      for (final t in full.ageTiers) {
+        final prices = t.durations
+            .map((d) => d.price)
+            .where((p) => p > 0)
+            .toList();
+        final min = prices.isEmpty
+            ? 0
+            : prices.reduce((a, b) => a < b ? a : b);
+        final adults = t.ageFrom >= 6 || t.ageTo == null;
+        rows.add((
+          range: t.rangeLabel,
+          subtitle:
+              adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr(),
+          price: min,
+          icon: adults ? 'profile2user' : 'babygirl',
+        ));
+      }
+    } else {
+      for (final r in full.pricesSummary) {
+        rows.add((
+          range: r.rangeLabel,
+          subtitle: 'price_tier_children'.tr(),
+          price: r.price,
+          icon: 'babygirl',
+        ));
+      }
     }
-    final cat = widget.classModel.category;
-    if (cat != null && cat.isNotEmpty) return cat;
-    return '';
+    return rows;
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final classModel = widget.classModel;
     final full = _full;
+    final safeTop = MediaQuery.of(context).viewPadding.top;
     final safeBottom = MediaQuery.of(context).viewPadding.bottom;
 
-    final categoryName = _getCategoryName();
-    final branchTitle = full?.branch?.title ?? classModel.branch?.title;
-    final distanceStr =
-        _formatDistance(classModel.branch?.distance ?? classModel.distance);
+    final title = full == null
+        ? (classModel.title ?? '')
+        : _localized(full.name, fallback: classModel.title ?? '');
+    final branchTitle = full?.branch?.title ?? classModel.branch?.title ?? '';
+    final description =
+        full == null ? '' : _cleanHtml(_localized(full.description));
+    final priceRows = _priceRows();
+    final languages = full?.activityLanguages ?? const <String>[];
 
-    return Scaffold(
-      backgroundColor: _cream,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              // ─── [1] Hero SliverAppBar ─────────────────────────────────────
-              SliverAppBar(
-                expandedHeight: 310.h,
-                pinned: true,
-                stretch: true,
-                backgroundColor: _cream,
-                surfaceTintColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                automaticallyImplyLeading: false,
-                leadingWidth: 72.w,
-                toolbarHeight: 60.h,
-                leading: Padding(
-                  padding: EdgeInsets.only(left: 16.w, top: 6.h, bottom: 6.h),
-                  child: _FrostedCircleButton(
-                    onTap: () => context.router.pop(),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: _navy,
-                      size: 18,
-                    ),
-                  ),
-                ),
-                actions: [
-                  _FrostedCircleButton(
-                    onTap: () => _shareClass(),
-                    child: const Icon(Icons.share_rounded, color: _navy, size: 18),
-                  ),
-                  8.kw,
-                  _FrostedCircleButton(
-                    onTap: () => setState(() => _isFavorite = !_isFavorite),
-                    child: Icon(
-                      _isFavorite
-                          ? CupertinoIcons.heart_fill
-                          : CupertinoIcons.heart,
-                      color: _isFavorite ? const Color(0xFFEF4444) : _navy,
-                      size: 18,
-                    ),
-                  ),
-                  16.kw,
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  collapseMode: CollapseMode.parallax,
-                  stretchModes: const [StretchMode.zoomBackground],
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _galleryImages.isNotEmpty
-                          ? PageView.builder(
-                              controller: _pageController,
-                              itemCount: _galleryImages.length,
-                              onPageChanged: (i) =>
-                                  setState(() => _currentImageIndex = i),
-                              itemBuilder: (_, i) => CachedNetworkImage(
-                                imageUrl: _galleryImages[i],
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                                placeholder: (_, __) => Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade200,
-                                  highlightColor: Colors.grey.shade50,
-                                  child: Container(color: Colors.white),
-                                ),
-                                errorWidget: (_, __, ___) => Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade200,
-                                  highlightColor: Colors.grey.shade50,
-                                  child: Container(color: Colors.white),
-                                ),
-                              ),
-                            )
-                          : Shimmer.fromColors(
-                              baseColor: Colors.grey.shade200,
-                              highlightColor: Colors.grey.shade50,
-                              child: Container(color: Colors.white),
-                            ),
-
-                      // Top vignette — keeps nav buttons legible over any image
-                      const Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Color(0x880E0C2B), Colors.transparent],
-                              stops: [0.0, 0.38],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Bottom vignette
-                      const Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Color(0xBB0E0C2B),
-                              ],
-                              stops: [0.5, 1.0],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Page indicators
-                      if (_galleryImages.length > 1)
-                        Positioned(
-                          bottom: 14.h,
-                          left: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              _galleryImages.length,
-                              (i) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 3),
-                                width: _currentImageIndex == i ? 16 : 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: _currentImageIndex == i
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // Category chip
-                      if (categoryName.isNotEmpty)
-                        Positioned(
-                          bottom: 14.h,
-                          left: 16.w,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 5.h),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20.r),
-                              border: Border.all(
-                                  color: Colors.white.withOpacity(0.4)),
-                            ),
-                            child: Text(
-                              categoryName,
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ─── [2] Info card ─────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24.r),
-                      boxShadow: [_cardShadow],
-                    ),
-                    padding: EdgeInsets.all(20.w),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: c.bg,
+        body: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: _hero(c, safeTop)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          classModel.title ?? '',
-                          style: IOSText.largeTitle(),
-                        ),
-                        14.kh,
-
-                        if (branchTitle != null &&
-                            branchTitle.isNotEmpty &&
-                            classModel.branch != null)
-                          _BranchNavCard(
-                            title: branchTitle,
-                            distance: distanceStr,
-                            onTap: () => context.router.push(
-                              BranchDetailRoute(branch: classModel.branch!),
-                            ),
-                          ),
-
-                        16.kh,
-                        Divider(color: _border, height: 1),
-                        16.kh,
-
-                        // Stats as tinted chip cards
-                        Builder(builder: (_) {
-                          final ageRange = _effectiveAgeRange(full);
-                          final ageUnit = 'filter_years_label'.tr();
-                          final ageLabel = ageRange == null
-                              ? null
-                              : (ageRange.from == ageRange.to
-                                  ? '${ageRange.from} $ageUnit'
-                                  : '${ageRange.from}–${ageRange.to} $ageUnit');
-
-                          final stats = <(IconData, Color, String, String)>[
-                            (
-                              Icons.access_time_rounded,
-                              _brand,
-                              _formatDuration(_effectiveDuration(full)),
-                              'detail_duration_label'.tr(),
-                            ),
-                            if (ageLabel != null)
-                              (
-                                Icons.child_care_rounded,
-                                _success,
-                                ageLabel,
-                                'age'.tr(),
-                              ),
-                            (
-                              _getGenderIcon(),
-                              _getGenderColor(),
-                              _getGenderText(),
-                              'gender'.tr(),
-                            ),
-                          ];
-
-                          return Row(
-                            children: stats.asMap().entries.map((e) {
-                              final idx = e.key;
-                              final s = e.value;
-                              return Expanded(
-                                child: Container(
-                                  margin: EdgeInsets.only(
-                                      right: idx < stats.length - 1
-                                          ? 8.w
-                                          : 0),
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 12.h, horizontal: 6.w),
-                                  decoration: BoxDecoration(
-                                    color: s.$2.withOpacity(0.07),
-                                    borderRadius:
-                                        BorderRadius.circular(14.r),
-                                    border: Border.all(
-                                        color: s.$2.withOpacity(0.14)),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(s.$1,
-                                          size: 20.sp, color: s.$2),
-                                      6.kh,
-                                      Text(
-                                        s.$3,
-                                        style: TextStyle(
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: _navy,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      2.kh,
-                                      Text(
-                                        s.$4,
-                                        style: TextStyle(
-                                            fontSize: 10.sp,
-                                            color: _muted),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        }),
+                        _mainCard(c, title, description, branchTitle),
+                        if (priceRows.isNotEmpty) ...[
+                          6.verticalSpace,
+                          _pricesCard(c, priceRows),
+                        ],
+                        if (description.isNotEmpty) ...[
+                          6.verticalSpace,
+                          _descriptionCard(c, title, description),
+                        ],
+                        if (languages.isNotEmpty) ...[
+                          6.verticalSpace,
+                          _languageCard(c, languages),
+                        ],
                       ],
                     ),
                   ),
                 ),
-              ),
-
-              // ─── [3] Content sections ──────────────────────────────────────
-              SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    if (full == null) _DetailShimmer(),
-
-                    if (full != null &&
-                        (full.hasAgeTierPricing ||
-                            full.pricesSummary.isNotEmpty)) ...[
-                      _DetailSection(
-                        title: full.hasAgePricing
-                            ? 'detail_prices_by_age'.tr()
-                            : 'detail_prices'.tr(),
-                        icon: Icons.sell_rounded,
-                        iconColor: _brand,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (full.hasAgeTierPricing)
-                              ...List.generate(full.ageTiers.length, (i) {
-                                final tier = full.ageTiers[i];
-                                final isLastTier =
-                                    i == full.ageTiers.length - 1;
-                                return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 8.h),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10.w,
-                                                vertical: 5.h),
-                                            decoration: BoxDecoration(
-                                              color: _brandLight,
-                                              borderRadius:
-                                                  BorderRadius.circular(8.r),
-                                            ),
-                                            child: Text(
-                                              tier.rangeLabel,
-                                              style: TextStyle(
-                                                fontSize: 11.sp,
-                                                fontWeight: FontWeight.w800,
-                                                color: _brandDark,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    ...List.generate(
-                                        tier.durations.length, (j) {
-                                      final dur = tier.durations[j];
-                                      final isLastDur =
-                                          j == tier.durations.length - 1;
-                                      return Column(
-                                        children: [
-                                          Padding(
-                                            padding: EdgeInsets.fromLTRB(
-                                                12.w, 6.h, 0, 6.h),
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.timelapse_rounded,
-                                                  size: 14.sp,
-                                                  color: _muted,
-                                                ),
-                                                6.kw,
-                                                Expanded(
-                                                  child: Text(
-                                                    dur.durationLabel,
-                                                    style: IOSText.body(),
-                                                  ),
-                                                ),
-                                                _priceText(dur.price),
-                                              ],
-                                            ),
-                                          ),
-                                          if (!isLastDur)
-                                            Divider(
-                                                height: 1,
-                                                color: _border,
-                                                thickness: 1),
-                                        ],
-                                      );
-                                    }),
-                                    if (!isLastTier)
-                                      Divider(
-                                          height: 1,
-                                          color: _border,
-                                          thickness: 1),
-                                  ],
-                                );
-                              })
-                            else
-                              ...List.generate(full.pricesSummary.length,
-                                  (i) {
-                                final r = full.pricesSummary[i];
-                                final isLast =
-                                    i == full.pricesSummary.length - 1;
-                                return Column(
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 8.h),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 40.w,
-                                            height: 36.h,
-                                            decoration: BoxDecoration(
-                                              color: _brandLight,
-                                              borderRadius:
-                                                  BorderRadius.circular(8.r),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                '${r.ageFrom}–${r.ageTo}',
-                                                style: TextStyle(
-                                                  fontSize: 10.sp,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: _brandDark,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          10.kw,
-                                          Expanded(
-                                            child: Text(
-                                              r.rangeLabel,
-                                              style: IOSText.body(),
-                                            ),
-                                          ),
-                                          _priceText(r.price),
-                                        ],
-                                      ),
-                                    ),
-                                    if (!isLast)
-                                      Divider(
-                                          height: 1,
-                                          color: _border,
-                                          thickness: 1),
-                                  ],
-                                );
-                              }),
-                          ],
-                        ),
-                      ),
-                      16.kh,
-                    ],
-
-                    if (full != null &&
-                        _cleanHtml(_localized(full.description))
-                            .isNotEmpty) ...[
-                      _DetailSection(
-                        title: 'detail_about'.tr(),
-                        icon: Icons.info_outline_rounded,
-                        iconColor: _brand,
-                        child: Text(
-                          _cleanHtml(_localized(full.description)),
-                          style: IOSText.body(color: IOSText.secondary),
-                        ),
-                      ),
-                      16.kh,
-                    ] else if (full == null &&
-                        (classModel.description ?? '').isNotEmpty) ...[
-                      _DetailSection(
-                        title: 'detail_about'.tr(),
-                        icon: Icons.info_outline_rounded,
-                        iconColor: _brand,
-                        child: Text(
-                          _cleanHtml(classModel.description!),
-                          style: IOSText.body(color: IOSText.secondary),
-                        ),
-                      ),
-                      16.kh,
-                    ],
-
-                    if (full != null &&
-                        _cleanHtml(_localized(full.importantNotes))
-                            .isNotEmpty) ...[
-                      _DetailSection(
-                        title: 'detail_notes'.tr(),
-                        icon: Icons.priority_high_rounded,
-                        iconColor: const Color(0xFFD97706),
-                        child: Text(
-                          _cleanHtml(_localized(full.importantNotes)),
-                          style: IOSText.body(color: IOSText.secondary),
-                        ),
-                      ),
-                      16.kh,
-                    ],
-
-                    if (full != null &&
-                        _cleanHtml(_localized(full.requiredItems))
-                            .isNotEmpty) ...[
-                      _DetailSection(
-                        title: 'detail_bring'.tr(),
-                        icon: Icons.checklist_rounded,
-                        iconColor: const Color(0xFF0E7490),
-                        child: Text(
-                          _cleanHtml(_localized(full.requiredItems)),
-                          style: IOSText.body(color: IOSText.secondary),
-                        ),
-                      ),
-                      16.kh,
-                    ],
-
-                    if (full != null &&
-                        full.activityLanguages.isNotEmpty) ...[
-                      _DetailSection(
-                        title: 'detail_language'.tr(),
-                        icon: Icons.translate_rounded,
-                        iconColor: _muted,
-                        child: Wrap(
-                          spacing: 8.w,
-                          runSpacing: 8.h,
-                          children: full.activityLanguages
-                              .map(
-                                (lang) => Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w, vertical: 6.h),
-                                  decoration: BoxDecoration(
-                                    color: _brandLight,
-                                    borderRadius:
-                                        BorderRadius.circular(10.r),
-                                  ),
-                                  child: Text(
-                                    lang,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: _brandDark,
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      16.kh,
-                    ],
-
-                    if (full != null && full.workHours.isNotEmpty) ...[
-                      _DetailSection(
-                        title: 'detail_hours'.tr(),
-                        icon: Icons.schedule_rounded,
-                        iconColor: const Color(0xFF059669),
-                        child: Column(
-                          children: full.workHours
-                              .map(
-                                (s) => Padding(
-                                  padding: EdgeInsets.only(bottom: 8.h),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 8.w,
-                                        height: 8.h,
-                                        decoration: BoxDecoration(
-                                          color: _brand,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      8.kw,
-                                      Expanded(
-                                        child: Text(
-                                          s.day,
-                                          style: IOSText.bodyEmphasized(),
-                                        ),
-                                      ),
-                                      Text(
-                                        '${s.startTime} – ${s.endTime}',
-                                        style: IOSText.body(
-                                            color: IOSText.secondary),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      16.kh,
-                    ],
-
-                    if (full?.effectiveVideoUrl != null) ...[
-                      _VideoCard(onTap: () {
-                        ShortsFeed.set([widget.classModel], 0);
-                        context.tabsRouter.setActiveIndex(1);
-                      }),
-                      16.kh,
-                    ],
-
-                    120.kh,
-                  ]),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 90.h + safeBottom),
                 ),
-              ),
-            ],
-          ),
-
-          // ─── CTA bar at bottom ─────────────────────────────────────────────
-          if (!RemoteConfigService.instance.isInReview)
+              ],
+            ),
+            // Top controls over the hero.
             Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x00FDFAF5),
-                      Color(0xF2FDFAF5),
-                      _cream,
-                    ],
-                    stops: [0.0, 0.35, 0.65],
-                  ),
-                ),
-                padding: EdgeInsets.fromLTRB(
-                    16.w, 20.h, 16.w, safeBottom + 16.h),
-                child: full == null
-                    ? Shimmer.fromColors(
-                        baseColor: Colors.grey.shade200,
-                        highlightColor: Colors.grey.shade50,
-                        child: Container(
-                          height: 54.h,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                        ),
-                      )
-                    : full.pricesSummary.isEmpty && full.ageTiers.isEmpty
-                        ? _CtaButton(
-                            label: 'cta_loading'.tr(),
-                            enabled: false,
-                            onTap: null,
-                          )
-                        : _CtaGradientButton(
-                            label: 'cta_buy_ticket'.tr(),
-                            onTap: _openBookingSheet,
-                          ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Frosted circle button ─────────────────────────────────────────────────────
-
-class _FrostedCircleButton extends StatelessWidget {
-  const _FrostedCircleButton({required this.onTap, required this.child});
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 42.w,
-      height: 42.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14.r),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14.r),
-          onTap: onTap,
-          child: Center(child: child),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Branch navigation card ────────────────────────────────────────────────────
-
-class _BranchNavCard extends StatelessWidget {
-  const _BranchNavCard({
-    required this.title,
-    required this.distance,
-    required this.onTap,
-  });
-
-  final String title;
-  final String distance;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: _brandLight.withOpacity(0.4),
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: _border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36.w,
-              height: 36.h,
-              decoration: BoxDecoration(
-                color: _brandLight,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Icon(Icons.apartment_rounded, color: _brand, size: 18.sp),
-            ),
-            10.kw,
-            Expanded(
-              child: Text(
-                title,
-                style: IOSText.headline(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (distance.isNotEmpty) ...[
-              6.kw,
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: _brandLight,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  distance,
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w700,
-                    color: _brandDark,
-                  ),
-                ),
-              ),
-            ],
-            6.kw,
-            Icon(Icons.arrow_forward_ios_rounded, size: 14.sp, color: _muted),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Detail section ────────────────────────────────────────────────────────────
-
-class _DetailSection extends StatelessWidget {
-  const _DetailSection({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
-    required this.child,
-  });
-  final String title;
-  final IconData icon;
-  final Color iconColor;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [_cardShadow],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36.w,
-                height: 36.h,
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Center(
-                  child: Icon(icon, color: iconColor, size: 18.sp),
-                ),
-              ),
-              10.kw,
-              Expanded(
-                child: Text(title, style: IOSText.headline()),
-              ),
-            ],
-          ),
-          12.kh,
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Video card ────────────────────────────────────────────────────────────────
-
-class _VideoCard extends StatelessWidget {
-  const _VideoCard({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [_brand, _brandDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20.r),
-          boxShadow: [
-            BoxShadow(
-              color: _brand.withOpacity(0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44.w,
-              height: 44.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.2),
-                border: Border.all(color: Colors.white.withOpacity(0.35)),
-              ),
-              child: Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 26.sp,
-              ),
-            ),
-            12.kw,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              top: safeTop + 8.h,
+              left: 16.w,
+              right: 16.w,
+              child: Row(
                 children: [
-                  Text(
-                    'video_watch'.tr(),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.2,
-                    ),
+                  _ControlButton(
+                    child: const HomeIcon('arrow',
+                        size: 16, color: Colors.white),
+                    onTap: () => context.router.pop(),
                   ),
-                  2.kh,
-                  Text(
-                    'video_shorts_cta'.tr(),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  const Spacer(),
+                  _ControlButton(
+                    child: const HomeIcon('share',
+                        size: 16, color: Colors.white),
+                    onTap: _shareClass,
+                  ),
+                  8.horizontalSpace,
+                  _ControlButton(
+                    child: HomeIcon('heart',
+                        size: 16,
+                        color: _isFavorite ? AppColors.error : Colors.white),
+                    onTap: () => setState(() => _isFavorite = !_isFavorite),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_rounded,
-              color: Colors.white,
-              size: 20.sp,
+            // Bottom CTA.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                color: c.bg,
+                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + safeBottom),
+                child: GradientButton(
+                  text: 'buy_tickets'.tr(),
+                  onPressed: _openBookingSheet,
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-// ─── CTA button (disabled state) ──────────────────────────────────────────────
-
-class _CtaButton extends StatelessWidget {
-  const _CtaButton({
-    required this.label,
-    required this.enabled,
-    required this.onTap,
-  });
-  final String label;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
+  // ─── Hero image carousel ────────────────────────────────────────────────────
+  Widget _hero(AppColors c, double safeTop) {
     return SizedBox(
-      height: 54.h,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: enabled ? _brandDark : const Color(0xFFCBD5E1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── CTA gradient button ───────────────────────────────────────────────────────
-
-class _CtaGradientButton extends StatelessWidget {
-  const _CtaGradientButton({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 54.h,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [_brandDark, _brand],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: _brand.withOpacity(0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Detail shimmer skeleton ───────────────────────────────────────────────────
-
-class _DetailShimmer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade50,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      height: 300.h,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          16.kh,
-          _shimmerBox(height: 20.h, width: 120.w, radius: 6.r),
-          12.kh,
-          _shimmerBox(height: 80.h, width: double.infinity, radius: 14.r),
-          16.kh,
-          _shimmerBox(height: 20.h, width: 160.w, radius: 6.r),
-          12.kh,
-          _shimmerBox(height: 120.h, width: double.infinity, radius: 14.r),
-          16.kh,
-          _shimmerBox(height: 20.h, width: 100.w, radius: 6.r),
-          12.kh,
-          _shimmerBox(height: 80.h, width: double.infinity, radius: 14.r),
-          20.kh,
+          if (_galleryImages.isNotEmpty)
+            PageView.builder(
+              controller: _pageController,
+              itemCount: _galleryImages.length,
+              onPageChanged: (i) => setState(() => _currentImageIndex = i),
+              itemBuilder: (_, i) => CachedNetworkImage(
+                imageUrl: _galleryImages[i],
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _imgShimmer(c),
+                errorWidget: (_, __, ___) => _imgShimmer(c),
+              ),
+            )
+          else
+            _imgShimmer(c),
+          // Dots indicator.
+          if (_galleryImages.length > 1)
+            Positioned(
+              bottom: 12.h,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_galleryImages.length, (i) {
+                  final active = i == _currentImageIndex;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    margin: EdgeInsets.symmetric(horizontal: 3.w),
+                    width: active ? 20.w : 8.w,
+                    height: 8.h,
+                    decoration: BoxDecoration(
+                      color: active ? Colors.white : Colors.white.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  );
+                }),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _shimmerBox(
-      {required double height,
-      required double width,
-      required double radius}) {
-    return Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(radius),
+  Widget _imgShimmer(AppColors c) => Shimmer.fromColors(
+        baseColor: c.surface,
+        highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
+        child: Container(color: c.surface),
+      );
+
+  // ─── Main info card ────────────────────────────────────────────────────────
+  Widget _mainCard(
+      AppColors c, String title, String description, String branchTitle) {
+    return _Card(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
+          if (description.isNotEmpty) ...[
+            6.verticalSpace,
+            Text(
+              description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.regular14.copyWith(color: c.textPrimary),
+            ),
+          ],
+          20.verticalSpace,
+          // Location row.
+          if (branchTitle.isNotEmpty)
+            Container(
+              padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
+              decoration: BoxDecoration(
+                color: c.control,
+                borderRadius: BorderRadius.circular(40.r),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.surface,
+                      shape: BoxShape.circle,
+                    ),
+                    child: HomeIcon(HomeIcon.building,
+                        size: 16, color: c.textPrimary),
+                  ),
+                  8.horizontalSpace,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('detail_location'.tr(),
+                            style: AppText.regular12
+                                .copyWith(color: c.textSecondary)),
+                        4.verticalSpace,
+                        Text(
+                          branchTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.semibold14
+                              .copyWith(color: c.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.classModel.branch != null)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => context.router.push(
+                        BranchDetailRoute(branch: widget.classModel.branch!),
+                      ),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: _chipFill(c),
+                          borderRadius: BorderRadius.circular(40.r),
+                        ),
+                        child: Text('view_all'.tr(),
+                            style: AppText.regular12
+                                .copyWith(color: c.textPrimary)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          12.verticalSpace,
+          // Info tiles.
+          Row(
+            children: [
+              Expanded(
+                child: _InfoTile(
+                  c: c,
+                  icon: 'iconsax-ticket-discount',
+                  value: _formatDuration(_effectiveDuration(_full)),
+                  label: 'detail_duration'.tr(),
+                ),
+              ),
+              4.horizontalSpace,
+              Expanded(
+                child: _InfoTile(
+                  c: c,
+                  icon: 'iconsax-baby',
+                  value: _ageLabel(),
+                  label: 'detail_age'.tr(),
+                ),
+              ),
+              4.horizontalSpace,
+              Expanded(
+                child: _InfoTile(
+                  c: c,
+                  icon: 'iconsax-ai-users',
+                  value: _getGenderText(),
+                  label: 'detail_gender'.tr(),
+                ),
+              ),
+            ],
+          ),
+          16.verticalSpace,
+          _HappyParents(c: c),
+        ],
+      ),
+    );
+  }
+
+  // ─── Prices card ────────────────────────────────────────────────────────────
+  Widget _pricesCard(
+      AppColors c,
+      List<({String range, String subtitle, num price, String icon})> rows) {
+    return _Card(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            c: c,
+            icon: 'money',
+            iconGradient: const LinearGradient(
+              colors: [AppColors.brandPink, AppColors.brandPink],
+            ),
+            title: 'detail_prices'.tr(),
+          ),
+          16.verticalSpace,
+          ...List.generate(rows.length, (i) {
+            final r = rows[i];
+            return Padding(
+              padding: EdgeInsets.only(bottom: i == rows.length - 1 ? 0 : 8.h),
+              child: _PriceRow(c: c, row: r, couponPct: _couponPct),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ─── Description card ───────────────────────────────────────────────────────
+  Widget _descriptionCard(AppColors c, String title, String description) {
+    return _Card(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppText.semibold16.copyWith(color: c.textPrimary)),
+          6.verticalSpace,
+          Text(description,
+              style: AppText.regular14.copyWith(color: c.textPrimary)),
+        ],
+      ),
+    );
+  }
+
+  // ─── Language card ──────────────────────────────────────────────────────────
+  Widget _languageCard(AppColors c, List<String> languages) {
+    return _Card(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            c: c,
+            icon: 'iconsax-language-circle',
+            iconDir: 'detail',
+            iconGradient: AppGradients.indigo,
+            title: 'detail_language'.tr(),
+          ),
+          16.verticalSpace,
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: languages.map((lang) => _LangChip(c: c, lang: lang)).toList(),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─── Effective duration value ──────────────────────────────────────────────────
+// ─── Reusable pieces ──────────────────────────────────────────────────────────
+
+/// Subtle "frosted" pill fill for chips nested on a control/surface row. Figma
+/// uses translucent white in dark mode; on light backgrounds that vanishes, so
+/// we fall back to solid white which still reads as a raised pill.
+Color _chipFill(AppColors c) =>
+    c.isDark ? Colors.white.withOpacity(0.10) : Colors.white;
+
+class _Card extends StatelessWidget {
+  const _Card({required this.c, required this.child});
+  final AppColors c;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  const _CardHeader({
+    required this.c,
+    required this.icon,
+    required this.iconGradient,
+    required this.title,
+    this.iconDir = 'home',
+  });
+  final AppColors c;
+  final String icon;
+  final Gradient iconGradient;
+  final String title;
+  final String iconDir;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(4.w),
+          decoration: BoxDecoration(
+            gradient: iconGradient,
+            borderRadius: BorderRadius.circular(6.r),
+          ),
+          child:
+              HomeIcon(icon, size: 14, color: Colors.white, dir: iconDir),
+        ),
+        6.horizontalSpace,
+        Text(title, style: AppText.semibold16.copyWith(color: c.textPrimary)),
+      ],
+    );
+  }
+}
+
+class _ControlButton extends StatelessWidget {
+  const _ControlButton({required this.child, required this.onTap});
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(8.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFF323139),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: const Color(0xFF4C4C54)),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// "Довольные родители" — decorative avatar group (Figma 60:3421). No real
+/// data source; renders overlapping brand-gradient avatars + a "+N" chip.
+class _HappyParents extends StatelessWidget {
+  const _HappyParents({required this.c});
+  final AppColors c;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget circle(IconData icon) => Container(
+          width: 40.w,
+          height: 40.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: AppGradients.brand,
+            border: Border.all(color: c.surface, width: 2),
+          ),
+          child: Icon(icon, size: 20.sp, color: Colors.white),
+        );
+
+    return Row(
+      children: [
+        SizedBox(
+          width: 40.w * 3 - 24.w + 40.w,
+          height: 40.w,
+          child: Stack(
+            children: [
+              Positioned(left: 0, child: circle(CupertinoIcons.person_fill)),
+              Positioned(left: 28.w, child: circle(CupertinoIcons.person_2_fill)),
+              Positioned(left: 56.w, child: circle(CupertinoIcons.person_fill)),
+              Positioned(
+                left: 84.w,
+                child: Container(
+                  width: 40.w,
+                  height: 40.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: c.control,
+                    border: Border.all(color: c.surface, width: 2),
+                  ),
+                  child: Text('+12',
+                      style: AppText.semibold12.copyWith(color: c.textSecondary)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        10.horizontalSpace,
+        Text('detail_happy_parents'.tr(),
+            style: AppText.regular12.copyWith(color: c.textPrimary)),
+      ],
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.c,
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+  final AppColors c;
+  final String icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(8.w),
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Multicolour detail glyphs — render their own colours (no tint).
+          HomeIcon(icon, size: 24, dir: 'detail'),
+          4.verticalSpace,
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppText.semibold16.copyWith(color: c.textPrimary),
+          ),
+          4.verticalSpace,
+          Text(label,
+              style: AppText.regular12.copyWith(color: c.textPrimary)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriceRow extends StatelessWidget {
+  const _PriceRow({required this.c, required this.row, required this.couponPct});
+  final AppColors c;
+  final ({String range, String subtitle, num price, String icon}) row;
+  final int couponPct;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(40.r),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40.w,
+            height: 40.w,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle),
+            child: HomeIcon(row.icon, size: 20, color: c.textPrimary),
+          ),
+          8.horizontalSpace,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(row.range,
+                    style: AppText.semibold14.copyWith(color: c.textPrimary)),
+                4.verticalSpace,
+                Text(row.subtitle,
+                    style: AppText.regular12.copyWith(color: c.textPrimary)),
+              ],
+            ),
+          ),
+          _priceChip(),
+        ],
+      ),
+    );
+  }
+
+  Widget _priceChip() {
+    final chip = (Widget child) => Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: _chipFill(c),
+            borderRadius: BorderRadius.circular(40.r),
+          ),
+          child: child,
+        );
+    if (couponPct <= 0 || row.price <= 0) {
+      return chip(Text(
+        row.price <= 0 ? 'price_free'.tr() : row.price.toRawUzsPrice(),
+        style: AppText.semibold12.copyWith(color: c.textPrimary),
+      ));
+    }
+    final discounted = (row.price * (100 - couponPct) / 100).round();
+    return chip(Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          row.price.toRawUzsPrice(),
+          style: AppText.regular12.copyWith(
+            color: c.textMuted,
+            decoration: TextDecoration.lineThrough,
+          ),
+        ),
+        Text(discounted.toRawUzsPrice(),
+            style: AppText.semibold12.copyWith(color: AppColors.badgeGreen)),
+      ],
+    ));
+  }
+}
+
+class _LangChip extends StatelessWidget {
+  const _LangChip({required this.c, required this.lang});
+  final AppColors c;
+  final String lang;
+
+  String get _flag {
+    final l = lang.toLowerCase();
+    if (l.contains('eng') || l.contains('англ')) return '🇬🇧';
+    if (l.contains('rus') || l.contains('рус')) return '🇷🇺';
+    if (l.contains('uz') || l.contains('ўз') || l.contains('o‘z') || l.contains("o'z")) {
+      return '🇺🇿';
+    }
+    return '🌐';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(4.w, 4.h, 12.w, 4.h),
+      decoration: BoxDecoration(
+        color: _chipFill(c),
+        borderRadius: BorderRadius.circular(40.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 24.w,
+            height: 24.w,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(shape: BoxShape.circle),
+            child: Text(_flag, style: TextStyle(fontSize: 16.sp)),
+          ),
+          6.horizontalSpace,
+          Text(lang, style: AppText.medium16.copyWith(color: c.textPrimary)),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Duration helper ──────────────────────────────────────────────────────────
 
 class _Duration {
-  const _Duration._({required this.unbounded, this.minutes});
-
-  final bool unbounded;
+  const _Duration._(this.minutes, this.unbounded);
+  factory _Duration.finite(int minutes) => _Duration._(minutes, false);
+  factory _Duration.unbounded(int? minutes) => _Duration._(minutes, true);
   final int? minutes;
-
-  factory _Duration.finite(int minutes) =>
-      _Duration._(unbounded: false, minutes: minutes);
-
-  factory _Duration.unbounded(int? longestFinite) =>
-      _Duration._(unbounded: true, minutes: longestFinite);
+  final bool unbounded;
 }

@@ -14,6 +14,7 @@ import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/search_coming_soon_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_unified_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
@@ -28,6 +29,8 @@ import 'package:lumi_pass/presentation/auth/login/login_page.dart';
 import 'package:lumi_pass/presentation/auth/register/register_page.dart';
 import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 import 'package:lumi_pass/presentation/start/onboard/onboard_page.dart';
+import 'package:lumi_pass/presentation/start/welcome/welcome_page.dart';
+import 'package:lumi_pass/presentation/start/language/language_page.dart';
 
 import '../../data/api_model/child_model/child_model.dart';
 import '../../data/api_model/order/user_order.dart';
@@ -82,6 +85,8 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: VerifyRoute.page),
 
     /// Start
+    AutoRoute(page: WelcomeRoute.page),
+    AutoRoute(page: LanguageRoute.page),
     AutoRoute(page: OnboardingRoute.page),
 
     /// Main
@@ -110,6 +115,7 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: AddNewCardRoute.page),
     AutoRoute(page: CheckoutRoute.page),
     AutoRoute(page: SearchUnifiedRoute.page),
+    AutoRoute(page: SearchComingSoonRoute.page),
     AutoRoute(page: AttendanceHistoryRoute.page),
     AutoRoute(page: AttendanceDetailRoute.page),
     AutoRoute(page: FaqRoute.page),

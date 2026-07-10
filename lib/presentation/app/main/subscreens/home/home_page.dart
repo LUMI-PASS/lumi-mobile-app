@@ -1,38 +1,33 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:lumi_pass/common/utils/display_name_notifier.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lottie/lottie.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
-import 'package:lumi_pass/common/constants/constants.dart';
-import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
-
-import 'package:lumi_pass/common/widget/container_3d.dart';
-import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
+import 'package:lumi_pass/common/utils/display_name_notifier.dart';
+import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_banners.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_header.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_skeletons.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/banner_lesson_widgets.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/class_item_widget.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_skeletons.dart';
-import 'package:shimmer/shimmer.dart';
 
-// Tab indices inside the main AutoTabsScaffold.
+// Tab index of the Shorts tab inside the main AutoTabsScaffold.
 const int _kShortsTabIndex = 1;
-const int _kSearchTabIndex = 3;
 
 @RoutePage()
 class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
@@ -58,350 +53,161 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   }
 
   @override
-  Widget builder(context, state) {
-    final primary = context.colors.primary;
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Subtle pattern wash using primary color — low opacity SVG motifs.
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFFDFAF5),
-                    Color(0xFFF8F5FF),
-                    Color(0xFFEEE8FF),
-                  ],
-                  stops: [0.0, 0.6, 1.0],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: -40,
-            left: -60,
-            child: Opacity(
-              opacity: 0.08,
-              child: Assets.icons.background.congratsMisc.svg(
-                width: 280.w,
-                height: 280.w,
-                colorFilter:
-                    ColorFilter.mode(primary, BlendMode.srcIn),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 220.h,
-            right: -80,
-            child: Opacity(
-              opacity: 0.06,
-              child: Assets.icons.background.premiumMisc.svg(
-                width: 260.w,
-                height: 260.w,
-                colorFilter:
-                    ColorFilter.mode(primary, BlendMode.srcIn),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -60,
-            left: -40,
-            child: Opacity(
-              opacity: 0.05,
-              child: Assets.icons.background.misc2.svg(
-                width: 240.w,
-                height: 240.w,
-                colorFilter:
-                    ColorFilter.mode(primary, BlendMode.srcIn),
-              ),
-            ),
-          ),
-          Column(
-            children: [
-              // Fixed header
-              Padding(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).viewPadding.top + 8.h,
-                  bottom: 8.h,
-                ),
-                child: _buildHeader(context, state),
-              ),
-              // Scrollable content
-              Expanded(
-                child: state.isLoading
-                    ? const HomeShimmer()
-                    : RefreshIndicator(
-                        onRefresh: () => context.read<HomeCubit>().getHome(),
-                        child: NotificationListener<ScrollNotification>(
-                          onNotification: (scrollInfo) {
-                            if (scrollInfo.metrics.axis == Axis.vertical &&
-                                scrollInfo.metrics.pixels >=
-                                    scrollInfo.metrics.maxScrollExtent - 300) {
-                              context.read<HomeCubit>().loadMoreNearClasses();
-                            }
-                            return false;
-                          },
-                          child: CustomScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            slivers: [
-                              SliverToBoxAdapter(child: SizedBox(height: 4.h)),
-                              SliverToBoxAdapter(
-                                child: _CouponCtaBanner(
-                                  onTap: () => context.router
-                                      .push(const PlansRoute()),
-                                ),
-                              ),
-                              if (state.homeModel?.data?.upcomingClass != null)
-                                SliverToBoxAdapter(
-                                  child: UpcomingClassWidget(
-                                    upcomingClass:
-                                        state.homeModel!.data!.upcomingClass!,
-                                  ),
-                                ),
-                              if ((state.homeModel?.data?.banners ?? [])
-                                  .isNotEmpty) ...[
-                                SliverToBoxAdapter(child: SizedBox(height: 4.h)),
-                                SliverToBoxAdapter(
-                                  child: _buildBannerSlider(context, state),
-                                ),
-                              ],
-                              if ((state.homeModel?.data?.categories?.data ??
-                                      [])
-                                  .isNotEmpty)
-                                SliverToBoxAdapter(
-                                  child: _buildCategoriesSection(context, state),
-                                ),
-                              if (state.newClassesList.isNotEmpty)
-                                SliverToBoxAdapter(
-                                  child: _buildPopularClassesSection(context, state),
-                                ),
-                              if (state.nearClassesList.isNotEmpty) ...[
-                                SliverToBoxAdapter(
-                                  child: _buildNearYouHeader(context),
-                                ),
-                                SliverList(
-                                  delegate: SliverChildBuilderDelegate(
-                                    (context, index) => Padding(
-                                      padding: EdgeInsets.only(bottom: 16.h, right: 16.w),
-                                      child: ClassItemWidget(
-                                        key: ValueKey(
-                                            state.nearClassesList[index].id ??
-                                                index),
-                                        homClass: state.nearClassesList[index],
-                                        width: 1.sw - 32.w,
-                                        imageHeight: 190.h,
-                                        wrapBranch: false,
-                                        onViewAsReels: () => _openShorts(
-                                            context,
-                                            state.nearClassesList,
-                                            index),
-                                      ),
-                                    ),
-                                    childCount: state.nearClassesList.length,
-                                  ),
-                                ),
-                                if (state.isLoadingNearClasses)
-                                  SliverToBoxAdapter(
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 12.h),
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                              SliverToBoxAdapter(
-                                child: SizedBox(
-                                  height: 20.h +
-                                      64.0 +
-                                      MediaQuery.of(context)
-                                          .viewPadding
-                                          .bottom,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget builder(BuildContext context, HomeBuildable state) {
+    final c = context.appColors;
+    final topInset = MediaQuery.of(context).viewPadding.top;
 
-  Widget _buildHeader(BuildContext context, HomeBuildable state) {
-    final storage = getIt<Storage>();
-    final isPremium = storage.hasPremium() == true;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Row(
-        children: [
-          Flexible(
-            fit: FlexFit.loose,
-            child: ValueListenableBuilder<String?>(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: c.overlayStyle,
+      child: Scaffold(
+        backgroundColor: c.bg,
+        body: Column(
+          children: [
+            SizedBox(height: topInset + 8.h),
+            ValueListenableBuilder<String?>(
               valueListenable: displayNameNotifier,
               builder: (_, nameOverride, __) {
-                final firstName = nameOverride
-                    ?? state.homeModel?.data?.forUser?.firstName
-                    ?? storage.parentName.call()
-                    ?? 'User';
-                return Container3d(
-                  padding: EdgeInsets.fromLTRB(10.w, 8.h, 14.w, 8.h),
-                  backgroundColor: Colors.white,
-                  borderColor: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(30.r),
-                  depth: 3,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _PremiumProfileIcon(isPremium: isPremium),
-                      10.kw,
-                      Flexible(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'hello'.tr().toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 9.sp,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF91A2C3),
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                            Text(
-                              firstName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF2E3D5D),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                final storage = getIt<Storage>();
+                final name = nameOverride ??
+                    state.homeModel?.data?.forUser?.firstName ??
+                    storage.parentName.call() ??
+                    'User';
+                return HomeHeader(
+                  name: name,
+                  onSearchTap: () =>
+                      context.router.push(const SearchComingSoonRoute()),
                 );
               },
             ),
-          ),
-          const Spacer(),
-          _CouponIconButton(onTap: () => context.router.push(const PlansRoute())),
-          8.kw,
-          const _BellIconButton(),
-        ],
+            12.verticalSpace,
+            Expanded(child: _buildContent(context, state)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBannerSlider(BuildContext context, HomeBuildable state) {
-    final banners = state.homeModel?.data?.banners ?? [];
-    return _BannerSlider(banners: banners, resolveSrc: _resolveBannerSrc);
-  }
+  Widget _buildContent(BuildContext context, HomeBuildable state) {
+    if (state.isLoading) return const HomeShimmer();
 
-  String _resolveBannerSrc(String? url, String? id) {
-    final raw = (url ?? '').replaceAll(RegExp(r'\s+'), '').trim();
-    if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return raw;
-    }
-    if (raw.isNotEmpty) {
-      return '${Constants.assetsUrl}$raw';
-    }
-    return '${Constants.assetsUrl}${id ?? ''}';
-  }
+    final isEmpty = state.homeModel == null &&
+        state.newClassesList.isEmpty &&
+        state.nearClassesList.isEmpty;
+    if (isEmpty) return _ConnectionErrorView(context.read<HomeCubit>());
 
-  Widget _sectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Row(
-        children: [
-          Container(
-            width: 3.w,
-            height: 16.h,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [context.colors.primary, const Color(0xFFFF7093)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+    return RefreshIndicator(
+      color: AppColors.brandPurple,
+      onRefresh: () => context.read<HomeCubit>().getHome(),
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (scrollInfo) {
+          if (scrollInfo.metrics.axis == Axis.vertical &&
+              scrollInfo.metrics.pixels >=
+                  scrollInfo.metrics.maxScrollExtent - 300) {
+            context.read<HomeCubit>().loadMoreNearClasses();
+          }
+          return false;
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: 8.verticalSpace),
+            SliverToBoxAdapter(
+              child: HomeCouponBanner(
+                onTap: () => context.router.push(const PlansRoute()),
               ),
-              borderRadius: BorderRadius.circular(2.r),
             ),
-          ),
-          8.kw,
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF1A1535),
-              letterSpacing: -0.2,
+            if ((state.homeModel?.data?.banners ?? []).isNotEmpty) ...[
+              SliverToBoxAdapter(child: 12.verticalSpace),
+              SliverToBoxAdapter(
+                child: HomeBannerCarousel(
+                  banners: state.homeModel!.data!.banners!,
+                ),
+              ),
+            ],
+            if (_categories(state).isNotEmpty)
+              SliverToBoxAdapter(child: _buildCategories(context, state)),
+            if (state.newClassesList.isNotEmpty)
+              SliverToBoxAdapter(child: _buildCourses(context, state)),
+            // Second "Курсы" row (Figma has two) — reuses the nearby feed.
+            if (state.nearClassesList.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _buildCoursesRow(
+                  context,
+                  'courses'.tr(),
+                  state.nearClassesList,
+                ),
+              ),
+            if (state.nearClassesList.isNotEmpty)
+              ..._buildNearYou(context, state),
+            // "Реклама" ad card — reuses a real banner image.
+            if ((state.homeModel?.data?.banners ?? []).isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8.h),
+                  child: HomeAdCard(
+                    imageUrl: _bannerSrc(state.homeModel!.data!.banners!.last),
+                    onTap: () => context.router.push(const PlansRoute()),
+                  ),
+                ),
+              ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 24.h +
+                    64.0 +
+                    MediaQuery.of(context).viewPadding.bottom,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCategoriesSection(BuildContext context, HomeBuildable state) {
-    // Prefer the full list loaded from the unlimited /categories endpoint;
-    // fall back to whatever the home feed returned (capped at 10).
-    final categories = (state.categories?.isNotEmpty == true)
-        ? state.categories!
-        : (state.homeModel?.data?.categories?.data ?? []);
+  List<HomCategory> _categories(HomeBuildable state) =>
+      (state.categories?.isNotEmpty == true)
+          ? state.categories!
+          : (state.homeModel?.data?.categories?.data ?? []);
+
+  Widget _buildCategories(BuildContext context, HomeBuildable state) {
+    final categories = _categories(state);
     if (categories.isNotEmpty) SearchCubit.cachedCategories = categories;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        18.kh,
-        _sectionHeader(context, 'all_categories'.tr()),
-        12.kh,
+        24.verticalSpace,
+        HomeSectionHeader(
+          title: 'all_categories'.tr(),
+          onViewAll: () =>
+              context.router.push(const SearchComingSoonRoute()),
+        ),
+        16.verticalSpace,
         SizedBox(
-          height: MediaQuery.of(context).size.width * 0.25,
+          height: 104.h,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(bottom: 8.h, right: 16.w),
+            padding: EdgeInsets.only(right: 16.w),
             itemCount: categories.length,
-            itemBuilder: (context, index) {
-              return CategoryItemWidget(
-                key: ValueKey(categories[index].id ?? index),
-                homeCategoryModel: categories[index],
-                onTap: () {
-                  SearchCubit.pendingCategory = categories[index];
-                  context.tabsRouter.setActiveIndex(_kSearchTabIndex);
-                },
-              );
-            },
+            itemBuilder: (context, index) => CategoryItemWidget(
+              key: ValueKey(categories[index].id ?? index),
+              homeCategoryModel: categories[index],
+              onTap: () =>
+                  context.router.push(const SearchComingSoonRoute()),
+            ),
           ),
         ),
       ],
     );
   }
 
-  void _openShorts(BuildContext context, List<HomClass> feed, int index) {
-    ShortsFeed.set(feed, index);
-    context.tabsRouter.setActiveIndex(_kShortsTabIndex);
-  }
-
-  Widget _buildPopularClassesSection(BuildContext context, HomeBuildable state) {
+  Widget _buildCourses(BuildContext context, HomeBuildable state) {
+    final rowH = 126.h + 14.h + 118.h;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        18.kh,
-        _sectionHeader(context, 'popular_activities'.tr()),
-        12.kh,
+        24.verticalSpace,
+        HomeSectionHeader(title: 'popular_activities'.tr()),
+        16.verticalSpace,
         NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (scrollInfo.metrics.axis == Axis.horizontal &&
@@ -411,725 +217,163 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             }
             return scrollInfo.metrics.axis == Axis.horizontal;
           },
-          child: Builder(
-            builder: (context) {
-              // imageHeight passed to ClassItemWidget + card padding (8+8) + body.
-              // Extra 20.h added so the two-line discounted price row is never clipped.
-              final rowH = 130.h + 16 + 188.h;
-              return SizedBox(
-                height: rowH,
-                child: Stack(
-                  children: [
-                    ListView.builder(
-                      key: const PageStorageKey('new-classes-list'),
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.only(bottom: 8.h, right: 16.w),
-                      itemCount: state.newClassesList.length,
-                      itemBuilder: (context, index) => ClassItemWidget(
-                        key: ValueKey(state.newClassesList[index].id ?? index),
-                        homClass: state.newClassesList[index],
-                        imageHeight: 170.h,
-                        wrapBranch: true,
-                        onViewAsReels: () =>
-                            _openShorts(context, state.newClassesList, index),
-                      ),
-                    ),
-                    if (state.isLoadingNewClasses)
-                      Positioned(
-                        right: 16.w,
-                        top: 0,
-                        bottom: 8.h,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                  ],
+          child: SizedBox(
+            height: rowH,
+            child: Stack(
+              children: [
+                ListView.builder(
+                  key: const PageStorageKey('new-classes-list'),
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.only(right: 16.w),
+                  itemCount: state.newClassesList.length,
+                  itemBuilder: (context, index) => HomeCourseCard(
+                    key: ValueKey(state.newClassesList[index].id ?? index),
+                    homClass: state.newClassesList[index],
+                    onViewAsReels: () =>
+                        _openShorts(context, state.newClassesList, index),
+                  ),
                 ),
-              );
-            },
+                if (state.isLoadingNewClasses)
+                  Positioned(
+                    right: 16.w,
+                    top: 0,
+                    bottom: 8.h,
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  // ignore: unused_element
-  Widget _buildQuickFilters(BuildContext context) {
-    final filters = [
-      ('Bugun', '☀️', const Color(0xFFFFD93D), const Color(0xFFFF6B6B)),
-      ('Bu hafta', '📅', const Color(0xFFA8D8EA), const Color(0xFFAA96DA)),
-      ('Yaqinda', '📍', const Color(0xFF95E1D3), const Color(0xFF38ADA9)),
-      ('Bepul', '🎁', const Color(0xFFFFB4A2), const Color(0xFFE5989B)),
-    ];
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 4.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: filters.map((f) {
-          return GestureDetector(
-            onTap: () {},
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: (MediaQuery.of(context).size.width - 32.w - 24.w) / 4,
-              child: Column(
-                children: [
-                  Container(
-                    width: 54.w,
-                    height: 54.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [f.$3, f.$4],
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x1A6C4EF2),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(f.$2, style: TextStyle(fontSize: 22.sp)),
-                    ),
-                  ),
-                  6.kh,
-                  Text(
-                    f.$1,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A1535),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildNearYouHeader(BuildContext context) {
+  /// A generic horizontal "Курсы" row (Figma's second popular section),
+  /// reusing whichever activity list is passed in.
+  Widget _buildCoursesRow(
+      BuildContext context, String title, List<HomClass> list) {
+    final rowH = 126.h + 14.h + 118.h;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        18.kh,
-        _sectionHeader(context, 'near_you'.tr()),
-        12.kh,
+        24.verticalSpace,
+        HomeSectionHeader(title: title),
+        16.verticalSpace,
+        SizedBox(
+          height: rowH,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(right: 16.w),
+            itemCount: list.length,
+            itemBuilder: (context, index) => HomeCourseCard(
+              key: ValueKey('c2-${list[index].id ?? index}'),
+              homClass: list[index],
+              onViewAsReels: () => _openShorts(context, list, index),
+            ),
+          ),
+        ),
       ],
     );
   }
+
+  String _bannerSrc(HomBanner banner) {
+    final raw = (banner.url ?? '').replaceAll(RegExp(r'\s+'), '').trim();
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    if (raw.isNotEmpty) return '${Constants.assetsUrl}$raw';
+    return '${Constants.assetsUrl}${banner.id ?? ''}';
+  }
+
+  List<Widget> _buildNearYou(BuildContext context, HomeBuildable state) {
+    return [
+      SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            24.verticalSpace,
+            HomeSectionHeader(title: 'near_you'.tr()),
+            16.verticalSpace,
+          ],
+        ),
+      ),
+      SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
+            padding: EdgeInsets.only(bottom: 20.h),
+            child: HomeNearbyCard(
+              key: ValueKey(state.nearClassesList[index].id ?? index),
+              homClass: state.nearClassesList[index],
+              onViewAsReels: () =>
+                  _openShorts(context, state.nearClassesList, index),
+            ),
+          ),
+          childCount: state.nearClassesList.length,
+        ),
+      ),
+      if (state.isLoadingNearClasses)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+        ),
+    ];
+  }
+
+  void _openShorts(BuildContext context, List<HomClass> feed, int index) {
+    ShortsFeed.set(feed, index);
+    context.tabsRouter.setActiveIndex(_kShortsTabIndex);
+  }
 }
 
-class _PremiumProfileIcon extends StatelessWidget {
-  const _PremiumProfileIcon({required this.isPremium});
+/// "No internet" state (Figma `Ошибка подключения к интернету`).
+class _ConnectionErrorView extends StatelessWidget {
+  const _ConnectionErrorView(this.cubit);
 
-  final bool isPremium;
+  final HomeCubit cubit;
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    final circle = Container(
-      width: 36.w,
-      height: 36.w,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: isPremium
-              ? [const Color(0xFFFFD56A), const Color(0xFFFF8A65)]
-              : [
-                  primary.withOpacity(0.22),
-                  const Color(0xFFFF7093).withOpacity(0.22),
-                ],
-        ),
-        boxShadow: isPremium
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFFF8A65).withOpacity(0.45),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
-      ),
-      child: Icon(
-        CupertinoIcons.person_fill,
-        size: 22.sp,
-        color: isPremium ? Colors.white : primary,
-      ),
-    );
-
-    if (!isPremium) return circle;
-
-    return SizedBox(
-      width: 42.w,
-      height: 42.w,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 0,
-            top: 3.w,
-            child: circle,
-          ),
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: EdgeInsets.all(2.w),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+    final c = context.appColors;
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72.w,
+              height: 72.w,
+              decoration: BoxDecoration(
+                color: c.surface,
                 shape: BoxShape.circle,
               ),
-              child: Container(
-                width: 14.w,
-                height: 14.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD56A), Color(0xFFFF8A65)],
-                  ),
-                ),
-                child: Icon(
-                  CupertinoIcons.star_fill,
-                  size: 9.sp,
-                  color: Colors.white,
-                ),
-              ),
+              child: Icon(CupertinoIcons.wifi_slash,
+                  size: 32.sp, color: c.textSecondary),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Coupon icon button ───────────────────────────────────────────────────────
-
-class _CouponIconButton extends StatelessWidget {
-  const _CouponIconButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        width: 42.w,
-        height: 42.w,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 14,
-              offset: const Offset(0, 3),
+            20.verticalSpace,
+            Text(
+              'no_internet_title'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.bold18.copyWith(color: c.textPrimary),
+            ),
+            8.verticalSpace,
+            Text(
+              'no_internet_desc'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.regular14.copyWith(color: c.textSecondary),
+            ),
+            28.verticalSpace,
+            SizedBox(
+              width: 200.w,
+              child: GradientButton(
+                text: 'retry'.tr(),
+                onPressed: () => cubit.getHome(),
+              ),
             ),
           ],
         ),
-        padding: EdgeInsets.all(5.w),
-        child: Lottie.asset(
-          'assets/lotties/premium.json',
-          fit: BoxFit.contain,
-          repeat: true,
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Coupon call-to-action banner (tear-off ticket) ──────────────────────────
-
-class _CouponCtaBanner extends StatefulWidget {
-  const _CouponCtaBanner({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  State<_CouponCtaBanner> createState() => _CouponCtaBannerState();
-}
-
-class _CouponCtaBannerState extends State<_CouponCtaBanner>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _glint;
-
-  // Width of the right "tear-off" stub, in logical px.
-  static const double _stubWidth = 88.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _glint = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3400),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _glint.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    final stub = _stubWidth.w;
-    final notchR = 9.r;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 4.h),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: ClipRRect(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          child: SizedBox(
-            height: 96.h,
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final w = c.maxWidth;
-                final notchX = w - stub;
-                return PhysicalShape(
-                  clipper:
-                      _TicketClipper(notchRadius: notchR, notchCenterX: notchX),
-                  elevation: 7,
-                  color: const Color(0xFFB14AE0),
-                  shadowColor: primary.withOpacity(0.45),
-                  child: Stack(
-                    children: [
-                      // Gradient base
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                primary,
-                                const Color(0xFFB14AE0),
-                                const Color(0xFFFF7093),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Decorative circles
-                      // Positioned(
-                      //   left: -18,
-                      //   top: -28,
-                      //   child: _circle(72.w, Colors.white.withOpacity(0.08)),
-                      // ),
-                      // Positioned(
-                      //   left: notchX - 140,
-                      //   bottom: -46,
-                      //   child: _circle(96.w, Colors.white.withOpacity(0.06)),
-                      // ),
-                      // Periodic light glint
-                      AnimatedBuilder(
-                        animation: _glint,
-                        builder: (context, _) {
-                          final t = Curves.easeInOut
-                              .transform((_glint.value / 0.45).clamp(0.0, 1.0));
-                          final x = -90.0 + t * (w + 180);
-                          return Positioned(
-                            left: x,
-                            top: -24,
-                            bottom: -24,
-                            child: Transform.rotate(
-                              angle: 0.36,
-                              child: Container(
-                                width: 34.w,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.white.withOpacity(0),
-                                      Colors.white.withOpacity(0.22),
-                                      Colors.white.withOpacity(0),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      // Main content
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: 14.w,
-                          top: 12.h,
-                          bottom: 12.h,
-                          right: stub + 10.w,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 46.w,
-                              height: 46.w,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.16),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.35),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Icon(
-                                CupertinoIcons.ticket_fill,
-                                size: 22.sp,
-                                color: Colors.white,
-                              ),
-                            ),
-                            12.kw,
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'coupon_plans_title'.tr(),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                      height: 1.15,
-                                    ),
-                                  ),
-                                  3.kh,
-                                  Text(
-                                    'coupon_plans_subtitle'.tr(),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 11.5.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white.withOpacity(0.9),
-                                      height: 1.25,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Perforation
-                      Positioned(
-                        left: notchX - 1,
-                        top: 16.h,
-                        bottom: 16.h,
-                        width: 2,
-                        child: _VerticalDashedLine(
-                          color: Colors.white.withOpacity(0.55),
-                        ),
-                      ),
-                      // Tear-off stub: CTA arrow
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: stub,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 42.w,
-                              height: 42.w,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.12),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 20.sp,
-                                color: primary,
-                              ),
-                            ),
-                            7.kh,
-                            Text(
-                              'get_coupon'.tr(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 9.sp,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _circle(double size, Color color) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      );
-}
-
-// Ticket outline with circular notches punched at the top & bottom of the
-// perforation line, giving the classic tear-off coupon silhouette.
-class _TicketClipper extends CustomClipper<Path> {
-  _TicketClipper({required this.notchRadius, required this.notchCenterX});
-
-  final double notchRadius;
-  final double notchCenterX;
-
-  @override
-  Path getClip(Size size) {
-    final body = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Offset.zero & size,
-          const Radius.circular(20),
-        ),
-      );
-    final topNotch = Path()
-      ..addOval(
-        Rect.fromCircle(
-          center: Offset(notchCenterX, 0),
-          radius: notchRadius,
-        ),
-      );
-    final bottomNotch = Path()
-      ..addOval(
-        Rect.fromCircle(
-          center: Offset(notchCenterX, size.height),
-          radius: notchRadius,
-        ),
-      );
-    return Path.combine(
-      PathOperation.difference,
-      Path.combine(PathOperation.difference, body, topNotch),
-      bottomNotch,
-    );
-  }
-
-  @override
-  bool shouldReclip(covariant _TicketClipper old) =>
-      old.notchCenterX != notchCenterX || old.notchRadius != notchRadius;
-}
-
-class _VerticalDashedLine extends StatelessWidget {
-  const _VerticalDashedLine({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const dashHeight = 5.0;
-        const dashGap = 4.0;
-        final count = (constraints.maxHeight / (dashHeight + dashGap)).floor();
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(
-            count,
-            (_) => Container(
-              width: 1.6,
-              height: dashHeight,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ─── Bell icon with unread badge ─────────────────────────────────────────────
-
-class _BellIconButton extends StatefulWidget {
-  const _BellIconButton();
-
-  @override
-  State<_BellIconButton> createState() => _BellIconButtonState();
-}
-
-class _BellIconButtonState extends State<_BellIconButton> {
-  int _unreadCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchCount();
-  }
-
-  Future<void> _fetchCount() async {
-    try {
-      final count = await getIt<NotificationsApi>().getUnreadCount();
-      if (mounted) setState(() => _unreadCount = count);
-    } catch (_) {}
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () async {
-        await context.router.push(const NotificationsRoute());
-        _fetchCount();
-      },
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container3d(
-            padding: EdgeInsets.all(8.w),
-            backgroundColor: Colors.white,
-            borderColor: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(14.r),
-            depth: 3,
-            child: Icon(
-              CupertinoIcons.bell,
-              size: 20.sp,
-              color: const Color(0xFF2E3D5D),
-            ),
-          ),
-          if (_unreadCount > 0)
-            Positioned(
-              top: -4,
-              right: -4,
-              child: Container(
-                padding: EdgeInsets.all(2.r),
-                constraints: BoxConstraints(
-                  minWidth: 16.w,
-                  minHeight: 16.w,
-                ),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFF7093),
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  _unreadCount > 99 ? '99+' : '$_unreadCount',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 8.sp,
-                    fontWeight: FontWeight.bold,
-                    height: 1.0,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Banner slider with dot indicators ───────────────────────────────────────
-
-class _BannerSlider extends StatefulWidget {
-  const _BannerSlider({
-    required this.banners,
-    required this.resolveSrc,
-  });
-
-  final List<HomBanner> banners;
-  final String Function(String?, String?) resolveSrc;
-
-  @override
-  State<_BannerSlider> createState() => _BannerSliderState();
-}
-
-class _BannerSliderState extends State<_BannerSlider> {
-  int _current = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Column(
-        children: [
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 180.h,
-              autoPlay: true,
-              autoPlayInterval: const Duration(seconds: 5),
-              viewportFraction: 1.0,
-              enlargeCenterPage: false,
-              onPageChanged: (index, _) =>
-                  setState(() => _current = index),
-            ),
-            items: widget.banners.map((banner) {
-              final src = widget.resolveSrc(banner.url, banner.id);
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(24.r),
-                child: CachedNetworkImage(
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  imageUrl: src,
-                  placeholder: (_, __) => Shimmer.fromColors(
-                    baseColor: Colors.grey.shade200,
-                    highlightColor: Colors.grey.shade50,
-                    child: Container(color: Colors.white),
-                  ),
-                  errorWidget: (_, __, ___) => Shimmer.fromColors(
-                    baseColor: Colors.grey.shade200,
-                    highlightColor: Colors.grey.shade50,
-                    child: Container(color: Colors.white),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          if (widget.banners.length > 1) ...[
-            8.kh,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(widget.banners.length, (i) {
-                final active = i == _current;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: EdgeInsets.symmetric(horizontal: 3.w),
-                  width: active ? 20.w : 6.w,
-                  height: 6.h,
-                  decoration: BoxDecoration(
-                    color: active
-                        ? const Color(0xFF6C4EF2)
-                        : const Color(0xFFD1C4E9),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                );
-              }),
-            ),
-          ],
-        ],
       ),
     );
   }

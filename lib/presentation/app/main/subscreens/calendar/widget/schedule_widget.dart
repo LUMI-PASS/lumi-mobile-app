@@ -5,15 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/text_extensions.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Opens Paycom for [order] from any surface. Falls back through several
@@ -81,267 +80,240 @@ Future<void> payForOrder(BuildContext context, UserOrder order) async {
   }
 }
 
-/// One row in the Bookings tab. Represents a single order (transaction),
-/// which may contain multiple seats (tickets). Tap to open [BookingDetailRoute].
+/// One card in the Bookings tab (redesign — Figma 96-3204). Represents a single
+/// order (transaction), which may hold multiple seats. Tap → [BookingDetailRoute].
+///
+/// Dark reference, but rendered on the design-system tokens so it also works in
+/// light. Shared with the profile "My bookings" screen.
 class BookingCard extends StatelessWidget {
   const BookingCard({super.key, required this.order});
 
   final UserOrder order;
 
-  String _formatDateTime(String? iso) {
-    if (iso == null) return '';
+  /// "22 апр. 09:55" — day + short month + time.
+  String _dateTime(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
     try {
       final d = DateTime.parse(iso).toLocal();
       final month = 'month_short_${d.month}'.tr();
       final hh = d.hour.toString().padLeft(2, '0');
       final mm = d.minute.toString().padLeft(2, '0');
-      return '$month ${d.day}, $hh:$mm';
+      return '${d.day} $month $hh:$mm';
     } catch (_) {
-      return iso;
+      return '';
     }
+  }
+
+  /// "22 апр" — day + short month.
+  String _dateOnly(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
+    try {
+      final d = DateTime.parse(iso).toLocal();
+      return '${d.day} ${'month_short_${d.month}'.tr()}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// "22 апр 09:00 - 10:00" — first ticket's session date + time window.
+  String _sessionDateTime() {
+    if (order.ticketSummaries.isEmpty) return '';
+    final t = order.ticketSummaries.first;
+    final date = _dateOnly(t.ticketDate);
+    final s = t.startTime, e = t.endTime;
+    if (s != null && s.isNotEmpty && e != null && e.isNotEmpty) {
+      return date.isNotEmpty ? '$date $s - $e' : '$s - $e';
+    }
+    return date;
+  }
+
+  /// "3-6 лет" — first item's age range.
+  String _ageRange() {
+    if (order.items.isEmpty) return '';
+    final it = order.items.first;
+    final to = it.ageTo >= 99 ? '∞' : '${it.ageTo}';
+    return '${it.ageFrom}-$to ${'age_years_suffix'.tr()}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final c = context.appColors;
     final imageUrl = (order.activityImage != null &&
             order.activityImage!.isNotEmpty)
         ? order.activityImage
         : null;
-    final seats = order.totalSeats;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () =>
-          context.router.push(BookingDetailRoute(orderId: order.id)),
-      child: Padding(
-        padding: EdgeInsets.only(bottom: 14.h),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF3C539A).withOpacity(0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top row: image + title + status
-              Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 12.h),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14.r),
-                      child: SizedBox(
-                        width: 72.w,
-                        height: 72.w,
-                        child: imageUrl != null
-                            ? CachedNetworkImage(
-                                imageUrl: imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade200,
-                                  highlightColor: Colors.grey.shade50,
-                                  child: Container(color: Colors.white),
-                                ),
-                                errorWidget: (_, __, ___) => Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade200,
-                                  highlightColor: Colors.grey.shade50,
-                                  child: Container(color: Colors.white),
-                                ),
-                              )
-                            : Shimmer.fromColors(
-                                baseColor: Colors.grey.shade200,
-                                highlightColor: Colors.grey.shade50,
-                                child: Container(color: Colors.white),
-                              ),
-                      ),
-                    ),
-                    12.kw,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  order.activityName ?? 'Class',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1E293B),
-                                    letterSpacing: -0.2,
-                                  ),
-                                ),
-                              ),
-                              8.kw,
-                              _OrderStatusPill(
-                                  status: order.effectiveDisplayStatus),
-                            ],
-                          ),
-                          6.kh,
-                          Row(
-                            children: [
-                              Icon(Icons.people_alt_rounded,
-                                  size: 12.sp, color: const Color(0xFF64748B)),
-                              4.kw,
-                              Text(
-                                (seats == 1
-                                        ? 'seats_count_one'
-                                        : 'seats_count_many')
-                                    .tr(args: ['$seats']),
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: const Color(0xFF475569),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              10.kw,
-                              Icon(Icons.schedule_rounded,
-                                  size: 12.sp, color: const Color(0xFF64748B)),
-                              4.kw,
-                              Flexible(
-                                child: Text(
-                                  _formatDateTime(order.createdAt),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: const Color(0xFF475569),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: Colors.grey.shade100),
-              if (order.ticketSummaries.isNotEmpty)
-                Padding(
-                  padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 0),
-                  child: _OrderTimesRow(order: order),
-                ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 12.h),
-                child: Row(
-                  children: [
-                    Text(
-                      (order.isPending ? 'amount_due_short' : 'order_total')
-                          .tr(),
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: const Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (order.hasDiscount) ...[
-                      Text(
-                        order.subtotalAmount.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF94A3B8),
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      6.kw,
-                    ],
-                    Text(
-                      order.totalAmount.toRawUzsPrice(),
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: order.hasDiscount
-                            ? const Color(0xFF16A34A)
-                            : const Color(0xFF1E293B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (order.hasDiscount)
-                Padding(
-                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 8.w, vertical: 3.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.local_offer_rounded,
-                                size: 11.sp,
-                                color: const Color(0xFF16A34A)),
-                            4.kw,
-                            Text(
-                              '${'booking_coupon_saved'.tr()} ${order.discountAmount.toRawUzsPrice()}',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF16A34A),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+      onTap: () => context.router.push(BookingDetailRoute(orderId: order.id)),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header: thumbnail + title + status badge.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: SizedBox(
+                    width: 56.w,
+                    height: 56.w,
+                    child: imageUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) =>
+                                Container(color: c.control),
+                            errorWidget: (_, __, ___) =>
+                                Container(color: c.control),
+                          )
+                        : Container(color: c.control),
                   ),
                 ),
-              if (order.isPending)
-                _PayNowFooter(
-                  order: order,
-                  color: primary,
-                )
-              else
-                Padding(
-                  padding: EdgeInsets.only(
-                      left: 14.w, right: 14.w, bottom: 12.h),
-                  child: Row(
-                    children: [
-                      const Spacer(),
-                      'view_details'.tr().s(12).w(600).c(primary),
-                      4.kw,
-                      Icon(Icons.arrow_forward_rounded,
-                          size: 14.sp, color: primary),
-                    ],
+                12.kw,
+                Expanded(
+                  child: Text(
+                    order.activityName ?? 'Class',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold16.copyWith(color: c.textPrimary),
                   ),
                 ),
+                8.kw,
+                _StatusBadge(status: order.effectiveDisplayStatus),
+              ],
+            ),
+            16.kh,
+            _InfoRow(
+              icon: Icons.child_care_rounded,
+              label: _ageRange(),
+              value: '${order.totalSeats}',
+            ),
+            12.kh,
+            _InfoRow(
+              icon: Icons.event_note_rounded,
+              label: 'booking_date'.tr(),
+              value: _dateTime(order.createdAt),
+            ),
+            if (_sessionDateTime().isNotEmpty) ...[
+              12.kh,
+              _InfoRow(
+                icon: Icons.calendar_today_rounded,
+                label: 'order_date'.tr(),
+                value: _sessionDateTime(),
+              ),
             ],
-          ),
+            12.kh,
+            _InfoRow(
+              label: 'order_sum'.tr(),
+              value: order.totalAmount.toRawUzsPrice(),
+            ),
+            if (order.isPending) ...[
+              14.kh,
+              _PayNowFooter(order: order),
+            ],
+          ],
         ),
       ),
     );
   }
 }
 
+/// One label/value line in a [BookingCard]. Optional leading icon.
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value, this.icon});
+
+  final IconData? icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Row(
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 20.sp, color: c.textMuted),
+          8.kw,
+        ],
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.regular14.copyWith(color: c.textMuted),
+          ),
+        ),
+        8.kw,
+        Text(
+          value,
+          style: AppText.semibold14.copyWith(color: c.textPrimary),
+        ),
+      ],
+    );
+  }
+}
+
+/// Booking status pill. Active is a green gradient; the terminal states are
+/// solid (visited=blue, missed=orange, cancelled=red) per Figma 96-3204.
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    Gradient? gradient;
+    Color? color;
+    final String label;
+    switch (status.toLowerCase()) {
+      case 'active':
+        gradient = AppGradients.green;
+        label = 'status_active'.tr();
+        break;
+      case 'visited':
+        color = const Color(0xFF497BF1);
+        label = 'status_visited'.tr();
+        break;
+      case 'missed':
+        color = const Color(0xFFEF8E48);
+        label = 'status_missed'.tr();
+        break;
+      case 'canceled':
+      case 'cancelled':
+        color = AppColors.error;
+        label = 'status_canceled'.tr();
+        break;
+      default: // pending
+        color = const Color(0xFFEF8E48);
+        label = 'status_pending'.tr();
+    }
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        color: color,
+        borderRadius: BorderRadius.circular(48.r),
+      ),
+      child: Text(
+        label,
+        style: AppText.medium10.copyWith(color: Colors.white),
+      ),
+    );
+  }
+}
+
 class _PayNowFooter extends StatefulWidget {
-  const _PayNowFooter({required this.order, required this.color});
+  const _PayNowFooter({required this.order});
 
   final UserOrder order;
-  final Color color;
 
   @override
   State<_PayNowFooter> createState() => _PayNowFooterState();
@@ -366,19 +338,13 @@ class _PayNowFooterState extends State<_PayNowFooter> {
       color: Colors.transparent,
       child: InkWell(
         onTap: _launching ? null : _onTap,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(20.r),
-          bottomRight: Radius.circular(20.r),
-        ),
+        borderRadius: BorderRadius.circular(30.r),
         child: Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(vertical: 12.h),
           decoration: BoxDecoration(
-            color: widget.color,
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(20.r),
-              bottomRight: Radius.circular(20.r),
-            ),
+            gradient: AppGradients.brand,
+            borderRadius: BorderRadius.circular(30.r),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -393,139 +359,15 @@ class _PayNowFooterState extends State<_PayNowFooter> {
                   ),
                 )
               else
-                Icon(Icons.payments_rounded,
-                    size: 16.sp, color: Colors.white),
+                Icon(Icons.payments_rounded, size: 16.sp, color: Colors.white),
               8.kw,
-              (_launching ? 'opening_payment'.tr() : 'pay_now'.tr())
-                  .s(13)
-                  .w(700)
-                  .c(Colors.white),
+              Text(
+                _launching ? 'opening_payment'.tr() : 'pay_now'.tr(),
+                style: AppText.semibold14.copyWith(color: Colors.white),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _OrderTimesRow extends StatelessWidget {
-  const _OrderTimesRow({required this.order});
-
-  final UserOrder order;
-
-  static String _fmtDate(String? iso) {
-    if (iso == null || iso.isEmpty) return '';
-    try {
-      final d = DateTime.parse(iso).toLocal();
-      final month = 'month_short_${d.month}'.tr();
-      return '$month ${d.day}';
-    } catch (_) {
-      return '';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Collapse identical windows so a 3-ticket order with the same time only
-    // shows it once. Falls back to ticketDate when no start/end times.
-    final seen = <String>{};
-    final entries = <String>[];
-    for (final t in order.ticketSummaries) {
-      final s = t.startTime;
-      final e = t.endTime;
-      final date = _fmtDate(t.ticketDate);
-      final hasTimes = s != null && s.isNotEmpty && e != null && e.isNotEmpty;
-      if (hasTimes) {
-        final label = date.isNotEmpty ? '$date, $s – $e' : '$s – $e';
-        if (seen.add(label)) entries.add(label);
-      } else if (date.isNotEmpty) {
-        if (seen.add(date)) entries.add(date);
-      }
-    }
-    if (entries.isEmpty) return const SizedBox.shrink();
-    return Row(
-      children: [
-        Icon(Icons.access_time_rounded,
-            size: 12.sp, color: const Color(0xFF64748B)),
-        4.kw,
-        Expanded(
-          child: Text(
-            entries.join(', '),
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: const Color(0xFF475569),
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OrderStatusPill extends StatelessWidget {
-  const _OrderStatusPill({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color bg;
-    final Color fg;
-    final String label;
-    switch (status.toLowerCase()) {
-      case 'active':
-        bg = const Color(0xFFECFDF5);
-        fg = const Color(0xFF16A34A);
-        label = 'status_active'.tr();
-        break;
-      case 'visited':
-        bg = const Color(0xFFEFF6FF);
-        fg = const Color(0xFF2563EB);
-        label = 'status_visited'.tr();
-        break;
-      case 'missed':
-        bg = const Color(0xFFFFF3CD);
-        fg = const Color(0xFF92400E);
-        label = 'status_missed'.tr();
-        break;
-      case 'canceled':
-      case 'cancelled':
-        bg = const Color(0xFFFEF2F2);
-        fg = const Color(0xFFDC2626);
-        label = 'status_cancelled'.tr();
-        break;
-      default: // pending
-        bg = const Color(0xFFFFF7ED);
-        fg = const Color(0xFFB45309);
-        label = 'status_pending'.tr();
-    }
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6.w,
-            height: 6.w,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: fg),
-          ),
-          6.kw,
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w700,
-              color: fg,
-            ),
-          ),
-        ],
       ),
     );
   }

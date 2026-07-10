@@ -1,5 +1,24 @@
 str,ru_RU,uz_UZ,en_EN
 skip,Пропустить,O‘tkazish,Skip
+filter_active,Активные,Faol,Active
+filter_completed,Завершённые,Yakunlangan,Completed
+booking_date,Дата брони,Bron sanasi,Booking date
+order_date,Дата,Sana,Date
+order_sum,Сумма,Summa,Amount
+status_completed,Завершена,Yakunlangan,Completed
+status_canceled,Отменено вами,Bekor qilingan,Canceled
+status_visited,Посещено,Tashrif buyurilgan,Visited
+status_missed,Пропущено,O‘tkazib yuborilgan,Missed
+status_pending,В ожидании,Kutilmoqda,Pending
+settings_title,Настройки,Sozlamalar,Settings
+app_version,Версия приложения,Ilova versiyasi,App version
+age_years_suffix,лет,yosh,y.o.
+profile_title,Профиль,Profil,Profile
+add_child_short,Добавить,Qo‘shish,Add
+edit_profile,Изменить,Tahrirlash,Edit
+privacy_policy,Политика конфиденциальности,Maxfiylik siyosati,Privacy policy
+favorites,Избранное,Sevimlilar,Favorites
+logout_account,Выйти из аккаунта,Akkauntdan chiqish,Log out
 onboard1_title,Активности и события для детей,Bolalar uchun faoliyat va tadbirlar,Activities & Events for Kids
 onboard1_subtitle,Всё лучшее для вашего ребёнка в одном месте,Farzandingiz uchun hamma narsa bir joyda,Everything for your child in one place
 onboard2_title,Найдите идеальное занятие,Mukammal mashg’ulot toping,Find the Perfect Activity
@@ -23,8 +42,10 @@ session_expired,"Учетная запись пользователя удале
 tab_home,Главная,Bosh sahifa,Home
 tab_shorts,Видео,Videolar,Shorts
 tab_bookings,Брони,Bronlar,Bookings
-tab_explore,Поиск,Qidirish,Explore
+tab_explore,Учреждения,Muassasalar,Institutions
 tab_profile,Профиль,Profil,Profile
+coming_soon,Скоро,Tez orada,Coming soon
+coming_soon_desc,Мы уже готовим этот раздел. Загляните чуть позже.,Bu bo'lim tayyorlanmoqda. Birozdan so'ng qayting.,We're getting this section ready. Check back soon.
 hello,ПРИВЕТ,SALOM,HELLO
 all_categories,Все категории,Barcha kategoriyalar,All Categories
 newly_added_classes,Новые занятия,Yangi mashg'ulotlar,New Activities
@@ -774,3 +795,71 @@ fiscal_receipt_subtitle,Чек ОФД (Soliq),OFD cheki (Soliq),OFD receipt (Sol
 fiscal_receipt_error,Не удалось загрузить чек,Chekni yuklab bo‘lmadi,Couldn’t load the receipt
 fiscal_receipt_unavailable,Чек пока недоступен,Chek hozircha mavjud emas,Receipt isn’t available yet
 fiscal_receipt_open_browser,Открыть в браузере,Brauzerda ochish,Open in browser
+select_language_subtitle,Выберите удобный для вас язык интерфейса,Siz uchun qulay interfeys tilini tanlang,Choose a comfortable interface language
+auth_title,Авторизация,Avtorizatsiya,Authorization
+auth_subtitle,Введите номер телефона для входа в аккаунт,Hisobingizga kirish uchun telefon raqamingizni kiriting,Enter your phone number to sign in
+confirm_title,Подтверждение,Tasdiqlash,Confirmation
+confirm_code_sent_prefix,Код подтверждения отправлен на номер ,Tasdiqlash kodi ,We sent a confirmation code to 
+confirm_code_sent_suffix,, raqamiga yuborildi,
+greeting,Привет,Salom,Hi
+view_all,Посмотреть все,Barchasini ko'rish,View all
+watch,Смотреть,Ko'rish,View
+courses,Курсы,Kurslar,Courses
+no_internet_title,Ошибка подключения к интернету,Internetga ulanishda xatolik,Internet connection error
+no_internet_desc,Проверьте подключение к интернету и попробуйте снова.,Internet aloqasini tekshiring va qayta urinib ko'ring.,Check your internet connection and try again.
+sale,Акция,Aksiya,Sale
+buy_tickets,Купить билеты,Chiptalarni sotib olish,Buy tickets
+detail_location,Расположение,Manzil,Location
+detail_duration,Длительность,Davomiyligi,Duration
+detail_age,Возраст,Yosh,Age
+detail_gender,Пол,Jinsi,Gender
+price_tier_children,Дети в возрасте,Yoshdagi bolalar,Children
+price_tier_all,Дети и взрослые,Bolalar va kattalar,Children & adults
+search_hint,Искать...,Qidirish...,Search...
+all_count,Все • {},Barchasi • {},All • {}
+view_on_map_subtitle,Просмотрите расположение на карте,Joylashuvni xaritada ko'ring,See the location on the map
+results_not_found,Результаты не найдены,Natijalar topilmadi,No results found
+results_not_found_desc,Попробуйте изменить параметры поиска или выбрать другую категорию,Qidiruv shartlarini o'zgartiring yoki boshqa toifani tanlang,Try changing your search parameters or choosing another category
+order_details,Детали брони,Bron tafsilotlari,Booking details
+payment_title,Оплата,To'lov,Payment
+pay_total_amount,Сумма к оплате,To'lov summasi,Total amount
+pay_tickets,Билеты,Chiptalar,Tickets
+pay_wait_booking,Ожидаем подтверждение оплаты. Бронь появится автоматически.,To'lov tasdiqlanishini kutyapmiz. Bron avtomatik paydo bo'ladi.,Waiting for payment confirmation. Your booking will appear automatically.
+pay_wait_subscription,Ожидаем подтверждение оплаты. Подписка активируется автоматически.,To'lov tasdiqlanishini kutyapmiz. Obuna avtomatik faollashadi.,Waiting for payment confirmation. Your subscription will activate automatically.
+order_paid_title,Оплата успешно выполнена,To'lov muvaffaqiyatli amalga oshirildi,Payment successful
+order_paid_desc,Оплата за бронирование успешно произведена. Бронирование подтверждено.,Bron uchun to'lov amalga oshirildi. Bron tasdiqlandi.,Your booking payment went through. The booking is confirmed.
+order_pending_title,Ожидается оплата,To'lov kutilmoqda,Awaiting payment
+order_pending_desc,Мы ждём подтверждение оплаты. Как только оно придёт, бронирование появится автоматически.,To'lov tasdig'ini kutyapmiz. U kelishi bilan bron avtomatik paydo bo'ladi.,We're waiting for payment confirmation. Your booking will appear automatically once it arrives.
+order_failed_title,Оплата не выполнена,To'lov amalga oshmadi,Payment failed
+order_failed_desc,Оплата не была завершена. Попробуйте ещё раз или выберите другой способ оплаты.,To'lov yakunlanmadi. Qaytadan urinib ko'ring yoki boshqa to'lov usulini tanlang.,The payment didn't go through. Please try again or choose another payment method.
+nav_main,Главный,Bosh sahifa,Home
+pay_choose_type,Выберите тип оплаты,To'lov turini tanlang,Choose payment type
+pay_choose_card,Выберите карту,Kartani tanlang,Choose card
+pay_with_card,Оплата с картой,Karta bilan to'lov,Pay with card
+pay_add_card,Добавить карту,Karta qo'shish,Add card
+pay_send_sms,Отправить смс,SMS yuborish,Send SMS
+pay_confirm,Подтверждение,Tasdiqlash,Confirmation
+pay_code_sent,Код подтверждения отправлен на ваш номер телефона,Tasdiqlash kodi telefon raqamingizga yuborildi,A confirmation code was sent to your phone
+pay_resend,Отправить снова,Qayta yuborish,Resend
+pay_code_sent_to,Код подтверждения отправлен на {},Tasdiqlash kodi {} raqamiga yuborildi,A confirmation code was sent to {}
+pay_card_number_invalid,Введите номер карты полностью,Karta raqamini to'liq kiriting,Enter the full card number
+pay_card_expiry_invalid,Введите срок действия карты,Karta amal qilish muddatini kiriting,Enter the card expiry date
+pay_enter_code,Введите код подтверждения,Tasdiqlash kodini kiriting,Enter the confirmation code
+pay_code_invalid,Неверный код. Попробуйте снова,Kod noto'g'ri. Qayta urinib ko'ring,Invalid code. Please try again
+pay_generic_error,Не удалось выполнить платёж. Попробуйте снова,To'lovni amalga oshirib bo'lmadi. Qayta urinib ko'ring,Could not complete the payment. Please try again
+detail_happy_parents,Довольные родители,Mamnun ota-onalar,Happy parents
+ad_label,Реклама,Reklama,Ad
+dark_mode,Тёмная тема,Tungi rejim,Dark mode
+dark_mode_on,Включена,Yoqilgan,On
+dark_mode_off,Выключена,O'chirilgan,Off
+book_payment_method,Оплата,To'lov,Payment
+book_pay_method_label,Способ оплаты,To'lov usuli,Payment method
+book_change,Изменить,O'zgartirish,Change
+book_payment_summary,Оплата,Hisob,Summary
+book_date_time,Дата и время,Sana va vaqt,Date & time
+promo_code_title,Промокод,Promokod,Promo code
+promo_discount,Скидка за купон,Kupon chegirmasi,Coupon discount
+pay_open_gateway,Открыть {},{} ochish,Open {}
+pay_open_gateway_again,Открыть {} снова,{} qayta ochish,Open {} again
+pay_redirect_note,Вы будете перенаправлены в {} для завершения оплаты.,To'lovni yakunlash uchun {} ga yo'naltirilasiz.,You'll be redirected to {} to complete payment.
+pay_open_failed,Не удалось открыть {}.,{} ochib bo'lmadi.,Couldn't open {}.

@@ -306,9 +306,11 @@ class HomeRepositoryImpl extends HomeRepository {
       final listView = list as List;
       ClassPricingCache.mergeFromList(listView);
       final pages = (data is Map ? data['pages'] : null) ?? 1;
+      final total = (data is Map ? data['total'] : null);
       return ClassesPage(
         classes: listView.map((e) => HomClass.fromJson(e)).toList(),
         totalPages: pages is int ? pages : int.tryParse('$pages') ?? 1,
+        total: total is int ? total : int.tryParse('$total') ?? listView.length,
       );
     });
   }
@@ -354,11 +356,13 @@ class HomeRepositoryImpl extends HomeRepository {
         .then((value) {
       final data = value.data['data'] ?? value.data;
       final list = (data is Map ? data['data'] : data) ?? [];
+      final listView = list as List;
       final pages = (data is Map ? data['pages'] : null) ?? 1;
+      final total = (data is Map ? data['total'] : null);
       return BranchesPage(
-        branches:
-            (list as List).map((e) => HomBranch.fromJson(e)).toList(),
+        branches: listView.map((e) => HomBranch.fromJson(e)).toList(),
         totalPages: pages is int ? pages : int.tryParse('$pages') ?? 1,
+        total: total is int ? total : int.tryParse('$total') ?? listView.length,
       );
     });
   }

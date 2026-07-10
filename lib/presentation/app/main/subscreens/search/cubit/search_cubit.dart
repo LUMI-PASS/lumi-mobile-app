@@ -20,6 +20,14 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   double? _lng;
   String _lastLang = '';
 
+  /// Total matching results per tab, surfaced in the "Все • N" count row.
+  int _classesTotal = 0;
+  int _branchesTotal = 0;
+
+  /// Total number of results for the active tab (all pages, not just loaded).
+  int get resultCount =>
+      buildable.activeTab == 0 ? _classesTotal : _branchesTotal;
+
   /// Pending category set from outside (e.g. home page).
   /// Picked up on next [applyPendingCategory] call.
   static HomCategory? pendingCategory;
@@ -211,6 +219,8 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           lng: _lng,
         );
 
+        _classesTotal = result.total;
+
         if (append) {
           final existingIds = buildable.classes.map((c) => c.id).toSet();
           final unique = result.classes
@@ -239,6 +249,8 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           lat: _lat,
           lng: _lng,
         );
+
+        _branchesTotal = result.total;
 
         if (append) {
           final existingIds = buildable.branches.map((b) => b.id).toSet();
