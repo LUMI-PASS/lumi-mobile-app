@@ -42,6 +42,13 @@ class CategoryItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final url = sanitizeImageUrl(homeCategoryModel?.image);
+    // Decode the artwork at the size it is actually painted (56pt) instead of
+    // the source's full resolution. A full-res bitmap is large enough that
+    // Flutter's image cache evicts it as soon as the user leaves Home, so the
+    // tile had to re-read and re-decode from disk — and flash its shimmer —
+    // every time the screen came back. At tile size the whole row stays
+    // resident and re-renders instantly.
+    final decodeSize = (56.w * MediaQuery.devicePixelRatioOf(context)).round();
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -62,11 +69,17 @@ class CategoryItemWidget extends StatelessWidget {
                 child: url == null
                     ? _fallback()
                     : CachedNetworkImage(
-                                imageUrl: url,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => _shimmer(c),
-                                errorWidget: (_, __, ___) => _fallback(),
-                          ),
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        memCacheWidth: decodeSize,
+                        memCacheHeight: decodeSize,
+                        // A cached tile is ready on the first frame; fading it
+                        // in would re-introduce the flicker we just removed.
+                        fadeInDuration: Duration.zero,
+                        fadeOutDuration: Duration.zero,
+                        placeholder: (_, __) => _shimmer(c),
+                        errorWidget: (_, __, ___) => _fallback(),
+                      ),
               ),
               8.verticalSpace,
               Text(

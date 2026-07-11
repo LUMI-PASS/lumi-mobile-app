@@ -370,6 +370,12 @@ class _NotificationCard extends StatelessWidget {
     }
   }
 
+  /// The backend always prefixes the title with an emoji sticker ("✅ Booking
+  /// approved"). The card already carries a glyph for the type, so drop
+  /// everything before the first letter or digit.
+  String get _title => notification.title
+      .replaceFirst(RegExp(r'^[^\p{L}\p{N}]+', unicode: true), '');
+
   Color _iconColor(AppColorScheme c) {
     switch (notification.notificationType) {
       case NotificationType.bookingApproved:
@@ -454,7 +460,7 @@ class _NotificationCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            notification.title,
+                            _title,
                             style: AppText.semibold14
                                 .copyWith(color: c.textPrimary),
                           ),
