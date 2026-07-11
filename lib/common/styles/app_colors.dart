@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 class AppColors {
   const AppColors({
     required this.bg,
+    required this.canvas,
     required this.surface,
     required this.control,
     required this.controlBorder,
@@ -25,6 +26,11 @@ class AppColors {
 
   /// Scaffold background — Figma `Color/BG`.
   final Color bg;
+
+  /// Tinted page background the frosted cards sit on — Figma `#EFEEF5`. Used by
+  /// screens built out of frosted cards (booking), where a plain white [bg]
+  /// would leave the pale cards with no contrast.
+  final Color canvas;
 
   /// Cards / list items / unselected chips — Figma `Color/Shape`.
   final Color surface;
@@ -82,9 +88,35 @@ class AppColors {
   /// Error text / invalid code — Figma `Secondary/Red`.
   static const Color error = Color(0xFFFF4B55);
 
+  /// Pending / awaiting state (the "Ожидается оплата" hourglass accent) —
+  /// Figma `Secondary/Orange`.
+  static const Color warning = Color(0xFFF6B53D);
+
+  /// Fixed ink for glyphs on always-light chips (hero controls / dots) —
+  /// Figma `color/bg` `#15141A`. Theme-independent: these chips stay light
+  /// over the hero image in both themes.
+  static const Color ink = Color(0xFF15141A);
+
+  /// Muted glyph on always-light chips — the secondary hero controls
+  /// (share / heart) render in Figma `#A5A6BB`, a step lighter than [ink].
+  /// Theme-independent sibling to [ink].
+  static const Color inkMuted = Color(0xFFA5A6BB);
+
+  /// Fill of the small chips punched *into* an always-light frosted card —
+  /// stepper +/− buttons, the "Change" / "Apply" chips. Theme-independent for
+  /// the same reason as [ink]: the card underneath stays pale in both themes,
+  /// so a theme-aware fill would go dark-on-light in dark mode.
+  static const Color inkChip = Color(0xFFEFEEF5);
+
+  /// Hairline rule between rows on an always-light surface (the saved-card list
+  /// in the payment sheet) — Figma `Primary/Divider`. Doubles as the fill of the
+  /// secondary "Cancel" button sitting next to a gradient CTA.
+  static const Color divider = Color(0xFFE5E7EA);
+
   // ── Dark theme (the reference design) ─────────────────────────────────────
   static const AppColors dark = AppColors(
     bg: Color(0xFF15141A),
+    canvas: Color(0xFF1D1C23),
     surface: Color(0xFF202024),
     control: Color(0xFF313039),
     controlBorder: Color(0xFF4C4C54),
@@ -100,7 +132,8 @@ class AppColors {
   // ── Light theme (derived to mirror the dark reference) ────────────────────
   static const AppColors light = AppColors(
     bg: Color(0xFFFFFFFF),
-    surface: Color(0xFFF2F1F6),
+    canvas: Color(0xFFEFEEF5),
+    surface: Color(0xffFFFFFF),
     control: Color(0xFFF2F1F6),
     controlBorder: Color(0xFFE6E5EC),
     tabBar: Color(0xFFFFFFFF),

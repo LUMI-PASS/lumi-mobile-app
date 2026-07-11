@@ -193,13 +193,11 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
     if (_loading) {
       return Scaffold(
-        backgroundColor: context.colors.window,
         body: const _BookingDetailShimmer(),
       );
     }
     if (_error != null || _detail == null) {
       return Scaffold(
-        backgroundColor: context.colors.window,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -241,7 +239,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     final images = _resolveImages();
 
     return Scaffold(
-      backgroundColor: context.colors.window,
       body: Stack(
         children: [
           CustomScrollView(

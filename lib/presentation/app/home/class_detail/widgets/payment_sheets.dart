@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/auth_fields.dart';
@@ -40,6 +41,52 @@ typedef CheckoutResultCallback = void Function(CheckoutResult result);
 /// current choice in its "Способ оплаты" row.
 enum PaymentRail { payme, click, uzum, card }
 
+/// Card brands we can show artwork for.
+///
+/// The saved-card list is display-only today (Paylov re-collects the full PAN on
+/// every charge), but the brand is a fixed vocabulary that the backend will
+/// eventually send, so it is modelled as an enum with a non-throwing [fromKey]
+/// and an [unknown] fallback rather than raw strings.
+enum CardBrand {
+  uzcard('uzcard', 'UzCard'),
+  humo('humo', 'Humo'),
+  mastercard('mastercard', 'MasterCard'),
+  unknown('unknown', 'Card');
+
+  const CardBrand(this.key, this.label);
+
+  /// Wire value.
+  final String key;
+
+  /// Display name shown next to the masked digits.
+  final String label;
+
+  static CardBrand fromKey(String? key) {
+    final k = key?.trim().toLowerCase();
+    for (final b in values) {
+      if (b.key == k) return b;
+    }
+    return CardBrand.unknown;
+  }
+
+  /// Brand artwork, or `null` for [unknown] — the row then falls back to a
+  /// neutral card tile.
+  AssetGenImage? get artwork => switch (this) {
+        CardBrand.uzcard => Assets.images.pay.uzcard,
+        CardBrand.humo => Assets.images.pay.humo,
+        CardBrand.mastercard => Assets.images.pay.mastercard,
+        CardBrand.unknown => null,
+      };
+}
+
+/// A card shown in the "choose a card" list.
+class SavedCard {
+  const SavedCard({required this.brand, required this.last4});
+
+  final CardBrand brand;
+  final String last4;
+}
+
 void showPaymentFlow(
   BuildContext context, {
   required PaymentStartCheckout startCheckout,
@@ -53,7 +100,9 @@ void showPaymentFlow(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    useSafeArea: true,
+    // No SafeArea: it would reserve the home-indicator inset *outside* the
+    // sheet, leaving a dead gap under it. The shell pads for that inset itself.
+    useSafeArea: false,
     builder: (_) => _PaymentSheet(
       startCheckout: startCheckout,
       confirmCard: confirmCard,
@@ -87,30 +136,40 @@ class _SheetShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
+    final media = MediaQuery.of(context);
+    // Clear the home indicator from *inside* the sheet, and lift the whole
+    // thing above the keyboard when a field is focused.
+    final bottomInset = media.padding.bottom + media.viewInsets.bottom;
     return Container(
+      constraints: BoxConstraints(maxHeight: 0.9.sh),
       decoration: BoxDecoration(
         color: c.bg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       padding: EdgeInsets.only(
-        left: 16.w,
-        right: 16.w,
-        top: 8.h,
-        bottom: 16.h + MediaQuery.of(context).viewInsets.bottom,
+        left: 14.w,
+        right: 14.w,
+        top: 12.h,
+        bottom: 12.h + bottomInset,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 36.w,
+            width: 32.w,
             height: 4.h,
-            margin: EdgeInsets.only(bottom: 16.h),
+            margin: EdgeInsets.only(bottom: 12.h),
             decoration: BoxDecoration(
-              color: c.control,
-              borderRadius: BorderRadius.circular(2.r),
+              // Figma `Pull`: rgba(170,178,188,0.35).
+              color: const Color(0xFFAAB2BC).withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(12.r),
             ),
           ),
-          child,
+          // The card list can outgrow the sheet on small screens, so the body
+          // scrolls inside the shell instead of overflowing it.
+          Flexible(
+            child: SingleChildScrollView(child: child),
+          ),
         ],
       ),
     );
@@ -148,6 +207,138 @@ class _ErrorNote extends StatelessWidget {
 }
 
 // ─── Payment sheet (choose → add card → OTP) ──────────────────────────────────
+
+/// Figma `Input Bg` — the dark tile behind the "add card" plus. Screen-local.
+const Color _kAddCardTile = Color(0xFF2A2A2A);
+
+/// A pale 42px input on the payment sheets (card number, expiry).
+class _PayField extends StatelessWidget {
+  const _PayField({
+    required this.controller,
+    required this.hint,
+    this.keyboardType,
+    this.inputFormatters,
+    this.suffix,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final Widget? suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      decoration: BoxDecoration(
+        color: AppColors.inkChip,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+              cursorColor: AppColors.link,
+              style: AppText.regular14.copyWith(color: AppColors.ink),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                border: InputBorder.none,
+                hintText: hint,
+                hintStyle:
+                    AppText.regular12.copyWith(color: AppColors.inkMuted),
+              ),
+            ),
+          ),
+          if (suffix != null) suffix!,
+        ],
+      ),
+    );
+  }
+}
+
+/// The paired "Cancel" / gradient-CTA footer shared by the payment sheets.
+class _SheetActions extends StatelessWidget {
+  const _SheetActions({
+    required this.primaryLabel,
+    required this.onPrimary,
+    required this.onCancel,
+    this.busy = false,
+  });
+
+  final String primaryLabel;
+  final VoidCallback? onPrimary;
+  final VoidCallback? onCancel;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onCancel,
+            child: Container(
+              height: 50.h,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(44.r),
+              ),
+              child: Text('cancel'.tr(),
+                  style:
+                      AppText.medium16.copyWith(color: AppColors.greeting)),
+            ),
+          ),
+        ),
+        8.horizontalSpace,
+        Expanded(
+          child: GradientButton(
+            text: primaryLabel,
+            loading: busy,
+            onPressed: onPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The 44×28 brand tile in the saved-card list. Falls back to a neutral card
+/// glyph when the brand has no artwork ([CardBrand.unknown]).
+class _CardArtwork extends StatelessWidget {
+  const _CardArtwork({required this.brand});
+
+  static const double width = 44;
+  static const double height = 28;
+
+  final CardBrand brand;
+
+  @override
+  Widget build(BuildContext context) {
+    final art = brand.artwork;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4.r),
+      child: SizedBox(
+        width: width.w,
+        height: height.h,
+        child: art == null
+            ? ColoredBox(
+                color: AppColors.inkChip,
+                child: Icon(Icons.credit_card_rounded,
+                    size: 16.sp, color: AppColors.inkMuted),
+              )
+            : art.image(fit: BoxFit.cover),
+      ),
+    );
+  }
+}
 
 enum _PayMethod { click, payme, uzum, card }
 
@@ -212,9 +403,9 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   // Illustrative saved cards. Paylov charges a full PAN + expiry each time, so
   // paying still routes through the add-card step; these are display only.
   static const _cards = [
-    'UzCard •••• 8534',
-    'Humo •••• 8534',
-    'MasterCard •••• 8534',
+    SavedCard(brand: CardBrand.uzcard, last4: '8534'),
+    SavedCard(brand: CardBrand.humo, last4: '8534'),
+    SavedCard(brand: CardBrand.mastercard, last4: '8534'),
   ];
 
   @override
@@ -346,6 +537,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   // ── Step: choose method ─────────────────────────────────────────────────────
   Widget _buildChoose() {
     final c = context.appColors;
+    final isCard = _method == _PayMethod.card;
     return _SheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -353,89 +545,93 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         children: [
           Center(
             child: Text('pay_choose_type'.tr(),
-                style: AppText.bold18.copyWith(color: c.textPrimary)),
+                style: AppText.heading20.copyWith(color: c.textPrimary)),
           ),
-          16.verticalSpace,
+          20.verticalSpace,
           if (_error != null) _ErrorNote(message: _error!),
-          _methodLogo('click', 20, _PayMethod.click),
+          // The Click wordmark ships in two tints; the rail tiles are always the
+          // pale `inkChip` fill, so the dark glyph is the one that reads.
+          _methodTile(
+            _PayMethod.click,
+            logo: Assets.images.pay.clickLight,
+            logoHeight: 20,
+          ),
           4.verticalSpace,
-          _methodLogo('payme', 24, _PayMethod.payme),
+          _methodTile(_PayMethod.payme,
+              logo: Assets.images.pay.payme, logoHeight: 24),
           4.verticalSpace,
-          _methodLogo('uzum', 24, _PayMethod.uzum),
+          _methodTile(_PayMethod.uzum,
+              logo: Assets.images.pay.uzum, logoHeight: 24),
           4.verticalSpace,
-          _cardRow(),
-          // Always show the saved cards + "Добавить карту" so every option
-          // (click / payme / uzum / card + card-adding) is visible at once.
-          16.verticalSpace,
-          Text('pay_choose_card'.tr(),
-              style: AppText.regular12.copyWith(color: c.textSecondary)),
-          8.verticalSpace,
-          ...List.generate(_cards.length, (i) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
-              child: _savedCard(_cards[i], i),
-            );
-          }),
-          _addCardRow(),
-          16.verticalSpace,
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _busy ? null : () => Navigator.of(context).pop(),
-                  child: Container(
-                    height: 50.h,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(30.r),
-                    ),
-                    child: Text('cancel'.tr(),
-                        style:
-                            AppText.medium16.copyWith(color: c.textPrimary)),
-                  ),
-                ),
-              ),
-              12.horizontalSpace,
-              Expanded(
-                child: GradientButton(
-                  text: 'pay_now'.tr(),
-                  loading: _busy,
-                  onPressed: () {
-                    if (_method == _PayMethod.card) {
-                      setState(() {
-                        _error = null;
-                        _step = _Step.addCard;
-                      });
-                    } else {
-                      _payRedirect();
-                    }
-                  },
-                ),
-              ),
+          _methodTile(_PayMethod.card),
+          // The card list belongs to the card rail — it only appears once that
+          // rail is picked, as in the design.
+          if (isCard) ...[
+            20.verticalSpace,
+            Text('pay_choose_card'.tr(),
+                style: AppText.semibold14.copyWith(color: AppColors.inkMuted)),
+            14.verticalSpace,
+            for (var i = 0; i < _cards.length; i++) ...[
+              if (i > 0) _cardDivider(),
+              _savedCardRow(_cards[i], i),
             ],
+            _cardDivider(),
+            _addCardRow(),
+          ],
+          20.verticalSpace,
+          _SheetActions(
+            primaryLabel: 'pay_now'.tr(),
+            busy: _busy,
+            onCancel: _busy ? null : () => Navigator.of(context).pop(),
+            onPrimary: () {
+              // The card rail needs a PAN + expiry before it can charge, so it
+              // advances to the add-card step; the redirect rails pay directly.
+              if (isCard) {
+                setState(() {
+                  _error = null;
+                  _step = _Step.addCard;
+                });
+              } else {
+                _payRedirect();
+              }
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _methodLogo(String asset, double h, _PayMethod m) {
-    final c = context.appColors;
+  /// One payment-rail tile: a pale card holding the provider wordmark (or the
+  /// card icon + label for the card rail) and the selection radio.
+  Widget _methodTile(
+    _PayMethod m, {
+    AssetGenImage? logo,
+    double logoHeight = 20,
+  }) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => _selectMethod(m),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: c.surface,
+          color: AppColors.inkChip,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
           children: [
-            Image.asset('assets/icons/pay/$asset.png',
-                height: h.h, fit: BoxFit.contain),
+            if (logo != null)
+              logo.image(height: logoHeight.h, fit: BoxFit.contain)
+            else ...[
+              Assets.icons.icCard.svg(
+                width: 20.w,
+                height: 20.w,
+                colorFilter:
+                    const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+              ),
+              12.horizontalSpace,
+              Text('pay_with_card'.tr(),
+                  style: AppText.semibold16.copyWith(color: AppColors.ink)),
+            ],
             const Spacer(),
             _radio(_method == m),
           ],
@@ -444,33 +640,13 @@ class _PaymentSheetState extends State<_PaymentSheet> {
     );
   }
 
-  Widget _cardRow() {
-    final c = context.appColors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _selectMethod(_PayMethod.card),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.credit_card_rounded, size: 18.sp, color: c.textPrimary),
-            10.horizontalSpace,
-            Text('pay_with_card'.tr(),
-                style: AppText.medium16.copyWith(color: c.textPrimary)),
-            const Spacer(),
-            _radio(_method == _PayMethod.card),
-          ],
-        ),
-      ),
-    );
-  }
+  /// Hairline between saved-card rows, inset past the artwork as in the design.
+  Widget _cardDivider() => Padding(
+        padding: EdgeInsets.only(left: 60.w),
+        child: Container(height: 1, color: AppColors.divider),
+      );
 
-  Widget _savedCard(String label, int i) {
-    final c = context.appColors;
+  Widget _savedCardRow(SavedCard card, int i) {
     final selected = _method == _PayMethod.card && _cardIndex == i;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -478,27 +654,18 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         setState(() => _cardIndex = i);
         _selectMethod(_PayMethod.card);
       },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 14.h),
         child: Row(
           children: [
-            Container(
-              width: 32.w,
-              height: 22.h,
-              decoration: BoxDecoration(
-                color: c.control,
-                borderRadius: BorderRadius.circular(4.r),
+            _CardArtwork(brand: card.brand),
+            16.horizontalSpace,
+            Expanded(
+              child: Text(
+                '${card.brand.label} •••• ${card.last4}',
+                style: AppText.medium16.copyWith(color: AppColors.ink),
               ),
-              child:
-                  Icon(Icons.credit_card, size: 14.sp, color: c.textSecondary),
             ),
-            10.horizontalSpace,
-            Text(label, style: AppText.medium14.copyWith(color: c.textPrimary)),
-            const Spacer(),
             _radio(selected),
           ],
         ),
@@ -507,55 +674,66 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   }
 
   Widget _addCardRow() {
-    final c = context.appColors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => setState(() {
         _error = null;
         _step = _Step.addCard;
       }),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 14.h),
         child: Row(
           children: [
             Container(
-              width: 32.w,
-              height: 32.w,
+              width: _CardArtwork.width.w,
+              height: _CardArtwork.height.h,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: c.surface,
-                borderRadius: BorderRadius.circular(8.r),
+                color: _kAddCardTile,
+                borderRadius: BorderRadius.circular(4.r),
               ),
-              child: Icon(Icons.add, size: 18.sp, color: c.textPrimary),
+              child: Icon(Icons.add_rounded,
+                  size: 18.sp, color: AppColors.onBrand),
             ),
-            10.horizontalSpace,
-            Text('pay_add_card'.tr(),
-                style: AppText.medium16.copyWith(color: c.textPrimary)),
-            const Spacer(),
+            16.horizontalSpace,
+            Expanded(
+              child: Text('pay_add_card'.tr(),
+                  style: AppText.medium16.copyWith(color: AppColors.ink)),
+            ),
             Icon(Icons.chevron_right_rounded,
-                size: 20.sp, color: c.textSecondary),
+                size: 18.sp, color: AppColors.ink),
           ],
         ),
       ),
     );
   }
 
+  /// Figma `_Checkbox base`: a hollow grey ring, or a filled green disc with a
+  /// white tick once picked.
   Widget _radio(bool selected) {
     if (selected) {
-      return Icon(Icons.check_circle_rounded,
-          size: 22.sp, color: AppColors.badgeGreen);
+      return Container(
+        width: 16.w,
+        height: 16.w,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: AppColors.green,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.check_rounded, size: 11.sp, color: AppColors.onBrand),
+      );
     }
     return Container(
-      width: 20.w,
-      height: 20.w,
+      width: 16.w,
+      height: 16.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: context.appColors.controlBorder, width: 1.5),
+        border: Border.all(color: AppColors.inkMuted),
       ),
     );
   }
 
-  // ── Step: add card ──────────────────────────────────────────────────────────
+  // ── Step: add card (Figma 131:3526) ─────────────────────────────────────────
   Widget _buildAddCard() {
     final c = context.appColors;
     return _SheetShell(
@@ -563,82 +741,65 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _stepHeader('pay_add_card'.tr(),
-              onBack: _busy ? null : () => setState(() => _step = _Step.choose)),
-          16.verticalSpace,
-          if (_error != null) _ErrorNote(message: _error!),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
+          Center(
+            child: Column(
               children: [
-                Icon(Icons.credit_card_rounded,
-                    size: 18.sp, color: c.textSecondary),
-                10.horizontalSpace,
-                Expanded(
-                  child: TextField(
-                    controller: _numberCtrl,
-                    keyboardType: TextInputType.number,
-                    cursorColor: AppColors.brandPurple,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(16),
-                      _CardNumberFormatter(),
-                    ],
-                    style: AppText.medium16.copyWith(color: c.textPrimary),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '0000 0000 0000 0000',
-                      hintStyle:
-                          AppText.medium16.copyWith(color: c.textPlaceholder),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          12.verticalSpace,
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today_rounded,
-                    size: 16.sp, color: c.textSecondary),
-                10.horizontalSpace,
-                Expanded(
-                  child: TextField(
-                    controller: _expiryCtrl,
-                    keyboardType: TextInputType.number,
-                    cursorColor: AppColors.brandPurple,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(4),
-                      _ExpiryFormatter(),
-                    ],
-                    style: AppText.medium16.copyWith(color: c.textPrimary),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'MM/YY',
-                      hintStyle:
-                          AppText.medium16.copyWith(color: c.textPlaceholder),
-                    ),
-                  ),
+                Text('pay_add_card'.tr(),
+                    style: AppText.heading20.copyWith(color: c.textPrimary)),
+                8.verticalSpace,
+                Text(
+                  'pay_add_card_subtitle'.tr(),
+                  textAlign: TextAlign.center,
+                  style:
+                      AppText.regular14.copyWith(color: AppColors.inkMuted),
                 ),
               ],
             ),
           ),
           20.verticalSpace,
-          GradientButton(
-            text: 'pay_send_sms'.tr(),
-            loading: _busy,
-            onPressed: _startCardCheckout,
+          if (_error != null) _ErrorNote(message: _error!),
+          _PayField(
+            controller: _numberCtrl,
+            hint: 'pay_card_number_hint'.tr(),
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(16),
+              _CardNumberFormatter(),
+            ],
+            suffix: Assets.icons.icCardScan.svg(
+              width: 24.w,
+              height: 24.w,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+            ),
+          ),
+          12.verticalSpace,
+          // The expiry is a short field in the design, not full-bleed.
+          SizedBox(
+            width: 170.w,
+            child: _PayField(
+              controller: _expiryCtrl,
+              hint: 'pay_card_expiry_hint'.tr(),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(4),
+                _ExpiryFormatter(),
+              ],
+            ),
+          ),
+          24.verticalSpace,
+          _SheetActions(
+            primaryLabel: 'pay_add_card'.tr(),
+            busy: _busy,
+            onCancel: _busy
+                ? null
+                : () => setState(() {
+                      _error = null;
+                      _step = _Step.choose;
+                    }),
+            onPrimary: _startCardCheckout,
           ),
         ],
       ),
@@ -681,26 +842,6 @@ class _PaymentSheetState extends State<_PaymentSheet> {
     );
   }
 
-  Widget _stepHeader(String title, {VoidCallback? onBack}) {
-    final c = context.appColors;
-    return Row(
-      children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onBack,
-          child: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 16.sp, color: c.textPrimary),
-        ),
-        Expanded(
-          child: Center(
-            child: Text(title,
-                style: AppText.bold18.copyWith(color: c.textPrimary)),
-          ),
-        ),
-        SizedBox(width: 16.sp),
-      ],
-    );
-  }
 }
 
 /// Wrapper so a caller can surface a clean, localized error message to the

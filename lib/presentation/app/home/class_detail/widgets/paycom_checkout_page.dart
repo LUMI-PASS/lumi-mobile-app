@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
@@ -177,27 +178,26 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
   /// Order-details rows derived from the checkout result (the external redirect
   /// flow has no per-tier breakdown, so it shows date + ticket count).
   List<OrderLine> _resultLines(CheckoutResult r) {
-    const dir = 'assets/icons/detail';
     final out = <OrderLine>[];
     if (r.ticketDate.isNotEmpty) {
       out.add(OrderLine(
         label: 'book_date_time'.tr(),
         value: r.ticketDate,
-        iconAsset: '$dir/iconsax-ai-calendar.svg',
+        iconAsset: Assets.icons.detail.iconsaxAiCalendar,
       ));
     }
     if (r.ticketNumbers.isNotEmpty) {
       out.add(OrderLine(
         label: 'pay_tickets'.tr(),
         value: '${r.ticketNumbers.length}',
-        iconAsset: '$dir/iconsax-ai-users.svg',
+        iconAsset: Assets.icons.detail.iconsaxAiUsers,
       ));
     }
     if (r.discountAmount > 0) {
       out.add(OrderLine(
         label: 'promo_discount'.tr(),
         value: '−${r.discountAmount.toRawUzsPrice()}',
-        iconAsset: '$dir/iconsax-ticket-discount.svg',
+        iconAsset: Assets.icons.detail.iconsaxTicketDiscount,
         negative: true,
       ));
     }

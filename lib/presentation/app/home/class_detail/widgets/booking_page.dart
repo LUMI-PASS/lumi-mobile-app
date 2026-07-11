@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -5,6 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -14,7 +19,6 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
@@ -28,21 +32,23 @@ String _isoDateStatic(DateTime d) {
   return '${d.year}-${two(d.month)}-${two(d.day)}';
 }
 
-// ─── Brand accents (theme-independent) ───────────────────────────────────────
-// Everything else now reads from `context.appColors` (dark/light aware).
-const _brand = Color(0xFFA752C8); // Color/Pink — primary accent / gradient end
-const _brandDark = Color(0xFFFC6F95); // brand pink — gradient start / emphasis
-
-class BookingBottomsheet extends StatefulWidget {
-  const BookingBottomsheet({super.key, required this.clazz});
+/// "Buy tickets" — a full page, not a bottom sheet.
+///
+/// It used to be a `showModalBottomSheet` opened with `useSafeArea: false`, so
+/// its own header slid under the notch / Dynamic Island. A booking is a
+/// multi-section form with its own back navigation, so it belongs on the
+/// router as a page with a real [SafeArea].
+@RoutePage()
+class BookingPage extends StatefulWidget {
+  const BookingPage({super.key, required this.clazz});
 
   final ClassFullModel clazz;
 
   @override
-  State<BookingBottomsheet> createState() => _BookingBottomsheetState();
+  State<BookingPage> createState() => _BookingPageState();
 }
 
-class _BookingBottomsheetState extends State<BookingBottomsheet> {
+class _BookingPageState extends State<BookingPage> {
   // ageTiers mode: _tierCounts[tierIdx][durIdx] = count
   late final List<List<int>> _tierCounts;
   // legacy flat mode: _flatCounts[rangeIdx] = count
@@ -163,52 +169,26 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
   }
 
   Widget _buildPromoSection() {
-    final c = context.appColors;
     final applied = _appliedPromo;
+
+    // Applied: the field is replaced by the code + what it saved, and the
+    // trailing chip becomes the "remove" affordance.
     if (applied != null) {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEAF7EE),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: const Color(0xFFB7E4C7)),
+      return PillCard(
+        leading: PillIconBadge(
+          child: Assets.icons.detail.iconsaxDiscount.svg(width: 20.w),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.local_offer_rounded,
-                size: 18.sp, color: const Color(0xFF16A34A)),
-            8.kw,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    applied.code,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: c.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    'promo_applied_saved'
-                        .tr(args: [applied.discountAmount.toRawUzsPrice()]),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF16A34A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: _removePromo,
-              behavior: HitTestBehavior.opaque,
-              child: Icon(Icons.close_rounded, size: 18.sp, color: c.textSecondary),
-            ),
-          ],
+        child: PillCaption(
+          title: applied.code,
+          subtitle: 'promo_applied_saved'
+              .tr(args: [applied.discountAmount.toRawUzsPrice()]),
+          subtitleColor: AppColors.green,
+        ),
+        trailing: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _removePromo,
+          child: Icon(Icons.close_rounded,
+              size: 18.sp, color: AppColors.inkMuted),
         ),
       );
     }
@@ -216,74 +196,55 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 46.h,
-                padding: EdgeInsets.symmetric(horizontal: 12.w),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF6F4FE),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: c.controlBorder),
-                ),
-                child: TextField(
-                  controller: _promoCtrl,
-                  enabled: !_promoLoading,
-                  textCapitalization: TextCapitalization.characters,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _applyPromo(),
-                  style: TextStyle(fontSize: 14.sp, color: c.textPrimary),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    hintText: 'promo_hint'.tr(),
-                    hintStyle: TextStyle(fontSize: 14.sp, color: c.textSecondary),
-                  ),
-                ),
-              ),
+        PillCard(
+          leading: PillIconBadge(
+            child: Assets.icons.detail.iconsaxDiscount.svg(width: 20.w),
+          ),
+          child: TextField(
+            controller: _promoCtrl,
+            enabled: !_promoLoading,
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _applyPromo(),
+            // The error belongs to the code that was submitted, so it stops
+            // being true the moment the user edits the field.
+            onChanged: (_) {
+              if (_promoError != null) setState(() => _promoError = null);
+            },
+            cursorColor: AppColors.link,
+            style: AppText.semibold14.copyWith(color: AppColors.ink),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+              border: InputBorder.none,
+              hintText: 'promo_hint'.tr(),
+              hintStyle:
+                  AppText.semibold14.copyWith(color: AppColors.inkMuted),
             ),
-            10.kw,
-            GestureDetector(
-              onTap: _promoLoading ? null : _applyPromo,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                height: 46.h,
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: c.control,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: _promoLoading
-                    ? SizedBox(
-                        width: 18.w,
-                        height: 18.h,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(_brandDark),
-                        ),
-                      )
-                    : Text(
-                        'promo_apply'.tr(),
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: _brandDark,
-                        ),
-                      ),
-              ),
-            ),
-          ],
+          ),
+          trailing: PillActionChip(
+            label: 'promo_apply'.tr(),
+            onTap: _promoLoading ? null : _applyPromo,
+            child: _promoLoading
+                ? SizedBox(
+                    width: 14.w,
+                    height: 14.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandPink),
+                    ),
+                  )
+                : null,
+          ),
         ),
         if (_promoError != null) ...[
-          6.kh,
-          Text(
-            _promoError!,
-            style:
-                TextStyle(fontSize: 12.sp, color: const Color(0xFFDC2626)),
+          8.kh,
+          Padding(
+            padding: EdgeInsets.only(left: 8.w),
+            child: Text(
+              _promoError!,
+              style: AppText.regular12.copyWith(color: AppColors.error),
+            ),
           ),
         ],
       ],
@@ -303,38 +264,10 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
   bool get _requiresBookingSlot =>
       widget.clazz.category?.requiresBookingTimeSlot ?? false;
 
-  bool _isWindowValid(TimeOfDay start, TimeOfDay end) {
-    final s = start.hour * 60 + start.minute;
-    final e = end.hour * 60 + end.minute;
-    if (e <= s) return false;
-    final bounds = _slotBounds();
-    if (bounds != null) {
-      final bMin = bounds.min.hour * 60 + bounds.min.minute;
-      final bMax = bounds.max.hour * 60 + bounds.max.minute;
-      if (s < bMin || e > bMax) return false;
-    }
-    return true;
-  }
-
   String _fmtTime(TimeOfDay t) {
     final h = t.hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
     return '$h:$m';
-  }
-
-  /// Deduplicated summary of custom windows for the confirmation step.
-  /// Identical windows are merged with a ×N suffix so they don't repeat.
-  String _windowSummary() {
-    final counts = <String, int>{};
-    for (final w in _customWindows) {
-      if (w.start == null || w.end == null) continue;
-      final key = '${_fmtTime(w.start!)} – ${_fmtTime(w.end!)}';
-      counts[key] = (counts[key] ?? 0) + 1;
-    }
-    if (counts.isEmpty) return '';
-    return counts.entries
-        .map((e) => e.value > 1 ? '${e.key} ×${e.value}' : e.key)
-        .join('  ·  ');
   }
 
   /// Parses "HH:MM" string to a TimeOfDay. Returns null if invalid.
@@ -592,7 +525,7 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
                         child: Text(
                           'book_continue'.tr(),
                           style: TextStyle(
-                            color: _brandDark,
+                            color: AppColors.brandPink,
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -839,21 +772,6 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
     return out;
   }
 
-  String _className() {
-    final m = widget.clazz.name;
-    if (m.isEmpty) return '';
-    final lang = context.locale.languageCode;
-    final v = m[lang] ?? m['uz'] ?? m['ru'] ?? m['en'] ?? m.values.first;
-    return v is String ? v : '';
-  }
-
-  String _formatSelectedDate(_AvailableDate? d) {
-    if (d == null) return '';
-    final monthFull = 'month_full_${d.date.month}'.tr();
-    final weekdayFull = 'weekday_full_${d.date.weekday}'.tr();
-    return '${d.date.day} $monthFull, $weekdayFull';
-  }
-
   /// Builds the CheckoutItems for the current selection (age tiers, flat
   /// ranges, or per-ticket time windows for required-booking categories).
   List<CheckoutItem> _buildCheckoutItems() {
@@ -1013,63 +931,86 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
     }
   }
 
-  /// Builds the order-details breakdown rows (date + per-tier tickets +
-  /// discount) shown on the success screen, mirroring [_breakdownSection].
-  List<OrderLine> _orderLines() {
-    const dir = 'assets/icons/detail';
-    final out = <OrderLine>[];
-    if (_selectedDate != null) {
-      final slot = _selectedSlot;
-      final time = slot != null ? ' ${slot.startTime}' : '';
-      out.add(OrderLine(
-        label: 'book_date_time'.tr(),
-        value:
-            '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
-        iconAsset: '$dir/iconsax-ai-calendar.svg',
+  /// The order breakdown (per-tier tickets + date + discount). Rendered both in
+  /// the on-page summary card ([_breakdownSection]) and, mapped to [OrderLine],
+  /// on the success screen — one source so the two can never disagree.
+  List<_SummaryLine> _summaryLines() {
+    final out = <_SummaryLine>[];
+
+    void addTicket({
+      required int ageFrom,
+      required int? ageTo,
+      required String rangeLabel,
+      required num price,
+      required int count,
+    }) {
+      if (count <= 0) return;
+      final sub = (_hasCoupon ? _applyDiscount(price) : price) * count;
+      out.add(_SummaryLine(
+        icon: ageFrom >= 6 || ageTo == null
+            ? Assets.icons.detail.iconsaxAiUsers
+            : Assets.icons.detail.babyGirl,
+        label: '$rangeLabel (${count}x)',
+        value: sub.toRawUzsPrice(),
       ));
     }
+
     if (_hasAgeTiers) {
       for (var t = 0; t < _tierCounts.length; t++) {
         final tier = widget.clazz.ageTiers[t];
-        final durs = tier.durations;
         for (var d = 0; d < _tierCounts[t].length; d++) {
-          final count = _tierCounts[t][d];
-          if (count <= 0) continue;
-          final sub =
-              (_hasCoupon ? _applyDiscount(durs[d].price) : durs[d].price) *
-                  count;
-          final adults = tier.ageFrom >= 6 || tier.ageTo == null;
-          out.add(OrderLine(
-            label: '${tier.rangeLabel} (${count}x)',
-            value: sub.toRawUzsPrice(),
-            iconAsset: '$dir/${adults ? 'iconsax-ai-users' : 'iconsax-baby'}.svg',
-          ));
+          addTicket(
+            ageFrom: tier.ageFrom,
+            ageTo: tier.ageTo,
+            rangeLabel: tier.rangeLabel,
+            price: tier.durations[d].price,
+            count: _tierCounts[t][d],
+          );
         }
       }
     } else {
       for (var i = 0; i < _flatCounts.length; i++) {
-        final count = _flatCounts[i];
-        if (count <= 0) continue;
         final r = widget.clazz.pricesSummary[i];
-        final sub = (_hasCoupon ? _applyDiscount(r.price) : r.price) * count;
-        final adults = r.ageFrom >= 6 || r.ageTo == null;
-        out.add(OrderLine(
-          label: '${r.rangeLabel} (${count}x)',
-          value: sub.toRawUzsPrice(),
-          iconAsset: '$dir/${adults ? 'iconsax-ai-users' : 'iconsax-baby'}.svg',
-        ));
+        addTicket(
+          ageFrom: r.ageFrom,
+          ageTo: r.ageTo,
+          rangeLabel: r.rangeLabel,
+          price: r.price,
+          count: _flatCounts[i],
+        );
       }
     }
+
+    if (_selectedDate != null) {
+      final slot = _selectedSlot;
+      final time = slot != null ? ' ${slot.startTime}' : '';
+      out.add(_SummaryLine(
+        icon: Assets.icons.detail.iconsaxAiCalendar,
+        label: 'book_date_time'.tr(),
+        value:
+            '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
+      ));
+    }
     if (!_hasCoupon && _promoDiscount > 0) {
-      out.add(OrderLine(
+      out.add(_SummaryLine(
+        icon: Assets.icons.detail.iconsaxTicketDiscount,
         label: 'promo_discount'.tr(),
         value: '−${_promoDiscount.toRawUzsPrice()}',
-        iconAsset: '$dir/iconsax-ticket-discount.svg',
         negative: true,
       ));
     }
     return out;
   }
+
+  /// The same breakdown, in the shape the success screen expects.
+  List<OrderLine> _orderLines() => _summaryLines()
+      .map((l) => OrderLine(
+            label: l.label,
+            value: l.value,
+            iconAsset: l.icon,
+            negative: l.negative,
+          ))
+      .toList();
 
   /// Card rail: the OTP was confirmed and the order is already paid — go
   /// straight to the success screen (no external checkout redirect needed).
@@ -1104,180 +1045,209 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
     }
   }
 
-  // ─── Single-screen booking sheet (Figma 60:3665) ──────────────────────────
+  // ─── Single-screen booking page (Figma 60:6122) ───────────────────────────
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    return Container(
-      decoration: BoxDecoration(
-        color: c.bg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      padding: EdgeInsets.only(
-        left: 16.w,
-        right: 16.w,
-        top: 8.h,
-        bottom: 16.h + viewInsets,
-      ),
-      child: SafeArea(
-        top: false,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: 0.92.sh),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 36.w,
-                  height: 4.h,
-                  margin: EdgeInsets.only(bottom: 12.h),
-                  decoration: BoxDecoration(
-                    color: c.control,
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  _SheetIconButton(
-                    icon: 'arrow',
-                    onTap: () => Navigator.of(context).maybePop(),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'buy_tickets'.tr(),
-                      textAlign: TextAlign.center,
-                      style: AppText.bold18.copyWith(color: c.textPrimary),
+    return Scaffold(
+      backgroundColor: c.canvas,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _header(c),
+            Expanded(
+              child: SingleChildScrollView(
+                // Only the header is pinned; the date strip scrolls away with
+                // the rest of the form.
+                padding: EdgeInsets.only(bottom: 24.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Full-bleed: the strip has its own horizontal padding so
+                    // its chips can scroll edge to edge.
+                    if (_availableDates.isNotEmpty)
+                      _DateStrip(
+                        dates: _availableDates,
+                        selected: _selectedDate,
+                        unavailableDates:
+                            _requiresBookingSlot && !_prefetchingDays
+                                ? _scheduledDates
+                                : null,
+                        onPickDate: _onDateTapped,
+                      ),
+                    16.kh,
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _ticketSection(c),
+                          20.kh,
+                          if (_requiresBookingSlot)
+                            _customWindowsSection(c)
+                          else
+                            _slotsSection(c),
+                          20.kh,
+                          _paymentMethodRow(c),
+                          if (!_hasCoupon) ...[
+                            20.kh,
+                            _promoSection(c),
+                          ],
+                          20.kh,
+                          _breakdownSection(c),
+                          if (_error != null) ...[
+                            12.kh,
+                            Text(_error!,
+                                style: AppText.regular12
+                                    .copyWith(color: AppColors.error)),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 32.w),
-                ],
-              ),
-              16.kh,
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!_requiresBookingSlot) ...[
-                        _datesSection(c),
-                        16.kh,
-                      ],
-                      _ticketSection(c),
-                      16.kh,
-                      if (_requiresBookingSlot) ...[
-                        _customWindowsSection(c),
-                        16.kh,
-                      ],
-                      _paymentMethodRow(c),
-                      if (!_hasCoupon) ...[
-                        16.kh,
-                        _promoSection(c),
-                      ],
-                      16.kh,
-                      _breakdownSection(c),
-                      if (_error != null) ...[
-                        12.kh,
-                        Text(_error!,
-                            style: AppText.regular12
-                                .copyWith(color: AppColors.error)),
-                      ],
-                    ],
-                  ),
+                  ],
                 ),
               ),
-              16.kh,
-              _payCta(c),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+      bottomNavigationBar: _bottomBar(c),
+    );
+  }
+
+  /// Back control + centered title. Replaces the old drag handle: the screen is
+  /// a page now, so it gets a real header inside the [SafeArea].
+  Widget _header(AppColors c) => Padding(
+        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+        child: Row(
+          children: [
+            FrostedCard(
+              onTap: () => Navigator.of(context).maybePop(),
+              padding: EdgeInsets.all(8.w),
+              child: Assets.icons.detail.arrow.svg(
+                width: 16.w,
+                height: 16.w,
+                colorFilter:
+                    const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                'buy_tickets'.tr(),
+                textAlign: TextAlign.center,
+                style: AppText.medium16.copyWith(color: c.textPrimary),
+              ),
+            ),
+            // Balances the back button so the title stays optically centered.
+            SizedBox(width: 32.w),
+          ],
+        ),
+      );
+
+  /// Pay CTA pinned above the home indicator on an opaque bar, as in the design.
+  Widget? _bottomBar(AppColors c) {
+    if (RemoteConfigService.instance.isInReview) return null;
+    // The home-indicator inset is padded in directly rather than wrapped in a
+    // SafeArea, so the bar's fill runs to the bottom edge with no dead gap.
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    return Container(
+      color: c.bg,
+      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h + bottomInset),
+      child: GradientButton(
+        text: 'book_pay_cta'.tr(args: [_payableTotal.toRawUzsPrice()]),
+        loading: _submitting,
+        onPressed: _openPaymentFlow,
       ),
     );
   }
 
   Widget _sectionHeader(AppColors c, String title) => Padding(
-        padding: EdgeInsets.only(bottom: 12.h),
-        child: Text(title, style: AppText.bold18.copyWith(color: c.textPrimary)),
+        padding: EdgeInsets.only(left: 8.w, bottom: 14.h),
+        child:
+            Text(title, style: AppText.semibold14.copyWith(color: c.textSecondary)),
       );
 
-  // "Цены на билеты" — ticket steppers.
+  // "Цены на билеты" — one frosted pill row per tariff, each with a stepper.
   Widget _ticketSection(AppColors c) {
     final rows = <Widget>[];
+
+    void addRow({
+      required int ageFrom,
+      required int? ageTo,
+      required String label,
+      required String? durationLabel,
+      required num price,
+      required int count,
+      required VoidCallback onMinus,
+      required VoidCallback onPlus,
+    }) {
+      if (rows.isNotEmpty) rows.add(8.kh);
+      rows.add(_TariffRow(
+        // Adult tiers get the "users" glyph, children the "baby" one — the same
+        // split the order summary uses.
+        icon: ageFrom >= 6 || ageTo == null
+            ? Assets.icons.detail.iconsaxAiUsers
+            : Assets.icons.detail.babyGirl,
+        label: label,
+        durationLabel: durationLabel,
+        price: price,
+        discountedPrice: _hasCoupon ? _applyDiscount(price) : null,
+        count: count,
+        onMinus: onMinus,
+        onPlus: onPlus,
+      ));
+    }
+
     if (_hasAgeTiers) {
       for (var t = 0; t < widget.clazz.ageTiers.length; t++) {
         final tier = widget.clazz.ageTiers[t];
-        if (tier.durations.isEmpty) continue;
-        rows.add(Padding(
-          padding: EdgeInsets.symmetric(vertical: 8.h),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-              decoration: BoxDecoration(
-                color: c.control,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Text(tier.rangeLabel,
-                  style: AppText.semibold12.copyWith(color: _brandDark)),
-            ),
-          ),
-        ));
         for (var d = 0; d < tier.durations.length; d++) {
           final dur = tier.durations[d];
-          rows.add(_DurationRow(
-            label: dur.durationLabel,
+          addRow(
+            ageFrom: tier.ageFrom,
+            ageTo: tier.ageTo,
+            label: tier.rangeLabel,
+            durationLabel: dur.durationLabel,
             price: dur.price,
-            discountedPrice: _hasCoupon ? _applyDiscount(dur.price) : null,
             count: _tierCounts[t][d],
             onMinus: () => _bumpTier(t, d, -1),
             onPlus: () => _bumpTier(t, d, 1),
-          ));
-          if (d != tier.durations.length - 1) {
-            rows.add(Divider(height: 1, color: c.controlBorder));
-          }
+          );
         }
       }
     } else {
       for (var i = 0; i < widget.clazz.pricesSummary.length; i++) {
         final r = widget.clazz.pricesSummary[i];
-        rows.add(_DurationRow(
+        addRow(
+          ageFrom: r.ageFrom,
+          ageTo: r.ageTo,
           label: r.rangeLabel,
+          durationLabel: null,
           price: r.price,
-          discountedPrice: _hasCoupon ? _applyDiscount(r.price) : null,
           count: _flatCounts[i],
           onMinus: () => _bumpFlat(i, -1),
           onPlus: () => _bumpFlat(i, 1),
-        ));
-        if (i != widget.clazz.pricesSummary.length - 1) {
-          rows.add(Divider(height: 1, color: c.controlBorder));
-        }
+        );
       }
     }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(c, 'detail_prices'.tr()),
-        Container(
-          decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows),
-        ),
+        ...rows,
       ],
     );
   }
 
-  // "Доступное время" — date strip + slot chips.
-  Widget _datesSection(AppColors c) => _DateSection(
-        dates: _availableDates,
+  // "Доступное время" — slot chips for the day picked in the header strip.
+  Widget _slotsSection(AppColors c) => _SlotPicker(
         selected: _selectedDate,
         selectedSlot: _selectedSlot,
         loadingSlots: _loadingSlots,
         slotsLoaded: _slotsLoaded,
-        onPickDate: _onDateTapped,
+        header: _sectionHeader(c, 'book_available_times'.tr()),
         onPickSlot: (s) => setState(() {
           _selectedSlot = s;
           _error = null;
@@ -1285,15 +1255,12 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
       );
 
   Widget _customWindowsSection(AppColors c) => _CustomTimeWindowSection(
-        dates: _availableDates,
         selected: _selectedDate,
         tickets: _ticketDescriptors(),
         windows: _customWindows,
         loadingSlots: _loadingSlots,
         slotsLoaded: _slotsLoaded,
-        scheduledDates: _scheduledDates,
-        prefetchingDays: _prefetchingDays,
-        onPickDate: _onDateTapped,
+        header: _sectionHeader(c, 'book_pick_slot'.tr()),
         onPickStart: (i) => _pickTimeFor(i, start: true),
         onPickEnd: (i) => _pickTimeFor(i, start: false),
         fmt: _fmtTime,
@@ -1305,45 +1272,17 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(c, 'book_payment_method'.tr()),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
+        PillCard(
           onTap: () => _openPaymentFlow(validate: false),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              children: [
-                _railLeading(c, _rail),
-                12.kw,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('book_pay_method_label'.tr(),
-                          style: AppText.regular12
-                              .copyWith(color: c.textSecondary)),
-                      2.kh,
-                      Text(_railName(_rail),
-                          style: AppText.semibold14
-                              .copyWith(color: c.textPrimary)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: c.control,
-                    borderRadius: BorderRadius.circular(40.r),
-                  ),
-                  child: Text('book_change'.tr(),
-                      style: AppText.medium13.copyWith(color: c.textPrimary)),
-                ),
-              ],
-            ),
+          leading: PillIconBadge(child: _railLeading(_rail)),
+          child: PillCaption(
+            title: _railName(_rail),
+            subtitle: 'book_pay_method_label'.tr(),
+            captionFirst: true,
+          ),
+          trailing: PillActionChip(
+            label: 'book_change'.tr(),
+            onTap: () => _openPaymentFlow(validate: false),
           ),
         ),
       ],
@@ -1358,110 +1297,95 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
         ],
       );
 
-  // "Оплата" — price breakdown card.
+  // "Оплата" — the frosted price-breakdown card.
   Widget _breakdownSection(AppColors c) {
-    final lines = <Widget>[];
-    Widget line(String label, String value, {Color? valueColor}) => Padding(
-          padding: EdgeInsets.only(bottom: 10.h),
-          child: Row(
+    return FrostedCard(
+      borderWidth: 2,
+      borderRadius: BorderRadius.circular(12.r),
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card title with the gradient receipt badge.
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  gradient: AppGradients.indigo,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Assets.icons.detail.iconsaxReceipt.svg(
+                  width: 14.w,
+                  height: 14.w,
+                  colorFilter: const ColorFilter.mode(
+                      AppColors.onBrand, BlendMode.srcIn),
+                ),
+              ),
+              6.kw,
+              Text('book_payment_summary'.tr(),
+                  style: AppText.semibold16.copyWith(color: AppColors.ink)),
+            ],
+          ),
+          for (final l in _summaryLines()) ...[
+            16.kh,
+            Row(
+              children: [
+                l.icon.svg(
+                  width: 20.w,
+                  height: 20.w,
+                  colorFilter: const ColorFilter.mode(
+                      AppColors.greeting, BlendMode.srcIn),
+                ),
+                8.kw,
+                Expanded(
+                  child: Text(l.label,
+                      style: AppText.regular14
+                          .copyWith(color: AppColors.inkMuted)),
+                ),
+                Text(
+                  l.value,
+                  style: AppText.semibold14.copyWith(
+                    color: l.negative ? AppColors.error : AppColors.ink,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          16.kh,
+          Row(
             children: [
               Expanded(
-                child: Text(label,
-                    style: AppText.regular14.copyWith(color: c.textSecondary)),
+                child: Text('book_grand_total'.tr(),
+                    style: AppText.bold18.copyWith(color: AppColors.inkMuted)),
               ),
-              Text(value,
-                  style: AppText.semibold14
-                      .copyWith(color: valueColor ?? c.textPrimary)),
+              Text(_payableTotal.toRawUzsPrice(),
+                  style: AppText.bold18.copyWith(color: AppColors.ink)),
             ],
           ),
-        );
-
-    if (_hasAgeTiers) {
-      for (var t = 0; t < _tierCounts.length; t++) {
-        final durs = widget.clazz.ageTiers[t].durations;
-        for (var d = 0; d < _tierCounts[t].length; d++) {
-          final count = _tierCounts[t][d];
-          if (count <= 0) continue;
-          final dur = durs[d];
-          final sub = (_hasCoupon ? _applyDiscount(dur.price) : dur.price) * count;
-          lines.add(line(
-            '${widget.clazz.ageTiers[t].rangeLabel} (${count}x)',
-            sub.toRawUzsPrice(),
-          ));
-        }
-      }
-    } else {
-      for (var i = 0; i < _flatCounts.length; i++) {
-        final count = _flatCounts[i];
-        if (count <= 0) continue;
-        final r = widget.clazz.pricesSummary[i];
-        final sub = (_hasCoupon ? _applyDiscount(r.price) : r.price) * count;
-        lines.add(line('${r.rangeLabel} (${count}x)', sub.toRawUzsPrice()));
-      }
-    }
-    if (_selectedDate != null) {
-      final slot = _selectedSlot;
-      final time = slot != null ? ' ${slot.startTime}' : '';
-      lines.add(line('book_date_time'.tr(),
-          '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time'));
-    }
-    if (!_hasCoupon && _promoDiscount > 0) {
-      lines.add(line('promo_discount'.tr(), '−${_promoDiscount.toRawUzsPrice()}',
-          valueColor: AppColors.error));
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader(c, 'book_payment_summary'.tr()),
-        Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...lines,
-              Divider(height: 1, color: c.controlBorder),
-              10.kh,
-              Row(
-                children: [
-                  Expanded(
-                    child: Text('book_grand_total'.tr(),
-                        style: AppText.bold18.copyWith(color: c.textSecondary)),
-                  ),
-                  Text(_payableTotal.toRawUzsPrice(),
-                      style: AppText.bold18.copyWith(color: c.textPrimary)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _payCta(AppColors c) {
-    if (RemoteConfigService.instance.isInReview) return const SizedBox.shrink();
-    return GradientButton(
-      text: 'book_pay_cta'.tr(args: [_payableTotal.toRawUzsPrice()]),
-      loading: _submitting,
-      onPressed: _openPaymentFlow,
-    );
-  }
-
-  Widget _railLeading(AppColors c, PaymentRail r) {
+  /// The rail glyph, sized to sit inside the white [PillIconBadge]. Always
+  /// rendered on a light surface, so the card icon uses [AppColors.ink].
+  Widget _railLeading(PaymentRail r) {
     switch (r) {
+      // The round badge is far too narrow for the full wordmarks, so this row
+      // uses the square brand marks; the sheet still shows the wordmarks.
       case PaymentRail.payme:
-        return Image.asset("assets/icons/pay/payme.png", height: 22.h);
+        return Assets.images.pay.paymeLogo.image(width: 22.w, height: 22.w);
       case PaymentRail.click:
-        return Image.asset("assets/icons/pay/click.png", height: 20.h);
+        return Assets.images.pay.clickLogo.image(width: 22.w, height: 22.w);
       case PaymentRail.uzum:
-        return Image.asset("assets/icons/pay/uzum.png", height: 22.h);
+        return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
       case PaymentRail.card:
-        return Icon(Icons.credit_card_rounded, size: 22.sp, color: c.textPrimary);
+        return Assets.icons.icCard.svg(
+          width: 20.w,
+          height: 20.w,
+          colorFilter: const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+        );
     }
   }
 
@@ -1501,28 +1425,23 @@ class _BookingBottomsheetState extends State<BookingBottomsheet> {
     );
   }
 
-  // ─── Step 0: ticket selection ──────────────────────────────────────────────
-
-
-
-  // ─── Step 1: confirmation ─────────────────────────────────────────────────
-
-
 }
 
-// ─── _ThumbnailFallback ───────────────────────────────────────────────────────
+/// One row of the order breakdown. See [_BookingPageState._summaryLines].
+class _SummaryLine {
+  const _SummaryLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.negative = false,
+  });
 
-class _ThumbnailFallback extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 64,
-      height: 64,
-      color: const Color(0xFFEDE8FF),
-      child: const Icon(Icons.image_not_supported_rounded,
-          color: Color(0xFF6C4EF2), size: 28),
-    );
-  }
+  final SvgGenImage icon;
+  final String label;
+  final String value;
+
+  /// Renders the value in [AppColors.error] — used by the coupon discount.
+  final bool negative;
 }
 
 // ─── _AvailableDate ───────────────────────────────────────────────────────────
@@ -1542,43 +1461,49 @@ class _AvailableDate {
       _AvailableDate(date: date, isoKey: isoKey, slots: next);
 }
 
-// ─── _DateSection ─────────────────────────────────────────────────────────────
+// ─── _DateStrip ───────────────────────────────────────────────────────────────
 
-class _DateSection extends StatefulWidget {
-  const _DateSection({
+/// Horizontal day picker pinned under the header (Figma 60:6144).
+///
+/// Unselected days are bare text straight on the canvas; only the selected day
+/// gets the frosted pill. Shared by both booking modes.
+class _DateStrip extends StatefulWidget {
+  const _DateStrip({
     required this.dates,
     required this.selected,
-    required this.selectedSlot,
-    required this.loadingSlots,
-    required this.slotsLoaded,
     required this.onPickDate,
-    required this.onPickSlot,
+    this.unavailableDates,
   });
 
   final List<_AvailableDate> dates;
   final _AvailableDate? selected;
-  final ScheduleSlotInfo? selectedSlot;
-  final bool loadingSlots;
-  final bool slotsLoaded;
+
+  /// ISO days that *have* a schedule. When non-null, days outside this set are
+  /// dimmed — but stay tappable, so the user can tap one and read why it is
+  /// empty instead of wondering why it does nothing.
+  final Set<String>? unavailableDates;
+
   final ValueChanged<_AvailableDate> onPickDate;
-  final ValueChanged<ScheduleSlotInfo> onPickSlot;
 
   @override
-  State<_DateSection> createState() => _DateSectionState();
+  State<_DateStrip> createState() => _DateStripState();
 }
 
-class _DateSectionState extends State<_DateSection> {
+class _DateStripState extends State<_DateStrip> {
   final ScrollController _scrollCtrl = ScrollController();
+
+  /// Chip width + separator. Kept in sync with [_DateChip] so the auto-scroll
+  /// lands on the right day.
+  static const double _chipExtent = _DateChip.width + 4;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _scrollToSelected());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
   }
 
   @override
-  void didUpdateWidget(_DateSection old) {
+  void didUpdateWidget(_DateStrip old) {
     super.didUpdateWidget(old);
     if (old.selected?.isoKey != widget.selected?.isoKey) _scrollToSelected();
   }
@@ -1591,219 +1516,173 @@ class _DateSectionState extends State<_DateSection> {
 
   void _scrollToSelected() {
     if (!_scrollCtrl.hasClients) return;
-    final idx = widget.dates
-        .indexWhere((d) => d.isoKey == widget.selected?.isoKey);
+    final idx =
+        widget.dates.indexWhere((d) => d.isoKey == widget.selected?.isoKey);
     if (idx <= 0) return;
-    final offset = (idx * (66.w + 8.w))
-        .clamp(0.0, _scrollCtrl.position.maxScrollExtent);
-    _scrollCtrl.animateTo(offset,
-        duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
+    // Centre the selected chip instead of left-aligning it, so the neighbouring
+    // days stay visible and the strip reads as a calendar.
+    final extent = _chipExtent.w;
+    final target =
+        idx * extent - (_scrollCtrl.position.viewportDimension - extent) / 2;
+    _scrollCtrl.animateTo(
+      target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
-    if (widget.dates.isEmpty) {
-      return Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEF3C7),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Text(
-          'book_no_schedule'.tr(),
-          style: TextStyle(
-              fontSize: 12.sp, color: const Color(0xFF92400E)),
-        ),
-      );
-    }
-    final selected = widget.selected;
-    // Filter out past slots when today is selected so users can't book times
-    // that have already passed.
+    final unavailable = widget.unavailableDates;
+    // A horizontal scroller sized by its children rather than a fixed-height
+    // ListView: the chip is three lines of text whose height moves with the
+    // user's text-scale factor, and any fixed height overflows once it does.
+    return SingleChildScrollView(
+      controller: _scrollCtrl,
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      child: Row(
+        children: [
+          for (var i = 0; i < widget.dates.length; i++) ...[
+            if (i > 0) 4.kw,
+            _DateChip(
+              date: widget.dates[i],
+              isSelected: widget.selected?.isoKey == widget.dates[i].isoKey,
+              isUnavailable: unavailable != null &&
+                  unavailable.isNotEmpty &&
+                  !unavailable.contains(widget.dates[i].isoKey),
+              onTap: () => widget.onPickDate(widget.dates[i]),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── _SlotPicker ──────────────────────────────────────────────────────────────
+
+/// "Available times" — the slot chips for the day picked in the [_DateStrip].
+class _SlotPicker extends StatelessWidget {
+  const _SlotPicker({
+    required this.selected,
+    required this.selectedSlot,
+    required this.loadingSlots,
+    required this.slotsLoaded,
+    required this.header,
+    required this.onPickSlot,
+  });
+
+  final _AvailableDate? selected;
+  final ScheduleSlotInfo? selectedSlot;
+  final bool loadingSlots;
+  final bool slotsLoaded;
+  final Widget header;
+  final ValueChanged<ScheduleSlotInfo> onPickSlot;
+
+  /// Slots the user can still act on: on today, everything that has already
+  /// ended is dropped so a past time can't be booked.
+  List<ScheduleSlotInfo> _bookableSlots(_AvailableDate date) {
+    final all = date.slots;
     final now = DateTime.now();
-    final todayKey = _isoDateStatic(now);
-    List<ScheduleSlotInfo> selectedSlots = selected?.slots ?? const <ScheduleSlotInfo>[];
-    if (selected?.isoKey == todayKey) {
-      final nowMins = now.hour * 60 + now.minute;
-      selectedSlots = selectedSlots.where((s) {
-        final parts = s.endTime.split(':');
-        if (parts.length < 2) return true;
-        final h = int.tryParse(parts[0]) ?? 0;
-        final m = int.tryParse(parts[1]) ?? 0;
-        return h * 60 + m > nowMins;
-      }).toList();
+    if (date.isoKey != _isoDateStatic(now)) return all;
+    final nowMins = now.hour * 60 + now.minute;
+    return all.where((s) {
+      final parts = s.endTime.split(':');
+      if (parts.length < 2) return true;
+      final h = int.tryParse(parts[0]) ?? 0;
+      final m = int.tryParse(parts[1]) ?? 0;
+      return h * 60 + m > nowMins;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final date = selected;
+
+    Widget body;
+    if (date == null) {
+      body = _AvailabilityNote(
+        icon: Icons.event_rounded,
+        text: 'book_pick_date'.tr(),
+      );
+    } else if (loadingSlots) {
+      body = _AvailabilityNote(
+        icon: Icons.schedule_rounded,
+        text: 'book_loading_slots'.tr(),
+      );
+    } else {
+      final slots = _bookableSlots(date);
+      if (slotsLoaded && slots.isEmpty) {
+        body = _AvailabilityNote(
+          icon: Icons.event_busy_rounded,
+          text: 'book_no_slots_for_day'.tr(),
+          isError: true,
+        );
+      } else {
+        body = Wrap(
+          spacing: 6.w,
+          runSpacing: 6.h,
+          children: [
+            for (final s in slots)
+              _SlotChip(
+                slot: s,
+                isSelected: selectedSlot?.startTime == s.startTime &&
+                    selectedSlot?.endTime == s.endTime,
+                onTap: () => onPickSlot(s),
+              ),
+          ],
+        );
+      }
     }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'book_select_date'.tr(),
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w700,
-            color: c.textPrimary,
+      children: [header, body],
+    );
+  }
+}
+
+// ─── _SlotChip ────────────────────────────────────────────────────────────────
+
+/// A single bookable time. White pill; the selected one takes the brand
+/// gradient; a full one is dimmed and inert (Figma 60:6229).
+class _SlotChip extends StatelessWidget {
+  const _SlotChip({
+    required this.slot,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final ScheduleSlotInfo slot;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isFull = slot.isFull;
+    final label = Text(
+      slot.startTime,
+      style: AppText.semibold12.copyWith(
+        color: isSelected ? AppColors.onBrand : AppColors.ink,
+      ),
+    );
+
+    return Opacity(
+      opacity: isFull ? 0.3 : 1,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: isFull ? null : onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: isSelected ? null : AppColors.onBrand,
+            gradient: isSelected ? AppGradients.brand : null,
+            borderRadius: BorderRadius.circular(40.r),
           ),
+          child: label,
         ),
-        8.kh,
-        SizedBox(
-          height: 78.h,
-          child: ListView.separated(
-            controller: _scrollCtrl,
-            scrollDirection: Axis.horizontal,
-            itemCount: widget.dates.length,
-            separatorBuilder: (_, __) => 8.kw,
-            itemBuilder: (context, i) {
-              final d = widget.dates[i];
-              return _DateChip(
-                date: d,
-                isSelected: widget.selected?.isoKey == d.isoKey,
-                onTap: () => widget.onPickDate(d),
-              );
-            },
-          ),
-        ),
-        10.kh,
-        if (selected == null)
-          Text(
-            'book_pick_date'.tr(),
-            style: TextStyle(fontSize: 12.sp, color: c.textSecondary),
-          )
-        else if (widget.loadingSlots)
-          Row(
-            children: [
-              SizedBox(
-                width: 14.w,
-                height: 14.w,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: _brand,
-                ),
-              ),
-              8.kw,
-              Text(
-                'book_loading_slots'.tr(),
-                style: TextStyle(fontSize: 12.sp, color: c.textSecondary),
-              ),
-            ],
-          )
-        else if (widget.slotsLoaded && selectedSlots.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: const Color(0xFFFDE68A)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.event_busy_rounded,
-                    size: 16.sp, color: const Color(0xFF92400E)),
-                8.kw,
-                Expanded(
-                  child: Text(
-                    'book_no_slots_for_day'.tr(),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF92400E),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else if (selectedSlots.isNotEmpty) ...[
-          Text(
-            'book_available_times'.tr(),
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: c.textSecondary,
-            ),
-          ),
-          6.kh,
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children: selectedSlots.map((s) {
-              final isActive = identical(widget.selectedSlot, s) ||
-                  (widget.selectedSlot?.startTime == s.startTime &&
-                      widget.selectedSlot?.endTime == s.endTime);
-              final isFull = s.isFull;
-              final chipColor = isFull
-                  ? const Color(0xFFE2E8F0)
-                  : isActive
-                      ? _brand
-                      : c.control;
-              final textColor = isFull
-                  ? c.textSecondary
-                  : isActive
-                      ? Colors.white
-                      : _brandDark;
-              return GestureDetector(
-                onTap: isFull ? null : () => widget.onPickSlot(s),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 12.w, vertical: 7.h),
-                  decoration: BoxDecoration(
-                    color: chipColor,
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(
-                      color: isFull
-                          ? const Color(0xFFCBD5E1)
-                          : isActive
-                              ? _brand
-                              : c.controlBorder,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: 13.sp,
-                        color: textColor,
-                      ),
-                      5.kw,
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${s.startTime} – ${s.endTime}',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w700,
-                              color: textColor,
-                            ),
-                          ),
-                          if (s.availableSlots != null)
-                            Text(
-                              isFull
-                                  ? 'book_slot_full'.tr()
-                                  : 'book_slots_left'.tr(
-                                      args: ['${s.availableSlots}']),
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
-                                color: isFull
-                                    ? const Color(0xFFDC2626)
-                                    : isActive
-                                        ? Colors.white.withValues(alpha: 0.85)
-                                        : c.textSecondary,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
@@ -1818,6 +1697,10 @@ class _DateChip extends StatelessWidget {
     this.isUnavailable = false,
   });
 
+  /// Fixed so every chip is the same width whether or not it is selected —
+  /// otherwise the strip would jitter as the frosted pill moves between days.
+  static const double width = 48;
+
   final _AvailableDate date;
   final bool isSelected;
   final bool isUnavailable;
@@ -1825,77 +1708,58 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
     final d = date.date;
-    final monthShort = 'month_short_${d.month}'.tr();
-    final weekdayShort = 'weekday_short_${d.weekday}'.tr();
-    final fg = isSelected ? Colors.white : c.textPrimary.withValues(alpha: isUnavailable ? 0.45 : 1.0);
-    final mutedColor = isSelected
-        ? Colors.white.withValues(alpha: 0.85)
-        : c.textSecondary.withValues(alpha: isUnavailable ? 0.45 : 1.0);
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        width: 66.w,
-        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
-        decoration: BoxDecoration(
-          color: isSelected ? _brand : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: isSelected ? _brand : c.controlBorder),
-          boxShadow: isSelected && !isUnavailable
-              ? [
-                  BoxShadow(
-                    color: _brand.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              weekdayShort,
-              style: TextStyle(
-                fontSize: 10.sp,
-                fontWeight: FontWeight.w700,
-                color: mutedColor,
-                letterSpacing: 0.6,
+    // The selected chip sits on the pale frosted pill, the rest on the canvas —
+    // so its muted labels need a touch more contrast.
+    final mutedColor = isSelected ? AppColors.greeting : AppColors.inkMuted;
+
+    final content = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('weekday_short_${d.weekday}'.tr(),
+            style: AppText.regular12.copyWith(color: mutedColor)),
+        4.kh,
+        Text('${d.day}',
+            style: AppText.bold18
+                .copyWith(color: AppColors.ink, height: 1.0)),
+        4.kh,
+        Text('month_short_${d.month}'.tr(),
+            style: AppText.regular12.copyWith(color: mutedColor)),
+      ],
+    );
+
+    final padding = EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w);
+
+    return Opacity(
+      opacity: isUnavailable ? 0.4 : 1,
+      child: SizedBox(
+        width: width.w,
+        child: isSelected
+            ? FrostedCard(
+                onTap: onTap,
+                padding: padding,
+                borderRadius: BorderRadius.circular(56.r),
+                child: content,
+              )
+            : GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTap,
+                child: Padding(padding: padding, child: content),
               ),
-            ),
-            2.kh,
-            Text(
-              '${d.day}',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w800,
-                color: fg,
-                height: 1.0,
-              ),
-            ),
-            2.kh,
-            Text(
-              monthShort,
-              style: TextStyle(
-                fontSize: 10.sp,
-                fontWeight: FontWeight.w600,
-                color: mutedColor,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 }
 
-// ─── _DurationRow ────────────────────────────────────────────────────────────
+// ─── _TariffRow ──────────────────────────────────────────────────────────────
 
-class _DurationRow extends StatelessWidget {
-  const _DurationRow({
+/// One ticket tariff: age tier, its price, and the stepper that adds tickets.
+class _TariffRow extends StatelessWidget {
+  const _TariffRow({
+    required this.icon,
     required this.label,
+    required this.durationLabel,
     required this.price,
     required this.count,
     required this.onMinus,
@@ -1903,154 +1767,165 @@ class _DurationRow extends StatelessWidget {
     this.discountedPrice,
   });
 
+  final SvgGenImage icon;
   final String label;
+
+  /// e.g. "40 min" — only age-tier pricing carries a duration.
+  final String? durationLabel;
   final num price;
-  /// When non-null, the original price is shown struck-through and this value
-  /// is shown below it in green.
+
+  /// When non-null the original [price] is struck through and this is shown
+  /// next to it — an active coupon plan.
   final num? discountedPrice;
+
   final int count;
   final VoidCallback onMinus;
   final VoidCallback onPlus;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
-    final active = count > 0;
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
-      child: Row(
+    final priceText = price > 0 ? price.toRawUzsPrice() : '—';
+    final discounted = discountedPrice;
+
+    return PillCard(
+      leading: PillIconBadge(
+        child: icon.svg(
+          width: 20.w,
+          height: 20.w,
+          colorFilter:
+              const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+        ),
+      ),
+      trailing: _Stepper(count: count, onMinus: onMinus, onPlus: onPlus),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timelapse_rounded, size: 14.sp, color: c.textSecondary),
-          6.kw,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary,
-                  ),
-                ),
-                2.kh,
-                if (discountedPrice != null) ...[
-                  Text(
-                    price > 0 ? price.toRawUzsPrice() : '—',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                      color: c.textSecondary,
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                  Text(
-                    discountedPrice! > 0
-                        ? discountedPrice!.toRawUzsPrice()
-                        : '—',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF16A34A),
-                    ),
-                  ),
-                ] else
-                  Text(
-                    price > 0 ? price.toRawUzsPrice() : '—',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w800,
-                      color: _brandDark,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          _StepperButton(
-            icon: Icons.remove,
-            onTap: count > 0 ? onMinus : null,
-          ),
-          SizedBox(
-            width: 32.w,
-            child: Center(
-              child: Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w700,
-                  color: active ? _brandDark : c.textPrimary,
+          Text(label, style: AppText.semibold14.copyWith(color: AppColors.ink)),
+          4.kh,
+          // Wrap, not Row: a long duration + price pair wraps instead of
+          // overflowing on narrow screens.
+          Wrap(
+            spacing: 4.w,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (durationLabel != null)
+                Text('$durationLabel ·',
+                    style: AppText.regular12
+                        .copyWith(color: AppColors.greeting)),
+              Text(
+                priceText,
+                style: AppText.regular12.copyWith(
+                  color: AppColors.greeting,
+                  decoration:
+                      discounted != null ? TextDecoration.lineThrough : null,
                 ),
               ),
-            ),
+              if (discounted != null)
+                Text(
+                  discounted > 0 ? discounted.toRawUzsPrice() : '—',
+                  style:
+                      AppText.semibold12.copyWith(color: AppColors.green),
+                ),
+            ],
           ),
-          _StepperButton(icon: Icons.add, onTap: onPlus),
         ],
       ),
     );
   }
 }
 
-// ─── _StepperButton ──────────────────────────────────────────────────────────
+// ─── _Stepper ────────────────────────────────────────────────────────────────
+
+class _Stepper extends StatelessWidget {
+  const _Stepper({
+    required this.count,
+    required this.onMinus,
+    required this.onPlus,
+  });
+
+  final int count;
+  final VoidCallback onMinus;
+  final VoidCallback onPlus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _StepperButton(
+          icon: Icons.remove,
+          onTap: count > 0 ? onMinus : null,
+        ),
+        SizedBox(
+          width: 27.w,
+          child: Center(
+            child: Text('$count',
+                style: AppText.bold18.copyWith(color: AppColors.ink)),
+          ),
+        ),
+        _StepperButton(icon: Icons.add, onTap: onPlus),
+      ],
+    );
+  }
+}
 
 class _StepperButton extends StatelessWidget {
   const _StepperButton({required this.icon, this.onTap});
 
   final IconData icon;
+
+  /// `null` disables the button — the minus at zero.
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
     final disabled = onTap == null;
-    return Material(
-      color: disabled ? c.control : _brand,
-      borderRadius: BorderRadius.circular(10.r),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10.r),
-        onTap: onTap,
-        child: SizedBox(
-          width: 32.w,
-          height: 32.h,
-          child: Icon(icon,
-              size: 16.w,
-              color: disabled ? c.textSecondary : Colors.white),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: 26.w,
+        height: 26.w,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: AppColors.inkChip,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 14.w,
+          color: disabled ? AppColors.inkMuted : AppColors.ink,
         ),
       ),
     );
   }
 }
 
-/// Date picker + per-ticket from/to time picker shown for required-booking
-/// classes. Each ticket the user added in the count step gets its own row so
-/// different attendees can show up at different times within the activity's
-/// open window for the day.
+/// Per-ticket from/to time picker shown for required-booking classes. Each
+/// ticket the user added gets its own row so different attendees can show up at
+/// different times within the activity's open window for the day.
+///
+/// The day itself is picked in the shared [_DateStrip] under the header.
 class _CustomTimeWindowSection extends StatelessWidget {
   const _CustomTimeWindowSection({
-    required this.dates,
     required this.selected,
     required this.tickets,
     required this.windows,
     required this.loadingSlots,
     required this.slotsLoaded,
-    required this.scheduledDates,
-    required this.prefetchingDays,
-    required this.onPickDate,
+    required this.header,
     required this.onPickStart,
     required this.onPickEnd,
     required this.fmt,
   });
 
-  final List<_AvailableDate> dates;
   final _AvailableDate? selected;
   final List<_TicketDescriptor> tickets;
   final List<_TicketWindow> windows;
   final bool loadingSlots;
   final bool slotsLoaded;
-  final Set<String> scheduledDates;
-  final bool prefetchingDays;
-  final ValueChanged<_AvailableDate> onPickDate;
+  final Widget header;
   final ValueChanged<int> onPickStart;
   final ValueChanged<int> onPickEnd;
   final String Function(TimeOfDay) fmt;
@@ -2062,40 +1937,7 @@ class _CustomTimeWindowSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'book_pick_date'.tr(),
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w700,
-            color: c.textPrimary,
-          ),
-        ),
-        10.kh,
-        SizedBox(
-          height: 78.h,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: dates.length,
-            separatorBuilder: (_, __) => 8.kw,
-            itemBuilder: (_, i) {
-              final d = dates[i];
-              final isSelected = selected?.isoKey == d.isoKey;
-              // After prefetch lands, visually de-emphasise dates with no
-              // schedule — but keep them tappable so the user can still tap
-              // and see the "no slots" message.
-              final isUnavailable = !prefetchingDays &&
-                  scheduledDates.isNotEmpty &&
-                  !scheduledDates.contains(d.isoKey);
-              return _DateChip(
-                date: d,
-                isSelected: isSelected,
-                isUnavailable: isUnavailable,
-                onTap: () => onPickDate(d),
-              );
-            },
-          ),
-        ),
-        12.kh,
+        header,
         // Show the partner's open window(s) for the selected day so the user
         // knows the valid range to pick within. Hidden until the slots
         // response lands so we don't render a confusing empty placeholder.
@@ -2120,20 +1962,11 @@ class _CustomTimeWindowSection extends StatelessWidget {
             ]),
           ),
         if (selectedSlots.isNotEmpty) ...[
-          16.kh,
-          Text(
-            'book_pick_slot'.tr(),
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: c.textPrimary,
-            ),
-          ),
           if (tickets.isEmpty) ...[
             10.kh,
             Text(
               'book_add_ticket'.tr(),
-              style: TextStyle(fontSize: 12.sp, color: c.textSecondary),
+              style: AppText.regular12.copyWith(color: c.textSecondary),
             ),
           ] else
             for (var i = 0; i < tickets.length; i++) ...[
@@ -2172,54 +2005,45 @@ class _PerTicketWindowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
     final subtitle = [
       descriptor.ageLabel,
       if (descriptor.durationLabel != null) descriptor.durationLabel!,
     ].join(' · ');
-    return Container(
+    return FrostedCard(
+      borderWidth: 2,
+      borderRadius: BorderRadius.circular(12.r),
       padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: c.controlBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              // Ticket number — the brand gradient makes each ticket scannable
+              // when several windows are stacked.
               Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: c.control,
-                  borderRadius: BorderRadius.circular(8.r),
+                  gradient: AppGradients.brand,
+                  borderRadius: BorderRadius.circular(40.r),
                 ),
                 child: Text(
                   'book_ticket_index'.tr(args: ['${index + 1}']),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w800,
-                    color: _brandDark,
-                  ),
+                  style:
+                      AppText.semibold12.copyWith(color: AppColors.onBrand),
                 ),
               ),
               8.kw,
               Expanded(
                 child: Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: c.textSecondary,
-                  ),
+                  style:
+                      AppText.regular12.copyWith(color: AppColors.greeting),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          10.kh,
+          12.kh,
           Row(
             children: [
               Expanded(
@@ -2229,7 +2053,7 @@ class _PerTicketWindowCard extends StatelessWidget {
                   onTap: onPickStart,
                 ),
               ),
-              10.kw,
+              8.kw,
               Expanded(
                 child: _TimeBox(
                   label: 'time_to'.tr(),
@@ -2283,18 +2107,14 @@ class _AvailabilityNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
-    final color = isError ? const Color(0xFFB91C1C) : _brandDark;
-    final bg = isError ? const Color(0xFFFEF2F2) : c.control;
-    return Container(
+    // Sits on the canvas, so it takes the frosted-card treatment like every
+    // other surface on this screen; only the accent tells errors apart.
+    final color = isError ? AppColors.error : AppColors.brandPink;
+    return FrostedCard(
+      width: double.infinity,
+      borderWidth: 2,
+      borderRadius: BorderRadius.circular(12.r),
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: isError ? const Color(0xFFFECACA) : c.controlBorder,
-        ),
-      ),
       child: Row(
         children: [
           Icon(icon, size: 16.sp, color: color),
@@ -2302,11 +2122,7 @@ class _AvailabilityNote extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppText.semibold12.copyWith(color: color),
             ),
           ),
         ],
@@ -2328,36 +2144,34 @@ class _TimeBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final unset = value == '--:--';
+    // Nested inside a frosted card, so it uses the inset-chip fill — the same
+    // relationship the steppers have to a tariff row.
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: c.control,
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: c.controlBorder),
+          color: AppColors.inkChip,
+          borderRadius: BorderRadius.circular(12.r),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 11.sp, color: c.textSecondary),
-            ),
+            Text(label,
+                style: AppText.regular12.copyWith(color: AppColors.greeting)),
             4.kh,
             Row(
               children: [
                 Icon(Icons.access_time_rounded,
-                    size: 16.sp, color: _brandDark),
+                    size: 16.sp, color: AppColors.brandPink),
                 6.kw,
                 Text(
                   value,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w800,
-                    color: c.textPrimary,
+                  style: AppText.semibold16.copyWith(
+                    // An unfilled slot reads as a placeholder, not a value.
+                    color: unset ? AppColors.inkMuted : AppColors.ink,
                   ),
                 ),
               ],
@@ -2402,12 +2216,12 @@ class _BookingRequestedPage extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        _brand.withValues(alpha: 0.15),
-                        _brand.withValues(alpha: 0.04),
+                        AppColors.brandPurple.withValues(alpha: 0.15),
+                        AppColors.brandPurple.withValues(alpha: 0.04),
                       ],
                     ),
                     border: Border.all(
-                      color: _brand.withValues(alpha: 0.25),
+                      color: AppColors.brandPurple.withValues(alpha: 0.25),
                       width: 1.5,
                     ),
                   ),
@@ -2420,11 +2234,11 @@ class _BookingRequestedPage extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [_brand, const Color(0xFF9C7EF8)],
+                          colors: [AppColors.brandPurple, const Color(0xFF9C7EF8)],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _brand.withValues(alpha: 0.4),
+                            color: AppColors.brandPurple.withValues(alpha: 0.4),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -2478,12 +2292,12 @@ class _BookingRequestedPage extends StatelessWidget {
                       width: 36.w,
                       height: 36.w,
                       decoration: BoxDecoration(
-                        color: _brand.withValues(alpha: 0.12),
+                        color: AppColors.brandPurple.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Icon(
                         CupertinoIcons.bell_fill,
-                        color: _brand,
+                        color: AppColors.brandPurple,
                         size: 18.sp,
                       ),
                     ),
@@ -2493,7 +2307,7 @@ class _BookingRequestedPage extends StatelessWidget {
                         'book_pending_note'.tr(),
                         style: TextStyle(
                           fontSize: 13.sp,
-                          color: _brandDark,
+                          color: AppColors.brandPink,
                           height: 1.5,
                           fontWeight: FontWeight.w500,
                         ),
@@ -2510,14 +2324,14 @@ class _BookingRequestedPage extends StatelessWidget {
                   height: 52.h,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [_brandDark, _brand],
+                      colors: [AppColors.brandPink, AppColors.brandPurple],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
                     borderRadius: BorderRadius.circular(16.r),
                     boxShadow: [
                       BoxShadow(
-                        color: _brand.withValues(alpha: 0.35),
+                        color: AppColors.brandPurple.withValues(alpha: 0.35),
                         blurRadius: 14,
                         offset: const Offset(0, 6),
                       ),
@@ -2539,31 +2353,6 @@ class _BookingRequestedPage extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Small square icon button used in the booking-sheet header (Figma control).
-class _SheetIconButton extends StatelessWidget {
-  const _SheetIconButton({required this.icon, required this.onTap});
-  final String icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(8.w),
-        decoration: BoxDecoration(
-          color: c.control,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: c.controlBorder),
-        ),
-        child: HomeIcon(icon, size: 16, color: c.textPrimary),
       ),
     );
   }

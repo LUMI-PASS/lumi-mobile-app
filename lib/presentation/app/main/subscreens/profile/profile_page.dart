@@ -6,7 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -613,12 +613,11 @@ class _DashedCirclePainter extends CustomPainter {
 /// label red for destructive rows (logout).
 /// Figma (node 96-1829) Iconsax glyphs used by the profile settings rows.
 class _ProfileIcons {
-  static const _dir = 'assets/icons/detail';
-  static const bookings = '$_dir/iconsax-ai-calendar.svg';
-  static const language = '$_dir/iconsax-language-circle.svg';
-  static const faq = '$_dir/iconsax-question-mark.svg';
-  static const share = '$_dir/iconsax-circle-share.svg';
-  static const logout = '$_dir/iconsax-logout2.svg';
+  static final bookings = Assets.icons.detail.iconsaxAiCalendar;
+  static final language = Assets.icons.detail.iconsaxLanguageCircle;
+  static final faq = Assets.icons.detail.iconsaxQuestionMark;
+  static final share = Assets.icons.detail.iconsaxCircleShare;
+  static final logout = Assets.icons.detail.iconsaxLogout2;
 }
 
 class _MenuRow extends StatelessWidget {
@@ -636,7 +635,7 @@ class _MenuRow extends StatelessWidget {
   final IconData? icon;
 
   /// Iconsax SVG asset. Tinted with the brand gradient, or red when [danger].
-  final String? iconAsset;
+  final SvgGenImage? iconAsset;
   final String label;
   final String? trailingValue;
   final Widget? trailing;
@@ -649,8 +648,7 @@ class _MenuRow extends StatelessWidget {
     if (iconAsset == null) {
       return Icon(icon, size: 20.sp, color: accent);
     }
-    final svg = SvgPicture.asset(
-      iconAsset!,
+    final svg = iconAsset!.svg(
       width: 20.sp,
       height: 20.sp,
       colorFilter: danger

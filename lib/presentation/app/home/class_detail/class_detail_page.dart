@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
@@ -14,13 +15,13 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
-import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_bottomsheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
@@ -259,7 +260,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
   }
 
-  void _openBookingSheet() {
+  void _openBooking() {
     final full = _full;
     if (full == null || (full.pricesSummary.isEmpty && full.ageTiers.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -275,20 +276,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           'class_title': widget.classModel.title!,
       },
     );
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useSafeArea: false,
-      builder: (_) => BookingBottomsheet(clazz: full),
-    );
+    context.router.push(BookingRoute(clazz: full));
   }
 
   /// Price tiers derived for display: one row per age tier (min price), or the
   /// price-summary ranges as a fallback.
-  List<({String range, String subtitle, num price, String icon})> _priceRows() {
+  List<({String range, String subtitle, num price, SvgGenImage icon})>
+      _priceRows() {
     final full = _full;
-    final rows = <({String range, String subtitle, num price, String icon})>[];
+    final rows =
+        <({String range, String subtitle, num price, SvgGenImage icon})>[];
     if (full == null) return rows;
     if (full.ageTiers.isNotEmpty) {
       for (final t in full.ageTiers) {
@@ -305,7 +302,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           subtitle:
               adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr(),
           price: min,
-          icon: adults ? 'profile2user' : 'babygirl',
+          icon: adults
+              ? Assets.icons.home.profile2user
+              : Assets.icons.home.babygirl,
         ));
       }
     } else {
@@ -314,7 +313,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           range: r.rangeLabel,
           subtitle: 'price_tier_children'.tr(),
           price: r.price,
-          icon: 'babygirl',
+          icon: Assets.icons.home.babygirl,
         ));
       }
     }
@@ -345,7 +344,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         statusBarBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: c.bg,
         body: Stack(
           children: [
             CustomScrollView(
@@ -353,7 +351,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 SliverToBoxAdapter(child: _hero(c, safeTop)),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                    padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
                     child: Column(
                       children: [
                         _mainCard(c, title, description, branchTitle),
@@ -386,21 +384,22 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               child: Row(
                 children: [
                   _ControlButton(
-                    child: const HomeIcon('arrow',
-                        size: 16, color: Colors.white),
+                    child: HomeIcon(Assets.icons.home.arrow,
+                        size: 16, color: AppColors.ink),
                     onTap: () => context.router.pop(),
                   ),
                   const Spacer(),
                   _ControlButton(
-                    child: const HomeIcon('share',
-                        size: 16, color: Colors.white),
+                    child: HomeIcon(Assets.icons.home.share,
+                        size: 16, color: AppColors.inkMuted),
                     onTap: _shareClass,
                   ),
                   8.horizontalSpace,
                   _ControlButton(
-                    child: HomeIcon('heart',
+                    child: HomeIcon(Assets.icons.home.heart,
                         size: 16,
-                        color: _isFavorite ? AppColors.error : Colors.white),
+                        color:
+                            _isFavorite ? AppColors.error : AppColors.inkMuted),
                     onTap: () => setState(() => _isFavorite = !_isFavorite),
                   ),
                 ],
@@ -416,7 +415,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + safeBottom),
                 child: GradientButton(
                   text: 'buy_tickets'.tr(),
-                  onPressed: _openBookingSheet,
+                  onPressed: _openBooking,
                 ),
               ),
             ),
@@ -447,27 +446,57 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             )
           else
             _imgShimmer(c),
-          // Dots indicator.
+          // Top scrim — a soft dark fade so the light controls stay legible
+          // over bright / near-white hero images.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: safeTop + 72.h,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.28),
+                      Colors.black.withOpacity(0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Dots indicator — frosted light pill over the hero (Figma 60:5620).
           if (_galleryImages.length > 1)
             Positioned(
               bottom: 12.h,
               left: 0,
               right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_galleryImages.length, (i) {
-                  final active = i == _currentImageIndex;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: EdgeInsets.symmetric(horizontal: 3.w),
-                    width: active ? 20.w : 8.w,
-                    height: 8.h,
-                    decoration: BoxDecoration(
-                      color: active ? Colors.white : Colors.white.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  );
-                }),
+              child: Center(
+                child: FrostedCard(
+                  hasBorder: false,
+                  borderRadius: BorderRadius.circular(32.r),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(_galleryImages.length, (i) {
+                      final active = i == _currentImageIndex;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: EdgeInsets.symmetric(horizontal: 3.w),
+                        width: 8.w,
+                        height: 8.w,
+                        decoration: BoxDecoration(
+                          color: active
+                              ? AppColors.ink
+                              : const Color(0xFFCECDD6),
+                          shape: BoxShape.circle,
+                        ),
+                      );
+                    }),
+                  ),
+                ),
               ),
             ),
         ],
@@ -518,7 +547,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       color: c.surface,
                       shape: BoxShape.circle,
                     ),
-                    child: HomeIcon(HomeIcon.building,
+                    child: HomeIcon(Assets.icons.home.building,
                         size: 16, color: c.textPrimary),
                   ),
                   8.horizontalSpace,
@@ -569,7 +598,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               Expanded(
                 child: _InfoTile(
                   c: c,
-                  icon: 'iconsax-ticket-discount',
+                  icon: Assets.icons.detail.iconsaxTicketDiscount,
                   value: _formatDuration(_effectiveDuration(_full)),
                   label: 'detail_duration'.tr(),
                 ),
@@ -578,7 +607,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               Expanded(
                 child: _InfoTile(
                   c: c,
-                  icon: 'iconsax-baby',
+                  icon: Assets.icons.detail.iconsaxBaby,
                   value: _ageLabel(),
                   label: 'detail_age'.tr(),
                 ),
@@ -587,7 +616,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               Expanded(
                 child: _InfoTile(
                   c: c,
-                  icon: 'iconsax-ai-users',
+                  icon: Assets.icons.detail.iconsaxAiUsers,
                   value: _getGenderText(),
                   label: 'detail_gender'.tr(),
                 ),
@@ -604,7 +633,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   // ─── Prices card ────────────────────────────────────────────────────────────
   Widget _pricesCard(
       AppColors c,
-      List<({String range, String subtitle, num price, String icon})> rows) {
+      List<({String range, String subtitle, num price, SvgGenImage icon})>
+          rows) {
     return _Card(
       c: c,
       child: Column(
@@ -612,7 +642,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         children: [
           _CardHeader(
             c: c,
-            icon: 'money',
+            icon: Assets.icons.home.money,
             iconGradient: const LinearGradient(
               colors: [AppColors.brandPink, AppColors.brandPink],
             ),
@@ -656,8 +686,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         children: [
           _CardHeader(
             c: c,
-            icon: 'iconsax-language-circle',
-            iconDir: 'detail',
+            icon: Assets.icons.detail.iconsaxLanguageCircle,
             iconGradient: AppGradients.indigo,
             title: 'detail_language'.tr(),
           ),
@@ -706,13 +735,11 @@ class _CardHeader extends StatelessWidget {
     required this.icon,
     required this.iconGradient,
     required this.title,
-    this.iconDir = 'home',
   });
   final AppColors c;
-  final String icon;
+  final SvgGenImage icon;
   final Gradient iconGradient;
   final String title;
-  final String iconDir;
 
   @override
   Widget build(BuildContext context) {
@@ -724,8 +751,7 @@ class _CardHeader extends StatelessWidget {
             gradient: iconGradient,
             borderRadius: BorderRadius.circular(6.r),
           ),
-          child:
-              HomeIcon(icon, size: 14, color: Colors.white, dir: iconDir),
+          child: HomeIcon(icon, size: 14, color: Colors.white),
         ),
         6.horizontalSpace,
         Text(title, style: AppText.semibold16.copyWith(color: c.textPrimary)),
@@ -741,19 +767,7 @@ class _ControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(8.w),
-        decoration: BoxDecoration(
-          color: const Color(0xFF323139),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: const Color(0xFF4C4C54)),
-        ),
-        child: child,
-      ),
-    );
+    return FrostedCard(onTap: onTap, child: child);
   }
 }
 
@@ -821,7 +835,7 @@ class _InfoTile extends StatelessWidget {
     required this.label,
   });
   final AppColors c;
-  final String icon;
+  final SvgGenImage icon;
   final String value;
   final String label;
 
@@ -837,7 +851,7 @@ class _InfoTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Multicolour detail glyphs — render their own colours (no tint).
-          HomeIcon(icon, size: 24, dir: 'detail'),
+          HomeIcon(icon, size: 24),
           4.verticalSpace,
           Text(
             value,
@@ -858,7 +872,7 @@ class _InfoTile extends StatelessWidget {
 class _PriceRow extends StatelessWidget {
   const _PriceRow({required this.c, required this.row, required this.couponPct});
   final AppColors c;
-  final ({String range, String subtitle, num price, String icon}) row;
+  final ({String range, String subtitle, num price, SvgGenImage icon}) row;
   final int couponPct;
 
   @override
@@ -899,7 +913,7 @@ class _PriceRow extends StatelessWidget {
   }
 
   Widget _priceChip() {
-    final chip = (Widget child) => Container(
+    Container chip(Widget child) => Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
           decoration: BoxDecoration(
             color: _chipFill(c),

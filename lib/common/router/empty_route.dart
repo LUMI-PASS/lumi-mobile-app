@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 
 @RoutePage()
 class EmptyRouterPage extends StatefulWidget {
@@ -79,8 +80,7 @@ class _EmptyRouterPageState extends State<EmptyRouterPage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset(
-                      'assets/icons/lumi_logo.png',
+                    Assets.icons.lumiLogo.image(
                       width: 96,
                       height: 96,
                       fit: BoxFit.contain,

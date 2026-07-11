@@ -3,7 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
@@ -17,20 +17,12 @@ import 'package:shimmer/shimmer.dart';
 class _SearchIcon extends StatelessWidget {
   const _SearchIcon(this.asset, {required this.size, required this.color});
 
-  final String asset;
+  final SvgGenImage asset;
   final double size;
   final Color color;
 
-  static const String back = 'assets/icons/arrow_left.svg';
-  static const String sort = 'assets/icons/filter.svg';
-  static const String search = 'assets/icons/home/search.svg';
-  static const String map = 'assets/icons/map.svg';
-  static const String chevron = 'assets/icons/arrow_right.svg';
-  static const String boxSearch = 'assets/icons/home/box_search.svg';
-
   @override
-  Widget build(BuildContext context) => SvgPicture.asset(
-        asset,
+  Widget build(BuildContext context) => asset.svg(
         width: size.w,
         height: size.w,
         colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
@@ -68,7 +60,7 @@ class SearchTopBar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(color: c.controlBorder),
                   ),
-                  child: _SearchIcon(_SearchIcon.back,
+                  child: _SearchIcon(Assets.icons.arrowLeft,
                       size: 16, color: c.textPrimary),
                 ),
               ),
@@ -131,7 +123,7 @@ class _SearchBarRowState extends State<SearchBarRow> {
               ),
               child: Row(
                 children: [
-                  _SearchIcon(_SearchIcon.search,
+                  _SearchIcon(Assets.icons.home.search,
                       size: 16, color: c.textPlaceholder),
                   8.horizontalSpace,
                   Expanded(
@@ -187,7 +179,7 @@ class _SearchBarRowState extends State<SearchBarRow> {
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(color: c.controlBorder),
                   ),
-                  child: _SearchIcon(_SearchIcon.sort,
+                  child: _SearchIcon(Assets.icons.filter,
                       size: 16, color: c.textPrimary),
                 ),
                 if (widget.filterCount > 0)
@@ -302,7 +294,7 @@ class SearchMapCard extends StatelessWidget {
                 width: 40.w,
                 height: 40.w,
                 alignment: Alignment.center,
-                child: _SearchIcon(_SearchIcon.map,
+                child: _SearchIcon(Assets.icons.map,
                     size: 24, color: c.textSecondary),
               ),
               8.horizontalSpace,
@@ -330,7 +322,7 @@ class SearchMapCard extends StatelessWidget {
                 ),
               ),
               8.horizontalSpace,
-              _SearchIcon(_SearchIcon.chevron,
+              _SearchIcon(Assets.icons.arrowRight,
                   size: 24, color: c.textSecondary),
             ],
           ),
@@ -383,7 +375,7 @@ class SearchEmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _SearchIcon(_SearchIcon.boxSearch,
+            _SearchIcon(Assets.icons.home.boxSearch,
                 size: 36, color: c.textSecondary),
             12.verticalSpace,
             Text(

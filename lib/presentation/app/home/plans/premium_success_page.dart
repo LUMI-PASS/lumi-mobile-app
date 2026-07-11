@@ -102,7 +102,7 @@ class _PremiumSuccessPageState extends State<PremiumSuccessPage>
                           width: 200.w,
                           height: 200.w,
                           child: Lottie.asset(
-                            'assets/lotties/premium.json',
+                            Assets.lotties.premium,
                             repeat: true,
                             fit: BoxFit.contain,
                           ),

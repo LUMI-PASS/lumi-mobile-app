@@ -107,7 +107,7 @@ Widget appBarLeading(BuildContext context) {
         color: const Color(0XFFCAD9E2).withOpacity(0.4),
         borderRadius: BorderRadius.circular(8.r),
       ),
-      child: Assets.icons.arrowLeft.svg(),
+      child: Assets.icons.arrowLeftRounded.svg(),
     ),
   );
 }
@@ -131,7 +131,7 @@ Widget AppBarLeadingScreens(BuildContext context) {
         color: const Color(0XFFCAD9E2).withOpacity(0.4),
         borderRadius: BorderRadius.circular(8.r),
       ),
-      child: Assets.icons.arrowLeft.svg(),
+      child: Assets.icons.arrowLeftRounded.svg(),
     ),
   );
 }

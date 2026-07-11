@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
-import 'package:lumi_pass/common/styles/auth_assets.dart';
 
 /// Big gradient circle holding a white glyph — the globe on the language
 /// screen. Figma: 64×64, pink→purple, 16px padding, 32px icon.
 class GradientIconBadge extends StatelessWidget {
   const GradientIconBadge({super.key, required this.asset, this.size = 64});
 
-  final String asset;
+  final SvgGenImage asset;
   final double size;
 
   @override
@@ -42,8 +41,7 @@ class GradientIconBadge extends StatelessWidget {
             ),
           ),
           Center(
-            child: SvgPicture.asset(
-              asset,
+            child: asset.svg(
               colorFilter: const ColorFilter.mode(
                 AppColors.onBrand,
                 BlendMode.srcIn,
@@ -60,32 +58,35 @@ class GradientIconBadge extends StatelessWidget {
 class AuthBadgeSpec {
   const AuthBadgeSpec(this.color, this.asset);
   final Color color;
-  final String asset;
+  final SvgGenImage asset;
 }
 
 /// The row of three overlapping colored icon squares that tops the
 /// authorization / confirmation screens. Figma: 22×22, r6, 15px step.
 class AuthIconBadgeRow extends StatelessWidget {
-  const AuthIconBadgeRow({super.key, this.specs = _authSpecs});
+  /// [specs] defaults to [_authSpecs]. It can't be a default parameter value
+  /// because the generated asset getters aren't const expressions.
+  const AuthIconBadgeRow({super.key, this.specs});
 
-  static const List<AuthBadgeSpec> _authSpecs = [
-    AuthBadgeSpec(AppColors.badgeBlue, AuthAssets.userAi),
-    AuthBadgeSpec(AppColors.badgeGreen, AuthAssets.loginCircle),
-    AuthBadgeSpec(AppColors.badgePink, AuthAssets.login02),
+  static final List<AuthBadgeSpec> _authSpecs = [
+    AuthBadgeSpec(AppColors.badgeBlue, Assets.icons.auth.userAi),
+    AuthBadgeSpec(AppColors.badgeGreen, Assets.icons.auth.loginCircle),
+    AuthBadgeSpec(AppColors.badgePink, Assets.icons.auth.login02),
   ];
 
   /// Onboarding uses a playful trio.
-  static const List<AuthBadgeSpec> onboardSpecs = [
-    AuthBadgeSpec(AppColors.badgeBlue, AuthAssets.rockingHorse),
-    AuthBadgeSpec(AppColors.badgeGreen, AuthAssets.rocket),
-    AuthBadgeSpec(AppColors.badgePink, AuthAssets.maskTheater),
+  static final List<AuthBadgeSpec> onboardSpecs = [
+    AuthBadgeSpec(AppColors.badgeBlue, Assets.icons.auth.rockingHorse),
+    AuthBadgeSpec(AppColors.badgeGreen, Assets.icons.auth.rocket01),
+    AuthBadgeSpec(AppColors.badgePink, Assets.icons.auth.maskTheater),
   ];
 
-  final List<AuthBadgeSpec> specs;
+  final List<AuthBadgeSpec>? specs;
 
   @override
   Widget build(BuildContext context) {
     final border = context.appColors.badgeBorder;
+    final specs = this.specs ?? _authSpecs;
     const step = 15.0;
     return SizedBox(
       width: (step * (specs.length - 1) + 22).w,
@@ -127,8 +128,7 @@ class _Badge extends StatelessWidget {
           ),
         ],
       ),
-      child: SvgPicture.asset(
-        spec.asset,
+      child: spec.asset.svg(
         colorFilter:
             const ColorFilter.mode(AppColors.onBrand, BlendMode.srcIn),
       ),

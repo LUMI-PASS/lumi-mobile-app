@@ -75,7 +75,6 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
 
     if (_showLoginPrompt) {
       return Scaffold(
-        backgroundColor: context.colors.window,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -135,7 +134,6 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: context.colors.window,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,

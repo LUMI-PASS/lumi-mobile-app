@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/styles/auth_assets.dart';
 
 /// Clock glyph + `mm:ss` countdown. Figma: 14px icon, muted 12px text.
 class CountdownTimer extends StatelessWidget {
@@ -23,8 +22,7 @@ class CountdownTimer extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SvgPicture.asset(
-          AuthAssets.time,
+        Assets.icons.auth.time02.svg(
           width: 14.r,
           height: 14.r,
           colorFilter: ColorFilter.mode(muted, BlendMode.srcIn),
@@ -83,6 +81,7 @@ class LumiWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(AuthAssets.logo, height: height.h, fit: BoxFit.contain);
+    return Assets.icons.lumiLogo
+        .image(height: height.h, fit: BoxFit.contain);
   }
 }

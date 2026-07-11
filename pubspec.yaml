@@ -114,9 +114,10 @@ flutter:
     - assets/icons/home/
     - assets/icons/main/
     - assets/icons/detail/
-    - assets/icons/pay/
     - assets/icons/background/
+    - assets/icons/notification/
     - assets/images/
+    - assets/images/pay/
     - assets/localization/
     - assets/lotties/
 
