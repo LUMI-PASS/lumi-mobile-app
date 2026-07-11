@@ -41,11 +41,13 @@ class HomeCouponBanner extends StatelessWidget {
               decoration: BoxDecoration(gradient: AppGradients.greenGlow),
             ),
           ),
-          // Ticket artwork bleeds past the right edge; the card clips it.
+          // Ticket artwork bleeds vertically so it can scale up, but stays
+          // inside the right padding — pulling it past the edge got it clipped
+          // by the card's rounded corners.
           Positioned(
-            top: 0,
-            bottom: 0,
-            right: -28.w,
+            top: -8.h,
+            bottom: -8.h,
+            right: 0,
             child: SizedBox(
               width: 150.w,
               child: Assets.images.banner.bannerTicketPercentage.image(
@@ -56,7 +58,7 @@ class HomeCouponBanner extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
-              width: 207.w,
+              width: 190.w,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +144,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
         children: [
           CarouselSlider(
             options: CarouselOptions(
-              height: 160.h,
+              height: 144.h,
               autoPlay: pages.length > 1,
               autoPlayInterval: const Duration(seconds: 5),
               viewportFraction: 1.0,

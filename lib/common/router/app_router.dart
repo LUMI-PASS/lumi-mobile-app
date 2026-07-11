@@ -6,6 +6,7 @@ import 'package:lumi_pass/common/router/initial_guard.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/presentation/app/connection_error/connection_error_page.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
@@ -19,9 +20,9 @@ import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/search/search_coming_soon_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/branches_map_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discovery_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/search/search_unified_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/wallet_page.dart';
 import 'package:lumi_pass/presentation/app/profile/children/child_detail_page.dart';
@@ -122,8 +123,8 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: PaymentCardsRoute.page),
     AutoRoute(page: AddNewCardRoute.page),
     AutoRoute(page: CheckoutRoute.page),
-    AutoRoute(page: SearchUnifiedRoute.page),
-    AutoRoute(page: SearchComingSoonRoute.page),
+    AutoRoute(page: SearchDiscoveryRoute.page),
+    AutoRoute(page: BranchesMapRoute.page),
     AutoRoute(page: AttendanceHistoryRoute.page),
     AutoRoute(page: AttendanceDetailRoute.page),
     AutoRoute(page: FaqRoute.page),
@@ -137,5 +138,6 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: CategoriesGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
     AutoRoute(page: NotificationsRoute.page),
+    AutoRoute(page: ConnectionErrorRoute.page),
   ];
 }

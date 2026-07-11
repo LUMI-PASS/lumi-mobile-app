@@ -28,10 +28,6 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   int get resultCount =>
       buildable.activeTab == 0 ? _classesTotal : _branchesTotal;
 
-  /// Pending category set from outside (e.g. home page).
-  /// Picked up on next [applyPendingCategory] call.
-  static HomCategory? pendingCategory;
-
   /// Categories cached from the home feed (have resolved title strings).
   /// Used by search so we don't depend on the raw categories/ endpoint.
   static List<HomCategory> cachedCategories = [];
@@ -39,15 +35,35 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   static const int _pageLimit = 10;
   Timer? _debounce;
 
-  Future<void> init() async {
+  /// [tab] selects which result set to load first — 0 classes, 1 branches. The
+  /// map screen opens straight on branches, so it doesn't pay for a classes
+  /// fetch it will never show.
+  ///
+  /// [category] is seeded *before* the first fetch so that opening search from
+  /// a category costs one filtered request, not an unfiltered one followed by
+  /// a filtered one (which also flashed the wrong results on screen).
+  Future<void> init({int tab = 0, HomCategory? category}) async {
     _lastLang = currentLang;
-    build((b) => b.copyWith(isLoading: true));
+    build((b) => b.copyWith(
+          isLoading: true,
+          activeTab: tab,
+          selectedCategory: category,
+        ));
     await Future.wait([
       _fetchCategories(),
-      _fetchTab(buildable.activeTab, page: 1, append: false),
+      _fetchChildren(),
+      _fetchTab(tab, page: 1, append: false),
     ]);
     build((b) => b.copyWith(isLoading: false));
-    applyPendingCategory();
+  }
+
+  /// The filter sheet offers the parent's children as a shortcut that fills in
+  /// the age and gender it would otherwise ask them to type.
+  Future<void> _fetchChildren() async {
+    try {
+      final children = await _repo.getChildren();
+      build((b) => b.copyWith(children: children));
+    } catch (_) {}
   }
 
   /// Re-fetches categories and results when the app language has changed.
@@ -59,14 +75,6 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     await Future.wait([_fetchCategories(), refresh()]);
   }
 
-  /// Check if a category was set externally and apply it.
-  void applyPendingCategory() {
-    final cat = pendingCategory;
-    if (cat != null) {
-      pendingCategory = null;
-      selectCategory(cat);
-    }
-  }
 
 
   Future<void> _fetchCategories() async {
@@ -287,7 +295,8 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     final f = buildable.filter;
     if (f == null) return 0;
     int count = 0;
-    if (f.ageYears != null) count++;
+    // The age range is one filter however many of its two bounds are filled.
+    if (f.ageYears != null || f.ageToYears != null) count++;
     if (f.gender != Gender.any) count++;
     if (f.pricePreset == PricePreset.custom) count++;
     if (f.datePreset != DatePreset.none) count++;

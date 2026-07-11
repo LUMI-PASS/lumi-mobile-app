@@ -6,6 +6,7 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
@@ -166,42 +167,68 @@ class _TicketCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Stub: logo, status, ticket number, date/time pills ──
-        Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
+        ClipRRect(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+          child: ColoredBox(
             color: c.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Assets.icons.lumiLogo.image(height: 20.h),
-                  const Spacer(),
-                  _StatusChip(status: status),
-                ],
-              ),
-              16.verticalSpace,
-              Text(
-                ticketNo != null
-                    ? 'ticket_number'.tr(args: [ticketNo!])
-                    : 'ticket_pending_label'.tr(),
-                style: AppText.semibold18
-                    .copyWith(fontSize: 20.sp, color: c.textPrimary),
-              ),
-              6.verticalSpace,
-              Wrap(
-                spacing: 4.w,
-                runSpacing: 4.h,
-                children: [
-                  _MetaChip(c: c, label: 'ticket_date_label'.tr(), value: date),
-                  if (time != null)
-                    _MetaChip(
-                        c: c, label: 'ticket_time_label'.tr(), value: time!),
-                ],
-              ),
-            ],
+            child: Stack(
+              children: [
+                // The purple bloom straddling the card's top edge, tinting the
+                // branded half of the stub.
+                const Positioned.fill(
+                  child: DecoratedBox(
+                    decoration:
+                        BoxDecoration(gradient: AppGradients.ticketStubGlow),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // The neon wordmark carries its own glow, and the
+                          // asset is a square with the mark banded across the
+                          // middle — `cover` crops the empty margins away.
+                          Assets.icons.logoTransparent.image(
+                            width: 96.w,
+                            height: 40.h,
+                            fit: BoxFit.cover,
+                          ),
+                          const Spacer(),
+                          _StatusChip(status: status),
+                        ],
+                      ),
+                      16.verticalSpace,
+                      Text(
+                        ticketNo != null
+                            ? 'ticket_number'.tr(args: [ticketNo!])
+                            : 'ticket_pending_label'.tr(),
+                        style: AppText.semibold18
+                            .copyWith(fontSize: 20.sp, color: c.textPrimary),
+                      ),
+                      6.verticalSpace,
+                      Wrap(
+                        spacing: 4.w,
+                        runSpacing: 4.h,
+                        children: [
+                          _MetaChip(
+                              c: c,
+                              label: 'ticket_date_label'.tr(),
+                              value: date),
+                          if (time != null)
+                            _MetaChip(
+                                c: c,
+                                label: 'ticket_time_label'.tr(),
+                                value: time!),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         _Perforation(c: c),
@@ -214,7 +241,7 @@ class _TicketCard extends StatelessWidget {
               if (className != null && className!.isNotEmpty)
                 _DetailRow(
                   c: c,
-                  icon: Assets.icons.home.book,
+                  icon: Assets.icons.coupons.icTicketTitle,
                   label: 'ticket_class'.tr(),
                   value: className!,
                 ),

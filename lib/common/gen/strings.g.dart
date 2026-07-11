@@ -1000,4 +1000,9 @@ class Strings {
   static String get notificationsMarkAllRead => 'notifications_mark_all_read'.tr();
   static String get notificationToday => 'notification_today'.tr();
   static String get notificationYesterday => 'notification_yesterday'.tr();
+
+  // connection error
+  static String get noInternetTitle => 'no_internet_title'.tr();
+  static String get noInternetDesc => 'no_internet_desc'.tr();
+  static String get retry => 'retry'.tr();
 }

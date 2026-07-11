@@ -47,6 +47,15 @@ class AppGradients {
     ],
   );
 
+  /// Purple bloom straddling the top edge of the ticket receipt stub (Figma
+  /// `Ellipse 1269`) — a wide, heavily blurred ellipse that tints the branded
+  /// half of the ticket and fades out before it reaches the ticket number.
+  static const RadialGradient ticketStubGlow = RadialGradient(
+    center: Alignment.topCenter,
+    radius: 1.1,
+    colors: [Color(0x8FA752C7), Color(0x00A752C7)],
+  );
+
   /// Soft green wash bleeding in from behind the coupon banner's ticket art
   /// (Figma `star`) — sits on top of [frostedControl], fading to transparent
   /// before it reaches the copy.

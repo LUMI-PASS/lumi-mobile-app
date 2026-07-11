@@ -10,6 +10,7 @@ import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/pill_filter_chip.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -116,19 +117,19 @@ class _CalendarBodyState extends State<_CalendarBody> {
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(
             children: [
-              _FilterChip(
+              PillFilterChip(
                 label: 'filter_all'.tr(),
                 selected: _filter == _BookingFilter.all,
                 onTap: () => setState(() => _filter = _BookingFilter.all),
               ),
               8.kw,
-              _FilterChip(
+              PillFilterChip(
                 label: 'filter_active'.tr(),
                 selected: _filter == _BookingFilter.active,
                 onTap: () => setState(() => _filter = _BookingFilter.active),
               ),
               8.kw,
-              _FilterChip(
+              PillFilterChip(
                 label: 'filter_completed'.tr(),
                 selected: _filter == _BookingFilter.completed,
                 onTap: () => setState(() => _filter = _BookingFilter.completed),
@@ -162,43 +163,6 @@ class _CalendarBodyState extends State<_CalendarBody> {
                 }),
         ),
       ],
-    );
-  }
-}
-
-/// A pill filter chip — selected shows the brand blue→purple gradient, otherwise
-/// a muted surface fill (Figma 96-3204).
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          gradient: selected ? AppGradients.indigo : null,
-          color: selected ? null : c.surface,
-          borderRadius: BorderRadius.circular(40.r),
-        ),
-        child: Text(
-          label,
-          style: AppText.semibold12.copyWith(
-            color: selected ? Colors.white : c.textSecondary,
-          ),
-        ),
-      ),
     );
   }
 }
