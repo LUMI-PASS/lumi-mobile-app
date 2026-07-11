@@ -46,7 +46,8 @@ Future<void> _seedDefaultLocale() async {
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // ignore: avoid_print
-  print('[FCM] background — title:${message.notification?.title} data:${message.data}');
+  print(
+      '[FCM] background — title:${message.notification?.title} data:${message.data}');
 }
 
 // ─── Native deep-link interceptor ────────────────────────────────────────────
@@ -72,8 +73,7 @@ DeepLink _initialWebDeepLink(PlatformDeepLink link) {
   // ignore: avoid_print
   print('[lumi] deepLink uri: ${link.uri}');
   if (_webInitialNavDone) return link;
-  _webInitialNavDone
-  = true;
+  _webInitialNavDone = true;
   try {
     final storage = getIt<Storage>();
     final showOnboard = storage.showOnboard();
@@ -118,7 +118,8 @@ Future<void> _runWeb() async {
       await _seedDefaultLocale();
 
       log('3 firebase');
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform);
 
       log('4 remoteconfig');
       await RemoteConfigService.instance.init();
@@ -128,7 +129,7 @@ Future<void> _runWeb() async {
 
       log('6 di');
       await configureDependencies();
-  initThemeMode();
+      initThemeMode();
 
       log('7 locale');
       initLangIfNeeded('uz');
@@ -226,45 +227,40 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
     return DisplayWidget(
       child: ScreenUtilInit(
         designSize: const Size(414, 896),
-        child: MaterialApp.router(
-          title: AppEnv.isDev ? 'Lumi [DEV]' : 'lumi_pass',
-          debugShowCheckedModeBanner: AppEnv.isDev,
-          routerConfig: getIt<AppRouter>().config(
-            deepLinkBuilder: kIsWeb ? _initialWebDeepLink : _nativeDeepLink,
+        // The user's theme override drives `themeMode`; `AppColorScheme` rides
+        // along on `ThemeData.extensions`, so every `context.colors` lookup —
+        // and its lerp on switch — follows from here.
+        child: ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeModeNotifier,
+          builder: (context, mode, _) => MaterialApp.router(
+            title: AppEnv.isDev ? 'Lumi [DEV]' : 'lumi_pass',
+            debugShowCheckedModeBanner: AppEnv.isDev,
+            routerConfig: getIt<AppRouter>().config(
+              deepLinkBuilder: kIsWeb ? _initialWebDeepLink : _nativeDeepLink,
+            ),
+            scrollBehavior: _LumiScrollBehavior(),
+            color: AppColorScheme.light.primary,
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
+            theme: _themeFrom(AppColorScheme.light),
+            darkTheme: _themeFrom(AppColorScheme.dark),
+            themeMode: mode,
           ),
-          scrollBehavior: _LumiScrollBehavior(),
-          color: context.colors.primary,
-          localizationsDelegates: context.localizationDelegates,
-          supportedLocales: context.supportedLocales,
-          locale: context.locale,
-          theme: ThemeData(
-            fontFamily: 'Onest',
-            useMaterial3: false,
-            primarySwatch: MaterialColors.vividCerulean,
-            primaryColor: context.colors.primary,
-            scaffoldBackgroundColor: context.colors.window,
-            shadowColor: context.colors.onPrimary,
-            highlightColor: context.colors.onPrimary,
-          ),
-          // User theme toggle: override the platform brightness that
-          // `context.appColors` reads, so the redesigned screens follow it.
-          builder: (context, child) {
-            return ValueListenableBuilder<ThemeMode>(
-              valueListenable: themeModeNotifier,
-              builder: (context, mode, _) {
-                final mq = MediaQuery.of(context);
-                return MediaQuery(
-                  data: mq.copyWith(
-                    platformBrightness:
-                        resolveBrightness(mode, mq.platformBrightness),
-                  ),
-                  child: child ?? const SizedBox.shrink(),
-                );
-              },
-            );
-          },
         ),
       ),
     );
   }
+
+  ThemeData _themeFrom(AppColorScheme colors) => ThemeData(
+        fontFamily: 'Onest',
+        useMaterial3: false,
+        brightness: colors.brightness,
+        primarySwatch: MaterialColors.vividCerulean,
+        primaryColor: colors.primary,
+        scaffoldBackgroundColor: colors.scaffoldBg,
+        shadowColor: colors.onPrimary,
+        highlightColor: colors.onPrimary,
+        extensions: [colors],
+      );
 }

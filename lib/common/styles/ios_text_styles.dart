@@ -89,7 +89,8 @@ class IOSText {
         color: color ?? tertiary,
       );
 
-  static TextStyle sectionHeader({Color? color}) => caption(color: color).copyWith(
+  static TextStyle sectionHeader({Color? color}) =>
+      caption(color: color).copyWith(
         fontSize: 13.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.1,

@@ -1,4 +1,4 @@
-import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class CustomCheckbox extends StatefulWidget {
@@ -22,9 +22,9 @@ class CustomCheckbox extends StatefulWidget {
     Key? key,
     required this.initialValue,
     this.onChanged,
-    this.activeColor = StaticColors.bittersweet,
+    this.activeColor = AppColors.error,
     this.checkColor = Colors.white,
-    this.borderColor = StaticColors.raven,
+    this.borderColor = AppColors.lightTextSecondary,
     this.borderWidth = 1.0,
     this.size = 16.0,
     this.borderRadius = 4.0,

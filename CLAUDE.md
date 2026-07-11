@@ -25,18 +25,30 @@ Guidance for working in this Flutter app (`lumi_pass`).
 
 ### Colors
 
-- **Global / reused colors → `AppColors`** (`lib/common/styles/app_colors.dart`).
-  If a color is part of the brand palette or appears on more than one screen
-  (text, borders, brand accents, status colors like green/orange/red, `ink`,
-  `greeting`, `error`), it MUST be a token in `AppColors` — reference it, don't
-  hardcode a hex literal. Theme-aware tokens are read via `context.appColors`;
-  theme-independent brand statics are `AppColors.<name>` (e.g. `AppColors.ink`,
-  `AppColors.green`, `AppColors.error`, `AppColors.greeting`).
-  When you need a global color that doesn't exist yet, add it to `AppColors`
-  first, then use it.
-- **Screen-only colors → may be hardcoded** as `const` at the top of that
-  screen's file (e.g. a one-off background or an icon-chip fill used nowhere
-  else). If such a color later gets reused, promote it to `AppColors`.
+Colors live in **two layers**. Keep them separate — that separation is what
+makes dark mode work.
+
+1. **The palette — `AppColors`** (`lib/common/styles/app_colors.dart`).
+   Nothing but `static const` hex literals, named after the *paint*
+   (`brandPurple`, `error`, `lightBorder`, `darkSurface`). It is theme-unaware.
+2. **The roles — `AppColorScheme`** (`lib/common/styles/app_color_scheme.dart`).
+   A `ThemeExtension` naming what a color is *for* (`scaffoldBg`, `textPrimary`,
+   `border`, `disabled`), with a `light` and a `dark` table assigning a palette
+   entry to each role. Registered on `ThemeData.extensions` in `main.dart`.
+
+- **Screens read roles, never paints: `context.colors.textPrimary`.** This is
+  the single color accessor in the app. (`context.appColors` and the injectable
+  `DefaultThemeColors` are gone — both folded into `context.colors`.)
+- **A new color → add the hex to `AppColors`, then give it a role in
+  `AppColorScheme` (both `light` *and* `dark`).** Never hardcode a hex literal
+  in a widget, and never reference a `light*` / `dark*` palette entry from a
+  screen — those exist only to be assigned inside the two tables.
+- **The one exception: fixed inks.** `AppColors.ink`, `inkMuted`, `inkChip` and
+  the brand/status statics (`brandPurple`, `error`, `green`, `warning`, `blue`)
+  are theme-invariant *by design* — they paint chips that stay light in both
+  themes because they sit on a photo. Use those directly.
+- Adding a role means adding it to the constructor, both tables, `copyWith` and
+  `lerp`. If you skip `lerp`, the color won't animate on theme switch.
 - Gradients live in `AppGradients` (`lib/common/styles/app_gradients.dart`) —
   same rule: reuse tokens, don't inline `LinearGradient(...)` for a shared look.
 

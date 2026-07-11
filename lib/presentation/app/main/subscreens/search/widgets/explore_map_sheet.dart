@@ -148,7 +148,7 @@ class _ExploreMapSheetState extends State<ExploreMapSheet> {
     return Container(
       height: screenH * 0.92,
       decoration: BoxDecoration(
-        color: context.colors.window,
+        color: context.colors.scaffoldBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(

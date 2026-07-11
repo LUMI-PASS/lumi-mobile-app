@@ -120,7 +120,7 @@ class GetTicketBottomsheet
       height: MediaQuery.of(context).size.height * 0.85,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: context.colors.window,
+        color: context.colors.scaffoldBg,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
@@ -138,7 +138,7 @@ class GetTicketBottomsheet
                 height: 4.h,
                 margin: EdgeInsets.only(bottom: 12.h),
                 decoration: BoxDecoration(
-                  color: context.colors.grey.withOpacity(0.3),
+                  color: context.colors.border.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -185,7 +185,7 @@ class GetTicketBottomsheet
                       'expected_charge'.tr()
                           .s(12)
                           .w(600)
-                          .c(context.colors.grey),
+                          .c(context.colors.border),
                       Container(
                         padding: EdgeInsets.symmetric(
                             horizontal: 10.w, vertical: 4.h),
@@ -286,12 +286,12 @@ class GetTicketBottomsheet
                               depth:
                                   isDisabled ? 0 : (isSelected ? 0 : 3),
                               backgroundColor: isDisabled
-                                  ? context.colors.grey.withOpacity(0.08)
+                                  ? context.colors.border.withOpacity(0.08)
                                   : isSelected
                                       ? context.colors.primary
                                       : context.colors.onPrimary,
                               borderColor: isDisabled
-                                  ? context.colors.grey.withOpacity(0.2)
+                                  ? context.colors.border.withOpacity(0.2)
                                   : isSelected
                                       ? context.colors.primary
                                       : Colors.grey.shade200,
@@ -307,10 +307,10 @@ class GetTicketBottomsheet
                                             .s(13)
                                             .w(600)
                                             .c(isDisabled
-                                                ? context.colors.grey
+                                                ? context.colors.border
                                                 : isSelected
                                                     ? Colors.white
-                                                    : context.colors.title),
+                                                    : context.colors.textSecondary),
                                         4.kh,
                                         Row(
                                           mainAxisAlignment:
@@ -320,7 +320,7 @@ class GetTicketBottomsheet
                                               Icons.event_seat_rounded,
                                               size: 13.w,
                                               color: isDisabled
-                                                  ? context.colors.grey
+                                                  ? context.colors.border
                                                   : isSelected
                                                       ? Colors.white
                                                           .withOpacity(0.7)
@@ -328,14 +328,14 @@ class GetTicketBottomsheet
                                                           ? const Color(
                                                               0xFFEF603D)
                                                           : context
-                                                              .colors.grey,
+                                                              .colors.border,
                                             ),
                                             4.kw,
                                             'seats_left'.tr(args: ['$emptySeats'])
                                                 .s(10)
                                                 .w(500)
                                                 .c(isDisabled
-                                                    ? context.colors.grey
+                                                    ? context.colors.border
                                                     : isSelected
                                                         ? Colors.white
                                                             .withOpacity(
@@ -345,7 +345,7 @@ class GetTicketBottomsheet
                                                                 0xFFEF603D)
                                                             : context
                                                                 .colors
-                                                                .grey),
+                                                                .border),
                                           ],
                                         ),
                                       ],
@@ -364,7 +364,7 @@ class GetTicketBottomsheet
                                               ? Colors.orange
                                               : emptySeats <= 0
                                                   ? const Color(0xFFEF603D)
-                                                  : context.colors.grey,
+                                                  : context.colors.border,
                                           borderRadius:
                                               BorderRadius.circular(6.r),
                                         ),
@@ -405,12 +405,12 @@ class GetTicketBottomsheet
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.event_busy,
-                                  size: 48.w, color: context.colors.grey),
+                                  size: 48.w, color: context.colors.border),
                               12.kh,
                               'no_slots_for_date'.tr()
                                   .s(14)
                                   .w(500)
-                                  .c(context.colors.grey),
+                                  .c(context.colors.border),
                             ],
                           ),
                         ),

@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -6,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/auth_misc.dart';
 import 'package:lumi_pass/common/widget/auth/auth_scaffold.dart';
@@ -41,7 +41,7 @@ class OnboardingPage
 
   @override
   Widget builder(BuildContext context, OnboardingBuildable state) {
-    final colors = context.appColors;
+    final colors = context.colors;
     const pages = Onboard.values;
     final isLast = state.index == pages.length - 1;
 
@@ -111,7 +111,7 @@ class _OnboardSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
+    final colors = context.colors;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 24.w),
       child: Column(

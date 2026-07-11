@@ -117,6 +117,7 @@ flutter:
     - assets/icons/background/
     - assets/icons/notification/
     - assets/images/
+    - assets/images/banner/
     - assets/images/pay/
     - assets/localization/
     - assets/lotties/

@@ -586,9 +586,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    context.colors.window.withOpacity(0),
-                    context.colors.window.withOpacity(0.95),
-                    context.colors.window,
+                    context.colors.scaffoldBg.withOpacity(0),
+                    context.colors.scaffoldBg.withOpacity(0.95),
+                    context.colors.scaffoldBg,
                   ],
                   stops: const [0.0, 0.35, 0.6],
                 ),

@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,6 +11,7 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
+import 'package:lumi_pass/common/widget/shaker.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -48,6 +50,17 @@ class BookingPage extends StatefulWidget {
   State<BookingPage> createState() => _BookingPageState();
 }
 
+/// Placeholder cards so the chooser's card list can be exercised before the
+/// backend serves saved cards. The PANs are test numbers, not chargeable — the
+/// gateway will reject them at payment. Delete this once a real card list
+/// endpoint exists.
+const List<PaymentCard> _kDemoCards = [
+  PaymentCard(brand: CardBrand.uzcard, pan: '8600123456788534', expiry: '1230'),
+  PaymentCard(brand: CardBrand.humo, pan: '9860123456788534', expiry: '1230'),
+  PaymentCard(
+      brand: CardBrand.mastercard, pan: '5555444433338534', expiry: '1230'),
+];
+
 class _BookingPageState extends State<BookingPage> {
   // ageTiers mode: _tierCounts[tierIdx][durIdx] = count
   late final List<List<int>> _tierCounts;
@@ -60,7 +73,24 @@ class _BookingPageState extends State<BookingPage> {
   bool _loadingSlots = false;
   bool _slotsLoaded = false;
   bool _submitting = false;
-  PaymentRail _rail = PaymentRail.card; // selected payment rail (Figma row)
+
+  /// The buyer's payment choice. Null until they pick one in the chooser sheet
+  /// — paying is blocked until then.
+  PaymentSelection? _payment;
+
+  /// Cards offered in the chooser's card list: the demo ones plus anything the
+  /// buyer adds during this session.
+  final List<PaymentCard> _cards = [..._kDemoCards];
+
+  // Missing input is flagged by shaking the control itself, so each one the pay
+  // CTA can block on is addressable.
+  final _ticketShake = GlobalKey<ShakerState>();
+  final _dateShake = GlobalKey<ShakerState>();
+  final _timeShake = GlobalKey<ShakerState>();
+  final _paymentShake = GlobalKey<ShakerState>();
+
+  /// Gateway/network failures only. Validation never lands here — it shakes the
+  /// offending control instead of printing a message at the bottom of the page.
   String? _error;
 
   // ─── Coupon discount ──────────────────────────────────────────────────────
@@ -176,13 +206,13 @@ class _BookingPageState extends State<BookingPage> {
     if (applied != null) {
       return PillCard(
         leading: PillIconBadge(
-          child: Assets.icons.detail.iconsaxDiscount.svg(width: 20.w),
+          child: Assets.icons.detail.icDiscount.svg(width: 20.w),
         ),
         child: PillCaption(
           title: applied.code,
           subtitle: 'promo_applied_saved'
               .tr(args: [applied.discountAmount.toRawUzsPrice()]),
-          subtitleColor: AppColors.green,
+          subtitleColor: AppColors.tagGreen,
         ),
         trailing: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -198,7 +228,7 @@ class _BookingPageState extends State<BookingPage> {
       children: [
         PillCard(
           leading: PillIconBadge(
-            child: Assets.icons.detail.iconsaxDiscount.svg(width: 20.w),
+            child: Assets.icons.detail.icDiscount.svg(width: 20.w),
           ),
           child: TextField(
             controller: _promoCtrl,
@@ -263,6 +293,14 @@ class _BookingPageState extends State<BookingPage> {
 
   bool get _requiresBookingSlot =>
       widget.clazz.category?.requiresBookingTimeSlot ?? false;
+
+  /// Every ticket in the required-booking flow has both ends of its window set.
+  bool get _windowsComplete {
+    if (_customWindows.length < _totalTickets) return false;
+    return _customWindows
+        .take(_totalTickets)
+        .every((w) => w.start != null && w.end != null);
+  }
 
   String _fmtTime(TimeOfDay t) {
     final h = t.hour.toString().padLeft(2, '0');
@@ -476,11 +514,11 @@ class _BookingPageState extends State<BookingPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final c = context.appColors;
+        final c = context.colors;
         return Container(
           height: 280.h,
           decoration: BoxDecoration(
-            color: c.bg,
+            color: c.scaffoldBg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
           ),
           child: SafeArea(
@@ -828,19 +866,53 @@ class _BookingPageState extends State<BookingPage> {
     return items;
   }
 
-  /// Validates the selection before opening the payment sheet. Surfaces the
-  /// error inline and returns false when the user can't pay yet.
+  /// Scrolls the control into view and shakes it — the "you still owe me this"
+  /// signal, delivered where the user has to act rather than as a line of red
+  /// text elsewhere on the page.
+  Future<void> _flag(GlobalKey<ShakerState> key) async {
+    final ctx = key.currentContext;
+    if (ctx != null) {
+      await Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+    key.currentState?.shake();
+  }
+
+  /// Checks the form before charging. Returns false — and shakes whatever is
+  /// still missing — when the user can't pay yet.
   bool _validateForPayment() {
+    if (_error != null) setState(() => _error = null);
     if (_totalTickets == 0) {
-      setState(() => _error = 'book_at_least_one'.tr());
+      _flag(_ticketShake);
       return false;
     }
     if (_selectedDate == null) {
-      setState(() => _error = 'book_pick_date'.tr());
+      _flag(_dateShake);
+      return false;
+    }
+    // Required-booking classes carry a per-ticket [start, end]; the backend
+    // records the window per booking, so an unset one can't be sent.
+    if (_requiresBookingSlot && !_windowsComplete) {
+      _flag(_timeShake);
+      return false;
+    }
+    // Slot-based classes need one of the day's slots picked.
+    if (!_requiresBookingSlot &&
+        (_selectedDate?.slots.isNotEmpty ?? false) &&
+        _selectedSlot == null) {
+      _flag(_timeShake);
+      return false;
+    }
+    // The buyer has to say how they're paying — nothing is preselected.
+    if (_payment == null) {
+      _flag(_paymentShake);
       return false;
     }
     if (widget.clazz.id == null) return false;
-    setState(() => _error = null);
     return true;
   }
 
@@ -912,7 +984,12 @@ class _BookingPageState extends State<BookingPage> {
     Navigator.of(context).pop(); // close booking sheet
     if (!RemoteConfigService.instance.isInReview) {
       await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PaycomCheckoutPage(result: result, provider: _rail.name)),
+        MaterialPageRoute(
+          builder: (_) => PaycomCheckoutPage(
+            result: result,
+            provider: _payment?.rail.name ?? PaymentRail.card.name,
+          ),
+        ),
       );
     }
     // Re-sync premium status so the discount badge disappears immediately when
@@ -985,7 +1062,7 @@ class _BookingPageState extends State<BookingPage> {
       final slot = _selectedSlot;
       final time = slot != null ? ' ${slot.startTime}' : '';
       out.add(_SummaryLine(
-        icon: Assets.icons.detail.iconsaxAiCalendar,
+        icon: Assets.icons.detail.icCalendar,
         label: 'book_date_time'.tr(),
         value:
             '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
@@ -1048,7 +1125,7 @@ class _BookingPageState extends State<BookingPage> {
   // ─── Single-screen booking page (Figma 60:6122) ───────────────────────────
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Scaffold(
       backgroundColor: c.canvas,
       body: SafeArea(
@@ -1067,14 +1144,17 @@ class _BookingPageState extends State<BookingPage> {
                     // Full-bleed: the strip has its own horizontal padding so
                     // its chips can scroll edge to edge.
                     if (_availableDates.isNotEmpty)
-                      _DateStrip(
-                        dates: _availableDates,
-                        selected: _selectedDate,
-                        unavailableDates:
-                            _requiresBookingSlot && !_prefetchingDays
-                                ? _scheduledDates
-                                : null,
-                        onPickDate: _onDateTapped,
+                      Shaker(
+                        key: _dateShake,
+                        child: _DateStrip(
+                          dates: _availableDates,
+                          selected: _selectedDate,
+                          unavailableDates:
+                              _requiresBookingSlot && !_prefetchingDays
+                                  ? _scheduledDates
+                                  : null,
+                          onPickDate: _onDateTapped,
+                        ),
                       ),
                     16.kh,
                     Padding(
@@ -1082,14 +1162,19 @@ class _BookingPageState extends State<BookingPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _ticketSection(c),
+                          Shaker(key: _ticketShake, child: _ticketSection(c)),
                           20.kh,
-                          if (_requiresBookingSlot)
-                            _customWindowsSection(c)
-                          else
-                            _slotsSection(c),
+                          Shaker(
+                            key: _timeShake,
+                            child: _requiresBookingSlot
+                                ? _customWindowsSection(c)
+                                : _slotsSection(c),
+                          ),
                           20.kh,
-                          _paymentMethodRow(c),
+                          Shaker(
+                            key: _paymentShake,
+                            child: _paymentMethodRow(c),
+                          ),
                           if (!_hasCoupon) ...[
                             20.kh,
                             _promoSection(c),
@@ -1118,7 +1203,7 @@ class _BookingPageState extends State<BookingPage> {
 
   /// Back control + centered title. Replaces the old drag handle: the screen is
   /// a page now, so it gets a real header inside the [SafeArea].
-  Widget _header(AppColors c) => Padding(
+  Widget _header(AppColorScheme c) => Padding(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
         child: Row(
           children: [
@@ -1146,30 +1231,30 @@ class _BookingPageState extends State<BookingPage> {
       );
 
   /// Pay CTA pinned above the home indicator on an opaque bar, as in the design.
-  Widget? _bottomBar(AppColors c) {
+  Widget? _bottomBar(AppColorScheme c) {
     if (RemoteConfigService.instance.isInReview) return null;
     // The home-indicator inset is padded in directly rather than wrapped in a
     // SafeArea, so the bar's fill runs to the bottom edge with no dead gap.
     final bottomInset = MediaQuery.of(context).padding.bottom;
     return Container(
-      color: c.bg,
+      color: c.scaffoldBg,
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h + bottomInset),
       child: GradientButton(
         text: 'book_pay_cta'.tr(args: [_payableTotal.toRawUzsPrice()]),
         loading: _submitting,
-        onPressed: _openPaymentFlow,
+        onPressed: _pay,
       ),
     );
   }
 
-  Widget _sectionHeader(AppColors c, String title) => Padding(
+  Widget _sectionHeader(AppColorScheme c, String title) => Padding(
         padding: EdgeInsets.only(left: 8.w, bottom: 14.h),
         child:
             Text(title, style: AppText.semibold14.copyWith(color: c.textSecondary)),
       );
 
   // "Цены на билеты" — one frosted pill row per tariff, each with a stepper.
-  Widget _ticketSection(AppColors c) {
+  Widget _ticketSection(AppColorScheme c) {
     final rows = <Widget>[];
 
     void addRow({
@@ -1242,7 +1327,7 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   // "Доступное время" — slot chips for the day picked in the header strip.
-  Widget _slotsSection(AppColors c) => _SlotPicker(
+  Widget _slotsSection(AppColorScheme c) => _SlotPicker(
         selected: _selectedDate,
         selectedSlot: _selectedSlot,
         loadingSlots: _loadingSlots,
@@ -1254,7 +1339,7 @@ class _BookingPageState extends State<BookingPage> {
         }),
       );
 
-  Widget _customWindowsSection(AppColors c) => _CustomTimeWindowSection(
+  Widget _customWindowsSection(AppColorScheme c) => _CustomTimeWindowSection(
         selected: _selectedDate,
         tickets: _ticketDescriptors(),
         windows: _customWindows,
@@ -1266,30 +1351,36 @@ class _BookingPageState extends State<BookingPage> {
         fmt: _fmtTime,
       );
 
-  // "Оплата" — payment method row (opens the Paylov payment-type sheet).
-  Widget _paymentMethodRow(AppColors c) {
+  // "Оплата" — payment method row. Opens the chooser; it never charges.
+  Widget _paymentMethodRow(AppColorScheme c) {
+    final payment = _payment;
+    final card = payment?.card;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(c, 'book_payment_method'.tr()),
         PillCard(
-          onTap: () => _openPaymentFlow(validate: false),
-          leading: PillIconBadge(child: _railLeading(_rail)),
+          onTap: _openChooser,
+          leading: PillIconBadge(child: _paymentLeading(payment)),
           child: PillCaption(
-            title: _railName(_rail),
+            // Nothing picked yet: the row itself is the prompt to pick.
+            title: payment == null
+                ? 'book_pick_payment'.tr()
+                : (card?.label ?? payment.rail.brandName),
             subtitle: 'book_pay_method_label'.tr(),
             captionFirst: true,
+            titleColor: payment == null ? AppColors.greeting : null,
           ),
           trailing: PillActionChip(
-            label: 'book_change'.tr(),
-            onTap: () => _openPaymentFlow(validate: false),
+            label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
+            onTap: _openChooser,
           ),
         ),
       ],
     );
   }
 
-  Widget _promoSection(AppColors c) => Column(
+  Widget _promoSection(AppColorScheme c) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(c, 'promo_code_title'.tr()),
@@ -1298,7 +1389,7 @@ class _BookingPageState extends State<BookingPage> {
       );
 
   // "Оплата" — the frosted price-breakdown card.
-  Widget _breakdownSection(AppColors c) {
+  Widget _breakdownSection(AppColorScheme c) {
     return FrostedCard(
       borderWidth: 2,
       borderRadius: BorderRadius.circular(12.r),
@@ -1368,10 +1459,15 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
-  /// The rail glyph, sized to sit inside the white [PillIconBadge]. Always
-  /// rendered on a light surface, so the card icon uses [AppColors.ink].
-  Widget _railLeading(PaymentRail r) {
-    switch (r) {
+  /// The glyph inside the white [PillIconBadge]: the chosen card's brand
+  /// artwork, the rail's brand mark, or a neutral card icon when nothing is
+  /// picked. Always on a light surface, so the icon uses [AppColors.ink].
+  Widget _paymentLeading(PaymentSelection? payment) {
+    final card = payment?.card;
+    if (card != null) {
+      return CardArtwork(brand: card.brand, width: 30, height: 20);
+    }
+    switch (payment?.rail) {
       // The round badge is far too narrow for the full wordmarks, so this row
       // uses the square brand marks; the sheet still shows the wordmarks.
       case PaymentRail.payme:
@@ -1381,6 +1477,7 @@ class _BookingPageState extends State<BookingPage> {
       case PaymentRail.uzum:
         return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
       case PaymentRail.card:
+      case null:
         return Assets.icons.icCard.svg(
           width: 20.w,
           height: 20.w,
@@ -1389,42 +1486,77 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-  String _railName(PaymentRail r) {
-    switch (r) {
-      case PaymentRail.payme:
-        return "Payme";
-      case PaymentRail.click:
-        return "Click";
-      case PaymentRail.uzum:
-        return "Uzum";
-      case PaymentRail.card:
-        return "pay_with_card".tr();
+  /// Opens the chooser sheet. It only picks a rail (and a card) — the charge
+  /// happens later, from the pay CTA.
+  Future<void> _openChooser() async {
+    final picked = await showPaymentChooser(
+      context,
+      initial: _payment,
+      cards: _cards,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _payment = picked;
+      // Remember a card added inside the sheet for the rest of the session.
+      final card = picked.card;
+      if (card != null && !_cards.contains(card)) _cards.add(card);
+      _error = null;
+    });
+  }
+
+  /// Pay CTA: create the order and charge it on the chosen rail. Card payments
+  /// confirm an OTP in a sheet; the other rails hand off to the checkout page.
+  Future<void> _pay() async {
+    if (_submitting) return;
+    if (!_validateForPayment()) return;
+    final payment = _payment!;
+    final card = payment.card;
+
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      final result = await _runCheckout(
+        provider: payment.rail.providerKey,
+        cardNumber: card?.pan,
+        expireDate: card?.expiry,
+      );
+      if (!mounted) return;
+      setState(() => _submitting = false);
+
+      // A card charge comes back as a transaction to confirm via OTP; anything
+      // else (including a card checkout the gateway chose to redirect) goes to
+      // the checkout page.
+      if (result.isCardOtpPending) {
+        final paid = await showCardOtpSheet(
+          context,
+          checkout: result,
+          confirmCard: ({
+            required String transactionId,
+            required String cid,
+            required String otp,
+          }) =>
+              getIt<OrdersApi>().paylovConfirmCard(
+            transactionId: transactionId,
+            cid: cid,
+            otp: otp,
+          ),
+        );
+        if (paid == true && mounted) _completeCardPaid(result);
+      } else if (result.checkoutUrl.isNotEmpty) {
+        await _completeRedirect(result);
+      } else {
+        setState(() => _error = 'pay_generic_error'.tr());
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = e is CheckoutFriendlyError ? e.message : e.toString();
+      });
     }
   }
-
-  void _openPaymentFlow({bool validate = true}) {
-    if (validate && !_validateForPayment()) return;
-    showPaymentFlow(
-      context,
-      startCheckout: ({String? provider, String? cardNumber, String? expireDate}) =>
-          _runCheckout(
-        provider: provider,
-        cardNumber: cardNumber,
-        expireDate: expireDate,
-      ),
-      confirmCard: ({required String transactionId, required String cid, required String otp}) =>
-          getIt<OrdersApi>().paylovConfirmCard(
-        transactionId: transactionId,
-        cid: cid,
-        otp: otp,
-      ),
-      onRedirect: _completeRedirect,
-      onCardPaid: _completeCardPaid,
-      initial: _rail,
-      onRailChanged: (r) => setState(() => _rail = r),
-    );
-  }
-
 }
 
 /// One row of the order breakdown. See [_BookingPageState._summaryLines].
@@ -1825,7 +1957,7 @@ class _TariffRow extends StatelessWidget {
                 Text(
                   discounted > 0 ? discounted.toRawUzsPrice() : '—',
                   style:
-                      AppText.semibold12.copyWith(color: AppColors.green),
+                      AppText.semibold12.copyWith(color: AppColors.tagGreen),
                 ),
             ],
           ),
@@ -1932,7 +2064,7 @@ class _CustomTimeWindowSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final selectedSlots = selected?.slots ?? const <ScheduleSlotInfo>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2193,9 +2325,9 @@ class _BookingRequestedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: c.bg,
+      backgroundColor: c.scaffoldBg,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 28.w),

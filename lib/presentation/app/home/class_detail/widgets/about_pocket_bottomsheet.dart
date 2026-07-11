@@ -35,7 +35,7 @@ class AboutPocketBottomsheet
         vertical: 12.h,
       ),
       decoration: BoxDecoration(
-        color: context.colors.window,
+        color: context.colors.scaffoldBg,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),

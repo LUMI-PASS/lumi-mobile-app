@@ -1,10 +1,10 @@
 import 'dart:ui';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
@@ -23,13 +23,13 @@ class SearchComingSoonView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final topInset = MediaQuery.of(context).viewPadding.top;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: c.overlayStyle,
       child: Scaffold(
-        backgroundColor: c.bg,
+        backgroundColor: c.scaffoldBg,
         body: Column(
           children: [
             SizedBox(height: topInset + 8.h),
@@ -44,7 +44,7 @@ class SearchComingSoonView extends StatelessWidget {
                   Positioned.fill(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(color: c.bg.withOpacity(0.6)),
+                      child: Container(color: c.scaffoldBg.withOpacity(0.6)),
                     ),
                   ),
                   Center(
@@ -67,7 +67,7 @@ class SearchComingSoonView extends StatelessWidget {
 class _PreviewSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final itemW = (1.sw - 32.w - 8.w) / 2;
 
     Widget bar(double w, double h) => Container(
@@ -145,7 +145,7 @@ class _ComingSoonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 28.h),
       decoration: BoxDecoration(

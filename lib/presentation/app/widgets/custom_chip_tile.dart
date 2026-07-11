@@ -46,9 +46,9 @@ class _CustomChipTileState extends State<CustomChipTile> {
               onChanged: (value) {
                 widget.onTap(value!);
               },
-              activeColor: context.colors.greenHeadline,
+              activeColor: context.colors.success,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
-              side: BorderSide(color: context.colors.grey, width: 1.5.w),
+              side: BorderSide(color: context.colors.border, width: 1.5.w),
               checkColor: context.colors.onPrimary,
             )
           ],

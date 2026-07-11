@@ -40,6 +40,9 @@ class AppText {
   /// B3 / Medium / 16 — buttons, list labels.
   static TextStyle get medium16 => _s(16, FontWeight.w500);
 
+  /// B3 / Regular / 16 — text-field values and placeholders.
+  static TextStyle get regular16 => _s(16, FontWeight.w400);
+
   /// B4 / Regular / 14 — subtitles / descriptions.
   static TextStyle get regular14 => _s(14, FontWeight.w400);
 

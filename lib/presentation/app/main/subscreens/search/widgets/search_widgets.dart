@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +39,7 @@ class SearchTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: SizedBox(
@@ -107,7 +108,7 @@ class _SearchBarRowState extends State<SearchBarRow> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Row(
@@ -193,7 +194,7 @@ class _SearchBarRowState extends State<SearchBarRow> {
                       decoration: BoxDecoration(
                         color: AppColors.brandPurple,
                         shape: BoxShape.circle,
-                        border: Border.all(color: c.bg, width: 1.5),
+                        border: Border.all(color: c.scaffoldBg, width: 1.5),
                       ),
                       child: Text(
                         '${widget.filterCount}',
@@ -231,7 +232,7 @@ class SearchChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return SizedBox(
       height: 32.h,
       child: ListView.separated(
@@ -275,7 +276,7 @@ class SearchMapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: GestureDetector(
@@ -350,7 +351,7 @@ class SearchCountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Text(
@@ -368,7 +369,7 @@ class SearchEmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Center(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 40.w),
@@ -419,7 +420,7 @@ class SearchBranchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final imageUrl = _imageUrl;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

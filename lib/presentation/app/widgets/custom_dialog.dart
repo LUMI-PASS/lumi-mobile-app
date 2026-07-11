@@ -41,12 +41,12 @@ class CustomDialog extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 24),
-            title.s(20).w(600).c(context.colors.headline).a(TextAlign.center),
+            title.s(20).w(600).c(context.colors.primary).a(TextAlign.center),
             const SizedBox(height: 16),
             description
                 .s(16)
                 .w(400)
-                .c(context.colors.title)
+                .c(context.colors.textSecondary)
                 .copyWith(textAlign: TextAlign.center),
             const SizedBox(height: 36),
             if (onRightTap != null)
@@ -56,7 +56,7 @@ class CustomDialog extends StatelessWidget {
                     child: CommonButton.elevated(
                       text: leftTapTitle ?? "",
                       textColor: context.colors.primary,
-                      backgroundColor: context.colors.differ,
+                      backgroundColor: context.colors.info,
                       onPressed: onLeftTap,
                     ),
                   ),

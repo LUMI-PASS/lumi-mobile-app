@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -90,7 +91,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
       case BookingResultStatus.paid:
         return (
           image: Assets.images.paymentSuccess,
-          glow: AppColors.badgeGreen,
+          glow: AppColors.green,
           title: 'order_paid_title'.tr(),
           desc: 'order_paid_desc'.tr(),
         );
@@ -113,7 +114,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final v = _variant;
     final showCard = widget.result != null &&
         (widget.lines.isNotEmpty || (widget.result?.totalAmount ?? 0) > 0);
@@ -192,7 +193,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
 
   /// Status illustration + title + description, animated in on first frame.
   Widget _outcome(
-    AppColors c,
+    AppColorScheme c,
     ({AssetGenImage image, Color glow, String title, String desc}) v,
   ) =>
       Column(
@@ -236,9 +237,9 @@ class _BookingCompletePageState extends State<BookingCompletePage>
       );
 
   /// "Главный" CTA pinned above the home indicator on an opaque bar.
-  Widget _bottomBar(AppColors c) => Container(
+  Widget _bottomBar(AppColorScheme c) => Container(
         width: double.infinity,
-        color: c.bg,
+        color: c.scaffoldBg,
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
         child: SafeArea(
           top: false,

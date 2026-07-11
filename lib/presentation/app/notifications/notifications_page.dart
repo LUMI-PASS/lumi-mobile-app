@@ -368,7 +368,7 @@ class _NotificationCard extends StatelessWidget {
   Color get _iconColor {
     switch (notification.notificationType) {
       case NotificationType.bookingApproved:
-        return AppColors.green;
+        return AppColors.tagGreen;
       case NotificationType.bookingRejected:
         return AppColors.error;
       case NotificationType.bookingTimeSuggestion:

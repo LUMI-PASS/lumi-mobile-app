@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
@@ -69,23 +70,23 @@ class AuthIconBadgeRow extends StatelessWidget {
   const AuthIconBadgeRow({super.key, this.specs});
 
   static final List<AuthBadgeSpec> _authSpecs = [
-    AuthBadgeSpec(AppColors.badgeBlue, Assets.icons.auth.userAi),
-    AuthBadgeSpec(AppColors.badgeGreen, Assets.icons.auth.loginCircle),
-    AuthBadgeSpec(AppColors.badgePink, Assets.icons.auth.login02),
+    AuthBadgeSpec(AppColors.blue, Assets.icons.auth.userAi),
+    AuthBadgeSpec(AppColors.green, Assets.icons.auth.loginCircle),
+    AuthBadgeSpec(AppColors.brandPurple, Assets.icons.auth.login02),
   ];
 
   /// Onboarding uses a playful trio.
   static final List<AuthBadgeSpec> onboardSpecs = [
-    AuthBadgeSpec(AppColors.badgeBlue, Assets.icons.auth.rockingHorse),
-    AuthBadgeSpec(AppColors.badgeGreen, Assets.icons.auth.rocket01),
-    AuthBadgeSpec(AppColors.badgePink, Assets.icons.auth.maskTheater),
+    AuthBadgeSpec(AppColors.blue, Assets.icons.auth.rockingHorse),
+    AuthBadgeSpec(AppColors.green, Assets.icons.auth.rocket01),
+    AuthBadgeSpec(AppColors.brandPurple, Assets.icons.auth.maskTheater),
   ];
 
   final List<AuthBadgeSpec>? specs;
 
   @override
   Widget build(BuildContext context) {
-    final border = context.appColors.badgeBorder;
+    final border = context.colors.badgeBorder;
     final specs = this.specs ?? _authSpecs;
     const step = 15.0;
     return SizedBox(

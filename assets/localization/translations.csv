@@ -12,7 +12,7 @@ status_missed,Пропущено,O‘tkazib yuborilgan,Missed
 status_pending,В ожидании,Kutilmoqda,Pending
 settings_title,Настройки,Sozlamalar,Settings
 app_version,Версия приложения,Ilova versiyasi,App version
-age_years_suffix,лет,yosh,y.o.
+age_years_suffix,лет,yosh,yrs
 profile_title,Профиль,Profil,Profile
 add_child_short,Добавить,Qo‘shish,Add
 edit_profile,Изменить,Tahrirlash,Edit
@@ -867,3 +867,6 @@ pay_open_gateway,Открыть {},{} ochish,Open {}
 pay_open_gateway_again,Открыть {} снова,{} qayta ochish,Open {} again
 pay_redirect_note,Вы будете перенаправлены в {} для завершения оплаты.,To'lovni yakunlash uchun {} ga yo'naltirilasiz.,You'll be redirected to {} to complete payment.
 pay_open_failed,Не удалось открыть {}.,{} ochib bo'lmadi.,Couldn't open {}.
+book_pick_payment,Выберите способ оплаты,To'lov turini tanlang,Choose a payment method
+book_choose,Выбрать,Tanlash,Choose
+pay_select,Выбрать,Tanlash,Select

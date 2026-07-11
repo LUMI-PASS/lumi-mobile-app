@@ -87,7 +87,7 @@ class CommonDialogView extends StatelessWidget {
                       },
                       text: secondaryButtonText!,
                       backgroundColor:
-                          secondaryButtonColor ?? context.colors.primary2,
+                          secondaryButtonColor ?? context.colors.error,
                     ),
                   ),
                   const SizedBox(width: 12),

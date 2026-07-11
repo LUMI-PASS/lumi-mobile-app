@@ -20,7 +20,7 @@ class _EmptyWidgetState extends State<EmptyWidget> {
         12.kh,
         "Classes you have booked will appear here"
             .s(14)
-            .c(context.colors.title)
+            .c(context.colors.textSecondary)
             .w(400),
         24.kh,
         CommonButton.outlined(

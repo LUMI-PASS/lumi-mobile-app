@@ -226,8 +226,8 @@ class _PhoneEmailFormFieldState extends State<PhoneEmailFormField> {
               decoration: InputDecoration(
                   filled: true,
                   alignLabelWithHint: true,
-                  labelStyle: GoogleFonts.onest(fontSize: 12, color: context.colors.display),
-                  fillColor: context.colors.grey.withOpacity(0.2),
+                  labelStyle: GoogleFonts.onest(fontSize: 12, color: context.colors.textPrimary),
+                  fillColor: context.colors.border.withOpacity(0.2),
                   hintText: Strings.emailOrPhoneHint,
                   errorMaxLines: 5,
                   contentPadding: EdgeInsets.symmetric(
@@ -246,36 +246,36 @@ class _PhoneEmailFormFieldState extends State<PhoneEmailFormField> {
                     color: const Color(0xFF717680),
                   ),
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.colors.grey),
+                    borderSide: BorderSide(color: context.colors.border),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.colors.grey),
+                    borderSide: BorderSide(color: context.colors.border),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   disabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.colors.grey),
+                    borderSide: BorderSide(color: context.colors.border),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.colors.primary01),
+                    borderSide: BorderSide(color: context.colors.textPrimary),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   errorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.colors.primary2),
+                    borderSide: BorderSide(color: context.colors.error),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.colors.primary2),
+                    borderSide: BorderSide(color: context.colors.error),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  errorStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400, color: context.colors.primary2)),
+                  errorStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400, color: context.colors.error)),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@.]')),
                 LengthLimitingTextInputFormatter(_isEmail ? 100 : 20),
               ]),
         ),
-        if (widget.errorPhone != null) ...[2.kh, widget.errorPhone!.s(12).c(context.colors.warningDark)]
+        if (widget.errorPhone != null) ...[2.kh, widget.errorPhone!.s(12).c(context.colors.error)]
       ],
     );
   }

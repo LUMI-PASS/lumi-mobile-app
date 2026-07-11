@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -39,7 +40,7 @@ class _AuthAgreementTextState extends State<AuthAgreementText> {
 
   @override
   Widget build(BuildContext context) {
-    final base = AppText.regular12.copyWith(color: context.appColors.textSecondary);
+    final base = AppText.regular12.copyWith(color: context.colors.textSecondary);
     return Text.rich(
       TextSpan(
         style: base,

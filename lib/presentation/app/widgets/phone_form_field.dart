@@ -175,8 +175,8 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF717680)),
       decoration: InputDecoration(
         filled: true,
-        labelStyle: GoogleFonts.onest(fontSize: 12.sp, color: context.colors.display),
-        fillColor: context.colors.grey.withOpacity(0.2),
+        labelStyle: GoogleFonts.onest(fontSize: 12.sp, color: context.colors.textPrimary),
+        fillColor: context.colors.border.withOpacity(0.2),
         hintText: "Введите номер телефона *",
         errorMaxLines: 5,
         contentPadding: const EdgeInsets.symmetric(
@@ -190,23 +190,23 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
           color: const Color(0xFF717680),
         ),
         border: OutlineInputBorder(
-          borderSide: BorderSide(color: context.colors.grey),
+          borderSide: BorderSide(color: context.colors.border),
           borderRadius: BorderRadius.circular(12),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: context.colors.grey),
+          borderSide: BorderSide(color: context.colors.border),
           borderRadius: BorderRadius.circular(12),
         ),
         disabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: context.colors.grey),
+          borderSide: BorderSide(color: context.colors.border),
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: context.colors.primary01),
+          borderSide: BorderSide(color: context.colors.textPrimary),
           borderRadius: BorderRadius.circular(12),
         ),
         errorBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: context.colors.errorColor),
+          borderSide: BorderSide(color: context.colors.error),
           borderRadius: BorderRadius.circular(12),
         ),
       ),

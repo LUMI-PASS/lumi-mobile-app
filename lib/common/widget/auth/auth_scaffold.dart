@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/services.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 
 /// Shared shell for every auth/onboarding screen: brightness-aware background
 /// plus a matching status-bar overlay, so the whole flow renders correctly in
@@ -17,11 +17,11 @@ class AuthScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
+    final colors = context.colors;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: colors.overlayStyle,
       child: Scaffold(
-        backgroundColor: colors.bg,
+        backgroundColor: colors.scaffoldBg,
         resizeToAvoidBottomInset: resizeToAvoidBottomInset,
         body: SafeArea(child: child),
       ),

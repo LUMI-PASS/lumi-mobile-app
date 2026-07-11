@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,7 +25,7 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Row(
@@ -79,7 +80,7 @@ class _ControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -121,7 +122,7 @@ class _NotificationButtonState extends State<_NotificationButton> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -142,7 +143,7 @@ class _NotificationButtonState extends State<_NotificationButton> {
               decoration: BoxDecoration(
                 color: AppColors.error,
                 shape: BoxShape.circle,
-                border: Border.all(color: c.bg, width: 1.5),
+                border: Border.all(color: c.scaffoldBg, width: 1.5),
               ),
               child: Text(
                 _unreadCount > 99 ? '99+' : '$_unreadCount',

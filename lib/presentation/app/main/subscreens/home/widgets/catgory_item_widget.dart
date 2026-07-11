@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -22,7 +23,7 @@ class CategoryItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final url = sanitizeImageUrl(homeCategoryModel?.image);
 
     return GestureDetector(
@@ -35,14 +36,10 @@ class CategoryItemWidget extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
+              FrostedCard(
                 width: 56.w,
                 height: 56.w,
                 padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: c.surface,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.r),
                   child: url != null
@@ -70,7 +67,7 @@ class CategoryItemWidget extends StatelessWidget {
     );
   }
 
-  Widget _shimmer(AppColors c) => Shimmer.fromColors(
+  Widget _shimmer(AppColorScheme c) => Shimmer.fromColors(
         baseColor: c.surface,
         highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
         child: Container(color: c.surface),

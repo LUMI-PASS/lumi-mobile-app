@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -11,10 +11,12 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -36,13 +38,21 @@ class ClassDetailPage extends StatefulWidget {
   State<ClassDetailPage> createState() => _ClassDetailPageState();
 }
 
+/// Hero carousel height — also the distance the top scrim fades in over.
+const double _kHeroHeight = 300;
+
 class _ClassDetailPageState extends State<ClassDetailPage> {
   bool _isFavorite = false;
   List<String> _galleryImages = [];
   final PageController _pageController = PageController();
+  final ScrollController _scrollController = ScrollController();
   int _currentImageIndex = 0;
   ClassFullModel? _full;
   Timer? _slideTimer;
+
+  /// 0 → hero fully visible, 1 → content scrolled under the top controls and
+  /// the frosted scrim is fully on.
+  double _topScrim = 0;
 
   // ─── Coupon discount helpers ──────────────────────────────────────────────
   int get _couponPct {
@@ -56,6 +66,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     _loadImages();
     _loadFull();
     _startAutoSlide();
+    _scrollController.addListener(_onScroll);
     final cm = widget.classModel;
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.classDetailViewed,
@@ -75,7 +86,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   void dispose() {
     _slideTimer?.cancel();
     _pageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Fade the top scrim in over the second half of the hero, so it is fully on
+  /// by the time the first card slides under the back/share/heart controls.
+  void _onScroll() {
+    final start = _kHeroHeight.h * 0.45;
+    final end = _kHeroHeight.h * 0.85;
+    final t = ((_scrollController.offset - start) / (end - start))
+        .clamp(0.0, 1.0);
+    if ((t - _topScrim).abs() > 0.01 || t == 0 || t == 1) {
+      if (t != _topScrim) setState(() => _topScrim = t);
+    }
   }
 
   void _startAutoSlide() {
@@ -304,7 +328,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           price: min,
           icon: adults
               ? Assets.icons.home.profile2user
-              : Assets.icons.home.babygirl,
+              : Assets.icons.home.babyGirl,
         ));
       }
     } else {
@@ -313,7 +337,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           range: r.rangeLabel,
           subtitle: 'price_tier_children'.tr(),
           price: r.price,
-          icon: Assets.icons.home.babygirl,
+          icon: Assets.icons.home.babyGirl,
         ));
       }
     }
@@ -322,7 +346,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final classModel = widget.classModel;
     final full = _full;
     final safeTop = MediaQuery.of(context).viewPadding.top;
@@ -337,16 +361,22 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     final priceRows = _priceRows();
     final languages = full?.activityLanguages ?? const <String>[];
 
+    // Over the hero the status bar sits on a photo (light icons); once the
+    // scrim takes over on a light background the icons have to flip to dark.
+    final darkIcons = !c.isDark && _topScrim > 0.5;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness:
+            darkIcons ? Brightness.dark : Brightness.light,
+        statusBarBrightness: darkIcons ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
         body: Stack(
           children: [
             CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 SliverToBoxAdapter(child: _hero(c, safeTop)),
                 SliverToBoxAdapter(
@@ -376,6 +406,22 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
               ],
             ),
+            // Frosted scrim under the top controls — content blurs and fades
+            // out as it scrolls beneath them (Figma "Детали / scrolled").
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: _topScrim,
+                  child: DetailTopScrim(
+                    color: c.scaffoldBg,
+                    height: safeTop + 56.h,
+                  ),
+                ),
+              ),
+            ),
             // Top controls over the hero.
             Positioned(
               top: safeTop + 8.h,
@@ -383,19 +429,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               right: 16.w,
               child: Row(
                 children: [
-                  _ControlButton(
+                  DetailControlButton(
                     child: HomeIcon(Assets.icons.home.arrow,
                         size: 16, color: AppColors.ink),
                     onTap: () => context.router.pop(),
                   ),
                   const Spacer(),
-                  _ControlButton(
+                  DetailControlButton(
+                    onTap: _shareClass,
                     child: HomeIcon(Assets.icons.home.share,
                         size: 16, color: AppColors.inkMuted),
-                    onTap: _shareClass,
                   ),
                   8.horizontalSpace,
-                  _ControlButton(
+                  DetailControlButton(
                     child: HomeIcon(Assets.icons.home.heart,
                         size: 16,
                         color:
@@ -411,7 +457,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               right: 0,
               bottom: 0,
               child: Container(
-                color: c.bg,
+                decoration: BoxDecoration(
+                  color: c.scaffoldBg,
+                  boxShadow: AppShadows.bottomBar,
+                ),
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + safeBottom),
                 child: GradientButton(
                   text: 'buy_tickets'.tr(),
@@ -426,9 +475,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   // ─── Hero image carousel ────────────────────────────────────────────────────
-  Widget _hero(AppColors c, double safeTop) {
+  Widget _hero(AppColorScheme c, double safeTop) {
     return SizedBox(
-      height: 300.h,
+      height: _kHeroHeight.h,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -477,6 +526,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               child: Center(
                 child: FrostedCard(
                   hasBorder: false,
+                  boxShadow: AppShadows.control,
                   borderRadius: BorderRadius.circular(32.r),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -504,7 +554,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
-  Widget _imgShimmer(AppColors c) => Shimmer.fromColors(
+  Widget _imgShimmer(AppColorScheme c) => Shimmer.fromColors(
         baseColor: c.surface,
         highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
         child: Container(color: c.surface),
@@ -512,8 +562,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   // ─── Main info card ────────────────────────────────────────────────────────
   Widget _mainCard(
-      AppColors c, String title, String description, String branchTitle) {
-    return _Card(
+      AppColorScheme c, String title, String description, String branchTitle) {
+    return DetailCard(
       c: c,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,7 +597,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       color: c.surface,
                       shape: BoxShape.circle,
                     ),
-                    child: HomeIcon(Assets.icons.home.building,
+                    child: HomeIcon(Assets.icons.detail.icLocation,
                         size: 16, color: c.textPrimary),
                   ),
                   8.horizontalSpace,
@@ -580,7 +630,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         padding: EdgeInsets.symmetric(
                             horizontal: 12.w, vertical: 4.h),
                         decoration: BoxDecoration(
-                          color: _chipFill(c),
+                          color: detailChipFill(c),
                           borderRadius: BorderRadius.circular(40.r),
                         ),
                         child: Text('view_all'.tr(),
@@ -632,15 +682,15 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   // ─── Prices card ────────────────────────────────────────────────────────────
   Widget _pricesCard(
-      AppColors c,
+      AppColorScheme c,
       List<({String range, String subtitle, num price, SvgGenImage icon})>
           rows) {
-    return _Card(
+    return DetailCard(
       c: c,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardHeader(
+          DetailCardHeader(
             c: c,
             icon: Assets.icons.home.money,
             iconGradient: const LinearGradient(
@@ -662,8 +712,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   // ─── Description card ───────────────────────────────────────────────────────
-  Widget _descriptionCard(AppColors c, String title, String description) {
-    return _Card(
+  Widget _descriptionCard(AppColorScheme c, String title, String description) {
+    return DetailCard(
       c: c,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,13 +728,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   // ─── Language card ──────────────────────────────────────────────────────────
-  Widget _languageCard(AppColors c, List<String> languages) {
-    return _Card(
+  Widget _languageCard(AppColorScheme c, List<String> languages) {
+    return DetailCard(
       c: c,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardHeader(
+          DetailCardHeader(
             c: c,
             icon: Assets.icons.detail.iconsaxLanguageCircle,
             iconGradient: AppGradients.indigo,
@@ -704,78 +754,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
 // ─── Reusable pieces ──────────────────────────────────────────────────────────
 
-/// Subtle "frosted" pill fill for chips nested on a control/surface row. Figma
-/// uses translucent white in dark mode; on light backgrounds that vanishes, so
-/// we fall back to solid white which still reads as a raised pill.
-Color _chipFill(AppColors c) =>
-    c.isDark ? Colors.white.withOpacity(0.10) : Colors.white;
-
-class _Card extends StatelessWidget {
-  const _Card({required this.c, required this.child});
-  final AppColors c;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _CardHeader extends StatelessWidget {
-  const _CardHeader({
-    required this.c,
-    required this.icon,
-    required this.iconGradient,
-    required this.title,
-  });
-  final AppColors c;
-  final SvgGenImage icon;
-  final Gradient iconGradient;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.all(4.w),
-          decoration: BoxDecoration(
-            gradient: iconGradient,
-            borderRadius: BorderRadius.circular(6.r),
-          ),
-          child: HomeIcon(icon, size: 14, color: Colors.white),
-        ),
-        6.horizontalSpace,
-        Text(title, style: AppText.semibold16.copyWith(color: c.textPrimary)),
-      ],
-    );
-  }
-}
-
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({required this.child, required this.onTap});
-  final Widget child;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FrostedCard(onTap: onTap, child: child);
-  }
-}
-
 /// "Довольные родители" — decorative avatar group (Figma 60:3421). No real
 /// data source; renders overlapping brand-gradient avatars + a "+N" chip.
 class _HappyParents extends StatelessWidget {
   const _HappyParents({required this.c});
-  final AppColors c;
+  final AppColorScheme c;
 
   @override
   Widget build(BuildContext context) {
@@ -834,7 +817,7 @@ class _InfoTile extends StatelessWidget {
     required this.value,
     required this.label,
   });
-  final AppColors c;
+  final AppColorScheme c;
   final SvgGenImage icon;
   final String value;
   final String label;
@@ -871,7 +854,7 @@ class _InfoTile extends StatelessWidget {
 
 class _PriceRow extends StatelessWidget {
   const _PriceRow({required this.c, required this.row, required this.couponPct});
-  final AppColors c;
+  final AppColorScheme c;
   final ({String range, String subtitle, num price, SvgGenImage icon}) row;
   final int couponPct;
 
@@ -916,7 +899,7 @@ class _PriceRow extends StatelessWidget {
     Container chip(Widget child) => Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
           decoration: BoxDecoration(
-            color: _chipFill(c),
+            color: detailChipFill(c),
             borderRadius: BorderRadius.circular(40.r),
           ),
           child: child,
@@ -940,7 +923,7 @@ class _PriceRow extends StatelessWidget {
           ),
         ),
         Text(discounted.toRawUzsPrice(),
-            style: AppText.semibold12.copyWith(color: AppColors.badgeGreen)),
+            style: AppText.semibold12.copyWith(color: AppColors.green)),
       ],
     ));
   }
@@ -948,7 +931,7 @@ class _PriceRow extends StatelessWidget {
 
 class _LangChip extends StatelessWidget {
   const _LangChip({required this.c, required this.lang});
-  final AppColors c;
+  final AppColorScheme c;
   final String lang;
 
   String get _flag {
@@ -966,7 +949,7 @@ class _LangChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(4.w, 4.h, 12.w, 4.h),
       decoration: BoxDecoration(
-        color: _chipFill(c),
+        color: detailChipFill(c),
         borderRadius: BorderRadius.circular(40.r),
       ),
       child: Row(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 
-/// User-selected theme override for the redesigned (`context.appColors`)
+/// User-selected theme override for the redesigned (`context.colors`)
 /// screens. Overrides `MediaQuery.platformBrightness` at the app root, so every
 /// screen built on the design system follows it. `system` defers to the OS.
 final ValueNotifier<ThemeMode> themeModeNotifier =

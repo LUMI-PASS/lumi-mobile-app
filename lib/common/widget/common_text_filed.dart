@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class CommonTextField extends StatefulWidget {
@@ -206,10 +205,10 @@ class _CommonTextFieldState extends State<CommonTextField> {
               filled: true,
               labelText: widget.labelText,
               alignLabelWithHint: true,
-              labelStyle: GoogleFonts.onest(
-                  fontSize: 12.sp, color: context.colors.display),
+              labelStyle:
+                  AppText.medium12.copyWith(color: context.colors.textPrimary),
               fillColor:
-                  widget.background ?? context.colors.grey.withOpacity(0.2),
+                  widget.background ?? context.colors.border.withOpacity(0.2),
               hintText: widget.hint,
               error: null,
               // errorMaxLines: 5,
@@ -226,36 +225,34 @@ class _CommonTextFieldState extends State<CommonTextField> {
                       maxHeight: 50.h,
                     )
                   : null,
-              hintStyle: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w400,
-                color: widget.hintColor ?? const Color(0xFF717680),
+              hintStyle: AppText.regular16.copyWith(
+                color: widget.hintColor ?? context.colors.textPlaceholder,
               ),
               border: OutlineInputBorder(
                 borderSide: BorderSide(
-                    color: widget.disabledBorderColor ?? context.colors.grey),
+                    color: widget.disabledBorderColor ?? context.colors.border),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                    color: widget.enabledBorderColor ?? context.colors.grey),
+                    color: widget.enabledBorderColor ?? context.colors.border),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                    color: widget.disabledBorderColor ?? context.colors.grey),
+                    color: widget.disabledBorderColor ?? context.colors.border),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                    color: widget.enabledBorderColor ?? StaticColors.primary),
+                    color: widget.enabledBorderColor ?? context.colors.primary),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: context.colors.primary2),
+                borderSide: BorderSide(color: context.colors.error),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              // errorStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400, color: context.colors.primary2),
+              // errorStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400, color: context.colors.error),
               // Use custom suffix icon with fixed dimensions
               suffixIcon: (widget.obscureText || widget.suffix != null)
                   ? _buildSuffixIcon()
@@ -270,16 +267,14 @@ class _CommonTextFieldState extends State<CommonTextField> {
                         )
                       : null,
             ),
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w400,
-              color: widget.textColor ?? context.colors.label,
+            style: AppText.regular16.copyWith(
+              color: widget.textColor ?? context.colors.textPrimary,
             ),
           ),
         ),
         if (widget.errorText != null) ...[
           2.kh,
-          widget.errorText!.s(12).c(context.colors.warningDark)
+          widget.errorText!.s(12).c(context.colors.error)
         ]
       ],
     );

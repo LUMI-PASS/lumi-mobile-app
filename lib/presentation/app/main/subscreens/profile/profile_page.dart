@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -75,14 +76,14 @@ class ProfilePage
   }
 
   void _showLogoutSheet(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
         padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 16.h),
         decoration: BoxDecoration(
-          color: c.bg,
+          color: c.scaffoldBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: Column(
@@ -97,7 +98,7 @@ class ProfilePage
               ),
             ),
             24.kh,
-            Icon(Icons.logout_rounded, size: 48.w, color: AppColors.error),
+            Assets.icons.icLogout.svg(width: 48.w, height: 48.w),
             16.kh,
             Text(
               'log_out'.tr(),
@@ -202,7 +203,7 @@ class ProfilePage
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
       builder: (context, _, __) {
-        final c = context.appColors;
+        final c = context.colors;
         return _buildScaffold(
           context, state, c, showGuest, cubit, showBanner, displayName, user);
       },
@@ -212,7 +213,7 @@ class ProfilePage
   Widget _buildScaffold(
     BuildContext context,
     ProfileBuildable state,
-    AppColors c,
+    AppColorScheme c,
     bool showGuest,
     ProfileCubit cubit,
     bool showBanner,
@@ -220,7 +221,7 @@ class ProfilePage
     HomForUser? user,
   ) {
     return Scaffold(
-      backgroundColor: c.bg,
+      backgroundColor: c.scaffoldBg,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -348,7 +349,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: AppText.bold18.copyWith(color: context.appColors.textSecondary),
+      style: AppText.bold18.copyWith(color: context.colors.textSecondary),
     );
   }
 }
@@ -375,7 +376,7 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
       decoration: BoxDecoration(
@@ -481,7 +482,7 @@ class _ChildChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -523,7 +524,7 @@ class _AddChildChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -617,7 +618,7 @@ class _ProfileIcons {
   static final language = Assets.icons.detail.iconsaxLanguageCircle;
   static final faq = Assets.icons.detail.iconsaxQuestionMark;
   static final share = Assets.icons.detail.iconsaxCircleShare;
-  static final logout = Assets.icons.detail.iconsaxLogout2;
+  static final logout = Assets.icons.icLogout;
 }
 
 class _MenuRow extends StatelessWidget {
@@ -665,7 +666,7 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final accent = danger ? AppColors.error : AppColors.brandPurple;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -754,7 +755,7 @@ class _VersionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return FutureBuilder<PackageInfo>(
       future: PackageInfo.fromPlatform(),
       builder: (context, snap) {
@@ -820,7 +821,7 @@ class _GuestProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
       decoration: BoxDecoration(
@@ -1063,7 +1064,7 @@ class _DevEnvToggleTileState extends State<_DevEnvToggleTile> {
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
-                    color: context.appColors.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 4.kh,

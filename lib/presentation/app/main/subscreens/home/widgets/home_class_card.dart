@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -126,7 +127,7 @@ class _ClassImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final firstCategory = (category ?? '')
         .split(',')
         .map((s) => s.trim())
@@ -213,7 +214,7 @@ class _ClassInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final provider = hc?.branch?.title;
     final address = hc?.branch?.address;
 
@@ -256,7 +257,7 @@ class _PriceText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final snap = ClassPricingCache.get(hc?.id);
     final hasFreeAndPaid =
         snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
@@ -300,7 +301,7 @@ class _PriceText extends StatelessWidget {
         ),
         Text(
           label(discounted),
-          style: AppText.semibold14.copyWith(color: AppColors.badgeGreen),
+          style: AppText.semibold14.copyWith(color: AppColors.green),
         ),
       ],
     );

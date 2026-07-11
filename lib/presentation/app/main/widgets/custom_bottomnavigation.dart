@@ -1,9 +1,9 @@
 import 'package:dynamic_glass_glmv/dynamic_glass_glmv.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 
 /// Glass bottom navigation — the same `AdaptiveBottomNavigationBar` component
@@ -57,7 +57,7 @@ class CustomBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     // Selected label = primary text (white in dark, #15141A in light).
     final selectedColor = c.textPrimary;
     // Unselected icon + label — Figma grey per theme.
@@ -91,7 +91,11 @@ class CustomBottomBar extends StatelessWidget {
       blurSigma: 24,
       height: 50,
       horizontalPadding: 16,
-      bottomPadding: 12,
+      // The package's gap below the bar is `MediaQuery.padding.bottom +
+      // bottomPadding`, which on a home-indicator iPhone floats the bar ~46pt
+      // off the edge. We strip that inset below (`MediaQuery.removePadding`),
+      // so this value *is* the full gap.
+      bottomPadding: 20,
       // Pill fills its cell (bar has 2px padding → ~4px slack per slot).
       pillHeightFactor: 0.9,
       pillHorizontalInset: 4,
@@ -178,33 +182,40 @@ class CustomBottomBar extends StatelessWidget {
           ),
         );
 
-    return AdaptiveBottomNavigationBar(
-      items: items,
-      selectedIndex: selectedIndex,
-      onTap: onItemSelected,
-      // Force the Flutter glass-pill bar on every platform (see class doc).
-      useNativeBottomBar: false,
-      selectedItemColor: selectedColor,
-      unselectedItemColor: unselectedColor,
-      hidden: hidden,
-      // Nexus pattern: supply the glass bar explicitly as the fallback so it is
-      // always the widget that renders.
-      fallbackNavBar: IgnorePointer(
-        ignoring: hidden,
-        child: GlassPillNavBar(
-          items: items,
-          selectedIndex: selectedIndex,
-          onTap: onItemSelected,
-          selectedItemColor: selectedColor,
-          unselectedItemColor: unselectedColor,
-          style: style,
-          iconBuilder: iconBuilder,
-          labelBuilder: labelBuilder,
+    // `GlassPillNavBar` pads itself by `MediaQuery.padding.bottom +
+    // style.bottomPadding`. Dropping the inset here makes `bottomPadding` the
+    // single source of truth for how far the bar floats off the screen edge.
+    return MediaQuery.removePadding(
+      context: context,
+      removeBottom: true,
+      child: AdaptiveBottomNavigationBar(
+        items: items,
+        selectedIndex: selectedIndex,
+        onTap: onItemSelected,
+        // Force the Flutter glass-pill bar on every platform (see class doc).
+        useNativeBottomBar: false,
+        selectedItemColor: selectedColor,
+        unselectedItemColor: unselectedColor,
+        hidden: hidden,
+        // Nexus pattern: supply the glass bar explicitly as the fallback so it
+        // is always the widget that renders.
+        fallbackNavBar: IgnorePointer(
+          ignoring: hidden,
+          child: GlassPillNavBar(
+            items: items,
+            selectedIndex: selectedIndex,
+            onTap: onItemSelected,
+            selectedItemColor: selectedColor,
+            unselectedItemColor: unselectedColor,
+            style: style,
+            iconBuilder: iconBuilder,
+            labelBuilder: labelBuilder,
+          ),
         ),
+        glassPillStyle: style,
+        glassPillIconBuilder: iconBuilder,
+        glassPillLabelBuilder: labelBuilder,
       ),
-      glassPillStyle: style,
-      glassPillIconBuilder: iconBuilder,
-      glassPillLabelBuilder: labelBuilder,
     );
   }
 }

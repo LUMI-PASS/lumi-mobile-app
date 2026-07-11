@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -54,7 +55,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   @override
   Widget builder(BuildContext context, HomeBuildable state) {
-    final c = context.appColors;
+    final c = context.colors;
     final topInset = MediaQuery.of(context).viewPadding.top;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -110,19 +111,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(child: 8.verticalSpace),
+            // Coupon promo rides as the first page of the banner carousel.
             SliverToBoxAdapter(
-              child: HomeCouponBanner(
-                onTap: () => context.router.push(const PlansRoute()),
+              child: HomeBannerCarousel(
+                banners: state.homeModel?.data?.banners ?? [],
+                onCouponTap: () => context.router.push(const PlansRoute()),
               ),
             ),
-            if ((state.homeModel?.data?.banners ?? []).isNotEmpty) ...[
-              SliverToBoxAdapter(child: 12.verticalSpace),
-              SliverToBoxAdapter(
-                child: HomeBannerCarousel(
-                  banners: state.homeModel!.data!.banners!,
-                ),
-              ),
-            ],
             if (_categories(state).isNotEmpty)
               SliverToBoxAdapter(child: _buildCategories(context, state)),
             if (state.newClassesList.isNotEmpty)
@@ -334,7 +329,7 @@ class _ConnectionErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Center(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 40.w),

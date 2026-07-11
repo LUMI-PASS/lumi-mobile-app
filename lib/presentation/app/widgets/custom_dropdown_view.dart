@@ -391,7 +391,7 @@ class _BasicDropdownState<T> extends State<BasicDropdown<T>> {
                   width: _isExpanded ? 2 : 1,
                 ),
                 borderRadius: BorderRadius.circular(8.r),
-                color: context.colors.grey.withOpacity(0.2),
+                color: context.colors.border.withOpacity(0.2),
               ),
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(

@@ -15,7 +15,6 @@ import 'package:logger/logger.dart' as _i974;
 import 'package:logger/web.dart' as _i120;
 import 'package:lumi_pass/common/widget/display/display.dart' as _i755;
 import 'package:lumi_pass/common/widget/display/display_impl.dart' as _i426;
-import 'package:lumi_pass/data/base_model/default_theme_colors.dart' as _i64;
 import 'package:lumi_pass/data/interceptor/auth_interceptor.dart' as _i948;
 import 'package:lumi_pass/data/service/analytics_service.dart' as _i594;
 import 'package:lumi_pass/data/service/push_notification_service.dart' as _i361;
@@ -73,7 +72,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     final appModule = _$AppModule();
     final networkModule = _$NetworkModule();
-    gh.singleton<_i64.DefaultThemeColors>(() => _i64.DefaultThemeColors());
     gh.lazySingleton<_i974.Logger>(() => appModule.logger);
     await gh.lazySingletonAsync<_i279.Storage>(
       () => _i279.Storage.create(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
@@ -31,7 +32,7 @@ class _PhoneNumberFieldState extends State<PhoneNumberField> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
+    final colors = context.colors;
     return Center(
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -82,7 +83,7 @@ class OtpCodeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
+    final colors = context.colors;
     final color = hasError ? AppColors.error : colors.textPrimary;
     return TextField(
       controller: controller,

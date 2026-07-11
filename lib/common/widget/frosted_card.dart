@@ -25,6 +25,7 @@ class FrostedCard extends StatelessWidget {
     this.height,
     this.alignment,
     this.margin,
+    this.clipBehavior = Clip.none,
   });
 
   final Widget? child;
@@ -49,6 +50,10 @@ class FrostedCard extends StatelessWidget {
   final AlignmentGeometry? alignment;
   final EdgeInsetsGeometry? margin;
 
+  /// Set [Clip.antiAlias] when the child deliberately overflows the card (e.g.
+  /// artwork bleeding past the rounded corners) and must be cut to its shape.
+  final Clip clipBehavior;
+
   @override
   Widget build(BuildContext context) {
     final box = Container(
@@ -57,6 +62,7 @@ class FrostedCard extends StatelessWidget {
       margin: margin,
       padding: padding ?? EdgeInsets.all(8.w),
       alignment: alignment,
+      clipBehavior: clipBehavior,
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: borderRadius ?? BorderRadius.circular(12.r),

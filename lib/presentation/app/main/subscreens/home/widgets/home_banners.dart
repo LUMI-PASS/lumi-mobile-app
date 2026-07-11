@@ -1,18 +1,20 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/constants/constants.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
-import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:shimmer/shimmer.dart';
 
-/// "Скидочные купоны" call-to-action — a green promo card that opens the
-/// coupon plans screen (Figma `Discount container`).
+/// "Скидочные купоны" call-to-action — the frosted promo card that opens the
+/// coupon plans screen (Figma `Discount container`). Rides as the first page of
+/// [HomeBannerCarousel], so it sizes itself to whatever height the slide gives.
 class HomeCouponBanner extends StatelessWidget {
   const HomeCouponBanner({super.key, required this.onTap});
 
@@ -20,82 +22,75 @@ class HomeCouponBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            gradient: AppGradients.green,
-            borderRadius: BorderRadius.circular(12.r),
+    return FrostedCard(
+      onTap: onTap,
+      padding: EdgeInsets.all(16.w),
+      borderWidth: 2,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Ticket artwork bleeds past the right edge; the card clips it.
+          Positioned(
+            top: 0,
+            bottom: 0,
+            right: -28.w,
+            child: SizedBox(
+              width: 150.w,
+              child: Assets.images.banner.bannerTicketPercentage.image(
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
-          child: Stack(
-            children: [
-              // Decorative circle wash on the right.
-              Positioned(
-                right: -30.w,
-                top: -20.h,
-                child: Container(
-                  width: 120.w,
-                  height: 120.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 207.w,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'coupon_plans_title'.tr(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bold18.copyWith(color: AppColors.ink),
                   ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'coupon_plans_title'.tr(),
-                            style: AppText.bold18.copyWith(color: Colors.white),
-                          ),
-                          6.verticalSpace,
-                          Text(
-                            'coupon_plans_subtitle'.tr(),
-                            style:
-                                AppText.regular14.copyWith(color: Colors.white),
-                          ),
-                        ],
-                      ),
+                  6.verticalSpace,
+                  // Flexible: the longer locales must ellipsize, not overflow
+                  // the fixed-height carousel slide.
+                  Flexible(
+                    child: Text(
+                      'coupon_plans_subtitle'.tr(),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 3,
+                      style:
+                          AppText.regular14.copyWith(color: AppColors.greeting),
                     ),
-                    12.horizontalSpace,
-                    Container(
-                      width: 56.w,
-                      height: 56.w,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(CupertinoIcons.ticket_fill,
-                          color: Colors.white, size: 28.sp),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-/// Promo banner carousel driven by the API `banners` (Figma teacher / promo
-/// card with dot indicators).
+/// Promo banner carousel — the coupon card first, then the API `banners`
+/// (Figma teacher / promo card with dot indicators).
 class HomeBannerCarousel extends StatefulWidget {
-  const HomeBannerCarousel({super.key, required this.banners});
+  const HomeBannerCarousel({
+    super.key,
+    required this.banners,
+    required this.onCouponTap,
+  });
 
   final List<HomBanner> banners;
+
+  /// Tapping the leading coupon page opens the coupon plans screen.
+  final VoidCallback onCouponTap;
 
   @override
   State<HomeBannerCarousel> createState() => _HomeBannerCarouselState();
@@ -113,7 +108,23 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
+    final pages = <Widget>[
+      HomeCouponBanner(onTap: widget.onCouponTap),
+      ...widget.banners.map((banner) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12.r),
+          child: CachedNetworkImage(
+            width: double.infinity,
+            fit: BoxFit.cover,
+            imageUrl: _resolveSrc(banner.url, banner.id),
+            placeholder: (_, __) => _placeholder(c),
+            errorWidget: (_, __, ___) => _placeholder(c),
+          ),
+        );
+      }),
+    ];
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Column(
@@ -121,30 +132,19 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
           CarouselSlider(
             options: CarouselOptions(
               height: 160.h,
-              autoPlay: widget.banners.length > 1,
+              autoPlay: pages.length > 1,
               autoPlayInterval: const Duration(seconds: 5),
               viewportFraction: 1.0,
               enlargeCenterPage: false,
               onPageChanged: (index, _) => setState(() => _current = index),
             ),
-            items: widget.banners.map((banner) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
-                child: CachedNetworkImage(
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  imageUrl: _resolveSrc(banner.url, banner.id),
-                  placeholder: (_, __) => _placeholder(c),
-                  errorWidget: (_, __, ___) => _placeholder(c),
-                ),
-              );
-            }).toList(),
+            items: pages,
           ),
-          if (widget.banners.length > 1) ...[
+          if (pages.length > 1) ...[
             10.verticalSpace,
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(widget.banners.length, (i) {
+              children: List.generate(pages.length, (i) {
                 final active = i == _current;
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
@@ -164,7 +164,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
     );
   }
 
-  Widget _placeholder(AppColors c) => Shimmer.fromColors(
+  Widget _placeholder(AppColorScheme c) => Shimmer.fromColors(
         baseColor: c.surface,
         highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
         child: Container(color: c.surface),
@@ -197,11 +197,11 @@ class HomeAdCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (_, __) => Container(
                   height: 140.h,
-                  color: context.appColors.surface,
+                  color: context.colors.surface,
                 ),
                 errorWidget: (_, __, ___) => Container(
                   height: 140.h,
-                  color: context.appColors.surface,
+                  color: context.colors.surface,
                 ),
               ),
               Positioned(

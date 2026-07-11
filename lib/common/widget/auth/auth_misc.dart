@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
@@ -18,7 +19,7 @@ class CountdownTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = context.appColors.textMuted;
+    final muted = context.colors.textMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -43,7 +44,7 @@ class PageDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
+    final colors = context.colors;
     return Container(
       padding: EdgeInsets.all(8.r),
       decoration: BoxDecoration(

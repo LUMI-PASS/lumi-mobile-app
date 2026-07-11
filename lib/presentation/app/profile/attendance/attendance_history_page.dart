@@ -81,7 +81,7 @@ class AttendanceHistoryPage extends BasePage<AttendanceCubit,
             "No children found"
                 .s(16)
                 .w(600)
-                .c(context.colors.black ?? Colors.black),
+                .c(context.colors.textPrimary),
             8.kh,
             "Please add a child first to view attendance history"
                 .s(14)
@@ -176,7 +176,7 @@ class _ChildSelectionCard extends StatelessWidget {
                   "${child.firstName ?? ''} ${child.lastName ?? ''}"
                       .s(15)
                       .w(600)
-                      .c(context.colors.black ?? Colors.black),
+                      .c(context.colors.textPrimary),
                   4.kh,
                   if (age != null)
                     Row(

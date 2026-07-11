@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,9 +45,9 @@ class CalendarPage
 
   @override
   Widget builder(BuildContext context, ScheduleBuildable state) {
-    final c = context.appColors;
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: c.bg,
+      backgroundColor: c.scaffoldBg,
       body: _showLoginPrompt
           ? _LoginPrompt(
               onLogin: () => context.router.replaceAll([LoginRoute()]),
@@ -94,7 +95,7 @@ class _CalendarBodyState extends State<_CalendarBody> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final state = widget.state;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +181,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -208,7 +209,7 @@ class _LoginPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,7 +276,7 @@ class _EmptyBookings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -313,7 +314,7 @@ class _BookingsShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 0),

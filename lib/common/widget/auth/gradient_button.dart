@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
@@ -88,7 +89,7 @@ class AuthTextButton extends StatelessWidget {
         child: Text(
           text,
           style: AppText.medium16
-              .copyWith(color: color ?? context.appColors.textPrimary),
+              .copyWith(color: color ?? context.colors.textPrimary),
         ),
       ),
     );

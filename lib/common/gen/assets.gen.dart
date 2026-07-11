@@ -14,9 +14,6 @@ import 'package:flutter/services.dart';
 class $AssetsIconsGen {
   const $AssetsIconsGen();
 
-  /// File path: assets/icons/Logout.svg
-  SvgGenImage get logout => const SvgGenImage('assets/icons/Logout.svg');
-
   /// File path: assets/icons/arrow_down.svg
   SvgGenImage get arrowDown => const SvgGenImage('assets/icons/arrow_down.svg');
 
@@ -145,6 +142,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/ic_filter.svg
   SvgGenImage get icFilter => const SvgGenImage('assets/icons/ic_filter.svg');
 
+  /// File path: assets/icons/ic_logout.svg
+  SvgGenImage get icLogout => const SvgGenImage('assets/icons/ic_logout.svg');
+
   /// File path: assets/icons/ic_map.svg
   SvgGenImage get icMap => const SvgGenImage('assets/icons/ic_map.svg');
 
@@ -225,7 +225,6 @@ class $AssetsIconsGen {
 
   /// List of all assets
   List<dynamic> get values => [
-        logout,
         arrowDown,
         arrowEpandHor,
         arrowExpand,
@@ -261,6 +260,7 @@ class $AssetsIconsGen {
         icCard,
         icCardScan,
         icFilter,
+        icLogout,
         icMap,
         infoDis,
         location,
@@ -291,6 +291,8 @@ class $AssetsImagesGen {
   /// File path: assets/images/app_icon.jpg
   AssetGenImage get appIcon =>
       const AssetGenImage('assets/images/app_icon.jpg');
+
+  $AssetsImagesBannerGen get banner => const $AssetsImagesBannerGen();
 
   /// File path: assets/images/carousel1.png
   AssetGenImage get carousel1 =>
@@ -500,6 +502,18 @@ class $AssetsIconsDetailGen {
   /// File path: assets/icons/detail/heart.svg
   SvgGenImage get heart => const SvgGenImage('assets/icons/detail/heart.svg');
 
+  /// File path: assets/icons/detail/ic_calendar.svg
+  SvgGenImage get icCalendar =>
+      const SvgGenImage('assets/icons/detail/ic_calendar.svg');
+
+  /// File path: assets/icons/detail/ic_discount.svg
+  SvgGenImage get icDiscount =>
+      const SvgGenImage('assets/icons/detail/ic_discount.svg');
+
+  /// File path: assets/icons/detail/ic_location.svg
+  SvgGenImage get icLocation =>
+      const SvgGenImage('assets/icons/detail/ic_location.svg');
+
   /// File path: assets/icons/detail/iconsax-ai-calendar.svg
   SvgGenImage get iconsaxAiCalendar =>
       const SvgGenImage('assets/icons/detail/iconsax-ai-calendar.svg');
@@ -524,10 +538,6 @@ class $AssetsIconsDetailGen {
   SvgGenImage get iconsaxLanguageCircle =>
       const SvgGenImage('assets/icons/detail/iconsax-language-circle.svg');
 
-  /// File path: assets/icons/detail/iconsax-logout2.svg
-  SvgGenImage get iconsaxLogout2 =>
-      const SvgGenImage('assets/icons/detail/iconsax-logout2.svg');
-
   /// File path: assets/icons/detail/iconsax-question-mark.svg
   SvgGenImage get iconsaxQuestionMark =>
       const SvgGenImage('assets/icons/detail/iconsax-question-mark.svg');
@@ -548,13 +558,15 @@ class $AssetsIconsDetailGen {
         arrow,
         babyGirl,
         heart,
+        icCalendar,
+        icDiscount,
+        icLocation,
         iconsaxAiCalendar,
         iconsaxAiUsers,
         iconsaxBaby,
         iconsaxCircleShare,
         iconsaxDiscount,
         iconsaxLanguageCircle,
-        iconsaxLogout2,
         iconsaxQuestionMark,
         iconsaxReceipt,
         iconsaxTicketDiscount,
@@ -571,9 +583,9 @@ class $AssetsIconsHomeGen {
   /// File path: assets/icons/home/baby.svg
   SvgGenImage get baby => const SvgGenImage('assets/icons/home/baby.svg');
 
-  /// File path: assets/icons/home/babygirl.svg
-  SvgGenImage get babygirl =>
-      const SvgGenImage('assets/icons/home/babygirl.svg');
+  /// File path: assets/icons/home/baby_girl.svg
+  SvgGenImage get babyGirl =>
+      const SvgGenImage('assets/icons/home/baby_girl.svg');
 
   /// File path: assets/icons/home/book.svg
   SvgGenImage get book => const SvgGenImage('assets/icons/home/book.svg');
@@ -635,7 +647,7 @@ class $AssetsIconsHomeGen {
   List<SvgGenImage> get values => [
         arrow,
         baby,
-        babygirl,
+        babyGirl,
         book,
         boxSearch,
         building,
@@ -705,6 +717,17 @@ class $AssetsIconsNotificationGen {
 
   /// List of all assets
   List<SvgGenImage> get values => [bell, clock, close, idea, tick];
+}
+
+class $AssetsImagesBannerGen {
+  const $AssetsImagesBannerGen();
+
+  /// File path: assets/images/banner/banner_ticket_percentage.png
+  AssetGenImage get bannerTicketPercentage =>
+      const AssetGenImage('assets/images/banner/banner_ticket_percentage.png');
+
+  /// List of all assets
+  List<AssetGenImage> get values => [bannerTicketPercentage];
 }
 
 class $AssetsImagesPayGen {

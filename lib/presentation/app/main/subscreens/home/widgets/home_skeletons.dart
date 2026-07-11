@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// Theme-aware shimmer palette for the home loading state.
-Color _shimmerBase(BuildContext c) => c.appColors.surface;
+Color _shimmerBase(BuildContext c) => c.colors.surface;
 Color _shimmerHi(BuildContext c) =>
-    c.appColors.isDark ? const Color(0xFF2E2E35) : Colors.white;
+    c.colors.isDark ? const Color(0xFF2E2E35) : Colors.white;
 
 class HomeShimmer extends StatelessWidget {
   const HomeShimmer({super.key});

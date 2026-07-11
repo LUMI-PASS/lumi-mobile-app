@@ -104,12 +104,12 @@ class _CalendarFieldWidgetState extends State<CalendarFieldWidget> {
         calendarType: widget.type == CalendarFieldType.range
             ? CalendarDatePicker2Type.range
             : CalendarDatePicker2Type.single,
-        selectedDayHighlightColor: context.colors.display,
+        selectedDayHighlightColor: context.colors.textPrimary,
         weekdayLabelTextStyle: const TextStyle(
           fontWeight: FontWeight.w600,
         ),
         controlsTextStyle: TextStyle(
-          color: context.colors.display,
+          color: context.colors.textPrimary,
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),

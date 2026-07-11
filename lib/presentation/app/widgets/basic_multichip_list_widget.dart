@@ -85,7 +85,7 @@ class _CustomMultiChiplistWidgetState extends State<CustomMultiChiplistWidget> {
                   ? (widget.selectedDecoration ??
                   BoxDecoration(
                     color: Colors.black,
-                    border: Border.all(color: context.colors.black),
+                    border: Border.all(color: context.colors.textPrimary),
                     borderRadius: BorderRadius.circular(24),
                   ))
                   : (widget.unselectedDecoration ??

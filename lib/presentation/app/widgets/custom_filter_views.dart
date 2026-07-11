@@ -79,7 +79,7 @@ class _CustomFilterListWidgetState extends State<CustomFilterListWidget> {
                    _selectedIndex==index ? item.selectedIcon! : item.unselectedIcon!,
                     6.kw,
                   ],
-                  item.label.s(14).w(_selectedIndex==index ? 600 : 400).c(_selectedIndex==index ? context.colors.onPrimary : context.colors.title),
+                  item.label.s(14).w(_selectedIndex==index ? 600 : 400).c(_selectedIndex==index ? context.colors.onPrimary : context.colors.textSecondary),
                 ],
               ),
             ),

@@ -4,10 +4,11 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
-import 'package:lumi_pass/data/base_model/default_theme_colors.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 
 class CommonButton extends StatelessWidget {
-  const CommonButton._(this.text, this.loading, this.enabled, this.onPressed, this.radius, this.type,
+  const CommonButton._(this.text, this.loading, this.enabled, this.onPressed,
+      this.radius, this.type,
       {super.key,
       this.backgroundColor,
       this.textColor,
@@ -45,7 +46,8 @@ class CommonButton extends StatelessWidget {
       Widget? icon,
       double? padding,
       Color? borderColor})
-      : this._(text, loading, enabled, onPressed, radius, CommonButtonType.outlined,
+      : this._(text, loading, enabled, onPressed, radius,
+            CommonButtonType.outlined,
             backgroundColor: backgroundColor,
             textColor: textColor,
             key: key,
@@ -135,7 +137,8 @@ class CommonButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [icon ?? Container(), 6.kw],
                   ),
-                Center(child: text.w(600).s(16).c(textColor ?? StaticColors.white)),
+                Center(
+                    child: text.w(600).s(16).c(textColor ?? AppColors.white)),
                 Visibility(
                   visible: icon != null && isRightIcon == true,
                   child: Row(
@@ -171,7 +174,7 @@ class CommonButton extends StatelessWidget {
           ? BoxDecoration(
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: context.colors.primary2,
+                  color: context.colors.error,
                   spreadRadius: 10,
                   blurRadius: 16,
                 ),
@@ -184,10 +187,14 @@ class CommonButton extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius ?? 16.r),
-            color: enabled ? backgroundColor ?? context.colors.primary : context.colors.grey,
+            color: enabled
+                ? backgroundColor ?? context.colors.primary
+                : context.colors.disabled,
           ),
           child: _child(
-            enabled ? textColor ?? context.colors.onPrimary : context.colors.primary,
+            enabled
+                ? textColor ?? context.colors.onPrimary
+                : context.colors.primary,
           ),
         ),
       ),
@@ -204,8 +211,10 @@ class CommonButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Flexible(
-              child: text.w(600).s(16).c(context.colors.display).copyWith(
-                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: context.colors.display))),
+              child: text.w(600).s(16).c(context.colors.textPrimary).copyWith(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.colors.textPrimary))),
           4.kw,
           if (prefixIcon != null) prefixIcon!,
         ],

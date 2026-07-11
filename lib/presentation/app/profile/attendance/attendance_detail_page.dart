@@ -121,7 +121,7 @@ class AttendanceDetailPage extends BasePage<AttendanceCubit,
                 "${childModel.firstName ?? ''} ${childModel.lastName ?? ''}"
                     .s(16)
                     .w(600)
-                    .c(context.colors.black ?? Colors.black),
+                    .c(context.colors.textPrimary),
                 if (age != null) ...[
                   4.kh,
                   "$age years old"
@@ -161,7 +161,7 @@ class AttendanceDetailPage extends BasePage<AttendanceCubit,
             "No attendance records yet"
                 .s(15)
                 .w(600)
-                .c(context.colors.black ?? Colors.black),
+                .c(context.colors.textPrimary),
             8.kh,
             "This child has no attendance records"
                 .s(13)
@@ -250,7 +250,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                 child: (record.className ?? 'Unknown Class')
                     .s(15)
                     .w(600)
-                    .c(context.colors.black ?? Colors.black),
+                    .c(context.colors.textPrimary),
               ),
               8.kw,
               if (isCanceled)

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -238,12 +239,12 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     final isSub = widget.isSubscription;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: c.overlayStyle,
       child: Scaffold(
-        backgroundColor: c.bg,
+        backgroundColor: c.scaffoldBg,
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
@@ -467,7 +468,7 @@ class _StatusIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
+    final c = context.colors;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(

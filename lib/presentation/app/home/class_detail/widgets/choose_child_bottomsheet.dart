@@ -114,7 +114,7 @@ class ChooseChildBottomsheet
       ),
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: context.colors.window,
+        color: context.colors.scaffoldBg,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24.r),
           topRight: Radius.circular(24.r),

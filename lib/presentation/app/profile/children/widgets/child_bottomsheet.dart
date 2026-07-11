@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_state.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/text_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
@@ -20,7 +20,8 @@ class ChildBottomsheet extends StatefulWidget {
 
   final ChildModel? childModel;
 
-  static Future<void> show(BuildContext context, {ChildModel? childModel}) async {
+  static Future<void> show(BuildContext context,
+      {ChildModel? childModel}) async {
     final cubit = context.read<ChildrenCubit>();
     await showModalBottomSheet(
       context: context,
@@ -120,6 +121,7 @@ class _ChildBottomsheetState extends State<ChildBottomsheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocConsumer<ChildrenCubit,
@@ -133,13 +135,13 @@ class _ChildBottomsheetState extends State<ChildBottomsheet> {
         final loading = state.buildable?.buttonLoading ?? false;
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
           ),
           padding: EdgeInsets.only(
             left: 20.w,
             right: 20.w,
-            top: 14.h,
+            top: 12.h,
             bottom: 16.h + viewInsets,
           ),
           child: SafeArea(
@@ -152,54 +154,67 @@ class _ChildBottomsheetState extends State<ChildBottomsheet> {
                 children: [
                   Center(
                     child: Container(
-                      width: 36.w,
+                      width: 40.w,
                       height: 4.h,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE2E8F0),
+                        color: colors.controlBorder,
                         borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  20.kh,
+                  Center(
+                    child: Container(
+                      width: 72.w,
+                      height: 72.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colors.primary.withOpacity(0.10),
+                      ),
+                      child: Icon(
+                        Icons.child_care_rounded,
+                        size: 36.w,
+                        color: colors.primary,
                       ),
                     ),
                   ),
                   16.kh,
                   Center(
-                    child: Container(
-                      width: 64.w,
-                      height: 64.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.colors.primary.withOpacity(0.1),
-                      ),
-                      child: Icon(
-                        Icons.child_care_rounded,
-                        size: 32.w,
-                        color: context.colors.primary,
+                    child: Text(
+                      _isEdit ? 'update_child'.tr() : 'add_child'.tr(),
+                      style: AppText.semibold16.copyWith(
+                        color: colors.textPrimary,
                       ),
                     ),
                   ),
-                  12.kh,
-                  Center(
-                    child: (_isEdit ? 'update_child'.tr() : 'add_child'.tr())
-                        .s(16)
-                        .w(700),
-                  ),
-                  20.kh,
-                  'first_name'.tr().s(13).w(600),
+                  24.kh,
+                  _FieldLabel('first_name'.tr()),
                   8.kh,
                   CommonTextField(
                     controller: _firstNameController,
                     hint: 'enter_first_name'.tr(),
                     needToCapitalize: true,
-                    background: context.colors.onPrimary,
+                    background: colors.surface,
+                    enabledBorderColor: colors.controlBorder,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 18.h,
+                    ),
                     validator: (v) => _validateName(v as String?),
                   ),
                   16.kh,
-                  'age'.tr().s(13).w(600),
+                  _FieldLabel('age'.tr()),
                   8.kh,
                   CommonTextField(
                     controller: _ageController,
                     hint: 'enter_age'.tr(),
-                    background: context.colors.onPrimary,
+                    background: colors.surface,
+                    enabledBorderColor: colors.controlBorder,
                     keyboardType: TextInputType.number,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 18.h,
+                    ),
                     inputFormatter: [
                       FilteringTextInputFormatter.digitsOnly,
                       LengthLimitingTextInputFormatter(2),
@@ -211,12 +226,12 @@ class _ChildBottomsheetState extends State<ChildBottomsheet> {
                     children: [
                       Expanded(
                         child: CommonButton.outlined(
-                          onPressed: loading
-                              ? null
-                              : () => Navigator.of(context).pop(),
+                          onPressed:
+                              loading ? null : () => Navigator.of(context).pop(),
                           text: 'cancel'.tr(),
-                          textColor: Colors.red,
-                          borderColor: Colors.red.withOpacity(0.3),
+                          textColor: colors.error,
+                          backgroundColor: colors.surface,
+                          borderColor: colors.error.withOpacity(0.30),
                         ),
                       ),
                       16.kw,
@@ -235,6 +250,20 @@ class _ChildBottomsheetState extends State<ChildBottomsheet> {
           ),
         );
       },
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: AppText.medium13.copyWith(color: context.colors.textSecondary),
     );
   }
 }

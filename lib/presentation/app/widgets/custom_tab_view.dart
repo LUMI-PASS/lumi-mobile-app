@@ -69,7 +69,7 @@ class _CustomSegmentedControlState extends State<CustomSegmentedControl> {
                       height: double.infinity,
                       alignment: Alignment.center,
                       child: widget.segments[index]
-                          .c(selectedIndex == index ? context.colors.black : const Color(0xFF8E99A1))
+                          .c(selectedIndex == index ? context.colors.textPrimary : const Color(0xFF8E99A1))
                           .w(selectedIndex == index ? 600 : 500)
                           .s(14)),
                 ),

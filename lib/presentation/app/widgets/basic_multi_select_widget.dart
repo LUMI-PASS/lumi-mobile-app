@@ -370,7 +370,7 @@ class _BasicMultiSelectDropdownState<T>
                 children: [
                   Expanded(
                     child: widget.displayText(item).s(14).w(400).c(
-                      context.colors.title,
+                      context.colors.textSecondary,
                     ),
                   ),
                 ],
