@@ -41,15 +41,17 @@ class HomeCouponBanner extends StatelessWidget {
               decoration: BoxDecoration(gradient: AppGradients.greenGlow),
             ),
           ),
-          // Ticket artwork bleeds vertically so it can scale up, but stays
-          // inside the right padding — pulling it past the edge got it clipped
-          // by the card's rounded corners.
+          // The ticket artwork is already cropped in the asset — it runs off the
+          // right edge of the PNG. So it is pushed past the card's right border
+          // (`-16` alone would only cancel the padding) for that crop to read as
+          // a bleed; inset even slightly, the cut edge floats mid-card and looks
+          // broken. The extra width compensates for what the card clips away.
           Positioned(
-            top: -8.h,
-            bottom: -8.h,
-            right: 0,
+            top: -12.h,
+            bottom: -12.h,
+            right: -32.w,
             child: SizedBox(
-              width: 150.w,
+              width: 190.w,
               child: Assets.images.banner.bannerTicketPercentage.image(
                 fit: BoxFit.contain,
               ),
@@ -58,7 +60,7 @@ class HomeCouponBanner extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
-              width: 190.w,
+              width: 207.w,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

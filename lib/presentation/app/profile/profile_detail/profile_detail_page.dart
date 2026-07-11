@@ -50,9 +50,30 @@ class ProfileDetailPage extends BasePage<ProfileDetailCubit,
   Widget builder(BuildContext context, ProfileDetailBuildable state) {
     return Scaffold(
       backgroundColor: context.colors.scaffoldBg,
-      appBar: BaseAppBar(title: 'my_info'.tr()),
+      appBar: BaseAppBar(
+        title: 'my_info'.tr(),
+        actions: [
+          appBarDeleteAction(
+            context,
+            enabled: !state.success,
+            onTap: () => _confirmDeleteAccount(context),
+          ),
+        ],
+      ),
       body: _AccountForm(user: user, saving: state.success),
     );
+  }
+}
+
+/// Confirms the delete, then hands it to `ProfileCubit` by popping `true`.
+Future<void> _confirmDeleteAccount(BuildContext context) async {
+  final confirmed = await showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _DeleteAccountSheet(),
+  );
+  if (confirmed == true && context.mounted) {
+    context.router.maybePop(true);
   }
 }
 
@@ -90,17 +111,6 @@ class _AccountFormState extends State<_AccountForm> {
             phoneNumber: widget.user.phoneNumber,
           ),
         );
-  }
-
-  Future<void> _confirmDelete() async {
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _DeleteAccountSheet(),
-    );
-    if (confirmed == true && mounted) {
-      context.router.maybePop(true);
-    }
   }
 
   @override
@@ -152,27 +162,10 @@ class _AccountFormState extends State<_AccountForm> {
           ),
         ),
         BottomBox(
-          child: Row(
-            children: [
-              Expanded(
-                child: CommonButton.elevated(
-                  text: 'delete_account'.tr(),
-                  backgroundColor: AppColors.error,
-                  textColor: AppColors.onBrand,
-                  radius: 44.r,
-                  enabled: !widget.saving,
-                  onPressed: _confirmDelete,
-                ),
-              ),
-              8.kw,
-              Expanded(
-                child: GradientButton(
-                  text: 'save_button'.tr(),
-                  loading: widget.saving,
-                  onPressed: _save,
-                ),
-              ),
-            ],
+          child: GradientButton(
+            text: 'save_button'.tr(),
+            loading: widget.saving,
+            onPressed: _save,
           ),
         ),
       ],

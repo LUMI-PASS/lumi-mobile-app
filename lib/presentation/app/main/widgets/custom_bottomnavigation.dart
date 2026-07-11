@@ -1,24 +1,37 @@
+import 'package:cupertino_native_glmv/cupertino_native_glmv.dart';
 import 'package:dynamic_glass_glmv/dynamic_glass_glmv.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 
-/// Glass bottom navigation — the same `AdaptiveBottomNavigationBar` component
-/// nexus-mobile-app uses (from `dynamic_glass_glmv`), wired the nexus way: a
-/// [GlassPillNavBar] handed in via [AdaptiveBottomNavigationBar.fallbackNavBar]
-/// and wrapped in an [IgnorePointer] so it can be hidden. Combined with
-/// `useNativeBottomBar: false` this **forces the frosted Flutter glass pill on
-/// every platform** — including iOS 26, where the native liquid-glass bar would
-/// otherwise take over (it renders raw SVG fills as white and owns its own
-/// selection, so it can't drive `AutoTabsScaffold`'s router).
+/// Glass bottom navigation with two renderers, both fed the **same Figma tab
+/// SVGs** ([_tabs]):
+///
+///   • **iOS 26+ → the real thing.** A native `UITabBar` ([CNTabBar]) that the
+///     system paints with genuine liquid glass — the actual UIKit material,
+///     with its refraction and scroll-edge behaviour, not a Flutter imitation.
+///     It is a controlled widget (`currentIndex` + `onTap`), so it drives
+///     `AutoTabsScaffold`'s router exactly like the pill does.
+///   • **Everything else → [GlassPillNavBar]**, the frosted Flutter pill.
+///
+/// We drive [CNTabBar] **directly** rather than going through
+/// `dynamic_glass_glmv`'s [AdaptiveBottomNavigationBar], for one reason: that
+/// wrapper hardcodes `preserveColors: true` on every asset icon, which tells
+/// UIKit to blit the glyph as-is. Our tab SVGs are `fill="white"`, so they'd
+/// come out white-on-glass and would never tint for selection. `CNTabBar`'s own
+/// default is `preserveColors: false`, which templates the glyph — UIKit then
+/// tints it with [CNTabBar.tint] when selected and system grey when not, which
+/// is exactly the behaviour we want. `CNTabBar` already pre-renders SVG asset
+/// paths to PNG, so it takes our `Assets.icons.home.*` paths as they are.
 ///
 /// The blur only frosts because `MainPage`'s `AutoTabsScaffold` sets
 /// `extendBody: true`, letting the tab content scroll behind the bar.
 ///
-/// Every surface / size / colour is taken straight from the Figma "Бар"
+/// Pill surfaces / sizes / colours come straight from the Figma "Бар"
 /// component:
 ///   • light 103:5934 — bar `rgba(255,255,255,0.6)`, pill `#E5E7EA`
 ///   • dark  103:4120 — bar `rgba(0,0,0,0.6)`,       pill `rgba(63,63,63,0.5)`
@@ -133,14 +146,39 @@ class CustomBottomBar extends StatelessWidget {
       animationCurve: Curves.easeOutCubic,
     );
 
+    // The package takes an asset-path String (see its `icon` doc); our own
+    // `iconBuilder` below renders it.
     final items = [
       for (final (icon, labelKey) in _tabs)
         AdaptiveNavigationDestination(
-          // The package takes an asset-path String (see its `icon` doc).
           icon: icon.path,
           label: labelKey.tr(),
         ),
     ];
+
+    // iOS 26: the system liquid-glass UITabBar, carrying our own tab SVGs.
+    // `preserveColors` is left at its default (false) so UIKit templates each
+    // glyph and tints it — brand purple when selected, system grey when not.
+    if (PlatformInfo.isIOS26OrHigher()) {
+      if (hidden) return const SizedBox.shrink();
+      return CNTabBar(
+        items: [
+          for (final (icon, labelKey) in _tabs)
+            CNTabBarItem(
+              label: labelKey.tr(),
+              assetImage: icon.path,
+              // Apple's tab-bar icon metric; without it the pre-rendered PNG
+              // would draw at its own size.
+              assetSize: 25,
+            ),
+        ],
+        currentIndex: selectedIndex,
+        onTap: onItemSelected,
+        // UIKit tints flat, so the pill's pink→purple gradient collapses to
+        // the brand purple here.
+        tint: AppColors.brandPurple,
+      );
+    }
 
     Widget iconBuilder(
       BuildContext context,
@@ -182,39 +220,28 @@ class CustomBottomBar extends StatelessWidget {
           ),
         );
 
+    // Every other platform: the frosted Flutter pill.
+    //
     // `GlassPillNavBar` pads itself by `MediaQuery.padding.bottom +
-    // style.bottomPadding`. Dropping the inset here makes `bottomPadding` the
-    // single source of truth for how far the bar floats off the screen edge.
+    // style.bottomPadding`. Dropping the inset makes `bottomPadding` the single
+    // source of truth for how far the pill floats off the screen edge. The
+    // native bar lays out its own safe area in UIKit, so this concerns the pill
+    // alone.
     return MediaQuery.removePadding(
       context: context,
       removeBottom: true,
-      child: AdaptiveBottomNavigationBar(
-        items: items,
-        selectedIndex: selectedIndex,
-        onTap: onItemSelected,
-        // Force the Flutter glass-pill bar on every platform (see class doc).
-        useNativeBottomBar: false,
-        selectedItemColor: selectedColor,
-        unselectedItemColor: unselectedColor,
-        hidden: hidden,
-        // Nexus pattern: supply the glass bar explicitly as the fallback so it
-        // is always the widget that renders.
-        fallbackNavBar: IgnorePointer(
-          ignoring: hidden,
-          child: GlassPillNavBar(
-            items: items,
-            selectedIndex: selectedIndex,
-            onTap: onItemSelected,
-            selectedItemColor: selectedColor,
-            unselectedItemColor: unselectedColor,
-            style: style,
-            iconBuilder: iconBuilder,
-            labelBuilder: labelBuilder,
-          ),
+      child: IgnorePointer(
+        ignoring: hidden,
+        child: GlassPillNavBar(
+          items: items,
+          selectedIndex: selectedIndex,
+          onTap: onItemSelected,
+          selectedItemColor: selectedColor,
+          unselectedItemColor: unselectedColor,
+          style: style,
+          iconBuilder: iconBuilder,
+          labelBuilder: labelBuilder,
         ),
-        glassPillStyle: style,
-        glassPillIconBuilder: iconBuilder,
-        glassPillLabelBuilder: labelBuilder,
       ),
     );
   }

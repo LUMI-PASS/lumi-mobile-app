@@ -105,3 +105,6 @@ sources and in `lib/common/gen/`.
   in that committed part file). `make gen` restores it automatically — never
   commit its deletion. Add new UI strings to `translations.csv` and, if a typed
   getter is needed, add it to `strings.g.dart` by hand.
+
+RUNNING:
+DO NOT RUN APP IN ORDER TO TEST/VIEW IT

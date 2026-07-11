@@ -92,7 +92,6 @@ class _SearchViewState extends State<SearchView> {
     final result = await FilterBottomSheet.show(
       context,
       initial: widget.state.filter,
-      children: widget.state.children,
     );
     if (result != null) cubit.applyFilter(result);
   }

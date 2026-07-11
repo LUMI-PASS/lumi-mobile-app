@@ -192,8 +192,8 @@ class _SearchBarRowState extends State<SearchBarRow> {
                       borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(color: c.controlBorder),
                     ),
-                    child: _SearchIcon(Assets.icons.filter,
-                        size: 16, color: c.textPrimary),
+                    child: _SearchIcon(Assets.icons.icFilter,
+                        size: 20, color: c.textPrimary),
                   ),
                   if (widget.filterCount > 0)
                     Positioned(

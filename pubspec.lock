@@ -338,7 +338,7 @@ packages:
     source: hosted
     version: "1.0.8"
   cupertino_native_glmv:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: cupertino_native_glmv
       sha256: "56c71f30cfef02da93d0e001290b3eb5c9772789ed9e3bf9979f45d92d33c99f"

@@ -197,6 +197,8 @@ book_no_slots_for_day,На выбранный день расписание от
 book_no_schedule,Нет расписания,Jadval mavjud emas,No schedule
 book_day_unavailable,В этот день занятий нет,Bu kuni mashg'ulot yo‘q,No activities on this day
 book_available_times,Доступное время,Mavjud vaqtlar,Available times
+book_select_time,Выберите время,Vaqtni tanlang,Select time
+time_picker_range,Доступно с {} до {},{} dan {} gacha mavjud,Available from {} to {}
 book_available_window,Открыто: {},Ochiq: {},Open: {}
 book_ticket_index,Билет №{},Chipta №{},Ticket #{}
 book_tickets,Билеты,Chiptalar,Tickets
@@ -698,6 +700,8 @@ faqs_title,Вопросы,Savollar,FAQ
 filter_title,Фильтры,Filtrlar,Filters
 filter_date,Дата,Sana,Date
 filter_choose_calendar,Из календаря,Kalendardan,From calendar
+select_period,Выберите период,Davrni tanlang,Select period
+select_period_hint,Нажмите на дату начала,Boshlanish sanasini tanlang,Tap a start date
 filter_start_date,Дата начала,Boshlanish sanasi,Start date
 filter_end_date,Дата окончания,Tugash sanasi,End date
 filter_years_label,лет,yosh,years
