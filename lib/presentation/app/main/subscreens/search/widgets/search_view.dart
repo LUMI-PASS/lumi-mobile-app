@@ -20,12 +20,23 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search
 /// Shared by the root bottom-nav tab and the pushed screen; the only
 /// difference is the back button, so [onBack] is null on the tab.
 class SearchView extends StatefulWidget {
-  const SearchView({super.key, required this.state, this.onBack});
+  const SearchView({
+    super.key,
+    required this.state,
+    this.onBack,
+    this.classesOnly = false,
+  });
 
   final SearchBuildable state;
 
   /// Omit on the root tab — there is nothing behind it to go back to.
   final VoidCallback? onBack;
+
+  /// Drops the Darslar / Ta'lim markazlari chips and the result count, leaving
+  /// every activity behind the search field and the filters. Set when the
+  /// screen is opened as "see all activities" from Home, where the user asked
+  /// for one list and switching it to centres would be a non-sequitur.
+  final bool classesOnly;
 
   @override
   State<SearchView> createState() => _SearchViewState();
@@ -62,6 +73,20 @@ class _SearchViewState extends State<SearchView> {
     }
   }
 
+  /// What the screen is showing, named at the top.
+  ///
+  /// Opened from a category, it is that category — the user tapped "Sport", so
+  /// the screen says "Sport" rather than the generic "Izlash", and they can see
+  /// what the list is filtered to. Opened as see-all, it is every activity.
+  String _title(SearchBuildable state) {
+    if (state.selectedCategory != null) {
+      final name = state.selectedCategory!.title ?? '';
+      if (name.isNotEmpty) return name;
+    }
+    if (widget.classesOnly) return 'all_activities'.tr();
+    return 'search'.tr();
+  }
+
   Future<void> _openFilter() async {
     final cubit = context.read<SearchCubit>();
     final result = await FilterBottomSheet.show(
@@ -86,7 +111,7 @@ class _SearchViewState extends State<SearchView> {
     final c = context.colors;
     final cubit = context.read<SearchCubit>();
     final state = widget.state;
-    final isClasses = state.activeTab == 0;
+    final isClasses = widget.classesOnly || state.activeTab == 0;
     final items = isClasses ? state.classes : state.branches;
 
     // Two columns with a 16pt page margin and an 8pt gutter (Figma).
@@ -100,7 +125,7 @@ class _SearchViewState extends State<SearchView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             16.verticalSpace,
-            SearchTopBar(title: 'search'.tr(), onBack: widget.onBack),
+            SearchTopBar(title: _title(state), onBack: widget.onBack),
             16.verticalSpace,
             SearchBarRow(
               initialTerm: state.searchTerm,
@@ -108,20 +133,24 @@ class _SearchViewState extends State<SearchView> {
               onFilterTap: _openFilter,
               filterCount: cubit.activeFilterCount,
             ),
-            16.verticalSpace,
-            SearchChips(
-              labels: [
-                'search_tab_classes'.tr(),
-                'search_tab_centers'.tr(),
-              ],
-              activeIndex: state.activeTab,
-              onSelect: cubit.setTab,
-            ),
+            if (!widget.classesOnly) ...[
+              16.verticalSpace,
+              SearchChips(
+                labels: [
+                  'search_tab_classes'.tr(),
+                  'search_tab_centers'.tr(),
+                ],
+                activeIndex: state.activeTab,
+                onSelect: cubit.setTab,
+              ),
+            ],
             16.verticalSpace,
             SearchMapCard(onTap: _openMap),
             24.verticalSpace,
-            SearchCountRow(count: cubit.resultCount),
-            14.verticalSpace,
+            if (!widget.classesOnly) ...[
+              SearchCountRow(count: cubit.resultCount),
+              14.verticalSpace,
+            ],
             Expanded(
               child: Builder(
                 builder: (context) {

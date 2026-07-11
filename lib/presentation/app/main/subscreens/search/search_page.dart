@@ -4,12 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_view.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/businesses_coming_page.dart';
 
-/// Учреждения / Explore tab — the discovery search.
+/// Учреждения / Muassasalar tab.
 ///
-/// A root tab has nothing behind it, so no back button; the user leaves via the
-/// bottom nav. The pushed [SearchDiscoveryPage] is the one that gets one.
+/// The centres feature is not ready, so the tab shows [BusinessesComingPage]
+/// rather than the search screen. It still loads the branches (tab 1) — they
+/// are what the coming-soon card is frosted over, so the user gets a real
+/// preview of the section rather than a grey placeholder.
+///
+/// The working search lives on the pushed `SearchDiscoveryPage`.
 @RoutePage()
 class SearchPage
     extends BasePage<SearchCubit, SearchBuildable, SearchListenable> {
@@ -17,7 +21,7 @@ class SearchPage
 
   @override
   void init(BuildContext context) {
-    context.read<SearchCubit>().init();
+    context.read<SearchCubit>().init(tab: 1);
     super.init(context);
   }
 
@@ -29,6 +33,6 @@ class SearchPage
 
   @override
   Widget builder(BuildContext context, SearchBuildable state) {
-    return SearchView(state: state);
+    return BusinessesComingPage(state: state);
   }
 }

@@ -147,8 +147,8 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
           CarouselSlider(
             options: CarouselOptions(
               height: 144.h,
-              autoPlay: pages.length > 1,
-              autoPlayInterval: const Duration(seconds: 5),
+              // The banners advance only when the user swipes them.
+              autoPlay: false,
               viewportFraction: 1.0,
               enlargeCenterPage: false,
               onPageChanged: (index, _) => setState(() => _current = index),

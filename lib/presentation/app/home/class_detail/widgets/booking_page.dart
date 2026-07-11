@@ -960,7 +960,13 @@ class _BookingPageState extends State<BookingPage> {
 
     if (_selectedDate != null) {
       final slot = _selectedSlot;
-      final time = slot != null ? ' ${slot.startTime}' : '';
+      // The whole window, not just when it opens — the summary is the last
+      // thing the buyer reads before paying, so it spells out what they get.
+      final time = slot == null
+          ? ''
+          : slot.endTime.isEmpty
+              ? ' ${slot.startTime}'
+              : ' ${slot.startTime} – ${slot.endTime}';
       out.add(_SummaryLine(
         icon: Assets.icons.detail.icCalendar,
         label: 'book_date_time'.tr(),
@@ -1748,8 +1754,9 @@ class _SlotPicker extends StatelessWidget {
 
 // ─── _SlotChip ────────────────────────────────────────────────────────────────
 
-/// A single bookable time. White pill; the selected one takes the brand
-/// gradient; a full one is dimmed and inert (Figma 60:6229).
+/// A single bookable time, as the window it actually covers — "10:00 – 22:00".
+/// The selected one takes the brand gradient; a full one is dimmed and inert
+/// (Figma 60:6229).
 class _SlotChip extends StatelessWidget {
   const _SlotChip({
     required this.slot,
@@ -1761,13 +1768,27 @@ class _SlotChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
+  /// The start alone left the buyer guessing how long they were booking for.
+  /// The end is optional on the wire, so fall back to the start when it's
+  /// missing rather than rendering a dangling dash.
+  String get _label {
+    final end = slot.endTime;
+    if (end.isEmpty) return slot.startTime;
+    return '${slot.startTime} – $end';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final isFull = slot.isFull;
+
+    // Unselected chips sit bare on the canvas, which goes dark — so they take
+    // the theme's surface and text roles. The selected one is painted by the
+    // brand gradient, which is theme-invariant, so its label stays fixed.
     final label = Text(
-      slot.startTime,
+      _label,
       style: AppText.semibold12.copyWith(
-        color: isSelected ? AppColors.onBrand : AppColors.ink,
+        color: isSelected ? AppColors.onBrand : c.textPrimary,
       ),
     );
 
@@ -1779,9 +1800,10 @@ class _SlotChip extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
           decoration: BoxDecoration(
-            color: isSelected ? null : AppColors.onBrand,
+            color: isSelected ? null : c.surface,
             gradient: isSelected ? AppGradients.brand : null,
             borderRadius: BorderRadius.circular(40.r),
+            border: isSelected ? null : Border.all(color: c.controlBorder),
           ),
           child: label,
         ),
@@ -1811,10 +1833,14 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final d = date.date;
-    // The selected chip sits on the pale frosted pill, the rest on the canvas —
-    // so its muted labels need a touch more contrast.
-    final mutedColor = isSelected ? AppColors.greeting : AppColors.inkMuted;
+    // The selected chip sits on the pale frosted pill — which stays light in
+    // both themes — so it keeps the fixed inks. The rest are bare text on the
+    // canvas, which goes dark, so they must read their colours from the theme:
+    // fixed ink on a dark canvas is all but invisible.
+    final dayColor = isSelected ? AppColors.ink : c.textPrimary;
+    final mutedColor = isSelected ? AppColors.greeting : c.textSecondary;
 
     final content = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -1824,8 +1850,7 @@ class _DateChip extends StatelessWidget {
             style: AppText.regular12.copyWith(color: mutedColor)),
         4.kh,
         Text('${d.day}',
-            style: AppText.bold18
-                .copyWith(color: AppColors.ink, height: 1.0)),
+            style: AppText.bold18.copyWith(color: dayColor, height: 1.0)),
         4.kh,
         Text('month_short_${d.month}'.tr(),
             style: AppText.regular12.copyWith(color: mutedColor)),

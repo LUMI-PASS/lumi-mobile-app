@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
@@ -30,41 +29,6 @@ import 'package:url_launcher/url_launcher.dart';
 /// Height of a coupon card in the horizontal carousel. Fixed so the [PageView]
 /// can size itself; the cards' content is top-aligned inside it.
 const double _kCouponCardHeight = 184;
-
-/// Flip to `true` to exercise the multi-coupon carousel (paging, dots, the buy
-/// bar re-pricing) without a backend that returns several plans. Debug builds
-/// only — it is ignored in release, so it can't ship a fake price.
-const bool _kUseMockPlans = true;
-
-const List<PremiumPlan> _kMockPlans = [
-  PremiumPlan(
-    id: 'mock-starter',
-    name: {'ru': 'Стартовый', 'uz': 'Boshlang\'ich', 'en': 'Starter'},
-    price: 39900,
-    durationDays: 30,
-    activitiesLimit: 3,
-    discountPercentage: 10,
-    isActive: true,
-  ),
-  PremiumPlan(
-    id: 'mock-popular',
-    name: {'ru': 'Популярный', 'uz': 'Ommabop', 'en': 'Popular'},
-    price: 59900,
-    durationDays: 30,
-    activitiesLimit: 6,
-    discountPercentage: 20,
-    isActive: true,
-  ),
-  PremiumPlan(
-    id: 'mock-premium',
-    name: {'ru': 'Премиум', 'uz': 'Premium', 'en': 'Premium'},
-    price: 99900,
-    durationDays: 60,
-    activitiesLimit: 12,
-    discountPercentage: 25,
-    isActive: true,
-  ),
-];
 
 @RoutePage()
 class PlansPage extends StatefulWidget {
@@ -166,14 +130,6 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
 
   Future<void> _loadPlans() async {
     setState(() => _isLoading = true);
-    if (_kUseMockPlans && kDebugMode) {
-      setState(() {
-        _plans = _kMockPlans;
-        _isLoading = false;
-      });
-      _startAutoScroll();
-      return;
-    }
     try {
       final data = await _repo.getPremiumPlans();
       if (!mounted) return;

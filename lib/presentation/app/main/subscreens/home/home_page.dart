@@ -173,11 +173,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         24.verticalSpace,
-        HomeSectionHeader(
-          title: 'all_categories'.tr(),
-          onViewAll: () =>
-              context.router.push(CategoriesGridRoute(categories: categories)),
-        ),
+        // No "see all": the row already scrolls through every category, so the
+        // grid it used to open was the same list a second time.
+        HomeSectionHeader(title: 'all_categories'.tr()),
         16.verticalSpace,
         SizedBox(
           height: 104.h,
@@ -206,12 +204,10 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         24.verticalSpace,
         HomeSectionHeader(
           title: 'popular_activities'.tr(),
+          // Every activity, searchable and filterable — the discovery screen
+          // without its Darslar / Ta'lim markazlari chips.
           onViewAll: () => context.router.push(
-            ClassesGridRoute(
-              title: 'popular_activities'.tr(),
-              list: HomeClassList.popular,
-              initialClasses: state.newClassesList,
-            ),
+            SearchDiscoveryRoute(classesOnly: true),
           ),
         ),
         16.verticalSpace,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -95,6 +96,18 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   HomBranch? _selected;
   bool _mapReady = false;
 
+  /// The device's location, once fetched via the "my location" button.
+  LatLng? _myLocation;
+  bool _locating = false;
+
+  /// Signature (sorted ids) of the branch set the camera last fitted to. Guards
+  /// against re-fitting on every cubit emit (loading toggles etc.) — the camera
+  /// only re-fits when the actual set of centres changes.
+  String? _fittedSig;
+
+  static const _minZoom = 4.0;
+  static const _maxZoom = 18.0;
+
   /// Flips once this screen's own fetch has landed. Until then the seed from
   /// the search screen stands in; after it, the seed is stale and the cubit is
   /// the only source — otherwise picking a category would flash the original
@@ -132,12 +145,20 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
             lng <= _maxLng;
       }).toList();
 
+  /// Stable signature of the current plottable set, so we only re-fit when the
+  /// centres actually change (not on every rebuild).
+  String get _sig {
+    final ids = _plottable.map((b) => b.id ?? '').toList()..sort();
+    return ids.join(',');
+  }
+
   @override
   void didUpdateWidget(covariant _BranchesMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.branchesLoaded) _everLoaded = true;
-    if (oldWidget.branches != widget.branches) {
-      // A new result set (category changed) invalidates the selection.
+    // Re-fit only when the actual set of centres changed (e.g. category
+    // switched) — not on spurious cubit emits, which caused the camera to jump.
+    if (_sig != _fittedSig) {
       _selected = null;
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitToBranches());
     }
@@ -150,6 +171,7 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
 
   void _fitToBranches() {
     if (!_mapReady || !mounted) return;
+    _fittedSig = _sig;
     final points =
         _plottable.map((b) => LatLng(b.latitude!, b.longitude!)).toList();
 
@@ -168,6 +190,51 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
         maxZoom: 15,
       ),
     );
+  }
+
+  /// Zooms in/out by [delta] around the current centre, clamped to the map's
+  /// zoom range so the buttons can't drive it into empty grey space.
+  void _zoomBy(double delta) {
+    if (!_mapReady) return;
+    final cam = _mapController.camera;
+    final z = (cam.zoom + delta).clamp(_minZoom, _maxZoom);
+    _mapController.move(cam.center, z);
+  }
+
+  /// Centres the map on the device's location, requesting permission first.
+  Future<void> _goToMyLocation() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _showMsg('map_location_off'.tr());
+        return;
+      }
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        _showMsg('map_location_denied'.tr());
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      final here = LatLng(pos.latitude, pos.longitude);
+      setState(() => _myLocation = here);
+      _mapController.move(here, 15);
+    } catch (_) {
+      _showMsg('map_location_error'.tr());
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
+  void _showMsg(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   void _select(HomBranch branch) {
@@ -219,6 +286,8 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                         options: MapOptions(
                           initialCenter: _defaultCenter,
                           initialZoom: 12,
+                          minZoom: _minZoom,
+                          maxZoom: _maxZoom,
                           onMapReady: _onMapReady,
                           onTap: (_, __) => setState(() => _selected = null),
                         ),
@@ -231,6 +300,13 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                           ),
                           MarkerLayer(
                             markers: [
+                              if (_myLocation != null)
+                                Marker(
+                                  point: _myLocation!,
+                                  width: 26.w,
+                                  height: 26.w,
+                                  child: const _MyLocationDot(),
+                                ),
                               for (final branch in branches)
                                 if (branch.id == selected?.id)
                                   Marker(
@@ -261,6 +337,31 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                   ),
                   if (widget.isLoading && branches.isEmpty)
                     const Center(child: CircularProgressIndicator()),
+                  // Zoom + locate controls, clear of the bottom chips/card.
+                  Positioned(
+                    right: 20.w,
+                    bottom: MediaQuery.of(context).padding.bottom +
+                        (selected != null ? 110.h : 84.h),
+                    child: Column(
+                      children: [
+                        _MapButton(
+                          icon: Icons.add_rounded,
+                          onTap: () => _zoomBy(1),
+                        ),
+                        8.verticalSpace,
+                        _MapButton(
+                          icon: Icons.remove_rounded,
+                          onTap: () => _zoomBy(-1),
+                        ),
+                        12.verticalSpace,
+                        _MapButton(
+                          icon: Icons.my_location_rounded,
+                          onTap: _goToMyLocation,
+                          busy: _locating,
+                        ),
+                      ],
+                    ),
+                  ),
                   // Category chips float over the bottom of the map.
                   if (widget.categories.isNotEmpty && selected == null)
                     Positioned(
@@ -352,6 +453,84 @@ class _BranchLabel extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A round, theme-aware map control (zoom / locate).
+class _MapButton extends StatelessWidget {
+  const _MapButton({
+    required this.icon,
+    required this.onTap,
+    this.busy = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: busy ? null : onTap,
+      child: Container(
+        width: 44.w,
+        height: 44.w,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: c.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: c.controlBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: busy
+            ? SizedBox(
+                width: 18.w,
+                height: 18.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(c.primary),
+                ),
+              )
+            : Icon(icon, size: 22.sp, color: c.textPrimary),
+      ),
+    );
+  }
+}
+
+/// The pulsing blue "you are here" dot.
+class _MyLocationDot extends StatelessWidget {
+  const _MyLocationDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(4.w),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.link,
+          shape: BoxShape.circle,
         ),
       ),
     );
