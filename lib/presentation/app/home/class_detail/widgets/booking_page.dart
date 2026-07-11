@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -927,6 +928,11 @@ class _BookingPageState extends State<BookingPage> {
   }) async {
     final id = widget.clazz.id!;
     final items = _buildCheckoutItems();
+    // Redirect rails (payme/click/uzum/paylov) send WLCM the URL to bounce the
+    // buyer back to after paying. The card rail is confirmed in-app via OTP and
+    // never redirects, so it doesn't need one. Derived from the live base URL so
+    // dev and prod each hit their own /paylov/return.
+    final isRedirect = provider != null && provider != 'card';
     try {
       final result = await getIt<OrdersApi>().checkout(
         activityId: id,
@@ -936,6 +942,7 @@ class _BookingPageState extends State<BookingPage> {
         // user has no coupon plan (the promo field is hidden in that case).
         promoCode: _hasCoupon ? null : _appliedPromo?.code,
         paymentProvider: provider,
+        returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
         cardNumber: cardNumber,
         expireDate: expireDate,
       );
