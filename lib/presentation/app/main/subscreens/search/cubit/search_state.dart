@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 
@@ -21,7 +20,6 @@ class SearchBuildable with _$SearchBuildable {
     @Default(1) int classesTotalPages,
     @Default(1) int branchesTotalPages,
     @Default([]) List<HomCategory> categories,
-    @Default([]) List<ChildModel> children,
     HomCategory? selectedCategory,
     FilterResult? filter,
     @Default(null) double? lat,

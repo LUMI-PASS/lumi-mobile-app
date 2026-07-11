@@ -792,6 +792,10 @@ class $AssetsIconsNotificationGen {
 class $AssetsIconsProfileGen {
   const $AssetsIconsProfileGen();
 
+  /// File path: assets/icons/profile/ic_delete.svg
+  SvgGenImage get icDelete =>
+      const SvgGenImage('assets/icons/profile/ic_delete.svg');
+
   /// File path: assets/icons/profile/ic_edit.svg
   SvgGenImage get icEdit =>
       const SvgGenImage('assets/icons/profile/ic_edit.svg');
@@ -801,7 +805,7 @@ class $AssetsIconsProfileGen {
       const SvgGenImage('assets/icons/profile/ic_user.svg');
 
   /// List of all assets
-  List<SvgGenImage> get values => [icEdit, icUser];
+  List<SvgGenImage> get values => [icDelete, icEdit, icUser];
 }
 
 class $AssetsImagesBannerGen {

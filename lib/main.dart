@@ -243,8 +243,16 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
             // Innermost wrapper on purpose: the theme flips above it, so the
             // tree under its RepaintBoundary repaints with the new colors while
             // the stale snapshot is still being clipped away on top.
-            builder: (context, child) =>
-                ThemeTransitionOverlay(child: child ?? const SizedBox.shrink()),
+            builder: (context, child) => Listener(
+              // Translucent so the tap still reaches whatever was hit; this only
+              // rides along to drop the keyboard on any pointer down.
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
+              child: ThemeTransitionOverlay(
+                child: child ?? const SizedBox.shrink(),
+              ),
+            ),
             color: AppColorScheme.light.primary,
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,

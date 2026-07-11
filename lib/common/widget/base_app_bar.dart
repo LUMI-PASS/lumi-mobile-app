@@ -130,6 +130,34 @@ Widget appBarLeading(BuildContext context) {
   );
 }
 
+/// The destructive counterpart of [appBarLeading] — a trailing [ControlChip]
+/// holding the red trash glyph, inset 16 from the trailing edge.
+///
+/// The glyph already carries its own red, so it is not tinted; only the chip
+/// behind it follows the theme.
+Widget appBarDeleteAction(
+  BuildContext context, {
+  required VoidCallback onTap,
+  bool enabled = true,
+}) {
+  return Padding(
+    padding: EdgeInsets.only(right: 16.w),
+    child: Center(
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: ControlChip(
+          onTap: enabled ? onTap : null,
+          width: 36.w,
+          height: 36.w,
+          padding: EdgeInsets.zero,
+          borderWidth: 1.5,
+          child: Assets.icons.profile.icDelete.svg(width: 20.w, height: 20.w),
+        ),
+      ),
+    ),
+  );
+}
+
 Widget AppBarLeadingScreens(BuildContext context) {
   return InkWell(
     overlayColor: const WidgetStatePropertyAll(Colors.transparent),
