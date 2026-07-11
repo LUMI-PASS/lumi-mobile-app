@@ -81,7 +81,11 @@ dependencies:
   youtube_player_flutter: ^9.1.1
   webview_flutter: ^4.7.0
   # Glass "pill" bottom navigation (same component nexus-mobile-app uses).
-  dynamic_glass_glmv: ^0.2.2
+  dynamic_glass_glmv: ^0.2.3
+  # The native UITabBar behind `dynamic_glass_glmv`'s iOS 26 path. Depended on
+  # directly so `CustomBottomBar` can drive `CNTabBar` itself and keep our own
+  # tab SVGs template-tinted — see the note in custom_bottomnavigation.dart.
+  cupertino_native_glmv: ^0.1.5
 
 
 dev_dependencies:

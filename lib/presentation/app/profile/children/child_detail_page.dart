@@ -52,9 +52,31 @@ class ChildDetailPage
       backgroundColor: context.colors.scaffoldBg,
       appBar: BaseAppBar(
         title: child == null ? 'add_child'.tr() : 'child_details'.tr(),
+        actions: [
+          // Nothing to delete until the child exists.
+          if (child != null)
+            appBarDeleteAction(
+              context,
+              enabled: !state.buttonLoading,
+              onTap: () => _confirmDeleteChild(context, child!),
+            ),
+        ],
       ),
       body: _ChildForm(child: child, saving: state.buttonLoading),
     );
+  }
+}
+
+/// Confirms, then removes the child through the cubit — which pops the screen
+/// once the delete lands.
+Future<void> _confirmDeleteChild(BuildContext context, ChildModel child) async {
+  final confirmed = await showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _DeleteChildSheet(name: child.firstName ?? ''),
+  );
+  if (confirmed == true && context.mounted) {
+    context.read<ChildrenCubit>().deleteChild(child.id!);
   }
 }
 
@@ -135,19 +157,6 @@ class _ChildFormState extends State<_ChildForm> {
     cubit.saveChild(child, _isEdit, _photo);
   }
 
-  Future<void> _confirmDelete() async {
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _DeleteChildSheet(
-        name: widget.child?.firstName ?? '',
-      ),
-    );
-    if (confirmed == true && mounted) {
-      context.read<ChildrenCubit>().deleteChild(widget.child!.id!);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -215,30 +224,10 @@ class _ChildFormState extends State<_ChildForm> {
             ),
           ),
           BottomBox(
-            child: Row(
-              children: [
-                // Nothing to delete until the child exists.
-                if (_isEdit) ...[
-                  Expanded(
-                    child: CommonButton.elevated(
-                      text: 'delete'.tr(),
-                      backgroundColor: AppColors.error,
-                      textColor: AppColors.onBrand,
-                      radius: 44.r,
-                      enabled: !widget.saving,
-                      onPressed: _confirmDelete,
-                    ),
-                  ),
-                  8.kw,
-                ],
-                Expanded(
-                  child: GradientButton(
-                    text: 'save_button'.tr(),
-                    loading: widget.saving,
-                    onPressed: _save,
-                  ),
-                ),
-              ],
+            child: GradientButton(
+              text: 'save_button'.tr(),
+              loading: widget.saving,
+              onPressed: _save,
             ),
           ),
         ],

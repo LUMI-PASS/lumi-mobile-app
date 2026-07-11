@@ -13,6 +13,7 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/common/widget/shaker.dart';
+import 'package:lumi_pass/common/widget/time_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -415,8 +416,10 @@ class _BookingPageState extends State<BookingPage> {
       }
     }
 
-    final picked = await _showCupertinoTimePicker(
-      clamped,
+    if (!mounted) return;
+    final picked = await AppTimePickerSheet.show(
+      context,
+      initial: clamped,
       minTime: effectiveMin,
       maxTime: bounds?.max,
     );
@@ -477,110 +480,6 @@ class _BookingPageState extends State<BookingPage> {
       _customWindows[index] = next;
       _error = null;
     });
-  }
-
-  /// iOS-style wheel time picker, constrained to [minTime]..[maxTime] when
-  /// provided (used for required-booking classes to stay within the slot window).
-  Future<TimeOfDay?> _showCupertinoTimePicker(
-    TimeOfDay initial, {
-    TimeOfDay? minTime,
-    TimeOfDay? maxTime,
-  }) async {
-    final today = DateTime.now();
-    var temp = DateTime(
-      today.year,
-      today.month,
-      today.day,
-      initial.hour,
-      initial.minute,
-    );
-    final minDate = minTime != null
-        ? DateTime(today.year, today.month, today.day, minTime.hour, minTime.minute)
-        : null;
-    final maxDate = maxTime != null
-        ? DateTime(today.year, today.month, today.day, maxTime.hour, maxTime.minute)
-        : null;
-
-    return showModalBottomSheet<TimeOfDay>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final c = context.colors;
-        return Container(
-          height: 280.h,
-          decoration: BoxDecoration(
-            color: c.scaffoldBg,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  child: Row(
-                    children: [
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: Text(
-                          'book_go_back'.tr(),
-                          style: TextStyle(color: c.textSecondary, fontSize: 14.sp),
-                        ),
-                      ),
-                      if (minTime != null || maxTime != null)
-                        Expanded(
-                          child: Text(
-                            [
-                              if (minTime != null) _fmtTime(minTime),
-                              if (maxTime != null) _fmtTime(maxTime),
-                            ].join(' – '),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: c.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        )
-                      else
-                        const Spacer(),
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () => Navigator.of(ctx).pop(
-                          TimeOfDay(hour: temp.hour, minute: temp.minute),
-                        ),
-                        child: Text(
-                          'book_continue'.tr(),
-                          style: TextStyle(
-                            color: AppColors.brandPink,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(height: 1, color: c.controlBorder),
-                Expanded(
-                  child: CupertinoDatePicker(
-                    mode: CupertinoDatePickerMode.time,
-                    initialDateTime: temp,
-                    minimumDate: minDate,
-                    maximumDate: maxDate,
-                    use24hFormat: true,
-                    minuteInterval: 5,
-                    onDateTimeChanged: (d) => temp = d,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   // Cache slot fetches per ISO date so re-tapping a day is instant.

@@ -51,19 +51,9 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
         ));
     await Future.wait([
       _fetchCategories(),
-      _fetchChildren(),
       _fetchTab(tab, page: 1, append: false),
     ]);
     build((b) => b.copyWith(isLoading: false));
-  }
-
-  /// The filter sheet offers the parent's children as a shortcut that fills in
-  /// the age and gender it would otherwise ask them to type.
-  Future<void> _fetchChildren() async {
-    try {
-      final children = await _repo.getChildren();
-      build((b) => b.copyWith(children: children));
-    } catch (_) {}
   }
 
   /// Re-fetches categories and results when the app language has changed.

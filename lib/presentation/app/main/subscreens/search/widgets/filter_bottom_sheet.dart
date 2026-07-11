@@ -8,9 +8,8 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/widget/user_avatar.dart';
-import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
-import 'package:lumi_pass/data/service/photo_service.dart';
+import 'package:lumi_pass/common/widget/bouncing_button.dart';
+import 'package:lumi_pass/common/widget/date_range_picker_sheet.dart';
 
 enum DatePreset { none, today, tomorrow, thisWeek, custom }
 
@@ -29,12 +28,6 @@ class FilterResult {
   /// Upper bound of the age range (the "до" field).
   final int? ageToYears;
   final Gender gender;
-
-  /// The child whose chip is lit in the sheet. A pure UI shortcut — it only
-  /// exists so reopening the sheet re-lights the right chip. The query is
-  /// carried by [ageYears] / [ageToYears] / [gender], which the chip fills in
-  /// and the user may then override by hand.
-  final String? childId;
   final PricePreset pricePreset;
   final RangeValues priceRange;
 
@@ -45,7 +38,6 @@ class FilterResult {
     this.ageYears,
     this.ageToYears,
     this.gender = Gender.any,
-    this.childId,
     this.pricePreset = PricePreset.any,
     this.priceRange = const RangeValues(minPrice, maxPrice),
   });
@@ -63,7 +55,6 @@ class FilterResult {
     int? ageYears,
     int? ageToYears,
     Gender? gender,
-    String? childId,
     PricePreset? pricePreset,
     RangeValues? priceRange,
   }) {
@@ -74,7 +65,6 @@ class FilterResult {
       ageYears: ageYears ?? this.ageYears,
       ageToYears: ageToYears ?? this.ageToYears,
       gender: gender ?? this.gender,
-      childId: childId ?? this.childId,
       pricePreset: pricePreset ?? this.pricePreset,
       priceRange: priceRange ?? this.priceRange,
     );
@@ -84,20 +74,14 @@ class FilterResult {
 class FilterBottomSheet extends StatefulWidget {
   final FilterResult? initial;
 
-  /// The parent's children, offered as chips that pre-fill age and gender.
-  /// The section is hidden when empty.
-  final List<ChildModel> children;
-
   const FilterBottomSheet({
     super.key,
     this.initial,
-    this.children = const [],
   });
 
   static Future<FilterResult?> show(
     BuildContext context, {
     FilterResult? initial,
-    List<ChildModel> children = const [],
   }) {
     return showModalBottomSheet<FilterResult>(
       context: context,
@@ -108,7 +92,7 @@ class FilterBottomSheet extends StatefulWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
-      builder: (_) => FilterBottomSheet(initial: initial, children: children),
+      builder: (_) => FilterBottomSheet(initial: initial),
     );
   }
 
@@ -123,7 +107,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   final TextEditingController _ageFromController = TextEditingController();
   final TextEditingController _ageToController = TextEditingController();
   Gender _gender = Gender.any;
-  String? _childId;
   RangeValues _range =
       const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
 
@@ -135,7 +118,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _fromDate = init.fromDate;
     _toDate = init.toDate;
     _gender = init.gender;
-    _childId = init.childId;
     _range = init.priceRange;
     if (init.ageYears != null) _ageFromController.text = '${init.ageYears}';
     if (init.ageToYears != null) _ageToController.text = '${init.ageToYears}';
@@ -165,7 +147,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ageYears: _parseAge(_ageFromController),
         ageToYears: _parseAge(_ageToController),
         gender: _gender,
-        childId: _childId,
         pricePreset: _isPriceChanged ? PricePreset.custom : PricePreset.any,
         priceRange: _range,
       );
@@ -179,12 +160,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   }
 
   Future<void> _pickDateRange() async {
-    final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 2),
-      initialDateRange: _fromDate != null && _toDate != null
+    final picked = await AppDateRangePickerSheet.show(
+      context,
+      initial: _fromDate != null && _toDate != null
           ? DateTimeRange(start: _fromDate!, end: _toDate!)
           : null,
     );
@@ -273,32 +251,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ],
                     ),
                   ),
-                  if (widget.children.isNotEmpty) ...[
-                    16.kh,
-                    _Section(
-                      label: 'filter_child'.tr(),
-                      child: Wrap(
-                        spacing: 8.w,
-                        runSpacing: 8.h,
-                        children: [
-                          for (final child in widget.children)
-                            _FilterChip(
-                              label: child.firstName ?? '',
-                              selected: _childId != null &&
-                                  _childId == child.id,
-                              onTap: () => _selectChild(child),
-                              leading: UserAvatar(
-                                size: 24,
-                                imageUrl: child.hasPhoto == true &&
-                                        child.id != null
-                                    ? PhotoService.getImageUrl(child.id!)
-                                    : null,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
                   16.kh,
                   _Section(
                     label: 'age'.tr(),
@@ -394,7 +346,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 16.h),
+            // `useSafeArea` on a modal sheet only guards the top, so the home
+            // indicator has to be paid for here.
+            padding: EdgeInsets.fromLTRB(
+              14.w,
+              4.h,
+              14.w,
+              16.h + MediaQuery.of(context).padding.bottom,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -417,31 +376,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ],
       ),
     );
-  }
-
-  /// Picking a child is a shortcut: it fills the age and gender controls the
-  /// user would otherwise set by hand, and they stay editable afterwards.
-  /// Tapping the lit chip only clears [_childId] — the values it filled in are
-  /// left alone, since by then they may be the user's own.
-  void _selectChild(ChildModel child) {
-    setState(() {
-      if (_childId != null && _childId == child.id) {
-        _childId = null;
-        return;
-      }
-      _childId = child.id;
-
-      final age = child.age;
-      if (age != null) {
-        _ageFromController.text = '$age';
-        _ageToController.text = '$age';
-      }
-      _gender = switch (child.gender) {
-        'MALE' => Gender.boy,
-        'FEMALE' => Gender.girl,
-        _ => Gender.any,
-      };
-    });
   }
 
   static String _fmtPrice(double value) {
@@ -477,19 +411,16 @@ class _Section extends StatelessWidget {
 }
 
 /// Pill chip — indigo gradient when selected, flat control fill otherwise.
-/// [leading] is the child's avatar on the child chips; the rest have none.
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.label,
     required this.selected,
     required this.onTap,
-    this.leading,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -501,24 +432,13 @@ class _FilterChip extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: leading == null
-            ? EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h)
-            : EdgeInsets.fromLTRB(3.w, 3.h, 12.w, 3.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         decoration: BoxDecoration(
           color: selected ? null : c.control,
           gradient: selected ? AppGradients.indigo : null,
           borderRadius: BorderRadius.circular(40.r),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (leading != null) ...[
-              leading!,
-              8.kw,
-            ],
-            Text(label, style: AppText.semibold12.copyWith(color: textColor)),
-          ],
-        ),
+        child: Text(label, style: AppText.semibold12.copyWith(color: textColor)),
       ),
     );
   }
@@ -573,7 +493,8 @@ class _AgeField extends StatelessWidget {
   }
 }
 
-/// A 42h pill action button — [gradient] makes it the primary one.
+/// Pill action button sized like the app's primary [GradientButton] (50h /
+/// 44r) — [gradient] makes it the primary one.
 class _SheetButton extends StatelessWidget {
   const _SheetButton({
     required this.label,
@@ -589,11 +510,10 @@ class _SheetButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
 
-    return GestureDetector(
+    return Bouncing(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 42.h,
+        height: 50.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: gradient == null ? c.control : null,
