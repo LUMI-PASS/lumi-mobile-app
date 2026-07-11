@@ -97,16 +97,37 @@ abstract class _$AppRouter extends RootStackRouter {
         child: CalendarPage(),
       );
     },
+    CategoriesGridRoute.name: (routeData) {
+      final args = routeData.argsAs<CategoriesGridRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: CategoriesGridPage(
+          key: args.key,
+          categories: args.categories,
+        ),
+      );
+    },
+    ChangeLanguageRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const ChangeLanguagePage(),
+      );
+    },
     CheckoutRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const CheckoutPage(),
       );
     },
-    ChildrenRoute.name: (routeData) {
+    ChildDetailRoute.name: (routeData) {
+      final args = routeData.argsAs<ChildDetailRouteArgs>(
+          orElse: () => const ChildDetailRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: const ChildrenPage(),
+        child: ChildDetailPage(
+          key: args.key,
+          child: args.child,
+        ),
       );
     },
     ClassDetailRoute.name: (routeData) {
@@ -116,6 +137,18 @@ abstract class _$AppRouter extends RootStackRouter {
         child: ClassDetailPage(
           key: args.key,
           classModel: args.classModel,
+        ),
+      );
+    },
+    ClassesGridRoute.name: (routeData) {
+      final args = routeData.argsAs<ClassesGridRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: ClassesGridPage(
+          key: args.key,
+          title: args.title,
+          list: args.list,
+          initialClasses: args.initialClasses,
         ),
       );
     },
@@ -200,6 +233,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const PaymentCardsPage(),
       );
     },
+    PaymentHistoryRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const PaymentHistoryPage(),
+      );
+    },
     PaymentRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -213,11 +252,13 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     ProfileDetailRoute.name: (routeData) {
-      final args = routeData.argsAs<ProfileDetailRouteArgs>(
-          orElse: () => const ProfileDetailRouteArgs());
+      final args = routeData.argsAs<ProfileDetailRouteArgs>();
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: ProfileDetailPage(key: args.key),
+        child: ProfileDetailPage(
+          key: args.key,
+          user: args.user,
+        ),
       );
     },
     ProfileRoute.name: (routeData) {
@@ -597,6 +638,58 @@ class CalendarRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [CategoriesGridPage]
+class CategoriesGridRoute extends PageRouteInfo<CategoriesGridRouteArgs> {
+  CategoriesGridRoute({
+    Key? key,
+    required List<HomCategory> categories,
+    List<PageRouteInfo>? children,
+  }) : super(
+          CategoriesGridRoute.name,
+          args: CategoriesGridRouteArgs(
+            key: key,
+            categories: categories,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'CategoriesGridRoute';
+
+  static const PageInfo<CategoriesGridRouteArgs> page =
+      PageInfo<CategoriesGridRouteArgs>(name);
+}
+
+class CategoriesGridRouteArgs {
+  const CategoriesGridRouteArgs({
+    this.key,
+    required this.categories,
+  });
+
+  final Key? key;
+
+  final List<HomCategory> categories;
+
+  @override
+  String toString() {
+    return 'CategoriesGridRouteArgs{key: $key, categories: $categories}';
+  }
+}
+
+/// generated route for
+/// [ChangeLanguagePage]
+class ChangeLanguageRoute extends PageRouteInfo<void> {
+  const ChangeLanguageRoute({List<PageRouteInfo>? children})
+      : super(
+          ChangeLanguageRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'ChangeLanguageRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [CheckoutPage]
 class CheckoutRoute extends PageRouteInfo<void> {
   const CheckoutRoute({List<PageRouteInfo>? children})
@@ -611,17 +704,41 @@ class CheckoutRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [ChildrenPage]
-class ChildrenRoute extends PageRouteInfo<void> {
-  const ChildrenRoute({List<PageRouteInfo>? children})
-      : super(
-          ChildrenRoute.name,
+/// [ChildDetailPage]
+class ChildDetailRoute extends PageRouteInfo<ChildDetailRouteArgs> {
+  ChildDetailRoute({
+    Key? key,
+    ChildModel? child,
+    List<PageRouteInfo>? children,
+  }) : super(
+          ChildDetailRoute.name,
+          args: ChildDetailRouteArgs(
+            key: key,
+            child: child,
+          ),
           initialChildren: children,
         );
 
-  static const String name = 'ChildrenRoute';
+  static const String name = 'ChildDetailRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static const PageInfo<ChildDetailRouteArgs> page =
+      PageInfo<ChildDetailRouteArgs>(name);
+}
+
+class ChildDetailRouteArgs {
+  const ChildDetailRouteArgs({
+    this.key,
+    this.child,
+  });
+
+  final Key? key;
+
+  final ChildModel? child;
+
+  @override
+  String toString() {
+    return 'ChildDetailRouteArgs{key: $key, child: $child}';
+  }
 }
 
 /// generated route for
@@ -659,6 +776,54 @@ class ClassDetailRouteArgs {
   @override
   String toString() {
     return 'ClassDetailRouteArgs{key: $key, classModel: $classModel}';
+  }
+}
+
+/// generated route for
+/// [ClassesGridPage]
+class ClassesGridRoute extends PageRouteInfo<ClassesGridRouteArgs> {
+  ClassesGridRoute({
+    Key? key,
+    required String title,
+    required HomeClassList list,
+    List<HomClass> initialClasses = const [],
+    List<PageRouteInfo>? children,
+  }) : super(
+          ClassesGridRoute.name,
+          args: ClassesGridRouteArgs(
+            key: key,
+            title: title,
+            list: list,
+            initialClasses: initialClasses,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'ClassesGridRoute';
+
+  static const PageInfo<ClassesGridRouteArgs> page =
+      PageInfo<ClassesGridRouteArgs>(name);
+}
+
+class ClassesGridRouteArgs {
+  const ClassesGridRouteArgs({
+    this.key,
+    required this.title,
+    required this.list,
+    this.initialClasses = const [],
+  });
+
+  final Key? key;
+
+  final String title;
+
+  final HomeClassList list;
+
+  final List<HomClass> initialClasses;
+
+  @override
+  String toString() {
+    return 'ClassesGridRouteArgs{key: $key, title: $title, list: $list, initialClasses: $initialClasses}';
   }
 }
 
@@ -889,6 +1054,20 @@ class PaymentCardsRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [PaymentHistoryPage]
+class PaymentHistoryRoute extends PageRouteInfo<void> {
+  const PaymentHistoryRoute({List<PageRouteInfo>? children})
+      : super(
+          PaymentHistoryRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'PaymentHistoryRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [PaymentPage]
 class PaymentRoute extends PageRouteInfo<void> {
   const PaymentRoute({List<PageRouteInfo>? children})
@@ -921,10 +1100,14 @@ class PlansRoute extends PageRouteInfo<void> {
 class ProfileDetailRoute extends PageRouteInfo<ProfileDetailRouteArgs> {
   ProfileDetailRoute({
     Key? key,
+    required HomForUser user,
     List<PageRouteInfo>? children,
   }) : super(
           ProfileDetailRoute.name,
-          args: ProfileDetailRouteArgs(key: key),
+          args: ProfileDetailRouteArgs(
+            key: key,
+            user: user,
+          ),
           initialChildren: children,
         );
 
@@ -935,13 +1118,18 @@ class ProfileDetailRoute extends PageRouteInfo<ProfileDetailRouteArgs> {
 }
 
 class ProfileDetailRouteArgs {
-  const ProfileDetailRouteArgs({this.key});
+  const ProfileDetailRouteArgs({
+    this.key,
+    required this.user,
+  });
 
   final Key? key;
 
+  final HomForUser user;
+
   @override
   String toString() {
-    return 'ProfileDetailRouteArgs{key: $key}';
+    return 'ProfileDetailRouteArgs{key: $key, user: $user}';
   }
 }
 

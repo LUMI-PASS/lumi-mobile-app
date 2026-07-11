@@ -13,7 +13,7 @@ import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/presentation/app/profile/attendance/cubit/attendance_cubit.dart';
 import 'package:lumi_pass/presentation/app/profile/attendance/cubit/attendance_state.dart';
-import 'package:lumi_pass/presentation/app/profile/children/children_page.dart';
+import 'package:lumi_pass/common/utils/child_age.dart';
 import 'package:shimmer/shimmer.dart';
 
 @RoutePage()

@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -30,6 +31,16 @@ class HomeCouponBanner extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // Green wash behind the ticket, fading out before it reaches the copy.
+          Positioned(
+            top: -40.h,
+            bottom: -40.h,
+            right: -60.w,
+            width: 240.w,
+            child: const DecoratedBox(
+              decoration: BoxDecoration(gradient: AppGradients.greenGlow),
+            ),
+          ),
           // Ticket artwork bleeds past the right edge; the card clips it.
           Positioned(
             top: 0,
@@ -208,7 +219,8 @@ class HomeAdCard extends StatelessWidget {
                 left: 12.w,
                 top: 12.h,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(40.r),

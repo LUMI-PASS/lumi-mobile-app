@@ -8,6 +8,15 @@ import 'package:lumi_pass/presentation/app/main/widgets/coupon_promo_dialog.dart
 import 'package:lumi_pass/presentation/app/main/widgets/custom_bottomnavigation.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/onboarding_bottomsheet.dart';
 
+/// Index of the Profile tab in [MainPage]'s bottom nav. Keep in sync with the
+/// `routes` list in [_MainPageState.build] and `_tabs` in [CustomBottomBar].
+const int profileTabIndex = 4;
+
+/// Switches the bottom nav to the Profile tab. Callable from anywhere inside a
+/// tab (e.g. the Home header), since it walks up to [MainPage]'s tabs router.
+void openProfileTab(BuildContext context) =>
+    AutoTabsRouter.of(context).setActiveIndex(profileTabIndex);
+
 @RoutePage()
 class MainPage extends StatefulWidget {
   const MainPage({super.key});

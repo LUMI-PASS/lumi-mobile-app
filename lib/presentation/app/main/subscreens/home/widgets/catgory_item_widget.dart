@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/material.dart';
@@ -9,17 +11,32 @@ import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:shimmer/shimmer.dart';
 
-/// Category tile from the redesigned home — a rounded icon tile on the
-/// `Color/Shape` surface with the category label beneath (Figma `Category item`).
+/// Tilt of the category artwork inside its tile — Figma `Category item` rotates
+/// the image 14.75°.
+const double _kArtworkTilt = 14.75 * math.pi / 180;
+
+/// Category tile from the redesigned home — a frosted tile whose artwork sits
+/// oversized and tilted in the bottom-left corner, with the category label
+/// beneath (Figma `Category item`).
 class CategoryItemWidget extends StatelessWidget {
   const CategoryItemWidget({
     super.key,
     required this.homeCategoryModel,
     this.onTap,
+    this.padding,
+    this.width,
   });
 
   final HomCategory? homeCategoryModel;
   final VoidCallback? onTap;
+
+  /// Outer padding. Defaults to the horizontal row's leading gap; pass
+  /// [EdgeInsets.zero] when the tile sits in a grid cell.
+  final EdgeInsetsGeometry? padding;
+
+  /// Tile column width. Defaults to the horizontal row's fixed 64pt; pass
+  /// `null`-widening (e.g. `double.infinity`) inside a grid.
+  final double? width;
 
   @override
   Widget build(BuildContext context) {
@@ -30,27 +47,26 @@ class CategoryItemWidget extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.only(left: 16.w),
+        padding: padding ?? EdgeInsets.only(left: 16.w),
         child: SizedBox(
-          width: 64.w,
+          width: width ?? 64.w,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               FrostedCard(
                 width: 56.w,
                 height: 56.w,
-                padding: EdgeInsets.all(8.w),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: url != null
-                      ? CachedNetworkImage(
-                          imageUrl: url,
-                          fit: BoxFit.contain,
-                          placeholder: (_, __) => _shimmer(c),
-                          errorWidget: (_, __, ___) => _fallback(),
-                        )
-                      : _fallback(),
-                ),
+                padding: EdgeInsets.zero,
+                borderWidth: 1.6,
+                clipBehavior: Clip.antiAlias,
+                child: url == null
+                    ? _fallback()
+                    : CachedNetworkImage(
+                                imageUrl: url,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => _shimmer(c),
+                                errorWidget: (_, __, ___) => _fallback(),
+                          ),
               ),
               8.verticalSpace,
               Text(
@@ -75,7 +91,8 @@ class CategoryItemWidget extends StatelessWidget {
 
   Widget _fallback() {
     final title = homeCategoryModel?.title ?? '';
-    final letter = title.isNotEmpty ? title.characters.first.toUpperCase() : '?';
+    final letter =
+        title.isNotEmpty ? title.characters.first.toUpperCase() : '?';
     return DecoratedBox(
       decoration: const BoxDecoration(gradient: AppGradients.brand),
       child: Center(

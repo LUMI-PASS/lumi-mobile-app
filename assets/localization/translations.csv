@@ -530,7 +530,7 @@ notes_label,Примечание,Izohlar,Notes
 notes_placeholder,Введите примечание,Izoh kiriting,Enter notes
 publish_button,Опубликовать,Nashr qilish,Publish
 contact_center_title,Kontakt markazi,Контактный центр,Contact Center
-phone_number_label,Telefon raqami,Телефон номер,Phone number
+phone_number_label,Телефон номер,Telefon raqami,Phone number
 instagram_label,Instagram,Instagram,Instagram
 facebook_label,Facebook,Facebook,Facebook
 profile_title,Профиль,Profil,Profile
@@ -870,3 +870,21 @@ pay_open_failed,Не удалось открыть {}.,{} ochib bo'lmadi.,Couldn
 book_pick_payment,Выберите способ оплаты,To'lov turini tanlang,Choose a payment method
 book_choose,Выбрать,Tanlash,Choose
 pay_select,Выбрать,Tanlash,Select
+coupon_offers_title,Спецпредложения по купонам,Kupon bo'yicha maxsus takliflar,Coupon special offers
+coupon_up_to,До {percent}%,{percent}% gacha,Up to {percent}%
+coupon_history_title,История платежей,To'lovlar tarixi,Payment history
+coupon_history_subtitle,Все ваши платежи собраны в одном месте,Barcha to'lovlaringiz bir joyda,All your payments in one place
+coupon_best_offer,BEST OFFER,BEST OFFER,BEST OFFER
+coupon_cond_discount,Скидка до {percent}% на занятия,Mashg'ulotlarga {percent}% gacha chegirma,Up to {percent}% off activities
+coupon_cond_activities,Действует на {count} занятий,{count} ta mashg'ulotga amal qiladi,Valid for {count} activities
+coupon_cond_duration,Действует в течение {days} дней,{days} kun davomida amal qiladi,Valid for {days} days
+coupon_price_label,Цена за купон,Kupon narxi,Price per coupon
+coupon_buy_btn,Купить купон,Kupon sotib olish,Buy coupon
+my_info,Мои информации,Mening ma'lumotlarim,My information
+something_went_wrong,Что-то пошло не так,Nimadir xato ketdi,Something went wrong
+coupon_period,Период,Muddat,Period
+coupon_from,от,dan,from
+coupon_to,до,gacha,to
+coupon_used_count,Использовано {used}/{total},Ishlatilgan {used}/{total},Used {used}/{total}
+child_details,Детали ребёнка,Bola ma'lumotlari,Child details
+years_suffix,лет,yosh,years

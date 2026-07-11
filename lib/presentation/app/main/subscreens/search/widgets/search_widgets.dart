@@ -32,14 +32,18 @@ class _SearchIcon extends StatelessWidget {
 
 /// Top bar — back button on the left, centered title (Figma `Header`).
 class SearchTopBar extends StatelessWidget {
-  const SearchTopBar({super.key, required this.title, required this.onBack});
+  const SearchTopBar({super.key, required this.title, this.onBack});
+
+  /// Omit on a screen there is nothing to go back to — a root bottom-nav tab.
+  /// The bar then shows the title alone, with no back affordance.
+  final VoidCallback? onBack;
 
   final String title;
-  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final onBack = this.onBack;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: SizedBox(
@@ -47,25 +51,26 @@ class SearchTopBar extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onBack,
-                child: Container(
-                  width: 32.w,
-                  height: 32.w,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.control,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: c.controlBorder),
+            if (onBack != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onBack,
+                  child: Container(
+                    width: 32.w,
+                    height: 32.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.control,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: c.controlBorder),
+                    ),
+                    child: _SearchIcon(Assets.icons.arrowLeft,
+                        size: 16, color: c.textPrimary),
                   ),
-                  child: _SearchIcon(Assets.icons.arrowLeft,
-                      size: 16, color: c.textPrimary),
                 ),
               ),
-            ),
             Text(
               title,
               style: AppText.semibold16.copyWith(color: c.textPrimary),
@@ -83,13 +88,15 @@ class SearchBarRow extends StatefulWidget {
     super.key,
     required this.initialTerm,
     required this.onChanged,
-    required this.onFilterTap,
-    required this.filterCount,
+    this.onFilterTap,
+    this.filterCount = 0,
   });
 
   final String initialTerm;
   final ValueChanged<String> onChanged;
-  final VoidCallback onFilterTap;
+
+  /// Omit to render the field alone, without the trailing filter button.
+  final VoidCallback? onFilterTap;
   final int filterCount;
 
   @override
@@ -164,53 +171,55 @@ class _SearchBarRowState extends State<SearchBarRow> {
               ),
             ),
           ),
-          8.horizontalSpace,
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.onFilterTap,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 40.h,
-                  height: 40.h,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.control,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: c.controlBorder),
+          if (widget.onFilterTap != null) ...[
+            8.horizontalSpace,
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onFilterTap,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 40.h,
+                    height: 40.h,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.control,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: c.controlBorder),
+                    ),
+                    child: _SearchIcon(Assets.icons.filter,
+                        size: 16, color: c.textPrimary),
                   ),
-                  child: _SearchIcon(Assets.icons.filter,
-                      size: 16, color: c.textPrimary),
-                ),
-                if (widget.filterCount > 0)
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: Container(
-                      padding: EdgeInsets.all(2.r),
-                      constraints:
-                          BoxConstraints(minWidth: 16.w, minHeight: 16.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.brandPurple,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: c.scaffoldBg, width: 1.5),
-                      ),
-                      child: Text(
-                        '${widget.filterCount}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8.sp,
-                          fontWeight: FontWeight.bold,
-                          height: 1.0,
+                  if (widget.filterCount > 0)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: EdgeInsets.all(2.r),
+                        constraints:
+                            BoxConstraints(minWidth: 16.w, minHeight: 16.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.brandPurple,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: c.scaffoldBg, width: 1.5),
+                        ),
+                        child: Text(
+                          '${widget.filterCount}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8.sp,
+                            fontWeight: FontWeight.bold,
+                            height: 1.0,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

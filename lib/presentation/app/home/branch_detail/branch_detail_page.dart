@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -163,8 +164,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
           // shifts between requests; a duplicate id would collide on the list's
           // ValueKey and throw.
           final seen = _classes.map((e) => e.id).whereType<String>().toSet();
-          _classes.addAll(result.classes
-              .where((e) => e.id == null || seen.add(e.id!)));
+          _classes.addAll(
+              result.classes.where((e) => e.id == null || seen.add(e.id!)));
         } else {
           _classes = result.classes;
         }
@@ -233,11 +234,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                 SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      _mainCard(c, b),
-                      if (description.isNotEmpty) ...[
-                        6.verticalSpace,
-                        _aboutCard(c, description),
-                      ],
+                      _aboutCard(c, b, description),
                       20.verticalSpace,
                     ],
                   ),
@@ -291,7 +288,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
   // ─── Hero image carousel ────────────────────────────────────────────────────
   Widget _hero(AppColorScheme c, double safeTop) {
     final images = _gallery;
-    return SizedBox(
+    return StretchyHero(
+      controller: _scrollController,
       height: _kHeroHeight.h,
       child: Stack(
         fit: StackFit.expand,
@@ -381,8 +379,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
         child: Container(color: c.surface),
       );
 
-  // ─── Main card — title, address, route ─────────────────────────────────────
-  Widget _mainCard(AppColorScheme c, HomBranch b) {
+  // ─── About card — title, description, location ─────────────────────────────
+  Widget _aboutCard(AppColorScheme c, HomBranch b, String description) {
     final address = (b.address ?? '').trim();
     final landmark = (b.landmark ?? '').trim();
 
@@ -393,45 +391,33 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
         children: [
           Text(b.title ?? '',
               style: AppText.heading20.copyWith(color: c.textPrimary)),
-          16.verticalSpace,
+          if (description.isNotEmpty) ...[
+            16.verticalSpace,
+            DetailCardHeader(
+              c: c,
+              icon: Assets.icons.detail.iconsaxQuestionMark,
+              iconGradient: AppGradients.brand,
+              title: 'branch_about'.tr(),
+            ),
+            16.verticalSpace,
+            Text(
+              description,
+              textAlign: TextAlign.justify,
+              style: AppText.regular14.copyWith(color: c.textPrimary),
+            ),
+          ],
+          20.verticalSpace,
           _InfoPill(
             c: c,
             icon: Assets.icons.detail.icLocation,
             label: 'branch_address'.tr(),
             value: address.isEmpty ? 'branch_no_address'.tr() : address,
             subvalue: landmark.isEmpty ? null : landmark,
+            // The whole pill opens the route; the chip is the visible
+            // affordance. Both are inert without coordinates to navigate to.
+            action: _hasMap ? 'branch_build_route'.tr() : null,
+            onTap: _hasMap ? _openGoogleMaps : null,
           ),
-          if (_hasMap) ...[
-            6.verticalSpace,
-            _InfoPill(
-              c: c,
-              icon: Assets.icons.icMap,
-              label: 'branch_view_on_maps'.tr(),
-              action: 'branch_build_route'.tr(),
-              onAction: _openGoogleMaps,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // ─── About card ────────────────────────────────────────────────────────────
-  Widget _aboutCard(AppColorScheme c, String description) {
-    return DetailCard(
-      c: c,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DetailCardHeader(
-            c: c,
-            icon: Assets.icons.detail.iconsaxQuestionMark,
-            iconGradient: AppGradients.brand,
-            title: 'branch_about'.tr(),
-          ),
-          16.verticalSpace,
-          Text(description,
-              style: AppText.regular14.copyWith(color: c.textPrimary)),
         ],
       ),
     );
@@ -461,8 +447,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
               TextButton(
                 onPressed: () => _loadClasses(),
                 child: Text('retry'.tr(),
-                    style:
-                        AppText.medium14.copyWith(color: AppColors.brandPurple)),
+                    style: AppText.medium14
+                        .copyWith(color: AppColors.brandPurple)),
               ),
             ],
           ),
@@ -512,8 +498,8 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                 onPressed: () =>
                     _loadClasses(page: _classesPage + 1, append: true),
                 child: Text('retry'.tr(),
-                    style:
-                        AppText.medium14.copyWith(color: AppColors.brandPurple)),
+                    style: AppText.medium14
+                        .copyWith(color: AppColors.brandPurple)),
               ),
       ),
     );
@@ -530,7 +516,7 @@ class _InfoPill extends StatelessWidget {
     this.value,
     this.subvalue,
     this.action,
-    this.onAction,
+    this.onTap,
   });
 
   final AppColorScheme c;
@@ -538,8 +524,10 @@ class _InfoPill extends StatelessWidget {
   final String label;
   final String? value;
   final String? subvalue;
+
+  /// Trailing chip. Purely an affordance — the tap target is the whole pill.
   final String? action;
-  final VoidCallback? onAction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -547,67 +535,69 @@ class _InfoPill extends StatelessWidget {
     final sub = subvalue;
     final act = action;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
-      decoration: BoxDecoration(
-        color: c.control,
-        borderRadius: BorderRadius.circular(40.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40.w,
-            height: 40.w,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle),
-            child: HomeIcon(icon, size: 16, color: c.textPrimary),
-          ),
-          8.horizontalSpace,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label,
-                    style: AppText.regular12.copyWith(color: c.textSecondary)),
-                if (v != null) ...[
-                  4.verticalSpace,
-                  Text(
-                    v,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.semibold14.copyWith(color: c.textPrimary),
-                  ),
-                ],
-                if (sub != null) ...[
-                  2.verticalSpace,
-                  Text(
-                    sub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.regular12.copyWith(color: c.textSecondary),
-                  ),
-                ],
-              ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
+        decoration: BoxDecoration(
+          color: c.control,
+          borderRadius: BorderRadius.circular(40.r),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40.w,
+              height: 40.w,
+              alignment: Alignment.center,
+              decoration:
+                  BoxDecoration(color: c.surface, shape: BoxShape.circle),
+              child: HomeIcon(icon, size: 16, color: c.textPrimary),
             ),
-          ),
-          if (act != null) ...[
             8.horizontalSpace,
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onAction,
-              child: Container(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label,
+                      style:
+                          AppText.regular12.copyWith(color: c.textSecondary)),
+                  if (v != null) ...[
+                    4.verticalSpace,
+                    Text(
+                      v,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.semibold14.copyWith(color: c.textPrimary),
+                    ),
+                  ],
+                  if (sub != null) ...[
+                    2.verticalSpace,
+                    Text(
+                      sub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.regular12.copyWith(color: c.textSecondary),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (act != null) ...[
+              8.horizontalSpace,
+              Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: detailChipFill(c),
                   borderRadius: BorderRadius.circular(40.r),
                 ),
                 child: Text(act,
-                    style: AppText.regular12.copyWith(color: AppColors.link)),
+                    style: AppText.regular12.copyWith(color: c.textSecondary)),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

@@ -6,14 +6,15 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_s
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_coming_soon.dart';
 
 /// Учреждения / Explore tab. The discovery feature isn't live yet, so the tab
-/// shows the "coming soon" placeholder. Back returns to the Home tab.
+/// shows the "coming soon" placeholder.
+///
+/// A root tab has nothing behind it, so no back button — the user leaves via
+/// the bottom nav. The pushed [SearchComingSoonPage] is the one that gets one.
 @RoutePage()
 class SearchPage
     extends BasePage<SearchCubit, SearchBuildable, SearchListenable> {
   @override
   Widget builder(BuildContext context, SearchBuildable state) {
-    return SearchComingSoonView(
-      onBack: () => context.tabsRouter.setActiveIndex(0),
-    );
+    return const SearchComingSoonView();
   }
 }

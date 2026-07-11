@@ -21,6 +21,7 @@ class CommonTextField extends StatefulWidget {
       this.inputFormatter,
       this.enabled,
       this.suffix,
+      this.suffixText,
       this.mask,
       this.maxLength,
       this.enabledBorderColor,
@@ -47,6 +48,10 @@ class CommonTextField extends StatefulWidget {
   final String? hint;
   final Widget? prefixIcon;
   final Widget? suffix;
+
+  /// A unit label pinned to the trailing edge ("лет"). Unlike [suffix] it is
+  /// inert — [suffix] is a tap target that clears the field.
+  final String? suffixText;
   final TextEditingController? controller;
   final bool obscureText;
   final bool? enabled;
@@ -226,6 +231,10 @@ class _CommonTextFieldState extends State<CommonTextField> {
                     )
                   : null,
               hintStyle: AppText.regular16.copyWith(
+                color: widget.hintColor ?? context.colors.textPlaceholder,
+              ),
+              suffixText: widget.suffixText,
+              suffixStyle: AppText.regular16.copyWith(
                 color: widget.hintColor ?? context.colors.textPlaceholder,
               ),
               border: OutlineInputBorder(

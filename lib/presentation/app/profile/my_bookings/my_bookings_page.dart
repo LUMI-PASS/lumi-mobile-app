@@ -2,10 +2,11 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/text_extensions.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -14,9 +15,9 @@ import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/widget/schedule_widget.dart';
 import 'package:shimmer/shimmer.dart';
 
-/// Profile → My Bookings. Tabs split the order list into Active (pending or
-/// paid with a future ticket date) and Past (everything else, including
-/// canceled). Uses the same [BookingCard] the Bookings tab renders.
+/// Profile → My Bookings. A pill segmented control splits the order list into
+/// Active (paid/cancelled with a future ticket date) and Past (everything
+/// else). Uses the same [BookingCard] the Bookings tab renders.
 @RoutePage()
 class MyBookingsPage extends StatefulWidget {
   const MyBookingsPage({super.key});
@@ -26,15 +27,42 @@ class MyBookingsPage extends StatefulWidget {
 }
 
 class _MyBookingsPageState extends State<MyBookingsPage> {
+  final _pages = PageController();
+
   List<UserOrder> _orders = const [];
   bool _loading = true;
   String? _error;
 
+  /// Continuous page offset, driving the switcher's sliding pill. Fractional
+  /// while a swipe is in flight, whole once it settles.
+  double _position = 0;
+
   @override
   void initState() {
     super.initState();
+    _pages.addListener(_onScroll);
     _load();
   }
+
+  @override
+  void dispose() {
+    _pages.removeListener(_onScroll);
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // `page` is null until the PageView has been laid out.
+    final page = _pages.positions.isEmpty ? null : _pages.page;
+    if (page == null || page == _position) return;
+    setState(() => _position = page);
+  }
+
+  void _select(int index) => _pages.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
 
   Future<void> _load() async {
     setState(() {
@@ -60,114 +88,145 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
   /// Active = paid or cancelled with a ticket date today or in the future.
   bool _isActive(UserOrder o) => (o.isPaid || o.isCanceled) && o.hasFutureTicket;
 
-  bool get _hasRealToken =>
-      getIt<Storage>().tokens.call()?.access != null;
+  bool get _hasRealToken => getIt<Storage>().tokens.call()?.access != null;
 
   bool get _showLoginPrompt =>
       RemoteConfigService.instance.isInReview && !_hasRealToken;
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final colors = context.colors;
+
     final visible = _orders.where((o) => !o.isPending).toList();
     final active = visible.where(_isActive).toList();
     final past = visible.where((o) => !_isActive(o)).toList();
 
-    if (_showLoginPrompt) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: const Color(0xFF1E293B),
-          title: 'my_bookings'.tr().s(18).w(700),
-          centerTitle: true,
-        ),
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(32.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    return Scaffold(
+      backgroundColor: colors.canvas,
+      appBar: BaseAppBar(title: 'my_bookings'.tr()),
+      body: _showLoginPrompt
+          ? const _LoginPrompt()
+          : Column(
               children: [
-                Container(
-                  width: 80.w,
-                  height: 80.w,
-                  decoration: BoxDecoration(
-                    color: primary.withOpacity(0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.receipt_long_rounded,
-                      size: 40.w, color: primary.withOpacity(0.4)),
-                ),
-                20.kh,
-                'login_to_view_bookings'
-                    .tr()
-                    .s(15)
-                    .w(600)
-                    .c(const Color(0xFF1E293B)),
-                20.kh,
-                GestureDetector(
-                  onTap: () => context.router.replaceAll([LoginRoute()]),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 32.w, vertical: 14.h),
-                    decoration: BoxDecoration(
-                      color: primary,
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                    child: Text(
-                      'login_button'.tr(),
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: const Color(0xFF1E293B),
-          title: 'my_bookings'.tr().s(18).w(700),
-          centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: Size.fromHeight(48.h),
-            child: TabBar(
-              labelColor: primary,
-              unselectedLabelColor: const Color(0xFF64748B),
-              indicatorColor: primary,
-              indicatorWeight: 3,
-              labelStyle: TextStyle(
-                  fontSize: 14.sp, fontWeight: FontWeight.w700),
-              unselectedLabelStyle: TextStyle(
-                  fontSize: 14.sp, fontWeight: FontWeight.w600),
-              tabs: [
-                Tab(text: '${'active_bookings'.tr()} (${active.length})'),
-                Tab(text: '${'past_bookings'.tr()} (${past.length})'),
-              ],
-            ),
-          ),
-        ),
-        body: _loading
-            ? _Shimmer()
-            : (_error != null)
-                ? _ErrorState(message: _error!, onRetry: _load)
-                : TabBarView(
-                    children: [
-                      _OrdersList(orders: active, onRefresh: _load),
-                      _OrdersList(orders: past, onRefresh: _load),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
+                  child: _SegmentedTabs(
+                    position: _position,
+                    labels: [
+                      '${'active_bookings'.tr()} (${active.length})',
+                      '${'past_bookings'.tr()} (${past.length})',
                     ],
+                    onChanged: _select,
                   ),
+                ),
+                Expanded(
+                  child: _loading
+                      ? const _Shimmer()
+                      : _error != null
+                          ? _ErrorState(onRetry: _load)
+                          : PageView(
+                              controller: _pages,
+                              children: [
+                                _OrdersList(orders: active, onRefresh: _load),
+                                _OrdersList(orders: past, onRefresh: _load),
+                              ],
+                            ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+/// The rounded two-up switcher: a pill track with a single [AppColorScheme
+/// .surface] pill that *slides* between the segments, rather than one pill per
+/// segment fading in and out.
+///
+/// [position] is a continuous segment index — an `int` when the switcher is
+/// idle, and a fraction while the body's [PageView] is mid-drag, so the pill
+/// tracks the swipe under the user's finger instead of snapping at the end.
+class _SegmentedTabs extends StatelessWidget {
+  const _SegmentedTabs({
+    required this.labels,
+    required this.position,
+    required this.onChanged,
+  });
+
+  final List<String> labels;
+  final double position;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final radius = BorderRadius.circular(48.r);
+
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: colors.control,
+        borderRadius: radius,
+        border: Border.all(color: colors.controlBorder),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final segmentWidth = constraints.maxWidth / labels.length;
+
+          return SizedBox(
+            height: 40.h,
+            child: Stack(
+              children: [
+                // The travelling pill.
+                Positioned(
+                  left: position * segmentWidth,
+                  width: segmentWidth,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: radius,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.textPrimary.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Row(
+                  children: List.generate(labels.length, (i) {
+                    // How "selected" this segment is: 1 when the pill is fully
+                    // over it, 0 once it has left, interpolated mid-slide — so
+                    // the two labels cross-fade as the pill passes between them.
+                    final t = (1 - (position - i).abs()).clamp(0.0, 1.0);
+
+                    return Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onChanged(i),
+                        child: Center(
+                          child: Text(
+                            labels[i],
+                            style: TextStyle.lerp(
+                              AppText.medium14
+                                  .copyWith(color: colors.textSecondary),
+                              AppText.semibold14
+                                  .copyWith(color: colors.textPrimary),
+                              t,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -181,62 +240,152 @@ class _OrdersList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (orders.isEmpty) {
-      return RefreshIndicator(
-        color: context.colors.primary,
-        onRefresh: onRefresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
+    final colors = context.colors;
+
+    return RefreshIndicator(
+      color: colors.primary,
+      backgroundColor: colors.surface,
+      onRefresh: onRefresh,
+      child: orders.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(height: 120.h),
+                const _EmptyState(),
+              ],
+            )
+          : ListView.builder(
+              padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: orders.length,
+              itemBuilder: (_, i) => BookingCard(order: orders[i]),
+            ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Column(
+      children: [
+        Container(
+          width: 72.w,
+          height: 72.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: 0.08),
+            shape: BoxShape.circle,
+          ),
+          child: Assets.icons.coupons.icFiles.svg(
+            width: 32.w,
+            height: 32.w,
+            fit: BoxFit.scaleDown,
+            colorFilter: ColorFilter.mode(
+              colors.primary.withValues(alpha: 0.5),
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        16.verticalSpace,
+        Text(
+          'no_bookings_yet'.tr(),
+          textAlign: TextAlign.center,
+          style: AppText.semibold16.copyWith(color: colors.textPrimary),
+        ),
+      ],
+    );
+  }
+}
+
+class _LoginPrompt extends StatelessWidget {
+  const _LoginPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(32.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(height: 120.h),
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 72.w,
-                    height: 72.w,
-                    decoration: BoxDecoration(
-                      color: context.colors.primary.withOpacity(0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.receipt_long_rounded,
-                        size: 36.w,
-                        color: context.colors.primary.withOpacity(0.4)),
-                  ),
-                  16.kh,
-                  'no_bookings_yet'
-                      .tr()
-                      .s(15)
-                      .w(600)
-                      .c(const Color(0xFF1E293B)),
-                ],
+            const _EmptyStateIconOnly(),
+            20.verticalSpace,
+            Text(
+              'login_to_view_bookings'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.semibold16.copyWith(color: colors.textPrimary),
+            ),
+            20.verticalSpace,
+            GestureDetector(
+              onTap: () => context.router.replaceAll([LoginRoute()]),
+              child: Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 32.w, vertical: 14.h),
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(48.r),
+                ),
+                child: Text(
+                  'login_button'.tr(),
+                  style: AppText.semibold14.copyWith(color: colors.onPrimary),
+                ),
               ),
             ),
           ],
         ),
-      );
-    }
-    return RefreshIndicator(
-      color: context.colors.primary,
-      onRefresh: onRefresh,
-      child: ListView.builder(
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: orders.length,
-        itemBuilder: (_, i) => BookingCard(order: orders[i]),
+      ),
+    );
+  }
+}
+
+/// The circular icon badge of [_EmptyState], reused by [_LoginPrompt].
+class _EmptyStateIconOnly extends StatelessWidget {
+  const _EmptyStateIconOnly();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Container(
+      width: 80.w,
+      height: 80.w,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.08),
+        shape: BoxShape.circle,
+      ),
+      child: Assets.icons.coupons.icFiles.svg(
+        width: 36.w,
+        height: 36.w,
+        fit: BoxFit.scaleDown,
+        colorFilter: ColorFilter.mode(
+          colors.primary.withValues(alpha: 0.5),
+          BlendMode.srcIn,
+        ),
       ),
     );
   }
 }
 
 class _Shimmer extends StatelessWidget {
+  const _Shimmer();
+
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade50,
+      baseColor: colors.surface,
+      highlightColor: colors.canvas,
       child: ListView.builder(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
+        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 16.h),
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 4,
         itemBuilder: (_, __) => Container(
@@ -244,7 +393,7 @@ class _Shimmer extends StatelessWidget {
           height: 150.h,
           margin: EdgeInsets.only(bottom: 14.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(20.r),
           ),
         ),
@@ -254,30 +403,52 @@ class _Shimmer extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-  final String message;
+  const _ErrorState({required this.onRetry});
+
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Center(
       child: Padding(
         padding: EdgeInsets.all(24.w),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline,
-                size: 48.w, color: Colors.red.shade400),
-            16.kh,
-            'Could not load bookings'.s(16).w(600),
-            8.kh,
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+            Container(
+              width: 64.w,
+              height: 64.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: colors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.error_outline, size: 30.w, color: colors.error),
             ),
-            16.kh,
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            16.verticalSpace,
+            Text(
+              'something_went_wrong'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.semibold16.copyWith(color: colors.textPrimary),
+            ),
+            16.verticalSpace,
+            GestureDetector(
+              onTap: onRetry,
+              child: Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(48.r),
+                ),
+                child: Text(
+                  'retry'.tr(),
+                  style: AppText.semibold14.copyWith(color: colors.onPrimary),
+                ),
+              ),
+            ),
           ],
         ),
       ),

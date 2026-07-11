@@ -34,4 +34,25 @@ class AppGradients {
     end: Alignment.centerRight,
     colors: [Color(0xFF7FB846), Color(0xFF547F2A)],
   );
+
+  /// The oversized "01 / 02 / 03" watermark on the coupon how-it-works cards —
+  /// a grey that fades out downwards. Painted through the glyphs with a
+  /// `ShaderMask`, so it needs opaque→transparent stops, not a flat tint.
+  static final LinearGradient stepNumeral = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      AppColors.inkMuted.withValues(alpha: 0.38),
+      AppColors.inkMuted.withValues(alpha: 0.06),
+    ],
+  );
+
+  /// Soft green wash bleeding in from behind the coupon banner's ticket art
+  /// (Figma `star`) — sits on top of [frostedControl], fading to transparent
+  /// before it reaches the copy.
+  static const RadialGradient greenGlow = RadialGradient(
+    center: Alignment.center,
+    radius: 0.65,
+    colors: [Color(0x8FB4E882), Color(0x00B4E882)],
+  );
 }

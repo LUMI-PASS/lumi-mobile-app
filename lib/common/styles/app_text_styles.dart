@@ -31,8 +31,17 @@ class AppText {
   /// B1 / Semibold / 20 — large screen headings.
   static TextStyle get heading20 => _s(20, FontWeight.w700);
 
+  /// H3 / Semibold / 24 — screen headlines.
+  static TextStyle get semibold24 => _s(24, FontWeight.w600);
+
   /// B2 / Bold / 18 — section titles ("Все категории").
   static TextStyle get bold18 => _s(18, FontWeight.w700);
+
+  /// B2 / Semibold / 18 — muted section headers ("Купоны").
+  static TextStyle get semibold18 => _s(18, FontWeight.w600);
+
+  /// B3 / Bold / 16 — prices.
+  static TextStyle get bold16 => _s(16, FontWeight.w700);
 
   /// B3 / Semibold / 16 — card titles, prices.
   static TextStyle get semibold16 => _s(16, FontWeight.w600);
@@ -69,6 +78,10 @@ class AppText {
 
   /// B7 / Medium / 10 — pill badges (category / provider tags).
   static TextStyle get medium10 => _s(10, FontWeight.w500);
+
+  /// B7 / Bold / 10 — uppercase gradient badges ("BEST OFFER").
+  static TextStyle get bold10 =>
+      _s(10, FontWeight.w700, height: 1.8, letterSpacing: 0.2);
 
   // ── Larger display styles used by the auth screens ────────────────────────
   /// Section title ("Авторизация" / "Подтверждение").

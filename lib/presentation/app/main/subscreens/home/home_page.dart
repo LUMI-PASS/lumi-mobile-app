@@ -16,6 +16,8 @@ import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/home/see_all/classes_grid_page.dart';
+import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
@@ -76,6 +78,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                   name: name,
                   onSearchTap: () =>
                       context.router.push(const SearchComingSoonRoute()),
+                  onProfileTap: () => openProfileTab(context),
                 );
               },
             ),
@@ -173,7 +176,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         HomeSectionHeader(
           title: 'all_categories'.tr(),
           onViewAll: () =>
-              context.router.push(const SearchComingSoonRoute()),
+              context.router.push(CategoriesGridRoute(categories: categories)),
         ),
         16.verticalSpace,
         SizedBox(
@@ -200,7 +203,16 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         24.verticalSpace,
-        HomeSectionHeader(title: 'popular_activities'.tr()),
+        HomeSectionHeader(
+          title: 'popular_activities'.tr(),
+          onViewAll: () => context.router.push(
+            ClassesGridRoute(
+              title: 'popular_activities'.tr(),
+              list: HomeClassList.popular,
+              initialClasses: state.newClassesList,
+            ),
+          ),
+        ),
         16.verticalSpace,
         NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
@@ -253,7 +265,16 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         24.verticalSpace,
-        HomeSectionHeader(title: title),
+        HomeSectionHeader(
+          title: title,
+          onViewAll: () => context.router.push(
+            ClassesGridRoute(
+              title: title,
+              list: HomeClassList.near,
+              initialClasses: list,
+            ),
+          ),
+        ),
         16.verticalSpace,
         SizedBox(
           height: rowH,

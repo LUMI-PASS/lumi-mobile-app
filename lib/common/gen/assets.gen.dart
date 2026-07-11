@@ -93,6 +93,7 @@ class $AssetsIconsGen {
   /// File path: assets/icons/coupon.svg
   SvgGenImage get coupon => const SvgGenImage('assets/icons/coupon.svg');
 
+  $AssetsIconsCouponsGen get coupons => const $AssetsIconsCouponsGen();
   $AssetsIconsDetailGen get detail => const $AssetsIconsDetailGen();
 
   /// File path: assets/icons/dollar.svg
@@ -189,8 +190,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/paypal.svg
   SvgGenImage get paypal => const SvgGenImage('assets/icons/paypal.svg');
 
+  $AssetsIconsProfileGen get profile => const $AssetsIconsProfileGen();
+
   /// File path: assets/icons/profile.svg
-  SvgGenImage get profile => const SvgGenImage('assets/icons/profile.svg');
+  SvgGenImage get profileSvg => const SvgGenImage('assets/icons/profile.svg');
 
   /// File path: assets/icons/profilee.svg
   SvgGenImage get profilee => const SvgGenImage('assets/icons/profilee.svg');
@@ -272,7 +275,7 @@ class $AssetsIconsGen {
         outlinedCalendar,
         outlinedPerson,
         paypal,
-        profile,
+        profileSvg,
         profilee,
         profilelUnselected,
         search,
@@ -321,6 +324,10 @@ class $AssetsImagesGen {
   /// File path: assets/images/empty.png
   AssetGenImage get empty => const AssetGenImage('assets/images/empty.png');
 
+  /// File path: assets/images/image_discount.png
+  AssetGenImage get imageDiscount =>
+      const AssetGenImage('assets/images/image_discount.png');
+
   /// File path: assets/images/not_found.png
   AssetGenImage get notFound =>
       const AssetGenImage('assets/images/not_found.png');
@@ -349,6 +356,7 @@ class $AssetsImagesGen {
         defacultAvatar,
         defaultImage,
         empty,
+        imageDiscount,
         notFound,
         paymentLoading,
         paymentSuccess,
@@ -486,6 +494,44 @@ class $AssetsIconsBackgroundGen {
         phoneNumberMisc,
         premiumMisc,
         registrationMisc
+      ];
+}
+
+class $AssetsIconsCouponsGen {
+  const $AssetsIconsCouponsGen();
+
+  /// File path: assets/icons/coupons/ic_add_invoice.svg
+  SvgGenImage get icAddInvoice =>
+      const SvgGenImage('assets/icons/coupons/ic_add_invoice.svg');
+
+  /// File path: assets/icons/coupons/ic_coupon.svg
+  SvgGenImage get icCoupon =>
+      const SvgGenImage('assets/icons/coupons/ic_coupon.svg');
+
+  /// File path: assets/icons/coupons/ic_files.svg
+  SvgGenImage get icFiles =>
+      const SvgGenImage('assets/icons/coupons/ic_files.svg');
+
+  /// File path: assets/icons/coupons/ic_lightning.svg
+  SvgGenImage get icLightning =>
+      const SvgGenImage('assets/icons/coupons/ic_lightning.svg');
+
+  /// File path: assets/icons/coupons/ic_magic_selection.svg
+  SvgGenImage get icMagicSelection =>
+      const SvgGenImage('assets/icons/coupons/ic_magic_selection.svg');
+
+  /// File path: assets/icons/coupons/ic_rocket.svg
+  SvgGenImage get icRocket =>
+      const SvgGenImage('assets/icons/coupons/ic_rocket.svg');
+
+  /// List of all assets
+  List<SvgGenImage> get values => [
+        icAddInvoice,
+        icCoupon,
+        icFiles,
+        icLightning,
+        icMagicSelection,
+        icRocket
       ];
 }
 
@@ -717,6 +763,17 @@ class $AssetsIconsNotificationGen {
 
   /// List of all assets
   List<SvgGenImage> get values => [bell, clock, close, idea, tick];
+}
+
+class $AssetsIconsProfileGen {
+  const $AssetsIconsProfileGen();
+
+  /// File path: assets/icons/profile/ic_edit.svg
+  SvgGenImage get icEdit =>
+      const SvgGenImage('assets/icons/profile/ic_edit.svg');
+
+  /// List of all assets
+  List<SvgGenImage> get values => [icEdit];
 }
 
 class $AssetsImagesBannerGen {

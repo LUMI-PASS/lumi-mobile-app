@@ -56,7 +56,7 @@ class CustomDialog extends StatelessWidget {
                     child: CommonButton.elevated(
                       text: leftTapTitle ?? "",
                       textColor: context.colors.primary,
-                      backgroundColor: context.colors.info,
+                      backgroundColor: const Color(0xFF0F98FF),
                       onPressed: onLeftTap,
                     ),
                   ),

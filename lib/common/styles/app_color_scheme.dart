@@ -9,11 +9,15 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.onPrimary,
     required this.scaffoldBg,
     required this.canvas,
+    required this.pageBg,
     required this.surface,
+    required this.bottomBar,
+    required this.progressTrack,
     required this.control,
     required this.controlBorder,
     required this.textPrimary,
     required this.textSecondary,
+    required this.textSection,
     required this.textPlaceholder,
     required this.textMuted,
     required this.border,
@@ -21,7 +25,6 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.disabled,
     required this.error,
     required this.success,
-    required this.info,
     required this.badgeBorder,
   });
 
@@ -43,8 +46,20 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   /// [scaffoldBg] would leave the pale cards with no contrast.
   final Color canvas;
 
+  /// Backdrop for card-on-canvas screens (coupons). Tinted like [canvas] in
+  /// light; the deepest ink in dark, so a raised [surface] card reads against
+  /// it — [canvas]'s dark value sits too close to [surface] to separate.
+  final Color pageBg;
+
   /// Cards, list items, sheets, unselected chips.
   final Color surface;
+
+  /// Sticky bottom action bars — one step above [surface] in dark so the bar
+  /// lifts off the page.
+  final Color bottomBar;
+
+  /// Unfilled part of a progress bar sitting on a card.
+  final Color progressTrack;
 
   /// Header icon buttons / avatar tiles.
   final Color control;
@@ -59,6 +74,10 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
 
   /// Subtitles and captions. Absorbs the old `title`.
   final Color textSecondary;
+
+  /// Section headers above a group of cards ("Купоны", "Как это работает").
+  /// Recedes to grey in light, but goes full white in dark.
+  final Color textSection;
 
   /// Empty-field placeholders.
   final Color textPlaceholder;
@@ -84,9 +103,6 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   /// Confirmed / complete. The old `greenHeadline`.
   final Color success;
 
-  /// Informational accent. The old `differ` (which was a raw `Colors.blue`).
-  final Color info;
-
   /// Border that cuts the little coloured icon badges out of the background.
   final Color badgeBorder;
 
@@ -96,11 +112,15 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     onPrimary: AppColors.onBrand,
     scaffoldBg: AppColors.lightScaffold,
     canvas: AppColors.lightCanvas,
+    pageBg: AppColors.lightCanvas,
     surface: AppColors.white,
+    bottomBar: AppColors.white,
+    progressTrack: AppColors.inkChip,
     control: AppColors.lightControl,
     controlBorder: AppColors.lightControlBorder,
     textPrimary: AppColors.ink,
     textSecondary: AppColors.lightTextSecondary,
+    textSection: AppColors.inkMuted,
     textPlaceholder: AppColors.lightPlaceholder,
     textMuted: AppColors.textMuted,
     border: AppColors.lightBorder,
@@ -108,7 +128,6 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     disabled: AppColors.lightBorder,
     error: AppColors.error,
     success: AppColors.green,
-    info: AppColors.blue,
     badgeBorder: AppColors.white,
   );
 
@@ -118,11 +137,15 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     onPrimary: AppColors.onBrand,
     scaffoldBg: AppColors.ink,
     canvas: AppColors.darkCanvas,
+    pageBg: AppColors.ink,
     surface: AppColors.darkSurface,
+    bottomBar: AppColors.darkSurfaceRaised,
+    progressTrack: AppColors.chipGrey,
     control: AppColors.darkControl,
     controlBorder: AppColors.darkControlBorder,
     textPrimary: AppColors.white,
     textSecondary: AppColors.darkTextSecondary,
+    textSection: AppColors.white,
     textPlaceholder: AppColors.darkPlaceholder,
     textMuted: AppColors.textMuted,
     border: AppColors.darkBorder,
@@ -130,7 +153,6 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     disabled: AppColors.darkControl,
     error: AppColors.error,
     success: AppColors.green,
-    info: AppColors.blue,
     badgeBorder: AppColors.ink,
   );
 
@@ -153,11 +175,15 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? onPrimary,
     Color? scaffoldBg,
     Color? canvas,
+    Color? pageBg,
     Color? surface,
+    Color? bottomBar,
+    Color? progressTrack,
     Color? control,
     Color? controlBorder,
     Color? textPrimary,
     Color? textSecondary,
+    Color? textSection,
     Color? textPlaceholder,
     Color? textMuted,
     Color? border,
@@ -165,7 +191,6 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? disabled,
     Color? error,
     Color? success,
-    Color? info,
     Color? badgeBorder,
   }) {
     return AppColorScheme(
@@ -174,11 +199,15 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       onPrimary: onPrimary ?? this.onPrimary,
       scaffoldBg: scaffoldBg ?? this.scaffoldBg,
       canvas: canvas ?? this.canvas,
+      pageBg: pageBg ?? this.pageBg,
       surface: surface ?? this.surface,
+      bottomBar: bottomBar ?? this.bottomBar,
+      progressTrack: progressTrack ?? this.progressTrack,
       control: control ?? this.control,
       controlBorder: controlBorder ?? this.controlBorder,
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
+      textSection: textSection ?? this.textSection,
       textPlaceholder: textPlaceholder ?? this.textPlaceholder,
       textMuted: textMuted ?? this.textMuted,
       border: border ?? this.border,
@@ -186,7 +215,6 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       disabled: disabled ?? this.disabled,
       error: error ?? this.error,
       success: success ?? this.success,
-      info: info ?? this.info,
       badgeBorder: badgeBorder ?? this.badgeBorder,
     );
   }
@@ -200,11 +228,15 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
       scaffoldBg: Color.lerp(scaffoldBg, other.scaffoldBg, t)!,
       canvas: Color.lerp(canvas, other.canvas, t)!,
+      pageBg: Color.lerp(pageBg, other.pageBg, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
+      bottomBar: Color.lerp(bottomBar, other.bottomBar, t)!,
+      progressTrack: Color.lerp(progressTrack, other.progressTrack, t)!,
       control: Color.lerp(control, other.control, t)!,
       controlBorder: Color.lerp(controlBorder, other.controlBorder, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      textSection: Color.lerp(textSection, other.textSection, t)!,
       textPlaceholder: Color.lerp(textPlaceholder, other.textPlaceholder, t)!,
       textMuted: Color.lerp(textMuted, other.textMuted, t)!,
       border: Color.lerp(border, other.border, t)!,
@@ -212,7 +244,6 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       disabled: Color.lerp(disabled, other.disabled, t)!,
       error: Color.lerp(error, other.error, t)!,
       success: Color.lerp(success, other.success, t)!,
-      info: Color.lerp(info, other.info, t)!,
       badgeBorder: Color.lerp(badgeBorder, other.badgeBorder, t)!,
     );
   }

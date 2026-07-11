@@ -18,6 +18,7 @@ import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
@@ -476,7 +477,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   // ─── Hero image carousel ────────────────────────────────────────────────────
   Widget _hero(AppColorScheme c, double safeTop) {
-    return SizedBox(
+    return StretchyHero(
+      controller: _scrollController,
       height: _kHeroHeight.h,
       child: Stack(
         fit: StackFit.expand,

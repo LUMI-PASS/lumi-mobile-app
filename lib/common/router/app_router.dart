@@ -6,13 +6,15 @@ import 'package:lumi_pass/common/router/initial_guard.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
-import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_page.dart';
 import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
+import 'package:lumi_pass/presentation/app/home/plans/payment_history_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
+import 'package:lumi_pass/presentation/app/home/see_all/categories_grid_page.dart';
+import 'package:lumi_pass/presentation/app/home/see_all/classes_grid_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
@@ -22,7 +24,8 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.da
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_unified_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/wallet_page.dart';
-import 'package:lumi_pass/presentation/app/profile/children/children_page.dart';
+import 'package:lumi_pass/presentation/app/profile/children/child_detail_page.dart';
+import 'package:lumi_pass/presentation/app/profile/language/change_language_page.dart';
 import 'package:lumi_pass/presentation/app/profile/payment/add_new_card_page.dart';
 import 'package:lumi_pass/presentation/app/profile/payment/checkout_page.dart';
 import 'package:lumi_pass/presentation/app/profile/payment/payment_cards_page.dart';
@@ -67,7 +70,7 @@ Widget _webTransition(
 class AppRouter extends _$AppRouter {
   @override
   RouteType get defaultRouteType => kIsWeb
-      ? RouteType.custom(
+      ? const RouteType.custom(
           transitionsBuilder: _webTransition,
           durationInMilliseconds: 120,
           reverseDurationInMilliseconds: 100,
@@ -112,8 +115,9 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: BookingRoute.page),
     AutoRoute(page: BookingCompleteRoute.page),
     AutoRoute(page: ProfileDetailRoute.page),
-    AutoRoute(page: ChildrenRoute.page),
+    AutoRoute(page: ChildDetailRoute.page),
     AutoRoute(page: AddChildRoute.page),
+    AutoRoute(page: ChangeLanguageRoute.page),
     AutoRoute(page: PaymentRoute.page),
     AutoRoute(page: PaymentCardsRoute.page),
     AutoRoute(page: AddNewCardRoute.page),
@@ -128,6 +132,9 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: FiscalReceiptRoute.page),
     AutoRoute(page: MyBookingsRoute.page),
     AutoRoute(page: PlansRoute.page),
+    AutoRoute(page: PaymentHistoryRoute.page),
+    AutoRoute(page: ClassesGridRoute.page),
+    AutoRoute(page: CategoriesGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
     AutoRoute(page: NotificationsRoute.page),
   ];

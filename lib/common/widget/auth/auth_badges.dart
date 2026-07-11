@@ -70,14 +70,14 @@ class AuthIconBadgeRow extends StatelessWidget {
   const AuthIconBadgeRow({super.key, this.specs});
 
   static final List<AuthBadgeSpec> _authSpecs = [
-    AuthBadgeSpec(AppColors.blue, Assets.icons.auth.userAi),
+    AuthBadgeSpec(const Color(0xFF0F98FF), Assets.icons.auth.userAi),
     AuthBadgeSpec(AppColors.green, Assets.icons.auth.loginCircle),
     AuthBadgeSpec(AppColors.brandPurple, Assets.icons.auth.login02),
   ];
 
   /// Onboarding uses a playful trio.
   static final List<AuthBadgeSpec> onboardSpecs = [
-    AuthBadgeSpec(AppColors.blue, Assets.icons.auth.rockingHorse),
+    AuthBadgeSpec(const Color(0xFF0F98FF), Assets.icons.auth.rockingHorse),
     AuthBadgeSpec(AppColors.green, Assets.icons.auth.rocket01),
     AuthBadgeSpec(AppColors.brandPurple, Assets.icons.auth.maskTheater),
   ];

@@ -2,13 +2,16 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lottie/lottie.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/widget/adaptive_card.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
-import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
@@ -16,15 +19,9 @@ import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:shimmer/shimmer.dart';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const _green = Color(0xFF16A34A);
-const _greenBg = Color(0xFFECFDF5);
-const _grey = Color(0xFF64748B);
-const _greyBg = Color(0xFFF1F5F9);
-const _red = Color(0xFFDC2626);
-const _redBg = Color(0xFFFEF2F2);
-const _navy = Color(0xFF1E293B);
-const _border = Color(0xFFE2E8F0);
+/// Height of a coupon card in the horizontal carousel. Fixed so the [PageView]
+/// can size itself; the cards' content is top-aligned inside it.
+const double _kCouponCardHeight = 184;
 
 @RoutePage()
 class PlansPage extends StatefulWidget {
@@ -34,43 +31,36 @@ class PlansPage extends StatefulWidget {
   State<PlansPage> createState() => _PlansPageState();
 }
 
-class _PlansPageState extends State<PlansPage>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
+class _PlansPageState extends State<PlansPage> {
   final HomeRepository _repo = getIt<HomeRepository>();
   final OrdersApi _api = getIt<OrdersApi>();
 
-  // Plans tab
+  final PageController _pageController =
+      PageController(viewportFraction: 0.92);
+
   List<PremiumPlan> _plans = [];
   bool _isLoading = true;
   String? _purchasingId;
-
-  // History tab
-  List<SubscriptionRecord> _history = [];
-  bool _historyLoading = false;
-  bool _historyLoaded = false;
+  int _selected = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this)
-      ..addListener(_onTabChanged);
+    _pageController.addListener(_onPageScroll);
     _loadPlans();
   }
 
   @override
   void dispose() {
-    _tabController
-      ..removeListener(_onTabChanged)
+    _pageController
+      ..removeListener(_onPageScroll)
       ..dispose();
     super.dispose();
   }
 
-  void _onTabChanged() {
-    if (_tabController.index == 1 && !_historyLoaded && !_historyLoading) {
-      _loadHistory();
-    }
+  void _onPageScroll() {
+    final page = _pageController.page?.round() ?? 0;
+    if (page != _selected) setState(() => _selected = page);
   }
 
   Future<void> _loadPlans() async {
@@ -85,21 +75,7 @@ class _PlansPageState extends State<PlansPage>
     }
   }
 
-  Future<void> _loadHistory() async {
-    setState(() => _historyLoading = true);
-    try {
-      final data = await _api.getSubscriptionHistory();
-      if (!mounted) return;
-      setState(() {
-        _history = data;
-        _historyLoaded = true;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _historyLoaded = true);
-    } finally {
-      if (mounted) setState(() => _historyLoading = false);
-    }
-  }
+  void _openHistory() => context.router.push(const PaymentHistoryRoute());
 
   Future<void> _purchase(PremiumPlan plan) async {
     if (plan.id == null || _purchasingId != null) return;
@@ -127,18 +103,12 @@ class _PlansPageState extends State<PlansPage>
           ),
         ),
       );
-      // Refresh history after returning from payment
-      setState(() {
-        _historyLoaded = false;
-        _history = [];
-      });
-      if (_tabController.index == 1) _loadHistory();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString(), maxLines: 3),
-          backgroundColor: Colors.red.shade400,
+          backgroundColor: context.colors.error,
         ),
       );
     } finally {
@@ -146,573 +116,711 @@ class _PlansPageState extends State<PlansPage>
     }
   }
 
+  /// Highest discount across all plans — drives the "До N%" hero badge and
+  /// marks which card gets the "BEST OFFER" ribbon.
+  double get _bestDiscount => _plans.fold<double>(
+        0,
+        (max, p) => (p.discountPercentage ?? 0) > max
+            ? (p.discountPercentage ?? 0)
+            : max,
+      );
+
+  PremiumPlan? get _selectedPlan =>
+      _selected < _plans.length ? _plans[_selected] : null;
+
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final plan = _selectedPlan;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7FC),
+      backgroundColor: context.colors.pageBg,
       body: Stack(
         children: [
-          Column(
+          // Soft green wash bleeding out from behind the ticket artwork.
+          Positioned(
+            top: -80.h,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: 320.h,
+                decoration: const BoxDecoration(
+                  gradient: AppGradients.greenGlow,
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.only(bottom: 24.h),
+                    children: [
+                      _Hero(bestDiscount: _bestDiscount),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: _HistoryTile(onTap: _openHistory),
+                      ),
+                      24.kh,
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Text(
+                          'coupons_title'.tr(),
+                          style: AppText.semibold18
+                              .copyWith(color: context.colors.textSection),
+                        ),
+                      ),
+                      16.kh,
+                      if (_isLoading)
+                        const _CouponsShimmer()
+                      else if (_plans.isEmpty)
+                        const _EmptyPlans()
+                      // A lone coupon has nothing to page to, so it spans the
+                      // width rather than leaving the carousel's peek gap.
+                      else if (_plans.length == 1)
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: SizedBox(
+                            height: _kCouponCardHeight.h,
+                            child: _CouponCard(
+                              plan: _plans.first,
+                              isBestOffer: _bestDiscount > 0,
+                            ),
+                          ),
+                        )
+                      else ...[
+                        SizedBox(
+                          height: _kCouponCardHeight.h,
+                          child: PageView.builder(
+                            controller: _pageController,
+                            itemCount: _plans.length,
+                            padEnds: false,
+                            itemBuilder: (_, i) => Padding(
+                              padding: EdgeInsets.only(
+                                left: 16.w,
+                                right: i == _plans.length - 1 ? 16.w : 0,
+                              ),
+                              child: _CouponCard(
+                                plan: _plans[i],
+                                isBestOffer: _bestDiscount > 0 &&
+                                    _plans[i].discountPercentage ==
+                                        _bestDiscount,
+                              ),
+                            ),
+                          ),
+                        ),
+                        12.kh,
+                        _Dots(count: _plans.length, active: _selected),
+                      ],
+                      32.kh,
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Text(
+                          'plan_how_title'.tr(),
+                          style: AppText.semibold18
+                              .copyWith(color: context.colors.textSection),
+                        ),
+                      ),
+                      16.kh,
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: _HowItWorks(),
+                      ),
+                    ],
+                  ),
+                ),
+                if (plan != null)
+                  _BuyBar(
+                    price: plan.price ?? 0,
+                    isLoading: _purchasingId == plan.id,
+                    onBuy: () => _purchase(plan),
+                  ),
+              ],
+            ),
+          ),
+          // Sits outside the scroll view so it stays put as the page scrolls.
+          Positioned(
+            top: MediaQuery.of(context).viewPadding.top + 16.h,
+            right: 20.w,
+            child: AdaptiveCard(
+              onTap: () => context.router.maybePop(),
+              tone: CardTone.control,
+              bordered: true,
+              padding: EdgeInsets.all(8.w),
+              child: Icon(
+                Icons.close_rounded,
+                size: 16.sp,
+                color: context.colors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Hero — ticket artwork, rotated chips, close button, title ────────────────
+
+class _Hero extends StatelessWidget {
+  const _Hero({required this.bestDiscount});
+
+  final double bestDiscount;
+
+  @override
+  Widget build(BuildContext context) {
+    final art = 218.w;
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 232.h,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              _Header(primary: primary, tabController: _tabController),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
+              // The two chips are anchored to the artwork (not the screen), so
+              // they keep hugging the ticket's corners on any width. They
+              // deliberately overflow the artwork's box — hence `Clip.none`.
+              SizedBox(
+                width: art,
+                height: art,
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    _PlansTab(
-                      plans: _plans,
-                      isLoading: _isLoading,
-                      purchasingId: _purchasingId,
-                      onChoose: _purchase,
+                    Assets.images.imageDiscount.image(fit: BoxFit.contain),
+                    // Figma centres these chips on a point near the ticket's
+                    // top-left / bottom-right corner, so most of each chip
+                    // hangs off the artwork.
+                    _ArtChip(
+                      label: 'coupon_plans_title'.tr(),
+                      art: art,
+                      centerX: 0.072,
+                      centerY: 0.293,
+                      angle: -0.385, // −22.04°
                     ),
-                    _HistoryTab(
-                      history: _history,
-                      isLoading: _historyLoading,
-                    ),
+                    if (bestDiscount > 0)
+                      _ArtChip(
+                        label: 'coupon_up_to'.tr(namedArgs: {
+                          'percent': _fmtPercent(bestDiscount),
+                        }),
+                        art: art,
+                        centerX: 0.944,
+                        centerY: 0.647,
+                        angle: 0.217, // 12.45°
+                      ),
                   ],
                 ),
               ),
             ],
           ),
-          // ── Back button ──────────────────────────────────────────────────
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8.h,
-            left: 8.w,
-            child: Material(
-              color: Colors.transparent,
-              child: IconButton(
-                onPressed: () => context.router.maybePop(),
-                icon: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: primary,
-                    size: 16.sp,
-                  ),
-                ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 48.w),
+          child: Column(
+            children: [
+              Text(
+                'coupon_offers_title'.tr(),
+                textAlign: TextAlign.center,
+                style: AppText.semibold24
+                    .copyWith(color: context.colors.textPrimary),
+              ),
+              4.kh,
+              Text(
+                'coupon_plans_subtitle'.tr(),
+                textAlign: TextAlign.center,
+                style: AppText.regular12
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+        24.kh,
+      ],
+    );
+  }
+}
+
+/// Rotated dark chip pinned to a point on the ticket artwork. Stays dark in
+/// both themes by design — it paints over a photo-like asset.
+///
+/// [centerX] / [centerY] are fractions of the artwork box and mark where the
+/// chip's *centre* lands. `Align` can't express that: its `Alignment` insets by
+/// the child's own size, so a chip this wide would get dragged back toward the
+/// middle. `Positioned` + a −50% [FractionalTranslation] pins the centre exactly,
+/// whatever the translated label's width turns out to be.
+class _ArtChip extends StatelessWidget {
+  const _ArtChip({
+    required this.label,
+    required this.art,
+    required this.centerX,
+    required this.centerY,
+    required this.angle,
+  });
+
+  final String label;
+  final double art;
+  final double centerX;
+  final double centerY;
+  final double angle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: centerX * art,
+      top: centerY * art,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, -0.5),
+        child: Transform.rotate(
+          angle: angle,
+          child: Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Text(
+              label,
+              style: AppText.semibold14.copyWith(color: AppColors.white),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Payment-history entry row ───────────────────────────────────────────────
+
+class _HistoryTile extends StatelessWidget {
+  const _HistoryTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AdaptiveCard(
+      onTap: onTap,
+      tone: CardTone.control,
+      borderRadius: BorderRadius.circular(40.r),
+      padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
+      child: Row(
+        children: [
+          Container(
+            width: 40.w,
+            height: 40.w,
+            decoration: BoxDecoration(
+              color: colors.surface,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Assets.icons.coupons.icFiles.svg(
+                width: 20.w,
+                height: 20.w,
+                colorFilter:
+                    ColorFilter.mode(colors.textPrimary, BlendMode.srcIn),
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Header with gradient + TabBar ───────────────────────────────────────────
-
-class _Header extends StatelessWidget {
-  const _Header({required this.primary, required this.tabController});
-
-  final Color primary;
-  final TabController tabController;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [primary, const Color(0xFFFF7093)],
-            ),
-            borderRadius:
-                BorderRadius.vertical(bottom: Radius.circular(36.r)),
-          ),
-          child: SafeArea(
-            bottom: false,
+          8.kw,
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            36.kh,
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10.w, vertical: 4.h),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(20.r),
-                                border: Border.all(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.35)),
-                              ),
-                              child: Text(
-                                'coupon_plans_title'.tr().toUpperCase(),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.4,
-                                ),
-                              ),
-                            ),
-                            14.kh,
-                            Text(
-                              'coupon_plans_title'.tr(),
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 28.sp,
-                                fontWeight: FontWeight.w800,
-                                height: 1.1,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            6.kh,
-                            Text(
-                              'coupon_plans_subtitle'.tr(),
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontSize: 13.sp,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: 88.w,
-                        height: 88.w,
-                        child: Lottie.asset(
-                          Assets.lotties.premium,
-                          fit: BoxFit.contain,
-                          repeat: true,
-                        ),
-                      ),
-                    ],
-                  ),
+                Text(
+                  'coupon_history_title'.tr(),
+                  style:
+                      AppText.semibold14.copyWith(color: colors.textPrimary),
                 ),
-                16.kh,
-                // Tab bar
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: Container(
-                    height: 40.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: TabBar(
-                      controller: tabController,
-                      labelStyle: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      unselectedLabelStyle: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      labelColor: primary,
-                      unselectedLabelColor:
-                          Colors.white.withValues(alpha: 0.8),
-                      indicator: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      dividerColor: Colors.transparent,
-                      tabs: [
-                        Tab(text: 'coupon_tab_plans'.tr()),
-                        Tab(text: 'coupon_tab_history'.tr()),
-                      ],
-                    ),
-                  ),
+                4.kh,
+                Text(
+                  'coupon_history_subtitle'.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      AppText.regular12.copyWith(color: colors.textSecondary),
                 ),
-                16.kh,
               ],
             ),
           ),
-        ),
-        // Decorative motif
-        Positioned(
-          right: -40,
-          top: 20,
-          child: Opacity(
-            opacity: 0.1,
-            child: Assets.icons.background.premiumMisc.svg(
-              width: 180.w,
-              height: 180.w,
-              colorFilter:
-                  const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Plans tab ────────────────────────────────────────────────────────────────
-
-class _PlansTab extends StatelessWidget {
-  const _PlansTab({
-    required this.plans,
-    required this.isLoading,
-    required this.purchasingId,
-    required this.onChoose,
-  });
-
-  final List<PremiumPlan> plans;
-  final bool isLoading;
-  final String? purchasingId;
-  final ValueChanged<PremiumPlan> onChoose;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(strokeWidth: 2.5));
-    }
-    if (plans.isEmpty) {
-      return _EmptyPlans();
-    }
-    final popularIndex = plans.length >= 2 ? (plans.length ~/ 2) : -1;
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 32.h),
-      children: [
-        for (int index = 0; index < plans.length; index++) ...[
-          _PlanCard(
-            plan: plans[index],
-            isPopular: index == popularIndex,
-            isPurchasing: purchasingId == plans[index].id,
-            disabled:
-                purchasingId != null && purchasingId != plans[index].id,
-            onChoose: () => onChoose(plans[index]),
-          ),
-          if (index != plans.length - 1) 14.kh,
-        ],
-        24.kh,
-        const _HowItWorks(),
-      ],
-    );
-  }
-}
-
-// ─── History tab ─────────────────────────────────────────────────────────────
-
-class _HistoryTab extends StatelessWidget {
-  const _HistoryTab({
-    required this.history,
-    required this.isLoading,
-  });
-
-  final List<SubscriptionRecord> history;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return _HistoryShimmer();
-    }
-    if (history.isEmpty) {
-      return _EmptyHistory();
-    }
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 32.h),
-      itemCount: history.length,
-      separatorBuilder: (_, __) => 12.kh,
-      itemBuilder: (_, i) => _HistoryCard(record: history[i]),
-    );
-  }
-}
-
-// ─── Subscription history card ────────────────────────────────────────────────
-
-class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({required this.record});
-
-  final SubscriptionRecord record;
-
-  String _fmtDate(BuildContext context, DateTime d) =>
-      d.toRussianShortFormat(context);
-
-  @override
-  Widget build(BuildContext context) {
-    final r = record;
-    final primary = context.colors.primary;
-
-    // Status chip colours
-    final Color statusBg;
-    final Color statusFg;
-    final String statusLabel;
-    if (r.isActive) {
-      statusBg = _greenBg;
-      statusFg = _green;
-      statusLabel = 'sub_status_active'.tr();
-    } else if (r.isCanceled) {
-      statusBg = _redBg;
-      statusFg = _red;
-      statusLabel = 'sub_status_canceled'.tr();
-    } else {
-      statusBg = _greyBg;
-      statusFg = _grey;
-      statusLabel = 'sub_status_expired'.tr();
-    }
-
-    // Activity progress
-    final hasLimit = r.activitiesLimit > 0;
-    final progress = hasLimit
-        ? (r.usedCount / r.activitiesLimit).clamp(0.0, 1.0)
-        : 0.0;
-
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-            color: r.isActive ? primary.withValues(alpha: 0.25) : _border),
-        boxShadow: [
-          BoxShadow(
-            color: (r.isActive ? primary : Colors.black)
-                .withValues(alpha: r.isActive ? 0.07 : 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+          8.kw,
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 24.sp,
+            color: colors.textPrimary,
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Coupon card ─────────────────────────────────────────────────────────────
+
+class _CouponCard extends StatelessWidget {
+  const _CouponCard({required this.plan, required this.isBestOffer});
+
+  final PremiumPlan plan;
+  final bool isBestOffer;
+
+  @override
+  Widget build(BuildContext context) {
+    final discount = plan.discountPercentage ?? 0;
+    final activities = plan.activitiesLimit ?? 0;
+    final duration = plan.durationDays ?? 0;
+
+    return AdaptiveCard(
+      padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top row: plan name + status ──────────────────────────────────
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Discount badge circle
               Container(
-                width: 44.w,
-                height: 44.w,
+                padding: EdgeInsets.all(4.w),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [primary, const Color(0xFFFF7093)],
-                  ),
+                  gradient: AppGradients.indigo,
+                  borderRadius: BorderRadius.circular(6.r),
                 ),
-                child: Center(
-                  child: Text(
-                    r.discountPercentage > 0
-                        ? '-${r.discountPercentage}%'
-                        : '—',
-                    style: TextStyle(
-                      fontSize: r.discountPercentage >= 10 ? 11.sp : 13.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
+                child: Assets.icons.coupons.icRocket.svg(
+                  width: 14.w,
+                  height: 14.w,
                 ),
               ),
               12.kw,
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r.planName?.isNotEmpty == true
-                          ? r.planName!
-                          : 'coupon_plans_title'.tr(),
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        color: _navy,
-                        height: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    4.kh,
-                    Text(
-                      r.amount.toRawUzsPrice(),
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: _grey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Status pill
-              Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
                 child: Text(
-                  statusLabel,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w700,
-                    color: statusFg,
-                  ),
+                  plan.localizedTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bold18
+                      .copyWith(color: context.colors.textPrimary),
                 ),
               ),
+              if (isBestOffer) ...[8.kw, const _BestOfferBadge()],
             ],
           ),
-
-          16.kh,
-          Divider(height: 1, color: _border),
-          14.kh,
-
-          // ── Date range ───────────────────────────────────────────────────
-          Row(
-            children: [
-              Icon(Icons.calendar_today_rounded,
-                  size: 13.sp, color: _grey),
-              6.kw,
-              Text(
-                '${_fmtDate(context, r.startDate)}  →  ${_fmtDate(context, r.endDate)}',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: _grey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          8.kh,
+          if (discount > 0)
+            _Condition(
+              text: 'coupon_cond_discount'
+                  .tr(namedArgs: {'percent': _fmtPercent(discount)}),
+            ),
+          if (activities > 0)
+            _Condition(
+              text: 'coupon_cond_activities'
+                  .tr(namedArgs: {'count': '$activities'}),
+            ),
+          if (duration > 0)
+            _Condition(
+              text:
+                  'coupon_cond_duration'.tr(namedArgs: {'days': '$duration'}),
+            ),
+          const Spacer(),
+          Text(
+            (plan.price ?? 0).toRawUzsPrice(),
+            style:
+                AppText.bold16.copyWith(color: context.colors.textPrimary),
           ),
-
-          if (hasLimit) ...[
-            14.kh,
-            // ── Activities usage ─────────────────────────────────────────
-            Row(
-              children: [
-                Icon(Icons.event_available_rounded,
-                    size: 13.sp, color: _grey),
-                6.kw,
-                Expanded(
-                  child: Text(
-                    'sub_activities_progress'.tr(namedArgs: {
-                      'used': '${r.usedCount}',
-                      'total': '${r.activitiesLimit}',
-                    }),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: _grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${r.remaining} ${'sub_activities_remaining'.tr()}',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w700,
-                    color: r.remaining > 0 ? _green : _grey,
-                  ),
-                ),
-              ],
-            ),
-            8.kh,
-            // Progress bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4.r),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6.h,
-                backgroundColor: _border,
-                valueColor: AlwaysStoppedAnimation(
-                  progress >= 1.0 ? _red : primary,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-// ─── History shimmer ──────────────────────────────────────────────────────────
+class _BestOfferBadge extends StatelessWidget {
+  const _BestOfferBadge();
 
-class _HistoryShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 32.h),
-      itemCount: 3,
-      separatorBuilder: (_, __) => 12.kh,
-      itemBuilder: (_, __) => Shimmer.fromColors(
-        baseColor: Colors.grey.shade200,
-        highlightColor: Colors.grey.shade50,
-        child: Container(
-          height: 140.h,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
+    return Container(
+      padding: EdgeInsets.fromLTRB(6.w, 2.h, 9.w, 2.h),
+      decoration: BoxDecoration(
+        gradient: AppGradients.indigo,
+        borderRadius: BorderRadius.circular(100.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Assets.icons.coupons.icLightning.svg(width: 12.w, height: 12.w),
+          4.kw,
+          Text(
+            'coupon_best_offer'.tr(),
+            style: AppText.bold10.copyWith(color: AppColors.white),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-// ─── Empty states ─────────────────────────────────────────────────────────────
+/// Bulleted condition line inside a coupon or history card.
+class _Condition extends StatelessWidget {
+  const _Condition({required this.text});
 
-class _EmptyHistory extends StatelessWidget {
+  final String text;
+
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80.w,
-              height: 80.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primary.withValues(alpha: 0.1),
-              ),
-              child: Icon(Icons.receipt_long_rounded,
-                  size: 38.sp, color: primary),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 4.w,
+            height: 4.w,
+            margin: EdgeInsets.only(top: 6.h),
+            decoration: BoxDecoration(
+              color: context.colors.primary,
+              shape: BoxShape.circle,
             ),
-            18.kh,
-            Text(
-              'sub_history_empty'.tr(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 17.sp,
-                fontWeight: FontWeight.w700,
-                color: _navy,
+          ),
+          4.kw,
+          Expanded(
+            child: Text(
+              text,
+              style: AppText.regular12
+                  .copyWith(color: context.colors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Carousel dots ───────────────────────────────────────────────────────────
+
+class _Dots extends StatelessWidget {
+  const _Dots({required this.count, required this.active});
+
+  final int count;
+  final int active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        final isActive = i == active;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 8.w,
+          height: 8.w,
+          margin: EdgeInsets.symmetric(horizontal: 3.w),
+          decoration: BoxDecoration(
+            color: isActive
+                ? context.colors.textPrimary
+                : context.colors.border,
+            shape: BoxShape.circle,
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─── "How it works" — three numbered step cards ──────────────────────────────
+
+class _HowItWorks extends StatelessWidget {
+  const _HowItWorks();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      // Without this the third card shrink-wraps its text instead of spanning
+      // the row above it.
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _StepCard(
+                  icon: Assets.icons.coupons.icMagicSelection,
+                  number: '01',
+                  text: 'plan_step1'.tr(),
+                ),
+              ),
+              8.kw,
+              Expanded(
+                child: _StepCard(
+                  icon: Assets.icons.coupons.icAddInvoice,
+                  number: '02',
+                  text: 'plan_step2'.tr(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        8.kh,
+        _StepCard(
+          icon: Assets.icons.coupons.icCoupon,
+          number: '03',
+          text: 'plan_step3'.tr(),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  const _StepCard({
+    required this.icon,
+    required this.number,
+    required this.text,
+  });
+
+  final SvgGenImage icon;
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: 0,
+            top: -6.h,
+            child: ShaderMask(
+              // The numeral fades out top→bottom rather than sitting at a flat
+              // opacity. `srcIn` paints the gradient through the glyphs.
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (bounds) =>
+                  AppGradients.stepNumeral.createShader(bounds),
+              child: Text(
+                number,
+                style: AppText.semibold24.copyWith(
+                  fontSize: 36.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                ),
               ),
             ),
-            8.kh,
-            Text(
-              'sub_history_empty_hint'.tr(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: _grey,
-                height: 1.4,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              icon.svg(width: 30.w, height: 30.w),
+              32.kh,
+              Text(
+                text,
+                style: AppText.regular14
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Sticky buy bar ──────────────────────────────────────────────────────────
+
+class _BuyBar extends StatelessWidget {
+  const _BuyBar({
+    required this.price,
+    required this.isLoading,
+    required this.onBuy,
+  });
+
+  final num price;
+  final bool isLoading;
+  final VoidCallback onBuy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: context.colors.bottomBar,
+      padding: EdgeInsets.fromLTRB(
+        16.w,
+        16.h,
+        16.w,
+        16.h + MediaQuery.of(context).viewPadding.bottom,
+      ),
+      child: Row(
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'coupon_price_label'.tr(),
+                style: AppText.regular14
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+              4.kh,
+              Text(
+                price.toRawUzsPrice(),
+                style: AppText.bold16
+                    .copyWith(color: context.colors.textPrimary),
+              ),
+            ],
+          ),
+          24.kw,
+          Expanded(
+            child: GestureDetector(
+              onTap: isLoading ? null : onBuy,
+              child: Container(
+                height: 50.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: AppGradients.brand,
+                  borderRadius: BorderRadius.circular(44.r),
+                ),
+                child: isLoading
+                    ? SizedBox(
+                        width: 20.w,
+                        height: 20.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(
+                            context.colors.onPrimary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'coupon_buy_btn'.tr(),
+                        style: AppText.medium16
+                            .copyWith(color: context.colors.onPrimary),
+                      ),
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Loading / empty states ──────────────────────────────────────────────────
+
+class _CouponsShimmer extends StatelessWidget {
+  const _CouponsShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Shimmer.fromColors(
+        baseColor: context.colors.control,
+        highlightColor: context.colors.surface,
+        child: Container(
+          height: _kCouponCardHeight.h,
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
         ),
       ),
     );
@@ -720,448 +828,28 @@ class _EmptyHistory extends StatelessWidget {
 }
 
 class _EmptyPlans extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 24.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 88.w,
-              height: 88.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primary.withValues(alpha: 0.1),
-              ),
-              child: Icon(
-                Icons.workspace_premium_outlined,
-                size: 44.sp,
-                color: primary,
-              ),
-            ),
-            20.kh,
-            Text(
-              'no_plans_yet'.tr(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: _navy,
-              ),
-            ),
-            10.kh,
-            Text(
-              'no_plans_hint'.tr(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.grey.shade600,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Plan card (unchanged logic) ──────────────────────────────────────────────
-
-class _PlanCard extends StatelessWidget {
-  const _PlanCard({
-    required this.plan,
-    required this.isPopular,
-    required this.isPurchasing,
-    required this.disabled,
-    required this.onChoose,
-  });
-
-  final PremiumPlan plan;
-  final bool isPopular;
-  final bool isPurchasing;
-  final bool disabled;
-  final VoidCallback onChoose;
+  const _EmptyPlans();
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    final discount = plan.discountPercentage ?? 0;
-    final activities = plan.activitiesLimit ?? 0;
-    final duration = plan.durationDays ?? 0;
-    final discountLabel = discount > 0
-        ? '${discount.toStringAsFixed(discount % 1 == 0 ? 0 : 1)}%'
-        : '—';
-
-    final card = Container(
-      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 20.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-          color: isPopular ? primary.withValues(alpha: 0) : Colors.grey.shade200,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isPopular ? 0.08 : 0.04),
-            blurRadius: isPopular ? 24 : 12,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 24.h),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  plan.localizedTitle,
-                  style: TextStyle(
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF2E3D5D),
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ),
-              if (isPopular)
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [primary, const Color(0xFFFF7093)]),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.star_rounded,
-                          size: 12.sp, color: Colors.white),
-                      4.kw,
-                      Text(
-                        'popular'.tr().toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+          Assets.icons.coupons.icCoupon.svg(width: 40.w, height: 40.w),
           16.kh,
-          // ── Hero stats: discount + activities as tinted tiles ────────────
-          Row(
-            children: [
-              Expanded(
-                child: _HeroStat(
-                  icon: Icons.sell_rounded,
-                  value: discountLabel,
-                  label: 'discount_on_activities'.tr(),
-                  primary: primary,
-                ),
-              ),
-              10.kw,
-              Expanded(
-                child: _HeroStat(
-                  icon: Icons.confirmation_number_rounded,
-                  value: activities > 0 ? '$activities' : '—',
-                  label: 'activities_limit'.tr(),
-                  primary: primary,
-                ),
-              ),
-            ],
-          ),
-          if (duration > 0) ...[
-            12.kh,
-            // ── Duration chip ──────────────────────────────────────────────
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.schedule_rounded, size: 14.sp, color: _grey),
-                  6.kw,
-                  Text(
-                    '$duration ${'days'.tr()}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      color: _navy,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          14.kh,
-          _DashedLine(color: Colors.grey.shade300),
-          12.kh,
-          // ── Price (subtle) ───────────────────────────────────────────────
           Text(
-            (plan.price ?? 0).toRawUzsPrice(),
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: _grey,
-            ),
+            'no_plans_yet'.tr(),
+            textAlign: TextAlign.center,
+            style:
+                AppText.semibold16.copyWith(color: context.colors.textPrimary),
           ),
-          12.kh,
-          SizedBox(
-            width: double.infinity,
-            child: _ChooseButton(
-              isLoading: isPurchasing,
-              disabled: disabled,
-              onPressed: onChoose,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (!isPopular) return card;
-    return Container(
-      padding: const EdgeInsets.all(1.5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26.r),
-        gradient: LinearGradient(
-            colors: [primary, const Color(0xFFFF7093)]),
-      ),
-      child: card,
-    );
-  }
-}
-
-// ─── Animated "How it works" ──────────────────────────────────────────────────
-
-class _HowItWorks extends StatefulWidget {
-  const _HowItWorks();
-
-  @override
-  State<_HowItWorks> createState() => _HowItWorksState();
-}
-
-class _HowItWorksState extends State<_HowItWorks>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  static const _steps = <(IconData, String)>[
-    (Icons.touch_app_rounded, 'plan_step1'),
-    (Icons.lock_rounded, 'plan_step2'),
-    (Icons.local_offer_rounded, 'plan_step3'),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 32.w,
-                height: 32.w,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primary, const Color(0xFFFF7093)],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.auto_awesome_rounded,
-                    size: 16.sp, color: Colors.white),
-              ),
-              10.kw,
-              Text(
-                'plan_how_title'.tr(),
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w800,
-                  color: _navy,
-                ),
-              ),
-            ],
-          ),
-          18.kh,
-          ...List.generate(_steps.length, (i) {
-            final isLast = i == _steps.length - 1;
-            // Each step fades + slides in, staggered.
-            final start = i * 0.22;
-            final anim = CurvedAnimation(
-              parent: _controller,
-              curve: Interval(start, (start + 0.55).clamp(0.0, 1.0),
-                  curve: Curves.easeOutCubic),
-            );
-            return AnimatedBuilder(
-              animation: anim,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: anim.value,
-                  child: Transform.translate(
-                    offset: Offset(20 * (1 - anim.value), 0),
-                    child: child,
-                  ),
-                );
-              },
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Column(
-                      children: [
-                        Container(
-                          width: 36.w,
-                          height: 36.w,
-                          decoration: BoxDecoration(
-                            color: primary.withValues(alpha: 0.10),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(_steps[i].$1, size: 18.sp, color: primary),
-                        ),
-                        if (!isLast)
-                          Expanded(
-                            child: Container(
-                              width: 2,
-                              margin: EdgeInsets.symmetric(vertical: 4.h),
-                              color: primary.withValues(alpha: 0.15),
-                            ),
-                          ),
-                      ],
-                    ),
-                    12.kw,
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                            top: 7.h, bottom: isLast ? 0 : 18.h),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${i + 1}',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w900,
-                                color: primary,
-                              ),
-                            ),
-                            8.kw,
-                            Expanded(
-                              child: Text(
-                                _steps[i].$2.tr(),
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF4B5563),
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Hero stat tile (icon + big number + label) ───────────────────────────────
-
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.primary,
-  });
-
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color primary;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: primary.withValues(alpha: 0.10)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18.sp, color: primary),
           8.kh,
           Text(
-            value,
-            style: TextStyle(
-              fontSize: 26.sp,
-              fontWeight: FontWeight.w900,
-              color: primary,
-              height: 1.0,
-              letterSpacing: -0.5,
-            ),
-          ),
-          6.kh,
-          Text(
-            label,
+            'no_plans_hint'.tr(),
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-              color: _grey,
-              height: 1.2,
-            ),
+            style: AppText.regular13
+                .copyWith(color: context.colors.textSecondary),
           ),
         ],
       ),
@@ -1169,103 +857,6 @@ class _HeroStat extends StatelessWidget {
   }
 }
 
-// ─── Dashed separator (coupon ticket feel) ────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-class _DashedLine extends StatelessWidget {
-  const _DashedLine({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const dashWidth = 6.0;
-        const dashGap = 4.0;
-        final count = (constraints.maxWidth / (dashWidth + dashGap)).floor();
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(
-            count,
-            (_) => Container(
-              width: dashWidth,
-              height: 1.4,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ChooseButton extends StatelessWidget {
-  const _ChooseButton({
-    required this.isLoading,
-    required this.disabled,
-    required this.onPressed,
-  });
-
-  final bool isLoading;
-  final bool disabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    final gradient = LinearGradient(
-        colors: [primary, const Color(0xFFFF7093)]);
-    return GestureDetector(
-      onTap: (isLoading || disabled) ? null : onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(vertical: 15.h),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: primary.withValues(alpha: 0.32),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Center(
-          child: isLoading
-              ? SizedBox(
-                  width: 18.w,
-                  height: 18.w,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(Colors.white),
-                  ),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'get_coupon'.tr(),
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    6.kw,
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 16.sp,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-}
+String _fmtPercent(double v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1);

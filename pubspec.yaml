@@ -116,6 +116,8 @@ flutter:
     - assets/icons/detail/
     - assets/icons/background/
     - assets/icons/notification/
+    - assets/icons/profile/
+    - assets/icons/coupons/
     - assets/images/
     - assets/images/banner/
     - assets/images/pay/

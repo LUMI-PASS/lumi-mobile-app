@@ -18,10 +18,12 @@ class HomeHeader extends StatelessWidget {
     super.key,
     required this.name,
     required this.onSearchTap,
+    required this.onProfileTap,
   });
 
   final String name;
   final VoidCallback onSearchTap;
+  final VoidCallback onProfileTap;
 
   @override
   Widget build(BuildContext context) {
@@ -30,35 +32,47 @@ class HomeHeader extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Row(
         children: [
-          Container(
-            width: 40.w,
-            height: 40.w,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: c.control,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: c.controlBorder),
-            ),
-            child: HomeIcon(Assets.icons.home.user,
-                size: 24, color: c.textSecondary),
-          ),
-          8.horizontalSpace,
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${'greeting'.tr()},',
-                  style: AppText.regular13.copyWith(color: AppColors.greeting),
-                ),
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.semibold16.copyWith(color: c.textPrimary),
-                ),
-              ],
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onProfileTap,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.control,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: c.controlBorder),
+                    ),
+                    child: HomeIcon(Assets.icons.home.user,
+                        size: 24, color: c.textSecondary),
+                  ),
+                  8.horizontalSpace,
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${'greeting'.tr()},',
+                          style: AppText.regular13
+                              .copyWith(color: AppColors.greeting),
+                        ),
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.semibold16
+                              .copyWith(color: c.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           8.horizontalSpace,

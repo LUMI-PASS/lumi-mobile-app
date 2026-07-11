@@ -18,13 +18,12 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/styles/theme_mode_notifier.dart';
+import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
-import 'package:lumi_pass/common/widget/language_bottom_sheet.dart';
-import 'package:lumi_pass/presentation/app/profile/profile_detail/profile_detail_bottomsheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_state.dart';
 
@@ -63,6 +62,40 @@ class ProfilePage
         context.router.replaceAll([LoginRoute()]);
       }
     }
+  }
+
+  /// The account screen owns the edit form and the delete confirmation, but
+  /// not the delete itself — it pops `true` and we run it here, where the
+  /// post-delete navigation lives.
+  ///
+  /// The parent we already hold is handed over, so the screen doesn't refetch
+  /// it. `push` is left untyped on purpose: `push<bool>` makes auto_route cast
+  /// the page to `AutoRoutePage<bool>` and throw.
+  Future<void> _openAccountDetails(
+    BuildContext context,
+    ProfileCubit cubit,
+    HomForUser user,
+  ) async {
+    final deleteRequested = await context.router.push(
+      ProfileDetailRoute(user: user),
+    );
+    if (deleteRequested == true) {
+      await cubit.deleteAccount();
+    } else {
+      await cubit.refreshSilently();
+    }
+  }
+
+  /// Child details, in edit mode when [child] is given and add mode when it
+  /// isn't. The screen saves through its own cubit, so we just refresh the
+  /// children strip once it comes back.
+  Future<void> _openChildDetails(
+    BuildContext context,
+    ProfileCubit cubit,
+    ChildModel? child,
+  ) async {
+    await context.router.push(ChildDetailRoute(child: child));
+    await cubit.refreshSilently();
   }
 
   Future<void> _shareApp(BuildContext context) async {
@@ -258,7 +291,9 @@ class ProfilePage
                       _ProfileHeaderCard(
                         name: displayName,
                         phone: user?.phoneNumber,
-                        onEdit: () => ProfileDetailBottomsheet.show(context),
+                        onEdit: user == null
+                            ? null
+                            : () => _openAccountDetails(context, cubit, user),
                       ),
                     if (!showGuest) ...[
                       20.kh,
@@ -266,8 +301,9 @@ class ProfilePage
                       12.kh,
                       _ChildrenSection(
                         children: state.children,
-                        onTap: () =>
-                            context.router.push(const ChildrenRoute()),
+                        onEdit: (child) =>
+                            _openChildDetails(context, cubit, child),
+                        onAdd: () => _openChildDetails(context, cubit, null),
                       ),
                     ],
                     20.kh,
@@ -288,10 +324,8 @@ class ProfilePage
                       iconAsset: _ProfileIcons.language,
                       label: 'select_language'.tr(),
                       trailingValue: context.locale.languageCode.toUpperCase(),
-                      onTap: () => showLanguageBottomSheet(
-                        context,
-                        onChanged: () => setState(() {}),
-                      ),
+                      onTap: () =>
+                          context.router.push(const ChangeLanguageRoute()),
                     ),
                     8.kh,
                     _MenuRow(
@@ -364,7 +398,9 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   final String name;
   final String? phone;
-  final VoidCallback onEdit;
+
+  /// Null until the parent has loaded — there is nothing to edit yet.
+  final VoidCallback? onEdit;
 
   String get _initials {
     final parts = name.trim().split(RegExp(r'\s+'));
@@ -444,10 +480,15 @@ class _ProfileHeaderCard extends StatelessWidget {
 
 /// Horizontal "Мои дети" strip — child avatars followed by an add-child slot.
 class _ChildrenSection extends StatelessWidget {
-  const _ChildrenSection({required this.children, required this.onTap});
+  const _ChildrenSection({
+    required this.children,
+    required this.onEdit,
+    required this.onAdd,
+  });
 
   final List<ChildModel> children;
-  final VoidCallback onTap;
+  final ValueChanged<ChildModel> onEdit;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -460,9 +501,9 @@ class _ChildrenSection extends StatelessWidget {
           for (final child in children)
             Padding(
               padding: EdgeInsets.only(right: 8.w),
-              child: _ChildChip(child: child, onTap: onTap),
+              child: _ChildChip(child: child, onTap: () => onEdit(child)),
             ),
-          _AddChildChip(onTap: onTap),
+          _AddChildChip(onTap: onAdd),
         ],
       ),
     );
@@ -490,19 +531,29 @@ class _ChildChip extends StatelessWidget {
         width: 72.w,
         child: Column(
           children: [
-            Container(
-              width: 48.w,
-              height: 48.w,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.brandPurple.withOpacity(0.12),
-              ),
-              child: Text(
-                _initial,
-                style:
-                    AppText.semibold16.copyWith(color: AppColors.brandPurple),
-              ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 48.w,
+                  height: 48.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.brandPurple.withOpacity(0.12),
+                  ),
+                  child: Text(
+                    _initial,
+                    style: AppText.semibold16
+                        .copyWith(color: AppColors.brandPurple),
+                  ),
+                ),
+                Positioned(
+                  right: -2.w,
+                  bottom: -2.w,
+                  child: _EditBadge(onTap: onTap),
+                ),
+              ],
             ),
             6.kh,
             Text(
@@ -512,6 +563,32 @@ class _ChildChip extends StatelessWidget {
               style: AppText.medium12.copyWith(color: c.textPrimary),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The pencil badge hanging off a child avatar — opens that child's details.
+class _EditBadge extends StatelessWidget {
+  const _EditBadge({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ControlChip(
+      onTap: onTap,
+      width: 22.w,
+      height: 22.w,
+      padding: EdgeInsets.zero,
+      borderWidth: 1.5,
+      child: Assets.icons.profile.icEdit.svg(
+        width: 12.w,
+        height: 12.w,
+        colorFilter: ColorFilter.mode(
+          context.colors.textSecondary,
+          BlendMode.srcIn,
         ),
       ),
     );

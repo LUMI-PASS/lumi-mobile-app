@@ -1,28 +1,46 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
-import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/text_extensions.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/styles/app_shadows.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/strip_html.dart';
+import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/detail/detail_card.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/widget/schedule_widget.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+/// Hero carousel height — also the distance the top scrim fades in over.
+/// Matches the class/branch detail screens.
+const double _kHeroHeight = 300;
 
 /// Booking detail: shows full class context for one order (transaction). For
 /// pending orders the sticky CTA relaunches Paycom; for paid orders it lists
 /// every ticket inside the order so the user can open an individual receipt.
+///
+/// Built from the shared "Детали" blocks ([StretchyHero], [DetailCard],
+/// [DetailControlButton], [DetailTopScrim]) so it reads as the same screen
+/// family as class detail and branch detail.
 @RoutePage()
 class BookingDetailPage extends StatefulWidget {
   const BookingDetailPage({super.key, required this.orderId});
@@ -34,6 +52,10 @@ class BookingDetailPage extends StatefulWidget {
 }
 
 class _BookingDetailPageState extends State<BookingDetailPage> {
+  final PageController _pageController = PageController();
+  final ScrollController _scrollController = ScrollController();
+  Timer? _slideTimer;
+
   OrderDetail? _detail;
   ClassFullModel? _classFull;
   bool _loading = true;
@@ -41,19 +63,49 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   bool _cancelledLocally = false;
   String? _error;
   bool _viewLogged = false;
-  final PageController _pageController = PageController();
   int _currentImageIndex = 0;
+
+  /// 0 → hero fully visible, 1 → content scrolled under the top controls and
+  /// the frosted scrim is fully on.
+  double _topScrim = 0;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+    _startAutoSlide();
     _load();
   }
 
   @override
   void dispose() {
+    _slideTimer?.cancel();
     _pageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Fade the top scrim in over the second half of the hero, so it is fully on
+  /// by the time the first card slides under the back control.
+  void _onScroll() {
+    final start = _kHeroHeight.h * 0.45;
+    final end = _kHeroHeight.h * 0.85;
+    final t =
+        ((_scrollController.offset - start) / (end - start)).clamp(0.0, 1.0);
+    if (t != _topScrim) setState(() => _topScrim = t);
+  }
+
+  void _startAutoSlide() {
+    _slideTimer?.cancel();
+    _slideTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      final images = _images;
+      if (!mounted || images.length <= 1) return;
+      _pageController.animateToPage(
+        (_currentImageIndex + 1) % images.length,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   Future<void> _load({bool silent = false}) async {
@@ -86,7 +138,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
             'order_id': widget.orderId,
             if (detail.order.activityId != null)
               'activity_id': detail.order.activityId!,
-            if (full?.name != null) 'class_title': full!.name!,
+            // The localized string, not the raw `name` map — analytics params
+            // only carry scalars.
+            if (_classFullTitle() != null) 'class_title': _classFullTitle()!,
             'status': detail.order.effectiveDisplayStatus,
           },
         );
@@ -125,16 +179,19 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     if (!_detail!.order.isPaid) return false;
     final dateStr = _detail!.earliestTicketDate;
     if (dateStr == null || dateStr.isEmpty) return false;
-    final startTime = _detail!.tickets.firstOrNull?.startTime
-        ?? _classFull?.schedule.firstOrNull?.startTime;
+    final startTime = _detail!.tickets.firstOrNull?.startTime ??
+        _classFull?.schedule.firstOrNull?.startTime;
     try {
       final date = DateTime.parse(dateStr);
       final DateTime bookingDt;
       if (startTime != null && startTime.contains(':')) {
         final parts = startTime.split(':');
         bookingDt = DateTime(
-          date.year, date.month, date.day,
-          int.parse(parts[0]), int.parse(parts[1]),
+          date.year,
+          date.month,
+          date.day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
         );
       } else {
         bookingDt = date;
@@ -189,46 +246,63 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final c = context.colors;
+    final safeTop = MediaQuery.of(context).viewPadding.top;
+    final safeBottom = MediaQuery.of(context).viewPadding.bottom;
 
     if (_loading) {
       return Scaffold(
-        body: const _BookingDetailShimmer(),
+        backgroundColor: c.scaffoldBg,
+        body: _BookingDetailShimmer(c: c),
       );
     }
     if (_error != null || _detail == null) {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.router.maybePop(),
-          ),
-        ),
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline,
-                    size: 48.w, color: Colors.red.shade400),
-                16.kh,
-                'booking_could_not_load'.tr().s(16).w(600),
-                8.kh,
-                Text(
-                  _error ?? '',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+        backgroundColor: c.scaffoldBg,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Positioned(
+                top: 8.h,
+                left: 16.w,
+                child: DetailControlButton(
+                  onTap: () => context.router.maybePop(),
+                  child: HomeIcon(Assets.icons.home.arrow,
+                      size: 16, color: AppColors.ink),
                 ),
-                16.kh,
-                TextButton(
-                  onPressed: _load,
-                  child: Text('booking_retry'.tr()),
+              ),
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'booking_could_not_load'.tr(),
+                        textAlign: TextAlign.center,
+                        style:
+                            AppText.semibold16.copyWith(color: c.textPrimary),
+                      ),
+                      16.verticalSpace,
+                      GestureDetector(
+                        onTap: _load,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24.w, vertical: 12.h),
+                          decoration: BoxDecoration(
+                            color: c.primary,
+                            borderRadius: BorderRadius.circular(40.r),
+                          ),
+                          child: Text('booking_retry'.tr(),
+                              style: AppText.semibold14
+                                  .copyWith(color: c.onPrimary)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
@@ -236,421 +310,419 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
     final detail = _detail!;
     final order = detail.order;
-    final images = _resolveImages();
+    final title = _classFullTitle() ?? order.activityName ?? '';
+    final description = _classDescription();
+    final branch = _branchTitle();
+    final showReceipt =
+        order.isPaid && !_cancelledLocally && !order.isCanceled;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  width: 1.sw,
-                  height: 300.h,
-                  child: Stack(
+    // Over the hero the status bar sits on a photo (light icons); once the
+    // scrim takes over on a light background the icons have to flip to dark.
+    final darkIcons = !c.isDark && _topScrim > 0.5;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: darkIcons ? Brightness.dark : Brightness.light,
+        statusBarBrightness: darkIcons ? Brightness.light : Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: c.scaffoldBg,
+        body: Stack(
+          children: [
+            CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverToBoxAdapter(child: _hero(c, safeTop)),
+                SliverToBoxAdapter(
+                  child: Column(
                     children: [
-                      Positioned.fill(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(28.r),
-                            bottomRight: Radius.circular(28.r),
-                          ),
-                          child: images.isNotEmpty
-                              ? PageView.builder(
-                                  controller: _pageController,
-                                  itemCount: images.length,
-                                  onPageChanged: (i) =>
-                                      setState(() => _currentImageIndex = i),
-                                  itemBuilder: (_, i) => CachedNetworkImage(
-                                    imageUrl: images[i],
-                                    fit: BoxFit.cover,
-                                    placeholder: (_, __) => Shimmer.fromColors(
-                                      baseColor: Colors.grey.shade200,
-                                      highlightColor: Colors.grey.shade50,
-                                      child: Container(color: Colors.white),
-                                    ),
-                                    errorWidget: (_, __, ___) => Shimmer.fromColors(
-                                      baseColor: Colors.grey.shade200,
-                                      highlightColor: Colors.grey.shade50,
-                                      child: Container(color: Colors.white),
-                                    ),
-                                  ),
-                                )
-                              : Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade200,
-                                  highlightColor: Colors.grey.shade50,
-                                  child: Container(color: Colors.white),
-                                ),
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(28.r),
-                              bottomRight: Radius.circular(28.r),
-                            ),
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withOpacity(0.15),
-                                Colors.black.withOpacity(0.15),
-                                Colors.black.withOpacity(0.55),
-                              ],
-                              stops: const [0.0, 0.4, 1.0],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: MediaQuery.of(context).viewPadding.top + 10.h,
-                        left: 16.w,
-                        child: _CircleBackButton(primary: primary),
-                      ),
-                      Positioned(
-                        top: MediaQuery.of(context).viewPadding.top + 14.h,
-                        right: 16.w,
-                        child: _StatusBadge(status: _effectiveStatus),
-                      ),
-                      if (images.length > 1)
-                        Positioned(
-                          bottom: 60.h,
-                          left: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              images.length,
-                              (i) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 3),
-                                width: _currentImageIndex == i ? 20 : 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: _currentImageIndex == i
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.45),
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        bottom: 16.h,
-                        left: 20.w,
-                        right: 20.w,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 14.w, vertical: 10.h),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.35),
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                          child: (_classFullTitle() ??
-                                  order.activityName ??
-                                  'Class')
-                              .s(20)
-                              .w(700)
-                              .c(Colors.white),
-                        ),
-                      ),
+                      _mainCard(c, title, branch),
+                      if (description != null) ...[
+                        6.verticalSpace,
+                        _aboutCard(c, description),
+                      ],
+                      if (detail.tickets.isNotEmpty) ...[
+                        6.verticalSpace,
+                        _ticketsCard(c, detail, order),
+                      ],
+                      6.verticalSpace,
+                      _paymentCard(c, order, showReceipt),
+                    ],
+                  ),
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 100.h + safeBottom)),
+              ],
+            ),
+            // Frosted scrim under the top controls.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: _topScrim,
+                  child: DetailTopScrim(
+                    color: c.scaffoldBg,
+                    height: safeTop + 56.h,
+                  ),
+                ),
+              ),
+            ),
+            // Top controls over the hero.
+            Positioned(
+              top: safeTop + 8.h,
+              left: 16.w,
+              right: 16.w,
+              child: Row(
+                children: [
+                  DetailControlButton(
+                    onTap: () => context.router.maybePop(),
+                    child: HomeIcon(Assets.icons.home.arrow,
+                        size: 16, color: AppColors.ink),
+                  ),
+                  const Spacer(),
+                  _StatusChip(status: _effectiveStatus),
+                ],
+              ),
+            ),
+            // Sticky CTA.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: c.scaffoldBg,
+                  boxShadow: AppShadows.bottomBar,
+                ),
+                padding:
+                    EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + safeBottom),
+                child: _cta(c, order),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Hero image carousel ───────────────────────────────────────────────────
+  Widget _hero(AppColorScheme c, double safeTop) {
+    final images = _images;
+    return StretchyHero(
+      controller: _scrollController,
+      height: _kHeroHeight.h,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (images.isNotEmpty)
+            PageView.builder(
+              controller: _pageController,
+              itemCount: images.length,
+              onPageChanged: (i) => setState(() => _currentImageIndex = i),
+              itemBuilder: (_, i) => CachedNetworkImage(
+                imageUrl: images[i],
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _imgShimmer(c),
+                errorWidget: (_, __, ___) => _imgShimmer(c),
+              ),
+            )
+          else
+            _imgShimmer(c),
+          // Top scrim — a soft dark fade so the light controls stay legible
+          // over bright / near-white hero images.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: safeTop + 72.h,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.28),
+                      Colors.black.withValues(alpha: 0),
                     ],
                   ),
                 ),
               ),
-              SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    16.kh,
-                    if (detail.tickets.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          Icon(Icons.confirmation_number_rounded,
-                              color: primary, size: 20.w),
-                          8.kw,
-                          'your_tickets'
-                              .tr()
-                              .s(16)
-                              .w(700)
-                              .c(const Color(0xFF1E293B)),
-                          const Spacer(),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 3.h),
-                            decoration: BoxDecoration(
-                              color: primary.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Text(
-                              'tickets_count'
-                                  .tr(args: ['${detail.tickets.length}']),
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w700,
-                                color: primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      12.kh,
-                      ...detail.tickets.map((t) {
-                            final ticketCancelled = _cancelledLocally ||
-                                order.isCanceled ||
-                                t.status.toLowerCase() == 'canceled';
-                            // Per-ticket paid price: scale ticket.price by the
-                            // order-level discount ratio so each age-tier gets
-                            // the correct share.
-                            num? paidPerTicket;
-                            if (order.hasDiscount &&
-                                order.subtotalAmount > 0) {
-                              paidPerTicket = (t.price *
-                                      order.totalAmount /
-                                      order.subtotalAmount)
-                                  .round();
-                            }
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 10.h),
-                              child: _TicketRow(
-                                ticket: t,
-                                className:
-                                    _classFullTitle() ?? order.activityName,
-                                branch: _branchTitle(),
-                                primary: primary,
-                                orderId: order.id,
-                                canCancel: _canCancel(),
-                                isCancelled: ticketCancelled,
-                                onCanceled: _onCancelled,
-                                paidPrice: paidPerTicket,
-                                fromPromocode: order.isPromocodeDiscount,
-                              ),
-                            );
-                          }),
-                      8.kh,
-                    ],
-                    _InfoCard(
-                      icon: Icons.payments_outlined,
-                      iconBg: order.isPending
-                          ? const Color(0xFFFFF7ED)
-                          : const Color(0xFFECFDF5),
-                      iconColor: order.isPending
-                          ? const Color(0xFFEA580C)
-                          : const Color(0xFF059669),
-                      label: order.isPending
-                          ? 'amount_due'.tr()
-                          : 'amount_paid'.tr(),
-                      valueWidget: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (order.hasDiscount)
-                            Text(
-                              order.subtotalAmount.toRawUzsPrice(),
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF94A3B8),
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                            ),
-                          Text(
-                            order.totalAmount.toRawUzsPrice(),
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w800,
-                              color: order.isPending
-                                  ? const Color(0xFFEA580C)
-                                  : const Color(0xFF059669),
-                            ),
-                          ),
-                          if (order.hasDiscount)
-                            Container(
-                              margin: EdgeInsets.only(top: 4.h),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w, vertical: 3.h),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.local_offer_rounded,
-                                      size: 11.sp,
-                                      color: const Color(0xFF16A34A)),
-                                  4.kw,
-                                  Text(
-                                    '${'booking_coupon_saved'.tr()} ${order.discountAmount.toRawUzsPrice()}',
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF16A34A),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (order.isPaid &&
-                        !_cancelledLocally &&
-                        !order.isCanceled) ...[
-                      12.kh,
-                      _ReceiptCard(primary: primary, onTap: _openReceipt),
-                    ],
-                    if (_branchTitle() != null) ...[
-                      12.kh,
-                      _InfoCard(
-                        icon: Icons.location_on_outlined,
-                        iconBg: const Color(0xFFF5F3FF),
-                        iconColor: const Color(0xFF7C3AED),
-                        label: 'booking_location'.tr(),
-                        value: _branchTitle()!,
-                      ),
-                    ],
-                    if (_classDescription() != null) ...[
-                      20.kh,
-                      Container(
-                        padding: EdgeInsets.all(16.w),
+            ),
+          ),
+          if (images.length > 1)
+            Positioned(
+              bottom: 12.h,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: FrostedCard(
+                  hasBorder: false,
+                  boxShadow: AppShadows.control,
+                  borderRadius: BorderRadius.circular(32.r),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(images.length, (i) {
+                      final active = i == _currentImageIndex;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: EdgeInsets.symmetric(horizontal: 3.w),
+                        width: 8.w,
+                        height: 8.w,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(18.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF3C539A).withOpacity(0.08),
-                              blurRadius: 18,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
+                          color:
+                              active ? AppColors.ink : const Color(0xFFCECDD6),
+                          shape: BoxShape.circle,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 36.w,
-                                  height: 36.h,
-                                  decoration: BoxDecoration(
-                                    color: primary.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Icon(Icons.info_outline_rounded,
-                                      color: primary, size: 18.w),
-                                ),
-                                10.kw,
-                                'booking_about'
-                                    .tr()
-                                    .s(16)
-                                    .w(700)
-                                    .c(const Color(0xFF1E293B)),
-                              ],
-                            ),
-                            14.kh,
-                            Text(
-                              _classDescription()!,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(0xFF4B5563),
-                                height: 1.6,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    140.kh,
-                  ]),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imgShimmer(AppColorScheme c) => Shimmer.fromColors(
+        baseColor: c.surface,
+        highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
+        child: Container(color: c.surface),
+      );
+
+  // ─── Title + location ──────────────────────────────────────────────────────
+  Widget _mainCard(AppColorScheme c, String title, String? branch) {
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
+          if (branch != null && branch.isNotEmpty) ...[
+            16.verticalSpace,
+            _DetailPill(
+              c: c,
+              icon: Assets.icons.detail.icLocation,
+              label: 'booking_location'.tr(),
+              value: branch,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ─── Tickets ───────────────────────────────────────────────────────────────
+  Widget _ticketsCard(AppColorScheme c, OrderDetail detail, UserOrder order) {
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: DetailCardHeader(
+                  c: c,
+                  icon: Assets.icons.detail.iconsaxTicketDiscount,
+                  iconGradient: AppGradients.brand,
+                  title: 'your_tickets'.tr(),
+                ),
+              ),
+              8.horizontalSpace,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: c.control,
+                  borderRadius: BorderRadius.circular(40.r),
+                ),
+                child: Text(
+                  'tickets_count'.tr(args: ['${detail.tickets.length}']),
+                  style: AppText.semibold12.copyWith(color: c.textPrimary),
                 ),
               ),
             ],
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
+          16.verticalSpace,
+          ...List.generate(detail.tickets.length, (i) {
+            final t = detail.tickets[i];
+            final cancelled = _cancelledLocally ||
+                order.isCanceled ||
+                t.status.toLowerCase() == 'canceled';
+            // Per-ticket paid price: scale ticket.price by the order-level
+            // discount ratio so each age-tier gets the correct share.
+            num? paidPerTicket;
+            if (order.hasDiscount && order.subtotalAmount > 0) {
+              paidPerTicket =
+                  (t.price * order.totalAmount / order.subtotalAmount).round();
+            }
+            return Padding(
               padding: EdgeInsets.only(
-                left: 16.w,
-                right: 16.w,
-                bottom: MediaQuery.of(context).viewPadding.bottom + 16.h,
-                top: 20.h,
+                  bottom: i == detail.tickets.length - 1 ? 0 : 8.h),
+              child: _TicketRow(
+                c: c,
+                ticket: t,
+                className: _classFullTitle() ?? order.activityName,
+                branch: _branchTitle(),
+                orderId: order.id,
+                canCancel: _canCancel(),
+                isCancelled: cancelled,
+                onCanceled: _onCancelled,
+                paidPrice: paidPerTicket,
+                fromPromocode: order.isPromocodeDiscount,
               ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    context.colors.scaffoldBg.withOpacity(0),
-                    context.colors.scaffoldBg.withOpacity(0.95),
-                    context.colors.scaffoldBg,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ─── Payment + fiscal receipt ──────────────────────────────────────────────
+  Widget _paymentCard(AppColorScheme c, UserOrder order, bool showReceipt) {
+    final amountColor = order.isPending ? AppColors.warning : AppColors.green;
+
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DetailCardHeader(
+            c: c,
+            icon: Assets.icons.home.money,
+            iconGradient: const LinearGradient(
+              colors: [AppColors.brandPink, AppColors.brandPink],
+            ),
+            title: order.isPending ? 'amount_due'.tr() : 'amount_paid'.tr(),
+          ),
+          16.verticalSpace,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (order.hasDiscount)
+                      Text(
+                        order.subtotalAmount.toRawUzsPrice(),
+                        style: AppText.regular13.copyWith(
+                          color: c.textMuted,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    Text(
+                      order.totalAmount.toRawUzsPrice(),
+                      style: AppText.heading20.copyWith(color: amountColor),
+                    ),
                   ],
-                  stops: const [0.0, 0.35, 0.6],
                 ),
               ),
-              child: _buildCta(primary),
+              if (order.hasDiscount)
+                Flexible(
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(40.r),
+                    ),
+                    child: Text(
+                      '${'booking_coupon_saved'.tr()} '
+                      '${order.discountAmount.toRawUzsPrice()}',
+                      maxLines: 2,
+                      style:
+                          AppText.semibold12.copyWith(color: AppColors.green),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (showReceipt) ...[
+            12.verticalSpace,
+            _DetailPill(
+              c: c,
+              icon: Assets.icons.detail.iconsaxReceipt,
+              label: 'fiscal_receipt_subtitle'.tr(),
+              value: 'fiscal_receipt'.tr(),
+              action: 'view_all'.tr(),
+              onTap: _openReceipt,
             ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ─── About the class ───────────────────────────────────────────────────────
+  Widget _aboutCard(AppColorScheme c, String description) {
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DetailCardHeader(
+            c: c,
+            icon: Assets.icons.detail.iconsaxQuestionMark,
+            iconGradient: AppGradients.indigo,
+            title: 'booking_about'.tr(),
+          ),
+          16.verticalSpace,
+          Text(
+            description,
+            textAlign: TextAlign.justify,
+            style: AppText.regular14.copyWith(color: c.textPrimary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCta(Color primary) {
-    final order = _detail!.order;
-
+  // ─── Sticky CTA ────────────────────────────────────────────────────────────
+  ///
+  /// Only a pending order has an action ("pay now") — everything else is a
+  /// terminal state, so the bar states it rather than offering a dead button.
+  Widget _cta(AppColorScheme c, UserOrder order) {
     if (_cancelledLocally || order.isCanceled) {
-      return _CtaButton(
+      return _StatusBar(
+        c: c,
         label: 'booking_cancelled_label'.tr(),
-        color: Colors.grey.shade400,
-        icon: Icons.cancel_outlined,
-        enabled: false,
+        color: AppColors.error,
       );
     }
-
     if (order.isPending) {
       final requiresBooking =
           _classFull?.category?.requiresBookingTimeSlot == true;
       if (requiresBooking) {
-        return _CtaButton(
+        return _StatusBar(
+          c: c,
           label: 'status_in_process'.tr(),
-          color: const Color(0xFF7C3AED),
-          icon: Icons.hourglass_empty_rounded,
-          enabled: false,
+          color: AppColors.brandPurple,
         );
       }
-      return _CtaButton(
-        label: _launchingPayment ? 'opening_payment'.tr() : 'pay_now'.tr(),
-        color: primary,
-        icon: Icons.payments_rounded,
-        enabled: !_launchingPayment,
+      return GradientButton(
+        text: _launchingPayment ? 'opening_payment'.tr() : 'pay_now'.tr(),
         loading: _launchingPayment,
-        onTap: _pay,
+        onPressed: _pay,
       );
     }
-
-    return _CtaButton(
-      label: 'order_paid'.tr(),
-      color: const Color(0xFF16A34A),
-      icon: Icons.check_circle_outline,
-      enabled: false,
-    );
+    return _StatusBar(c: c, label: 'order_paid'.tr(), color: AppColors.green);
   }
 
-  List<String> _resolveImages() {
+  // ─── Data helpers ──────────────────────────────────────────────────────────
+  List<String> get _images {
+    final detail = _detail;
+    if (detail == null) return const [];
     final imgs = <String>[];
-    final classImages = _classFull?.images ?? const [];
-    imgs.addAll(classImages.where((s) => s.isNotEmpty));
-    final classCover = _classFull?.imageUrl;
-    if (classCover != null && classCover.isNotEmpty && !imgs.contains(classCover)) {
-      imgs.insert(0, classCover);
+    imgs.addAll((_classFull?.images ?? const []).where((s) => s.isNotEmpty));
+    final cover = _classFull?.imageUrl;
+    if (cover != null && cover.isNotEmpty && !imgs.contains(cover)) {
+      imgs.insert(0, cover);
     }
-    final orderImage = _detail!.order.activityImage;
+    final orderImage = detail.order.activityImage;
     if (imgs.isEmpty && orderImage != null && orderImage.isNotEmpty) {
       imgs.add(orderImage);
     }
@@ -672,9 +744,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     return clean.isEmpty ? null : clean;
   }
 
-  String? _branchTitle() {
-    return _classFull?.branch?.title;
-  }
+  String? _branchTitle() => _classFull?.branch?.title;
 
   String? _readLang(Map<String, dynamic> field) {
     final code = context.locale.languageCode;
@@ -683,12 +753,179 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   }
 }
 
+// ─── Reusable pieces ─────────────────────────────────────────────────────────
+
+/// Status colours + label for an order's display status. Kept in one place so
+/// the hero chip and the sticky bar can't drift apart.
+({Color color, String label}) _statusStyle(String status) {
+  switch (status.toLowerCase()) {
+    case 'active':
+    case 'paid':
+      return (color: AppColors.green, label: 'status_active'.tr());
+    case 'visited':
+      return (color: AppColors.link, label: 'status_visited'.tr());
+    case 'missed':
+      return (color: AppColors.warning, label: 'status_missed'.tr());
+    case 'in_process':
+      return (color: AppColors.brandPurple, label: 'status_in_process'.tr());
+    case 'canceled_by_centre':
+      return (
+        color: AppColors.error,
+        label: 'status_canceled_by_centre'.tr(),
+      );
+    case 'canceled':
+    case 'cancelled':
+      return (color: AppColors.error, label: 'order_cancelled'.tr());
+    default:
+      return (color: AppColors.warning, label: 'order_pending'.tr());
+  }
+}
+
+/// Status chip floating over the hero. Frosted (always light) because it sits
+/// on the photo — only the dot and the label carry the status colour.
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = _statusStyle(status);
+    return FrostedCard(
+      hasBorder: false,
+      boxShadow: AppShadows.control,
+      borderRadius: BorderRadius.circular(40.r),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8.w,
+            height: 8.w,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: s.color),
+          ),
+          6.horizontalSpace,
+          Text(s.label, style: AppText.semibold12.copyWith(color: s.color)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Terminal-state bar in the CTA slot — states what happened to the order
+/// instead of offering a button that does nothing.
+class _StatusBar extends StatelessWidget {
+  const _StatusBar({required this.c, required this.label, required this.color});
+
+  final AppColorScheme c;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50.h,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(44.r),
+      ),
+      child: Text(label, style: AppText.semibold16.copyWith(color: color)),
+    );
+  }
+}
+
+/// Rounded pill row inside a detail card: a circular icon tile, a muted label
+/// with its value, and an optional trailing action chip.
+class _DetailPill extends StatelessWidget {
+  const _DetailPill({
+    required this.c,
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.action,
+    this.onTap,
+  });
+
+  final AppColorScheme c;
+  final SvgGenImage icon;
+  final String label;
+  final String value;
+
+  /// Trailing chip. Purely an affordance — the tap target is the whole pill.
+  final String? action;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final act = action;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
+        decoration: BoxDecoration(
+          color: c.control,
+          borderRadius: BorderRadius.circular(40.r),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40.w,
+              height: 40.w,
+              alignment: Alignment.center,
+              decoration:
+                  BoxDecoration(color: c.surface, shape: BoxShape.circle),
+              child: HomeIcon(icon, size: 16, color: c.textPrimary),
+            ),
+            8.horizontalSpace,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          AppText.regular12.copyWith(color: c.textSecondary)),
+                  4.verticalSpace,
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+            if (act != null) ...[
+              8.horizontalSpace,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: detailChipFill(c),
+                  borderRadius: BorderRadius.circular(40.r),
+                ),
+                child: Text(act,
+                    style: AppText.regular12.copyWith(color: c.textPrimary)),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One ticket inside the order. Tapping opens its receipt; a cancelled ticket
+/// is inert and reads as a muted row with a red status chip.
 class _TicketRow extends StatelessWidget {
   const _TicketRow({
+    required this.c,
     required this.ticket,
     required this.className,
     required this.branch,
-    required this.primary,
     this.orderId,
     this.canCancel = false,
     this.isCancelled = false,
@@ -697,160 +934,105 @@ class _TicketRow extends StatelessWidget {
     this.fromPromocode = false,
   });
 
+  final AppColorScheme c;
   final OrderTicket ticket;
   final String? className;
   final String? branch;
-  final Color primary;
   final String? orderId;
   final bool canCancel;
   final bool isCancelled;
   final VoidCallback? onCanceled;
+
   /// True when the discount came from a promocode (vs an auto coupon plan).
   final bool fromPromocode;
+
   /// Per-ticket amount actually paid (after coupon discount). Null = no discount.
   final num? paidPrice;
 
   @override
   Widget build(BuildContext context) {
-    final iconColor =
-        isCancelled ? Colors.grey.shade400 : primary;
-    final iconBg = isCancelled
-        ? Colors.grey.shade100
-        : primary.withOpacity(0.08);
-    final titleColor = isCancelled
-        ? const Color(0xFF94A3B8)
-        : const Color(0xFF1E293B);
-    final subColor = isCancelled
-        ? const Color(0xFFCBD5E1)
-        : const Color(0xFF64748B);
+    final titleColor = isCancelled ? c.textMuted : c.textPrimary;
+    final subColor = isCancelled ? c.textMuted : c.textSecondary;
+    final discounted = paidPrice != null && paidPrice != ticket.price;
 
     final card = Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.fromLTRB(8.w, 8.h, 12.w, 8.h),
       decoration: BoxDecoration(
-        color: isCancelled ? const Color(0xFFF8FAFC) : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isCancelled
-              ? const Color(0xFFE2E8F0)
-              : const Color(0xFFE2E8F0),
-        ),
+        color: c.control,
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
         children: [
           Container(
-            width: 44.w,
-            height: 44.w,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(Icons.confirmation_number_rounded,
-                color: iconColor, size: 22.w),
+            width: 40.w,
+            height: 40.w,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle),
+            child: HomeIcon(Assets.icons.detail.iconsaxTicketDiscount,
+                size: 20, color: titleColor),
           ),
-          12.kw,
+          8.horizontalSpace,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   ticket.ticketNo != null
                       ? '#${ticket.ticketNo}'
                       : 'ticket_pending_label'.tr(),
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
-                    color: titleColor,
-                  ),
+                  style: AppText.semibold14.copyWith(color: titleColor),
                 ),
-                4.kh,
-                Row(
+                4.verticalSpace,
+                // Wrap, not Row: the date, the time window and a struck-through
+                // original price together overflow a phone width on the long
+                // locales, so they flow onto a second line instead.
+                Wrap(
+                  spacing: 8.w,
+                  runSpacing: 2.h,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Icon(Icons.calendar_today_rounded,
-                        size: 11.sp, color: subColor),
-                    4.kw,
-                    Text(
-                      ticket.ticketDate,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: subColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    10.kw,
-                    Icon(Icons.payments_outlined,
-                        size: 11.sp, color: subColor),
-                    4.kw,
-                    if (paidPrice != null && paidPrice != ticket.price) ...[
+                    Text(ticket.ticketDate,
+                        style: AppText.regular12.copyWith(color: subColor)),
+                    if (ticket.startTime != null && ticket.endTime != null)
+                      Text('${ticket.startTime} – ${ticket.endTime}',
+                          style: AppText.regular12.copyWith(color: subColor)),
+                    if (discounted)
                       Text(
                         ticket.price.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: subColor,
-                          fontWeight: FontWeight.w500,
+                        style: AppText.regular12.copyWith(
+                          color: c.textMuted,
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
-                      4.kw,
-                      Text(
-                        paidPrice!.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: const Color(0xFF16A34A),
-                          fontWeight: FontWeight.w700,
-                        ),
+                    Text(
+                      (discounted ? paidPrice! : ticket.price).toRawUzsPrice(),
+                      style: AppText.semibold12.copyWith(
+                        color: isCancelled
+                            ? c.textMuted
+                            : discounted
+                                ? AppColors.green
+                                : c.textPrimary,
                       ),
-                    ] else
-                      Text(
-                        ticket.price.toRawUzsPrice(),
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: subColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    ),
                   ],
                 ),
-                if (ticket.startTime != null && ticket.endTime != null) ...[
-                  4.kh,
-                  Row(
-                    children: [
-                      Icon(Icons.access_time_rounded,
-                          size: 11.sp, color: subColor),
-                      4.kw,
-                      Text(
-                        '${ticket.startTime} – ${ticket.endTime}',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: subColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
+          8.horizontalSpace,
           if (isCancelled)
             Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.circular(8.r),
+                color: AppColors.error.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(40.r),
               ),
-              child: Text(
-                'order_cancelled'.tr(),
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFFEF4444),
-                ),
-              ),
+              child: Text('order_cancelled'.tr(),
+                  style: AppText.semibold12.copyWith(color: AppColors.error)),
             )
           else
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: 14.sp, color: const Color(0xFF94A3B8)),
+            HomeIcon(Assets.icons.detail.arrow, size: 16, color: c.textMuted),
         ],
       ),
     );
@@ -876,327 +1058,37 @@ class _TicketRow extends StatelessWidget {
   }
 }
 
-class _CircleBackButton extends StatelessWidget {
-  const _CircleBackButton({required this.primary});
-  final Color primary;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withOpacity(0.85),
-      borderRadius: BorderRadius.circular(14.r),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14.r),
-        onTap: () => context.router.maybePop(),
-        child: Container(
-          width: 42.w,
-          height: 42.h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14.r),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4)),
-            ],
-          ),
-          child: Center(
-            child: Icon(Icons.arrow_back_ios_new,
-                color: primary, size: 18.w),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color color;
-    final String label;
-    switch (status.toLowerCase()) {
-      case 'active':
-      case 'paid':
-        color = const Color(0xFF16A34A);
-        label = 'status_active'.tr();
-        break;
-      case 'visited':
-        color = const Color(0xFF2563EB);
-        label = 'status_visited'.tr();
-        break;
-      case 'missed':
-        color = const Color(0xFFF59E0B);
-        label = 'status_missed'.tr();
-        break;
-      case 'in_process':
-        color = const Color(0xFF7C3AED);
-        label = 'status_in_process'.tr();
-        break;
-      case 'canceled_by_centre':
-        color = const Color(0xFFEF4444);
-        label = 'status_canceled_by_centre'.tr();
-        break;
-      case 'canceled':
-      case 'cancelled':
-        color = const Color(0xFFEF4444);
-        label = 'order_cancelled'.tr();
-        break;
-      default:
-        color = const Color(0xFFF59E0B);
-        label = 'order_pending'.tr();
-    }
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-              width: 8.w,
-              height: 8.w,
-              decoration:
-                  BoxDecoration(shape: BoxShape.circle, color: color)),
-          6.kw,
-          label.s(12).w(600).c(color),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.label,
-    this.value,
-    this.valueWidget,
-  });
-  final IconData icon;
-  final Color iconBg, iconColor;
-  final String label;
-  final String? value;
-  final Widget? valueWidget;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-              color: const Color(0xFF3C539A).withOpacity(0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 8))
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48.w,
-            height: 48.h,
-            decoration: BoxDecoration(
-                color: iconBg, borderRadius: BorderRadius.circular(14.r)),
-            child: Icon(icon, color: iconColor, size: 22.w),
-          ),
-          12.kw,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                label.s(11).w(500).c(const Color(0xFF64748B)),
-                4.kh,
-                valueWidget ?? (value ?? '').s(14).w(600).c(const Color(0xFF1E293B)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Tappable card on the paid-order detail that opens the official OFD/Soliq
-/// fiscal receipt (full page on mobile, new tab on web).
-class _ReceiptCard extends StatelessWidget {
-  const _ReceiptCard({required this.primary, required this.onTap});
-  final Color primary;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withOpacity(0.9),
-      borderRadius: BorderRadius.circular(18.r),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18.r),
-        onTap: onTap,
-        child: Container(
-          padding: EdgeInsets.all(14.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18.r),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF3C539A).withOpacity(0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48.w,
-                height: 48.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Icon(Icons.receipt_long_rounded,
-                    color: const Color(0xFF2563EB), size: 22.w),
-              ),
-              12.kw,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    'fiscal_receipt'.tr().s(14).w(700).c(const Color(0xFF1E293B)),
-                    4.kh,
-                    'fiscal_receipt_subtitle'
-                        .tr()
-                        .s(11)
-                        .w(500)
-                        .c(const Color(0xFF64748B)),
-                  ],
-                ),
-              ),
-              Icon(Icons.arrow_forward_ios_rounded,
-                  size: 14.sp, color: const Color(0xFF94A3B8)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _BookingDetailShimmer extends StatelessWidget {
-  const _BookingDetailShimmer();
+  const _BookingDetailShimmer({required this.c});
+
+  final AppColorScheme c;
 
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade50,
+      baseColor: c.surface,
+      highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              height: 300.h,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(28.r),
-                  bottomRight: Radius.circular(28.r),
-                ),
-              ),
-            ),
-            16.kh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Column(
-                children: List.generate(
-                  4,
-                  (_) => Padding(
-                    padding: EdgeInsets.only(bottom: 12.h),
-                    child: Container(
-                      height: 76.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18.r),
-                      ),
-                    ),
+            Container(height: _kHeroHeight.h, color: c.surface),
+            6.verticalSpace,
+            ...List.generate(
+              3,
+              (_) => Padding(
+                padding: EdgeInsets.only(bottom: 6.h),
+                child: Container(
+                  height: 100.h,
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CtaButton extends StatelessWidget {
-  const _CtaButton({
-    required this.label,
-    required this.color,
-    this.icon,
-    this.enabled = true,
-    this.loading = false,
-    this.onTap,
-  });
-  final String label;
-  final Color color;
-  final IconData? icon;
-  final bool enabled, loading;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: enabled ? color : color.withOpacity(0.5),
-      borderRadius: BorderRadius.circular(18.r),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18.r),
-        onTap: enabled ? onTap : null,
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18.r),
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                        color: color.withOpacity(0.34),
-                        blurRadius: 26,
-                        offset: const Offset(0, 14))
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (loading)
-                SizedBox(
-                  width: 20.w,
-                  height: 20.w,
-                  child: const CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2),
-                )
-              else ...[
-                if (icon != null) ...[
-                  Icon(icon, color: Colors.white, size: 20.w),
-                  8.kw,
-                ],
-                label.s(16).w(700).c(Colors.white),
-              ],
-            ],
-          ),
         ),
       ),
     );

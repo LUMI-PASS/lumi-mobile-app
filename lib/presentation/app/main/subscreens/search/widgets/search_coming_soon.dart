@@ -16,10 +16,13 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search
 /// rather than an empty state. Used both by the bottom-nav tab and by the
 /// full-screen route pushed from Home.
 class SearchComingSoonView extends StatelessWidget {
-  const SearchComingSoonView({super.key, required this.onBack});
+  const SearchComingSoonView({super.key, this.onBack});
 
-  /// Back affordance — pops the pushed route, or returns to the Home tab.
-  final VoidCallback onBack;
+  /// Back affordance — set it when the screen was *pushed* onto a route (from
+  /// Home or the categories grid) so the user can get back where they came
+  /// from. Left null on the Explore bottom-nav tab, which is a root
+  /// destination: there is no previous screen, so it shows no back button.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -36,24 +39,29 @@ class SearchComingSoonView extends StatelessWidget {
             SearchTopBar(title: 'tab_explore'.tr(), onBack: onBack),
             16.verticalSpace,
             Expanded(
-              child: Stack(
-                children: [
-                  // Faint preview of the eventual search layout.
-                  Positioned.fill(child: _PreviewSkeleton()),
-                  // Frost the preview so it reads as "not ready yet".
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(color: c.scaffoldBg.withOpacity(0.6)),
+              // The ClipRect is load-bearing: a BackdropFilter frosts its whole
+              // layer, not just its own bounds, so without it the blur climbs
+              // over the top bar and smears the back button and title away.
+              child: ClipRect(
+                child: Stack(
+                  children: [
+                    // Faint preview of the eventual search layout.
+                    Positioned.fill(child: _PreviewSkeleton()),
+                    // Frost the preview so it reads as "not ready yet".
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: Container(color: c.scaffoldBg.withOpacity(0.6)),
+                      ),
                     ),
-                  ),
-                  Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 32.w),
-                      child: const _ComingSoonCard(),
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 32.w),
+                        child: const _ComingSoonCard(),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
