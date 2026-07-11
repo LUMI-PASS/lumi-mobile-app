@@ -26,6 +26,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.error,
     required this.success,
     required this.badgeBorder,
+    required this.link,
   });
 
   /// Which table this is. Drives [isDark] and [overlayStyle].
@@ -106,6 +107,9 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   /// Border that cuts the little coloured icon badges out of the background.
   final Color badgeBorder;
 
+  /// Inline text actions that aren't buttons — "Добавить фото".
+  final Color link;
+
   static const light = AppColorScheme(
     brightness: Brightness.light,
     primary: AppColors.brandPurple,
@@ -129,6 +133,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     error: AppColors.error,
     success: AppColors.green,
     badgeBorder: AppColors.white,
+    link: AppColors.lightPurple,
   );
 
   static const dark = AppColorScheme(
@@ -154,6 +159,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     error: AppColors.error,
     success: AppColors.green,
     badgeBorder: AppColors.ink,
+    link: AppColors.lightPurple,
   );
 
   bool get isDark => brightness == Brightness.dark;
@@ -192,6 +198,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? error,
     Color? success,
     Color? badgeBorder,
+    Color? link,
   }) {
     return AppColorScheme(
       brightness: brightness ?? this.brightness,
@@ -216,6 +223,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       error: error ?? this.error,
       success: success ?? this.success,
       badgeBorder: badgeBorder ?? this.badgeBorder,
+      link: link ?? this.link,
     );
   }
 
@@ -245,6 +253,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       error: Color.lerp(error, other.error, t)!,
       success: Color.lerp(success, other.success, t)!,
       badgeBorder: Color.lerp(badgeBorder, other.badgeBorder, t)!,
+      link: Color.lerp(link, other.link, t)!,
     );
   }
 }

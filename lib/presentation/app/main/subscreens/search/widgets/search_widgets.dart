@@ -32,18 +32,21 @@ class _SearchIcon extends StatelessWidget {
 
 /// Top bar — back button on the left, centered title (Figma `Header`).
 class SearchTopBar extends StatelessWidget {
-  const SearchTopBar({super.key, required this.title, this.onBack});
+  const SearchTopBar({super.key, this.title, this.onBack});
 
   /// Omit on a screen there is nothing to go back to — a root bottom-nav tab.
   /// The bar then shows the title alone, with no back affordance.
   final VoidCallback? onBack;
 
-  final String title;
+  /// Omit to show the back button alone. A pushed screen carries the title of
+  /// whatever the user was doing, not the tab's name.
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final onBack = this.onBack;
+    final title = this.title;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: SizedBox(
@@ -71,10 +74,11 @@ class SearchTopBar extends StatelessWidget {
                   ),
                 ),
               ),
-            Text(
-              title,
-              style: AppText.semibold16.copyWith(color: c.textPrimary),
-            ),
+            if (title != null)
+              Text(
+                title,
+                style: AppText.semibold16.copyWith(color: c.textPrimary),
+              ),
           ],
         ),
       ),

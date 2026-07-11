@@ -257,14 +257,28 @@ class OrdersApi {
   /// backend and returns a Paycom checkout URL. Subscription becomes active
   /// (expiring at now + tariff.duration_days) only after the user pays
   /// and Paycom calls PerformTransaction on our webhook.
+  /// [paymentProvider] is a [PaymentRail.providerKey] — `payme` / `click` /
+  /// `uzum` return a [CheckoutResult.checkoutUrl] to redirect to, while `card`
+  /// returns the Paylov OTP fields instead (see [paylovConfirmCard]). Omitting
+  /// it keeps the legacy Payme-only body.
   Future<CheckoutResult> checkoutSubscription({
     required String tariffId,
     String? lang,
+    String? paymentProvider,
+    String? cardNumber,
+    String? expireDate,
     bool test = false,
   }) async {
     final body = {
       'tariff_id': tariffId,
-      'payment_method': 'PAYME',
+      if (paymentProvider != null)
+        'payment_provider': paymentProvider
+      else
+        'payment_method': 'PAYME',
+      if (cardNumber != null && cardNumber.trim().isNotEmpty)
+        'card_number': cardNumber.replaceAll(RegExp(r'\s'), ''),
+      if (expireDate != null && expireDate.trim().isNotEmpty)
+        'expire_date': expireDate.replaceAll(RegExp(r'[^0-9]'), ''),
       if (lang != null) 'lang': lang,
     };
     final response =

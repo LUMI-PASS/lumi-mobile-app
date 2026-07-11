@@ -27,6 +27,7 @@ import 'common/base/base_page.dart';
 import 'common/env/app_env.dart';
 import 'common/env/runtime_env.dart';
 import 'common/router/app_router.dart';
+import 'common/widget/theme_transition_overlay.dart';
 import 'data/base_model/material_colors.dart';
 import 'presentation/app/cubit/app_cubit.dart';
 import 'presentation/app/cubit/app_state.dart';
@@ -239,6 +240,11 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
               deepLinkBuilder: kIsWeb ? _initialWebDeepLink : _nativeDeepLink,
             ),
             scrollBehavior: _LumiScrollBehavior(),
+            // Innermost wrapper on purpose: the theme flips above it, so the
+            // tree under its RepaintBoundary repaints with the new colors while
+            // the stale snapshot is still being clipped away on top.
+            builder: (context, child) =>
+                ThemeTransitionOverlay(child: child ?? const SizedBox.shrink()),
             color: AppColorScheme.light.primary,
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,

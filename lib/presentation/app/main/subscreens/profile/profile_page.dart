@@ -18,6 +18,10 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/styles/theme_mode_notifier.dart';
+import 'package:lumi_pass/common/utils/avatar_notifier.dart';
+import 'package:lumi_pass/common/utils/photo_urls.dart';
+import 'package:lumi_pass/common/widget/theme_transition_overlay.dart';
+import 'package:lumi_pass/common/widget/user_avatar.dart';
 import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -104,8 +108,10 @@ class ProfilePage
         : 'https://play.google.com/store/apps/details?id=uz.lumi.mobileapp';
     final text = '${'share_app_text'.tr()}\n$storeUrl';
     final box = context.findRenderObject() as RenderBox?;
-    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
-    await Share.share(text, subject: 'share_app'.tr(), sharePositionOrigin: origin);
+    final origin =
+        box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+    await Share.share(text,
+        subject: 'share_app'.tr(), sharePositionOrigin: origin);
   }
 
   void _showLogoutSheet(BuildContext context) {
@@ -158,8 +164,8 @@ class ProfilePage
                       child: Center(
                         child: Text(
                           'cancel'.tr(),
-                          style: AppText.medium16
-                              .copyWith(color: c.textPrimary),
+                          style:
+                              AppText.medium16.copyWith(color: c.textPrimary),
                         ),
                       ),
                     ),
@@ -238,7 +244,7 @@ class ProfilePage
       builder: (context, _, __) {
         final c = context.colors;
         return _buildScaffold(
-          context, state, c, showGuest, cubit, showBanner, displayName, user);
+            context, state, c, showGuest, cubit, showBanner, displayName, user);
       },
     );
   }
@@ -357,7 +363,8 @@ class ProfilePage
                         },
                       ),
                     ],
-                    if (!showGuest && _isPrivilegedPhone(user?.phoneNumber)) ...[
+                    if (!showGuest &&
+                        _isPrivilegedPhone(user?.phoneNumber)) ...[
                       12.kh,
                       const _FcmTokenTile(),
                     ],
@@ -402,14 +409,6 @@ class _ProfileHeaderCard extends StatelessWidget {
   /// Null until the parent has loaded — there is nothing to edit yet.
   final VoidCallback? onEdit;
 
-  String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    final a = parts.isNotEmpty && parts.first.isNotEmpty ? parts.first[0] : '';
-    final b = parts.length > 1 && parts[1].isNotEmpty ? parts[1][0] : '';
-    final s = (a + b).toUpperCase();
-    return s.isEmpty ? '?' : s;
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -421,17 +420,11 @@ class _ProfileHeaderCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 56.w,
-            height: 56.w,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppGradients.brand,
-            ),
-            child: Text(
-              _initials,
-              style: AppText.semibold16.copyWith(color: Colors.white),
+          ValueListenableBuilder<String?>(
+            valueListenable: parentAvatarNotifier,
+            builder: (_, __, ___) => UserAvatar(
+              file: parentAvatarFile(),
+              size: 56,
             ),
           ),
           12.kw,
@@ -521,6 +514,16 @@ class _ChildChip extends StatelessWidget {
     return (f != null && f.isNotEmpty) ? f[0].toUpperCase() : '?';
   }
 
+  Widget get _initialText => Text(
+        _initial,
+        style: AppText.semibold16.copyWith(color: AppColors.brandPurple),
+      );
+
+  /// The uploaded photo, when the child has one — the endpoint 404s otherwise.
+  String? get _photoUrl => (child.id != null && child.hasPhoto == true)
+      ? childPhotoUrl(child.id!)
+      : null;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -538,15 +541,20 @@ class _ChildChip extends StatelessWidget {
                   width: 48.w,
                   height: 48.w,
                   alignment: Alignment.center,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.brandPurple.withOpacity(0.12),
                   ),
-                  child: Text(
-                    _initial,
-                    style: AppText.semibold16
-                        .copyWith(color: AppColors.brandPurple),
-                  ),
+                  child: _photoUrl != null
+                      ? Image.network(
+                          _photoUrl!,
+                          width: 48.w,
+                          height: 48.w,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _initialText,
+                        )
+                      : _initialText,
                 ),
                 Positioned(
                   right: -2.w,
@@ -612,7 +620,8 @@ class _AddChildChip extends StatelessWidget {
             DottedCircle(
               size: 48.w,
               color: c.controlBorder,
-              child: Icon(Icons.add_rounded, size: 22.sp, color: c.textSecondary),
+              child:
+                  Icon(Icons.add_rounded, size: 22.sp, color: c.textSecondary),
             ),
             6.kh,
             Text(
@@ -800,25 +809,57 @@ class _MenuRow extends StatelessWidget {
 
 /// Dark-theme toggle, styled as a settings pill with an inline switch.
 /// Persists via [setThemeMode]; the app root applies it everywhere.
-class _ThemeToggleRow extends StatelessWidget {
+///
+/// The circular reveal grows out of the switch, so the switch carries a
+/// [GlobalKey] — its own box is the origin. A `Builder` here would hand back
+/// the whole row instead, putting the origin at the row's centre.
+class _ThemeToggleRow extends StatefulWidget {
   const _ThemeToggleRow();
+
+  @override
+  State<_ThemeToggleRow> createState() => _ThemeToggleRowState();
+}
+
+class _ThemeToggleRowState extends State<_ThemeToggleRow> {
+  final _switchKey = GlobalKey();
+
+  /// Snapshots the screen, flips the theme, then reveals it in a circle
+  /// centred on the switch. Falls back to an instant switch when the overlay
+  /// or the render box isn't there.
+  void _toggle(bool isDark) {
+    void flip() => setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark);
+
+    final overlay = ThemeTransitionOverlay.maybeOf(context);
+    final box = _switchKey.currentContext?.findRenderObject() as RenderBox?;
+    if (overlay == null || box == null) {
+      flip();
+      return;
+    }
+
+    overlay.toggleTheme(
+      position: box.localToGlobal(box.size.center(Offset.zero)),
+      isDarkening: isDark,
+      onToggle: flip,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
-        final isDark = resolveBrightness(
-                mode, MediaQuery.platformBrightnessOf(context)) ==
-            Brightness.dark;
+        final isDark =
+            resolveBrightness(mode, MediaQuery.platformBrightnessOf(context)) ==
+                Brightness.dark;
         return _MenuRow(
           icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
           label: 'dark_mode'.tr(),
-          onTap: () => setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark),
+          onTap: () => _toggle(isDark),
           trailing: Switch.adaptive(
+            key: _switchKey,
             value: isDark,
             activeColor: AppColors.brandPurple,
-            onChanged: (v) => setThemeMode(v ? ThemeMode.dark : ThemeMode.light),
+            onChanged: (_) => _toggle(isDark),
           ),
         );
       },
@@ -1020,9 +1061,8 @@ class _FcmTokenTileState extends State<_FcmTokenTile> {
                   Icon(
                     Icons.copy_outlined,
                     size: 14.w,
-                    color: hasError
-                        ? Colors.red.shade300
-                        : Colors.grey.shade500,
+                    color:
+                        hasError ? Colors.red.shade300 : Colors.grey.shade500,
                   ),
               ],
             ),
@@ -1059,7 +1099,8 @@ class _DevEnvToggleTileState extends State<_DevEnvToggleTile> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
         title: Row(
           children: [
             Icon(Icons.swap_horiz_rounded,

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -317,6 +319,46 @@ class _ShortsPageState extends State<ShortsPage> {
   }
 }
 
+/// The YouTube player, cropped to fill the slide edge to edge.
+///
+/// The player is a fixed 9:16 box; a phone is taller than that, so laying it
+/// out inside the slide leaves bars. Instead it is sized to *cover* — height
+/// pinned to the slide, width derived from it — and the overflow is clipped,
+/// which is what "fullscreen" means for a Shorts feed.
+class _CoverPlayer extends StatelessWidget {
+  const _CoverPlayer({required this.player});
+
+  final Widget player;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        // Cover: never narrower than the slide, never shorter than it.
+        final coverW = math.max(w, h * 9 / 16);
+        final coverH = coverW * 16 / 9;
+
+        return ClipRect(
+          child: OverflowBox(
+            maxWidth: double.infinity,
+            maxHeight: double.infinity,
+            child: SizedBox(
+              width: coverW,
+              height: coverH,
+              // Zoom in slightly: YouTube's channel header (top) and
+              // "Shorts"/share badge (bottom) sit at the video edges and can't
+              // be removed from the cross-origin iframe, so crop them off.
+              child: Transform.scale(scale: 1.22, child: player),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _ShortSlide extends StatelessWidget {
   const _ShortSlide({
     required this.hc,
@@ -365,39 +407,20 @@ class _ShortSlide extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // The media is full-bleed: it runs edge to edge and under the floating
+        // bottom bar. Insetting it by `bottomInset` (as this used to) letterboxed
+        // the video — dead space at the top and a visible seam where the player
+        // ended above the nav.
         if (isActive)
-          Padding(
-            padding: EdgeInsets.only(bottom: bottomInset),
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 9 / 16,
-                // Zoom in slightly and clip: YouTube's channel header (top) and
-                // "Shorts"/share badge (bottom) sit at the video edges and can't
-                // be removed from the cross-origin iframe, so crop them off.
-                child: ClipRect(
-                  child: Transform.scale(
-                    scale: 1.22,
-                    child: player,
-                  ),
-                ),
-              ),
-            ),
-          )
+          _CoverPlayer(player: player)
         else if (imageUrl != null)
-          Padding(
-            padding: EdgeInsets.only(bottom: bottomInset),
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              fit: BoxFit.cover,
-              errorWidget: (_, __, ___) =>
-                  Container(color: Colors.grey.shade900),
-            ),
+          CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            errorWidget: (_, __, ___) => Container(color: Colors.grey.shade900),
           )
         else
-          Padding(
-            padding: EdgeInsets.only(bottom: bottomInset),
-            child: Container(color: Colors.grey.shade900),
-          ),
+          Container(color: Colors.grey.shade900),
         // Tap anywhere on the video to pause/resume (native controls are
         // hidden). Sits above the player but below the text/buttons so those
         // stay tappable.

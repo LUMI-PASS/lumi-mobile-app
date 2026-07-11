@@ -888,3 +888,16 @@ coupon_to,до,gacha,to
 coupon_used_count,Использовано {used}/{total},Ishlatilgan {used}/{total},Used {used}/{total}
 child_details,Детали ребёнка,Bola ma'lumotlari,Child details
 years_suffix,лет,yosh,years
+add_photo,Добавить фото,Rasm qo'shish,Add photo
+change_photo,Изменить фото,Rasmni o'zgartirish,Change photo
+take_photo,Сделать фото,Suratga olish,Take photo
+choose_from_gallery,Выбрать из галереи,Galereyadan tanlash,Choose from gallery
+photo_upload_failed,Не удалось загрузить фото,Rasmni yuklab bo'lmadi,Could not upload the photo
+delete,Удалить,O'chirish,Delete
+delete_child,Удалить ребёнка,Bolani o'chirish,Delete child
+delete_child_subtitle,"{} будет удалён из вашего профиля. Это действие необратимо.","{} profilingizdan o'chiriladi. Bu amalni qaytarib bo'lmaydi.","{} will be removed from your profile. This cannot be undone."
+booking_cancel_warning,Внимание! После отмены бронирования это действие нельзя будет отменить.,Diqqat! Bron bekor qilingandan so‘ng bu amalni qaytarib bo‘lmaydi.,Warning! Once the booking is cancelled this cannot be undone.
+ticket_number,Билет №{},Chipta №{},Ticket #{}
+ticket_date_label,Дата:,Sana:,Date:
+ticket_time_label,Время:,Vaqt:,Time:
+ticket_details,Детали билета,Chipta tafsilotlari,Ticket details

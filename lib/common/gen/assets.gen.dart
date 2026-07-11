@@ -524,6 +524,13 @@ class $AssetsIconsCouponsGen {
   SvgGenImage get icRocket =>
       const SvgGenImage('assets/icons/coupons/ic_rocket.svg');
 
+  /// File path: assets/icons/coupons/ic_ticket_delete.svg
+  SvgGenImage get icTicketDelete =>
+      const SvgGenImage('assets/icons/coupons/ic_ticket_delete.svg');
+
+  /// File path: assets/icons/coupons/star4.svg
+  SvgGenImage get star4 => const SvgGenImage('assets/icons/coupons/star4.svg');
+
   /// List of all assets
   List<SvgGenImage> get values => [
         icAddInvoice,
@@ -531,7 +538,9 @@ class $AssetsIconsCouponsGen {
         icFiles,
         icLightning,
         icMagicSelection,
-        icRocket
+        icRocket,
+        icTicketDelete,
+        star4
       ];
 }
 
@@ -772,8 +781,12 @@ class $AssetsIconsProfileGen {
   SvgGenImage get icEdit =>
       const SvgGenImage('assets/icons/profile/ic_edit.svg');
 
+  /// File path: assets/icons/profile/ic_user.svg
+  SvgGenImage get icUser =>
+      const SvgGenImage('assets/icons/profile/ic_user.svg');
+
   /// List of all assets
-  List<SvgGenImage> get values => [icEdit];
+  List<SvgGenImage> get values => [icEdit, icUser];
 }
 
 class $AssetsImagesBannerGen {

@@ -72,7 +72,7 @@ class CategoryItemWidget extends StatelessWidget {
               Text(
                 homeCategoryModel?.title ?? '',
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppText.medium13.copyWith(color: c.textPrimary),
               ),

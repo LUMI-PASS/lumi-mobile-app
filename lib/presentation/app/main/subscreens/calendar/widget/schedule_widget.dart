@@ -3,6 +3,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
@@ -139,10 +140,10 @@ class BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final imageUrl = (order.activityImage != null &&
-            order.activityImage!.isNotEmpty)
-        ? order.activityImage
-        : null;
+    final imageUrl =
+        (order.activityImage != null && order.activityImage!.isNotEmpty)
+            ? order.activityImage
+            : null;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -170,8 +171,7 @@ class BookingCard extends StatelessWidget {
                         ? CachedNetworkImage(
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) =>
-                                Container(color: c.control),
+                            placeholder: (_, __) => Container(color: c.control),
                             errorWidget: (_, __, ___) =>
                                 Container(color: c.control),
                           )
@@ -193,20 +193,20 @@ class BookingCard extends StatelessWidget {
             ),
             16.kh,
             _InfoRow(
-              icon: Icons.child_care_rounded,
+              icon: Assets.icons.detail.babyGirl,
               label: _ageRange(),
               value: '${order.totalSeats}',
             ),
             12.kh,
             _InfoRow(
-              icon: Icons.event_note_rounded,
+              icon: Assets.icons.detail.icCalendar,
               label: 'booking_date'.tr(),
               value: _dateTime(order.createdAt),
             ),
             if (_sessionDateTime().isNotEmpty) ...[
               12.kh,
               _InfoRow(
-                icon: Icons.calendar_today_rounded,
+                icon: Assets.icons.detail.icCalendar,
                 label: 'order_date'.tr(),
                 value: _sessionDateTime(),
               ),
@@ -227,11 +227,13 @@ class BookingCard extends StatelessWidget {
   }
 }
 
-/// One label/value line in a [BookingCard]. Optional leading icon.
+/// One label/value line in a [BookingCard]. Optional leading icon — an SVG
+/// tinted to [AppColorScheme.textMuted], so it follows the theme like the
+/// label beside it.
 class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.label, required this.value, this.icon});
 
-  final IconData? icon;
+  final SvgGenImage? icon;
   final String label;
   final String value;
 
@@ -241,7 +243,11 @@ class _InfoRow extends StatelessWidget {
     return Row(
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 20.sp, color: c.textMuted),
+          icon!.svg(
+            width: 20.sp,
+            height: 20.sp,
+            colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn),
+          ),
           8.kw,
         ],
         Expanded(

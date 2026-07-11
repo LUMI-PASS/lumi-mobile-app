@@ -7,6 +7,8 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/avatar_notifier.dart';
+import 'package:lumi_pass/common/widget/user_avatar.dart';
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
@@ -38,17 +40,22 @@ class HomeHeader extends StatelessWidget {
               onTap: onProfileTap,
               child: Row(
                 children: [
-                  Container(
-                    width: 40.w,
-                    height: 40.w,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: c.control,
-                      borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(color: c.controlBorder),
+                  ValueListenableBuilder<String?>(
+                    valueListenable: parentAvatarNotifier,
+                    builder: (_, __, ___) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: c.controlBorder),
+                      ),
+                      child: UserAvatar(
+                        file: parentAvatarFile(),
+                        size: 40,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(16.r),
+                        background: c.control,
+                        iconColor: c.textSecondary,
+                      ),
                     ),
-                    child: HomeIcon(Assets.icons.home.user,
-                        size: 24, color: c.textSecondary),
                   ),
                   8.horizontalSpace,
                   Expanded(

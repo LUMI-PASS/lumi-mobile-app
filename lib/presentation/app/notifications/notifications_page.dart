@@ -5,13 +5,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/data/api_model/notification_model/notification_model.dart';
 import 'package:lumi_pass/data/api_model/notification_model/notification_type.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
+
+/// Amber accent for the "pending"/"suggestion" notification glyphs. Screen-only
+/// and theme-independent: it tints an icon, never a surface.
+const _kPendingAmber = Color(0xFFEF8E48);
 
 class _DateSeparator {
   const _DateSeparator(this.label);
@@ -130,13 +135,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
       body: Column(
         children: [
           _buildHeader(context),
-          Expanded(child: _buildBody()),
+          Expanded(child: _buildBody(context)),
         ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
+    final c = context.colors;
     return Padding(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).viewPadding.top + 8.h,
@@ -152,23 +158,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Center(
               child: Text(
                 Strings.notificationsTitle,
-                style: AppText.semibold16.copyWith(color: AppColors.ink),
+                style: AppText.semibold16.copyWith(color: c.textPrimary),
               ),
             ),
             Align(
               alignment: Alignment.centerLeft,
-              child: FrostedCard(
+              child: ControlChip(
                 onTap: () => context.router.maybePop(),
                 width: 36.w,
                 height: 36.w,
                 padding: EdgeInsets.zero,
-                alignment: Alignment.center,
                 borderWidth: 1.5,
                 child: Assets.icons.arrowLeftRounded.svg(
                   width: 18.w,
                   height: 18.w,
-                  colorFilter:
-                      const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+                  colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
                 ),
               ),
             ),
@@ -181,12 +185,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     padding:
                         EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(48.r),
                     ),
                     child: Text(
                       Strings.notificationsMarkAllRead,
-                      style: AppText.medium12.copyWith(color: AppColors.greeting),
+                      style: AppText.medium12.copyWith(color: c.textSecondary),
                     ),
                   ),
                 ),
@@ -197,14 +201,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
+    final c = context.colors;
+
     if (_loading) {
       return Center(
         child: SizedBox(
           width: 32.w,
           height: 32.w,
-          child: const CircularProgressIndicator(
-            color: AppColors.ink,
+          child: CircularProgressIndicator(
+            color: c.primary,
             strokeWidth: 2.5,
           ),
         ),
@@ -235,15 +241,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
             GestureDetector(
               onTap: _load,
               child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
                 decoration: BoxDecoration(
-                  color: AppColors.ink,
+                  color: c.primary,
                   borderRadius: BorderRadius.circular(48.r),
                 ),
                 child: Text(
                   'retry'.tr(),
-                  style: AppText.medium14.copyWith(color: Colors.white),
+                  style: AppText.medium14.copyWith(color: c.onPrimary),
                 ),
               ),
             ),
@@ -262,21 +267,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
               Assets.icons.notification.bell.svg(
                 width: 40.w,
                 height: 40.w,
-                colorFilter:
-                    const ColorFilter.mode(Color(0xFFA5A6BB), BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
               ),
               12.verticalSpace,
               Text(
                 Strings.notificationsEmpty,
                 textAlign: TextAlign.center,
                 style: AppText.semibold16
-                    .copyWith(fontSize: 20.sp, color: AppColors.ink),
+                    .copyWith(fontSize: 20.sp, color: c.textPrimary),
               ),
               4.verticalSpace,
               Text(
                 'notifications_empty_sub'.tr(),
                 textAlign: TextAlign.center,
-                style: AppText.regular14.copyWith(color: AppColors.greeting),
+                style: AppText.regular14.copyWith(color: c.textSecondary),
               ),
             ],
           ),
@@ -286,8 +290,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     final rows = _buildRows();
     return RefreshIndicator(
-      color: AppColors.ink,
-      backgroundColor: Colors.white,
+      color: c.primary,
+      backgroundColor: c.surface,
       onRefresh: _load,
       child: ListView.builder(
         padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 16.h),
@@ -320,18 +324,19 @@ class _DateHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Padding(
       padding: EdgeInsets.only(top: 8.h, bottom: 12.h),
       child: Center(
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: c.surface,
             borderRadius: BorderRadius.circular(48.r),
           ),
           child: Text(
             label,
-            style: AppText.medium12.copyWith(color: AppColors.greeting),
+            style: AppText.medium12.copyWith(color: c.textSecondary),
           ),
         ),
       ),
@@ -365,7 +370,7 @@ class _NotificationCard extends StatelessWidget {
     }
   }
 
-  Color get _iconColor {
+  Color _iconColor(AppColorScheme c) {
     switch (notification.notificationType) {
       case NotificationType.bookingApproved:
         return AppColors.tagGreen;
@@ -373,14 +378,15 @@ class _NotificationCard extends StatelessWidget {
         return AppColors.error;
       case NotificationType.bookingTimeSuggestion:
       case NotificationType.bookingRequestPending:
-        return const Color(0xFFEF8E48);
+        return _kPendingAmber;
       case NotificationType.unknown:
-        return const Color(0xFFA5A6BB);
+        return c.textSecondary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Dismissible(
       key: Key(notification.id),
       direction: DismissDirection.endToStart,
@@ -398,84 +404,97 @@ class _NotificationCard extends StatelessWidget {
         ),
       ),
       onDismissed: (_) => onDismiss(),
-      child: FrostedCard(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        padding: EdgeInsets.all(16.w),
-        alignment: Alignment.topLeft,
-        borderWidth: 2,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(12.r),
+            // The card is lifted off the page by a shadow in light mode. In
+            // dark, `surface` already reads as raised against `scaffoldBg`, and
+            // a shadow there would only muddy the edge.
+            boxShadow: c.isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: AppColors.ink.withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
           ),
-        ],
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36.w,
-              height: 36.w,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEEEDF4),
-                shape: BoxShape.circle,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36.w,
+                height: 36.w,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.control,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.controlBorder),
+                ),
+                child: _icon.svg(
+                  width: 20.w,
+                  height: 20.w,
+                  colorFilter: ColorFilter.mode(_iconColor(c), BlendMode.srcIn),
+                  fit: BoxFit.scaleDown,
+                ),
               ),
-              child: _icon.svg(
-                width: 20.w,
-                height: 20.w,
-                colorFilter: ColorFilter.mode(_iconColor, BlendMode.srcIn),
-                fit: BoxFit.scaleDown,
-              ),
-            ),
-            12.horizontalSpace,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          notification.title,
-                          style:
-                              AppText.semibold14.copyWith(color: AppColors.ink),
-                        ),
-                      ),
-                      if (!notification.isRead) ...[
-                        8.horizontalSpace,
-                        Container(
-                          margin: EdgeInsets.only(top: 6.h),
-                          width: 8.w,
-                          height: 8.w,
-                          decoration: const BoxDecoration(
-                            color: AppColors.error,
-                            shape: BoxShape.circle,
+              12.horizontalSpace,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            style: AppText.semibold14
+                                .copyWith(color: c.textPrimary),
                           ),
                         ),
+                        if (!notification.isRead) ...[
+                          8.horizontalSpace,
+                          Container(
+                            margin: EdgeInsets.only(top: 6.h),
+                            width: 8.w,
+                            height: 8.w,
+                            decoration: const BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                  6.verticalSpace,
-                  Text(
-                    notification.body,
-                    style: AppText.regular13.copyWith(color: AppColors.greeting),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  8.verticalSpace,
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      DateFormat('d MMM, HH:mm').format(notification.createdAt),
-                      style: AppText.medium10.copyWith(color: AppColors.greeting),
                     ),
-                  ),
-                ],
+                    6.verticalSpace,
+                    Text(
+                      notification.body,
+                      style: AppText.regular13.copyWith(color: c.textSecondary),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    8.verticalSpace,
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        DateFormat('d MMM, HH:mm')
+                            .format(notification.createdAt),
+                        style:
+                            AppText.medium10.copyWith(color: c.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

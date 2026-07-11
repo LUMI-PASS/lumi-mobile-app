@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
@@ -13,6 +14,49 @@ import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:shimmer/shimmer.dart';
+
+/// Flip to `true` to render [_kMockHistory] instead of calling the API, so the
+/// cards can be checked without a purchase behind them. Debug builds only — it
+/// is ignored in release, so it can't ship a fake purchase history.
+const bool _kUseMockHistory = true;
+
+/// Dates are fixed rather than relative to `now`, so the rows look the same on
+/// every run.
+final List<SubscriptionRecord> _kMockHistory = [
+  SubscriptionRecord(
+    id: 'mock-1',
+    planName: 'Ommabop kupon',
+    startDate: DateTime(2026, 4, 22),
+    endDate: DateTime(2026, 5, 22),
+    status: 'active',
+    discountPercentage: 20,
+    activitiesLimit: 19,
+    usedCount: 12,
+    amount: 157000,
+  ),
+  SubscriptionRecord(
+    id: 'mock-2',
+    planName: 'Premium kupon',
+    startDate: DateTime(2026, 1, 10),
+    endDate: DateTime(2026, 3, 10),
+    status: 'expired',
+    discountPercentage: 25,
+    activitiesLimit: 12,
+    usedCount: 12,
+    amount: 99900,
+  ),
+  SubscriptionRecord(
+    id: 'mock-3',
+    planName: 'Boshlang\'ich kupon',
+    startDate: DateTime(2025, 11, 5),
+    endDate: DateTime(2025, 12, 5),
+    status: 'canceled',
+    discountPercentage: 10,
+    activitiesLimit: 3,
+    usedCount: 0,
+    amount: 39900,
+  ),
+];
 
 /// Purchased-coupon history. Reached from the "История платежей" row on
 /// [PlansPage].
@@ -37,6 +81,13 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
   }
 
   Future<void> _load() async {
+    if (_kUseMockHistory && kDebugMode) {
+      setState(() {
+        _history = _kMockHistory;
+        _isLoading = false;
+      });
+      return;
+    }
     try {
       final data = await _api.getSubscriptionHistory();
       if (!mounted) return;
@@ -190,7 +241,8 @@ class _HistoryCard extends StatelessWidget {
   }
 }
 
-/// Lime square carrying the coupon's discount. Ink-on-lime in both themes.
+/// Lime square carrying the coupon's discount, with the four-point star
+/// bleeding out of its bottom-right corner. Ink-on-lime in both themes.
 class _DiscountTile extends StatelessWidget {
   const _DiscountTile({required this.percent});
 
@@ -198,20 +250,41 @@ class _DiscountTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = 45.w;
+    final star = 46.w;
+
     return Container(
-      width: 45.w,
-      height: 45.w,
-      alignment: Alignment.center,
+      width: size,
+      height: size,
+      // The star is deliberately larger than the tile and gets cut to its
+      // rounded corners.
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.lime,
         borderRadius: BorderRadius.circular(12.r),
       ),
-      child: Text(
-        percent > 0 ? '-$percent%' : '—',
-        style: AppText.semibold14.copyWith(
-          color: AppColors.ink,
-          fontWeight: FontWeight.w700,
-        ),
+      child: Stack(
+        children: [
+          Positioned(
+            left: size / 2 + 12.5.w - star / 2,
+            top: size / 2 + 11.5.h - star / 2,
+            child: Assets.icons.coupons.star4.svg(width: star, height: star),
+          ),
+          Positioned(
+            left: size / 2 - 18.5.w,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Text(
+                percent > 0 ? '-$percent%' : '—',
+                style: AppText.semibold14.copyWith(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -252,11 +325,9 @@ class _PeriodRow extends StatelessWidget {
 
     return Row(
       children: [
-        Assets.icons.outlinedCalendar.svg(
-          width: 20.w,
-          height: 20.w,
-          colorFilter: ColorFilter.mode(colors.textMuted, BlendMode.srcIn),
-        ),
+        // Stroke-only calendar, already drawn in `textMuted` — no colour filter,
+        // which would flatten the outline into a solid blob.
+        Assets.icons.detail.icCalendar.svg(width: 20.w, height: 20.w),
         8.kw,
         Text(
           'coupon_period'.tr(),

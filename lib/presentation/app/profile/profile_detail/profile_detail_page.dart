@@ -8,11 +8,12 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/utils/avatar_notifier.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/avatar_picker.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
-import 'package:lumi_pass/common/widget/initials_avatar.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_detail_cubit.dart';
 import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
@@ -113,7 +114,13 @@ class _AccountFormState extends State<_AccountForm> {
             padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
             child: Column(
               children: [
-                InitialsAvatar(name: widget.user.firstName ?? ''),
+                ValueListenableBuilder<String?>(
+                  valueListenable: parentAvatarNotifier,
+                  builder: (_, __, ___) => AvatarPicker(
+                    pickedFile: parentAvatarFile(),
+                    onPicked: setParentAvatar,
+                  ),
+                ),
                 20.kh,
                 CommonTextField(
                   controller: _firstNameController,

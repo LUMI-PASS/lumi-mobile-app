@@ -145,6 +145,11 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
+  Future<void> deleteChild(String childId) {
+    return _api.deleteChild(childId);
+  }
+
+  @override
   Future<List<Tariff>> getTariffs() {
     return _api.getTariffs().then((value) {
       return (value.data['data'] as List)

@@ -1,6 +1,7 @@
 import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.dart';
 
 import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
@@ -164,6 +165,68 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
       },
       invokeOnData: (data) =>
           const ChildrenListenable(effect: ChildrenEffect.verify),
+      buildOnDone: () => buildable.copyWith(buttonLoading: false),
+    );
+  }
+
+  /// Save a child and, when one was picked, its photo — the two calls the
+  /// child-details screen needs. A new child has to be created first, because
+  /// the photo endpoint is keyed by child id.
+  ///
+  /// A failed photo upload does not fail the save: the name/age/gender are
+  /// already persisted at that point, so we surface the error and still report
+  /// success.
+  Future<void> saveChild(
+    ChildModel childModel,
+    bool isUpdate,
+    File? photo,
+  ) async {
+    build((buildable) => buildable.copyWith(buttonLoading: true));
+    try {
+      String? childId = childModel.id;
+      if (isUpdate) {
+        await _repo.updateChild(childModel, childModel.id!);
+      } else {
+        childId = await _repo.addChildAndGetId(childModel);
+      }
+
+      if (photo != null && childId != null) {
+        try {
+          await _repo.uploadChildPhoto(childId, photo);
+        } catch (_) {
+          display.error('photo_upload_failed'.tr());
+        }
+      }
+
+      invoke(const ChildrenListenable(effect: ChildrenEffect.verify));
+    } catch (error) {
+      if (error is DioException &&
+          (error.response?.statusCode == 500 ||
+              error.response?.statusCode == 502)) {
+        display.error(Strings.serverErrorTryLater);
+      } else {
+        display.error(error);
+      }
+    } finally {
+      build((buildable) => buildable.copyWith(buttonLoading: false));
+    }
+  }
+
+  Future<void> deleteChild(String childId) {
+    return callable(
+      future: _repo.deleteChild(childId),
+      buildOnStart: () => buildable.copyWith(buttonLoading: true),
+      invokeOnData: (_) =>
+          const ChildrenListenable(effect: ChildrenEffect.verify),
+      onErrorData: (error) {
+        if (error is DioException &&
+            (error.response?.statusCode == 500 ||
+                error.response?.statusCode == 502)) {
+          display.error(Strings.serverErrorTryLater);
+        } else {
+          display.error(error);
+        }
+      },
       buildOnDone: () => buildable.copyWith(buttonLoading: false),
     );
   }

@@ -2,11 +2,16 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/text_extensions.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -73,6 +78,9 @@ class _FiscalReceiptPageState extends State<FiscalReceiptPage> {
 
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      // Stays white in both themes: the page inside is ofd.soliq.uz's own
+      // white document, and a dark backdrop behind it would only show as a
+      // flash before it paints.
       ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(
         NavigationDelegate(
@@ -114,42 +122,38 @@ class _FiscalReceiptPageState extends State<FiscalReceiptPage> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final c = context.colors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F8),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.white,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new,
-              color: const Color(0xFF1E293B), size: 20.w),
-          onPressed: () => context.router.maybePop(),
-        ),
-        centerTitle: true,
-        title: 'fiscal_receipt'.tr().s(15).w(700).c(const Color(0xFF1E293B)),
+      backgroundColor: c.scaffoldBg,
+      appBar: BaseAppBar(
+        title: 'fiscal_receipt'.tr(),
         actions: [
           if (_error != 'unavailable')
-            IconButton(
-              tooltip: 'fiscal_receipt_open_browser'.tr(),
-              icon: Icon(Icons.open_in_new_rounded,
-                  color: primary, size: 20.w),
-              onPressed: _openInBrowser,
+            Padding(
+              padding: EdgeInsets.only(right: 16.w),
+              child: ControlChip(
+                onTap: _openInBrowser,
+                width: 36.w,
+                height: 36.w,
+                padding: EdgeInsets.zero,
+                borderWidth: 1.5,
+                child: HomeIcon(Assets.icons.detail.share,
+                    size: 16, color: c.textPrimary),
+              ),
             ),
         ],
       ),
-      body: SafeArea(
-        top: false,
-        child: _buildBody(primary),
-      ),
+      body: SafeArea(top: false, child: _body(c)),
     );
   }
 
-  Widget _buildBody(Color primary) {
+  Widget _body(AppColorScheme c) {
     if (_error == 'unavailable') {
       return _ReceiptMessage(
-        icon: Icons.receipt_long_rounded,
-        color: const Color(0xFF94A3B8),
+        c: c,
+        icon: Assets.icons.detail.iconsaxReceipt,
+        color: c.textMuted,
         title: 'fiscal_receipt_unavailable'.tr(),
         actionLabel: 'booking_retry'.tr(),
         onAction: _resolve,
@@ -158,8 +162,9 @@ class _FiscalReceiptPageState extends State<FiscalReceiptPage> {
 
     if (_error == 'load') {
       return _ReceiptMessage(
-        icon: Icons.cloud_off_rounded,
-        color: const Color(0xFFEF4444),
+        c: c,
+        icon: Assets.icons.notification.close,
+        color: AppColors.error,
         title: 'fiscal_receipt_error'.tr(),
         actionLabel: 'fiscal_receipt_open_browser'.tr(),
         onAction: _openInBrowser,
@@ -175,9 +180,12 @@ class _FiscalReceiptPageState extends State<FiscalReceiptPage> {
         if (_resolving || _pageLoading)
           Positioned.fill(
             child: ColoredBox(
-              color: Colors.white,
+              color: c.surface,
               child: Center(
-                child: CircularProgressIndicator(color: primary, strokeWidth: 2.5),
+                child: CircularProgressIndicator(
+                  color: c.primary,
+                  strokeWidth: 2.5,
+                ),
               ),
             ),
           ),
@@ -188,6 +196,7 @@ class _FiscalReceiptPageState extends State<FiscalReceiptPage> {
 
 class _ReceiptMessage extends StatelessWidget {
   const _ReceiptMessage({
+    required this.c,
     required this.icon,
     required this.color,
     required this.title,
@@ -197,7 +206,8 @@ class _ReceiptMessage extends StatelessWidget {
     this.onSecondary,
   });
 
-  final IconData icon;
+  final AppColorScheme c;
+  final SvgGenImage icon;
   final Color color;
   final String title;
   final String actionLabel;
@@ -207,7 +217,8 @@ class _ReceiptMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final secondary = secondaryLabel;
+
     return Center(
       child: Padding(
         padding: EdgeInsets.all(28.w),
@@ -217,36 +228,34 @@ class _ReceiptMessage extends StatelessWidget {
             Container(
               width: 72.w,
               height: 72.w,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 34.w),
+              child: HomeIcon(icon, size: 32, color: color),
             ),
-            18.kh,
-            title.s(16).w(700).c(const Color(0xFF1E293B)),
-            24.kh,
-            SizedBox(
-              width: double.infinity,
-              child: Material(
-                color: primary,
-                borderRadius: BorderRadius.circular(16.r),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16.r),
-                  onTap: onAction,
-                  child: Container(
-                    height: 52.h,
-                    alignment: Alignment.center,
-                    child: actionLabel.s(15).w(700).c(Colors.white),
+            18.verticalSpace,
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AppText.semibold16.copyWith(color: c.textPrimary),
+            ),
+            24.verticalSpace,
+            GradientButton(text: actionLabel, onPressed: onAction),
+            if (secondary != null && onSecondary != null) ...[
+              10.verticalSpace,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onSecondary,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  child: Text(
+                    secondary,
+                    style:
+                        AppText.medium14.copyWith(color: c.textSecondary),
                   ),
                 ),
-              ),
-            ),
-            if (secondaryLabel != null && onSecondary != null) ...[
-              10.kh,
-              TextButton(
-                onPressed: onSecondary,
-                child: secondaryLabel!.s(14).w(600).c(const Color(0xFF64748B)),
               ),
             ],
           ],

@@ -3,17 +3,23 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
-import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
-import 'package:lumi_pass/common/extensions/text_extensions.dart';
-import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/calendar/widget/cancel_booking_sheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 
-/// A single-ticket receipt screen opened from the paid booking detail. Shows
-/// the ticket id and its date/time prominently at the top, followed by class
-/// and venue metadata — styled as a Lumi-branded paper receipt.
+/// A single-ticket receipt opened from the paid booking detail (Figma 96:3358).
+///
+/// The card is a paper ticket: a branded stub carrying the Lumi logo, the
+/// status chip, the ticket number and its date/time pills, then two torn-off
+/// sections — the class/age detail and the amount — separated by perforated
+/// dashed lines.
 @RoutePage()
 class TicketReceiptPage extends StatefulWidget {
   const TicketReceiptPage({
@@ -32,9 +38,11 @@ class TicketReceiptPage extends StatefulWidget {
   final String? branch;
   final String? orderId;
   final bool canCancel;
+
   /// Per-ticket amount the user actually paid after coupon discount.
   /// Null when no discount was applied — falls back to [ticket.price].
   final num? paidPrice;
+
   /// True when the discount came from a promocode (vs an auto coupon plan) —
   /// selects the "Promokod chegirmasi" vs "Kupon chegirmasi" label.
   final bool fromPromocode;
@@ -46,42 +54,22 @@ class TicketReceiptPage extends StatefulWidget {
 class _TicketReceiptPageState extends State<TicketReceiptPage> {
   bool _cancelling = false;
 
-  String _formatDate(String? iso) {
-    if (iso == null || iso.isEmpty) return '';
-    try {
-      final d = DateTime.parse(iso);
-      final weekday = 'weekday_full_${d.weekday}'.tr();
-      final month = 'month_full_${d.month}'.tr();
-      return '$weekday, $month ${d.day}, ${d.year}';
-    } catch (_) {
-      return iso;
-    }
-  }
-
   Future<void> _showCancelSheet() async {
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _CancelBookingSheet(
-        ticketNo: widget.ticket.ticketNo,
-        className: widget.className,
-      ),
-    );
+    final confirmed = await showCancelBookingSheet(context);
     if (confirmed != true || !mounted) return;
 
     setState(() => _cancelling = true);
     try {
       await getIt<OrdersApi>().cancelOrder(widget.orderId!);
       if (!mounted) return;
-      // Pop back to booking detail which will reload
+      // Pop back to booking detail, which reloads on `true`.
       context.router.maybePop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('booking_cancel_failed'.tr(args: [e.toString()])),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -91,320 +79,76 @@ class _TicketReceiptPageState extends State<TicketReceiptPage> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    final ticketNo = widget.ticket.ticketNo ?? '----';
-    final time = (widget.ticket.startTime != null && widget.ticket.endTime != null)
-        ? '${widget.ticket.startTime} – ${widget.ticket.endTime}'
+    final c = context.colors;
+    final t = widget.ticket;
+    final time = (t.startTime != null && t.endTime != null)
+        ? '${t.startTime} – ${t.endTime}'
         : null;
 
     final showCancel = widget.canCancel &&
         widget.orderId != null &&
-        widget.ticket.status.toLowerCase() != 'canceled';
+        t.status.toLowerCase() != 'canceled';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F8),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top bar
-            Padding(
-              padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_ios_new,
-                        color: const Color(0xFF1E293B), size: 20.w),
-                    onPressed: () => context.router.maybePop(),
-                  ),
-                  const Spacer(),
-                  'ticket_receipt'
-                      .tr()
-                      .s(14)
-                      .w(700)
-                      .c(const Color(0xFF1E293B)),
-                  const Spacer(),
-                  SizedBox(width: 44.w),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _ReceiptBody(
-                      primary: primary,
-                      ticketNo: ticketNo,
-                      ticketDate: _formatDate(widget.ticket.ticketDate),
-                      time: time,
-                      className: widget.className,
-                      branch: widget.branch,
-                      ageFrom: widget.ticket.ageFrom,
-                      ageTo: widget.ticket.ageTo,
-                      price: widget.ticket.price,
-                      paidPrice: widget.paidPrice,
-                      status: widget.ticket.status,
-                      fromPromocode: widget.fromPromocode,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (showCancel)
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  20.w,
-                  8.h,
-                  20.w,
-                  MediaQuery.of(context).viewPadding.bottom + 16.h,
-                ),
-                child: _CancelButton(
-                  loading: _cancelling,
-                  onTap: _showCancelSheet,
-                ),
-              ),
-          ],
+      backgroundColor: c.scaffoldBg,
+      appBar: BaseAppBar(title: 'ticket_details'.tr()),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+        child: _TicketCard(
+          c: c,
+          ticketNo: t.ticketNo,
+          status: t.status,
+          date: t.ticketDate,
+          time: time,
+          className: widget.className,
+          branch: widget.branch,
+          ageFrom: t.ageFrom,
+          ageTo: t.ageTo,
+          price: t.price,
+          paidPrice: widget.paidPrice,
+          fromPromocode: widget.fromPromocode,
         ),
       ),
+      bottomNavigationBar: showCancel
+          ? Padding(
+              padding: EdgeInsets.fromLTRB(
+                16.w,
+                8.h,
+                16.w,
+                MediaQuery.of(context).viewPadding.bottom + 16.h,
+              ),
+              child: _CancelButton(
+                loading: _cancelling,
+                onTap: _showCancelSheet,
+              ),
+            )
+          : null,
     );
   }
 }
 
-// ─── Cancel button ────────────────────────────────────────────────────────────
+// ─── The ticket ───────────────────────────────────────────────────────────────
 
-class _CancelButton extends StatelessWidget {
-  const _CancelButton({required this.onTap, this.loading = false});
-  final VoidCallback onTap;
-  final bool loading;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: loading ? null : onTap,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 14.h),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFEF4444), width: 1.5),
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (loading)
-                SizedBox(
-                  width: 18.w,
-                  height: 18.w,
-                  child: const CircularProgressIndicator(
-                    color: Color(0xFFEF4444),
-                    strokeWidth: 2,
-                  ),
-                )
-              else ...[
-                Icon(Icons.cancel_outlined,
-                    color: const Color(0xFFEF4444), size: 18.w),
-                8.kw,
-                'booking_cancel_title'
-                    .tr()
-                    .s(15)
-                    .w(700)
-                    .c(const Color(0xFFEF4444)),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Cancel confirmation bottomsheet ─────────────────────────────────────────
-
-class _CancelBookingSheet extends StatelessWidget {
-  const _CancelBookingSheet({this.ticketNo, this.className});
-  final String? ticketNo;
-  final String? className;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        24.w,
-        8.h,
-        24.w,
-        MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).viewPadding.bottom +
-            24.h,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Container(
-            width: 40.w,
-            height: 4.h,
-            margin: EdgeInsets.only(bottom: 24.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-          // Warning icon
-          Container(
-            width: 64.w,
-            height: 64.w,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF2F2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.cancel_outlined,
-              color: const Color(0xFFEF4444),
-              size: 32.w,
-            ),
-          ),
-          20.kh,
-          'booking_cancel_title'
-              .tr()
-              .s(20)
-              .w(800)
-              .c(const Color(0xFF1E293B)),
-          12.kh,
-          Text(
-            'booking_cancel_confirm'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: const Color(0xFF64748B),
-              height: 1.6,
-            ),
-          ),
-          if (className != null && className!.isNotEmpty) ...[
-            16.kh,
-            Container(
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.confirmation_number_rounded,
-                      color: const Color(0xFF64748B), size: 18.w),
-                  10.kw,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        className!
-                            .s(13)
-                            .w(600)
-                            .c(const Color(0xFF1E293B)),
-                        if (ticketNo != null) ...[
-                          4.kh,
-                          '#$ticketNo'
-                              .s(12)
-                              .w(500)
-                              .c(const Color(0xFF94A3B8)),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          28.kh,
-          // Keep button (primary)
-          SizedBox(
-            width: double.infinity,
-            child: Material(
-              color: const Color(0xFF6C4EF2),
-              borderRadius: BorderRadius.circular(16.r),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16.r),
-                onTap: () => Navigator.of(context).pop(false),
-                child: Container(
-                  height: 52.h,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6C4EF2).withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: 'booking_keep'
-                        .tr()
-                        .s(16)
-                        .w(700)
-                        .c(Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          12.kh,
-          // Cancel action button (secondary)
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                  side: const BorderSide(
-                    color: Color(0xFFEF4444),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              child: 'booking_cancel_action'
-                  .tr()
-                  .s(15)
-                  .w(600)
-                  .c(const Color(0xFFEF4444)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Receipt body (unchanged) ─────────────────────────────────────────────────
-
-class _ReceiptBody extends StatelessWidget {
-  const _ReceiptBody({
-    required this.primary,
+class _TicketCard extends StatelessWidget {
+  const _TicketCard({
+    required this.c,
     required this.ticketNo,
-    required this.ticketDate,
+    required this.status,
+    required this.date,
     required this.time,
     required this.className,
     required this.branch,
     required this.ageFrom,
     required this.ageTo,
     required this.price,
-    required this.status,
-    this.paidPrice,
-    this.fromPromocode = false,
+    required this.paidPrice,
+    required this.fromPromocode,
   });
 
-  final Color primary;
-  final String ticketNo;
-  final String ticketDate;
+  final AppColorScheme c;
+  final String? ticketNo;
+  final String status;
+  final String date;
   final String? time;
   final String? className;
   final String? branch;
@@ -412,293 +156,292 @@ class _ReceiptBody extends StatelessWidget {
   final int ageTo;
   final num price;
   final num? paidPrice;
-  final String status;
   final bool fromPromocode;
+
+  bool get _discounted => paidPrice != null && paidPrice != price;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF3C539A).withOpacity(0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Stub: logo, status, ticket number, date/time pills ──
+        Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Assets.icons.lumiLogo.image(height: 20.h),
+                  const Spacer(),
+                  _StatusChip(status: status),
+                ],
+              ),
+              16.verticalSpace,
+              Text(
+                ticketNo != null
+                    ? 'ticket_number'.tr(args: [ticketNo!])
+                    : 'ticket_pending_label'.tr(),
+                style: AppText.semibold18
+                    .copyWith(fontSize: 20.sp, color: c.textPrimary),
+              ),
+              6.verticalSpace,
+              Wrap(
+                spacing: 4.w,
+                runSpacing: 4.h,
+                children: [
+                  _MetaChip(c: c, label: 'ticket_date_label'.tr(), value: date),
+                  if (time != null)
+                    _MetaChip(
+                        c: c, label: 'ticket_time_label'.tr(), value: time!),
+                ],
+              ),
+            ],
+          ),
+        ),
+        _Perforation(c: c),
+        // ── Class / venue / age ──
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+          color: c.surface,
+          child: Column(
+            children: [
+              if (className != null && className!.isNotEmpty)
+                _DetailRow(
+                  c: c,
+                  icon: Assets.icons.home.book,
+                  label: 'ticket_class'.tr(),
+                  value: className!,
+                ),
+              if (branch != null && branch!.isNotEmpty) ...[
+                16.verticalSpace,
+                _DetailRow(
+                  c: c,
+                  icon: Assets.icons.detail.icLocation,
+                  label: 'ticket_venue'.tr(),
+                  value: branch!,
+                ),
+              ],
+              16.verticalSpace,
+              _DetailRow(
+                c: c,
+                icon: Assets.icons.detail.babyGirl,
+                label: 'detail_age'.tr(),
+                value: 'ticket_age_value'.tr(args: ['$ageFrom', '$ageTo']),
+              ),
+            ],
+          ),
+        ),
+        _Perforation(c: c),
+        // ── Amount + "show this at the entrance" note ──
+        Container(
+          padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(12.r)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('order_sum'.tr(),
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
+                  const Spacer(),
+                  if (_discounted) ...[
+                    Text(
+                      price.toRawUzsPrice(),
+                      style: AppText.regular12.copyWith(
+                        color: c.textMuted,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                    6.horizontalSpace,
+                  ],
+                  Text(
+                    (paidPrice ?? price).toRawUzsPrice(),
+                    style: AppText.semibold14.copyWith(
+                      color: _discounted ? AppColors.green : c.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              if (_discounted) ...[
+                8.verticalSpace,
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(40.r),
+                    ),
+                    child: Text(
+                      (fromPromocode
+                              ? 'booking_promocode_discount'
+                              : 'booking_coupon_discount')
+                          .tr(),
+                      style:
+                          AppText.semibold12.copyWith(color: AppColors.green),
+                    ),
+                  ),
+                ),
+              ],
+              16.verticalSpace,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HomeIcon(Assets.icons.infoDis,
+                      size: 20, color: AppColors.warning),
+                  8.horizontalSpace,
+                  Expanded(
+                    child: Text(
+                      'ticket_present_at_venue'.tr(),
+                      style:
+                          AppText.regular14.copyWith(color: AppColors.warning),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The tear line between two ticket sections: a dashed rule with a notch bitten
+/// out of each edge, so the card reads as a perforated paper stub.
+class _Perforation extends StatelessWidget {
+  const _Perforation({required this.c});
+
+  final AppColorScheme c;
+
+  @override
+  Widget build(BuildContext context) {
+    const notch = 16.0;
+
+    return SizedBox(
+      height: notch,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Gradient header with Lumi branding, ticket # and date/time front
-          Container(
-            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 20.h),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [primary, const Color(0xFFFF7093)],
-              ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24.r),
-                topRight: Radius.circular(24.r),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Assets.icons.lumiLogo.image(
-                      width: 28.w,
-                      height: 28.w,
-                      color: Colors.white,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.auto_awesome,
-                        size: 22.w,
-                        color: Colors.white,
-                      ),
-                    ),
-                    8.kw,
-                    Text(
-                      'LUMI',
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const Spacer(),
-                    _StatusChip(status: status),
-                  ],
-                ),
-                18.kh,
-                Text(
-                  'ticket_label'.tr(),
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white.withOpacity(0.8),
-                    letterSpacing: 2,
-                  ),
-                ),
-                4.kh,
-                Text(
-                  '#$ticketNo',
-                  style: TextStyle(
-                    fontSize: 40.sp,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
-                    height: 1.0,
-                  ),
-                ),
-                16.kh,
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today_rounded,
-                        size: 14.sp, color: Colors.white.withOpacity(0.9)),
-                    6.kw,
-                    Expanded(
-                      child: Text(
-                        ticketDate,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (time != null) ...[
-                  6.kh,
-                  Row(
-                    children: [
-                      Icon(Icons.access_time_rounded,
-                          size: 14.sp, color: Colors.white.withOpacity(0.9)),
-                      6.kw,
-                      Text(
-                        time!,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const _Perforation(),
+          Container(color: c.surface),
           Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (className != null && className!.isNotEmpty) ...[
-                  _ReceiptRow(label: 'ticket_class'.tr(), value: className!),
-                  12.kh,
-                ],
-                if (branch != null && branch!.isNotEmpty) ...[
-                  _ReceiptRow(label: 'ticket_venue'.tr(), value: branch!),
-                  12.kh,
-                ],
-                _ReceiptRow(
-                  label: 'ticket_age_label'.tr(),
-                  value:
-                      'ticket_age_value'.tr(args: ['$ageFrom', '$ageTo']),
-                ),
-                16.kh,
-                Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.grey.shade200,
-                        Colors.grey.shade300,
-                        Colors.grey.shade200,
-                      ],
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // One dash per 8px of available width, so the rule keeps its
+                // rhythm on any screen size.
+                final count = (constraints.maxWidth / 8).floor().clamp(1, 60);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    count,
+                    (_) => Container(
+                      width: 4.w,
+                      height: 1.6,
+                      color: c.control,
                     ),
                   ),
-                ),
-                16.kh,
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'amount_paid'.tr(),
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: const Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if (paidPrice != null && paidPrice != price) ...[
-                          Text(
-                            price.toRawUzsPrice(),
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF94A3B8),
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                          4.kh,
-                        ],
-                        Text(
-                          (paidPrice ?? price).toRawUzsPrice(),
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w900,
-                            color: paidPrice != null && paidPrice != price
-                                ? const Color(0xFF16A34A)
-                                : const Color(0xFF1E293B),
-                          ),
-                        ),
-                        if (paidPrice != null && paidPrice != price) ...[
-                          4.kh,
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 7.w, vertical: 2.h),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(6.r),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.local_offer_rounded,
-                                    size: 10.sp,
-                                    color: const Color(0xFF16A34A)),
-                                3.kw,
-                                Text(
-                                  (fromPromocode
-                                          ? 'booking_promocode_discount'
-                                          : 'booking_coupon_discount')
-                                      .tr(),
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF16A34A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                );
+              },
             ),
           ),
-          const _Perforation(),
-          Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 20.h),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline_rounded,
-                    size: 14.sp, color: const Color(0xFF64748B)),
-                6.kw,
-                Expanded(
-                  child: Text(
-                    'ticket_present_at_venue'.tr(),
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: const Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Positioned(left: -notch / 2, child: _Notch(c: c)),
+          Positioned(right: -notch / 2, child: _Notch(c: c)),
         ],
       ),
     );
   }
 }
 
-class _ReceiptRow extends StatelessWidget {
-  const _ReceiptRow({required this.label, required this.value});
+class _Notch extends StatelessWidget {
+  const _Notch({required this.c});
+
+  final AppColorScheme c;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 16,
+      height: 16,
+      decoration: BoxDecoration(color: c.scaffoldBg, shape: BoxShape.circle),
+    );
+  }
+}
+
+/// "Дата: 22 апр. 2026" pill — muted label, primary value.
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.c, required this.label, required this.value});
+
+  final AppColorScheme c;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(40.r),
+      ),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: AppText.semibold14.copyWith(color: c.textMuted),
+            ),
+            TextSpan(
+              text: value,
+              style: AppText.semibold14.copyWith(color: c.textPrimary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Icon + muted label on the left, value on the right.
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.c,
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final AppColorScheme c;
+  final SvgGenImage icon;
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 90.w,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: const Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
+        HomeIcon(icon, size: 20, color: c.textMuted),
+        8.horizontalSpace,
+        Text(label, style: AppText.regular14.copyWith(color: c.textSecondary)),
+        16.horizontalSpace,
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: const Color(0xFF1E293B),
-              fontWeight: FontWeight.w700,
-            ),
+            maxLines: 2,
+            textAlign: TextAlign.right,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.semibold14.copyWith(color: c.textPrimary),
           ),
         ),
       ],
@@ -708,85 +451,69 @@ class _ReceiptRow extends StatelessWidget {
 
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
+
   final String status;
 
   @override
   Widget build(BuildContext context) {
-    final lower = status.toLowerCase();
+    final Color color;
     final String label;
-    switch (lower) {
+    switch (status.toLowerCase()) {
       case 'confirmed':
+        color = AppColors.tagGreen;
         label = 'ticket_confirmed'.tr();
-        break;
       case 'canceled':
       case 'cancelled':
+        color = AppColors.error;
         label = 'order_cancelled'.tr();
-        break;
       default:
+        color = AppColors.warning;
         label = 'ticket_pending'.tr();
     }
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: color,
+        borderRadius: BorderRadius.circular(48.r),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF1E293B),
-        ),
-      ),
+      child: Text(label,
+          style: AppText.medium10.copyWith(color: Colors.white)),
     );
   }
 }
 
-class _Perforation extends StatelessWidget {
-  const _Perforation();
+class _CancelButton extends StatelessWidget {
+  const _CancelButton({required this.onTap, this.loading = false});
+
+  final VoidCallback onTap;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 16.h,
-      child: Stack(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: loading ? null : onTap,
+      child: Container(
+        height: 50.h,
         alignment: Alignment.center,
-        children: [
-          Positioned(left: -10.w, child: const _Notch()),
-          Positioned(right: -10.w, child: const _Notch()),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: Row(
-              children: List.generate(
-                40,
-                (_) => Expanded(
-                  child: Container(
-                    height: 1.h,
-                    margin: EdgeInsets.symmetric(horizontal: 1.w),
-                    color: const Color(0xFFCBD5E1),
-                  ),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(44.r),
+        ),
+        child: loading
+            ? SizedBox(
+                width: 20.w,
+                height: 20.w,
+                child: const CircularProgressIndicator(
+                  color: AppColors.error,
+                  strokeWidth: 2,
                 ),
+              )
+            : Text(
+                'booking_cancel_title'.tr(),
+                style: AppText.medium16.copyWith(color: AppColors.error),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Notch extends StatelessWidget {
-  const _Notch();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 20.w,
-      height: 20.w,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF3F4F8),
-        shape: BoxShape.circle,
       ),
     );
   }

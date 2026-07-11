@@ -33,7 +33,9 @@ class BottomBox extends StatelessWidget {
               bottom: 24.h,
             ),
         margin: margin,
-        decoration: BoxDecoration(color: context.colors.onPrimary),
+        // `bottomBar`, not `onPrimary` — the latter is a fixed white, which left
+        // the bar glowing white on a dark page.
+        decoration: BoxDecoration(color: context.colors.bottomBar),
         child: child,
       ),
     );

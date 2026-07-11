@@ -1,27 +1,70 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/adaptive_card.dart';
+import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
-import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
+import 'package:lumi_pass/presentation/app/home/plans/coupon_success_page.dart';
+import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Height of a coupon card in the horizontal carousel. Fixed so the [PageView]
 /// can size itself; the cards' content is top-aligned inside it.
 const double _kCouponCardHeight = 184;
+
+/// Flip to `true` to exercise the multi-coupon carousel (paging, dots, the buy
+/// bar re-pricing) without a backend that returns several plans. Debug builds
+/// only — it is ignored in release, so it can't ship a fake price.
+const bool _kUseMockPlans = true;
+
+const List<PremiumPlan> _kMockPlans = [
+  PremiumPlan(
+    id: 'mock-starter',
+    name: {'ru': 'Стартовый', 'uz': 'Boshlang\'ich', 'en': 'Starter'},
+    price: 39900,
+    durationDays: 30,
+    activitiesLimit: 3,
+    discountPercentage: 10,
+    isActive: true,
+  ),
+  PremiumPlan(
+    id: 'mock-popular',
+    name: {'ru': 'Популярный', 'uz': 'Ommabop', 'en': 'Popular'},
+    price: 59900,
+    durationDays: 30,
+    activitiesLimit: 6,
+    discountPercentage: 20,
+    isActive: true,
+  ),
+  PremiumPlan(
+    id: 'mock-premium',
+    name: {'ru': 'Премиум', 'uz': 'Premium', 'en': 'Premium'},
+    price: 99900,
+    durationDays: 60,
+    activitiesLimit: 12,
+    discountPercentage: 25,
+    isActive: true,
+  ),
+];
 
 @RoutePage()
 class PlansPage extends StatefulWidget {
@@ -31,7 +74,7 @@ class PlansPage extends StatefulWidget {
   State<PlansPage> createState() => _PlansPageState();
 }
 
-class _PlansPageState extends State<PlansPage> {
+class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
   final HomeRepository _repo = getIt<HomeRepository>();
   final OrdersApi _api = getIt<OrdersApi>();
 
@@ -43,19 +86,77 @@ class _PlansPageState extends State<PlansPage> {
   String? _purchasingId;
   int _selected = 0;
 
+  /// Rail (and card) the buyer picked in the chooser sheet, remembered for the
+  /// rest of the session so a second purchase starts from their last choice.
+  PaymentSelection? _payment;
+  final List<PaymentCard> _cards = [];
+
+  /// A redirect checkout the buyer was sent off to pay. The rails open an
+  /// external app, so the only signal we get back is the OS resuming us — at
+  /// which point we poll this order until it reads as paid.
+  CheckoutResult? _pendingCheckout;
+  PremiumPlan? _pendingPlan;
+  Timer? _pollTimer;
+  bool _navigated = false;
+
+  /// Cycles the coupon carousel on its own. A touch pauses it, so it never
+  /// yanks a card out from under the buyer's thumb.
+  Timer? _autoScrollTimer;
+
+  static const _pollInterval = Duration(seconds: 2);
+
+  /// A step quicker than the home banner carousel's 5s.
+  static const _autoScrollInterval = Duration(seconds: 4);
+  static const _autoScrollDuration = Duration(milliseconds: 450);
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pageController.addListener(_onPageScroll);
     _loadPlans();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pollTimer?.cancel();
+    _autoScrollTimer?.cancel();
     _pageController
       ..removeListener(_onPageScroll)
       ..dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startAutoScroll();
+    } else if (state == AppLifecycleState.paused) {
+      _autoScrollTimer?.cancel();
+    }
+
+    if (_pendingCheckout == null) return;
+    if (state == AppLifecycleState.resumed) {
+      _checkPaymentStatus();
+      _pollTimer?.cancel();
+      _pollTimer = Timer.periodic(_pollInterval, (_) => _checkPaymentStatus());
+    } else if (state == AppLifecycleState.paused) {
+      _pollTimer?.cancel();
+    }
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer?.cancel();
+    if (_plans.length < 2) return;
+    _autoScrollTimer = Timer.periodic(_autoScrollInterval, (_) {
+      if (!mounted || !_pageController.hasClients || _plans.length < 2) return;
+      _pageController.animateToPage(
+        (_selected + 1) % _plans.length,
+        duration: _autoScrollDuration,
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   void _onPageScroll() {
@@ -65,10 +166,19 @@ class _PlansPageState extends State<PlansPage> {
 
   Future<void> _loadPlans() async {
     setState(() => _isLoading = true);
+    if (_kUseMockPlans && kDebugMode) {
+      setState(() {
+        _plans = _kMockPlans;
+        _isLoading = false;
+      });
+      _startAutoScroll();
+      return;
+    }
     try {
       final data = await _repo.getPremiumPlans();
       if (!mounted) return;
       setState(() => _plans = data.where((p) => p.isActive != false).toList());
+      _startAutoScroll();
     } catch (_) {
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -77,53 +187,172 @@ class _PlansPageState extends State<PlansPage> {
 
   void _openHistory() => context.router.push(const PaymentHistoryRoute());
 
+  /// Buy CTA. The chooser sheet only *picks* a rail — the charge happens here,
+  /// once the buyer has confirmed one.
   Future<void> _purchase(PremiumPlan plan) async {
     if (plan.id == null || _purchasingId != null) return;
+
+    final picked = await showPaymentChooser(
+      context,
+      initial: _payment,
+      cards: _cards,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _payment = picked;
+      final card = picked.card;
+      if (card != null && !_cards.contains(card)) _cards.add(card);
+    });
+    if (!picked.isPayable) return;
+
+    await _pay(plan, picked);
+  }
+
+  Future<void> _pay(PremiumPlan plan, PaymentSelection payment) async {
     setState(() => _purchasingId = plan.id);
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.planPurchaseStarted,
       params: {
         'plan_id': plan.id!,
+        'payment_provider': payment.rail.providerKey,
         if (plan.discountPercentage != null)
           'discount_percentage': plan.discountPercentage!.round(),
       },
     );
+    final card = payment.card;
     try {
-      final checkout = await _api.checkoutSubscription(
+      final result = await _api.checkoutSubscription(
         tariffId: plan.id!,
-        test: true,
+        paymentProvider: payment.rail.providerKey,
+        cardNumber: card?.pan,
+        expireDate: card?.expiry,
       );
       if (!mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PaycomCheckoutPage(
-            result: checkout,
-            isSubscription: true,
-            planDiscountPercentage: plan.discountPercentage?.round(),
+      setState(() => _purchasingId = null);
+
+      if (result.isCardOtpPending) {
+        // The card rail finishes inside the app: confirm the OTP in a sheet.
+        final paid = await showCardOtpSheet(
+          context,
+          checkout: result,
+          confirmCard: ({
+            required String transactionId,
+            required String cid,
+            required String otp,
+          }) =>
+              _api.paylovConfirmCard(
+            transactionId: transactionId,
+            cid: cid,
+            otp: otp,
           ),
-        ),
-      );
+        );
+        if (paid == true && mounted) await _finishSuccess(plan, result);
+      } else if (result.checkoutUrl.isNotEmpty) {
+        await _openRedirect(plan, result);
+      } else {
+        _showError('pay_generic_error'.tr());
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString(), maxLines: 3),
-          backgroundColor: context.colors.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _purchasingId = null);
+      setState(() => _purchasingId = null);
+      _showError(e.toString());
     }
   }
 
-  /// Highest discount across all plans — drives the "До N%" hero badge and
-  /// marks which card gets the "BEST OFFER" ribbon.
+  /// Redirect rails hand off to an external app. We stay on this page and poll
+  /// the order once the OS brings us back.
+  Future<void> _openRedirect(PremiumPlan plan, CheckoutResult result) async {
+    final uri = Uri.tryParse(result.checkoutUrl);
+    if (uri == null) {
+      _showError('pay_generic_error'.tr());
+      return;
+    }
+    final launched =
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched) {
+      _showError('pay_generic_error'.tr());
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _pendingCheckout = result;
+      _pendingPlan = plan;
+    });
+  }
+
+  Future<void> _checkPaymentStatus() async {
+    final checkout = _pendingCheckout;
+    final plan = _pendingPlan;
+    if (_navigated || checkout == null || plan == null || !mounted) return;
+    if (checkout.orderId.isEmpty) return;
+    try {
+      final detail = await _api.getOrderDetail(checkout.orderId);
+      if (detail.order.isPaid) await _finishSuccess(plan, checkout);
+    } catch (_) {
+      // A hiccup while polling is non-fatal — the next tick retries.
+    }
+  }
+
+  /// Marks the plan active and hands off to the success screen. Mirrors what
+  /// the old checkout page did on a paid subscription.
+  Future<void> _finishSuccess(PremiumPlan plan, CheckoutResult result) async {
+    if (_navigated) return;
+    _navigated = true;
+    _pollTimer?.cancel();
+
+    final discount = plan.discountPercentage?.round();
+    getIt<AnalyticsService>().logEvent(
+      AnalyticsEvent.paymentSucceeded,
+      params: {
+        'plan_id': plan.id ?? '',
+        if (discount != null) 'discount_percentage': discount,
+      },
+    );
+    await getIt<Storage>().hasPremium.set(true);
+    if (discount != null) {
+      await getIt<Storage>().planDiscountPercentage.set(discount);
+    }
+    if (!mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => discount != null && discount > 0
+            ? CouponSuccessPage(discountPercentage: discount)
+            : const PremiumSuccessPage(),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _navigated = false;
+      _pendingCheckout = null;
+      _pendingPlan = null;
+    });
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, maxLines: 3),
+        backgroundColor: context.colors.error,
+      ),
+    );
+  }
+
+  /// Highest discount across all plans — drives the hero's "До N%" chip.
   double get _bestDiscount => _plans.fold<double>(
         0,
         (max, p) => (p.discountPercentage ?? 0) > max
             ? (p.discountPercentage ?? 0)
             : max,
       );
+
+  /// The single card that earns the "BEST OFFER" ribbon. Indexed rather than
+  /// compared by value, so plans tied on the top discount don't all get one.
+  /// `-1` when no plan carries a discount.
+  int get _bestOfferIndex => _bestDiscount > 0
+      ? _plans.indexWhere((p) => p.discountPercentage == _bestDiscount)
+      : -1;
 
   PremiumPlan? get _selectedPlan =>
       _selected < _plans.length ? _plans[_selected] : null;
@@ -185,27 +414,32 @@ class _PlansPageState extends State<PlansPage> {
                             height: _kCouponCardHeight.h,
                             child: _CouponCard(
                               plan: _plans.first,
-                              isBestOffer: _bestDiscount > 0,
+                              isBestOffer: _bestOfferIndex == 0,
                             ),
                           ),
                         )
                       else ...[
                         SizedBox(
                           height: _kCouponCardHeight.h,
-                          child: PageView.builder(
-                            controller: _pageController,
-                            itemCount: _plans.length,
-                            padEnds: false,
-                            itemBuilder: (_, i) => Padding(
-                              padding: EdgeInsets.only(
-                                left: 16.w,
-                                right: i == _plans.length - 1 ? 16.w : 0,
-                              ),
-                              child: _CouponCard(
-                                plan: _plans[i],
-                                isBestOffer: _bestDiscount > 0 &&
-                                    _plans[i].discountPercentage ==
-                                        _bestDiscount,
+                          // A finger on the carousel halts the auto-advance;
+                          // it picks back up once the touch ends.
+                          child: Listener(
+                            onPointerDown: (_) => _autoScrollTimer?.cancel(),
+                            onPointerUp: (_) => _startAutoScroll(),
+                            onPointerCancel: (_) => _startAutoScroll(),
+                            child: PageView.builder(
+                              controller: _pageController,
+                              itemCount: _plans.length,
+                              padEnds: false,
+                              itemBuilder: (_, i) => Padding(
+                                padding: EdgeInsets.only(
+                                  left: 16.w,
+                                  right: i == _plans.length - 1 ? 16.w : 0,
+                                ),
+                                child: _CouponCard(
+                                  plan: _plans[i],
+                                  isBestOffer: i == _bestOfferIndex,
+                                ),
                               ),
                             ),
                           ),
@@ -555,7 +789,11 @@ class _BestOfferBadge extends StatelessWidget {
   }
 }
 
-/// Bulleted condition line inside a coupon or history card.
+/// Bulleted condition line inside a coupon card.
+///
+/// Secondary copy, so it takes [AppColorScheme.textMuted] — the same `#85848c`
+/// the ticket card uses for its meta lines. Only the plan name and the price
+/// carry [AppColorScheme.textPrimary].
 class _Condition extends StatelessWidget {
   const _Condition({required this.text});
 
@@ -581,8 +819,8 @@ class _Condition extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: AppText.regular12
-                  .copyWith(color: context.colors.textPrimary),
+              style:
+                  AppText.regular12.copyWith(color: context.colors.textMuted),
             ),
           ),
         ],

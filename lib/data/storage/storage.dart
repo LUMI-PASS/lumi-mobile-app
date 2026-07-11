@@ -51,6 +51,11 @@ class Storage {
 
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
+  /// Path of the parent's avatar on this device. The backend has no endpoint
+  /// for a parent photo yet, so the picked file is kept locally and shown
+  /// from here; swap this for the server URL once the upload exists.
+  BaseStorage<String?> get avatarPath => BaseStorage(_box, 'avatarPath');
+
   BaseStorage<String> get childName => BaseStorage(_box, 'childName');
 
   BaseStorage<int> get childAge => BaseStorage(_box, 'childAge');

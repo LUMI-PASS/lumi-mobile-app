@@ -337,11 +337,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      _mainCard(c, title, branch),
-                      if (description != null) ...[
-                        6.verticalSpace,
-                        _aboutCard(c, description),
-                      ],
+                      _mainCard(c, title, description, branch),
                       if (detail.tickets.isNotEmpty) ...[
                         6.verticalSpace,
                         _ticketsCard(c, detail, order),
@@ -493,16 +489,28 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         child: Container(color: c.surface),
       );
 
-  // ─── Title + location ──────────────────────────────────────────────────────
-  Widget _mainCard(AppColorScheme c, String title, String? branch) {
+  // ─── Title, description, venue ─────────────────────────────────────────────
+  ///
+  /// One card, like class detail: the class name *is* the section header, so
+  /// there is no "About" header above the description.
+  Widget _mainCard(
+      AppColorScheme c, String title, String? description, String? branch) {
     return DetailCard(
       c: c,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
+          if (description != null) ...[
+            6.verticalSpace,
+            Text(
+              description,
+              textAlign: TextAlign.justify,
+              style: AppText.regular14.copyWith(color: c.textPrimary),
+            ),
+          ],
           if (branch != null && branch.isNotEmpty) ...[
-            16.verticalSpace,
+            20.verticalSpace,
             _DetailPill(
               c: c,
               icon: Assets.icons.detail.icLocation,
@@ -522,31 +530,24 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Figma 96:3667 — plain title on the left, the count as muted copy on
+          // the right (no chip, no gradient badge on the card header).
           Row(
             children: [
               Expanded(
-                child: DetailCardHeader(
-                  c: c,
-                  icon: Assets.icons.detail.iconsaxTicketDiscount,
-                  iconGradient: AppGradients.brand,
-                  title: 'your_tickets'.tr(),
+                child: Text(
+                  'your_tickets'.tr(),
+                  style: AppText.semibold16.copyWith(color: c.textPrimary),
                 ),
               ),
               8.horizontalSpace,
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: c.control,
-                  borderRadius: BorderRadius.circular(40.r),
-                ),
-                child: Text(
-                  'tickets_count'.tr(args: ['${detail.tickets.length}']),
-                  style: AppText.semibold12.copyWith(color: c.textPrimary),
-                ),
+              Text(
+                'tickets_count'.tr(args: ['${detail.tickets.length}']),
+                style: AppText.regular14.copyWith(color: c.textMuted),
               ),
             ],
           ),
-          16.verticalSpace,
+          20.verticalSpace,
           ...List.generate(detail.tickets.length, (i) {
             final t = detail.tickets[i];
             final cancelled = _cancelledLocally ||
@@ -561,7 +562,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
             }
             return Padding(
               padding: EdgeInsets.only(
-                  bottom: i == detail.tickets.length - 1 ? 0 : 8.h),
+                  bottom: i == detail.tickets.length - 1 ? 0 : 4.h),
               child: _TicketRow(
                 c: c,
                 ticket: t,
@@ -652,30 +653,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
               onTap: _openReceipt,
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  // ─── About the class ───────────────────────────────────────────────────────
-  Widget _aboutCard(AppColorScheme c, String description) {
-    return DetailCard(
-      c: c,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DetailCardHeader(
-            c: c,
-            icon: Assets.icons.detail.iconsaxQuestionMark,
-            iconGradient: AppGradients.indigo,
-            title: 'booking_about'.tr(),
-          ),
-          16.verticalSpace,
-          Text(
-            description,
-            textAlign: TextAlign.justify,
-            style: AppText.regular14.copyWith(color: c.textPrimary),
-          ),
         ],
       ),
     );
@@ -952,87 +929,102 @@ class _TicketRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleColor = isCancelled ? c.textMuted : c.textPrimary;
-    final subColor = isCancelled ? c.textMuted : c.textSecondary;
     final discounted = paidPrice != null && paidPrice != ticket.price;
+    final paid = discounted ? paidPrice! : ticket.price;
 
+    // Figma 96:3667: green gradient glyph badge + "Билет №N" on the left, the
+    // price on the right, and the metadata as pills on a second row — so a
+    // long date + time window wraps instead of overflowing.
     final card = Container(
-      padding: EdgeInsets.fromLTRB(8.w, 8.h, 12.w, 8.h),
+      padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
       decoration: BoxDecoration(
         color: c.control,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40.w,
-            height: 40.w,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle),
-            child: HomeIcon(Assets.icons.detail.iconsaxTicketDiscount,
-                size: 20, color: titleColor),
-          ),
-          8.horizontalSpace,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+          Row(
+            children: [
+              // Green badge in every state — a cancelled ticket is signalled by
+              // the red chip below, not by draining the glyph.
+              Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  gradient: AppGradients.green,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: HomeIcon(
+                  Assets.icons.detail.iconsaxTicketDiscount,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+              8.horizontalSpace,
+              Expanded(
+                child: Text(
                   ticket.ticketNo != null
-                      ? '#${ticket.ticketNo}'
+                      ? 'ticket_number'.tr(args: ['${ticket.ticketNo}'])
                       : 'ticket_pending_label'.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppText.semibold14.copyWith(color: titleColor),
                 ),
-                4.verticalSpace,
-                // Wrap, not Row: the date, the time window and a struck-through
-                // original price together overflow a phone width on the long
-                // locales, so they flow onto a second line instead.
-                Wrap(
-                  spacing: 8.w,
-                  runSpacing: 2.h,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(ticket.ticketDate,
-                        style: AppText.regular12.copyWith(color: subColor)),
-                    if (ticket.startTime != null && ticket.endTime != null)
-                      Text('${ticket.startTime} – ${ticket.endTime}',
-                          style: AppText.regular12.copyWith(color: subColor)),
-                    if (discounted)
-                      Text(
-                        ticket.price.toRawUzsPrice(),
-                        style: AppText.regular12.copyWith(
-                          color: c.textMuted,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                    Text(
-                      (discounted ? paidPrice! : ticket.price).toRawUzsPrice(),
-                      style: AppText.semibold12.copyWith(
-                        color: isCancelled
-                            ? c.textMuted
-                            : discounted
-                                ? AppColors.green
-                                : c.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          8.horizontalSpace,
-          if (isCancelled)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(40.r),
               ),
-              child: Text('order_cancelled'.tr(),
-                  style: AppText.semibold12.copyWith(color: AppColors.error)),
-            )
-          else
-            HomeIcon(Assets.icons.detail.arrow, size: 16, color: c.textMuted),
+              8.horizontalSpace,
+              if (discounted)
+                Text(
+                  ticket.price.toRawUzsPrice(),
+                  style: AppText.regular12.copyWith(
+                    color: c.textMuted,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+              if (discounted) 4.horizontalSpace,
+              Text(
+                paid.toRawUzsPrice(),
+                style: AppText.semibold14.copyWith(
+                  color: isCancelled
+                      ? c.textMuted
+                      : discounted
+                          ? AppColors.green
+                          : c.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          12.verticalSpace,
+          Wrap(
+            spacing: 4.w,
+            runSpacing: 4.h,
+            children: [
+              _TicketMetaChip(
+                c: c,
+                label: 'ticket_date_label'.tr(),
+                value: ticket.ticketDate,
+                muted: isCancelled,
+              ),
+              if (ticket.startTime != null && ticket.endTime != null)
+                _TicketMetaChip(
+                  c: c,
+                  label: 'ticket_time_label'.tr(),
+                  value: '${ticket.startTime} – ${ticket.endTime}',
+                  muted: isCancelled,
+                ),
+              if (isCancelled)
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(40.r),
+                  ),
+                  child: Text('order_cancelled'.tr(),
+                      style:
+                          AppText.semibold14.copyWith(color: AppColors.error)),
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -1054,6 +1046,47 @@ class _TicketRow extends StatelessWidget {
         if (result == true) onCanceled?.call();
       },
       child: card,
+    );
+  }
+}
+
+/// "Дата: 22 апр. 2026" pill under a ticket — muted label, primary value.
+class _TicketMetaChip extends StatelessWidget {
+  const _TicketMetaChip({
+    required this.c,
+    required this.label,
+    required this.value,
+    this.muted = false,
+  });
+
+  final AppColorScheme c;
+  final String label;
+  final String value;
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: detailChipFill(c),
+        borderRadius: BorderRadius.circular(40.r),
+      ),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: AppText.semibold14.copyWith(color: c.textMuted),
+            ),
+            TextSpan(
+              text: value,
+              style: AppText.semibold14
+                  .copyWith(color: muted ? c.textMuted : c.textPrimary),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

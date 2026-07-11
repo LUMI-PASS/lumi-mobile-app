@@ -55,6 +55,11 @@ class HomeApi {
         data: _childWritePayload(childModel));
   }
 
+  Future<Response> deleteChild(String childId) {
+    return _dio.delete('users/parents/profile/children/$childId',
+        queryParameters: {'lang': currentLang});
+  }
+
   /// Backend only needs first_name + dob; everything else is stripped.
   Map<String, dynamic> _childWritePayload(ChildModel c) {
     return <String, dynamic>{

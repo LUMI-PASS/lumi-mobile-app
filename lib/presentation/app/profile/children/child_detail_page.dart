@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +13,13 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/child_age.dart';
+import 'package:lumi_pass/common/utils/photo_urls.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/avatar_picker.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
+import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
-import 'package:lumi_pass/common/widget/initials_avatar.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_state.dart';
@@ -79,7 +83,18 @@ class _ChildFormState extends State<_ChildForm> {
   late String _gender =
       (widget.child?.gender ?? '').toUpperCase() == _female ? _female : _male;
 
+  /// Picked on this screen; uploaded as part of the save.
+  File? _photo;
+
   bool get _isEdit => widget.child != null;
+
+  /// The photo already on the server. The endpoint 404s when the child has
+  /// none, so only ask for it when the model says there is one.
+  String? get _serverPhotoUrl {
+    final child = widget.child;
+    if (child?.id == null || child?.hasPhoto != true) return null;
+    return childPhotoUrl(child!.id!);
+  }
 
   @override
   void dispose() {
@@ -109,20 +124,27 @@ class _ChildFormState extends State<_ChildForm> {
     final dob = dobForAge(int.parse(_ageController.text.trim()));
     final cubit = context.read<ChildrenCubit>();
 
-    if (_isEdit) {
-      cubit.submit(
-        widget.child!.copyWith(
-          firstName: firstName,
-          dob: dob,
-          gender: _gender,
-        ),
-        true,
-      );
-    } else {
-      cubit.submit(
-        ChildModel(firstName: firstName, dob: dob, gender: _gender),
-        false,
-      );
+    final child = _isEdit
+        ? widget.child!.copyWith(
+            firstName: firstName,
+            dob: dob,
+            gender: _gender,
+          )
+        : ChildModel(firstName: firstName, dob: dob, gender: _gender);
+
+    cubit.saveChild(child, _isEdit, _photo);
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _DeleteChildSheet(
+        name: widget.child?.firstName ?? '',
+      ),
+    );
+    if (confirmed == true && mounted) {
+      context.read<ChildrenCubit>().deleteChild(widget.child!.id!);
     }
   }
 
@@ -141,8 +163,10 @@ class _ChildFormState extends State<_ChildForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: InitialsAvatar(
-                      name: widget.child?.firstName ?? '',
+                    child: AvatarPicker(
+                      pickedFile: _photo,
+                      imageUrl: _serverPhotoUrl,
+                      onPicked: (file) => setState(() => _photo = file),
                     ),
                   ),
                   20.kh,
@@ -191,11 +215,105 @@ class _ChildFormState extends State<_ChildForm> {
             ),
           ),
           BottomBox(
-            child: GradientButton(
-              text: 'save_button'.tr(),
-              loading: widget.saving,
-              onPressed: _save,
+            child: Row(
+              children: [
+                // Nothing to delete until the child exists.
+                if (_isEdit) ...[
+                  Expanded(
+                    child: CommonButton.elevated(
+                      text: 'delete'.tr(),
+                      backgroundColor: AppColors.error,
+                      textColor: AppColors.onBrand,
+                      radius: 44.r,
+                      enabled: !widget.saving,
+                      onPressed: _confirmDelete,
+                    ),
+                  ),
+                  8.kw,
+                ],
+                Expanded(
+                  child: GradientButton(
+                    text: 'save_button'.tr(),
+                    loading: widget.saving,
+                    onPressed: _save,
+                  ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Confirmation before removing a child. Pops `true` on confirm.
+class _DeleteChildSheet extends StatelessWidget {
+  const _DeleteChildSheet({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        24.w,
+        16.h,
+        24.w,
+        16.h + MediaQuery.of(context).viewPadding.bottom,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40.w,
+            height: 4.h,
+            decoration: BoxDecoration(
+              color: colors.border,
+              borderRadius: BorderRadius.circular(2.r),
+            ),
+          ),
+          24.kh,
+          Text(
+            'delete_child'.tr(),
+            style: AppText.heading20.copyWith(color: colors.textPrimary),
+          ),
+          8.kh,
+          Text(
+            'delete_child_subtitle'.tr(args: [name]),
+            textAlign: TextAlign.center,
+            style: AppText.regular14.copyWith(color: colors.textSecondary),
+          ),
+          24.kh,
+          Row(
+            children: [
+              Expanded(
+                child: CommonButton.outlined(
+                  text: 'cancel'.tr(),
+                  textColor: colors.textPrimary,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                  radius: 44.r,
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+              ),
+              8.kw,
+              Expanded(
+                child: CommonButton.elevated(
+                  text: 'delete'.tr(),
+                  backgroundColor: AppColors.error,
+                  textColor: AppColors.onBrand,
+                  radius: 44.r,
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
+              ),
+            ],
           ),
         ],
       ),

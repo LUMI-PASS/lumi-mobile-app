@@ -9,6 +9,9 @@ abstract final class AppColors {
   static const onBrand = Color(0xFFFFFFFF);
 
   static const link = Color(0xFF5735FF);
+
+  /// The muted indigo of inline text actions ("Добавить фото").
+  static const lightPurple = Color(0xFF6F5ED0);
   static const error = Color(0xFFFF4B55);
 
   static const green = Color(0xFF2CBE88);

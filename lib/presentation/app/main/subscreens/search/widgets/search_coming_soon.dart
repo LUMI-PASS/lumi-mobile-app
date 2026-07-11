@@ -36,7 +36,13 @@ class SearchComingSoonView extends StatelessWidget {
         body: Column(
           children: [
             SizedBox(height: topInset + 8.h),
-            SearchTopBar(title: 'tab_explore'.tr(), onBack: onBack),
+            // Titled only as the Explore tab, where the title names the
+            // destination. Pushed from Home (search icon, categories grid) it
+            // is not "Учреждения" the user asked for, so the bar is bare.
+            SearchTopBar(
+              title: onBack == null ? 'tab_explore'.tr() : null,
+              onBack: onBack,
+            ),
             16.verticalSpace,
             Expanded(
               // The ClipRect is load-bearing: a BackdropFilter frosts its whole
