@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/data/api_model/order/saved_card.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
 
@@ -183,6 +184,68 @@ class OrdersApi {
         ? Map<String, dynamic>.from(raw['data'] as Map)
         : Map<String, dynamic>.from(raw as Map);
     return PaylovCardConfirmResult.fromJson(data);
+  }
+
+  // ── Saved cards (WLCM Subscribe/Merchant API, via our backend) ──────────────
+
+  /// Lists the user's saved (bound) cards (`GET /api/paylov/cards`).
+  Future<List<SavedCard>> getSavedCards() async {
+    final response = await _dio.get('paylov/cards');
+    final raw = response.data;
+    final list = raw is Map && raw['data'] is List
+        ? raw['data'] as List
+        : (raw is List ? raw : const []);
+    return list
+        .whereType<Map>()
+        .map((e) => SavedCard.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  /// Begins binding a card (`POST /api/paylov/cards`). Sends the PAN + expiry to
+  /// WLCM, which SMSes an OTP; confirm it with [confirmSavedCard]. The card is
+  /// only persisted after the OTP is confirmed — the PAN is never stored.
+  Future<CardAddSession> addSavedCard({
+    required String cardNumber,
+    required String expireDate,
+    String? phoneNumber,
+  }) async {
+    final response = await _dio.post('paylov/cards', data: {
+      'card_number': cardNumber.replaceAll(RegExp(r'\s'), ''),
+      'expire_date': expireDate.replaceAll(RegExp(r'[^0-9]'), ''),
+      if (phoneNumber != null && phoneNumber.trim().isNotEmpty)
+        'phone_number': phoneNumber.trim(),
+    });
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map
+        ? Map<String, dynamic>.from(raw['data'] as Map)
+        : Map<String, dynamic>.from(raw as Map);
+    return CardAddSession.fromJson(data);
+  }
+
+  /// Confirms the OTP and saves the bound card
+  /// (`POST /api/paylov/cards/confirm`).
+  Future<SavedCard> confirmSavedCard({
+    required String cid,
+    required String otp,
+    String? cardName,
+  }) async {
+    final response = await _dio.post('paylov/cards/confirm', data: {
+      'cid': cid,
+      'otp': otp.trim(),
+      if (cardName != null && cardName.trim().isNotEmpty)
+        'card_name': cardName.trim(),
+    });
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map
+        ? Map<String, dynamic>.from(raw['data'] as Map)
+        : Map<String, dynamic>.from(raw as Map);
+    return SavedCard.fromJson(data);
+  }
+
+  /// Deletes a saved card (`DELETE /api/paylov/cards/:cardId`), unbinding it on
+  /// WLCM too.
+  Future<void> deleteSavedCard(String cardId) async {
+    await _dio.delete('paylov/cards/$cardId');
   }
 
   /// Previews a promocode against an order subtotal without committing it.
