@@ -10,6 +10,9 @@ import 'package:lumi_pass/common/widget/auth/auth_fields.dart';
 import 'package:lumi_pass/common/widget/auth/auth_misc.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/data/api_model/order/saved_card.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 
 /// Confirms the OTP for a Paylov card payment.
 typedef PaymentConfirmCard = Future<PaylovCardConfirmResult> Function({
@@ -88,30 +91,52 @@ enum CardBrand {
       };
 }
 
-/// A card the buyer entered in this session.
-///
-/// Paylov re-charges the full PAN + expiry on every payment, so the details are
-/// kept alongside the display fields; they never leave the booking screen.
+/// A card offered in the chooser. Two flavours:
+///  • a **bound** card ([savedCardId] set) — a WLCM token; charged server-side
+///    with no PAN and no OTP;
+///  • a **session** card (PAN + expiry, [savedCardId] null) — entered this
+///    session and charged one-shot through the Paylov card checkout (OTP each
+///    time). The PAN never leaves the booking screen.
 class PaymentCard {
   const PaymentCard({
     required this.brand,
     required this.pan,
     required this.expiry,
+    this.savedCardId,
   });
 
-  /// 16 digits, unformatted.
+  /// 16 digits for a session card; the masked PAN for a bound card (only
+  /// [last4] is read from it).
   final String pan;
 
-  /// MMYY, unformatted.
+  /// MMYY, unformatted. Empty for a bound card.
   final String expiry;
 
   final CardBrand brand;
 
-  String get last4 =>
-      pan.length >= 4 ? pan.substring(pan.length - 4) : pan;
+  /// WLCM cardId token when this is a bound (saved) card; null for a session
+  /// card that must still be charged with its PAN.
+  final String? savedCardId;
+
+  bool get isSaved => savedCardId != null;
+
+  String get last4 {
+    final d = pan.replaceAll(RegExp(r'[^0-9]'), '');
+    return d.length >= 4 ? d.substring(d.length - 4) : d;
+  }
 
   /// "UzCard •••• 8534" — what the booking row and the card list show.
   String get label => '${brand.label} •••• $last4';
+
+  /// A bound card loaded from the backend.
+  factory PaymentCard.saved(SavedCard c) => PaymentCard(
+        brand: CardBrand.fromKey(c.vendor) == CardBrand.unknown
+            ? CardBrand.fromPan(c.maskedNumber ?? '')
+            : CardBrand.fromKey(c.vendor),
+        pan: c.maskedNumber ?? '',
+        expiry: '',
+        savedCardId: c.cardId,
+      );
 }
 
 /// What the chooser sheet hands back: the rail, plus the card when the buyer
@@ -407,6 +432,31 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   final _expiryCtrl = TextEditingController();
 
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCards();
+  }
+
+  /// Pulls the buyer's bound cards from the backend and shows them at the top of
+  /// the card list. Non-fatal on failure — a card can still be entered manually.
+  Future<void> _loadSavedCards() async {
+    try {
+      final saved = await getIt<OrdersApi>().getSavedCards();
+      if (!mounted || saved.isEmpty) return;
+      setState(() {
+        final tokens = _cards.map((c) => c.savedCardId).whereType<String>().toSet();
+        var i = 0;
+        for (final s in saved) {
+          if (tokens.contains(s.cardId)) continue;
+          _cards.insert(i++, PaymentCard.saved(s));
+        }
+      });
+    } catch (_) {
+      // Ignore — the manual add-card path remains available.
+    }
+  }
 
   @override
   void dispose() {

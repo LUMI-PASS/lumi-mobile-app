@@ -142,6 +142,7 @@ class OrdersApi {
     String? paymentProvider,
     String? cardNumber,
     String? expireDate,
+    String? savedCardId,
     bool test = false,
   }) async {
     final body = {
@@ -157,6 +158,8 @@ class OrdersApi {
         'card_number': cardNumber.replaceAll(RegExp(r'\s'), ''),
       if (expireDate != null && expireDate.trim().isNotEmpty)
         'expire_date': expireDate.replaceAll(RegExp(r'[^0-9]'), ''),
+      if (savedCardId != null && savedCardId.trim().isNotEmpty)
+        'saved_card_id': savedCardId.trim(),
     };
     final response = await _dio.post('orders/checkout', data: body);
     final raw = response.data;
@@ -246,6 +249,24 @@ class OrdersApi {
   /// WLCM too.
   Future<void> deleteSavedCard(String cardId) async {
     await _dio.delete('paylov/cards/$cardId');
+  }
+
+  /// Charges a PENDING order with a bound card token
+  /// (`POST /api/paylov/cards/pay`). Synchronous — no OTP, since the card is
+  /// already tokenized. Returns the paid order status.
+  Future<PaylovCardConfirmResult> payOrderWithSavedCard({
+    required String orderId,
+    required String cardId,
+  }) async {
+    final response = await _dio.post('paylov/cards/pay', data: {
+      'order_id': orderId,
+      'card_id': cardId,
+    });
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map
+        ? Map<String, dynamic>.from(raw['data'] as Map)
+        : Map<String, dynamic>.from(raw as Map);
+    return PaylovCardConfirmResult.fromJson(data);
   }
 
   /// Previews a promocode against an order subtotal without committing it.

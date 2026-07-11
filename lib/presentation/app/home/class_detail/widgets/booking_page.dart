@@ -915,6 +915,7 @@ class _BookingPageState extends State<BookingPage> {
     String? provider,
     String? cardNumber,
     String? expireDate,
+    String? savedCardId,
   }) async {
     final id = widget.clazz.id!;
     final items = _buildCheckoutItems();
@@ -931,10 +932,13 @@ class _BookingPageState extends State<BookingPage> {
         // Coupon plan and promocode never stack — only send a code when the
         // user has no coupon plan (the promo field is hidden in that case).
         promoCode: _hasCoupon ? null : _appliedPromo?.code,
-        paymentProvider: provider,
+        // A saved-card checkout sends only saved_card_id (no provider): the
+        // order is created PENDING and charged via the token afterwards.
+        paymentProvider: savedCardId != null ? null : provider,
         returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
         cardNumber: cardNumber,
         expireDate: expireDate,
+        savedCardId: savedCardId,
       );
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutStarted,
@@ -1514,6 +1518,24 @@ class _BookingPageState extends State<BookingPage> {
       _error = null;
     });
     try {
+      // Bound (saved) card → token pay: create the PENDING order, then charge
+      // the token server-side (no OTP). No redirect, no card entry.
+      if (card != null && card.isSaved) {
+        final order = await _runCheckout(savedCardId: card.savedCardId);
+        final paid = await getIt<OrdersApi>().payOrderWithSavedCard(
+          orderId: order.orderId,
+          cardId: card.savedCardId!,
+        );
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        if (paid.success) {
+          _completeCardPaid(order);
+        } else {
+          setState(() => _error = paid.message ?? 'pay_generic_error'.tr());
+        }
+        return;
+      }
+
       final result = await _runCheckout(
         provider: payment.rail.providerKey,
         cardNumber: card?.pan,
