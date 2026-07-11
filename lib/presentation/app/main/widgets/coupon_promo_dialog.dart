@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
@@ -104,7 +105,7 @@ class _CouponPromoDialog extends StatelessWidget {
                       ),
                     ),
                     Lottie.asset(
-                      'assets/lotties/premium.json',
+                      Assets.lotties.premium,
                       width: 150.w,
                       height: 150.w,
                       repeat: true,

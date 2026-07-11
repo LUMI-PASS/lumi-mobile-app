@@ -9,7 +9,7 @@ abstract class StaticColors {
   static const midnight = Color(0xFF242B3A);
   static const raven = Color(0xFF6D717C);
   static const aluminium = Color(0xFF203645);
-  static const solitude = Color(0xFFF9F9FA);
+  static const solitude = Color(0xFFEFEEF5);
   static const bittersweet = Color(0xFFFF4028);
   static const speechGreen = Color(0xFF1F2731);
   static const limeGreen = Color(0xFF34AD40);

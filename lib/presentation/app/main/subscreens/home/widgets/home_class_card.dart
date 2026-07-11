@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -163,14 +164,14 @@ class _ClassImage extends StatelessWidget {
                   if (firstCategory.isNotEmpty)
                     HomePillTag(
                       label: firstCategory,
-                      leading: const HomeIcon(HomeIcon.book,
+                      leading: HomeIcon(Assets.icons.home.book,
                           size: 12, color: Colors.white),
                       gradient: AppGradients.indigo,
                     ),
                   if (discountPercentage > 0)
                     HomePillTag(
                       label: 'sale'.tr(),
-                      leading: const HomeIcon(HomeIcon.flash,
+                      leading: HomeIcon(Assets.icons.home.flash,
                           size: 12, color: Colors.white),
                       color: AppColors.error,
                     ),

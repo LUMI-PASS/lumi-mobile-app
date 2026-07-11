@@ -60,7 +60,6 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: c.overlayStyle,
       child: Scaffold(
-        backgroundColor: c.bg,
         body: Column(
           children: [
             SizedBox(height: topInset + 8.h),

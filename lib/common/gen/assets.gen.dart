@@ -31,9 +31,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/arrow_left.svg
   SvgGenImage get arrowLeft => const SvgGenImage('assets/icons/arrow_left.svg');
 
-  /// File path: assets/icons/arrow_left_ios.svg
-  SvgGenImage get arrowLeftIos =>
-      const SvgGenImage('assets/icons/arrow_left_ios.svg');
+  /// File path: assets/icons/arrow_left_rounded.svg
+  SvgGenImage get arrowLeftRounded =>
+      const SvgGenImage('assets/icons/arrow_left_rounded.svg');
 
   /// File path: assets/icons/arrow_right.svg
   SvgGenImage get arrowRight =>
@@ -135,6 +135,19 @@ class $AssetsIconsGen {
   SvgGenImage get homeFilled =>
       const SvgGenImage('assets/icons/home_filled.svg');
 
+  /// File path: assets/icons/ic_card.svg
+  SvgGenImage get icCard => const SvgGenImage('assets/icons/ic_card.svg');
+
+  /// File path: assets/icons/ic_card_scan.svg
+  SvgGenImage get icCardScan =>
+      const SvgGenImage('assets/icons/ic_card_scan.svg');
+
+  /// File path: assets/icons/ic_filter.svg
+  SvgGenImage get icFilter => const SvgGenImage('assets/icons/ic_filter.svg');
+
+  /// File path: assets/icons/ic_map.svg
+  SvgGenImage get icMap => const SvgGenImage('assets/icons/ic_map.svg');
+
   /// File path: assets/icons/info_dis.svg
   SvgGenImage get infoDis => const SvgGenImage('assets/icons/info_dis.svg');
 
@@ -158,8 +171,11 @@ class $AssetsIconsGen {
   SvgGenImage get mastercard =>
       const SvgGenImage('assets/icons/mastercard.svg');
 
+  $AssetsIconsNotificationGen get notification =>
+      const $AssetsIconsNotificationGen();
+
   /// File path: assets/icons/notification.svg
-  SvgGenImage get notification =>
+  SvgGenImage get notificationSvg =>
       const SvgGenImage('assets/icons/notification.svg');
 
   /// File path: assets/icons/outlined_calendar.svg
@@ -169,8 +185,6 @@ class $AssetsIconsGen {
   /// File path: assets/icons/outlined_person.svg
   SvgGenImage get outlinedPerson =>
       const SvgGenImage('assets/icons/outlined_person.svg');
-
-  $AssetsIconsPayGen get pay => const $AssetsIconsPayGen();
 
   /// File path: assets/icons/paypal.svg
   SvgGenImage get paypal => const SvgGenImage('assets/icons/paypal.svg');
@@ -216,7 +230,7 @@ class $AssetsIconsGen {
         arrowEpandHor,
         arrowExpand,
         arrowLeft,
-        arrowLeftIos,
+        arrowLeftRounded,
         arrowRight,
         arrowRightExpand,
         arrowStrictRight,
@@ -244,13 +258,17 @@ class $AssetsIconsGen {
         google,
         group,
         homeFilled,
+        icCard,
+        icCardScan,
+        icFilter,
+        icMap,
         infoDis,
         location,
         locationPrimary,
         lumiLogo,
         map,
         mastercard,
-        notification,
+        notificationSvg,
         outlinedCalendar,
         outlinedPerson,
         paypal,
@@ -305,6 +323,20 @@ class $AssetsImagesGen {
   AssetGenImage get notFound =>
       const AssetGenImage('assets/images/not_found.png');
 
+  $AssetsImagesPayGen get pay => const $AssetsImagesPayGen();
+
+  /// File path: assets/images/payment_loading.png
+  AssetGenImage get paymentLoading =>
+      const AssetGenImage('assets/images/payment_loading.png');
+
+  /// File path: assets/images/payment_success.png
+  AssetGenImage get paymentSuccess =>
+      const AssetGenImage('assets/images/payment_success.png');
+
+  /// File path: assets/images/payment_warning.png
+  AssetGenImage get paymentWarning =>
+      const AssetGenImage('assets/images/payment_warning.png');
+
   /// List of all assets
   List<AssetGenImage> get values => [
         appIcon,
@@ -315,7 +347,10 @@ class $AssetsImagesGen {
         defacultAvatar,
         defaultImage,
         empty,
-        notFound
+        notFound,
+        paymentLoading,
+        paymentSuccess,
+        paymentWarning
       ];
 }
 
@@ -458,6 +493,10 @@ class $AssetsIconsDetailGen {
   /// File path: assets/icons/detail/arrow.svg
   SvgGenImage get arrow => const SvgGenImage('assets/icons/detail/arrow.svg');
 
+  /// File path: assets/icons/detail/baby_girl.svg
+  SvgGenImage get babyGirl =>
+      const SvgGenImage('assets/icons/detail/baby_girl.svg');
+
   /// File path: assets/icons/detail/heart.svg
   SvgGenImage get heart => const SvgGenImage('assets/icons/detail/heart.svg');
 
@@ -477,6 +516,10 @@ class $AssetsIconsDetailGen {
   SvgGenImage get iconsaxCircleShare =>
       const SvgGenImage('assets/icons/detail/iconsax-circle-share.svg');
 
+  /// File path: assets/icons/detail/iconsax-discount.svg
+  SvgGenImage get iconsaxDiscount =>
+      const SvgGenImage('assets/icons/detail/iconsax-discount.svg');
+
   /// File path: assets/icons/detail/iconsax-language-circle.svg
   SvgGenImage get iconsaxLanguageCircle =>
       const SvgGenImage('assets/icons/detail/iconsax-language-circle.svg');
@@ -489,6 +532,10 @@ class $AssetsIconsDetailGen {
   SvgGenImage get iconsaxQuestionMark =>
       const SvgGenImage('assets/icons/detail/iconsax-question-mark.svg');
 
+  /// File path: assets/icons/detail/iconsax-receipt.svg
+  SvgGenImage get iconsaxReceipt =>
+      const SvgGenImage('assets/icons/detail/iconsax-receipt.svg');
+
   /// File path: assets/icons/detail/iconsax-ticket-discount.svg
   SvgGenImage get iconsaxTicketDiscount =>
       const SvgGenImage('assets/icons/detail/iconsax-ticket-discount.svg');
@@ -499,14 +546,17 @@ class $AssetsIconsDetailGen {
   /// List of all assets
   List<SvgGenImage> get values => [
         arrow,
+        babyGirl,
         heart,
         iconsaxAiCalendar,
         iconsaxAiUsers,
         iconsaxBaby,
         iconsaxCircleShare,
+        iconsaxDiscount,
         iconsaxLanguageCircle,
         iconsaxLogout2,
         iconsaxQuestionMark,
+        iconsaxReceipt,
         iconsaxTicketDiscount,
         share
       ];
@@ -609,6 +659,10 @@ class $AssetsIconsHomeGen {
 class $AssetsIconsMainGen {
   const $AssetsIconsMainGen();
 
+  /// File path: assets/icons/main/coupon_container.png
+  AssetGenImage get couponContainer =>
+      const AssetGenImage('assets/icons/main/coupon_container.png');
+
   /// File path: assets/icons/main/onboard1.png
   AssetGenImage get onboard1 =>
       const AssetGenImage('assets/icons/main/onboard1.png');
@@ -622,23 +676,90 @@ class $AssetsIconsMainGen {
       const AssetGenImage('assets/icons/main/onboard3.png');
 
   /// List of all assets
-  List<AssetGenImage> get values => [onboard1, onboard2, onboard3];
+  List<AssetGenImage> get values =>
+      [couponContainer, onboard1, onboard2, onboard3];
 }
 
-class $AssetsIconsPayGen {
-  const $AssetsIconsPayGen();
+class $AssetsIconsNotificationGen {
+  const $AssetsIconsNotificationGen();
 
-  /// File path: assets/icons/pay/click.png
-  AssetGenImage get click => const AssetGenImage('assets/icons/pay/click.png');
+  /// File path: assets/icons/notification/bell.svg
+  SvgGenImage get bell =>
+      const SvgGenImage('assets/icons/notification/bell.svg');
 
-  /// File path: assets/icons/pay/payme.png
-  AssetGenImage get payme => const AssetGenImage('assets/icons/pay/payme.png');
+  /// File path: assets/icons/notification/clock.svg
+  SvgGenImage get clock =>
+      const SvgGenImage('assets/icons/notification/clock.svg');
 
-  /// File path: assets/icons/pay/uzum.png
-  AssetGenImage get uzum => const AssetGenImage('assets/icons/pay/uzum.png');
+  /// File path: assets/icons/notification/close.svg
+  SvgGenImage get close =>
+      const SvgGenImage('assets/icons/notification/close.svg');
+
+  /// File path: assets/icons/notification/idea.svg
+  SvgGenImage get idea =>
+      const SvgGenImage('assets/icons/notification/idea.svg');
+
+  /// File path: assets/icons/notification/tick.svg
+  SvgGenImage get tick =>
+      const SvgGenImage('assets/icons/notification/tick.svg');
 
   /// List of all assets
-  List<AssetGenImage> get values => [click, payme, uzum];
+  List<SvgGenImage> get values => [bell, clock, close, idea, tick];
+}
+
+class $AssetsImagesPayGen {
+  const $AssetsImagesPayGen();
+
+  /// File path: assets/images/pay/click-dark.png
+  AssetGenImage get clickDark =>
+      const AssetGenImage('assets/images/pay/click-dark.png');
+
+  /// File path: assets/images/pay/click-light.png
+  AssetGenImage get clickLight =>
+      const AssetGenImage('assets/images/pay/click-light.png');
+
+  /// File path: assets/images/pay/click_logo.png
+  AssetGenImage get clickLogo =>
+      const AssetGenImage('assets/images/pay/click_logo.png');
+
+  /// File path: assets/images/pay/humo.png
+  AssetGenImage get humo => const AssetGenImage('assets/images/pay/humo.png');
+
+  /// File path: assets/images/pay/mastercard.png
+  AssetGenImage get mastercard =>
+      const AssetGenImage('assets/images/pay/mastercard.png');
+
+  /// File path: assets/images/pay/payme.png
+  AssetGenImage get payme => const AssetGenImage('assets/images/pay/payme.png');
+
+  /// File path: assets/images/pay/payme_logo.png
+  AssetGenImage get paymeLogo =>
+      const AssetGenImage('assets/images/pay/payme_logo.png');
+
+  /// File path: assets/images/pay/uzcard.png
+  AssetGenImage get uzcard =>
+      const AssetGenImage('assets/images/pay/uzcard.png');
+
+  /// File path: assets/images/pay/uzum.png
+  AssetGenImage get uzum => const AssetGenImage('assets/images/pay/uzum.png');
+
+  /// File path: assets/images/pay/uzum_logo.png
+  AssetGenImage get uzumLogo =>
+      const AssetGenImage('assets/images/pay/uzum_logo.png');
+
+  /// List of all assets
+  List<AssetGenImage> get values => [
+        clickDark,
+        clickLight,
+        clickLogo,
+        humo,
+        mastercard,
+        payme,
+        paymeLogo,
+        uzcard,
+        uzum,
+        uzumLogo
+      ];
 }
 
 class Assets {

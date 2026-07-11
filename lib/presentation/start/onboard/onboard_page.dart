@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
@@ -20,10 +21,10 @@ class OnboardingPage
 
   final PageController _pageController = PageController();
 
-  static const _images = [
-    'assets/icons/main/onboard1.png',
-    'assets/icons/main/onboard2.png',
-    'assets/icons/main/onboard3.png',
+  static final _images = [
+    Assets.icons.main.onboard1,
+    Assets.icons.main.onboard2,
+    Assets.icons.main.onboard3,
   ];
 
   @override
@@ -104,7 +105,7 @@ class _OnboardSlide extends StatelessWidget {
     required this.subtitle,
   });
 
-  final String image;
+  final AssetGenImage image;
   final String title;
   final String subtitle;
 
@@ -117,7 +118,7 @@ class _OnboardSlide extends StatelessWidget {
         children: [
           Expanded(
             child: Center(
-              child: Image.asset(image, fit: BoxFit.contain),
+              child: image.image(fit: BoxFit.contain),
             ),
           ),
           SizedBox(height: 8.h),

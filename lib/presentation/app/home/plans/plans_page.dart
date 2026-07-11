@@ -295,7 +295,7 @@ class _Header extends StatelessWidget {
                         width: 88.w,
                         height: 88.w,
                         child: Lottie.asset(
-                          'assets/lotties/premium.json',
+                          Assets.lotties.premium,
                           fit: BoxFit.contain,
                           repeat: true,
                         ),

@@ -3,11 +3,14 @@ import 'package:flutter/cupertino.dart' hide CupertinoPageTransition;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lumi_pass/common/router/initial_guard.dart';
+import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_page.dart';
 import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
@@ -106,6 +109,7 @@ class AppRouter extends _$AppRouter {
 
     AutoRoute(page: ClassDetailRoute.page),
     AutoRoute(page: BranchDetailRoute.page),
+    AutoRoute(page: BookingRoute.page),
     AutoRoute(page: BookingCompleteRoute.page),
     AutoRoute(page: ProfileDetailRoute.page),
     AutoRoute(page: ChildrenRoute.page),

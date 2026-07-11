@@ -49,9 +49,16 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     BookingCompleteRoute.name: (routeData) {
+      final args = routeData.argsAs<BookingCompleteRouteArgs>(
+          orElse: () => const BookingCompleteRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: const BookingCompletePage(),
+        child: BookingCompletePage(
+          key: args.key,
+          status: args.status,
+          result: args.result,
+          lines: args.lines,
+        ),
       );
     },
     BookingDetailRoute.name: (routeData) {
@@ -61,6 +68,16 @@ abstract class _$AppRouter extends RootStackRouter {
         child: BookingDetailPage(
           key: args.key,
           orderId: args.orderId,
+        ),
+      );
+    },
+    BookingRoute.name: (routeData) {
+      final args = routeData.argsAs<BookingRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: BookingPage(
+          key: args.key,
+          clazz: args.clazz,
         ),
       );
     },
@@ -405,16 +422,50 @@ class AttendanceHistoryRoute extends PageRouteInfo<void> {
 
 /// generated route for
 /// [BookingCompletePage]
-class BookingCompleteRoute extends PageRouteInfo<void> {
-  const BookingCompleteRoute({List<PageRouteInfo>? children})
-      : super(
+class BookingCompleteRoute extends PageRouteInfo<BookingCompleteRouteArgs> {
+  BookingCompleteRoute({
+    Key? key,
+    BookingResultStatus status = BookingResultStatus.paid,
+    CheckoutResult? result,
+    List<OrderLine> lines = const [],
+    List<PageRouteInfo>? children,
+  }) : super(
           BookingCompleteRoute.name,
+          args: BookingCompleteRouteArgs(
+            key: key,
+            status: status,
+            result: result,
+            lines: lines,
+          ),
           initialChildren: children,
         );
 
   static const String name = 'BookingCompleteRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static const PageInfo<BookingCompleteRouteArgs> page =
+      PageInfo<BookingCompleteRouteArgs>(name);
+}
+
+class BookingCompleteRouteArgs {
+  const BookingCompleteRouteArgs({
+    this.key,
+    this.status = BookingResultStatus.paid,
+    this.result,
+    this.lines = const [],
+  });
+
+  final Key? key;
+
+  final BookingResultStatus status;
+
+  final CheckoutResult? result;
+
+  final List<OrderLine> lines;
+
+  @override
+  String toString() {
+    return 'BookingCompleteRouteArgs{key: $key, status: $status, result: $result, lines: $lines}';
+  }
 }
 
 /// generated route for
@@ -452,6 +503,44 @@ class BookingDetailRouteArgs {
   @override
   String toString() {
     return 'BookingDetailRouteArgs{key: $key, orderId: $orderId}';
+  }
+}
+
+/// generated route for
+/// [BookingPage]
+class BookingRoute extends PageRouteInfo<BookingRouteArgs> {
+  BookingRoute({
+    Key? key,
+    required ClassFullModel clazz,
+    List<PageRouteInfo>? children,
+  }) : super(
+          BookingRoute.name,
+          args: BookingRouteArgs(
+            key: key,
+            clazz: clazz,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'BookingRoute';
+
+  static const PageInfo<BookingRouteArgs> page =
+      PageInfo<BookingRouteArgs>(name);
+}
+
+class BookingRouteArgs {
+  const BookingRouteArgs({
+    this.key,
+    required this.clazz,
+  });
+
+  final Key? key;
+
+  final ClassFullModel clazz;
+
+  @override
+  String toString() {
+    return 'BookingRouteArgs{key: $key, clazz: $clazz}';
   }
 }
 

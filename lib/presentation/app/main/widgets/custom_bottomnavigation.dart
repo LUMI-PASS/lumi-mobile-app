@@ -2,9 +2,9 @@ import 'package:dynamic_glass_glmv/dynamic_glass_glmv.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 
 /// Glass bottom navigation — the same `AdaptiveBottomNavigationBar` component
 /// nexus-mobile-app uses (from `dynamic_glass_glmv`), wired the nexus way: a
@@ -45,17 +45,15 @@ class CustomBottomBar extends StatelessWidget {
   /// Figma `Primary/Grey` — unselected icon/label in dark mode.
   static const Color _figmaGrey = Color(0xFFA5A6BB);
 
-  // HomeIcon asset name + localization key, per tab (Figma order:
+  // Tab icon + localization key, per tab (Figma order:
   // Главный · Видео · Броны · Учреждения · Профиль).
-  static const List<(String, String)> _tabs = [
-    (HomeIcon.home, 'tab_home'),
-    (HomeIcon.video, 'tab_shorts'),
-    (HomeIcon.calendar, 'tab_bookings'),
-    (HomeIcon.building, 'tab_explore'),
-    (HomeIcon.profile, 'tab_profile'),
+  static final List<(SvgGenImage, String)> _tabs = [
+    (Assets.icons.home.home, 'tab_home'),
+    (Assets.icons.home.video, 'tab_shorts'),
+    (Assets.icons.home.calendar, 'tab_bookings'),
+    (Assets.icons.home.building, 'tab_explore'),
+    (Assets.icons.home.profile, 'tab_profile'),
   ];
-
-  static String _assetOf(String name) => 'assets/icons/home/$name.svg';
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +132,8 @@ class CustomBottomBar extends StatelessWidget {
     final items = [
       for (final (icon, labelKey) in _tabs)
         AdaptiveNavigationDestination(
-          icon: _assetOf(icon),
+          // The package takes an asset-path String (see its `icon` doc).
+          icon: icon.path,
           label: labelKey.tr(),
         ),
     ];

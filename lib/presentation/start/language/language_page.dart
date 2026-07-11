@@ -2,10 +2,10 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/styles/auth_assets.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/widget/auth/auth_badges.dart';
 import 'package:lumi_pass/common/widget/auth/auth_misc.dart';
@@ -18,13 +18,13 @@ class _Lang {
   final String code;
   final String label;
   final Locale locale;
-  final String flag;
+  final AssetGenImage flag;
 }
 
-const _languages = [
-  _Lang('en', 'English', Locale('en', 'EN'), AuthAssets.flagEn),
-  _Lang('uz', "O'zbek tili", Locale('uz', 'UZ'), AuthAssets.flagUz),
-  _Lang('ru', 'Русский', Locale('ru', 'RU'), AuthAssets.flagRu),
+final _languages = [
+  _Lang('en', 'English', const Locale('en', 'EN'), Assets.icons.auth.flagEn),
+  _Lang('uz', "O'zbek tili", const Locale('uz', 'UZ'), Assets.icons.auth.flagUz),
+  _Lang('ru', 'Русский', const Locale('ru', 'RU'), Assets.icons.auth.flagRu),
 ];
 
 /// "Выберите язык" — full-screen language picker.
@@ -66,7 +66,7 @@ class _LanguagePageState extends State<LanguagePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(height: 32.h),
-                  const GradientIconBadge(asset: AuthAssets.globe),
+                  GradientIconBadge(asset: Assets.icons.auth.globe),
                   SizedBox(height: 16.h),
                   Text(
                     'select_language'.tr(),

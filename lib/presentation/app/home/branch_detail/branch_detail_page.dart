@@ -1,8 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -10,7 +10,6 @@ import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 @RoutePage()
@@ -111,20 +110,24 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
     return AnnotatedRegion(
       value: c.overlayStyle,
       child: Scaffold(
-        backgroundColor: c.bg,
+        backgroundColor: c.canvas,
         body: SafeArea(
           bottom: false,
           child: Column(
             children: [
-              // Header.
+              // Header — back chip + centered branch title.
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
                 child: Row(
                   children: [
                     _ControlButton(
-                      child: Icon(CupertinoIcons.back,
-                          size: 18.sp, color: c.textPrimary),
                       onTap: () => context.router.pop(),
+                      child: Assets.icons.arrowLeft.svg(
+                        width: 16.w,
+                        height: 16.w,
+                        colorFilter:
+                            ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+                      ),
                     ),
                     Expanded(
                       child: Text(
@@ -132,21 +135,21 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppText.bold18.copyWith(color: c.textPrimary),
+                        style: AppText.medium16.copyWith(color: c.textPrimary),
                       ),
                     ),
-                    SizedBox(width: 36.w),
+                    SizedBox(width: 34.w),
                   ],
                 ),
               ),
-              // Search + filter + map.
+              // Search + map + filter.
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Row(
                   children: [
                     Expanded(
                       child: Container(
-                        height: 44.h,
+                        height: 40.h,
                         padding: EdgeInsets.symmetric(horizontal: 12.w),
                         decoration: BoxDecoration(
                           color: c.surface,
@@ -154,20 +157,24 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                         ),
                         child: Row(
                           children: [
-                            HomeIcon(HomeIcon.search,
-                                size: 16, color: c.textSecondary),
-                            8.horizontalSpace,
+                            Assets.icons.home.search.svg(
+                              width: 16.w,
+                              height: 16.w,
+                              colorFilter: ColorFilter.mode(
+                                  c.textSecondary, BlendMode.srcIn),
+                            ),
+                            4.horizontalSpace,
                             Expanded(
                               child: TextField(
                                 onChanged: (v) => setState(() => _query = v),
-                                style: AppText.regular14
+                                style: AppText.regular12
                                     .copyWith(color: c.textPrimary),
                                 cursorColor: AppColors.brandPurple,
                                 decoration: InputDecoration(
                                   isDense: true,
                                   border: InputBorder.none,
                                   hintText: 'search_hint'.tr(),
-                                  hintStyle: AppText.regular14
+                                  hintStyle: AppText.regular12
                                       .copyWith(color: c.textSecondary),
                                 ),
                               ),
@@ -177,29 +184,46 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                       ),
                     ),
                     8.horizontalSpace,
-                    if (_hasMap)
+                    if (_hasMap) ...[
                       _SquareButton(
-                        icon: Icons.map_outlined,
+                        icon: Assets.icons.icMap,
                         onTap: _openGoogleMaps,
                       ),
-                    if (_hasMap) 8.horizontalSpace,
+                      8.horizontalSpace,
+                    ],
                     _SquareButton(
-                      icon: Icons.tune_rounded,
+                      icon: Assets.icons.icFilter,
                       onTap: () {},
                     ),
                   ],
                 ),
               ),
               14.verticalSpace,
-              // Count.
+              // "Все • 15 751" — muted label, dot separator, emphasised count.
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'all_count'.tr(args: ['${filtered.length}']),
-                    style: AppText.regular14.copyWith(color: c.textSecondary),
-                  ),
+                child: Row(
+                  children: [
+                    Text(
+                      'all_label'.tr(),
+                      style:
+                          AppText.medium14.copyWith(color: c.textSecondary),
+                    ),
+                    6.horizontalSpace,
+                    Container(
+                      width: 4.w,
+                      height: 4.w,
+                      decoration: BoxDecoration(
+                        color: c.textSecondary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    6.horizontalSpace,
+                    Text(
+                      '${filtered.length}',
+                      style: AppText.medium14.copyWith(color: c.textPrimary),
+                    ),
+                  ],
                 ),
               ),
               12.verticalSpace,
@@ -296,9 +320,11 @@ class _ControlButton extends StatelessWidget {
   }
 }
 
+/// 40×40 surface tile holding a 16px SVG glyph — the map / filter affordances
+/// next to the search field.
 class _SquareButton extends StatelessWidget {
   const _SquareButton({required this.icon, required this.onTap});
-  final IconData icon;
+  final SvgGenImage icon;
   final VoidCallback onTap;
 
   @override
@@ -308,14 +334,18 @@ class _SquareButton extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        width: 44.h,
-        height: 44.h,
+        width: 40.w,
+        height: 40.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: c.surface,
           borderRadius: BorderRadius.circular(12.r),
         ),
-        child: Icon(icon, size: 20.sp, color: c.textPrimary),
+        child: icon.svg(
+          width: 16.w,
+          height: 16.w,
+          colorFilter: ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
+        ),
       ),
     );
   }

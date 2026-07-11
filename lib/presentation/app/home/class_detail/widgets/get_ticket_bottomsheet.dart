@@ -58,7 +58,7 @@ class GetTicketBottomsheet
   void listener(BuildContext context, ChildrenListenable state) {
     if (state.effect == ChildrenEffect.bookingSuccess) {
       Navigator.pop(context);
-      context.router.push(const BookingCompleteRoute());
+      context.router.push(BookingCompleteRoute());
     }
     super.listener(context, state);
   }

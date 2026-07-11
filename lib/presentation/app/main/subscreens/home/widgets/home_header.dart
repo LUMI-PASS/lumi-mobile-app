@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
@@ -37,7 +38,8 @@ class HomeHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: c.controlBorder),
             ),
-            child: HomeIcon(HomeIcon.user, size: 24, color: c.textSecondary),
+            child: HomeIcon(Assets.icons.home.user,
+                size: 24, color: c.textSecondary),
           ),
           8.horizontalSpace,
           Expanded(
@@ -61,7 +63,7 @@ class HomeHeader extends StatelessWidget {
           8.horizontalSpace,
           const _NotificationButton(),
           8.horizontalSpace,
-          _ControlButton(iconName: HomeIcon.search, onTap: onSearchTap),
+          _ControlButton(icon: Assets.icons.home.search, onTap: onSearchTap),
         ],
       ),
     );
@@ -70,9 +72,9 @@ class HomeHeader extends StatelessWidget {
 
 /// Square icon button on the `control` surface (Figma right-side avatars).
 class _ControlButton extends StatelessWidget {
-  const _ControlButton({required this.iconName, required this.onTap});
+  const _ControlButton({required this.icon, required this.onTap});
 
-  final String iconName;
+  final SvgGenImage icon;
   final VoidCallback onTap;
 
   @override
@@ -88,7 +90,7 @@ class _ControlButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: c.controlBorder),
         ),
-        child: HomeIcon(iconName, size: 16, color: c.textPrimary),
+        child: HomeIcon(icon, size: 16, color: c.textPrimary),
       ),
     );
   }
@@ -124,7 +126,7 @@ class _NotificationButtonState extends State<_NotificationButton> {
       clipBehavior: Clip.none,
       children: [
         _ControlButton(
-          iconName: HomeIcon.notification,
+          icon: Assets.icons.home.notification,
           onTap: () async {
             await context.router.push(const NotificationsRoute());
             _fetchCount();

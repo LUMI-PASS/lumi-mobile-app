@@ -733,7 +733,7 @@ notifications_mark_all_read,Прочитать все,Barchasini o'qish,Mark all
 notification_today,Сегодня,Bugun,Today
 notification_yesterday,Вчера,Kecha,Yesterday
 retry,Повторить,Qayta urinish,Retry
-notifications_empty_sub,Здесь будут появляться уведомления о бронированиях,Bronlashlar haqida bildirishnomalar bu yerda ko'rinadi,Booking notifications will appear here
+notifications_empty_sub,"У вас пока нет уведомлений, они появятся здесь скоро","Sizda hozircha bildirishnomalar yo'q, ular tez orada shu yerda paydo bo'ladi","You have no notifications yet, they will appear here soon"
 coupons_title,Купоны,Kuponlar,Coupons
 coupons_subtitle,Введите промокод и получите скидку,Promokod kiriting va chegirma oling,Enter a promo code to get a discount
 coupon_enter_code,Промокод,Promokod,Promo Code
@@ -817,6 +817,7 @@ price_tier_children,Дети в возрасте,Yoshdagi bolalar,Children
 price_tier_all,Дети и взрослые,Bolalar va kattalar,Children & adults
 search_hint,Искать...,Qidirish...,Search...
 all_count,Все • {},Barchasi • {},All • {}
+all_label,Все,Barchasi,All
 view_on_map_subtitle,Просмотрите расположение на карте,Joylashuvni xaritada ko'ring,See the location on the map
 results_not_found,Результаты не найдены,Natijalar topilmadi,No results found
 results_not_found_desc,Попробуйте изменить параметры поиска или выбрать другую категорию,Qidiruv shartlarini o'zgartiring yoki boshqa toifani tanlang,Try changing your search parameters or choosing another category
@@ -827,11 +828,11 @@ pay_tickets,Билеты,Chiptalar,Tickets
 pay_wait_booking,Ожидаем подтверждение оплаты. Бронь появится автоматически.,To'lov tasdiqlanishini kutyapmiz. Bron avtomatik paydo bo'ladi.,Waiting for payment confirmation. Your booking will appear automatically.
 pay_wait_subscription,Ожидаем подтверждение оплаты. Подписка активируется автоматически.,To'lov tasdiqlanishini kutyapmiz. Obuna avtomatik faollashadi.,Waiting for payment confirmation. Your subscription will activate automatically.
 order_paid_title,Оплата успешно выполнена,To'lov muvaffaqiyatli amalga oshirildi,Payment successful
-order_paid_desc,Оплата за бронирование успешно произведена. Бронирование подтверждено.,Bron uchun to'lov amalga oshirildi. Bron tasdiqlandi.,Your booking payment went through. The booking is confirmed.
+order_paid_desc,"Оплата за бронирование успешно произведена. Бронирование подтверждено, а безопасность платежа гарантирована","Bron uchun to'lov muvaffaqiyatli amalga oshirildi. Bron tasdiqlandi, to'lov xavfsizligi kafolatlanadi","Your booking payment went through. The booking is confirmed and the payment is secure"
 order_pending_title,Ожидается оплата,To'lov kutilmoqda,Awaiting payment
-order_pending_desc,Мы ждём подтверждение оплаты. Как только оно придёт, бронирование появится автоматически.,To'lov tasdig'ini kutyapmiz. U kelishi bilan bron avtomatik paydo bo'ladi.,We're waiting for payment confirmation. Your booking will appear automatically once it arrives.
+order_pending_desc,После подтверждения платежа бронирование будет автоматически оформлено и станет доступно в вашем личном кабинете,To'lov tasdiqlangach bron avtomatik rasmiylashtiriladi va shaxsiy kabinetingizda ko'rinadi,Once the payment is confirmed your booking is created automatically and appears in your account
 order_failed_title,Оплата не выполнена,To'lov amalga oshmadi,Payment failed
-order_failed_desc,Оплата не была завершена. Попробуйте ещё раз или выберите другой способ оплаты.,To'lov yakunlanmadi. Qaytadan urinib ko'ring yoki boshqa to'lov usulini tanlang.,The payment didn't go through. Please try again or choose another payment method.
+order_failed_desc,"К сожалению, платеж не был завершён. Пожалуйста, проверьте данные и попробуйте снова.","Afsuski, to'lov yakunlanmadi. Iltimos, ma'lumotlarni tekshirib, qaytadan urinib ko'ring.","Unfortunately the payment wasn't completed. Please check your details and try again."
 nav_main,Главный,Bosh sahifa,Home
 pay_choose_type,Выберите тип оплаты,To'lov turini tanlang,Choose payment type
 pay_choose_card,Выберите карту,Kartani tanlang,Choose card
@@ -847,6 +848,9 @@ pay_card_expiry_invalid,Введите срок действия карты,Kart
 pay_enter_code,Введите код подтверждения,Tasdiqlash kodini kiriting,Enter the confirmation code
 pay_code_invalid,Неверный код. Попробуйте снова,Kod noto'g'ri. Qayta urinib ko'ring,Invalid code. Please try again
 pay_generic_error,Не удалось выполнить платёж. Попробуйте снова,To'lovni amalga oshirib bo'lmadi. Qayta urinib ko'ring,Could not complete the payment. Please try again
+pay_add_card_subtitle,Введите данные карты для оплаты,To'lov uchun karta ma'lumotlarini kiriting,Enter your card details to pay
+pay_card_number_hint,Номер карты,Karta raqami,Card number
+pay_card_expiry_hint,мм/гг,oo/yy,mm/yy
 detail_happy_parents,Довольные родители,Mamnun ota-onalar,Happy parents
 ad_label,Реклама,Reklama,Ad
 dark_mode,Тёмная тема,Tungi rejim,Dark mode

@@ -1,3 +1,5 @@
+import 'package:lumi_pass/data/api_model/notification_model/notification_type.dart';
+
 class NotificationModel {
   final String id;
   final String title;
@@ -5,6 +7,9 @@ class NotificationModel {
   final String? type;
   final bool isRead;
   final DateTime createdAt;
+
+  /// Typed view of [type] — [NotificationType.unknown] for unmodelled values.
+  NotificationType get notificationType => NotificationType.fromKey(type);
 
   const NotificationModel({
     required this.id,

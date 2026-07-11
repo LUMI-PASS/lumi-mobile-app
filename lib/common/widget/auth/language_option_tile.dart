@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
@@ -16,7 +17,7 @@ class LanguageOptionTile extends StatelessWidget {
     this.onTap,
   });
 
-  final String flagAsset;
+  final AssetGenImage flagAsset;
   final String label;
   final bool selected;
   final VoidCallback? onTap;
@@ -38,8 +39,7 @@ class LanguageOptionTile extends StatelessWidget {
         child: Row(
           children: [
             ClipOval(
-              child: Image.asset(
-                flagAsset,
+              child: flagAsset.image(
                 width: 24.r,
                 height: 24.r,
                 fit: BoxFit.cover,
