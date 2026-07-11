@@ -934,3 +934,7 @@ search_tab_classes,Уроки,Darslar,Classes
 search_tab_centers,Образовательные центры,Ta'lim markazlari,Education centers
 map_title,На карте,Xaritada,On the map
 filter_child,Ребёнок,Bola,Child
+all_activities,Все занятия,Hamma mashg'ulotlar,All activities
+map_location_off,Геолокация выключена,Joylashuv o'chirilgan,Location is turned off
+map_location_denied,Нет доступа к геолокации,Joylashuvga ruxsat yo'q,Location permission denied
+map_location_error,Не удалось определить местоположение,Joylashuvni aniqlab bo'lmadi,Could not get your location

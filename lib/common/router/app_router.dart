@@ -14,7 +14,6 @@ import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_pag
 import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/payment_history_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
-import 'package:lumi_pass/presentation/app/home/see_all/categories_grid_page.dart';
 import 'package:lumi_pass/presentation/app/home/see_all/classes_grid_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
@@ -135,7 +134,6 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: PlansRoute.page),
     AutoRoute(page: PaymentHistoryRoute.page),
     AutoRoute(page: ClassesGridRoute.page),
-    AutoRoute(page: CategoriesGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
     AutoRoute(page: NotificationsRoute.page),
     AutoRoute(page: ConnectionErrorRoute.page),

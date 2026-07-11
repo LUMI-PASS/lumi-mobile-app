@@ -110,16 +110,6 @@ abstract class _$AppRouter extends RootStackRouter {
         child: CalendarPage(),
       );
     },
-    CategoriesGridRoute.name: (routeData) {
-      final args = routeData.argsAs<CategoriesGridRouteArgs>();
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: CategoriesGridPage(
-          key: args.key,
-          categories: args.categories,
-        ),
-      );
-    },
     ChangeLanguageRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -306,6 +296,7 @@ abstract class _$AppRouter extends RootStackRouter {
         child: SearchDiscoveryPage(
           key: args.key,
           initialCategory: args.initialCategory,
+          classesOnly: args.classesOnly,
         ),
       );
     },
@@ -696,44 +687,6 @@ class CalendarRoute extends PageRouteInfo<void> {
   static const String name = 'CalendarRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
-/// [CategoriesGridPage]
-class CategoriesGridRoute extends PageRouteInfo<CategoriesGridRouteArgs> {
-  CategoriesGridRoute({
-    Key? key,
-    required List<HomCategory> categories,
-    List<PageRouteInfo>? children,
-  }) : super(
-          CategoriesGridRoute.name,
-          args: CategoriesGridRouteArgs(
-            key: key,
-            categories: categories,
-          ),
-          initialChildren: children,
-        );
-
-  static const String name = 'CategoriesGridRoute';
-
-  static const PageInfo<CategoriesGridRouteArgs> page =
-      PageInfo<CategoriesGridRouteArgs>(name);
-}
-
-class CategoriesGridRouteArgs {
-  const CategoriesGridRouteArgs({
-    this.key,
-    required this.categories,
-  });
-
-  final Key? key;
-
-  final List<HomCategory> categories;
-
-  @override
-  String toString() {
-    return 'CategoriesGridRouteArgs{key: $key, categories: $categories}';
-  }
 }
 
 /// generated route for
@@ -1281,12 +1234,14 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
   SearchDiscoveryRoute({
     Key? key,
     HomCategory? initialCategory,
+    bool classesOnly = false,
     List<PageRouteInfo>? children,
   }) : super(
           SearchDiscoveryRoute.name,
           args: SearchDiscoveryRouteArgs(
             key: key,
             initialCategory: initialCategory,
+            classesOnly: classesOnly,
           ),
           initialChildren: children,
         );
@@ -1301,15 +1256,18 @@ class SearchDiscoveryRouteArgs {
   const SearchDiscoveryRouteArgs({
     this.key,
     this.initialCategory,
+    this.classesOnly = false,
   });
 
   final Key? key;
 
   final HomCategory? initialCategory;
 
+  final bool classesOnly;
+
   @override
   String toString() {
-    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory}';
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, classesOnly: $classesOnly}';
   }
 }
 

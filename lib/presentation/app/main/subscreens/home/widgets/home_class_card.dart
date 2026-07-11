@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -98,6 +100,7 @@ class HomeNearbyCard extends StatelessWidget {
               category: hc?.category,
               discountPercentage: hc?.discountPercentage ?? 0,
               onViewAsReels: onViewAsReels,
+              fit: BoxFit.cover,
             ),
             14.verticalSpace,
             _ClassInfo(hc: hc, crossAxis: CrossAxisAlignment.start),
@@ -117,6 +120,7 @@ class _ClassImage extends StatelessWidget {
     required this.category,
     required this.discountPercentage,
     required this.onViewAsReels,
+    this.fit = BoxFit.cover,
   });
 
   final String? imageUrl;
@@ -124,6 +128,15 @@ class _ClassImage extends StatelessWidget {
   final String? category;
   final int discountPercentage;
   final VoidCallback? onViewAsReels;
+
+  /// [BoxFit.cover] fills the frame but crops whatever doesn't fit.
+  ///
+  /// [BoxFit.contain] shows the whole photo instead — activity photos are not
+  /// shot to a fixed ratio, and the wide "Near you" cards were cropping real
+  /// content out of them. It would normally letterbox, so the gaps are filled
+  /// with a blurred, zoomed copy of the same photo (see [_BlurredFill]): the
+  /// frame still reads as full-bleed, and nothing is cut off.
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -141,18 +154,28 @@ class _ClassImage extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Shimmer.fromColors(
-              baseColor: c.surface,
-              highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
-              child: Container(color: c.surface),
-            ),
-            if (imageUrl != null)
+            // The frame the photo is laid into. It only shows through where the
+            // photo doesn't reach, and under `contain` the blurred fill covers
+            // that anyway — but it keeps the frame from flashing empty. The
+            // shimmer that used to sit here would have pulsed forever in the
+            // margins; it now runs as the loading placeholder only.
+            ColoredBox(color: c.surface),
+            if (imageUrl != null) ...[
+              if (fit == BoxFit.contain)
+                _BlurredFill(imageUrl: imageUrl!, isDark: c.isDark),
               CachedNetworkImage(
                 imageUrl: imageUrl!,
-                fit: BoxFit.cover,
+                fit: fit,
                 fadeInDuration: const Duration(milliseconds: 200),
+                placeholder: (_, __) => Shimmer.fromColors(
+                  baseColor: c.surface,
+                  highlightColor:
+                      c.isDark ? const Color(0xFF2E2E35) : Colors.white,
+                  child: Container(color: c.surface),
+                ),
                 errorWidget: (_, __, ___) => const SizedBox.shrink(),
               ),
+            ],
             // Category + promo badges, top-left.
             Positioned(
               left: 8.w,
@@ -200,6 +223,48 @@ class _ClassImage extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Fills the frame behind a `contain`-fitted photo with a blurred, zoomed copy
+/// of that same photo, so the card reads as full-bleed instead of letterboxed.
+///
+/// It is decoration, not content: the sharp photo on top is the real subject,
+/// so this decodes small (the blur destroys the detail anyway, and a full-res
+/// second decode of every card would be pure waste) and is dimmed so it never
+/// competes with the photo or with the badges sitting on top of it.
+class _BlurredFill extends StatelessWidget {
+  const _BlurredFill({required this.imageUrl, required this.isDark});
+
+  final String imageUrl;
+  final bool isDark;
+
+  /// Decode width of the backdrop copy. Small on purpose — see above.
+  static const _decodeWidth = 64;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          memCacheWidth: _decodeWidth,
+          // Same URL as the sharp copy, but a different decode size — without
+          // its own cache key the two would fight over one ImageCache entry and
+          // each evict the other on every rebuild.
+          cacheKey: '$imageUrl@blur',
+          fadeInDuration: Duration.zero,
+          // No placeholder: the surface underneath already covers the gap, and
+          // a shimmer here would show through the blur as a pulsing smear.
+          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          color: (isDark ? AppColors.ink : Colors.white)
+              .withValues(alpha: isDark ? 0.30 : 0.20),
+          colorBlendMode: BlendMode.srcATop,
         ),
       ),
     );

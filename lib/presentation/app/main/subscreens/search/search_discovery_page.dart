@@ -13,9 +13,18 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search
 @RoutePage()
 class SearchDiscoveryPage
     extends BasePage<SearchCubit, SearchBuildable, SearchListenable> {
-  const SearchDiscoveryPage({super.key, this.initialCategory});
+  const SearchDiscoveryPage({
+    super.key,
+    this.initialCategory,
+    this.classesOnly = false,
+  });
 
   final HomCategory? initialCategory;
+
+  /// Opens as an activities-only list — no Darslar / Ta'lim markazlari chips,
+  /// just every activity behind the search field and filters. Home's
+  /// "see all popular activities" comes in this way.
+  final bool classesOnly;
 
   @override
   void init(BuildContext context) {
@@ -28,6 +37,7 @@ class SearchDiscoveryPage
     return SearchView(
       state: state,
       onBack: () => context.router.maybePop(),
+      classesOnly: classesOnly,
     );
   }
 }
