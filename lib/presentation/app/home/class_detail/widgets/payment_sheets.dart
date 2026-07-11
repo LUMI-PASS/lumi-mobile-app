@@ -295,7 +295,7 @@ class _PayField extends StatelessWidget {
       height: 48.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
-        color: AppColors.inkChip,
+        color: context.colors.control,
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
@@ -306,14 +306,14 @@ class _PayField extends StatelessWidget {
               keyboardType: keyboardType,
               inputFormatters: inputFormatters,
               cursorColor: AppColors.link,
-              style: AppText.medium16.copyWith(color: AppColors.ink),
+              style: AppText.medium16.copyWith(color: context.colors.textPrimary),
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
                 border: InputBorder.none,
                 hintText: hint,
                 hintStyle:
-                    AppText.medium16.copyWith(color: AppColors.inkMuted),
+                    AppText.medium16.copyWith(color: context.colors.textSecondary),
               ),
             ),
           ),
@@ -350,12 +350,12 @@ class _SheetActions extends StatelessWidget {
               height: 50.h,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.lightDivider,
+                color: context.colors.divider,
                 borderRadius: BorderRadius.circular(44.r),
               ),
               child: Text('cancel'.tr(),
                   style:
-                      AppText.medium16.copyWith(color: AppColors.greeting)),
+                      AppText.medium16.copyWith(color: context.colors.textSecondary)),
             ),
           ),
         ),
@@ -395,9 +395,9 @@ class CardArtwork extends StatelessWidget {
         height: height.h,
         child: art == null
             ? ColoredBox(
-                color: AppColors.inkChip,
+                color: context.colors.control,
                 child: Icon(Icons.credit_card_rounded,
-                    size: 16.sp, color: AppColors.inkMuted),
+                    size: 16.sp, color: context.colors.textSecondary),
               )
             : art.image(fit: BoxFit.contain),
       ),
@@ -549,7 +549,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
           if (isCard) ...[
             20.verticalSpace,
             Text('pay_choose_card'.tr(),
-                style: AppText.semibold14.copyWith(color: AppColors.inkMuted)),
+                style: AppText.semibold14.copyWith(color: context.colors.textSecondary)),
             14.verticalSpace,
             for (var i = 0; i < _cards.length; i++) ...[
               if (i > 0) _cardDivider(),
@@ -589,7 +589,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: AppColors.inkChip,
+          color: context.colors.control,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
@@ -601,11 +601,11 @@ class _ChooserSheetState extends State<_ChooserSheet> {
                 width: 20.w,
                 height: 20.w,
                 colorFilter:
-                    const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+                    ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
               ),
               12.horizontalSpace,
               Text('pay_with_card'.tr(),
-                  style: AppText.semibold16.copyWith(color: AppColors.ink)),
+                  style: AppText.semibold16.copyWith(color: context.colors.textPrimary)),
             ],
             const Spacer(),
             _radio(_rail == r),
@@ -618,7 +618,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   /// Hairline between saved-card rows, inset past the artwork as in the design.
   Widget _cardDivider() => Padding(
         padding: EdgeInsets.only(left: 60.w),
-        child: Container(height: 1, color: AppColors.lightDivider),
+        child: Container(height: 1, color: context.colors.divider),
       );
 
   Widget _cardRow(PaymentCard card) {
@@ -639,7 +639,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             Expanded(
               child: Text(
                 card.label,
-                style: AppText.medium16.copyWith(color: AppColors.ink),
+                style: AppText.medium16.copyWith(color: context.colors.textPrimary),
               ),
             ),
             _radio(selected),
@@ -674,10 +674,10 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             16.horizontalSpace,
             Expanded(
               child: Text('pay_add_card'.tr(),
-                  style: AppText.medium16.copyWith(color: AppColors.ink)),
+                  style: AppText.medium16.copyWith(color: context.colors.textPrimary)),
             ),
             Icon(Icons.chevron_right_rounded,
-                size: 18.sp, color: AppColors.ink),
+                size: 18.sp, color: context.colors.textPrimary),
           ],
         ),
       ),
@@ -704,7 +704,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
       height: 16.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.inkMuted),
+        border: Border.all(color: context.colors.textSecondary),
       ),
     );
   }
@@ -727,7 +727,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
                   'pay_add_card_subtitle'.tr(),
                   textAlign: TextAlign.center,
                   style:
-                      AppText.regular14.copyWith(color: AppColors.inkMuted),
+                      AppText.regular14.copyWith(color: context.colors.textSecondary),
                 ),
               ],
             ),
@@ -747,7 +747,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
               width: 24.w,
               height: 24.w,
               colorFilter:
-                  const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+                  ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
             ),
           ),
           12.verticalSpace,

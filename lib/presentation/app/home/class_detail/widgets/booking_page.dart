@@ -604,6 +604,9 @@ class _BookingPageState extends State<BookingPage> {
     // immediately interactive. Slot data is fetched lazily — only when the
     // user taps a date — via the per-date `/slots?date=` endpoint.
     _availableDates = _buildLookaheadDates();
+    // Pre-select the buyer's last-used payment method so repeat checkouts are
+    // one tap. Async for the card rail (needs the saved-card lookup).
+    _loadLastPaymentMethod();
     // For required-booking classes, pre-fetch which days have schedules so
     // we can grey out unavailable chips before the user taps anything.
     if (_requiresBookingSlot) _prefetchScheduleDays();
@@ -898,11 +901,8 @@ class _BookingPageState extends State<BookingPage> {
       _flag(_timeShake);
       return false;
     }
-    // The buyer has to say how they're paying — nothing is preselected.
-    if (_payment == null) {
-      _flag(_paymentShake);
-      return false;
-    }
+    // Payment method is handled in _pay: if none is chosen, the pay CTA opens
+    // the chooser rather than blocking here.
     if (widget.clazz.id == null) return false;
     return true;
   }
@@ -1503,6 +1503,54 @@ class _BookingPageState extends State<BookingPage> {
       if (card != null && !_cards.contains(card)) _cards.add(card);
       _error = null;
     });
+    _persistPaymentMethod(picked);
+  }
+
+  /// Restores the buyer's last-used payment method. Redirect rails are restored
+  /// immediately; the card rail re-selects the same bound card if it's still
+  /// saved.
+  Future<void> _loadLastPaymentMethod() async {
+    final storage = getIt<Storage>();
+    final railKey = storage.lastPaymentRail();
+    if (railKey == null || railKey.isEmpty) return;
+    PaymentRail? rail;
+    for (final r in PaymentRail.values) {
+      if (r.name == railKey) {
+        rail = r;
+        break;
+      }
+    }
+    if (rail == null) return;
+    if (rail != PaymentRail.card) {
+      if (mounted) setState(() => _payment = PaymentSelection(rail: rail!));
+      return;
+    }
+    final savedId = storage.lastSavedCardId();
+    if (savedId == null || savedId.isEmpty) return;
+    try {
+      final cards = await getIt<OrdersApi>().getSavedCards();
+      for (final c in cards) {
+        if (c.cardId == savedId) {
+          if (mounted) {
+            setState(() {
+              final pc = PaymentCard.saved(c);
+              _payment = PaymentSelection(rail: PaymentRail.card, card: pc);
+              if (!_cards.contains(pc)) _cards.add(pc);
+            });
+          }
+          return;
+        }
+      }
+    } catch (_) {
+      // Non-fatal — the buyer can pick a method manually.
+    }
+  }
+
+  /// Persists the chosen method so the next checkout pre-selects it.
+  void _persistPaymentMethod(PaymentSelection sel) {
+    final storage = getIt<Storage>();
+    storage.lastPaymentRail.set(sel.rail.name);
+    storage.lastSavedCardId.set(sel.card?.savedCardId);
   }
 
   /// Pay CTA: create the order and charge it on the chosen rail. Card payments
@@ -1510,6 +1558,11 @@ class _BookingPageState extends State<BookingPage> {
   Future<void> _pay() async {
     if (_submitting) return;
     if (!_validateForPayment()) return;
+    // No method chosen yet → open the chooser; proceed only once one is picked.
+    if (_payment == null) {
+      await _openChooser();
+      if (!mounted || _payment == null) return;
+    }
     final payment = _payment!;
     final card = payment.card;
 

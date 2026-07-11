@@ -68,6 +68,16 @@ class Storage {
   BaseStorage<bool> get couponPromoShown =>
       BaseStorage(_box, 'couponPromoShown');
 
+  /// The buyer's last-used payment rail ('payme'|'click'|'uzum'|'card'), so the
+  /// booking sheet can pre-select it on the next checkout.
+  BaseStorage<String?> get lastPaymentRail =>
+      BaseStorage(_box, 'lastPaymentRail');
+
+  /// When the last rail was a saved card, its WLCM cardId token so the same
+  /// card is re-selected next time.
+  BaseStorage<String?> get lastSavedCardId =>
+      BaseStorage(_box, 'lastSavedCardId');
+
   Future<void> logout() async {
     await tokens.set(null);
     await code.set(null);
