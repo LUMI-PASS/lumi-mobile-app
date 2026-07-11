@@ -51,17 +51,6 @@ class BookingPage extends StatefulWidget {
   State<BookingPage> createState() => _BookingPageState();
 }
 
-/// Placeholder cards so the chooser's card list can be exercised before the
-/// backend serves saved cards. The PANs are test numbers, not chargeable — the
-/// gateway will reject them at payment. Delete this once a real card list
-/// endpoint exists.
-const List<PaymentCard> _kDemoCards = [
-  PaymentCard(brand: CardBrand.uzcard, pan: '8600123456788534', expiry: '1230'),
-  PaymentCard(brand: CardBrand.humo, pan: '9860123456788534', expiry: '1230'),
-  PaymentCard(
-      brand: CardBrand.mastercard, pan: '5555444433338534', expiry: '1230'),
-];
-
 class _BookingPageState extends State<BookingPage> {
   // ageTiers mode: _tierCounts[tierIdx][durIdx] = count
   late final List<List<int>> _tierCounts;
@@ -79,9 +68,10 @@ class _BookingPageState extends State<BookingPage> {
   /// — paying is blocked until then.
   PaymentSelection? _payment;
 
-  /// Cards offered in the chooser's card list: the demo ones plus anything the
-  /// buyer adds during this session.
-  final List<PaymentCard> _cards = [..._kDemoCards];
+  /// Cards offered in the chooser's card list — anything the buyer enters during
+  /// this session. (Tokenized saved cards live in the profile card screen; they
+  /// need the WLCM token-pay path before they can be charged from booking.)
+  final List<PaymentCard> _cards = [];
 
   // Missing input is flagged by shaking the control itself, so each one the pay
   // CTA can block on is addressable.

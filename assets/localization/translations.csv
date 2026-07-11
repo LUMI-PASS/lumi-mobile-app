@@ -901,3 +901,28 @@ ticket_number,Билет №{},Chipta №{},Ticket #{}
 ticket_date_label,Дата:,Sana:,Date:
 ticket_time_label,Время:,Vaqt:,Time:
 ticket_details,Детали билета,Chipta tafsilotlari,Ticket details
+card_your_cards,Ваши карты,Kartalaringiz,Your cards
+card_swipe_hint,Пролистайте сохранённые карты или добавьте новую,Saqlangan kartalarni ko'ring yoki yangisini qo'shing,Swipe through your saved cards or add a new one
+card_add_new,Добавить карту,Yangi karta qo'shish,Add a new card
+card_add_new_sub,Сохраните карту для быстрой оплаты,Tez to'lov uchun kartani saqlang,Save a card for faster checkout
+card_none,Сохранённых карт пока нет,Saqlangan kartalar hali yo'q,No saved cards yet
+card_load_error,Не удалось загрузить карты,Kartalarni yuklab bo'lmadi,Could not load your cards
+card_delete_error,Не удалось удалить карту,Kartani o'chirib bo'lmadi,Could not delete the card
+card_delete_title,Удалить карту,Kartani o'chirish,Delete card
+card_delete_confirm,Удалить {}?,{} o'chirilsinmi?,Remove {}?
+card_delete_action,Удалить,O'chirish,Delete
+card_retry,Повторить,Qayta urinish,Retry
+card_choose_title,Выбор карты,Karta tanlash,Choose card
+card_add_title,Новая карта,Yangi karta,Add new card
+card_details,Данные карты,Karta ma'lumotlari,Card details
+card_details_sub,Заполните данные карты чтобы сохранить её,Saqlash uchun karta ma'lumotlarini kiriting,Fill in your card info to save it
+card_number_label,Номер карты,Karta raqami,Card number
+card_holder_label,Владелец карты,Karta egasi,Cardholder name
+card_holder_hint,Полное имя,To'liq ism,Full name
+card_expiration_label,Срок действия,Amal muddati,Expiration
+card_secure_note,Данные карты зашифрованы и не хранятся на устройстве,Karta ma'lumotlari shifrlangan va qurilmada saqlanmaydi,Your card details are encrypted and never stored on the device
+card_save,Сохранить карту,Kartani saqlash,Save card
+card_confirm_title,Подтверждение карты,Kartani tasdiqlash,Confirm card
+card_sms_hint,SMS-код,SMS kod,SMS code
+card_confirm_action,Подтвердить,Tasdiqlash,Confirm
+card_save_error,Не удалось сохранить карту,Kartani saqlab bo'lmadi,Card could not be saved

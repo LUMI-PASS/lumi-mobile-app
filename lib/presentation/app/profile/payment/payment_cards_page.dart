@@ -1,11 +1,16 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/data/api_model/order/saved_card.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 
 @RoutePage()
 class PaymentCardsPage extends StatefulWidget {
@@ -31,39 +36,106 @@ class _CardItem {
   });
 }
 
+// Decorative gradients cycled per saved card. These are the card artwork itself
+// (white text sits on them), so they read the same in light and dark.
+const List<List<Color>> _kCardGradients = [
+  [Color(0xFFA652C7), Color(0xFFFF7093)],
+  [Color(0xFF4F46E5), Color(0xFF22D3EE)],
+  [Color(0xFF0F172A), Color(0xFF334155)],
+  [Color(0xFF0EA5E9), Color(0xFF6366F1)],
+];
+
 class _PaymentCardsPageState extends State<PaymentCardsPage> {
   int _currentCardIndex = 0;
+  bool _loading = true;
+  String? _error;
+  List<SavedCard> _cards = [];
 
-  final List<_CardItem> _cards = const [
-    _CardItem(
-      brand: 'Mastercard',
-      last4: '0411',
-      holder: 'LUMI USER',
-      expiry: '10/26',
-      gradient: [Color(0xFFA652C7), Color(0xFFFF7093)],
-    ),
-    _CardItem(
-      brand: 'Visa',
-      last4: '8823',
-      holder: 'LUMI USER',
-      expiry: '05/27',
-      gradient: [Color(0xFF4F46E5), Color(0xFF22D3EE)],
-    ),
-    _CardItem(
-      brand: 'Uzcard',
-      last4: '1207',
-      holder: 'LUMI USER',
-      expiry: '09/28',
-      gradient: [Color(0xFF0F172A), Color(0xFF334155)],
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final cards = await getIt<OrdersApi>().getSavedCards();
+      if (!mounted) return;
+      setState(() {
+        _cards = cards;
+        _loading = false;
+        if (_currentCardIndex >= cards.length) _currentCardIndex = 0;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'card_load_error'.tr();
+      });
+    }
+  }
+
+  Future<void> _addCard() async {
+    final added = await context.router.push(const AddNewCardRoute());
+    if (added == true) _load();
+  }
+
+  Future<void> _deleteCard(SavedCard card) async {
+    final c = context.colors;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: c.surface,
+        title: Text('card_delete_title'.tr(),
+            style: TextStyle(color: c.textPrimary)),
+        content: Text('card_delete_confirm'.tr(args: [card.label]),
+            style: TextStyle(color: c.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('cancel'.tr(), style: TextStyle(color: c.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('card_delete_action'.tr(),
+                style: TextStyle(color: c.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await getIt<OrdersApi>().deleteSavedCard(card.cardId);
+      await _load();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('card_delete_error'.tr())),
+        );
+      }
+    }
+  }
+
+  _CardItem _asItem(SavedCard c, int index) => _CardItem(
+        brand: c.vendor ?? 'Card',
+        last4: c.last4,
+        holder: (c.owner?.isNotEmpty ?? false)
+            ? c.owner!.toUpperCase()
+            : 'LUMI USER',
+        expiry: c.expiryDisplay.isEmpty ? '••/••' : c.expiryDisplay,
+        gradient: _kCardGradients[index % _kCardGradients.length],
+      );
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7FC),
-      appBar: const BaseAppBar(title: 'Choose Card'),
+      backgroundColor: c.scaffoldBg,
+      appBar: BaseAppBar(title: 'card_choose_title'.tr()),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,11 +143,11 @@ class _PaymentCardsPageState extends State<PaymentCardsPage> {
             Padding(
               padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 4.h),
               child: Text(
-                'Your cards',
+                'card_your_cards'.tr(),
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2E3D5D),
+                  color: c.textPrimary,
                   letterSpacing: -0.4,
                 ),
               ),
@@ -83,68 +155,29 @@ class _PaymentCardsPageState extends State<PaymentCardsPage> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Text(
-                'Swipe through your saved cards or add a new one.',
+                'card_swipe_hint'.tr(),
                 style: TextStyle(
                   fontSize: 13.sp,
-                  color: const Color(0xFF64748B),
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
             28.kh,
-            SizedBox(
-              height: 210.h,
-              child: PageView.builder(
-                controller: PageController(viewportFraction: 0.86),
-                onPageChanged: (i) => setState(() => _currentCardIndex = i),
-                itemCount: _cards.length,
-                itemBuilder: (context, index) {
-                  return AnimatedPadding(
-                    duration: const Duration(milliseconds: 220),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: _currentCardIndex == index ? 0 : 14.h,
-                    ),
-                    child: _CreditCard(card: _cards[index]),
-                  );
-                },
-              ),
-            ),
-            16.kh,
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _cards.length,
-                  (i) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    margin: EdgeInsets.symmetric(horizontal: 3.w),
-                    width: _currentCardIndex == i ? 22.w : 6.w,
-                    height: 6.h,
-                    decoration: BoxDecoration(
-                      color: _currentCardIndex == i
-                          ? primary
-                          : primary.withOpacity(0.25),
-                      borderRadius: BorderRadius.circular(3.r),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            Expanded(child: _cardsArea(c)),
             22.kh,
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: GestureDetector(
-                onTap: () => context.router.push(const AddNewCardRoute()),
+                onTap: _addCard,
                 child: Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(18.r),
                     border: Border.all(
-                      color: primary.withOpacity(0.4),
+                      color: c.primary.withValues(alpha: 0.4),
                       width: 1,
-                      style: BorderStyle.solid,
                     ),
                   ),
                   child: Row(
@@ -155,7 +188,7 @@ class _PaymentCardsPageState extends State<PaymentCardsPage> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
-                            colors: [primary, const Color(0xFFFF7093)],
+                            colors: [c.primary, const Color(0xFFFF7093)],
                           ),
                         ),
                         child: Icon(Icons.add_rounded,
@@ -167,77 +200,122 @@ class _PaymentCardsPageState extends State<PaymentCardsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Add a new card',
+                              'card_add_new'.tr(),
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E293B),
+                                color: c.textPrimary,
                               ),
                             ),
                             2.kh,
                             Text(
-                              'Securely save a card for fast payments.',
+                              'card_add_new_sub'.tr(),
                               style: TextStyle(
                                 fontSize: 12.sp,
-                                color: const Color(0xFF64748B),
+                                color: c.textSecondary,
                               ),
                             ),
                           ],
                         ),
                       ),
                       Icon(Icons.arrow_forward_ios_rounded,
-                          size: 14.sp, color: primary),
+                          size: 14.sp, color: c.primary),
                     ],
                   ),
                 ),
               ),
             ),
-            const Spacer(),
-            Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
-              child: GestureDetector(
-                onTap: () => context.router.push(const CheckoutRoute()),
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 15.h),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18.r),
-                    gradient: LinearGradient(
-                      colors: [primary, const Color(0xFFFF7093)],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primary.withOpacity(0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Use this card',
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            20.kh,
           ],
         ),
       ),
     );
   }
+
+  Widget _cardsArea(AppColorScheme c) {
+    if (_loading) {
+      return Center(child: CircularProgressIndicator(color: c.primary));
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!,
+                style: TextStyle(fontSize: 13.sp, color: c.textSecondary)),
+            8.kh,
+            TextButton(
+              onPressed: _load,
+              child: Text('card_retry'.tr(),
+                  style: TextStyle(color: c.primary)),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_cards.isEmpty) {
+      return Center(
+        child: Text(
+          'card_none'.tr(),
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14.sp, color: c.textSecondary),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        SizedBox(
+          height: 210.h,
+          child: PageView.builder(
+            controller: PageController(viewportFraction: 0.86),
+            onPageChanged: (i) => setState(() => _currentCardIndex = i),
+            itemCount: _cards.length,
+            itemBuilder: (context, index) {
+              return AnimatedPadding(
+                duration: const Duration(milliseconds: 220),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.w,
+                  vertical: _currentCardIndex == index ? 0 : 14.h,
+                ),
+                child: _CreditCard(
+                  card: _asItem(_cards[index], index),
+                  onDelete: () => _deleteCard(_cards[index]),
+                ),
+              );
+            },
+          ),
+        ),
+        16.kh,
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _cards.length,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                margin: EdgeInsets.symmetric(horizontal: 3.w),
+                width: _currentCardIndex == i ? 22.w : 6.w,
+                height: 6.h,
+                decoration: BoxDecoration(
+                  color: _currentCardIndex == i
+                      ? c.primary
+                      : c.primary.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(3.r),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _CreditCard extends StatelessWidget {
-  const _CreditCard({required this.card});
+  const _CreditCard({required this.card, this.onDelete});
 
   final _CardItem card;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -252,7 +330,7 @@ class _CreditCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: card.gradient.last.withOpacity(0.35),
+            color: card.gradient.last.withValues(alpha: 0.35),
             blurRadius: 22,
             offset: const Offset(0, 14),
           ),
@@ -266,10 +344,9 @@ class _CreditCard extends StatelessWidget {
               Assets.icons.card.svg(width: 36.w, height: 26.h),
               const Spacer(),
               Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 10.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
@@ -282,6 +359,15 @@ class _CreditCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onDelete != null) ...[
+                8.kw,
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onDelete,
+                  child: Icon(Icons.delete_outline_rounded,
+                      size: 20.sp, color: Colors.white),
+                ),
+              ],
             ],
           ),
           const Spacer(),
@@ -304,7 +390,7 @@ class _CreditCard extends StatelessWidget {
                     Text(
                       'CARDHOLDER',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 9.sp,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.1,
@@ -328,7 +414,7 @@ class _CreditCard extends StatelessWidget {
                   Text(
                     'EXPIRES',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
+                      color: Colors.white.withValues(alpha: 0.75),
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.1,

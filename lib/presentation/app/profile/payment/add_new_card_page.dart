@@ -1,12 +1,15 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 
 @RoutePage()
 class AddNewCardPage extends StatefulWidget {
@@ -22,6 +25,9 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
   final _expiryCtrl = TextEditingController();
   final _cvcCtrl = TextEditingController();
 
+  bool _busy = false;
+  String? _error;
+
   @override
   void dispose() {
     _numberCtrl.dispose();
@@ -31,12 +37,125 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
     super.dispose();
   }
 
+  /// Binds the card via WLCM: begin (PAN + expiry → OTP), confirm the OTP, then
+  /// pop back to the list. The PAN never leaves this call — only the resulting
+  /// token is saved on the backend.
+  Future<void> _save() async {
+    final pan = _numberCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final mmYy = _expiryCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (pan.length < 16) {
+      setState(() => _error = 'pay_card_number_invalid'.tr());
+      return;
+    }
+    if (mmYy.length < 4) {
+      setState(() => _error = 'pay_card_expiry_invalid'.tr());
+      return;
+    }
+    // The Subscribe API expects YYMM; the field is entered MM/YY.
+    final yyMm = mmYy.substring(2, 4) + mmYy.substring(0, 2);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final api = getIt<OrdersApi>();
+      final session = await api.addSavedCard(cardNumber: pan, expireDate: yyMm);
+      if (!mounted) return;
+      final otp = await _promptOtp(session.otpSentPhone);
+      if (otp == null || otp.isEmpty) {
+        setState(() => _busy = false);
+        return;
+      }
+      await api.confirmSavedCard(
+        cid: session.cid,
+        otp: otp,
+        cardName:
+            _holderCtrl.text.trim().isEmpty ? null : _holderCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(true); // signal the list to refresh
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map
+          ? (e.response?.data['message']?.toString() ??
+              e.message ??
+              'card_save_error'.tr())
+          : (e.message ?? 'card_save_error'.tr());
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = msg;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = 'card_save_error'.tr();
+        });
+      }
+    }
+  }
+
+  /// OTP prompt for the SMS the bank sent the cardholder.
+  Future<String?> _promptOtp(String? phone) {
+    final c = context.colors;
+    final ctrl = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: c.surface,
+        title: Text('card_confirm_title'.tr(),
+            style: TextStyle(color: c.textPrimary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              phone != null && phone.isNotEmpty
+                  ? 'pay_code_sent_to'.tr(args: [phone])
+                  : 'pay_code_sent'.tr(),
+              style: TextStyle(fontSize: 13.sp, color: c.textSecondary),
+            ),
+            12.kh,
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              style: TextStyle(color: c.textPrimary),
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(6),
+              ],
+              decoration: InputDecoration(
+                hintText: 'card_sms_hint'.tr(),
+                hintStyle: TextStyle(color: c.textPlaceholder),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child:
+                Text('cancel'.tr(), style: TextStyle(color: c.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(ctrl.text.trim()),
+            child: Text('card_confirm_action'.tr(),
+                style: TextStyle(color: c.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7FC),
-      appBar: const BaseAppBar(title: 'Add New Card'),
+      backgroundColor: c.scaffoldBg,
+      appBar: BaseAppBar(title: 'card_add_title'.tr()),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
@@ -50,26 +169,26 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
               ),
               24.kh,
               Text(
-                'Card details',
+                'card_details'.tr(),
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2E3D5D),
+                  color: c.textPrimary,
                   letterSpacing: -0.3,
                 ),
               ),
               6.kh,
               Text(
-                'Fill in your card info to save it securely.',
+                'card_details_sub'.tr(),
                 style: TextStyle(
                   fontSize: 13.sp,
-                  color: const Color(0xFF64748B),
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               22.kh,
               _CardField(
-                label: 'Card number',
+                label: 'card_number_label'.tr(),
                 hint: '0000 0000 0000 0000',
                 controller: _numberCtrl,
                 keyboardType: TextInputType.number,
@@ -81,14 +200,14 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
                 onChanged: () => setState(() {}),
                 suffix: Padding(
                   padding: EdgeInsets.only(right: 12.w),
-                  child: Assets.icons.mastercard.svg(
-                      width: 28.w, height: 28.w),
+                  child:
+                      Assets.icons.mastercard.svg(width: 28.w, height: 28.w),
                 ),
               ),
               14.kh,
               _CardField(
-                label: 'Cardholder name',
-                hint: 'Full name',
+                label: 'card_holder_label'.tr(),
+                hint: 'card_holder_hint'.tr(),
                 controller: _holderCtrl,
                 textCapitalization: TextCapitalization.characters,
                 onChanged: () => setState(() {}),
@@ -98,7 +217,7 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
                 children: [
                   Expanded(
                     child: _CardField(
-                      label: 'Expiration',
+                      label: 'card_expiration_label'.tr(),
                       hint: 'MM/YY',
                       controller: _expiryCtrl,
                       keyboardType: TextInputType.number,
@@ -131,20 +250,19 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.08),
+                  color: c.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14.r),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.lock_rounded,
-                        size: 16.sp, color: primary),
+                    Icon(Icons.lock_rounded, size: 16.sp, color: c.primary),
                     10.kw,
                     Expanded(
                       child: Text(
-                        'Your card details are encrypted and never stored on the device.',
+                        'card_secure_note'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
-                          color: const Color(0xFF475569),
+                          color: c.textSecondary,
                           height: 1.4,
                         ),
                       ),
@@ -152,35 +270,56 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
                   ],
                 ),
               ),
+              if (_error != null) ...[
+                14.kh,
+                Text(
+                  _error!,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: c.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
               28.kh,
               GestureDetector(
-                onTap: () => context.router.push(const CheckoutRoute()),
+                onTap: _busy ? null : _save,
                 child: Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 15.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18.r),
                     gradient: LinearGradient(
-                      colors: [primary, const Color(0xFFFF7093)],
+                      colors: [c.primary, const Color(0xFFFF7093)],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: primary.withOpacity(0.35),
+                        color: c.primary.withValues(alpha: 0.35),
                         blurRadius: 18,
                         offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: Center(
-                    child: Text(
-                      'Save card',
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
+                    child: _busy
+                        ? SizedBox(
+                            width: 20.w,
+                            height: 20.w,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'card_save'.tr(),
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -206,9 +345,8 @@ class _PreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = context.colors.primary;
-    final maskedNumber = number.isEmpty
-        ? '•••• •••• •••• ••••'
-        : number.padRight(19, '•');
+    final maskedNumber =
+        number.isEmpty ? '•••• •••• •••• ••••' : number.padRight(19, '•');
     final maskedHolder = holder.isEmpty ? 'FULL NAME' : holder.toUpperCase();
     final maskedExpiry = expiry.isEmpty ? 'MM/YY' : expiry;
 
@@ -223,7 +361,7 @@ class _PreviewCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.35),
+            color: primary.withValues(alpha: 0.35),
             blurRadius: 22,
             offset: const Offset(0, 14),
           ),
@@ -259,7 +397,7 @@ class _PreviewCard extends StatelessWidget {
                     Text(
                       'CARDHOLDER',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 9.sp,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.1,
@@ -285,7 +423,7 @@ class _PreviewCard extends StatelessWidget {
                   Text(
                     'EXPIRES',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
+                      color: Colors.white.withValues(alpha: 0.75),
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.1,
@@ -335,7 +473,7 @@ class _CardField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
+    final c = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -344,7 +482,7 @@ class _CardField extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF475569),
+            color: c.textSecondary,
             letterSpacing: 0.3,
           ),
         ),
@@ -359,31 +497,31 @@ class _CardField extends StatelessWidget {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF1E293B),
+            color: c.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
               fontSize: 14.sp,
-              color: const Color(0xFF94A3B8),
+              color: c.textPlaceholder,
               fontWeight: FontWeight.w500,
             ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: c.surface,
             contentPadding:
                 EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             suffixIcon: suffix,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14.r),
-              borderSide: BorderSide(color: Colors.grey.shade200),
+              borderSide: BorderSide(color: c.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14.r),
-              borderSide: BorderSide(color: Colors.grey.shade200),
+              borderSide: BorderSide(color: c.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14.r),
-              borderSide: BorderSide(color: primary, width: 1.5),
+              borderSide: BorderSide(color: c.primary, width: 1.5),
             ),
           ),
         ),
