@@ -16,6 +16,8 @@ import 'package:logger/web.dart' as _i120;
 import 'package:lumi_pass/common/widget/display/display.dart' as _i755;
 import 'package:lumi_pass/common/widget/display/display_impl.dart' as _i426;
 import 'package:lumi_pass/data/interceptor/auth_interceptor.dart' as _i948;
+import 'package:lumi_pass/data/interceptor/connectivity_interceptor.dart'
+    as _i359;
 import 'package:lumi_pass/data/service/analytics_service.dart' as _i594;
 import 'package:lumi_pass/data/service/push_notification_service.dart' as _i361;
 import 'package:lumi_pass/data/storage/storage.dart' as _i279;
@@ -77,12 +79,17 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i279.Storage.create(),
       preResolve: true,
     );
+    gh.lazySingleton<_i359.ConnectivityInterceptor>(
+        () => _i359.ConnectivityInterceptor());
     gh.singleton<_i755.Display>(() => _i426.DisplayImpl());
     gh.lazySingleton<_i948.AuthInterceptor>(() => _i948.AuthInterceptor(
           gh<_i279.Storage>(),
           gh<_i120.Logger>(),
         ));
-    gh.factory<_i361.Dio>(() => networkModule.dio(gh<_i948.AuthInterceptor>()));
+    gh.factory<_i361.Dio>(() => networkModule.dio(
+          gh<_i948.AuthInterceptor>(),
+          gh<_i359.ConnectivityInterceptor>(),
+        ));
     gh.lazySingleton<_i594.AnalyticsService>(
         () => _i594.AnalyticsService(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(

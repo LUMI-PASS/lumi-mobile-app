@@ -74,7 +74,7 @@ class PageDots extends StatelessWidget {
   }
 }
 
-/// The "Lumi" brand wordmark (reuses the existing app logo asset).
+/// The "Lumi" brand wordmark.
 class LumiWordmark extends StatelessWidget {
   const LumiWordmark({super.key, this.height = 24});
 
@@ -82,7 +82,7 @@ class LumiWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Assets.icons.lumiLogo
+    return Assets.icons.logoTransparent
         .image(height: height.h, fit: BoxFit.contain);
   }
 }

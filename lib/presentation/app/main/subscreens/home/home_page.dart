@@ -77,7 +77,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                 return HomeHeader(
                   name: name,
                   onSearchTap: () =>
-                      context.router.push(const SearchComingSoonRoute()),
+                      context.router.push(SearchDiscoveryRoute()),
                   onProfileTap: () => openProfileTab(context),
                 );
               },
@@ -188,8 +188,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             itemBuilder: (context, index) => CategoryItemWidget(
               key: ValueKey(categories[index].id ?? index),
               homeCategoryModel: categories[index],
-              onTap: () =>
-                  context.router.push(const SearchComingSoonRoute()),
+              onTap: () => context.router.push(
+                SearchDiscoveryRoute(initialCategory: categories[index]),
+              ),
             ),
           ),
         ),

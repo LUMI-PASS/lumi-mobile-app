@@ -334,7 +334,7 @@ book_slot_full,Мест нет,Joy yo'q,Full
 book_max_capacity_reached,Максимум {} мест для этого слота,Bu slot uchun maksimum {} joy,Max {} spots for this slot
 book_pay_cta,Оплатить {},To'lash {},Pay {}
 back_button,Назад,Orqaga,Back
-oferta_agree_prefix,Я соглашаюсь с ,Men ,I agree with the
+oferta_agree_prefix,Я соглашаюсь с ,Men ,I agree with the 
 oferta_link_text,публичной офертой,ommaviy offerta,public offer
 oferta_agree_suffix, , shartlariga roziman,
 login_title,Авторизация,Avtorizatsiya,Authorization
@@ -529,7 +529,7 @@ cash_payment_option,Наличные,Naqd pul,Cash
 notes_label,Примечание,Izohlar,Notes
 notes_placeholder,Введите примечание,Izoh kiriting,Enter notes
 publish_button,Опубликовать,Nashr qilish,Publish
-contact_center_title,Kontakt markazi,Контактный центр,Contact Center
+contact_center_title,Контактный центр,Kontakt markazi,Contact Center
 phone_number_label,Телефон номер,Telefon raqami,Phone number
 instagram_label,Instagram,Instagram,Instagram
 facebook_label,Facebook,Facebook,Facebook
@@ -547,7 +547,7 @@ my_updates,Мои объявления,Mening e'lonlarim,My ads
 email_or_phone_label,Почта или номер телефона,Elektron pochta yoki telefon raqami,Email or phone number
 invalid_phone_format,Телефон указан в неправильном формате.,Telefon noto‘g‘ri formatda kiritilgan.,Phone number is in an invalid format.
 invalid_input_format,Ввод имеет неправильный формат.,Kiritilgan ma’lumot noto‘g‘ri formatda.,Input has an invalid format.
-reset_password_instructions,,Parolni tiklash uchun ro‘yxatdan o‘tgan elektron pochta manzilingizni yoki telefon raqamingizni kiritin.,Enter the registered email address or phone number to reset your password.
+reset_password_instructions,Введите зарегистрированный адрес электронной почты или номер телефона для восстановления пароля.,Parolni tiklash uchun ro‘yxatdan o‘tgan elektron pochta manzilingizni yoki telefon raqamingizni kiriting.,Enter the registered email address or phone number to reset your password.
 generic_invalid_format,Неправильный формат ввода,Noto‘g‘ri formatdagi kiritish,Invalid input format
 password_min_length,Пароль должен содержать не менее 6 символов,Parol kamida 6 belgidan iborat bo‘lishi kerak,Password must be at least 6 characters long.
 invalid_credentials,Неверный логин или пароль,Login yoki parol noto‘g‘ri.,Invalid login or password.
@@ -926,3 +926,11 @@ card_confirm_title,Подтверждение карты,Kartani tasdiqlash,Conf
 card_sms_hint,SMS-код,SMS kod,SMS code
 card_confirm_action,Подтвердить,Tasdiqlash,Confirm
 card_save_error,Не удалось сохранить карту,Kartani saqlab bo'lmadi,Card could not be saved
+age_from,от,dan,from
+age_to,до,gacha,to
+filter_for_boys,Для мальчиков,O'g'il bolalar uchun,For boys
+filter_for_girls,Для девочек,Qiz bolalar uchun,For girls
+search_tab_classes,Уроки,Darslar,Classes
+search_tab_centers,Образовательные центры,Ta'lim markazlari,Education centers
+map_title,На карте,Xaritada,On the map
+filter_child,Ребёнок,Bola,Child

@@ -29,6 +29,7 @@ mixin _$SearchBuildable {
   int get classesTotalPages => throw _privateConstructorUsedError;
   int get branchesTotalPages => throw _privateConstructorUsedError;
   List<HomCategory> get categories => throw _privateConstructorUsedError;
+  List<ChildModel> get children => throw _privateConstructorUsedError;
   HomCategory? get selectedCategory => throw _privateConstructorUsedError;
   FilterResult? get filter => throw _privateConstructorUsedError;
   double? get lat => throw _privateConstructorUsedError;
@@ -59,6 +60,7 @@ abstract class $SearchBuildableCopyWith<$Res> {
       int classesTotalPages,
       int branchesTotalPages,
       List<HomCategory> categories,
+      List<ChildModel> children,
       HomCategory? selectedCategory,
       FilterResult? filter,
       double? lat,
@@ -93,6 +95,7 @@ class _$SearchBuildableCopyWithImpl<$Res, $Val extends SearchBuildable>
     Object? classesTotalPages = null,
     Object? branchesTotalPages = null,
     Object? categories = null,
+    Object? children = null,
     Object? selectedCategory = freezed,
     Object? filter = freezed,
     Object? lat = freezed,
@@ -151,6 +154,10 @@ class _$SearchBuildableCopyWithImpl<$Res, $Val extends SearchBuildable>
           ? _value.categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>,
+      children: null == children
+          ? _value.children
+          : children // ignore: cast_nullable_to_non_nullable
+              as List<ChildModel>,
       selectedCategory: freezed == selectedCategory
           ? _value.selectedCategory
           : selectedCategory // ignore: cast_nullable_to_non_nullable
@@ -205,6 +212,7 @@ abstract class _$$SearchBuildableImplCopyWith<$Res>
       int classesTotalPages,
       int branchesTotalPages,
       List<HomCategory> categories,
+      List<ChildModel> children,
       HomCategory? selectedCategory,
       FilterResult? filter,
       double? lat,
@@ -238,6 +246,7 @@ class __$$SearchBuildableImplCopyWithImpl<$Res>
     Object? classesTotalPages = null,
     Object? branchesTotalPages = null,
     Object? categories = null,
+    Object? children = null,
     Object? selectedCategory = freezed,
     Object? filter = freezed,
     Object? lat = freezed,
@@ -296,6 +305,10 @@ class __$$SearchBuildableImplCopyWithImpl<$Res>
           ? _value._categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>,
+      children: null == children
+          ? _value._children
+          : children // ignore: cast_nullable_to_non_nullable
+              as List<ChildModel>,
       selectedCategory: freezed == selectedCategory
           ? _value.selectedCategory
           : selectedCategory // ignore: cast_nullable_to_non_nullable
@@ -333,13 +346,15 @@ class _$SearchBuildableImpl implements _SearchBuildable {
       this.classesTotalPages = 1,
       this.branchesTotalPages = 1,
       final List<HomCategory> categories = const [],
+      final List<ChildModel> children = const [],
       this.selectedCategory,
       this.filter,
       this.lat = null,
       this.lng = null})
       : _classes = classes,
         _branches = branches,
-        _categories = categories;
+        _categories = categories,
+        _children = children;
 
   @override
   @JsonKey()
@@ -398,6 +413,15 @@ class _$SearchBuildableImpl implements _SearchBuildable {
     return EqualUnmodifiableListView(_categories);
   }
 
+  final List<ChildModel> _children;
+  @override
+  @JsonKey()
+  List<ChildModel> get children {
+    if (_children is EqualUnmodifiableListView) return _children;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_children);
+  }
+
   @override
   final HomCategory? selectedCategory;
   @override
@@ -411,7 +435,7 @@ class _$SearchBuildableImpl implements _SearchBuildable {
 
   @override
   String toString() {
-    return 'SearchBuildable(isLoading: $isLoading, isLoadingMore: $isLoadingMore, classesLoaded: $classesLoaded, branchesLoaded: $branchesLoaded, activeTab: $activeTab, searchTerm: $searchTerm, classes: $classes, branches: $branches, classesPage: $classesPage, branchesPage: $branchesPage, classesTotalPages: $classesTotalPages, branchesTotalPages: $branchesTotalPages, categories: $categories, selectedCategory: $selectedCategory, filter: $filter, lat: $lat, lng: $lng)';
+    return 'SearchBuildable(isLoading: $isLoading, isLoadingMore: $isLoadingMore, classesLoaded: $classesLoaded, branchesLoaded: $branchesLoaded, activeTab: $activeTab, searchTerm: $searchTerm, classes: $classes, branches: $branches, classesPage: $classesPage, branchesPage: $branchesPage, classesTotalPages: $classesTotalPages, branchesTotalPages: $branchesTotalPages, categories: $categories, children: $children, selectedCategory: $selectedCategory, filter: $filter, lat: $lat, lng: $lng)';
   }
 
   @override
@@ -443,6 +467,7 @@ class _$SearchBuildableImpl implements _SearchBuildable {
                 other.branchesTotalPages == branchesTotalPages) &&
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
+            const DeepCollectionEquality().equals(other._children, _children) &&
             (identical(other.selectedCategory, selectedCategory) ||
                 other.selectedCategory == selectedCategory) &&
             (identical(other.filter, filter) || other.filter == filter) &&
@@ -466,6 +491,7 @@ class _$SearchBuildableImpl implements _SearchBuildable {
       classesTotalPages,
       branchesTotalPages,
       const DeepCollectionEquality().hash(_categories),
+      const DeepCollectionEquality().hash(_children),
       selectedCategory,
       filter,
       lat,
@@ -494,6 +520,7 @@ abstract class _SearchBuildable implements SearchBuildable {
       final int classesTotalPages,
       final int branchesTotalPages,
       final List<HomCategory> categories,
+      final List<ChildModel> children,
       final HomCategory? selectedCategory,
       final FilterResult? filter,
       final double? lat,
@@ -525,6 +552,8 @@ abstract class _SearchBuildable implements SearchBuildable {
   int get branchesTotalPages;
   @override
   List<HomCategory> get categories;
+  @override
+  List<ChildModel> get children;
   @override
   HomCategory? get selectedCategory;
   @override

@@ -7,6 +7,7 @@ import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/common/widget/pill_filter_chip.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -15,9 +16,9 @@ import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/widget/schedule_widget.dart';
 import 'package:shimmer/shimmer.dart';
 
-/// Profile → My Bookings. A pill segmented control splits the order list into
-/// Active (paid/cancelled with a future ticket date) and Past (everything
-/// else). Uses the same [BookingCard] the Bookings tab renders.
+/// Profile → My Bookings. [PillFilterChip]s split the order list into Active
+/// (paid/cancelled with a future ticket date) and Past (everything else). Uses
+/// the same [BookingCard] and chips the Bookings tab renders.
 @RoutePage()
 class MyBookingsPage extends StatefulWidget {
   const MyBookingsPage({super.key});
@@ -110,13 +111,20 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
               children: [
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
-                  child: _SegmentedTabs(
-                    position: _position,
-                    labels: [
-                      '${'active_bookings'.tr()} (${active.length})',
-                      '${'past_bookings'.tr()} (${past.length})',
+                  child: Row(
+                    children: [
+                      PillFilterChip(
+                        label: '${'active_bookings'.tr()} (${active.length})',
+                        selected: _position < 0.5,
+                        onTap: () => _select(0),
+                      ),
+                      SizedBox(width: 8.w),
+                      PillFilterChip(
+                        label: '${'past_bookings'.tr()} (${past.length})',
+                        selected: _position >= 0.5,
+                        onTap: () => _select(1),
+                      ),
                     ],
-                    onChanged: _select,
                   ),
                 ),
                 Expanded(
@@ -134,100 +142,6 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                 ),
               ],
             ),
-    );
-  }
-}
-
-/// The rounded two-up switcher: a pill track with a single [AppColorScheme
-/// .surface] pill that *slides* between the segments, rather than one pill per
-/// segment fading in and out.
-///
-/// [position] is a continuous segment index — an `int` when the switcher is
-/// idle, and a fraction while the body's [PageView] is mid-drag, so the pill
-/// tracks the swipe under the user's finger instead of snapping at the end.
-class _SegmentedTabs extends StatelessWidget {
-  const _SegmentedTabs({
-    required this.labels,
-    required this.position,
-    required this.onChanged,
-  });
-
-  final List<String> labels;
-  final double position;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final radius = BorderRadius.circular(48.r);
-
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: colors.control,
-        borderRadius: radius,
-        border: Border.all(color: colors.controlBorder),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final segmentWidth = constraints.maxWidth / labels.length;
-
-          return SizedBox(
-            height: 40.h,
-            child: Stack(
-              children: [
-                // The travelling pill.
-                Positioned(
-                  left: position * segmentWidth,
-                  width: segmentWidth,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: radius,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.textPrimary.withValues(alpha: 0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Row(
-                  children: List.generate(labels.length, (i) {
-                    // How "selected" this segment is: 1 when the pill is fully
-                    // over it, 0 once it has left, interpolated mid-slide — so
-                    // the two labels cross-fade as the pill passes between them.
-                    final t = (1 - (position - i).abs()).clamp(0.0, 1.0);
-
-                    return Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => onChanged(i),
-                        child: Center(
-                          child: Text(
-                            labels[i],
-                            style: TextStyle.lerp(
-                              AppText.medium14
-                                  .copyWith(color: colors.textSecondary),
-                              AppText.semibold14
-                                  .copyWith(color: colors.textPrimary),
-                              t,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 }

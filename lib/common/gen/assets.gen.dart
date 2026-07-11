@@ -159,6 +159,10 @@ class $AssetsIconsGen {
   SvgGenImage get locationPrimary =>
       const SvgGenImage('assets/icons/location_primary.svg');
 
+  /// File path: assets/icons/logo_transparent.png
+  AssetGenImage get logoTransparent =>
+      const AssetGenImage('assets/icons/logo_transparent.png');
+
   /// File path: assets/icons/lumi_logo.png
   AssetGenImage get lumiLogo =>
       const AssetGenImage('assets/icons/lumi_logo.png');
@@ -268,6 +272,7 @@ class $AssetsIconsGen {
         infoDis,
         location,
         locationPrimary,
+        logoTransparent,
         lumiLogo,
         map,
         mastercard,
@@ -328,6 +333,10 @@ class $AssetsImagesGen {
   AssetGenImage get imageDiscount =>
       const AssetGenImage('assets/images/image_discount.png');
 
+  /// File path: assets/images/no_internet.png
+  AssetGenImage get noInternet =>
+      const AssetGenImage('assets/images/no_internet.png');
+
   /// File path: assets/images/not_found.png
   AssetGenImage get notFound =>
       const AssetGenImage('assets/images/not_found.png');
@@ -357,6 +366,7 @@ class $AssetsImagesGen {
         defaultImage,
         empty,
         imageDiscount,
+        noInternet,
         notFound,
         paymentLoading,
         paymentSuccess,
@@ -528,6 +538,10 @@ class $AssetsIconsCouponsGen {
   SvgGenImage get icTicketDelete =>
       const SvgGenImage('assets/icons/coupons/ic_ticket_delete.svg');
 
+  /// File path: assets/icons/coupons/ic_ticket_title.svg
+  SvgGenImage get icTicketTitle =>
+      const SvgGenImage('assets/icons/coupons/ic_ticket_title.svg');
+
   /// File path: assets/icons/coupons/star4.svg
   SvgGenImage get star4 => const SvgGenImage('assets/icons/coupons/star4.svg');
 
@@ -540,6 +554,7 @@ class $AssetsIconsCouponsGen {
         icMagicSelection,
         icRocket,
         icTicketDelete,
+        icTicketTitle,
         star4
       ];
 }

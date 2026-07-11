@@ -91,6 +91,19 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    BranchesMapRoute.name: (routeData) {
+      final args = routeData.argsAs<BranchesMapRouteArgs>(
+          orElse: () => const BranchesMapRouteArgs());
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: BranchesMapPage(
+          key: args.key,
+          branches: args.branches,
+          categories: args.categories,
+          selectedCategory: args.selectedCategory,
+        ),
+      );
+    },
     CalendarRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -150,6 +163,12 @@ abstract class _$AppRouter extends RootStackRouter {
           list: args.list,
           initialClasses: args.initialClasses,
         ),
+      );
+    },
+    ConnectionErrorRoute.name: (routeData) {
+      return AutoRoutePage<bool>(
+        routeData: routeData,
+        child: const ConnectionErrorPage(),
       );
     },
     CouponsRoute.name: (routeData) {
@@ -279,27 +298,21 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
-    SearchComingSoonRoute.name: (routeData) {
+    SearchDiscoveryRoute.name: (routeData) {
+      final args = routeData.argsAs<SearchDiscoveryRouteArgs>(
+          orElse: () => const SearchDiscoveryRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: const SearchComingSoonPage(),
+        child: SearchDiscoveryPage(
+          key: args.key,
+          initialCategory: args.initialCategory,
+        ),
       );
     },
     SearchRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: SearchPage(),
-      );
-    },
-    SearchUnifiedRoute.name: (routeData) {
-      final args = routeData.argsAs<SearchUnifiedRouteArgs>(
-          orElse: () => const SearchUnifiedRouteArgs());
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: SearchUnifiedPage(
-          key: args.key,
-          initialCategory: args.initialCategory,
-        ),
+        child: const SearchPage(),
       );
     },
     ShortsRoute.name: (routeData) {
@@ -624,6 +637,54 @@ class BranchDetailRouteArgs {
 }
 
 /// generated route for
+/// [BranchesMapPage]
+class BranchesMapRoute extends PageRouteInfo<BranchesMapRouteArgs> {
+  BranchesMapRoute({
+    Key? key,
+    List<HomBranch> branches = const [],
+    List<HomCategory> categories = const [],
+    HomCategory? selectedCategory,
+    List<PageRouteInfo>? children,
+  }) : super(
+          BranchesMapRoute.name,
+          args: BranchesMapRouteArgs(
+            key: key,
+            branches: branches,
+            categories: categories,
+            selectedCategory: selectedCategory,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'BranchesMapRoute';
+
+  static const PageInfo<BranchesMapRouteArgs> page =
+      PageInfo<BranchesMapRouteArgs>(name);
+}
+
+class BranchesMapRouteArgs {
+  const BranchesMapRouteArgs({
+    this.key,
+    this.branches = const [],
+    this.categories = const [],
+    this.selectedCategory,
+  });
+
+  final Key? key;
+
+  final List<HomBranch> branches;
+
+  final List<HomCategory> categories;
+
+  final HomCategory? selectedCategory;
+
+  @override
+  String toString() {
+    return 'BranchesMapRouteArgs{key: $key, branches: $branches, categories: $categories, selectedCategory: $selectedCategory}';
+  }
+}
+
+/// generated route for
 /// [CalendarPage]
 class CalendarRoute extends PageRouteInfo<void> {
   const CalendarRoute({List<PageRouteInfo>? children})
@@ -825,6 +886,20 @@ class ClassesGridRouteArgs {
   String toString() {
     return 'ClassesGridRouteArgs{key: $key, title: $title, list: $list, initialClasses: $initialClasses}';
   }
+}
+
+/// generated route for
+/// [ConnectionErrorPage]
+class ConnectionErrorRoute extends PageRouteInfo<void> {
+  const ConnectionErrorRoute({List<PageRouteInfo>? children})
+      : super(
+          ConnectionErrorRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'ConnectionErrorRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for
@@ -1201,17 +1276,41 @@ class RegisterRouteArgs {
 }
 
 /// generated route for
-/// [SearchComingSoonPage]
-class SearchComingSoonRoute extends PageRouteInfo<void> {
-  const SearchComingSoonRoute({List<PageRouteInfo>? children})
-      : super(
-          SearchComingSoonRoute.name,
+/// [SearchDiscoveryPage]
+class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
+  SearchDiscoveryRoute({
+    Key? key,
+    HomCategory? initialCategory,
+    List<PageRouteInfo>? children,
+  }) : super(
+          SearchDiscoveryRoute.name,
+          args: SearchDiscoveryRouteArgs(
+            key: key,
+            initialCategory: initialCategory,
+          ),
           initialChildren: children,
         );
 
-  static const String name = 'SearchComingSoonRoute';
+  static const String name = 'SearchDiscoveryRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static const PageInfo<SearchDiscoveryRouteArgs> page =
+      PageInfo<SearchDiscoveryRouteArgs>(name);
+}
+
+class SearchDiscoveryRouteArgs {
+  const SearchDiscoveryRouteArgs({
+    this.key,
+    this.initialCategory,
+  });
+
+  final Key? key;
+
+  final HomCategory? initialCategory;
+
+  @override
+  String toString() {
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory}';
+  }
 }
 
 /// generated route for
@@ -1226,44 +1325,6 @@ class SearchRoute extends PageRouteInfo<void> {
   static const String name = 'SearchRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
-/// [SearchUnifiedPage]
-class SearchUnifiedRoute extends PageRouteInfo<SearchUnifiedRouteArgs> {
-  SearchUnifiedRoute({
-    Key? key,
-    String? initialCategory,
-    List<PageRouteInfo>? children,
-  }) : super(
-          SearchUnifiedRoute.name,
-          args: SearchUnifiedRouteArgs(
-            key: key,
-            initialCategory: initialCategory,
-          ),
-          initialChildren: children,
-        );
-
-  static const String name = 'SearchUnifiedRoute';
-
-  static const PageInfo<SearchUnifiedRouteArgs> page =
-      PageInfo<SearchUnifiedRouteArgs>(name);
-}
-
-class SearchUnifiedRouteArgs {
-  const SearchUnifiedRouteArgs({
-    this.key,
-    this.initialCategory,
-  });
-
-  final Key? key;
-
-  final String? initialCategory;
-
-  @override
-  String toString() {
-    return 'SearchUnifiedRouteArgs{key: $key, initialCategory: $initialCategory}';
-  }
 }
 
 /// generated route for

@@ -42,8 +42,10 @@ class CategoriesGridPage extends StatelessWidget {
                         key: ValueKey(categories[index].id ?? index),
                         homeCategoryModel: categories[index],
                         padding: EdgeInsets.zero,
-                        onTap: () =>
-                            context.router.push(const SearchComingSoonRoute()),
+                        onTap: () => context.router.push(
+                          SearchDiscoveryRoute(
+                              initialCategory: categories[index]),
+                        ),
                       ),
                     ),
             ),

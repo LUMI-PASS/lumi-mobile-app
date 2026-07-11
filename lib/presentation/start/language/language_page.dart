@@ -58,7 +58,7 @@ class _LanguagePageState extends State<LanguagePage> {
       child: Column(
         children: [
           SizedBox(height: 24.h),
-          const LumiWordmark(height: 24),
+          const LumiWordmark(height: 64),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
