@@ -656,6 +656,7 @@ class _CouponCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final discount = plan.discountPercentage ?? 0;
     final activities = plan.activitiesLimit ?? 0;
     final duration = plan.durationDays ?? 0;
@@ -684,34 +685,75 @@ class _CouponCard extends StatelessWidget {
                   plan.localizedTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.bold18
-                      .copyWith(color: context.colors.textPrimary),
+                  style: AppText.bold18.copyWith(color: c.textPrimary),
                 ),
               ),
               if (isBestOffer) ...[8.kw, const _BestOfferBadge()],
             ],
           ),
-          8.kh,
-          if (discount > 0)
-            _Condition(
-              text: 'coupon_cond_discount'
-                  .tr(namedArgs: {'percent': _fmtPercent(discount)}),
-            ),
-          if (activities > 0)
-            _Condition(
-              text: 'coupon_cond_activities'
-                  .tr(namedArgs: {'count': '$activities'}),
-            ),
-          if (duration > 0)
-            _Condition(
-              text:
-                  'coupon_cond_duration'.tr(namedArgs: {'days': '$duration'}),
-            ),
-          const Spacer(),
+          14.kh,
+          // Headline: the discount % and the number of lessons — what the buyer
+          // actually compares — big and in the brand colour.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (discount > 0)
+                Text(
+                  '${_fmtPercent(discount)}%',
+                  style: TextStyle(
+                    fontSize: 30.sp,
+                    fontWeight: FontWeight.w900,
+                    color: c.primary,
+                    height: 1,
+                  ),
+                ),
+              if (discount > 0 && activities > 0) 10.kw,
+              if (activities > 0)
+                Flexible(
+                  child: Text(
+                    'coupon_lessons_short'
+                        .tr(namedArgs: {'count': '$activities'}),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                      color: c.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          6.kh,
+          // Coupons only apply to one-time (single) activities.
           Text(
-            (plan.price ?? 0).toRawUzsPrice(),
-            style:
-                AppText.bold16.copyWith(color: context.colors.textPrimary),
+            'coupon_one_time_only'.tr(),
+            style: TextStyle(fontSize: 10.sp, color: c.textMuted, height: 1.3),
+          ),
+          const Spacer(),
+          // Price + validity, deliberately small.
+          Row(
+            children: [
+              Text(
+                (plan.price ?? 0).toRawUzsPrice(),
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w700,
+                  color: c.textSecondary,
+                ),
+              ),
+              if (duration > 0) ...[
+                6.kw,
+                Text('·',
+                    style: TextStyle(fontSize: 11.sp, color: c.textMuted)),
+                6.kw,
+                Text(
+                  'coupon_valid_days_short'
+                      .tr(namedArgs: {'days': '$duration'}),
+                  style: TextStyle(fontSize: 10.sp, color: c.textMuted),
+                ),
+              ],
+            ],
           ),
         ],
       ),
@@ -738,46 +780,6 @@ class _BestOfferBadge extends StatelessWidget {
           Text(
             'coupon_best_offer'.tr(),
             style: AppText.bold10.copyWith(color: AppColors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Bulleted condition line inside a coupon card.
-///
-/// Secondary copy, so it takes [AppColorScheme.textMuted] — the same `#85848c`
-/// the ticket card uses for its meta lines. Only the plan name and the price
-/// carry [AppColorScheme.textPrimary].
-class _Condition extends StatelessWidget {
-  const _Condition({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 4.w,
-            height: 4.w,
-            margin: EdgeInsets.only(top: 6.h),
-            decoration: BoxDecoration(
-              color: context.colors.primary,
-              shape: BoxShape.circle,
-            ),
-          ),
-          4.kw,
-          Expanded(
-            child: Text(
-              text,
-              style:
-                  AppText.regular12.copyWith(color: context.colors.textMuted),
-            ),
           ),
         ],
       ),
