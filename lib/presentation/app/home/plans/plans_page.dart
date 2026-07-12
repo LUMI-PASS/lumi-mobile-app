@@ -28,7 +28,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// Height of a coupon card in the horizontal carousel. Fixed so the [PageView]
 /// can size itself; the cards' content is top-aligned inside it.
-const double _kCouponCardHeight = 184;
+const double _kCouponCardHeight = 172;
 
 @RoutePage()
 class PlansPage extends StatefulWidget {
@@ -697,7 +697,7 @@ class _CouponCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (discount > 0)
+              if (discount > 0) ...[
                 Text(
                   '${_fmtPercent(discount)}%',
                   style: TextStyle(
@@ -707,32 +707,50 @@ class _CouponCard extends StatelessWidget {
                     height: 1,
                   ),
                 ),
-              if (discount > 0 && activities > 0) 10.kw,
+                4.kw,
+                Padding(
+                  padding: EdgeInsets.only(bottom: 6.h),
+                  child: Text(
+                    'coupon_discount_word'.tr(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: c.primary,
+                    ),
+                  ),
+                ),
+              ],
+              if (discount > 0 && activities > 0) 8.kw,
               if (activities > 0)
                 Flexible(
-                  child: Text(
-                    'coupon_lessons_short'
-                        .tr(namedArgs: {'count': '$activities'}),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w800,
-                      color: c.primary,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Text(
+                      // "for {count} lessons" — the words make the number clear.
+                      '${'coupon_for_word'.tr()} ${'coupon_lessons_short'.tr(namedArgs: {
+                            'count': '$activities'
+                          })}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w800,
+                        color: c.primary,
+                      ),
                     ),
                   ),
                 ),
             ],
           ),
-          6.kh,
+          8.kh,
           // Coupons only apply to one-time (single) activities.
           Text(
             'coupon_one_time_only'.tr(),
-            style: TextStyle(fontSize: 10.sp, color: c.textMuted, height: 1.3),
+            style: TextStyle(fontSize: 12.sp, color: c.textMuted, height: 1.3),
           ),
           // Small gap (not a Spacer) so the price sits just under the headline
           // instead of being pushed to the bottom of the card.
-          14.kh,
+          12.kh,
           // Price + validity, deliberately small.
           Row(
             children: [

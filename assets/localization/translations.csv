@@ -948,3 +948,5 @@ coupon_valid_days_short,{days} дней,{days} kun,{days} days
 profile_prompt_title,Улучшите рекомендации,Tavsiyalarni yaxshilang,Improve your recommendations
 profile_prompt_sub,Добавьте своё имя и ребёнка — подберём занятия точнее,Ismingiz va bolangizni qo'shing — mashg'ulotlarni aniqroq tanlaymiz,Add your name and child so we can filter and recommend better
 profile_prompt_action,Добавить,Qo'shish,Add
+coupon_discount_word,скидка,chegirma,discount
+coupon_for_word,на,uchun,for
