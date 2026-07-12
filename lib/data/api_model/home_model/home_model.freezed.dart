@@ -194,7 +194,11 @@ mixin _$HomData {
   List<HomBanner>? get banners => throw _privateConstructorUsedError;
   HomCategoryPage? get categories => throw _privateConstructorUsedError;
   HomClassPage? get newClasses => throw _privateConstructorUsedError;
-  HomNearClasses? get nearClasses => throw _privateConstructorUsedError;
+  HomNearClasses? get nearClasses =>
+      throw _privateConstructorUsedError; // Courses — their own home row. The backend keeps them OUT of
+// newClasses/nearClasses, because a course is bought as a trial or as the
+// whole course, not per session.
+  HomClassPage? get courses => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -212,13 +216,15 @@ abstract class $HomDataCopyWith<$Res> {
       List<HomBanner>? banners,
       HomCategoryPage? categories,
       HomClassPage? newClasses,
-      HomNearClasses? nearClasses});
+      HomNearClasses? nearClasses,
+      HomClassPage? courses});
 
   $HomForUserCopyWith<$Res>? get forUser;
   $HomUpcomingClassCopyWith<$Res>? get upcomingClass;
   $HomCategoryPageCopyWith<$Res>? get categories;
   $HomClassPageCopyWith<$Res>? get newClasses;
   $HomNearClassesCopyWith<$Res>? get nearClasses;
+  $HomClassPageCopyWith<$Res>? get courses;
 }
 
 /// @nodoc
@@ -240,6 +246,7 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
     Object? categories = freezed,
     Object? newClasses = freezed,
     Object? nearClasses = freezed,
+    Object? courses = freezed,
   }) {
     return _then(_value.copyWith(
       forUser: freezed == forUser
@@ -266,6 +273,10 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
           ? _value.nearClasses
           : nearClasses // ignore: cast_nullable_to_non_nullable
               as HomNearClasses?,
+      courses: freezed == courses
+          ? _value.courses
+          : courses // ignore: cast_nullable_to_non_nullable
+              as HomClassPage?,
     ) as $Val);
   }
 
@@ -328,6 +339,18 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
       return _then(_value.copyWith(nearClasses: value) as $Val);
     });
   }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $HomClassPageCopyWith<$Res>? get courses {
+    if (_value.courses == null) {
+      return null;
+    }
+
+    return $HomClassPageCopyWith<$Res>(_value.courses!, (value) {
+      return _then(_value.copyWith(courses: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -343,7 +366,8 @@ abstract class _$$HomDataImplCopyWith<$Res> implements $HomDataCopyWith<$Res> {
       List<HomBanner>? banners,
       HomCategoryPage? categories,
       HomClassPage? newClasses,
-      HomNearClasses? nearClasses});
+      HomNearClasses? nearClasses,
+      HomClassPage? courses});
 
   @override
   $HomForUserCopyWith<$Res>? get forUser;
@@ -355,6 +379,8 @@ abstract class _$$HomDataImplCopyWith<$Res> implements $HomDataCopyWith<$Res> {
   $HomClassPageCopyWith<$Res>? get newClasses;
   @override
   $HomNearClassesCopyWith<$Res>? get nearClasses;
+  @override
+  $HomClassPageCopyWith<$Res>? get courses;
 }
 
 /// @nodoc
@@ -374,6 +400,7 @@ class __$$HomDataImplCopyWithImpl<$Res>
     Object? categories = freezed,
     Object? newClasses = freezed,
     Object? nearClasses = freezed,
+    Object? courses = freezed,
   }) {
     return _then(_$HomDataImpl(
       forUser: freezed == forUser
@@ -400,6 +427,10 @@ class __$$HomDataImplCopyWithImpl<$Res>
           ? _value.nearClasses
           : nearClasses // ignore: cast_nullable_to_non_nullable
               as HomNearClasses?,
+      courses: freezed == courses
+          ? _value.courses
+          : courses // ignore: cast_nullable_to_non_nullable
+              as HomClassPage?,
     ));
   }
 }
@@ -414,7 +445,8 @@ class _$HomDataImpl implements _HomData {
       final List<HomBanner>? banners,
       this.categories,
       this.newClasses,
-      this.nearClasses})
+      this.nearClasses,
+      this.courses})
       : _banners = banners;
 
   factory _$HomDataImpl.fromJson(Map<String, dynamic> json) =>
@@ -440,10 +472,15 @@ class _$HomDataImpl implements _HomData {
   final HomClassPage? newClasses;
   @override
   final HomNearClasses? nearClasses;
+// Courses — their own home row. The backend keeps them OUT of
+// newClasses/nearClasses, because a course is bought as a trial or as the
+// whole course, not per session.
+  @override
+  final HomClassPage? courses;
 
   @override
   String toString() {
-    return 'HomData(forUser: $forUser, upcomingClass: $upcomingClass, banners: $banners, categories: $categories, newClasses: $newClasses, nearClasses: $nearClasses)';
+    return 'HomData(forUser: $forUser, upcomingClass: $upcomingClass, banners: $banners, categories: $categories, newClasses: $newClasses, nearClasses: $nearClasses, courses: $courses)';
   }
 
   @override
@@ -460,7 +497,8 @@ class _$HomDataImpl implements _HomData {
             (identical(other.newClasses, newClasses) ||
                 other.newClasses == newClasses) &&
             (identical(other.nearClasses, nearClasses) ||
-                other.nearClasses == nearClasses));
+                other.nearClasses == nearClasses) &&
+            (identical(other.courses, courses) || other.courses == courses));
   }
 
   @JsonKey(ignore: true)
@@ -472,7 +510,8 @@ class _$HomDataImpl implements _HomData {
       const DeepCollectionEquality().hash(_banners),
       categories,
       newClasses,
-      nearClasses);
+      nearClasses,
+      courses);
 
   @JsonKey(ignore: true)
   @override
@@ -495,7 +534,8 @@ abstract class _HomData implements HomData {
       final List<HomBanner>? banners,
       final HomCategoryPage? categories,
       final HomClassPage? newClasses,
-      final HomNearClasses? nearClasses}) = _$HomDataImpl;
+      final HomNearClasses? nearClasses,
+      final HomClassPage? courses}) = _$HomDataImpl;
 
   factory _HomData.fromJson(Map<String, dynamic> json) = _$HomDataImpl.fromJson;
 
@@ -511,6 +551,10 @@ abstract class _HomData implements HomData {
   HomClassPage? get newClasses;
   @override
   HomNearClasses? get nearClasses;
+  @override // Courses — their own home row. The backend keeps them OUT of
+// newClasses/nearClasses, because a course is bought as a trial or as the
+// whole course, not per session.
+  HomClassPage? get courses;
   @override
   @JsonKey(ignore: true)
   _$$HomDataImplCopyWith<_$HomDataImpl> get copyWith =>
@@ -1996,7 +2040,18 @@ mixin _$HomClass {
   double? get distance => throw _privateConstructorUsedError;
   String? get videoUrl => throw _privateConstructorUsedError;
   String? get videoProvider => throw _privateConstructorUsedError;
-  int? get discountPercentage => throw _privateConstructorUsedError;
+  int? get discountPercentage =>
+      throw _privateConstructorUsedError; // ── course fields (present only on cards from the `courses` section) ────
+  bool? get isCourse => throw _privateConstructorUsedError;
+
+  /// How many trial lessons the course sells (normally 3).
+  int? get trialLessons => throw _privateConstructorUsedError;
+
+  /// Price of the WHOLE course. `trialPrice` above is the trial total.
+  num? get coursePrice => throw _privateConstructorUsedError;
+
+  /// Cohort size for full enrolment. null = unlimited.
+  int? get seats => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -2032,6 +2087,10 @@ abstract class $HomClassCopyWith<$Res> {
       String? videoUrl,
       String? videoProvider,
       int? discountPercentage,
+      bool? isCourse,
+      int? trialLessons,
+      num? coursePrice,
+      int? seats,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2071,6 +2130,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? videoUrl = freezed,
     Object? videoProvider = freezed,
     Object? discountPercentage = freezed,
+    Object? isCourse = freezed,
+    Object? trialLessons = freezed,
+    Object? coursePrice = freezed,
+    Object? seats = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2152,6 +2215,22 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.discountPercentage
           : discountPercentage // ignore: cast_nullable_to_non_nullable
               as int?,
+      isCourse: freezed == isCourse
+          ? _value.isCourse
+          : isCourse // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      trialLessons: freezed == trialLessons
+          ? _value.trialLessons
+          : trialLessons // ignore: cast_nullable_to_non_nullable
+              as int?,
+      coursePrice: freezed == coursePrice
+          ? _value.coursePrice
+          : coursePrice // ignore: cast_nullable_to_non_nullable
+              as num?,
+      seats: freezed == seats
+          ? _value.seats
+          : seats // ignore: cast_nullable_to_non_nullable
+              as int?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2208,6 +2287,10 @@ abstract class _$$HomClassImplCopyWith<$Res>
       String? videoUrl,
       String? videoProvider,
       int? discountPercentage,
+      bool? isCourse,
+      int? trialLessons,
+      num? coursePrice,
+      int? seats,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2246,6 +2329,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? videoUrl = freezed,
     Object? videoProvider = freezed,
     Object? discountPercentage = freezed,
+    Object? isCourse = freezed,
+    Object? trialLessons = freezed,
+    Object? coursePrice = freezed,
+    Object? seats = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2327,6 +2414,22 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.discountPercentage
           : discountPercentage // ignore: cast_nullable_to_non_nullable
               as int?,
+      isCourse: freezed == isCourse
+          ? _value.isCourse
+          : isCourse // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      trialLessons: freezed == trialLessons
+          ? _value.trialLessons
+          : trialLessons // ignore: cast_nullable_to_non_nullable
+              as int?,
+      coursePrice: freezed == coursePrice
+          ? _value.coursePrice
+          : coursePrice // ignore: cast_nullable_to_non_nullable
+              as num?,
+      seats: freezed == seats
+          ? _value.seats
+          : seats // ignore: cast_nullable_to_non_nullable
+              as int?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2367,6 +2470,10 @@ class _$HomClassImpl implements _HomClass {
       this.videoUrl,
       this.videoProvider,
       this.discountPercentage,
+      this.isCourse,
+      this.trialLessons,
+      this.coursePrice,
+      this.seats,
       this.createdAt,
       this.updatedAt,
       this.deletedAt});
@@ -2412,6 +2519,21 @@ class _$HomClassImpl implements _HomClass {
   final String? videoProvider;
   @override
   final int? discountPercentage;
+// ── course fields (present only on cards from the `courses` section) ────
+  @override
+  final bool? isCourse;
+
+  /// How many trial lessons the course sells (normally 3).
+  @override
+  final int? trialLessons;
+
+  /// Price of the WHOLE course. `trialPrice` above is the trial total.
+  @override
+  final num? coursePrice;
+
+  /// Cohort size for full enrolment. null = unlimited.
+  @override
+  final int? seats;
   @override
   final String? createdAt;
   @override
@@ -2421,7 +2543,7 @@ class _$HomClassImpl implements _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, seats: $seats, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2459,6 +2581,13 @@ class _$HomClassImpl implements _HomClass {
                 other.videoProvider == videoProvider) &&
             (identical(other.discountPercentage, discountPercentage) ||
                 other.discountPercentage == discountPercentage) &&
+            (identical(other.isCourse, isCourse) ||
+                other.isCourse == isCourse) &&
+            (identical(other.trialLessons, trialLessons) ||
+                other.trialLessons == trialLessons) &&
+            (identical(other.coursePrice, coursePrice) ||
+                other.coursePrice == coursePrice) &&
+            (identical(other.seats, seats) || other.seats == seats) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -2490,6 +2619,10 @@ class _$HomClassImpl implements _HomClass {
         videoUrl,
         videoProvider,
         discountPercentage,
+        isCourse,
+        trialLessons,
+        coursePrice,
+        seats,
         createdAt,
         updatedAt,
         deletedAt
@@ -2530,6 +2663,10 @@ abstract class _HomClass implements HomClass {
       final String? videoUrl,
       final String? videoProvider,
       final int? discountPercentage,
+      final bool? isCourse,
+      final int? trialLessons,
+      final num? coursePrice,
+      final int? seats,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomClassImpl;
@@ -2575,6 +2712,20 @@ abstract class _HomClass implements HomClass {
   String? get videoProvider;
   @override
   int? get discountPercentage;
+  @override // ── course fields (present only on cards from the `courses` section) ────
+  bool? get isCourse;
+  @override
+
+  /// How many trial lessons the course sells (normally 3).
+  int? get trialLessons;
+  @override
+
+  /// Price of the WHOLE course. `trialPrice` above is the trial total.
+  num? get coursePrice;
+  @override
+
+  /// Cohort size for full enrolment. null = unlimited.
+  int? get seats;
   @override
   String? get createdAt;
   @override

@@ -30,6 +30,7 @@ import 'package:lumi_pass/domain/repo/auth/auth_api.dart' as _i79;
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart' as _i652;
 import 'package:lumi_pass/domain/repo/booking/booking_api.dart' as _i261;
 import 'package:lumi_pass/domain/repo/booking/booking_repository.dart' as _i760;
+import 'package:lumi_pass/domain/repo/courses/courses_api.dart' as _i298;
 import 'package:lumi_pass/domain/repo/home/home_api.dart' as _i433;
 import 'package:lumi_pass/domain/repo/home/home_repository.dart' as _i526;
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart'
@@ -105,6 +106,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
+    gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
     gh.factory<_i760.BookingRepository>(() => _i808.BookingRepositoryImpl(

@@ -25,6 +25,10 @@ class HomData with _$HomData {
     HomCategoryPage? categories,
     HomClassPage? newClasses,
     HomNearClasses? nearClasses,
+    // Courses — their own home row. The backend keeps them OUT of
+    // newClasses/nearClasses, because a course is bought as a trial or as the
+    // whole course, not per session.
+    HomClassPage? courses,
   }) = _HomData;
 
   factory HomData.fromJson(Map<String, dynamic> json) =>
@@ -146,6 +150,14 @@ class HomClass with _$HomClass {
     String? videoUrl,
     String? videoProvider,
     int? discountPercentage,
+    // ── course fields (present only on cards from the `courses` section) ────
+    bool? isCourse,
+    /// How many trial lessons the course sells (normally 3).
+    int? trialLessons,
+    /// Price of the WHOLE course. `trialPrice` above is the trial total.
+    num? coursePrice,
+    /// Cohort size for full enrolment. null = unlimited.
+    int? seats,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,

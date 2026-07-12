@@ -6,6 +6,7 @@ import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'home_state.dart';
@@ -47,6 +48,28 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       final cats = await _repo.getAllCategories();
       if (cats.isNotEmpty) build((b) => b.copyWith(categories: cats));
     } catch (_) {}
+  }
+
+  /// Reloads the greeting name from the server on every home fetch.
+  ///
+  /// Both directions matter. Writing the name when the server sends one was
+  /// already here; *clearing* it when the server says the account has none was
+  /// not — so a freshly registered user, who has no name yet, kept being greeted
+  /// by whatever name the previous account on this device had left behind.
+  ///
+  /// Guarded on [user] being present: an absent `for_user` means the response
+  /// didn't carry the user at all, which is not the same as "this user has no
+  /// name", and must not wipe a good one.
+  void _syncDisplayName(HomForUser? user) {
+    if (user == null) return;
+    final firstName = user.firstName?.trim() ?? '';
+    if (firstName.isNotEmpty) {
+      _storage.parentName.set(firstName);
+      displayNameNotifier.value = firstName;
+    } else {
+      _storage.parentName.set(null);
+      displayNameNotifier.value = null;
+    }
   }
 
   Future<void> refreshIfLanguageChanged() async {
@@ -93,15 +116,13 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       buildOnData: (data) {
         final newClasses = data.data?.newClasses?.data ?? [];
         final nearClasses = data.data?.nearClasses?.data ?? [];
-        final firstName = data.data?.forUser?.firstName;
-        if (firstName != null && firstName.isNotEmpty) {
-          _storage.parentName.set(firstName);
-          displayNameNotifier.value = firstName;
-        }
+        final courses = data.data?.courses?.data ?? [];
+        _syncDisplayName(data.data?.forUser);
         return buildable.copyWith(
           homeModel: data,
           newClassesList: newClasses,
           nearClassesList: nearClasses,
+          coursesList: courses,
           newClassesPage: 2,
           nearClassesPage: 2,
           hasMoreNewClasses: newClasses.length >= _pageLimit,
@@ -141,15 +162,13 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       );
       final newClasses = data.data?.newClasses?.data ?? [];
       final nearClasses = data.data?.nearClasses?.data ?? [];
-      final silentName = data.data?.forUser?.firstName;
-      if (silentName != null && silentName.isNotEmpty) {
-        _storage.parentName.set(silentName);
-        displayNameNotifier.value = silentName;
-      }
+      final courses = data.data?.courses?.data ?? [];
+      _syncDisplayName(data.data?.forUser);
       build((b) => b.copyWith(
             homeModel: data,
             newClassesList: newClasses,
             nearClassesList: nearClasses,
+            coursesList: courses,
             newClassesPage: 2,
             nearClassesPage: 2,
             hasMoreNewClasses: newClasses.length >= _pageLimit,

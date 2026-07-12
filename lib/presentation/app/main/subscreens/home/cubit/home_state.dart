@@ -16,6 +16,9 @@ class HomeBuildable with _$HomeBuildable {
     @Default(null) double? lng,
     // Pagination for new classes
     @Default([]) List<HomClass> newClassesList,
+    /// Real courses — the home 'Курсы' row. Kept separate from the class
+    /// lists because a course is bought as a trial or as the whole course.
+    @Default([]) List<HomClass> coursesList,
     @Default(2) int newClassesPage,
     @Default(false) bool isLoadingNewClasses,
     @Default(true) bool hasMoreNewClasses,

@@ -950,3 +950,20 @@ profile_prompt_sub,Добавьте своё имя и ребёнка — под
 profile_prompt_action,Добавить,Qo'shish,Add
 coupon_discount_word,скидка,chegirma,discount
 coupon_for_word,на,uchun,for
+courses_section,Курсы,Kurslar,Courses
+course_trial_title,Пробные уроки ({count}),Sinov darslari ({count}),Trial lessons ({count})
+course_trial_subtitle,Попробуйте курс — оплата за каждый урок отдельно,Kursni sinab ko‘ring — har bir dars alohida to‘lanadi,Try the course — each lesson priced separately
+course_trial_total,Итого за пробные,Sinov uchun jami,Trial total
+course_buy_trial,Купить пробные уроки,Sinov darslarini sotib olish,Buy trial lessons
+course_trial_bought,Пробные уроки куплены,Sinov darslari sotib olingan,Trial lessons purchased
+course_full_title,Весь курс,Butun kurs,Whole course
+course_lessons_count,{count} уроков,{count} ta dars,{count} lessons
+course_more_lessons,и ещё {count} уроков,yana {count} ta dars,and {count} more lessons
+course_full_price,Цена курса,Kurs narxi,Course price
+course_buy_full,Купить весь курс,Butun kursni sotib olish,Buy the whole course
+course_seats_left,Осталось мест: {count},Qolgan joylar: {count},{count} seats left
+course_full_no_seats,Мест нет,Joy qolmadi,No seats left
+course_already_enrolled,Вы записаны на этот курс,Siz ushbu kursga yozilgansiz,You are enrolled in this course
+course_already_enrolled_short,Вы уже записаны,Siz allaqachon yozilgansiz,Already enrolled
+course_upsell_title,Продолжить весь курс?,Butun kursni davom ettirasizmi?,Continue with the whole course?
+course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.

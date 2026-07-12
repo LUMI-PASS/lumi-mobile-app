@@ -26,6 +26,10 @@ mixin _$HomeBuildable {
   double? get lng =>
       throw _privateConstructorUsedError; // Pagination for new classes
   List<HomClass> get newClassesList => throw _privateConstructorUsedError;
+
+  /// Real courses — the home 'Курсы' row. Kept separate from the class
+  /// lists because a course is bought as a trial or as the whole course.
+  List<HomClass> get coursesList => throw _privateConstructorUsedError;
   int get newClassesPage => throw _privateConstructorUsedError;
   bool get isLoadingNewClasses => throw _privateConstructorUsedError;
   bool get hasMoreNewClasses =>
@@ -55,6 +59,7 @@ abstract class $HomeBuildableCopyWith<$Res> {
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
+      List<HomClass> coursesList,
       int newClassesPage,
       bool isLoadingNewClasses,
       bool hasMoreNewClasses,
@@ -87,6 +92,7 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
+    Object? coursesList = null,
     Object? newClassesPage = null,
     Object? isLoadingNewClasses = null,
     Object? hasMoreNewClasses = null,
@@ -127,6 +133,10 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
       newClassesList: null == newClassesList
           ? _value.newClassesList
           : newClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      coursesList: null == coursesList
+          ? _value.coursesList
+          : coursesList // ignore: cast_nullable_to_non_nullable
               as List<HomClass>,
       newClassesPage: null == newClassesPage
           ? _value.newClassesPage
@@ -189,6 +199,7 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
+      List<HomClass> coursesList,
       int newClassesPage,
       bool isLoadingNewClasses,
       bool hasMoreNewClasses,
@@ -220,6 +231,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
+    Object? coursesList = null,
     Object? newClassesPage = null,
     Object? isLoadingNewClasses = null,
     Object? hasMoreNewClasses = null,
@@ -260,6 +272,10 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
       newClassesList: null == newClassesList
           ? _value._newClassesList
           : newClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      coursesList: null == coursesList
+          ? _value._coursesList
+          : coursesList // ignore: cast_nullable_to_non_nullable
               as List<HomClass>,
       newClassesPage: null == newClassesPage
           ? _value.newClassesPage
@@ -305,6 +321,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.lat = null,
       this.lng = null,
       final List<HomClass> newClassesList = const [],
+      final List<HomClass> coursesList = const [],
       this.newClassesPage = 2,
       this.isLoadingNewClasses = false,
       this.hasMoreNewClasses = true,
@@ -314,6 +331,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.hasMoreNearClasses = true})
       : _categories = categories,
         _newClassesList = newClassesList,
+        _coursesList = coursesList,
         _nearClassesList = nearClassesList;
 
   @override
@@ -355,6 +373,20 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     return EqualUnmodifiableListView(_newClassesList);
   }
 
+  /// Real courses — the home 'Курсы' row. Kept separate from the class
+  /// lists because a course is bought as a trial or as the whole course.
+  final List<HomClass> _coursesList;
+
+  /// Real courses — the home 'Курсы' row. Kept separate from the class
+  /// lists because a course is bought as a trial or as the whole course.
+  @override
+  @JsonKey()
+  List<HomClass> get coursesList {
+    if (_coursesList is EqualUnmodifiableListView) return _coursesList;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_coursesList);
+  }
+
   @override
   @JsonKey()
   final int newClassesPage;
@@ -387,7 +419,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, lat: $lat, lng: $lng, newClassesList: $newClassesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, lat: $lat, lng: $lng, newClassesList: $newClassesList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -408,6 +440,8 @@ class _$HomeBuildableImpl implements _HomeBuildable {
             (identical(other.lng, lng) || other.lng == lng) &&
             const DeepCollectionEquality()
                 .equals(other._newClassesList, _newClassesList) &&
+            const DeepCollectionEquality()
+                .equals(other._coursesList, _coursesList) &&
             (identical(other.newClassesPage, newClassesPage) ||
                 other.newClassesPage == newClassesPage) &&
             (identical(other.isLoadingNewClasses, isLoadingNewClasses) ||
@@ -435,6 +469,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       lat,
       lng,
       const DeepCollectionEquality().hash(_newClassesList),
+      const DeepCollectionEquality().hash(_coursesList),
       newClassesPage,
       isLoadingNewClasses,
       hasMoreNewClasses,
@@ -460,6 +495,7 @@ abstract class _HomeBuildable implements HomeBuildable {
       final double? lat,
       final double? lng,
       final List<HomClass> newClassesList,
+      final List<HomClass> coursesList,
       final int newClassesPage,
       final bool isLoadingNewClasses,
       final bool hasMoreNewClasses,
@@ -484,6 +520,11 @@ abstract class _HomeBuildable implements HomeBuildable {
   double? get lng;
   @override // Pagination for new classes
   List<HomClass> get newClassesList;
+  @override
+
+  /// Real courses — the home 'Курсы' row. Kept separate from the class
+  /// lists because a course is bought as a trial or as the whole course.
+  List<HomClass> get coursesList;
   @override
   int get newClassesPage;
   @override

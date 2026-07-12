@@ -167,6 +167,16 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const CouponsPage(),
       );
     },
+    CourseDetailRoute.name: (routeData) {
+      final args = routeData.argsAs<CourseDetailRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: CourseDetailPage(
+          course: args.course,
+          key: args.key,
+        ),
+      );
+    },
     EmptyRouterRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -867,6 +877,44 @@ class CouponsRoute extends PageRouteInfo<void> {
   static const String name = 'CouponsRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [CourseDetailPage]
+class CourseDetailRoute extends PageRouteInfo<CourseDetailRouteArgs> {
+  CourseDetailRoute({
+    required HomClass course,
+    Key? key,
+    List<PageRouteInfo>? children,
+  }) : super(
+          CourseDetailRoute.name,
+          args: CourseDetailRouteArgs(
+            course: course,
+            key: key,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'CourseDetailRoute';
+
+  static const PageInfo<CourseDetailRouteArgs> page =
+      PageInfo<CourseDetailRouteArgs>(name);
+}
+
+class CourseDetailRouteArgs {
+  const CourseDetailRouteArgs({
+    required this.course,
+    this.key,
+  });
+
+  final HomClass course;
+
+  final Key? key;
+
+  @override
+  String toString() {
+    return 'CourseDetailRouteArgs{course: $course, key: $key}';
+  }
 }
 
 /// generated route for

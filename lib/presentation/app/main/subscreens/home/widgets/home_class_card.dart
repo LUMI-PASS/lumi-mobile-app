@@ -44,8 +44,16 @@ class HomeCourseCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => context.router
-          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
+      onTap: () {
+        final c = hc ?? const HomClass();
+        // A course is bought as a trial or as the whole course — the normal
+        // class detail screen (age tiers, single date) cannot represent it.
+        if (c.isCourse == true) {
+          context.router.push(CourseDetailRoute(course: c));
+        } else {
+          context.router.push(ClassDetailRoute(classModel: c));
+        }
+      },
       child: Container(
         width: width ?? 168.w,
         margin: margin ?? EdgeInsets.only(left: 16.w),
@@ -86,8 +94,16 @@ class HomeNearbyCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => context.router
-          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
+      onTap: () {
+        final c = hc ?? const HomClass();
+        // A course is bought as a trial or as the whole course — the normal
+        // class detail screen (age tiers, single date) cannot represent it.
+        if (c.isCourse == true) {
+          context.router.push(CourseDetailRoute(course: c));
+        } else {
+          context.router.push(ClassDetailRoute(classModel: c));
+        }
+      },
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         child: Column(

@@ -123,6 +123,16 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             ),
             if (_categories(state).isNotEmpty)
               SliverToBoxAdapter(child: _buildCategories(context, state)),
+            // REAL courses — the backend keeps these out of the class lists, so
+            // this row is the only place they appear.
+            if (state.coursesList.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _buildCoursesRow(
+                  context,
+                  'courses_section'.tr(),
+                  state.coursesList,
+                ),
+              ),
             if (state.newClassesList.isNotEmpty)
               SliverToBoxAdapter(child: _buildCourses(context, state)),
             // Second "Курсы" row (Figma has two) — reuses the nearby feed.

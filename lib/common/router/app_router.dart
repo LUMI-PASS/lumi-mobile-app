@@ -10,6 +10,7 @@ import 'package:lumi_pass/presentation/app/connection_error/connection_error_pag
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
+import 'package:lumi_pass/presentation/app/home/course_detail/course_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_page.dart';
 import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/payment_history_page.dart';
@@ -111,6 +112,7 @@ class AppRouter extends _$AppRouter {
     ///Subscreens
 
     AutoRoute(page: ClassDetailRoute.page),
+    AutoRoute(page: CourseDetailRoute.page),
     AutoRoute(page: BranchDetailRoute.page),
     AutoRoute(page: BookingRoute.page),
     AutoRoute(page: BookingCompleteRoute.page),

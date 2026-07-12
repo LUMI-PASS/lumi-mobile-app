@@ -43,6 +43,9 @@ _$HomDataImpl _$$HomDataImplFromJson(Map<String, dynamic> json) =>
           ? null
           : HomNearClasses.fromJson(
               json['near_classes'] as Map<String, dynamic>),
+      courses: json['courses'] == null
+          ? null
+          : HomClassPage.fromJson(json['courses'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$HomDataImplToJson(_$HomDataImpl instance) =>
@@ -53,6 +56,7 @@ Map<String, dynamic> _$$HomDataImplToJson(_$HomDataImpl instance) =>
       'categories': instance.categories,
       'new_classes': instance.newClasses,
       'near_classes': instance.nearClasses,
+      'courses': instance.courses,
     };
 
 _$HomForUserImpl _$$HomForUserImplFromJson(Map<String, dynamic> json) =>
@@ -205,6 +209,10 @@ _$HomClassImpl _$$HomClassImplFromJson(Map<String, dynamic> json) =>
       videoUrl: json['video_url'] as String?,
       videoProvider: json['video_provider'] as String?,
       discountPercentage: (json['discount_percentage'] as num?)?.toInt(),
+      isCourse: json['is_course'] as bool?,
+      trialLessons: (json['trial_lessons'] as num?)?.toInt(),
+      coursePrice: json['course_price'] as num?,
+      seats: (json['seats'] as num?)?.toInt(),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
@@ -231,6 +239,10 @@ Map<String, dynamic> _$$HomClassImplToJson(_$HomClassImpl instance) =>
       'video_url': instance.videoUrl,
       'video_provider': instance.videoProvider,
       'discount_percentage': instance.discountPercentage,
+      'is_course': instance.isCourse,
+      'trial_lessons': instance.trialLessons,
+      'course_price': instance.coursePrice,
+      'seats': instance.seats,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
       'deleted_at': instance.deletedAt,
