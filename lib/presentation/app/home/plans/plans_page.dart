@@ -701,7 +701,7 @@ class _CouponCard extends StatelessWidget {
                 Text(
                   '${_fmtPercent(discount)}%',
                   style: TextStyle(
-                    fontSize: 30.sp,
+                    fontSize: 40.sp,
                     fontWeight: FontWeight.w900,
                     color: c.primary,
                     height: 1,
@@ -716,7 +716,7 @@ class _CouponCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 18.sp,
+                      fontSize: 24.sp,
                       fontWeight: FontWeight.w800,
                       color: c.primary,
                     ),
@@ -730,7 +730,9 @@ class _CouponCard extends StatelessWidget {
             'coupon_one_time_only'.tr(),
             style: TextStyle(fontSize: 10.sp, color: c.textMuted, height: 1.3),
           ),
-          const Spacer(),
+          // Small gap (not a Spacer) so the price sits just under the headline
+          // instead of being pushed to the bottom of the card.
+          14.kh,
           // Price + validity, deliberately small.
           Row(
             children: [
