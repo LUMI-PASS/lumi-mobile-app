@@ -793,12 +793,20 @@ class _BookingPageState extends State<BookingPage> {
       _flag(_timeShake);
       return false;
     }
-    // Slot-based classes need one of the day's slots picked.
-    if (!_requiresBookingSlot &&
-        (_selectedDate?.slots.isNotEmpty ?? false) &&
-        _selectedSlot == null) {
-      _flag(_timeShake);
-      return false;
+    // Slot-based classes: the class may not run on the chosen day (slots loaded
+    // but empty) — block with a clear message instead of letting the backend
+    // reject the checkout. When the day does have sessions, one must be picked.
+    if (!_requiresBookingSlot && _selectedDate != null) {
+      final slots = _selectedDate!.slots;
+      if (_slotsLoaded && !_loadingSlots && slots.isEmpty) {
+        _flag(_timeShake);
+        setState(() => _error = 'book_no_slots_for_day'.tr());
+        return false;
+      }
+      if (slots.isNotEmpty && _selectedSlot == null) {
+        _flag(_timeShake);
+        return false;
+      }
     }
     // Payment method is handled in _pay: if none is chosen, the pay CTA opens
     // the chooser rather than blocking here.
@@ -852,12 +860,21 @@ class _BookingPageState extends State<BookingPage> {
       );
       return result;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map
+      final raw = e.response?.data is Map
           ? (e.response?.data['message']?.toString() ??
               e.response?.statusMessage ??
               e.message ??
-              'book_network_error'.tr())
-          : (e.message ?? 'book_network_error'.tr());
+              '')
+          : (e.message ?? '');
+      // The backend rejects a day the class doesn't run on with an English
+      // message like "Class doesn't run on MON. Available: SUN". Surface a
+      // clean, localized message instead of the raw string.
+      final low = raw.toLowerCase();
+      final isDayUnavailable = low.contains('run on') &&
+          (low.contains('available') || low.contains("doesn't") || low.contains('does not'));
+      final msg = isDayUnavailable
+          ? 'book_no_slots_for_day'.tr()
+          : (raw.isNotEmpty ? raw : 'book_network_error'.tr());
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutFailed,
         params: {
@@ -1399,6 +1416,8 @@ class _BookingPageState extends State<BookingPage> {
       context,
       initial: _payment,
       cards: _cards,
+      // Paying by card isn't live yet — the rail shows, but inert.
+      cardsComingSoon: true,
     );
     if (picked == null || !mounted) return;
     setState(() {
