@@ -5,7 +5,6 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:focus_detector/focus_detector.dart';
-import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 import 'base_listener.dart';
 import 'base_state.dart';
 
@@ -64,31 +63,31 @@ class _BasePageState<CUBIT extends Cubit<BaseState<BUILDABLE, LISTENABLE>>,
   @override
   Widget build(BuildContext context) {
     bool lost = false;
-    return KeyboardDismisser(
-      child: BlocProvider<CUBIT>(
-        create: (_) => getIt<CUBIT>(),
-        child: Builder(
-          builder: (context) {
-            if (!initialized) {
-              widget.init(context);
-              initialized = true;
-            }
-            return
-              FocusDetector(
-              onFocusGained: () {
-                if (!lost) return;
-                widget.onFocusGained(context);
-              },
-              onFocusLost: () => lost = true,
-              child:
-              BaseListener<CUBIT, BUILDABLE, LISTENABLE>(
-                listener: (listenable) => widget.listener(context, listenable),
-                child: BaseBuilder<CUBIT, BUILDABLE, LISTENABLE>(
-                    builder: widget.builder),
-              ),
-            );
-          },
-        ),
+    // No global tap GestureDetector here (the old KeyboardDismisser): MyApp is
+    // a BasePage, so it would sit above the iOS 26 native UiKitView tab bar,
+    // win the gesture arena on tap and cancel the bar's touches. Keyboard
+    // dismissal is handled arena-free by the root Listener in main.dart.
+    return BlocProvider<CUBIT>(
+      create: (_) => getIt<CUBIT>(),
+      child: Builder(
+        builder: (context) {
+          if (!initialized) {
+            widget.init(context);
+            initialized = true;
+          }
+          return FocusDetector(
+            onFocusGained: () {
+              if (!lost) return;
+              widget.onFocusGained(context);
+            },
+            onFocusLost: () => lost = true,
+            child: BaseListener<CUBIT, BUILDABLE, LISTENABLE>(
+              listener: (listenable) => widget.listener(context, listenable),
+              child: BaseBuilder<CUBIT, BUILDABLE, LISTENABLE>(
+                  builder: widget.builder),
+            ),
+          );
+        },
       ),
     );
   }
