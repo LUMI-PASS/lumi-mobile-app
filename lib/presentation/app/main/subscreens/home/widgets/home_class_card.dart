@@ -46,13 +46,8 @@ class HomeCourseCard extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () {
         final c = hc ?? const HomClass();
-        // A course is bought as a trial or as the whole course — the normal
-        // class detail screen (age tiers, single date) cannot represent it.
-        if (c.isCourse == true) {
-          context.router.push(CourseDetailRoute(course: c));
-        } else {
-          context.router.push(ClassDetailRoute(classModel: c));
-        }
+        // Courses reuse the class detail screen + booking flow — no separate UI.
+        context.router.push(ClassDetailRoute(classModel: c));
       },
       child: Container(
         width: width ?? 168.w,
@@ -96,13 +91,8 @@ class HomeNearbyCard extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () {
         final c = hc ?? const HomClass();
-        // A course is bought as a trial or as the whole course — the normal
-        // class detail screen (age tiers, single date) cannot represent it.
-        if (c.isCourse == true) {
-          context.router.push(CourseDetailRoute(course: c));
-        } else {
-          context.router.push(ClassDetailRoute(classModel: c));
-        }
+        // Courses reuse the class detail screen + booking flow — no separate UI.
+        context.router.push(ClassDetailRoute(classModel: c));
       },
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -207,13 +197,6 @@ class _ClassImage extends StatelessWidget {
                       leading: HomeIcon(Assets.icons.home.book,
                           size: 12, color: Colors.white),
                       gradient: AppGradients.indigo,
-                    ),
-                  if (discountPercentage > 0)
-                    HomePillTag(
-                      label: 'sale'.tr(),
-                      leading: HomeIcon(Assets.icons.home.flash,
-                          size: 12, color: Colors.white),
-                      color: AppColors.error,
                     ),
                 ],
               ),

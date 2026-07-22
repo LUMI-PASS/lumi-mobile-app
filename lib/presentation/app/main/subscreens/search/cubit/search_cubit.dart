@@ -23,10 +23,23 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   /// Total matching results per tab, surfaced in the "Все • N" count row.
   int _classesTotal = 0;
   int _branchesTotal = 0;
+  int _coursesTotal = 0;
+
+  /// Which content the shared `classes` list currently holds: tab 0 (activities)
+  /// or tab 2 (courses). Both render through the same list slot.
+  int _classesContent = 0;
 
   /// Total number of results for the active tab (all pages, not just loaded).
-  int get resultCount =>
-      buildable.activeTab == 0 ? _classesTotal : _branchesTotal;
+  int get resultCount {
+    switch (buildable.activeTab) {
+      case 1:
+        return _branchesTotal;
+      case 2:
+        return _coursesTotal;
+      default:
+        return _classesTotal;
+    }
+  }
 
   /// Categories cached from the home feed (have resolved title strings).
   /// Used by search so we don't depend on the raw categories/ endpoint.
@@ -92,10 +105,18 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   Future<void> setTab(int tab) async {
     if (buildable.activeTab == tab) return;
     build((b) => b.copyWith(activeTab: tab));
-    final alreadyLoaded =
-        tab == 0 ? buildable.classesLoaded : buildable.branchesLoaded;
+    // Tabs 0 (activities) and 2 (courses) share the `classes` slot, so it's only
+    // "already loaded" when it currently holds THIS tab's content.
+    final alreadyLoaded = tab == 1
+        ? buildable.branchesLoaded
+        : (buildable.classesLoaded && _classesContent == tab);
     if (!alreadyLoaded) {
-      build((b) => b.copyWith(isLoading: true));
+      build((b) => b.copyWith(
+            isLoading: true,
+            // Clear the shared slot when swapping activities <-> courses so the
+            // old content doesn't flash while the new one loads.
+            classes: tab == 1 ? buildable.classes : const [],
+          ));
       await _fetchTab(tab, page: 1, append: false);
       build((b) => b.copyWith(isLoading: false));
     }
@@ -132,10 +153,11 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     if (buildable.isLoadingMore) return;
 
     final tab = buildable.activeTab;
+    // Courses (tab 2) page through the shared classes slot.
     final currentPage =
-        tab == 0 ? buildable.classesPage : buildable.branchesPage;
+        tab == 1 ? buildable.branchesPage : buildable.classesPage;
     final totalPages =
-        tab == 0 ? buildable.classesTotalPages : buildable.branchesTotalPages;
+        tab == 1 ? buildable.branchesTotalPages : buildable.classesTotalPages;
 
     if (currentPage > totalPages) return;
 
@@ -150,7 +172,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
       final search =
           buildable.searchTerm.isEmpty ? null : buildable.searchTerm;
 
-      if (tab == 0) {
+      if (tab == 0 || tab == 2) {
         String? fromDate;
         String? toDate;
         int? age;
@@ -202,22 +224,35 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           }
         }
 
-        final result = await _repo.getDiscoveryClasses(
-          page: page,
-          limit: _pageLimit,
-          search: search,
-          categoryId: buildable.selectedCategory?.id,
-          fromDate: fromDate,
-          toDate: toDate,
-          age: age,
-          classGender: classGender,
-          minPrice: minPrice,
-          maxPrice: maxPrice,
-          lat: _lat,
-          lng: _lng,
-        );
+        // Courses (tab 2) have their own catalogue endpoint and ignore the
+        // activity filters; they still render through the shared classes slot.
+        final result = tab == 2
+            ? await _repo.getDiscoveryCourses(
+                page: page,
+                limit: _pageLimit,
+                search: search,
+              )
+            : await _repo.getDiscoveryClasses(
+                page: page,
+                limit: _pageLimit,
+                search: search,
+                categoryId: buildable.selectedCategory?.id,
+                fromDate: fromDate,
+                toDate: toDate,
+                age: age,
+                classGender: classGender,
+                minPrice: minPrice,
+                maxPrice: maxPrice,
+                lat: _lat,
+                lng: _lng,
+              );
 
-        _classesTotal = result.total;
+        _classesContent = tab;
+        if (tab == 2) {
+          _coursesTotal = result.total;
+        } else {
+          _classesTotal = result.total;
+        }
 
         if (append) {
           final existingIds = buildable.classes.map((c) => c.id).toSet();

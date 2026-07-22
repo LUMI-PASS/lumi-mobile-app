@@ -161,6 +161,7 @@ Future<PaymentSelection?> showPaymentChooser(
   BuildContext context, {
   PaymentSelection? initial,
   List<PaymentCard> cards = const [],
+  bool cardsComingSoon = false,
 }) {
   return showModalBottomSheet<PaymentSelection>(
     context: context,
@@ -169,7 +170,11 @@ Future<PaymentSelection?> showPaymentChooser(
     // No SafeArea: it would reserve the home-indicator inset *outside* the
     // sheet, leaving a dead gap under it. The shell pads for that inset itself.
     useSafeArea: false,
-    builder: (_) => _ChooserSheet(initial: initial, cards: cards),
+    builder: (_) => _ChooserSheet(
+      initial: initial,
+      cards: cards,
+      cardsComingSoon: cardsComingSoon,
+    ),
   );
 }
 
@@ -410,10 +415,19 @@ class CardArtwork extends StatelessWidget {
 enum _Step { choose, addCard }
 
 class _ChooserSheet extends StatefulWidget {
-  const _ChooserSheet({required this.initial, required this.cards});
+  const _ChooserSheet({
+    required this.initial,
+    required this.cards,
+    this.cardsComingSoon = false,
+  });
 
   final PaymentSelection? initial;
   final List<PaymentCard> cards;
+
+  /// Shows the card rail as an inert "coming soon" row: no radio, no card list,
+  /// no add-card step. The rail still appears — the buyer should see that paying
+  /// by card is on the way — but it cannot be picked.
+  final bool cardsComingSoon;
 
   @override
   State<_ChooserSheet> createState() => _ChooserSheetState();
@@ -442,6 +456,9 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   /// Pulls the buyer's bound cards from the backend and shows them at the top of
   /// the card list. Non-fatal on failure — a card can still be entered manually.
   Future<void> _loadSavedCards() async {
+    // The card rail can't be picked, so its cards are never shown — don't pay
+    // for the request.
+    if (widget.cardsComingSoon) return;
     try {
       final saved = await getIt<OrdersApi>().getSavedCards();
       if (!mounted || saved.isEmpty) return;
@@ -516,7 +533,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   // ── Step: choose rail (and card, on the card rail) ──────────────────────────
   Widget _buildChoose() {
     final c = context.colors;
-    final isCard = _rail == PaymentRail.card;
+    final isCard = !widget.cardsComingSoon && _rail == PaymentRail.card;
     final selection = _selection;
     return _SheetShell(
       child: Column(
@@ -543,7 +560,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
           _railTile(PaymentRail.uzum,
               logo: Assets.images.pay.uzum, logoHeight: 24),
           4.verticalSpace,
-          _railTile(PaymentRail.card),
+          _railTile(PaymentRail.card, disabled: widget.cardsComingSoon),
           // The card list belongs to the card rail — it only appears once that
           // rail is picked, as in the design.
           if (isCard) ...[
@@ -579,39 +596,53 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     PaymentRail r, {
     AssetGenImage? logo,
     double logoHeight = 20,
+    bool disabled = false,
   }) {
+    final c = context.colors;
+    // A disabled rail is dimmed and shows a "coming soon" badge where its radio
+    // would be — it reads as not-yet rather than broken.
+    final tile = Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          if (logo != null)
+            logo.image(height: logoHeight.h, fit: BoxFit.contain)
+          else ...[
+            Assets.icons.icCard.svg(
+              width: 20.w,
+              height: 20.w,
+              colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+            ),
+            12.horizontalSpace,
+            Text('pay_with_card'.tr(),
+                style: AppText.semibold16.copyWith(color: c.textPrimary)),
+          ],
+          const Spacer(),
+          if (disabled) const _ComingSoonBadge() else _radio(_rail == r),
+        ],
+      ),
+    );
+
+    if (disabled) {
+      return Opacity(
+        opacity: 0.5,
+        // Swallows the tap so the row can't be selected, and so a tap doesn't
+        // fall through to whatever sits under it.
+        child: IgnorePointer(child: tile),
+      );
+    }
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => setState(() {
         _error = null;
         _rail = r;
       }),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: context.colors.control,
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Row(
-          children: [
-            if (logo != null)
-              logo.image(height: logoHeight.h, fit: BoxFit.contain)
-            else ...[
-              Assets.icons.icCard.svg(
-                width: 20.w,
-                height: 20.w,
-                colorFilter:
-                    ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
-              ),
-              12.horizontalSpace,
-              Text('pay_with_card'.tr(),
-                  style: AppText.semibold16.copyWith(color: context.colors.textPrimary)),
-            ],
-            const Spacer(),
-            _radio(_rail == r),
-          ],
-        ),
-      ),
+      child: tile,
     );
   }
 
@@ -775,6 +806,28 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             onPrimary: _saveCard,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "Tez orada" pill shown on a payment rail that isn't live yet.
+class _ComingSoonBadge extends StatelessWidget {
+  const _ComingSoonBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(40.r),
+        border: Border.all(color: c.controlBorder),
+      ),
+      child: Text(
+        'coming_soon'.tr(),
+        style: AppText.semibold12.copyWith(color: c.textSecondary),
       ),
     );
   }

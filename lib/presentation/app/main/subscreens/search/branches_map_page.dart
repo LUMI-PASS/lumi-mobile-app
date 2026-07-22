@@ -307,17 +307,14 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                                   height: 26.w,
                                   child: const _MyLocationDot(),
                                 ),
+                              // Selecting a branch doesn't swap its marker for a
+                              // different shape — the pill stays exactly as it
+                              // is and only picks up a selected state, so the
+                              // map doesn't reflow under the user's finger. The
+                              // selected pill is emitted last so it draws over
+                              // any neighbour it overlaps.
                               for (final branch in branches)
-                                if (branch.id == selected?.id)
-                                  Marker(
-                                    point: LatLng(
-                                        branch.latitude!, branch.longitude!),
-                                    width: 40.w,
-                                    height: 40.w,
-                                    alignment: Alignment.topCenter,
-                                    child: const _SelectedPin(),
-                                  )
-                                else
+                                if (branch.id != selected?.id)
                                   Marker(
                                     point: LatLng(
                                         branch.latitude!, branch.longitude!),
@@ -329,6 +326,19 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                                       onTap: () => _select(branch),
                                     ),
                                   ),
+                              if (selected != null)
+                                Marker(
+                                  point: LatLng(
+                                      selected.latitude!, selected.longitude!),
+                                  width: 160.w,
+                                  height: 28.h,
+                                  alignment: Alignment.centerLeft,
+                                  child: _BranchLabel(
+                                    title: selected.title ?? '',
+                                    isSelected: true,
+                                    onTap: () => _select(selected),
+                                  ),
+                                ),
                             ],
                           ),
                         ],
@@ -393,14 +403,22 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   }
 }
 
-/// Unselected marker — a labelled pill (Figma `Tag`). The grey pill and its
-/// white label are theme-invariant by design: they sit on the map, not on the
-/// page.
+/// Branch marker — a labelled pill (Figma `Tag`). The grey pill and its white
+/// label are theme-invariant by design: they sit on the map, not on the page.
+///
+/// Selecting a branch does not change the marker's shape, size or contents — it
+/// is the same pill, tinted to the brand purple and ringed in white. Swapping it
+/// for a different glyph made the map appear to jump as markers resized.
 class _BranchLabel extends StatelessWidget {
-  const _BranchLabel({required this.title, required this.onTap});
+  const _BranchLabel({
+    required this.title,
+    required this.onTap,
+    this.isSelected = false,
+  });
 
   final String title;
   final VoidCallback onTap;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -412,11 +430,16 @@ class _BranchLabel extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.fromLTRB(2.w, 2.h, 10.w, 2.h),
           decoration: BoxDecoration(
-            color: AppColors.chipGrey,
+            color: isSelected ? AppColors.brandPurple : AppColors.chipGrey,
             borderRadius: BorderRadius.circular(8.r),
+            border: isSelected
+                ? Border.all(color: AppColors.white, width: 1.5)
+                : null,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.10),
+                color: isSelected
+                    ? AppColors.brandPurple.withValues(alpha: 0.40)
+                    : Colors.black.withValues(alpha: 0.10),
                 blurRadius: 11.5,
                 offset: const Offset(0, 10),
               ),
@@ -537,38 +560,6 @@ class _MyLocationDot extends StatelessWidget {
   }
 }
 
-/// Selected marker — the purple pin (Figma `iconsax-location-mark`).
-class _SelectedPin extends StatelessWidget {
-  const _SelectedPin();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.link,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.link.withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Assets.icons.location.svg(
-        width: 22.w,
-        height: 22.w,
-        colorFilter: const ColorFilter.mode(
-          AppColors.white,
-          BlendMode.srcIn,
-        ),
-      ),
-    );
-  }
-}
-
 /// The raised card for the selected centre (Figma `Avatar` at the bottom).
 class _BranchCard extends StatelessWidget {
   const _BranchCard({required this.branch});
@@ -649,6 +640,22 @@ class _BranchCard extends StatelessWidget {
                     ),
                   ],
                 ],
+              ),
+            ),
+            // The card opens the branch — the arrow is what says so. Same
+            // affordance the "view on map" row uses. The row is top-aligned for
+            // the two-line caption, so the arrow is centred against the
+            // thumbnail rather than pinned to the top of it.
+            8.horizontalSpace,
+            SizedBox(
+              height: 45.w,
+              child: Center(
+                child: Assets.icons.arrowRight.svg(
+                  width: 24.w,
+                  height: 24.w,
+                  colorFilter:
+                      ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
+                ),
               ),
             ),
           ],

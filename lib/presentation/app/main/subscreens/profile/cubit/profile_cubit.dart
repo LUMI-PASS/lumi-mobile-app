@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/avatar_notifier.dart';
+import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -82,8 +84,17 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
     }
   }
 
+  /// Clearing the box isn't enough on its own: these notifiers are in memory and
+  /// outlive the sign-out, so without this the next user to sign in on this run
+  /// is greeted by the previous user's name and avatar until the API answers.
+  Future<void> _clearSession() async {
+    await _storage.logout();
+    displayNameNotifier.value = null;
+    parentAvatarNotifier.value = null;
+  }
+
   Future<void> logout() => callable(
-        future: _storage.logout(),
+        future: _clearSession(),
         buildOnStart: () => buildable.copyWith(isLoading: true),
         invokeOnData: (data) => const ProfileListenable(
           effect: ProfileEffect.login,
@@ -93,7 +104,7 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
       );
 
   Future<void> deleteAccount() => callable(
-        future: _storage.logout().then((_) => _showDeletedBanner = true),
+        future: _clearSession().then((_) => _showDeletedBanner = true),
         buildOnStart: () => buildable.copyWith(isLoading: true),
         invokeOnData: (_) => const ProfileListenable(
           effect: ProfileEffect.deleted,

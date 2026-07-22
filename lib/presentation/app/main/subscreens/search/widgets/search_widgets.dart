@@ -346,6 +346,60 @@ class SearchMapCard extends StatelessWidget {
   }
 }
 
+/// The category the results are currently narrowed to, shown as a removable
+/// chip above the map row.
+///
+/// Arriving from a category on Home, the list is filtered before the user has
+/// touched anything — without this they just see a short list and no reason for
+/// it. The chip names the filter and its × takes it off, turning an invisible
+/// constraint into one they can see and undo.
+class SearchCategoryChip extends StatelessWidget {
+  const SearchCategoryChip({
+    super.key,
+    required this.label,
+    required this.onRemove,
+  });
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onRemove,
+          child: Container(
+            padding: EdgeInsets.fromLTRB(12.w, 6.h, 8.w, 6.h),
+            decoration: BoxDecoration(
+              gradient: AppGradients.indigo,
+              borderRadius: BorderRadius.circular(40.r),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold12.copyWith(color: Colors.white),
+                  ),
+                ),
+                6.horizontalSpace,
+                Icon(Icons.close_rounded, size: 14.sp, color: Colors.white),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Result count row — "Все • 15 751" (Figma `Brand section`).
 class SearchCountRow extends StatelessWidget {
   const SearchCountRow({super.key, required this.count});

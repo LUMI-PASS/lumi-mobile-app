@@ -105,6 +105,13 @@ abstract class HomeRepository {
     int limit = 20,
   });
 
+  /// Courses-only, paged — for the home "Курсы" row's "see all".
+  Future<ClassesPage> getDiscoveryCourses({
+    int page = 1,
+    int limit = 10,
+    String? search,
+  });
+
   Future<BranchesPage> getDiscoveryBranches({
     int page = 1,
     int limit = 10,

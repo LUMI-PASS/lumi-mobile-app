@@ -7,6 +7,7 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/coupon_promo_dialog.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/custom_bottomnavigation.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/onboarding_bottomsheet.dart';
+import 'package:lumi_pass/presentation/app/main/widgets/profile_prompt_banner.dart';
 
 /// Index of the Profile tab in [MainPage]'s bottom nav. Keep in sync with the
 /// `routes` list in [_MainPageState.build] and `_tabs` in [CustomBottomBar].
@@ -26,27 +27,51 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  final _storage = getIt<Storage>();
+
+  late bool _showPrompt = _promptIsDue();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final storage = getIt<Storage>();
-      // Only users who came in registering see the onboarding sheet — and,
-      // once they dismiss it, the one-time premium "get coupon" reward popup.
-      if (storage.needsOnboarding.call() == true) {
-        await showOnboardingBottomsheet(context);
+      // A new user is no longer stopped at the door for their name and child —
+      // the banner above the nav asks for those, whenever they feel like it. The
+      // flag is still consumed here so the one-time "get coupon" reward popup
+      // fires once, for the users who came in registering.
+      if (_storage.needsOnboarding.call() != true) return;
+      _storage.needsOnboarding.set(false);
+
+      if (_storage.couponPromoShown.call() != true) {
+        _storage.couponPromoShown.set(true);
+        await Future.delayed(const Duration(milliseconds: 350));
         if (!mounted) return;
-        if (storage.couponPromoShown.call() != true) {
-          storage.couponPromoShown.set(true);
-          await Future.delayed(const Duration(milliseconds: 350));
-          if (!mounted) return;
-          showCouponPromoDialog(
-            context,
-            onGetCoupon: () => context.router.push(const PlansRoute()),
-          );
-        }
+        showCouponPromoDialog(
+          context,
+          onGetCoupon: () => context.router.push(const PlansRoute()),
+        );
       }
     });
+  }
+
+  /// Ask only while there is something to ask for: the prompt is gone once the
+  /// user has closed it, and once they have actually given us a name.
+  bool _promptIsDue() =>
+      _storage.profilePromptDismissed.call() != true &&
+      (_storage.parentName.call() ?? '').isEmpty;
+
+  void _dismissPrompt() {
+    _storage.profilePromptDismissed.set(true);
+    setState(() => _showPrompt = false);
+  }
+
+  /// The banner's own CTA — the same name + child form that used to be forced
+  /// on first launch, now opened on purpose.
+  Future<void> _openProfileForm() async {
+    await showOnboardingBottomsheet(context);
+    if (!mounted) return;
+    // Filling it in retires the banner; backing out leaves it up.
+    setState(() => _showPrompt = _promptIsDue());
   }
 
   @override
@@ -65,10 +90,22 @@ class _MainPageState extends State<MainPage> {
     return AutoTabsScaffold(
       extendBody: true,
       routes: routes,
+      // The banner is built here, not inside a tab, so it rides above the nav on
+      // every tab and survives switching between them.
       bottomNavigationBuilder: (context, tabsRouter) {
-        return CustomBottomBar(
-          selectedIndex: tabsRouter.activeIndex,
-          onItemSelected: tabsRouter.setActiveIndex,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_showPrompt)
+              ProfilePromptBanner(
+                onTap: _openProfileForm,
+                onDismiss: _dismissPrompt,
+              ),
+            CustomBottomBar(
+              selectedIndex: tabsRouter.activeIndex,
+              onItemSelected: tabsRouter.setActiveIndex,
+            ),
+          ],
         );
       },
     );

@@ -75,17 +75,11 @@ class _SearchViewState extends State<SearchView> {
 
   /// What the screen is showing, named at the top.
   ///
-  /// Opened from a category, it is that category — the user tapped "Sport", so
-  /// the screen says "Sport" rather than the generic "Izlash", and they can see
-  /// what the list is filtered to. Opened as see-all, it is every activity.
-  String _title(SearchBuildable state) {
-    if (state.selectedCategory != null) {
-      final name = state.selectedCategory!.title ?? '';
-      if (name.isNotEmpty) return name;
-    }
-    if (widget.classesOnly) return 'all_activities'.tr();
-    return 'search'.tr();
-  }
+  /// A category filter is *not* named here — the removable chip above the map
+  /// row already carries it, and repeating it in the title said the same word
+  /// twice while implying the screen was locked to that category.
+  String get _title =>
+      widget.classesOnly ? 'all_activities'.tr() : 'search'.tr();
 
   Future<void> _openFilter() async {
     final cubit = context.read<SearchCubit>();
@@ -111,8 +105,17 @@ class _SearchViewState extends State<SearchView> {
     final c = context.colors;
     final cubit = context.read<SearchCubit>();
     final state = widget.state;
-    final isClasses = widget.classesOnly || state.activeTab == 0;
+    // Tabs 0 (activities) and 2 (courses) both render the classes grid — courses
+    // are loaded into the same `classes` slot. Only tab 1 shows branches.
+    final isClasses = widget.classesOnly || state.activeTab != 1;
     final items = isClasses ? state.classes : state.branches;
+
+    // The active category filter, shown as a removable chip. A category with no
+    // resolved title would render as a bare × — skip it rather than show that.
+    final selectedCategory = state.selectedCategory;
+    final category = (selectedCategory?.title ?? '').isEmpty
+        ? null
+        : selectedCategory;
 
     // Two columns with a 16pt page margin and an 8pt gutter (Figma).
     final columnWidth = (1.sw - 32.w - 8.w) / 2;
@@ -125,7 +128,7 @@ class _SearchViewState extends State<SearchView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             16.verticalSpace,
-            SearchTopBar(title: _title(state), onBack: widget.onBack),
+            SearchTopBar(title: _title, onBack: widget.onBack),
             16.verticalSpace,
             SearchBarRow(
               initialTerm: state.searchTerm,
@@ -136,12 +139,23 @@ class _SearchViewState extends State<SearchView> {
             if (!widget.classesOnly) ...[
               16.verticalSpace,
               SearchChips(
+                // Display order Activities · Courses · Centres. The cubit keeps
+                // branches at tab 1 (the map opens straight on it), so we remap
+                // display position <-> tab index with this self-inverse table.
                 labels: [
                   'search_tab_classes'.tr(),
+                  'search_tab_courses'.tr(),
                   'search_tab_centers'.tr(),
                 ],
-                activeIndex: state.activeTab,
-                onSelect: cubit.setTab,
+                activeIndex: const [0, 2, 1][state.activeTab],
+                onSelect: (i) => cubit.setTab(const [0, 2, 1][i]),
+              ),
+            ],
+            if (category != null) ...[
+              16.verticalSpace,
+              SearchCategoryChip(
+                label: category.title ?? '',
+                onRemove: () => cubit.selectCategory(null),
               ),
             ],
             16.verticalSpace,

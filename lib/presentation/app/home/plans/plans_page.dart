@@ -20,7 +20,6 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
-import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/plans/coupon_success_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
 import 'package:shimmer/shimmer.dart';
@@ -49,11 +48,6 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
   bool _isLoading = true;
   String? _purchasingId;
   int _selected = 0;
-
-  /// Rail (and card) the buyer picked in the chooser sheet, remembered for the
-  /// rest of the session so a second purchase starts from their last choice.
-  PaymentSelection? _payment;
-  final List<PaymentCard> _cards = [];
 
   /// A redirect checkout the buyer was sent off to pay. The rails open an
   /// external app, so the only signal we get back is the OS resuming us — at
@@ -143,67 +137,37 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
 
   void _openHistory() => context.router.push(const PaymentHistoryRoute());
 
-  /// Buy CTA. The chooser sheet only *picks* a rail — the charge happens here,
-  /// once the buyer has confirmed one.
+  /// Buy CTA. Coupons are sold on Payme only, so there is no rail to choose —
+  /// tapping buy goes straight to the charge.
   Future<void> _purchase(PremiumPlan plan) async {
     if (plan.id == null || _purchasingId != null) return;
-
-    final picked = await showPaymentChooser(
-      context,
-      initial: _payment,
-      cards: _cards,
-    );
-    if (picked == null || !mounted) return;
-    setState(() {
-      _payment = picked;
-      final card = picked.card;
-      if (card != null && !_cards.contains(card)) _cards.add(card);
-    });
-    if (!picked.isPayable) return;
-
-    await _pay(plan, picked);
+    await _pay(plan);
   }
 
-  Future<void> _pay(PremiumPlan plan, PaymentSelection payment) async {
+  /// Charges the plan through direct Payme (Paycom).
+  ///
+  /// Omitting `payment_provider` is what selects that path: with it set, the
+  /// backend routes the order through the Paylov (WLCM) aggregator instead —
+  /// which is what activity bookings do. Coupons deliberately do not, so this
+  /// call passes the tariff alone. Paycom always answers with a checkout URL,
+  /// so there is no in-app OTP step here.
+  Future<void> _pay(PremiumPlan plan) async {
     setState(() => _purchasingId = plan.id);
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.planPurchaseStarted,
       params: {
         'plan_id': plan.id!,
-        'payment_provider': payment.rail.providerKey,
+        'payment_provider': 'payme',
         if (plan.discountPercentage != null)
           'discount_percentage': plan.discountPercentage!.round(),
       },
     );
-    final card = payment.card;
     try {
-      final result = await _api.checkoutSubscription(
-        tariffId: plan.id!,
-        paymentProvider: payment.rail.providerKey,
-        cardNumber: card?.pan,
-        expireDate: card?.expiry,
-      );
+      final result = await _api.checkoutSubscription(tariffId: plan.id!);
       if (!mounted) return;
       setState(() => _purchasingId = null);
 
-      if (result.isCardOtpPending) {
-        // The card rail finishes inside the app: confirm the OTP in a sheet.
-        final paid = await showCardOtpSheet(
-          context,
-          checkout: result,
-          confirmCard: ({
-            required String transactionId,
-            required String cid,
-            required String otp,
-          }) =>
-              _api.paylovConfirmCard(
-            transactionId: transactionId,
-            cid: cid,
-            otp: otp,
-          ),
-        );
-        if (paid == true && mounted) await _finishSuccess(plan, result);
-      } else if (result.checkoutUrl.isNotEmpty) {
+      if (result.checkoutUrl.isNotEmpty) {
         await _openRedirect(plan, result);
       } else {
         _showError('pay_generic_error'.tr());

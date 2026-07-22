@@ -68,6 +68,12 @@ class Storage {
   BaseStorage<bool> get couponPromoShown =>
       BaseStorage(_box, 'couponPromoShown');
 
+  /// Whether the user dismissed the "add your name and child" prompt that sits
+  /// above the bottom nav. Persisted, so once it is closed it stays closed
+  /// across launches — the profile details are a nice-to-have, not a gate.
+  BaseStorage<bool> get profilePromptDismissed =>
+      BaseStorage(_box, 'profilePromptDismissed');
+
   /// The buyer's last-used payment rail ('payme'|'click'|'uzum'|'card'), so the
   /// booking sheet can pre-select it on the next checkout.
   BaseStorage<String?> get lastPaymentRail =>
@@ -78,15 +84,38 @@ class Storage {
   BaseStorage<String?> get lastSavedCardId =>
       BaseStorage(_box, 'lastSavedCardId');
 
+  /// Wipes everything that belongs to the account being left.
+  ///
+  /// This box outlives the session, so anything not cleared here bleeds into the
+  /// *next* person to sign in on this device: they were greeted by the previous
+  /// user's name, kept their avatar, and never saw the "add your name" prompt
+  /// because the old account had already answered it. Session keys (tokens) and
+  /// profile keys (name, child, avatar) and the once-per-user UI flags all go.
   Future<void> logout() async {
+    // Session.
     await tokens.set(null);
     await code.set(null);
     await codeHash.set(null);
     await deviceToken.set(null);
-    await hasPremium.set(null);
-    await planDiscountPercentage.set(null);
     await userId.set(null);
     await userPhone.set(null);
+
+    // Who they were.
+    await parentName.set(null);
+    await childName.set(null);
+    await childAge.set(null);
+    await avatarPath.set(null);
+
+    // What they'd bought.
+    await hasPremium.set(null);
+    await planDiscountPercentage.set(null);
+    await lastPaymentRail.set(null);
+    await lastSavedCardId.set(null);
+
+    // Once-per-user prompts — the next user hasn't seen them.
+    await needsOnboarding.set(null);
+    await couponPromoShown.set(null);
+    await profilePromptDismissed.set(null);
   }
 // BaseStorage<String> get username => BaseStorage(_box, 'username');
 //

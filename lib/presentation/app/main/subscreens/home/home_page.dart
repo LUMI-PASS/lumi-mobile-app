@@ -123,6 +123,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             ),
             if (_categories(state).isNotEmpty)
               SliverToBoxAdapter(child: _buildCategories(context, state)),
+            // Popular activities first, then the courses row (swapped order).
+            if (state.newClassesList.isNotEmpty)
+              SliverToBoxAdapter(child: _buildCourses(context, state)),
             // REAL courses — the backend keeps these out of the class lists, so
             // this row is the only place they appear.
             if (state.coursesList.isNotEmpty)
@@ -131,17 +134,6 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                   context,
                   'courses_section'.tr(),
                   state.coursesList,
-                ),
-              ),
-            if (state.newClassesList.isNotEmpty)
-              SliverToBoxAdapter(child: _buildCourses(context, state)),
-            // Second "Курсы" row (Figma has two) — reuses the nearby feed.
-            if (state.nearClassesList.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _buildCoursesRow(
-                  context,
-                  'courses'.tr(),
-                  state.nearClassesList,
                 ),
               ),
             if (state.nearClassesList.isNotEmpty)
@@ -182,7 +174,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        24.verticalSpace,
+        14.verticalSpace,
         // No "see all": the row already scrolls through every category, so the
         // grid it used to open was the same list a second time.
         HomeSectionHeader(title: 'all_categories'.tr()),
@@ -208,10 +200,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   Widget _buildCourses(BuildContext context, HomeBuildable state) {
     final rowH = 126.h + 14.h + 118.h;
+    // Activities row must never show courses — they have their own row/endpoint.
+    final activities =
+        state.newClassesList.where((c) => c.isCourse != true).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        24.verticalSpace,
+        14.verticalSpace,
         HomeSectionHeader(
           title: 'popular_activities'.tr(),
           // Every activity, searchable and filterable — the discovery screen
@@ -238,12 +233,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                   key: const PageStorageKey('new-classes-list'),
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.only(right: 16.w),
-                  itemCount: state.newClassesList.length,
+                  itemCount: activities.length,
                   itemBuilder: (context, index) => HomeCourseCard(
-                    key: ValueKey(state.newClassesList[index].id ?? index),
-                    homClass: state.newClassesList[index],
+                    key: ValueKey(activities[index].id ?? index),
+                    homClass: activities[index],
                     onViewAsReels: () =>
-                        _openShorts(context, state.newClassesList, index),
+                        _openShorts(context, activities, index),
                   ),
                 ),
                 if (state.isLoadingNewClasses)
@@ -271,13 +266,15 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        24.verticalSpace,
+        14.verticalSpace,
         HomeSectionHeader(
           title: title,
           onViewAll: () => context.router.push(
             ClassesGridRoute(
               title: title,
-              list: HomeClassList.near,
+              // Courses have their own catalogue endpoint — "see all" must load
+              // ALL courses, not the activity feed.
+              list: HomeClassList.courses,
               initialClasses: list,
             ),
           ),
@@ -313,7 +310,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            24.verticalSpace,
+            14.verticalSpace,
             HomeSectionHeader(title: 'near_you'.tr()),
             16.verticalSpace,
           ],

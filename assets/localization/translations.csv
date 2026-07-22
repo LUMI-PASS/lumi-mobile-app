@@ -335,6 +335,7 @@ book_slots_left,Осталось: {} мест,Qoldi: {} joy,{} spots left
 book_slot_full,Мест нет,Joy yo'q,Full
 book_max_capacity_reached,Максимум {} мест для этого слота,Bu slot uchun maksimum {} joy,Max {} spots for this slot
 book_pay_cta,Оплатить {},To'lash {},Pay {}
+book_free_cta,Оформить бесплатно,Bepul rasmiylashtirish,Get for free
 back_button,Назад,Orqaga,Back
 oferta_agree_prefix,Я соглашаюсь с ,Men ,I agree with the 
 oferta_link_text,публичной офертой,ommaviy offerta,public offer
@@ -934,8 +935,8 @@ age_from,от,dan,from
 age_to,до,gacha,to
 filter_for_boys,Для мальчиков,O'g'il bolalar uchun,For boys
 filter_for_girls,Для девочек,Qiz bolalar uchun,For girls
-search_tab_classes,Уроки,Darslar,Classes
-search_tab_centers,Образовательные центры,Ta'lim markazlari,Education centers
+search_tab_classes,Занятия,Mashg'ulotlar,Activities
+search_tab_centers,Центры,Markazlar,Centres
 map_title,На карте,Xaritada,On the map
 filter_child,Ребёнок,Bola,Child
 all_activities,Все занятия,Hamma mashg'ulotlar,All activities
@@ -967,3 +968,4 @@ course_already_enrolled,Вы записаны на этот курс,Siz ushbu k
 course_already_enrolled_short,Вы уже записаны,Siz allaqachon yozilgansiz,Already enrolled
 course_upsell_title,Продолжить весь курс?,Butun kursni davom ettirasizmi?,Continue with the whole course?
 course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.
+search_tab_courses,Курсы,Kurslar,Courses

@@ -115,6 +115,14 @@ class _BookingPageState extends State<BookingPage> {
     return t < 0 ? 0 : t;
   }
 
+  /// A 100%-off order: a promocode reduced the payable total to zero for an
+  /// order that actually has tickets. There's nothing to charge, so the order is
+  /// still created but we skip payment-method selection and the checkout
+  /// redirect — it goes straight to the success screen. Restricted to
+  /// promocodes: a coupon plan that happens to hit 100% still runs the normal
+  /// pay flow.
+  bool get _isFree => !_hasCoupon && _totalTickets > 0 && _payableTotal == 0;
+
   /// Validate the entered code against the current subtotal and show a preview
   /// of the new total. The discount is re-checked server-side at checkout.
   Future<void> _applyPromo() async {
@@ -1093,11 +1101,15 @@ class _BookingPageState extends State<BookingPage> {
                                 ? _customWindowsSection(c)
                                 : _slotsSection(c),
                           ),
-                          20.kh,
-                          Shaker(
-                            key: _paymentShake,
-                            child: _paymentMethodRow(c),
-                          ),
+                          // A fully-discounted order has nothing to charge, so
+                          // the payment-method picker is hidden entirely.
+                          if (!_isFree) ...[
+                            20.kh,
+                            Shaker(
+                              key: _paymentShake,
+                              child: _paymentMethodRow(c),
+                            ),
+                          ],
                           if (!_hasCoupon) ...[
                             20.kh,
                             _promoSection(c),
@@ -1163,7 +1175,9 @@ class _BookingPageState extends State<BookingPage> {
       color: c.scaffoldBg,
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h + bottomInset),
       child: GradientButton(
-        text: 'book_pay_cta'.tr(args: [_payableTotal.toRawUzsPrice()]),
+        text: _isFree
+            ? 'book_free_cta'.tr()
+            : 'book_pay_cta'.tr(args: [_payableTotal.toRawUzsPrice()]),
         loading: _submitting,
         onPressed: _pay,
       ),
@@ -1482,6 +1496,32 @@ class _BookingPageState extends State<BookingPage> {
   Future<void> _pay() async {
     if (_submitting) return;
     if (!_validateForPayment()) return;
+
+    // 100%-off (coupon plan or promocode): the order is still created, but with
+    // nothing to charge there's no payment method to pick and no gateway to hand
+    // off to. Create it, then go straight to the success screen.
+    if (_isFree) {
+      setState(() {
+        _submitting = true;
+        _error = null;
+      });
+      try {
+        // No provider/card — the backend creates the order and, with a zero
+        // total, marks it paid; there is no checkout URL to open.
+        final order = await _runCheckout();
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        _completeCardPaid(order);
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _submitting = false;
+          _error = e is CheckoutFriendlyError ? e.message : e.toString();
+        });
+      }
+      return;
+    }
+
     // No method chosen yet → open the chooser; proceed only once one is picked.
     if (_payment == null) {
       await _openChooser();

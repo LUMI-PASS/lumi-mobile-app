@@ -22,11 +22,16 @@ enum HomeClassList {
   /// The "Популярное" row — `new_classes`. Fixed set, one page.
   popular,
 
-  /// The "Курсы" / "Рядом с вами" rows — the full activity catalogue.
-  near;
+  /// The "Рядом с вами" row — the full activity catalogue (courses excluded
+  /// server-side).
+  near,
+
+  /// The "Курсы" row — courses only, via `discovery/courses`.
+  courses;
 
   /// Whether the backend can page beyond the first response.
-  bool get isPaged => this == HomeClassList.near;
+  bool get isPaged =>
+      this == HomeClassList.near || this == HomeClassList.courses;
 
   /// One page of activities. Searching always goes through
   /// `discovery/classes`: it is the only endpoint that can filter, and it is
@@ -38,6 +43,11 @@ enum HomeClassList {
     String? search,
   }) async {
     final searching = search != null && search.isNotEmpty;
+
+    // Courses have their own catalogue endpoint (kept out of discovery/classes).
+    if (this == HomeClassList.courses) {
+      return repo.getDiscoveryCourses(page: page, limit: limit, search: search);
+    }
 
     if (isPaged || searching) {
       return repo.getDiscoveryClasses(page: page, limit: limit, search: search);

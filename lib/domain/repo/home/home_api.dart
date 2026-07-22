@@ -262,6 +262,22 @@ class HomeApi {
     });
   }
 
+  /// Courses-only feed (`discovery/courses`) — powers the home "Курсы" row's
+  /// "see all". The backend keeps courses OUT of `discovery/classes`, so this is
+  /// the only paged source of the full course catalogue.
+  Future<Response> discoveryCourses({
+    int page = 1,
+    int limit = 10,
+    String? search,
+  }) {
+    return _dio.get('discovery/courses', queryParameters: {
+      'page': page,
+      'limit': limit,
+      'lang': currentLang,
+      if (search != null && search.isNotEmpty) 'search': search,
+    });
+  }
+
   Future<Response> discoveryBranches({
     int page = 1,
     int limit = 10,
