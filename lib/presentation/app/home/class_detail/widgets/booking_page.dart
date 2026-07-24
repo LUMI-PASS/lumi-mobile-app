@@ -1430,8 +1430,6 @@ class _BookingPageState extends State<BookingPage> {
       context,
       initial: _payment,
       cards: _cards,
-      // Paying by card isn't live yet — the rail shows, but inert.
-      cardsComingSoon: true,
     );
     if (picked == null || !mounted) return;
     setState(() {

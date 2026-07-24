@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/material.dart';
@@ -412,7 +413,7 @@ class CardArtwork extends StatelessWidget {
 
 // ─── Chooser sheet (rail + card) ──────────────────────────────────────────────
 
-enum _Step { choose, addCard }
+enum _Step { choose, addCard, bindOtp }
 
 class _ChooserSheet extends StatefulWidget {
   const _ChooserSheet({
@@ -444,8 +445,16 @@ class _ChooserSheetState extends State<_ChooserSheet> {
 
   final _numberCtrl = TextEditingController();
   final _expiryCtrl = TextEditingController();
+  final _otpCtrl = TextEditingController();
 
   String? _error;
+
+  /// True while a bind request is in flight — keeps the buyer from firing a
+  /// second OTP by tapping again.
+  bool _busy = false;
+
+  /// The in-progress card binding: WLCM has SMSed an OTP and is waiting for it.
+  CardAddSession? _binding;
 
   @override
   void initState() {
@@ -479,6 +488,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   void dispose() {
     _numberCtrl.dispose();
     _expiryCtrl.dispose();
+    _otpCtrl.dispose();
     super.dispose();
   }
 
@@ -492,10 +502,16 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     return sel.isPayable ? sel : null;
   }
 
-  /// Validates the typed PAN + expiry, then keeps the card in the session list
-  /// and selects it. No gateway call happens here — the buyer still has to
-  /// confirm the choice and pay from the booking screen.
-  void _saveCard() {
+  /// Validates the typed PAN + expiry and starts BINDING the card with WLCM:
+  /// the PAN goes up once, WLCM SMSes an OTP, and [_confirmBinding] exchanges
+  /// that code for a reusable token. A card added here is therefore a real
+  /// saved card — it survives the booking and comes back in the wallet list —
+  /// rather than a PAN held in memory for a single one-shot charge.
+  ///
+  /// If binding isn't available (the Subscribe API has no credentials yet, so
+  /// the backend answers 503) we fall back to the old session card so the buyer
+  /// can still pay for this booking.
+  Future<void> _saveCard() async {
     final pan = _numberCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
     final expiry = _expiryCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (pan.length < 16) {
@@ -506,13 +522,104 @@ class _ChooserSheetState extends State<_ChooserSheet> {
       setState(() => _error = 'pay_card_expiry_invalid'.tr());
       return;
     }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      // The field is entered MM/YY; the Subscribe API expects YYMM.
+      final yyMm = expiry.substring(2, 4) + expiry.substring(0, 2);
+      final session = await getIt<OrdersApi>()
+          .addSavedCard(cardNumber: pan, expireDate: yyMm);
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _binding = session;
+        _otpCtrl.clear();
+        _step = _Step.bindOtp;
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      // 503 = card binding not configured on the server. Everything else is a
+      // real error the buyer should see (bad PAN, expired card, ...).
+      if (e.response?.statusCode == 503) {
+        _useSessionCard(pan, expiry);
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _error = _dioMessage(e, 'card_save_error'.tr());
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'card_save_error'.tr();
+      });
+    }
+  }
+
+  /// Exchanges the SMS code for a bound card, then selects it. From here the
+  /// booking screen charges it by token — no PAN, and no second OTP.
+  Future<void> _confirmBinding() async {
+    final session = _binding;
+    final otp = _otpCtrl.text.trim();
+    if (session == null) return;
+    if (otp.isEmpty) {
+      setState(() => _error = 'pay_enter_code'.tr());
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final saved = await getIt<OrdersApi>()
+          .confirmSavedCard(cid: session.cid, otp: otp);
+      if (!mounted) return;
+      final card = PaymentCard.saved(saved);
+      setState(() {
+        _busy = false;
+        _binding = null;
+        _error = null;
+        // The bound card may already be listed if WLCM had it from an earlier
+        // session; don't show it twice.
+        _cards.removeWhere((c) => c.savedCardId == card.savedCardId);
+        _cards.insert(0, card);
+        _card = card;
+        _rail = PaymentRail.card;
+        _numberCtrl.clear();
+        _expiryCtrl.clear();
+        _otpCtrl.clear();
+        _step = _Step.choose;
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = _dioMessage(e, 'pay_code_invalid'.tr());
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'pay_code_invalid'.tr();
+      });
+    }
+  }
+
+  /// The pre-binding behaviour: keep the PAN in memory for this booking only
+  /// and charge it one-shot. Used when the backend can't bind cards yet.
+  void _useSessionCard(String pan, String expiry) {
     final card = PaymentCard(
       brand: CardBrand.fromPan(pan),
       pan: pan,
       expiry: expiry,
     );
     setState(() {
+      _busy = false;
       _error = null;
+      _binding = null;
       _cards.add(card);
       _card = card;
       _rail = PaymentRail.card;
@@ -522,11 +629,24 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     });
   }
 
+  /// Server-supplied error text when there is one — the gateway's reason ("card
+  /// expired", "wrong code") is far more useful than a generic failure line.
+  String _dioMessage(DioException e, String fallback) {
+    final data = e.response?.data;
+    if (data is Map) {
+      final msg = data['message'];
+      if (msg is String && msg.isNotEmpty) return msg;
+      if (msg is List && msg.isNotEmpty) return msg.first.toString();
+    }
+    return fallback;
+  }
+
   @override
   Widget build(BuildContext context) {
     return switch (_step) {
       _Step.choose => _buildChoose(),
       _Step.addCard => _buildAddCard(),
+      _Step.bindOtp => _buildBindOtp(),
     };
   }
 
@@ -799,11 +919,58 @@ class _ChooserSheetState extends State<_ChooserSheet> {
           24.verticalSpace,
           _SheetActions(
             primaryLabel: 'pay_add_card'.tr(),
-            onCancel: () => setState(() {
-              _error = null;
-              _step = _Step.choose;
-            }),
-            onPrimary: _saveCard,
+            busy: _busy,
+            onCancel: _busy
+                ? null
+                : () => setState(() {
+                      _error = null;
+                      _step = _Step.choose;
+                    }),
+            onPrimary: _busy ? null : _saveCard,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Step: confirm the binding OTP ───────────────────────────────────────────
+  /// Shown after the PAN is submitted: WLCM has SMSed the cardholder a code,
+  /// and confirming it is what turns the card into a saved (tokenized) one.
+  Widget _buildBindOtp() {
+    final c = context.colors;
+    final phone = _binding?.otpSentPhone;
+    return _SheetShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('card_confirm_title'.tr(),
+              style: AppText.heading20.copyWith(color: c.textPrimary)),
+          8.verticalSpace,
+          Text(
+            phone != null && phone.isNotEmpty
+                ? 'pay_code_sent_to'.tr(args: [phone])
+                : 'pay_code_sent'.tr(),
+            textAlign: TextAlign.center,
+            style: AppText.regular14.copyWith(color: c.textSecondary),
+          ),
+          20.verticalSpace,
+          if (_error != null) _ErrorNote(message: _error!),
+          OtpCodeField(controller: _otpCtrl),
+          20.verticalSpace,
+          _SheetActions(
+            primaryLabel: 'next'.tr(),
+            busy: _busy,
+            // Backing out drops the half-finished binding — the card is only
+            // ever saved once its OTP is confirmed.
+            onCancel: _busy
+                ? null
+                : () => setState(() {
+                      _error = null;
+                      _binding = null;
+                      _otpCtrl.clear();
+                      _step = _Step.addCard;
+                    }),
+            onPrimary: _busy ? null : _confirmBinding,
           ),
         ],
       ),
