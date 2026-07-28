@@ -931,6 +931,7 @@ card_confirm_title,Подтверждение карты,Kartani tasdiqlash,Conf
 card_sms_hint,SMS-код,SMS kod,SMS code
 card_confirm_action,Подтвердить,Tasdiqlash,Confirm
 card_save_error,Не удалось сохранить карту,Kartani saqlab bo'lmadi,Card could not be saved
+card_save_unavailable,"Сохранение карт пока недоступно — оплатите картой при бронировании.","Kartani saqlash hozircha mavjud emas — bron qilishda karta bilan to'lang.","Saving cards isn't available yet — pay by card at checkout instead."
 age_from,от,dan,from
 age_to,до,gacha,to
 filter_for_boys,Для мальчиков,O'g'il bolalar uchun,For boys

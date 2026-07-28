@@ -502,16 +502,17 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     return sel.isPayable ? sel : null;
   }
 
-  /// Validates the typed PAN + expiry and starts BINDING the card with WLCM:
-  /// the PAN goes up once, WLCM SMSes an OTP, and [_confirmBinding] exchanges
-  /// that code for a reusable token. A card added here is therefore a real
-  /// saved card — it survives the booking and comes back in the wallet list —
-  /// rather than a PAN held in memory for a single one-shot charge.
+  /// Validates the typed PAN + expiry and hands the card to the booking screen,
+  /// which pays it through Paylov exactly like the payme / click / uzum rails:
+  /// `checkout(payment_provider: card, card_number, expire_date)` returns a
+  /// transaction to confirm with the OTP the bank SMSes.
   ///
-  /// If binding isn't available (the Subscribe API has no credentials yet, so
-  /// the backend answers 503) we fall back to the old session card so the buyer
-  /// can still pay for this booking.
-  Future<void> _saveCard() async {
+  /// No binding step. Binding lives on WLCM's Subscribe API — a different
+  /// onboarding we don't have credentials for — and the Partner API we pay
+  /// through returns no reusable card token, so there is nothing to save. This
+  /// used to attempt the bind first and fall back on the 503, which cost a
+  /// round-trip and could only ever fail.
+  void _saveCard() {
     final pan = _numberCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
     final expiry = _expiryCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (pan.length < 16) {
@@ -522,41 +523,8 @@ class _ChooserSheetState extends State<_ChooserSheet> {
       setState(() => _error = 'pay_card_expiry_invalid'.tr());
       return;
     }
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      // The field is entered MM/YY; the Subscribe API expects YYMM.
-      final yyMm = expiry.substring(2, 4) + expiry.substring(0, 2);
-      final session = await getIt<OrdersApi>()
-          .addSavedCard(cardNumber: pan, expireDate: yyMm);
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _binding = session;
-        _otpCtrl.clear();
-        _step = _Step.bindOtp;
-      });
-    } on DioException catch (e) {
-      if (!mounted) return;
-      // 503 = card binding not configured on the server. Everything else is a
-      // real error the buyer should see (bad PAN, expired card, ...).
-      if (e.response?.statusCode == 503) {
-        _useSessionCard(pan, expiry);
-        return;
-      }
-      setState(() {
-        _busy = false;
-        _error = _dioMessage(e, 'card_save_error'.tr());
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _error = 'card_save_error'.tr();
-      });
-    }
+    setState(() => _error = null);
+    _useSessionCard(pan, expiry);
   }
 
   /// Exchanges the SMS code for a bound card, then selects it. From here the

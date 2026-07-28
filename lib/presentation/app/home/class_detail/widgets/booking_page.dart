@@ -900,6 +900,16 @@ class _BookingPageState extends State<BookingPage> {
   /// Redirect rails (Payme direct, Click/Uzum via Paylov): close the booking
   /// sheet and open the checkout page, which launches the URL and polls for the
   /// paid webhook.
+  /// MM/YY (as typed) -> YYMM (as WLCM expects). Anything that isn't exactly
+  /// four digits is passed through untouched — the backend rejects it with a
+  /// clear 400 rather than us silently reordering something unexpected.
+  static String? _toYyMm(String? expiry) {
+    if (expiry == null) return null;
+    final digits = expiry.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length != 4) return expiry;
+    return digits.substring(2, 4) + digits.substring(0, 2);
+  }
+
   Future<void> _completeRedirect(CheckoutResult result) async {
     // Snapshot before we close: was a coupon slot consumed for this order?
     final usedCoupon = _hasCoupon;
@@ -1554,7 +1564,10 @@ class _BookingPageState extends State<BookingPage> {
       final result = await _runCheckout(
         provider: payment.rail.providerKey,
         cardNumber: card?.pan,
-        expireDate: card?.expiry,
+        // The field is entered MM/YY; WLCM wants YYMM. Their checkout example
+        // is "3003", which can only be YY=30 MM=03 — there is no month 30 —
+        // and their Subscribe API documents YYMM outright.
+        expireDate: _toYyMm(card?.expiry),
       );
       if (!mounted) return;
       setState(() => _submitting = false);
