@@ -138,6 +138,7 @@ class _BookingPageState extends State<BookingPage> {
         code: code,
         subtotal: _total,
         activityId: widget.clazz.id,
+        count: _totalTickets,
       );
       if (!mounted) return;
       setState(() {

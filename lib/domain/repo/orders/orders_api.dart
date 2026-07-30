@@ -278,11 +278,15 @@ class OrdersApi {
     required String code,
     required num subtotal,
     String? activityId,
+    int? count,
   }) async {
     final response = await _dio.post('promocodes/validate', data: {
       'code': code.trim().toUpperCase(),
       'subtotal': subtotal,
       if (activityId != null) 'activity_id': activityId,
+      // Number of tickets selected. Usage limits are counted by tickets, so the
+      // server can reject immediately when the code can't cover this many.
+      if (count != null) 'count': count,
     });
     final raw = response.data;
     final data = raw is Map && raw['data'] is Map
