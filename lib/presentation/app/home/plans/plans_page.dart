@@ -658,10 +658,19 @@ class _CouponCard extends StatelessWidget {
           14.kh,
           // Headline: the discount % and the number of lessons — what the buyer
           // actually compares — big and in the brand colour.
+          //
+          // "up to N%", never a flat "N%": what a coupon actually takes off is
+          // capped at Lumi's share of the class it's spent on, so this figure
+          // is a ceiling rather than a promise.
+          //
+          // The qualifier sits on a different side of the number per language —
+          // "скидка до 30%" but "30% gacha chegirma" — so it comes from two
+          // keys, one of which is empty in any given locale.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (discount > 0) ...[
+                _Qualifier(text: 'coupon_up_to_prefix'.tr()),
                 Text(
                   '${_fmtPercent(discount)}%',
                   style: TextStyle(
@@ -671,18 +680,7 @@ class _CouponCard extends StatelessWidget {
                     height: 1,
                   ),
                 ),
-                4.kw,
-                Padding(
-                  padding: EdgeInsets.only(bottom: 6.h),
-                  child: Text(
-                    'coupon_discount_word'.tr(),
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: c.primary,
-                    ),
-                  ),
-                ),
+                _Qualifier(text: 'coupon_discount_word'.tr()),
               ],
               if (discount > 0 && activities > 0) 8.kw,
               if (activities > 0)
@@ -690,10 +688,14 @@ class _CouponCard extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsets.only(bottom: 2.h),
                     child: Text(
-                      // "for {count} lessons" — the words make the number clear.
-                      '${'coupon_for_word'.tr()} ${'coupon_lessons_short'.tr(namedArgs: {
-                            'count': '$activities'
-                          })}',
+                      // "for {count} lessons" — the words make the number
+                      // clear. Uzbek needs no connector ("… 6 mashg'ulot"),
+                      // so the key is empty there and the space goes with it.
+                      [
+                        'coupon_for_word'.tr(),
+                        'coupon_lessons_short'
+                            .tr(namedArgs: {'count': '$activities'}),
+                      ].where((w) => w.isNotEmpty).join(' '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -740,6 +742,34 @@ class _CouponCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A small word flanking the big discount numeral ("скидка до", "gacha
+/// chegirma"). Renders nothing when the locale puts its qualifier on the other
+/// side and leaves this key empty.
+class _Qualifier extends StatelessWidget {
+  const _Qualifier({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4.w),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w700,
+            color: context.colors.primary,
+          ),
+        ),
       ),
     );
   }

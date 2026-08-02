@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/constants/districts.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
@@ -31,6 +32,10 @@ class FilterResult {
   final PricePreset pricePreset;
   final RangeValues priceRange;
 
+  /// Tashkent district slugs the buyer ticked. Empty = anywhere; the backend
+  /// takes them as a comma-separated `districts` query param.
+  final Set<String> districts;
+
   const FilterResult({
     this.datePreset = DatePreset.none,
     this.fromDate,
@@ -40,6 +45,7 @@ class FilterResult {
     this.gender = Gender.any,
     this.pricePreset = PricePreset.any,
     this.priceRange = const RangeValues(minPrice, maxPrice),
+    this.districts = const {},
   });
 
   static const double minPrice = 10000;
@@ -57,6 +63,7 @@ class FilterResult {
     Gender? gender,
     PricePreset? pricePreset,
     RangeValues? priceRange,
+    Set<String>? districts,
   }) {
     return FilterResult(
       datePreset: datePreset ?? this.datePreset,
@@ -67,6 +74,7 @@ class FilterResult {
       gender: gender ?? this.gender,
       pricePreset: pricePreset ?? this.pricePreset,
       priceRange: priceRange ?? this.priceRange,
+      districts: districts ?? this.districts,
     );
   }
 }
@@ -107,6 +115,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   final TextEditingController _ageFromController = TextEditingController();
   final TextEditingController _ageToController = TextEditingController();
   Gender _gender = Gender.any;
+  Set<String> _districts = <String>{};
   RangeValues _range =
       const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
 
@@ -118,6 +127,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _fromDate = init.fromDate;
     _toDate = init.toDate;
     _gender = init.gender;
+    _districts = {...init.districts};
     _range = init.priceRange;
     if (init.ageYears != null) _ageFromController.text = '${init.ageYears}';
     if (init.ageToYears != null) _ageToController.text = '${init.ageToYears}';
@@ -149,6 +159,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         gender: _gender,
         pricePreset: _isPriceChanged ? PricePreset.custom : PricePreset.any,
         priceRange: _range,
+        districts: _districts,
       );
 
   void _selectDatePreset(DatePreset preset) {
@@ -269,6 +280,29 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             hint: 'age_to'.tr(),
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                  16.kh,
+                  _Section(
+                    label: 'filter_district'.tr(),
+                    child: Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: [
+                        for (final d in kTashkentDistricts)
+                          _FilterChip(
+                            label: d.label,
+                            selected: _districts.contains(d.key),
+                            // Multi-select: each chip toggles on its own, so a
+                            // parent can pick the two districts they'd actually
+                            // travel to. No chip selected = anywhere.
+                            onTap: () => setState(() {
+                              if (!_districts.remove(d.key)) {
+                                _districts.add(d.key);
+                              }
+                            }),
+                          ),
                       ],
                     ),
                   ),

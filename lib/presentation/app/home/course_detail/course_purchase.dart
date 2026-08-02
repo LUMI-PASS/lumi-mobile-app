@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -51,9 +52,12 @@ String? _errorCode(Object error) {
 }
 
 String _messageFor(Object error) {
+  // A course-specific refusal ("sold out", "already enrolled") is the most
+  // useful thing we can say; then the shared payment-gateway mapping; then a
+  // generic message. Never the raw exception.
   final reason = CourseBlockedReason.fromKey(_errorCode(error));
   if (reason != null) return reason.messageKey.tr();
-  return 'pay_generic_error'.tr();
+  return PaymentError.fromDio(error) ?? 'pay_generic_error'.tr();
 }
 
 bool get _isSignedIn => getIt<Storage>().tokens.call()?.access != null;

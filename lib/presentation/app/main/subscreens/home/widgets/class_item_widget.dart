@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,8 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/ios_text_styles.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
@@ -13,7 +16,6 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:lumi_pass/presentation/app/home/open_activity.dart';
 
 class ClassItemWidget extends StatefulWidget {
   const ClassItemWidget({
@@ -67,9 +69,13 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     // Coupon (plan) discount state — used for badge and price display.
     final storage = getIt<Storage>();
     final hasPremium = storage.hasPremium() == true;
-    final couponPct = storage.planDiscountPercentage() ?? 0;
-    // Show badge on every activity when the user has an active coupon.
-    final showDiscountBadge = hasPremium && couponPct > 0;
+    // The coupon comes off Lumi's share of this class, so it is capped at that
+    // share — the badge and the price must show what will actually be charged.
+    final couponPct = effectiveCouponPercent(
+      hasPremium ? (storage.planDiscountPercentage() ?? 0) : 0,
+      hc?.discountPercentage,
+    );
+    final showDiscountBadge = couponPct > 0;
 
     // Parse comma-separated categories into individual labels.
     final categories = (hc?.category ?? '')
@@ -86,7 +92,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
         widget.width ?? (1.sw * 0.58).clamp(195.0, 255.0);
 
     return Container3d(
-      onTap: () => openActivity(context, hc),
+      onTap: () => context.router
+          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       width: resolvedWidth,
       margin: EdgeInsets.only(left: 16.w),
       padding: EdgeInsets.all(8.w),
@@ -215,11 +222,9 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                       ),
                     ),
 
-                  // Discount badge — bottom-left of image.
-                  // Only shown when the user has bought a coupon AND the
-                  // partner's discount is strictly greater than the coupon
-                  // discount. The badge shows the coupon discount (not the
-                  // partner discount).
+                  // Discount badge — bottom-left of image. Shown when the user
+                  // has a coupon and this class can carry it; the number is the
+                  // coupon's effective percentage on THIS class.
                   if (showDiscountBadge)
                     Positioned(
                       left: 8.w,
@@ -241,7 +246,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
                           ],
                         ),
                         child: Text(
-                          '−$couponPct%',
+                          '−${formatCouponPercent(couponPct)}%',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11.sp,
@@ -462,9 +467,12 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
   }) {
     final storage = getIt<Storage>();
     final hasPremium = storage.hasPremium() == true;
-    final planPct = storage.planDiscountPercentage() ?? 0;
-    // Show discounted price for every activity when the user has an active coupon.
-    if (!hasPremium || planPct <= 0) {
+    // Capped at this class's partner share — see effectiveCouponPercent.
+    final planPct = effectiveCouponPercent(
+      hasPremium ? (storage.planDiscountPercentage() ?? 0) : 0,
+      widget.homClass?.discountPercentage,
+    );
+    if (planPct <= 0) {
       return originalWidget;
     }
     final discounted = originalPrice * (1 - planPct / 100);

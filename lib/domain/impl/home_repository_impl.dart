@@ -287,6 +287,7 @@ class HomeRepositoryImpl extends HomeRepository {
     String? sortBy,
     double? lat,
     double? lng,
+    List<String>? districts,
   }) {
     return _api
         .discoveryClasses(
@@ -304,6 +305,7 @@ class HomeRepositoryImpl extends HomeRepository {
           sortBy: sortBy,
           lat: lat,
           lng: lng,
+          districts: districts,
         )
         .then((value) {
       final data = value.data['data'] ?? value.data;

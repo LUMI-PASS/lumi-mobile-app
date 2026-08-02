@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/auth_fields.dart';
 import 'package:lumi_pass/common/widget/auth/auth_misc.dart';
@@ -162,6 +164,7 @@ Future<PaymentSelection?> showPaymentChooser(
   PaymentSelection? initial,
   List<PaymentCard> cards = const [],
   bool cardsComingSoon = false,
+  CardSubmitted? onCardSubmitted,
 }) {
   return showModalBottomSheet<PaymentSelection>(
     context: context,
@@ -174,9 +177,18 @@ Future<PaymentSelection?> showPaymentChooser(
       initial: initial,
       cards: cards,
       cardsComingSoon: cardsComingSoon,
+      onCardSubmitted: onCardSubmitted,
     ),
   );
 }
+
+/// Charges a card chosen inside the chooser, right there in the sheet — a
+/// freshly typed one, or one the buyer tapped in the list.
+///
+/// Returns null when it handled the payment (paid, or the buyer backed out of
+/// the OTP) and the sheet should close. A non-null string is an error to show
+/// inline, keeping the buyer on the form with what they typed intact.
+typedef CardSubmitted = Future<String?> Function(PaymentCard card);
 
 /// Opens the OTP step for a Paylov card charge that is awaiting confirmation.
 /// Resolves true once the payment is confirmed, false/null if the buyer backs
@@ -412,17 +424,22 @@ class CardArtwork extends StatelessWidget {
 
 // ─── Chooser sheet (rail + card) ──────────────────────────────────────────────
 
-enum _Step { choose, addCard }
+enum _Step { choose, addCard, bindOtp }
 
 class _ChooserSheet extends StatefulWidget {
   const _ChooserSheet({
     required this.initial,
     required this.cards,
     this.cardsComingSoon = false,
+    this.onCardSubmitted,
   });
 
   final PaymentSelection? initial;
   final List<PaymentCard> cards;
+
+  /// When set, submitting the card form charges it immediately from this sheet
+  /// (checkout + OTP) instead of only selecting it for the caller's own CTA.
+  final CardSubmitted? onCardSubmitted;
 
   /// Shows the card rail as an inert "coming soon" row: no radio, no card list,
   /// no add-card step. The rail still appears — the buyer should see that paying
@@ -444,8 +461,16 @@ class _ChooserSheetState extends State<_ChooserSheet> {
 
   final _numberCtrl = TextEditingController();
   final _expiryCtrl = TextEditingController();
+  final _otpCtrl = TextEditingController();
 
   String? _error;
+
+  /// True while a bind request is in flight — keeps the buyer from firing a
+  /// second OTP by tapping again.
+  bool _busy = false;
+
+  /// The in-progress card binding: WLCM has SMSed an OTP and is waiting for it.
+  CardAddSession? _binding;
 
   @override
   void initState() {
@@ -479,6 +504,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   void dispose() {
     _numberCtrl.dispose();
     _expiryCtrl.dispose();
+    _otpCtrl.dispose();
     super.dispose();
   }
 
@@ -492,10 +518,17 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     return sel.isPayable ? sel : null;
   }
 
-  /// Validates the typed PAN + expiry, then keeps the card in the session list
-  /// and selects it. No gateway call happens here — the buyer still has to
-  /// confirm the choice and pay from the booking screen.
-  void _saveCard() {
+  /// Validates the typed PAN + expiry and hands the card to the booking screen,
+  /// which pays it through Paylov exactly like the payme / click / uzum rails:
+  /// `checkout(payment_provider: card, card_number, expire_date)` returns a
+  /// transaction to confirm with the OTP the bank SMSes.
+  ///
+  /// No binding step. Binding lives on WLCM's Subscribe API — a different
+  /// onboarding we don't have credentials for — and the Partner API we pay
+  /// through returns no reusable card token, so there is nothing to save. This
+  /// used to attempt the bind first and fall back on the 503, which cost a
+  /// round-trip and could only ever fail.
+  Future<void> _saveCard() async {
     final pan = _numberCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
     final expiry = _expiryCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (pan.length < 16) {
@@ -506,13 +539,129 @@ class _ChooserSheetState extends State<_ChooserSheet> {
       setState(() => _error = 'pay_card_expiry_invalid'.tr());
       return;
     }
+    setState(() => _error = null);
+
+    // Adding a card here IS the payment: the caller runs the checkout and the
+    // OTP step while this sheet stays up, so the buyer isn't sent back to hunt
+    // for a Pay button after typing their card.
+    final submit = widget.onCardSubmitted;
+    if (submit == null) {
+      _useSessionCard(pan, expiry);
+      return;
+    }
+    setState(() => _busy = true);
+    final error = await submit(PaymentCard(
+      brand: CardBrand.fromPan(pan),
+      pan: pan,
+      expiry: expiry,
+    ));
+    if (!mounted) return;
+    if (error == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    // Keep the buyer on the form with what they typed — a rejected card is
+    // usually a typo, and clearing it makes them start over.
+    setState(() {
+      _busy = false;
+      _error = error;
+    });
+  }
+
+  /// Charges a card the buyer tapped in the list, without making them find a
+  /// second button: picking a card IS the instruction to pay with it.
+  ///
+  /// Falls back to plain selection when the host gave us no way to pay (the
+  /// profile wallet, where the sheet only chooses).
+  Future<void> _payWithCard(PaymentCard card) async {
+    final submit = widget.onCardSubmitted;
+    if (submit == null) {
+      setState(() {
+        _error = null;
+        _rail = PaymentRail.card;
+        _card = card;
+      });
+      return;
+    }
+    setState(() {
+      _error = null;
+      _busy = true;
+      _rail = PaymentRail.card;
+      _card = card;
+    });
+    final error = await submit(card);
+    if (!mounted) return;
+    if (error == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _error = error;
+    });
+  }
+
+  /// Exchanges the SMS code for a bound card, then selects it. From here the
+  /// booking screen charges it by token — no PAN, and no second OTP.
+  Future<void> _confirmBinding() async {
+    final session = _binding;
+    final otp = _otpCtrl.text.trim();
+    if (session == null) return;
+    if (otp.isEmpty) {
+      setState(() => _error = 'pay_enter_code'.tr());
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final saved = await getIt<OrdersApi>()
+          .confirmSavedCard(cid: session.cid, otp: otp);
+      if (!mounted) return;
+      final card = PaymentCard.saved(saved);
+      setState(() {
+        _busy = false;
+        _binding = null;
+        _error = null;
+        // The bound card may already be listed if WLCM had it from an earlier
+        // session; don't show it twice.
+        _cards.removeWhere((c) => c.savedCardId == card.savedCardId);
+        _cards.insert(0, card);
+        _card = card;
+        _rail = PaymentRail.card;
+        _numberCtrl.clear();
+        _expiryCtrl.clear();
+        _otpCtrl.clear();
+        _step = _Step.choose;
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = _dioMessage(e, 'pay_code_invalid'.tr());
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'pay_code_invalid'.tr();
+      });
+    }
+  }
+
+  /// The pre-binding behaviour: keep the PAN in memory for this booking only
+  /// and charge it one-shot. Used when the backend can't bind cards yet.
+  void _useSessionCard(String pan, String expiry) {
     final card = PaymentCard(
       brand: CardBrand.fromPan(pan),
       pan: pan,
       expiry: expiry,
     );
     setState(() {
+      _busy = false;
       _error = null;
+      _binding = null;
       _cards.add(card);
       _card = card;
       _rail = PaymentRail.card;
@@ -522,11 +671,30 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     });
   }
 
+  /// Server-supplied error text when there is one — the gateway's reason ("card
+  /// expired", "wrong code") is far more useful than a generic failure line.
+  String _dioMessage(DioException e, String fallback) {
+    final data = e.response?.data;
+    if (data is Map) {
+      final msg = data['message'];
+      final raw = msg is String
+          ? msg
+          : (msg is List && msg.isNotEmpty ? msg.first.toString() : null);
+      // A known gateway code becomes a sentence the buyer can act on; anything
+      // else is passed through as the server wrote it.
+      final localized = PaymentError.fromText(raw);
+      if (localized != null) return localized;
+      if (raw != null && raw.isNotEmpty) return raw;
+    }
+    return fallback;
+  }
+
   @override
   Widget build(BuildContext context) {
     return switch (_step) {
       _Step.choose => _buildChoose(),
       _Step.addCard => _buildAddCard(),
+      _Step.bindOtp => _buildBindOtp(),
     };
   }
 
@@ -656,11 +824,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     final selected = identical(_card, card);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() {
-        _error = null;
-        _rail = PaymentRail.card;
-        _card = card;
-      }),
+      onTap: () => _payWithCard(card),
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 14.h),
         child: Row(
@@ -799,11 +963,58 @@ class _ChooserSheetState extends State<_ChooserSheet> {
           24.verticalSpace,
           _SheetActions(
             primaryLabel: 'pay_add_card'.tr(),
-            onCancel: () => setState(() {
-              _error = null;
-              _step = _Step.choose;
-            }),
-            onPrimary: _saveCard,
+            busy: _busy,
+            onCancel: _busy
+                ? null
+                : () => setState(() {
+                      _error = null;
+                      _step = _Step.choose;
+                    }),
+            onPrimary: _busy ? null : _saveCard,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Step: confirm the binding OTP ───────────────────────────────────────────
+  /// Shown after the PAN is submitted: WLCM has SMSed the cardholder a code,
+  /// and confirming it is what turns the card into a saved (tokenized) one.
+  Widget _buildBindOtp() {
+    final c = context.colors;
+    final phone = _binding?.otpSentPhone;
+    return _SheetShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('card_confirm_title'.tr(),
+              style: AppText.heading20.copyWith(color: c.textPrimary)),
+          8.verticalSpace,
+          Text(
+            phone != null && phone.isNotEmpty
+                ? 'pay_code_sent_to'.tr(args: [phone])
+                : 'pay_code_sent'.tr(),
+            textAlign: TextAlign.center,
+            style: AppText.regular14.copyWith(color: c.textSecondary),
+          ),
+          20.verticalSpace,
+          if (_error != null) _ErrorNote(message: _error!),
+          OtpCodeField(controller: _otpCtrl, length: 6),
+          20.verticalSpace,
+          _SheetActions(
+            primaryLabel: 'next'.tr(),
+            busy: _busy,
+            // Backing out drops the half-finished binding — the card is only
+            // ever saved once its OTP is confirmed.
+            onCancel: _busy
+                ? null
+                : () => setState(() {
+                      _error = null;
+                      _binding = null;
+                      _otpCtrl.clear();
+                      _step = _Step.addCard;
+                    }),
+            onPrimary: _busy ? null : _confirmBinding,
           ),
         ],
       ),
@@ -878,14 +1089,20 @@ class _OtpSheetState extends State<_OtpSheet> {
       } else {
         setState(() {
           _busy = false;
-          _error = res.message ?? 'pay_code_invalid'.tr();
+          // The gateway's own reason, localized — a declined card is not a
+          // "wrong code", and telling the buyer to re-enter the SMS would send
+          // them round a loop that cannot succeed.
+          _error = PaymentError.fromText(res.message) ??
+              res.message ??
+              'pay_code_invalid'.tr();
         });
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e is CheckoutFriendlyError ? e.message : e.toString();
+        _error = PaymentError.fromDio(e) ??
+            (e is CheckoutFriendlyError ? e.message : 'pay_generic_error'.tr());
       });
     }
   }
@@ -910,7 +1127,7 @@ class _OtpSheetState extends State<_OtpSheet> {
           ),
           20.verticalSpace,
           if (_error != null) _ErrorNote(message: _error!),
-          OtpCodeField(controller: _otpCtrl),
+          OtpCodeField(controller: _otpCtrl, length: 6),
           16.verticalSpace,
           const CountdownTimer(seconds: 57),
           16.verticalSpace,

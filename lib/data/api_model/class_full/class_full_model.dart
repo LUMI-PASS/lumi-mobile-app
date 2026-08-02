@@ -17,6 +17,12 @@ class ClassFullModel {
   final String? gender;
   final num price;
   final bool hasAgePricing;
+
+  /// Whether the class is on the app's catalogue. False means the centre has
+  /// taken it down: the detail page still opens (by direct link or from an
+  /// existing booking) but shows "coming soon" instead of a Book button.
+  /// Absent counts as visible — older payloads don't carry the field.
+  final bool isVisible;
   final num priceMin;
   final num priceMax;
   final bool hasMultiplePrices;
@@ -34,6 +40,12 @@ class ClassFullModel {
   final CategorySummary? category;
   final bool isParentControlRequired;
 
+  /// A COURSE is its own kind of thing, not a category — it keeps a normal
+  /// category and is additionally flagged here. It is sold as a package (the
+  /// trial lessons, or the whole course) rather than per session, so the detail
+  /// page swaps its CTA and lesson list rather than offering ticket booking.
+  final bool isCourse;
+
   ClassFullModel({
     required this.id,
     required this.imageUrl,
@@ -47,6 +59,7 @@ class ClassFullModel {
     required this.gender,
     required this.price,
     required this.hasAgePricing,
+    this.isVisible = true,
     required this.priceMin,
     required this.priceMax,
     required this.hasMultiplePrices,
@@ -63,6 +76,7 @@ class ClassFullModel {
     required this.branch,
     required this.category,
     required this.isParentControlRequired,
+    this.isCourse = false,
   });
 
   /// Returns the first non-empty video link (vimeo → youtube → videoUrl).
@@ -142,6 +156,7 @@ class ClassFullModel {
       gender: json['gender']?.toString(),
       price: (json['price'] as num?) ?? 0,
       hasAgePricing: json['has_age_pricing'] == true || ageTiers.isNotEmpty,
+      isVisible: json['is_visible'] != false,
       priceMin: priceMin,
       priceMax: priceMax,
       hasMultiplePrices:
@@ -172,6 +187,7 @@ class ClassFullModel {
           : null,
       isParentControlRequired:
           json['is_parent_control_required'] == true,
+      isCourse: json['is_course'] == true,
     );
   }
 }

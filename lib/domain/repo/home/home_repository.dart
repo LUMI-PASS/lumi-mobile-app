@@ -98,6 +98,7 @@ abstract class HomeRepository {
     String? sortBy,
     double? lat,
     double? lng,
+      List<String>? districts,
   });
 
   Future<ClassesPage> getDiscoveryShorts({

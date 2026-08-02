@@ -52,6 +52,15 @@ class CheckoutResult {
   final String? cid;
   final String? otpSentPhone;
 
+  /// Paylov's own answer, forwarded by our backend untouched.
+  /// [paylovState]: 1 pending · 2 success · -2 cancelled.
+  /// [paylovMessage] is the gateway's text (e.g. "Already paid").
+  /// [paylovOrderId] is WLCM's order id — quote it to their support, not
+  /// [orderId], which is ours.
+  final int? paylovState;
+  final String? paylovMessage;
+  final String? paylovOrderId;
+
   const CheckoutResult({
     required this.orderId,
     required this.totalAmount,
@@ -67,6 +76,9 @@ class CheckoutResult {
     this.transactionId,
     this.cid,
     this.otpSentPhone,
+    this.paylovState,
+    this.paylovMessage,
+    this.paylovOrderId,
   });
 
   /// True when this is a Paylov card checkout awaiting an OTP confirmation
@@ -97,6 +109,11 @@ class CheckoutResult {
       transactionId: nonEmpty(json['transaction_id']),
       cid: nonEmpty(json['cid']),
       otpSentPhone: nonEmpty(json['otp_sent_phone']),
+      paylovState: json['state'] is num
+          ? (json['state'] as num).toInt()
+          : int.tryParse('${json['state'] ?? ''}'),
+      paylovMessage: nonEmpty(json['message']),
+      paylovOrderId: nonEmpty(json['paylov_order_id']),
     );
   }
 }

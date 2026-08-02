@@ -278,11 +278,15 @@ class OrdersApi {
     required String code,
     required num subtotal,
     String? activityId,
+    int? count,
   }) async {
     final response = await _dio.post('promocodes/validate', data: {
       'code': code.trim().toUpperCase(),
       'subtotal': subtotal,
       if (activityId != null) 'activity_id': activityId,
+      // Number of tickets selected. Usage limits are counted by tickets, so the
+      // server can reject immediately when the code can't cover this many.
+      if (count != null) 'count': count,
     });
     final raw = response.data;
     final data = raw is Map && raw['data'] is Map
@@ -293,11 +297,20 @@ class OrdersApi {
 
   /// Cancel a PAID order. Backend enforces the 12-hour cutoff; this call
   /// throws a [DioException] with the server's message if it's too late.
-  Future<void> cancelOrder(String orderId, {String reason = ''}) async {
-    await _dio.patch(
+  ///
+  /// Returns how the money comes back, as the server decided it:
+  /// `automatic` (Paycom refund initiated), `manual` (a Paylov payment — WLCM
+  /// reports `cancel_payment_enabled: false`, so our team pushes it through),
+  /// or `none`. Null when an older backend didn't say.
+  Future<String?> cancelOrder(String orderId, {String reason = ''}) async {
+    final response = await _dio.patch(
       'orders/$orderId/cancel',
       data: {'reason': reason},
     );
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map ? raw['data'] as Map : null;
+    final refund = data?['refund'];
+    return refund is String && refund.isNotEmpty ? refund : null;
   }
 
   /// Returns the current user's active subscription (including

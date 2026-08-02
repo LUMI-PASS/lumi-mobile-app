@@ -76,13 +76,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                     'User';
                 return HomeHeader(
                   name: name,
-                  onSearchTap: () =>
-                      context.router.push(SearchDiscoveryRoute()),
+                  onSearchTap: () => context.router
+                      .push(SearchDiscoveryRoute(autofocusSearch: true)),
                   onProfileTap: () => openProfileTab(context),
                 );
               },
             ),
-            12.verticalSpace,
+            8.verticalSpace,
             Expanded(child: _buildContent(context, state)),
           ],
         ),
@@ -113,7 +113,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: 8.verticalSpace),
+            SliverToBoxAdapter(child: 4.verticalSpace),
             // Coupon promo rides as the first page of the banner carousel.
             SliverToBoxAdapter(
               child: HomeBannerCarousel(
@@ -174,20 +174,25 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        14.verticalSpace,
+        8.verticalSpace,
         // No "see all": the row already scrolls through every category, so the
         // grid it used to open was the same list a second time.
         HomeSectionHeader(title: 'all_categories'.tr()),
-        16.verticalSpace,
+        10.verticalSpace,
         SizedBox(
-          height: 104.h,
+          // Tall enough for a two-line label under the artwork, so a wrapped
+          // title doesn't overflow the row.
+          height: 112.h,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(right: 16.w),
+            // 8pt between tiles; the leading 8 here plus the tile's own 8 keep
+            // the first one on the page's 16pt margin.
+            padding: EdgeInsets.only(left: 8.w, right: 16.w),
             itemCount: categories.length,
             itemBuilder: (context, index) => CategoryItemWidget(
               key: ValueKey(categories[index].id ?? index),
               homeCategoryModel: categories[index],
+              padding: EdgeInsets.only(left: 8.w),
               onTap: () => context.router.push(
                 SearchDiscoveryRoute(initialCategory: categories[index]),
               ),
@@ -206,7 +211,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        14.verticalSpace,
+        8.verticalSpace,
         HomeSectionHeader(
           title: 'popular_activities'.tr(),
           // Every activity, searchable and filterable — the discovery screen
@@ -215,7 +220,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             SearchDiscoveryRoute(classesOnly: true),
           ),
         ),
-        16.verticalSpace,
+        10.verticalSpace,
         NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (scrollInfo.metrics.axis == Axis.horizontal &&
@@ -232,11 +237,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                 ListView.builder(
                   key: const PageStorageKey('new-classes-list'),
                   scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.only(right: 16.w),
+                  padding: EdgeInsets.only(left: 8.w, right: 16.w),
                   itemCount: activities.length,
                   itemBuilder: (context, index) => HomeCourseCard(
                     key: ValueKey(activities[index].id ?? index),
                     homClass: activities[index],
+                    margin: EdgeInsets.only(left: 8.w),
                     onViewAsReels: () =>
                         _openShorts(context, activities, index),
                   ),
@@ -266,7 +272,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        14.verticalSpace,
+        8.verticalSpace,
         HomeSectionHeader(
           title: title,
           onViewAll: () => context.router.push(
@@ -279,16 +285,17 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             ),
           ),
         ),
-        16.verticalSpace,
+        10.verticalSpace,
         SizedBox(
           height: rowH,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(right: 16.w),
+            padding: EdgeInsets.only(left: 8.w, right: 16.w),
             itemCount: list.length,
             itemBuilder: (context, index) => HomeCourseCard(
               key: ValueKey('c2-${list[index].id ?? index}'),
               homClass: list[index],
+              margin: EdgeInsets.only(left: 8.w),
               onViewAsReels: () => _openShorts(context, list, index),
             ),
           ),
@@ -310,16 +317,16 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            14.verticalSpace,
+            8.verticalSpace,
             HomeSectionHeader(title: 'near_you'.tr()),
-            16.verticalSpace,
+            10.verticalSpace,
           ],
         ),
       ),
       SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) => Padding(
-            padding: EdgeInsets.only(bottom: 20.h),
+            padding: EdgeInsets.only(bottom: 12.h),
             child: HomeNearbyCard(
               key: ValueKey(state.nearClassesList[index].id ?? index),
               homClass: state.nearClassesList[index],

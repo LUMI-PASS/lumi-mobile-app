@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'dart:ui';
 
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
@@ -10,6 +11,8 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -18,7 +21,6 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:lumi_pass/presentation/app/home/open_activity.dart';
 
 /// Compact activity card used in the horizontal "Courses" / "Popular" rows.
 /// Matches Figma `Popular item container` (image → provider → title → price).
@@ -43,8 +45,8 @@ class HomeCourseCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      // A course opens its own screen — see openActivity.
-      onTap: () => openActivity(context, hc),
+      onTap: () => context.router
+          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       child: Container(
         width: width ?? 168.w,
         margin: margin ?? EdgeInsets.only(left: 16.w),
@@ -85,8 +87,8 @@ class HomeNearbyCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      // A course opens its own screen — see openActivity.
-      onTap: () => openActivity(context, hc),
+      onTap: () => context.router
+          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         child: Column(
@@ -354,9 +356,14 @@ class _PriceText extends StatelessWidget {
         : v.toRawUzsPrice();
 
     final storage = getIt<Storage>();
-    final planPct = storage.planDiscountPercentage() ?? 0;
     final hasPremium = storage.hasPremium() == true;
-    if (!hasPremium || planPct <= 0) {
+    // The coupon can't cut deeper than Lumi's share of this class, so the
+    // preview is capped the same way the charge will be.
+    final planPct = effectiveCouponPercent(
+      hasPremium ? (storage.planDiscountPercentage() ?? 0) : 0,
+      hc?.discountPercentage,
+    );
+    if (planPct <= 0) {
       return Text(label(effectivePrice), style: baseStyle);
     }
 

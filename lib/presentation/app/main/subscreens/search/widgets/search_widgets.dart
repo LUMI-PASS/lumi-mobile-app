@@ -94,10 +94,16 @@ class SearchBarRow extends StatefulWidget {
     required this.onChanged,
     this.onFilterTap,
     this.filterCount = 0,
+    this.autofocus = false,
   });
 
   final String initialTerm;
   final ValueChanged<String> onChanged;
+
+  /// Opens the keyboard as soon as the field is mounted. Set when the screen
+  /// was reached by tapping a search field elsewhere (Home's header), where the
+  /// user has already declared they want to type.
+  final bool autofocus;
 
   /// Omit to render the field alone, without the trailing filter button.
   final VoidCallback? onFilterTap;
@@ -141,6 +147,8 @@ class _SearchBarRowState extends State<SearchBarRow> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      autofocus: widget.autofocus,
+                      textInputAction: TextInputAction.search,
                       onChanged: widget.onChanged,
                       cursorColor: AppColors.brandPurple,
                       style: AppText.regular14.copyWith(color: c.textPrimary),

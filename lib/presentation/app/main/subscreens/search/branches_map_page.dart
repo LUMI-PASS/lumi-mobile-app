@@ -44,7 +44,13 @@ class BranchesMapPage
 
   @override
   void init(BuildContext context) {
-    context.read<SearchCubit>().init(tab: 1, category: selectedCategory);
+    // `allBranches` — the map plots pins, so it needs every centre, not the
+    // first page the list screens work through.
+    context.read<SearchCubit>().init(
+          tab: 1,
+          category: selectedCategory,
+          allBranches: true,
+        );
     super.init(context);
   }
 
@@ -114,13 +120,17 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   /// unfiltered centres back onto the map mid-refresh.
   bool _everLoaded = false;
 
-  /// Tashkent — where the app operates. Used as the fallback camera and to
-  /// drop branches the backend gave bad coordinates for.
+  /// Tashkent — the fallback camera when there is nothing to fit to.
   static const _defaultCenter = LatLng(41.3111, 69.2797);
-  static const _minLat = 41.15;
-  static const _maxLat = 41.45;
-  static const _minLng = 69.05;
-  static const _maxLng = 69.50;
+
+  /// Uzbekistan's bounding box, used only to drop coordinates the backend got
+  /// wrong (0,0, swapped lat/lng, …). It is deliberately country-wide and not
+  /// Tashkent-tight: a centre a few km outside the city is a real centre, and
+  /// clipping to the city silently hid it from the map.
+  static const _minLat = 37.0;
+  static const _maxLat = 45.7;
+  static const _minLng = 55.9;
+  static const _maxLng = 73.2;
 
   /// CartoDB raster basemaps — the same provider the app already used, in the
   /// variant that matches the active theme.
@@ -159,7 +169,13 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
     // Re-fit only when the actual set of centres changed (e.g. category
     // switched) — not on spurious cubit emits, which caused the camera to jump.
     if (_sig != _fittedSig) {
-      _selected = null;
+      // Map mode streams the centres in page by page, so a set change is not
+      // necessarily a new search — keep the user's pick if it's still plotted.
+      final selectedId = _selected?.id;
+      if (selectedId == null ||
+          !_plottable.any((b) => b.id == selectedId)) {
+        _selected = null;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitToBranches());
     }
   }

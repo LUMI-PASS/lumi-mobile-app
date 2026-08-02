@@ -73,6 +73,7 @@ class OtpCodeField extends StatelessWidget {
     this.onChanged,
     this.hasError = false,
     this.autofocus = true,
+    this.length = 4,
   });
 
   final TextEditingController controller;
@@ -81,10 +82,21 @@ class OtpCodeField extends StatelessWidget {
   final bool hasError;
   final bool autofocus;
 
+  /// Digits the code has. Our own SMS login sends 4; a bank's payment OTP is 6,
+  /// so the payment sheets pass 6 — a field capped at 4 silently swallowed the
+  /// last two digits and every confirmation failed.
+  final int length;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final color = hasError ? AppColors.error : colors.textPrimary;
+    // 56pt glyphs at 14pt tracking fit four digits across the narrowest phone;
+    // six need to come down or the line overflows its box.
+    final base = length > 4
+        ? AppText.code56.copyWith(fontSize: 40.sp)
+        : AppText.code56;
+    final tracking = length > 4 ? 8.w : 14.w;
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -95,16 +107,16 @@ class OtpCodeField extends StatelessWidget {
       cursorColor: AppColors.brandPurple,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(4),
+        LengthLimitingTextInputFormatter(length),
       ],
-      style: AppText.code56.copyWith(color: color, letterSpacing: 14.w),
+      style: base.copyWith(color: color, letterSpacing: tracking),
       decoration: InputDecoration(
         isCollapsed: true,
         border: InputBorder.none,
         counterText: '',
-        hintText: '0000',
-        hintStyle: AppText.code56
-            .copyWith(color: colors.textPlaceholder, letterSpacing: 14.w),
+        hintText: '0' * length,
+        hintStyle:
+            base.copyWith(color: colors.textPlaceholder, letterSpacing: tracking),
       ),
       onChanged: onChanged,
     );

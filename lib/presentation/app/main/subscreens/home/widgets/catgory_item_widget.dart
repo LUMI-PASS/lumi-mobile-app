@@ -59,6 +59,7 @@ class CategoryItemWidget extends StatelessWidget {
           width: width ?? 64.w,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               FrostedCard(
                 width: 56.w,
@@ -82,12 +83,21 @@ class CategoryItemWidget extends StatelessWidget {
                       ),
               ),
               8.verticalSpace,
-              Text(
-                homeCategoryModel?.title ?? '',
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.medium13.copyWith(color: c.textPrimary),
+              // Two lines: at 64pt most category names don't survive a single
+              // line, so the label wraps instead of being cut short.
+              //
+              // Full-width so `textAlign.center` centres against the tile. A
+              // shrink-wrapped Text centres only its own second line, which
+              // leaves a one-line label sitting off-centre under the artwork.
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  homeCategoryModel?.title ?? '',
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.medium12.copyWith(color: c.textPrimary),
+                ),
               ),
             ],
           ),

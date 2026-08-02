@@ -75,11 +75,18 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
       if (!mounted) return;
       Navigator.of(context).pop(true); // signal the list to refresh
     } on DioException catch (e) {
-      final msg = e.response?.data is Map
-          ? (e.response?.data['message']?.toString() ??
-              e.message ??
-              'card_save_error'.tr())
-          : (e.message ?? 'card_save_error'.tr());
+      // 503 = the backend has no card-BINDING credentials (WLCM Subscribe). The
+      // Partner API we are live on charges a card at checkout but cannot store
+      // one, so there is nothing here to retry — say that in the user's language
+      // rather than surfacing the server's English diagnostic. The booking sheet
+      // handles the same 503 by charging the card for that order only.
+      final msg = e.response?.statusCode == 503
+          ? 'card_save_unavailable'.tr()
+          : e.response?.data is Map
+              ? (e.response?.data['message']?.toString() ??
+                  e.message ??
+                  'card_save_error'.tr())
+              : (e.message ?? 'card_save_error'.tr());
       if (mounted) {
         setState(() {
           _busy = false;

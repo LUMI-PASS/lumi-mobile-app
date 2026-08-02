@@ -167,16 +167,6 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const CouponsPage(),
       );
     },
-    CourseDetailRoute.name: (routeData) {
-      final args = routeData.argsAs<CourseDetailRouteArgs>();
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: CourseDetailPage(
-          course: args.course,
-          key: args.key,
-        ),
-      );
-    },
     EmptyRouterRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -307,6 +297,7 @@ abstract class _$AppRouter extends RootStackRouter {
           key: args.key,
           initialCategory: args.initialCategory,
           classesOnly: args.classesOnly,
+          autofocusSearch: args.autofocusSearch,
         ),
       );
     },
@@ -880,44 +871,6 @@ class CouponsRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [CourseDetailPage]
-class CourseDetailRoute extends PageRouteInfo<CourseDetailRouteArgs> {
-  CourseDetailRoute({
-    required HomClass course,
-    Key? key,
-    List<PageRouteInfo>? children,
-  }) : super(
-          CourseDetailRoute.name,
-          args: CourseDetailRouteArgs(
-            course: course,
-            key: key,
-          ),
-          initialChildren: children,
-        );
-
-  static const String name = 'CourseDetailRoute';
-
-  static const PageInfo<CourseDetailRouteArgs> page =
-      PageInfo<CourseDetailRouteArgs>(name);
-}
-
-class CourseDetailRouteArgs {
-  const CourseDetailRouteArgs({
-    required this.course,
-    this.key,
-  });
-
-  final HomClass course;
-
-  final Key? key;
-
-  @override
-  String toString() {
-    return 'CourseDetailRouteArgs{course: $course, key: $key}';
-  }
-}
-
-/// generated route for
 /// [EmptyRouterPage]
 class EmptyRouterRoute extends PageRouteInfo<void> {
   const EmptyRouterRoute({List<PageRouteInfo>? children})
@@ -1283,6 +1236,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
     Key? key,
     HomCategory? initialCategory,
     bool classesOnly = false,
+    bool autofocusSearch = false,
     List<PageRouteInfo>? children,
   }) : super(
           SearchDiscoveryRoute.name,
@@ -1290,6 +1244,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
             key: key,
             initialCategory: initialCategory,
             classesOnly: classesOnly,
+            autofocusSearch: autofocusSearch,
           ),
           initialChildren: children,
         );
@@ -1305,6 +1260,7 @@ class SearchDiscoveryRouteArgs {
     this.key,
     this.initialCategory,
     this.classesOnly = false,
+    this.autofocusSearch = false,
   });
 
   final Key? key;
@@ -1313,9 +1269,11 @@ class SearchDiscoveryRouteArgs {
 
   final bool classesOnly;
 
+  final bool autofocusSearch;
+
   @override
   String toString() {
-    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, classesOnly: $classesOnly}';
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, classesOnly: $classesOnly, autofocusSearch: $autofocusSearch}';
   }
 }
 

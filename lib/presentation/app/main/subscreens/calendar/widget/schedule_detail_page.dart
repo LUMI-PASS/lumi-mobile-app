@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -34,6 +35,7 @@ import 'package:url_launcher/url_launcher.dart';
 /// Matches the class/branch detail screens.
 const double _kHeroHeight = 300;
 
+
 /// Booking detail: shows full class context for one order (transaction). For
 /// pending orders the sticky CTA relaunches Paycom; for paid orders it lists
 /// every ticket inside the order so the user can open an individual receipt.
@@ -61,6 +63,10 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   bool _loading = true;
   bool _launchingPayment = false;
   bool _cancelledLocally = false;
+
+  /// True while the cancel request is in flight — keeps the buyer from firing
+  /// a second one and from tapping through to a stale screen.
+  bool _cancelling = false;
   String? _error;
   bool _viewLogged = false;
   int _currentImageIndex = 0;
@@ -176,7 +182,13 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
   bool _canCancel() {
     if (_detail == null) return false;
-    if (!_detail!.order.isPaid) return false;
+    final order = _detail!.order;
+    if (order.isCanceled || _cancelledLocally) return false;
+    // A pending order was never charged — the buyer can drop it at any time,
+    // which is the only way to clear an abandoned checkout out of their
+    // bookings. The window below guards a PAID seat, so it doesn't apply.
+    if (order.isPending) return true;
+    if (!order.isPaid) return false;
     final dateStr = _detail!.earliestTicketDate;
     if (dateStr == null || dateStr.isEmpty) return false;
     final startTime = _detail!.tickets.firstOrNull?.startTime ??
@@ -583,6 +595,18 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   }
 
   // ─── Payment + fiscal receipt ──────────────────────────────────────────────
+  /// Wordmark for a rail key. Brand names are not translated; an unknown key
+  /// is shown as-is rather than hidden, so a new rail is visible immediately.
+  String _providerLabel(String key) => switch (key.toLowerCase()) {
+        'payme' || 'paycom' => 'Payme',
+        'click' => 'Click',
+        'uzum' => 'Uzum',
+        'paylov' => 'Paylov',
+        'card' => 'card_payment'.tr(),
+        'saved_card' => 'card_payment'.tr(),
+        _ => key,
+      };
+
   Widget _paymentCard(AppColorScheme c, UserOrder order, bool showReceipt) {
     final amountColor = order.isPending ? AppColors.warning : AppColors.green;
 
@@ -642,6 +666,17 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 ),
             ],
           ),
+          // Which rail the money went out on — the first thing anyone asks
+          // when a payment is queried, and previously only visible in the DB.
+          if (order.paymentProvider != null) ...[
+            12.verticalSpace,
+            _DetailPill(
+              c: c,
+              icon: Assets.icons.home.money,
+              label: 'payment_method'.tr(),
+              value: _providerLabel(order.paymentProvider!),
+            ),
+          ],
           if (showReceipt) ...[
             12.verticalSpace,
             _DetailPill(
@@ -673,20 +708,136 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     if (order.isPending) {
       final requiresBooking =
           _classFull?.category?.requiresBookingTimeSlot == true;
-      if (requiresBooking) {
-        return _StatusBar(
-          c: c,
-          label: 'status_in_process'.tr(),
-          color: AppColors.brandPurple,
-        );
-      }
-      return GradientButton(
-        text: _launchingPayment ? 'opening_payment'.tr() : 'pay_now'.tr(),
-        loading: _launchingPayment,
-        onPressed: _pay,
+      // Unpaid either way, so the buyer can always drop it — an abandoned
+      // checkout otherwise sits in their bookings forever.
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (requiresBooking)
+            _StatusBar(
+              c: c,
+              label: 'status_in_process'.tr(),
+              color: AppColors.brandPurple,
+            )
+          else
+            GradientButton(
+              text: _launchingPayment ? 'opening_payment'.tr() : 'pay_now'.tr(),
+              loading: _launchingPayment,
+              onPressed: _pay,
+            ),
+          _cancelLink(c),
+        ],
+      );
+    }
+    // Paid and still inside the cancellation window: state it, and offer the
+    // way out right here. Cancelling used to be reachable only by tapping a
+    // ticket through to the receipt screen, which nobody finds.
+    if (_canCancel()) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StatusBar(c: c, label: 'order_paid'.tr(), color: AppColors.green),
+          _cancelLink(c),
+        ],
       );
     }
     return _StatusBar(c: c, label: 'order_paid'.tr(), color: AppColors.green);
+  }
+
+  /// The "Отменить бронирование" row under the status bar. Renders nothing when
+  /// the order can't be cancelled (already past, already cancelled), so both
+  /// call sites can include it unconditionally.
+  Widget _cancelLink(AppColorScheme c) {
+    if (!_canCancel()) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(top: 8.h),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _cancelling ? null : _confirmCancel,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+          alignment: Alignment.center,
+          child: Text(
+            _cancelling
+                ? 'booking_cancelling'.tr()
+                : 'booking_cancel_title'.tr(),
+            style: AppText.semibold14.copyWith(
+              color: _cancelling ? c.textSecondary : AppColors.error,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Asks first — cancelling is irreversible and the money comes back on the
+  /// gateway's schedule, not ours.
+  Future<void> _confirmCancel() async {
+    final c = context.colors;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: c.surface,
+        title: Text('booking_cancel_title'.tr(),
+            style: AppText.semibold16.copyWith(color: c.textPrimary)),
+        content: Text('booking_cancel_confirm'.tr(),
+            style: AppText.regular14.copyWith(color: c.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('booking_keep'.tr(),
+                style: TextStyle(color: c.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('booking_cancel_action'.tr(),
+                style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _cancelling = true);
+    try {
+      final refund =
+          await getIt<OrdersApi>().cancelOrder(_detail!.order.id);
+      if (!mounted) return;
+      setState(() => _cancelling = false);
+      _onCancelled();
+      // Say which kind of refund to expect — "manual" means a Paylov payment,
+      // which WLCM won't let us reverse over the API.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            refund == 'manual'
+                ? 'booking_refund_manual'.tr()
+                : 'booking_refund_auto'.tr(),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _cancelling = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('booking_cancel_failed'.tr(args: [_cancelMessage(e)])),
+        ),
+      );
+    }
+  }
+
+  /// The server's reason (past the cancellation window, already cancelled, …)
+  /// rather than a Dio stack string.
+  String _cancelMessage(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      final msg = data is Map ? data['message'] : null;
+      if (msg != null && '$msg'.isNotEmpty) return '$msg';
+      return e.message ?? e.toString();
+    }
+    return e.toString();
   }
 
   // ─── Data helpers ──────────────────────────────────────────────────────────
