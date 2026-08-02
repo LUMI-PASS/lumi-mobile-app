@@ -2048,7 +2048,17 @@ mixin _$HomClass {
   int? get trialLessons => throw _privateConstructorUsedError;
 
   /// Price of the WHOLE course. `trialPrice` above is the trial total.
+  ///
+  /// For a course sold as LEVELS this is the CHEAPEST level's price — there is
+  /// no single course price — and [priceFrom] is true so the card renders it
+  /// as "from X".
   num? get coursePrice => throw _privateConstructorUsedError;
+
+  /// True when this course is sold as levels, so [coursePrice] is a floor.
+  bool? get priceFrom => throw _privateConstructorUsedError;
+
+  /// How many levels are on sale. 0 for a course without levels.
+  int? get subcoursesCount => throw _privateConstructorUsedError;
 
   /// Cohort size for full enrolment. null = unlimited.
   int? get seats => throw _privateConstructorUsedError;
@@ -2090,6 +2100,8 @@ abstract class $HomClassCopyWith<$Res> {
       bool? isCourse,
       int? trialLessons,
       num? coursePrice,
+      bool? priceFrom,
+      int? subcoursesCount,
       int? seats,
       String? createdAt,
       String? updatedAt,
@@ -2133,6 +2145,8 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? isCourse = freezed,
     Object? trialLessons = freezed,
     Object? coursePrice = freezed,
+    Object? priceFrom = freezed,
+    Object? subcoursesCount = freezed,
     Object? seats = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -2227,6 +2241,14 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.coursePrice
           : coursePrice // ignore: cast_nullable_to_non_nullable
               as num?,
+      priceFrom: freezed == priceFrom
+          ? _value.priceFrom
+          : priceFrom // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      subcoursesCount: freezed == subcoursesCount
+          ? _value.subcoursesCount
+          : subcoursesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
       seats: freezed == seats
           ? _value.seats
           : seats // ignore: cast_nullable_to_non_nullable
@@ -2290,6 +2312,8 @@ abstract class _$$HomClassImplCopyWith<$Res>
       bool? isCourse,
       int? trialLessons,
       num? coursePrice,
+      bool? priceFrom,
+      int? subcoursesCount,
       int? seats,
       String? createdAt,
       String? updatedAt,
@@ -2332,6 +2356,8 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? isCourse = freezed,
     Object? trialLessons = freezed,
     Object? coursePrice = freezed,
+    Object? priceFrom = freezed,
+    Object? subcoursesCount = freezed,
     Object? seats = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -2426,6 +2452,14 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.coursePrice
           : coursePrice // ignore: cast_nullable_to_non_nullable
               as num?,
+      priceFrom: freezed == priceFrom
+          ? _value.priceFrom
+          : priceFrom // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      subcoursesCount: freezed == subcoursesCount
+          ? _value.subcoursesCount
+          : subcoursesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
       seats: freezed == seats
           ? _value.seats
           : seats // ignore: cast_nullable_to_non_nullable
@@ -2473,6 +2507,8 @@ class _$HomClassImpl implements _HomClass {
       this.isCourse,
       this.trialLessons,
       this.coursePrice,
+      this.priceFrom,
+      this.subcoursesCount,
       this.seats,
       this.createdAt,
       this.updatedAt,
@@ -2528,8 +2564,20 @@ class _$HomClassImpl implements _HomClass {
   final int? trialLessons;
 
   /// Price of the WHOLE course. `trialPrice` above is the trial total.
+  ///
+  /// For a course sold as LEVELS this is the CHEAPEST level's price — there is
+  /// no single course price — and [priceFrom] is true so the card renders it
+  /// as "from X".
   @override
   final num? coursePrice;
+
+  /// True when this course is sold as levels, so [coursePrice] is a floor.
+  @override
+  final bool? priceFrom;
+
+  /// How many levels are on sale. 0 for a course without levels.
+  @override
+  final int? subcoursesCount;
 
   /// Cohort size for full enrolment. null = unlimited.
   @override
@@ -2543,7 +2591,7 @@ class _$HomClassImpl implements _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, seats: $seats, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2587,6 +2635,10 @@ class _$HomClassImpl implements _HomClass {
                 other.trialLessons == trialLessons) &&
             (identical(other.coursePrice, coursePrice) ||
                 other.coursePrice == coursePrice) &&
+            (identical(other.priceFrom, priceFrom) ||
+                other.priceFrom == priceFrom) &&
+            (identical(other.subcoursesCount, subcoursesCount) ||
+                other.subcoursesCount == subcoursesCount) &&
             (identical(other.seats, seats) || other.seats == seats) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
@@ -2622,6 +2674,8 @@ class _$HomClassImpl implements _HomClass {
         isCourse,
         trialLessons,
         coursePrice,
+        priceFrom,
+        subcoursesCount,
         seats,
         createdAt,
         updatedAt,
@@ -2666,6 +2720,8 @@ abstract class _HomClass implements HomClass {
       final bool? isCourse,
       final int? trialLessons,
       final num? coursePrice,
+      final bool? priceFrom,
+      final int? subcoursesCount,
       final int? seats,
       final String? createdAt,
       final String? updatedAt,
@@ -2721,7 +2777,19 @@ abstract class _HomClass implements HomClass {
   @override
 
   /// Price of the WHOLE course. `trialPrice` above is the trial total.
+  ///
+  /// For a course sold as LEVELS this is the CHEAPEST level's price — there is
+  /// no single course price — and [priceFrom] is true so the card renders it
+  /// as "from X".
   num? get coursePrice;
+  @override
+
+  /// True when this course is sold as levels, so [coursePrice] is a floor.
+  bool? get priceFrom;
+  @override
+
+  /// How many levels are on sale. 0 for a course without levels.
+  int? get subcoursesCount;
   @override
 
   /// Cohort size for full enrolment. null = unlimited.

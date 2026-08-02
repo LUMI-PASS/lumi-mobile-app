@@ -969,3 +969,12 @@ course_already_enrolled_short,Вы уже записаны,Siz allaqachon yozilg
 course_upsell_title,Продолжить весь курс?,Butun kursni davom ettirasizmi?,Continue with the whole course?
 course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.
 search_tab_courses,Курсы,Kurslar,Courses
+course_levels_title,Уровни курса,Kurs darajalari,Course levels
+course_levels_subtitle,Выберите уровень — каждый покупается отдельно,Darajani tanlang — har biri alohida sotib olinadi,Pick a level — each is bought separately
+course_level_enrolled,Вы записаны,Yozilgansiz,Enrolled
+course_level_trial,Пробные куплены,Sinov olingan,Trial bought
+course_lessons_remaining,Осталось {left} из {total} уроков,{total} darsdan {left} tasi qoldi,{left} of {total} lessons left
+course_upcoming_lessons,Впереди уроков: {count},Oldinda {count} ta dars,{count} lessons ahead
+course_blocked_not_configured,Пока недоступно для покупки,Hozircha sotib olib bo'lmaydi,Not available to buy yet
+course_blocked_ended,Занятия уже прошли,Darslar allaqachon o'tgan,These lessons have already passed
+course_blocked_unavailable,Сейчас недоступно,Hozir mavjud emas,Not available right now

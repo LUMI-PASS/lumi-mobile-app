@@ -17,6 +17,7 @@ import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import 'shorts_feed.dart';
+import 'package:lumi_pass/presentation/app/home/open_activity.dart';
 
 // Autoplay immediately (with sound) and loop — the plugin's WebView is
 // configured to not require a user gesture, so the first short plays without a
@@ -513,8 +514,7 @@ class _ShortSlide extends StatelessWidget {
               ],
               14.kh,
               GestureDetector(
-                onTap: () =>
-                    context.router.push(ClassDetailRoute(classModel: hc)),
+                onTap: () => openActivity(context, hc),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                       horizontal: 18.w, vertical: 11.h),

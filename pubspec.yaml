@@ -23,7 +23,7 @@ dependencies:
   get_it: ^7.6.8
   injectable: ^2.4.1
   freezed_annotation: ^2.4.1
-  flutter_svg: any
+  flutter_svg: ^2.3.0
   elegant_notification: ^2.1.0
   bloc: ^8.1.4
   flutter_bloc: ^8.1.5
@@ -39,7 +39,7 @@ dependencies:
   cookie_jar: ^4.0.8
   rxdart: ^0.27.7
   dio: ^5.4.2+1
-  google_fonts: any
+  google_fonts: ^8.2.1
   collection: ^1.18.0
   mask_text_input_formatter: ^2.9.0
   smooth_page_indicator: ^1.1.0
@@ -80,7 +80,7 @@ dependencies:
   youtube_player_flutter: ^9.1.1
   webview_flutter: ^4.7.0
   # Glass "pill" bottom navigation (same component nexus-mobile-app uses).
-  dynamic_glass_glmv: ^0.2.3
+  dynamic_glass_glmv: ^0.2.4
   # The native UITabBar behind `dynamic_glass_glmv`'s iOS 26 path. Depended on
   # directly so `CustomBottomBar` can drive `CNTabBar` itself and keep our own
   # tab SVGs template-tinted — see the note in custom_bottomnavigation.dart.

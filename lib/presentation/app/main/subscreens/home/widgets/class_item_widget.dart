@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/ios_text_styles.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
@@ -15,6 +13,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:lumi_pass/presentation/app/home/open_activity.dart';
 
 class ClassItemWidget extends StatefulWidget {
   const ClassItemWidget({
@@ -87,8 +86,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
         widget.width ?? (1.sw * 0.58).clamp(195.0, 255.0);
 
     return Container3d(
-      onTap: () => context.router
-          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
+      onTap: () => openActivity(context, hc),
       width: resolvedWidth,
       margin: EdgeInsets.only(left: 16.w),
       padding: EdgeInsets.all(8.w),

@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -11,7 +10,6 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -20,6 +18,7 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:lumi_pass/presentation/app/home/open_activity.dart';
 
 /// Compact activity card used in the horizontal "Courses" / "Popular" rows.
 /// Matches Figma `Popular item container` (image → provider → title → price).
@@ -44,11 +43,8 @@ class HomeCourseCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        final c = hc ?? const HomClass();
-        // Courses reuse the class detail screen + booking flow — no separate UI.
-        context.router.push(ClassDetailRoute(classModel: c));
-      },
+      // A course opens its own screen — see openActivity.
+      onTap: () => openActivity(context, hc),
       child: Container(
         width: width ?? 168.w,
         margin: margin ?? EdgeInsets.only(left: 16.w),
@@ -89,11 +85,8 @@ class HomeNearbyCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        final c = hc ?? const HomClass();
-        // Courses reuse the class detail screen + booking flow — no separate UI.
-        context.router.push(ClassDetailRoute(classModel: c));
-      },
+      // A course opens its own screen — see openActivity.
+      onTap: () => openActivity(context, hc),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         child: Column(
@@ -334,6 +327,23 @@ class _PriceText extends StatelessWidget {
         (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
 
     final baseStyle = AppText.semibold14.copyWith(color: c.textPrimary);
+
+    // A course is not priced per session, so the age-tier machinery above says
+    // nothing about it (and usually reads 0 → "Free"). It sells a trial and a
+    // whole course; when it has levels there is no single price at all, and the
+    // backend sends the cheapest one with price_from set.
+    if (hc?.isCourse == true) {
+      final coursePrice = hc?.coursePrice ?? 0;
+      if (coursePrice <= 0) {
+        return Text('price_free'.tr(), style: baseStyle);
+      }
+      return Text(
+        hc?.priceFrom == true
+            ? 'price_from'.tr(args: [coursePrice.toRawUzsPrice()])
+            : coursePrice.toRawUzsPrice(),
+        style: baseStyle,
+      );
+    }
 
     if (effectivePrice < 100) {
       return Text('price_free'.tr(), style: baseStyle);
