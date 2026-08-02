@@ -25,9 +25,14 @@ class SearchView extends StatefulWidget {
     required this.state,
     this.onBack,
     this.classesOnly = false,
+    this.autofocusSearch = false,
   });
 
   final SearchBuildable state;
+
+  /// Raises the keyboard on the search field as soon as the screen opens — set
+  /// when the user got here by tapping Home's search field.
+  final bool autofocusSearch;
 
   /// Omit on the root tab — there is nothing behind it to go back to.
   final VoidCallback? onBack;
@@ -135,6 +140,7 @@ class _SearchViewState extends State<SearchView> {
               onChanged: cubit.setSearchTerm,
               onFilterTap: _openFilter,
               filterCount: cubit.activeFilterCount,
+              autofocus: widget.autofocusSearch,
             ),
             if (!widget.classesOnly) ...[
               16.verticalSpace,

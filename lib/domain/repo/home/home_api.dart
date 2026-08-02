@@ -194,6 +194,7 @@ class HomeApi {
     String? sortBy,
     double? lat,
     double? lng,
+    List<String>? districts,
   }) {
     return _dio.get('discovery/explore', queryParameters: {
       'page': page,
@@ -211,6 +212,9 @@ class HomeApi {
       if (sortBy != null) 'sort_by': sortBy,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
+      // Comma-separated so the multi-select survives a plain query string.
+      if (districts != null && districts.isNotEmpty)
+        'districts': districts.join(','),
     });
   }
 
@@ -229,6 +233,7 @@ class HomeApi {
     String? sortBy,
     double? lat,
     double? lng,
+    List<String>? districts,
   }) {
     return _dio.get('discovery/classes', queryParameters: {
       'page': page,
@@ -246,6 +251,9 @@ class HomeApi {
       if (sortBy != null) 'sort_by': sortBy,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
+      // Comma-separated so the multi-select survives a plain query string.
+      if (districts != null && districts.isNotEmpty)
+        'districts': districts.join(','),
     });
   }
 

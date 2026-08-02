@@ -2,6 +2,7 @@ import 'package:cupertino_native_glmv/cupertino_native_glmv.dart';
 import 'package:dynamic_glass_glmv/dynamic_glass_glmv.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -68,6 +69,11 @@ class CustomBottomBar extends StatelessWidget {
     (Assets.icons.home.profile, 'tab_profile'),
   ];
 
+  /// Gap between the pill and the bottom of the screen when nothing of the
+  /// system's own lives down there (iOS home indicator included — it floats
+  /// over the glass rather than covering it).
+  static const double _floatGap = 20;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -75,6 +81,22 @@ class CustomBottomBar extends StatelessWidget {
     final selectedColor = c.textPrimary;
     // Unselected icon + label — Figma grey per theme.
     final unselectedColor = c.isDark ? _figmaGrey : _charcoalGray;
+
+    // Android's system navigation — the three-button bar, or the gesture
+    // handle — is drawn INSIDE our window on the versions that run us
+    // edge-to-edge (12+ on some OEM skins, always on 15+). Anything under it is
+    // genuinely covered, so the pill has to clear the inset before its own gap;
+    // stripping the inset and floating a flat 20 (right for iOS) buried the bar
+    // behind the nav bar. `viewPadding`, not `padding`: the latter collapses to
+    // zero while the keyboard is up, which would drop the bar mid-animation.
+    //
+    // Where the platform reports no inset (Android without edge-to-edge, web,
+    // desktop) this is the same flat gap as before.
+    final systemInset = MediaQuery.viewPaddingOf(context).bottom;
+    final bottomGap =
+        defaultTargetPlatform == TargetPlatform.android && systemInset > 0
+            ? systemInset + 8
+            : _floatGap;
 
     final style = GlassPillNavBarStyle(
       selectedItemColor: selectedColor,
@@ -107,8 +129,8 @@ class CustomBottomBar extends StatelessWidget {
       // The package's gap below the bar is `MediaQuery.padding.bottom +
       // bottomPadding`, which on a home-indicator iPhone floats the bar ~46pt
       // off the edge. We strip that inset below (`MediaQuery.removePadding`),
-      // so this value *is* the full gap.
-      bottomPadding: 20,
+      // so this value *is* the full gap — see [bottomGap].
+      bottomPadding: bottomGap,
       // Pill fills its cell (bar has 2px padding → ~4px slack per slot).
       pillHeightFactor: 0.9,
       pillHorizontalInset: 4,
@@ -224,9 +246,10 @@ class CustomBottomBar extends StatelessWidget {
     //
     // `GlassPillNavBar` pads itself by `MediaQuery.padding.bottom +
     // style.bottomPadding`. Dropping the inset makes `bottomPadding` the single
-    // source of truth for how far the pill floats off the screen edge. The
-    // native bar lays out its own safe area in UIKit, so this concerns the pill
-    // alone.
+    // source of truth for how far the pill floats off the screen edge — we fold
+    // the system inset into it ourselves above, per platform, since the package
+    // would otherwise add the keyboard-sensitive `padding` on top. The native
+    // bar lays out its own safe area in UIKit, so this concerns the pill alone.
     return MediaQuery.removePadding(
       context: context,
       removeBottom: true,

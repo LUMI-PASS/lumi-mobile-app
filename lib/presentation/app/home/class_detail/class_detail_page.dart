@@ -15,6 +15,8 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/common/utils/coupon_discount.dart';
+import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
@@ -24,7 +26,9 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
@@ -51,14 +55,31 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   ClassFullModel? _full;
   Timer? _slideTimer;
 
+  /// Set only for a course: its dated lessons and package prices, fetched from
+  /// `/api/courses/:id`. The lesson dates are expanded server-side from the
+  /// course's own weekday pattern, so the screen never re-derives them.
+  CourseDetail? _course;
+  bool _buyingCourse = false;
+
+  /// A course is sold as a package, not per session. Known from the list model
+  /// before the detail lands, so the CTA never flashes the ticket wording.
+  bool get _isCourse =>
+      _full?.isCourse ?? widget.classModel.isCourse ?? false;
+
   /// 0 → hero fully visible, 1 → content scrolled under the top controls and
   /// the frosted scrim is fully on.
   double _topScrim = 0;
 
   // ─── Coupon discount helpers ──────────────────────────────────────────────
-  int get _couponPct {
+  /// The coupon's percentage on THIS class — the plan's percentage capped at
+  /// Lumi's share of the class, which is what checkout will actually charge.
+  num get _couponPct {
     final s = getIt<Storage>();
-    return s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
+    final plan = s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
+    return effectiveCouponPercent(
+      plan,
+      _full?.discountPercentage ?? widget.classModel.discountPercentage,
+    );
   }
 
   @override
@@ -126,8 +147,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         _full = full;
         _galleryImages = _resolveGallery(full);
       });
+      if (full.isCourse) unawaited(_loadCourse(id));
     } catch (_) {
       // Keep whatever gallery/list image we already have.
+    }
+  }
+
+  /// Course lessons + package prices. Failure is non-fatal: the page still
+  /// renders, it just can't show the lesson list or open the purchase sheet.
+  Future<void> _loadCourse(String id) async {
+    try {
+      final detail = await getIt<CoursesApi>().detail(id);
+      if (!mounted) return;
+      setState(() => _course = detail);
+    } catch (_) {
+      // Leave _course null — the CTA reports "not ready yet" if tapped.
     }
   }
 
@@ -250,6 +284,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         .trim();
   }
 
+  /// Bullet lines out of a localized rich-text map (`important_notes`,
+  /// `required_items`). The partner console stores these as HTML, so flatten it
+  /// and treat every non-empty line as one bullet — `_cleanHtml` already turns
+  /// `<li>`/`<br>`/`</p>` into "• " + newlines, we just strip the marker so the
+  /// row can draw its own dot.
+  List<String> _bullets(Map<String, dynamic> map) {
+    final text = _cleanHtml(_localized(map));
+    if (text.isEmpty) return const [];
+    return text
+        .split('\n')
+        .map((l) => l.replaceFirst(RegExp(r'^\s*[•·\-–—*]\s*'), '').trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+  }
+
   Future<void> _shareClass() async {
     try {
       final id = widget.classModel.id;
@@ -302,6 +351,68 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       },
     );
     context.router.push(BookingRoute(clazz: full));
+  }
+
+  /// Course CTA. Opens the package picker — trial lessons vs the whole course.
+  Future<void> _openCoursePurchase() async {
+    final detail = _course;
+    if (detail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('cta_loading'.tr())),
+      );
+      return;
+    }
+    getIt<AnalyticsService>().logEvent(
+      AnalyticsEvent.bookButtonTapped,
+      params: {
+        if (_full?.id != null) 'class_id': _full!.id!,
+        if (widget.classModel.title != null)
+          'class_title': widget.classModel.title!,
+        'is_course': 'true',
+      },
+    );
+    final option = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CoursePurchaseSheet(detail: detail),
+    );
+    if (option != null && mounted) await _buyCourse(option);
+  }
+
+  /// Charges the chosen package and hands off to the shared checkout screen —
+  /// the same one the per-session booking flow ends on.
+  Future<void> _buyCourse(String option) async {
+    final id = _full?.id ?? widget.classModel.id;
+    if (id == null || _buyingCourse) return;
+    setState(() => _buyingCourse = true);
+    try {
+      final result =
+          await getIt<CoursesApi>().checkout(activityId: id, option: option);
+      if (!mounted) return;
+      setState(() => _buyingCourse = false);
+      if (result.checkoutUrl.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('pay_generic_error'.tr())),
+        );
+        return;
+      }
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => PaycomCheckoutPage(result: result)),
+      );
+      // The enrolment may have changed — refresh so the sheet reflects it.
+      if (mounted) await _loadCourse(id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _buyingCourse = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(PaymentError.fromDio(e) ?? 'pay_generic_error'.tr()),
+          backgroundColor: context.colors.error,
+        ),
+      );
+    }
   }
 
   /// Price tiers derived for display: one row per age tier (min price), or the
@@ -361,6 +472,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         full == null ? '' : _cleanHtml(_localized(full.description));
     final priceRows = _priceRows();
     final languages = full?.activityLanguages ?? const <String>[];
+    final notes =
+        full == null ? const <String>[] : _bullets(full.importantNotes);
+    final requiredItems =
+        full == null ? const <String>[] : _bullets(full.requiredItems);
 
     // Over the hero the status bar sits on a photo (light icons); once the
     // scrim takes over on a light background the icons have to flip to dark.
@@ -386,6 +501,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     child: Column(
                       children: [
                         _mainCard(c, title, description, branchTitle),
+                        // Which days the course actually runs — the first thing
+                        // a parent needs to check before the price.
+                        if (_course != null &&
+                            _courseCalendar(_course!).isNotEmpty) ...[
+                          6.verticalSpace,
+                          _courseLessonsCard(c, _course!),
+                        ],
                         if (priceRows.isNotEmpty) ...[
                           6.verticalSpace,
                           _pricesCard(c, priceRows),
@@ -393,6 +515,26 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         if (description.isNotEmpty) ...[
                           6.verticalSpace,
                           _descriptionCard(c, title, description),
+                        ],
+                        if (notes.isNotEmpty) ...[
+                          6.verticalSpace,
+                          _bulletCard(
+                            c,
+                            icon: Assets.icons.detail.iconsaxQuestionMark,
+                            iconGradient: AppGradients.brand,
+                            title: 'detail_notes'.tr(),
+                            items: notes,
+                          ),
+                        ],
+                        if (requiredItems.isNotEmpty) ...[
+                          6.verticalSpace,
+                          _bulletCard(
+                            c,
+                            icon: Assets.icons.detail.iconsaxReceipt,
+                            iconGradient: AppGradients.green,
+                            title: 'detail_bring'.tr(),
+                            items: requiredItems,
+                          ),
                         ],
                         if (languages.isNotEmpty) ...[
                           6.verticalSpace,
@@ -463,10 +605,23 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   boxShadow: AppShadows.bottomBar,
                 ),
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + safeBottom),
-                child: GradientButton(
-                  text: 'buy_tickets'.tr(),
-                  onPressed: _openBooking,
-                ),
+                // A class the centre has hidden can still be reached by direct
+                // link or from an existing booking, so the page opens — but it
+                // must not be bookable. Inert "coming soon" rather than a Book
+                // button that would fail at checkout.
+                // A course is bought as a package (trial lessons or the whole
+                // course), never as a dated ticket — so it gets its own
+                // wording and opens the course purchase sheet instead of the
+                // per-session booking flow.
+                child: _full?.isVisible == false
+                    ? _ComingSoonButton(c: c)
+                    : GradientButton(
+                        text: _isCourse
+                            ? 'course_buy_cta'.tr()
+                            : 'buy_tickets'.tr(),
+                        onPressed:
+                            _isCourse ? _openCoursePurchase : _openBooking,
+                      ),
               ),
             ),
           ],
@@ -676,7 +831,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             ],
           ),
           16.verticalSpace,
-          _HappyParents(c: c),
+          _HappyParents(
+            c: c,
+            seed: (widget.classModel.id ?? widget.classModel.title ?? '')
+                .hashCode,
+          ),
         ],
       ),
     );
@@ -713,6 +872,85 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
+  // ─── Course lessons card ────────────────────────────────────────────────────
+
+  /// Every dated lesson of the course, not a weekly pattern.
+  ///
+  /// A parent buying a course is committing to a fixed set of days, so the
+  /// screen shows exactly which ones rather than "Tue/Thu/Sat" and leaving them
+  /// to work out the dates.
+  Widget _courseLessonsCard(AppColorScheme c, CourseDetail detail) {
+    final lessons = _courseCalendar(detail);
+    final pattern = _courseWeekdays(lessons);
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DetailCardHeader(
+            c: c,
+            icon: Assets.icons.detail.icCalendar,
+            iconGradient: AppGradients.brand,
+            title: 'course_schedule_title'.tr(),
+          ),
+          if (pattern.isNotEmpty) ...[
+            8.verticalSpace,
+            Text(
+              pattern,
+              style: AppText.regular13.copyWith(color: c.textSecondary),
+            ),
+          ],
+          16.verticalSpace,
+          ...List.generate(lessons.length, (i) {
+            final l = lessons[i];
+            return Padding(
+              padding:
+                  EdgeInsets.only(bottom: i == lessons.length - 1 ? 0 : 8.h),
+              child: _CourseLessonRow(c: c, lesson: l, index: i + 1),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  /// The course's own calendar, in date order — every lesson expanded from its
+  /// start date across its weekdays, through to the end date.
+  ///
+  /// Deliberately NOT merged with the trial lessons. A course has two
+  /// independent calendars: the trials come from the activity's schedule and
+  /// commonly run weeks before the course itself starts, so listing them here
+  /// would misstate which days the course runs. The trials are priced and
+  /// counted in the purchase sheet instead.
+  List<CourseLesson> _courseCalendar(CourseDetail detail) {
+    final lessons =
+        detail.courseLessons.where((l) => l.date.isNotEmpty).toList()
+          ..sort((a, b) {
+            final byDate = a.date.compareTo(b.date);
+            return byDate != 0
+                ? byDate
+                : (a.startTime ?? '').compareTo(b.startTime ?? '');
+          });
+    return lessons;
+  }
+
+  /// "Tue, Thu, Sat · 12 lessons" — the shape of the commitment, above the
+  /// dated list. Weekdays are read off the lessons themselves so the summary
+  /// can never disagree with the rows below it.
+  String _courseWeekdays(List<CourseLesson> lessons) {
+    if (lessons.isEmpty) return '';
+    final seen = <int>{};
+    final days = <String>[];
+    for (final l in lessons) {
+      final d = DateTime.tryParse(l.date);
+      if (d == null || !seen.add(d.weekday)) continue;
+      days.add('weekday_short_${d.weekday}'.tr());
+    }
+    final count =
+        'course_lessons_count'.tr(namedArgs: {'count': '${lessons.length}'});
+    return days.isEmpty ? count : '${days.join(', ')} · $count';
+  }
+
   // ─── Description card ───────────────────────────────────────────────────────
   Widget _descriptionCard(AppColorScheme c, String title, String description) {
     return DetailCard(
@@ -724,6 +962,37 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           6.verticalSpace,
           Text(description,
               style: AppText.regular14.copyWith(color: c.textPrimary)),
+        ],
+      ),
+    );
+  }
+
+  // ─── Bulleted section card (important notes / what to bring) ────────────────
+  Widget _bulletCard(
+    AppColorScheme c, {
+    required SvgGenImage icon,
+    required Gradient iconGradient,
+    required String title,
+    required List<String> items,
+  }) {
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DetailCardHeader(
+            c: c,
+            icon: icon,
+            iconGradient: iconGradient,
+            title: title,
+          ),
+          16.verticalSpace,
+          ...List.generate(items.length, (i) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: i == items.length - 1 ? 0 : 8.h),
+              child: _BulletRow(c: c, text: items[i]),
+            );
+          }),
         ],
       ),
     );
@@ -759,21 +1028,47 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 /// "Довольные родители" — decorative avatar group (Figma 60:3421). No real
 /// data source; renders overlapping brand-gradient avatars + a "+N" chip.
 class _HappyParents extends StatelessWidget {
-  const _HappyParents({required this.c});
+  const _HappyParents({required this.c, required this.seed});
   final AppColorScheme c;
+
+  /// Stable per-class seed (from the class id/title) so each class shows a
+  /// different trio of parent photos and a different "+N" — not a fixed +12.
+  final int seed;
 
   @override
   Widget build(BuildContext context) {
-    Widget circle(IconData icon) => Container(
+    final s = seed.abs();
+    // Three distinct real-photo avatars, varied per class (pravatar has 1–70).
+    final photoIds = <int>[
+      s % 70 + 1,
+      (s ~/ 11) % 70 + 1,
+      (s ~/ 23) % 70 + 1,
+    ];
+    // "+N" overflow count varies per class (~8–48) instead of always +12.
+    final extra = 8 + s % 41;
+
+    Widget avatar(int id) => Container(
           width: 40.w,
           height: 40.w,
-          alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: AppGradients.brand,
             border: Border.all(color: c.surface, width: 2),
           ),
-          child: Icon(icon, size: 20.sp, color: Colors.white),
+          child: ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: 'https://i.pravatar.cc/120?img=$id',
+              width: 40.w,
+              height: 40.w,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(color: c.control),
+              errorWidget: (_, __, ___) => Container(
+                color: c.control,
+                alignment: Alignment.center,
+                child: Icon(CupertinoIcons.person_fill,
+                    size: 20.sp, color: c.textSecondary),
+              ),
+            ),
+          ),
         );
 
     return Row(
@@ -783,9 +1078,9 @@ class _HappyParents extends StatelessWidget {
           height: 40.w,
           child: Stack(
             children: [
-              Positioned(left: 0, child: circle(CupertinoIcons.person_fill)),
-              Positioned(left: 28.w, child: circle(CupertinoIcons.person_2_fill)),
-              Positioned(left: 56.w, child: circle(CupertinoIcons.person_fill)),
+              Positioned(left: 0, child: avatar(photoIds[0])),
+              Positioned(left: 28.w, child: avatar(photoIds[1])),
+              Positioned(left: 56.w, child: avatar(photoIds[2])),
               Positioned(
                 left: 84.w,
                 child: Container(
@@ -797,7 +1092,7 @@ class _HappyParents extends StatelessWidget {
                     color: c.control,
                     border: Border.all(color: c.surface, width: 2),
                   ),
-                  child: Text('+12',
+                  child: Text('+$extra',
                       style: AppText.semibold12.copyWith(color: c.textSecondary)),
                 ),
               ),
@@ -858,7 +1153,7 @@ class _PriceRow extends StatelessWidget {
   const _PriceRow({required this.c, required this.row, required this.couponPct});
   final AppColorScheme c;
   final ({String range, String subtitle, num price, SvgGenImage icon}) row;
-  final int couponPct;
+  final num couponPct;
 
   @override
   Widget build(BuildContext context) {
@@ -931,6 +1226,48 @@ class _PriceRow extends StatelessWidget {
   }
 }
 
+/// One line of an important-notes / what-to-bring list.
+class _BulletRow extends StatelessWidget {
+  const _BulletRow({required this.c, required this.text});
+  final AppColorScheme c;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 6.h),
+            child: Container(
+              width: 6.w,
+              height: 6.w,
+              decoration: BoxDecoration(
+                color: c.textSecondary,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          10.horizontalSpace,
+          Expanded(
+            child: Text(
+              text,
+              style: AppText.regular14.copyWith(color: c.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LangChip extends StatelessWidget {
   const _LangChip({required this.c, required this.lang});
   final AppColorScheme c;
@@ -980,4 +1317,238 @@ class _Duration {
   factory _Duration.unbounded(int? minutes) => _Duration._(minutes, true);
   final int? minutes;
   final bool unbounded;
+}
+
+
+// ─── Course lesson row ───────────────────────────────────────────────────────
+
+/// One dated lesson: its position, the date, and the time window.
+class _CourseLessonRow extends StatelessWidget {
+  const _CourseLessonRow({
+    required this.c,
+    required this.lesson,
+    required this.index,
+  });
+
+  final AppColorScheme c;
+  final CourseLesson lesson;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateTime.tryParse(lesson.date);
+    final label = date == null
+        ? lesson.date
+        : '${date.day} ${'month_short_${date.month}'.tr()}, '
+            '${'weekday_short_${date.weekday}'.tr()}';
+    final time = [lesson.startTime, lesson.endTime]
+        .whereType<String>()
+        .where((t) => t.isNotEmpty)
+        .join(' – ');
+
+    return Row(
+      children: [
+        Container(
+          width: 28.w,
+          height: 28.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: c.control, shape: BoxShape.circle),
+          child: Text(
+            '$index',
+            style: AppText.semibold12.copyWith(color: c.textSecondary),
+          ),
+        ),
+        10.horizontalSpace,
+        Expanded(
+          child: Text(
+            label,
+            style: AppText.semibold14.copyWith(color: c.textPrimary),
+          ),
+        ),
+        if (time.isNotEmpty) ...[
+          6.horizontalSpace,
+          Text(time,
+              style: AppText.regular13.copyWith(color: c.textSecondary)),
+        ],
+      ],
+    );
+  }
+}
+
+// ─── Course purchase sheet ───────────────────────────────────────────────────
+
+/// The two things a course sells. Kept as a picker rather than two CTAs on the
+/// page: the choice only matters once the parent has decided to buy, and the
+/// trial's "you still pay full price for the course afterwards" caveat needs
+/// room to be stated rather than hidden.
+class _CoursePurchaseSheet extends StatelessWidget {
+  const _CoursePurchaseSheet({required this.detail});
+
+  final CourseDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final enrolled = detail.enrollment?.isEnrolled == true;
+    final hasTrial = detail.enrollment?.hasTrial == true;
+    final canTrial = detail.trialLessons.isNotEmpty && !enrolled && !hasTrial;
+    final canFull = detail.courseLessons.isNotEmpty && !enrolled &&
+        !detail.isFull;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: c.scaffoldBg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: c.border,
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+              ),
+            ),
+            16.verticalSpace,
+            Text(
+              'course_buy_cta'.tr(),
+              style: AppText.semibold18.copyWith(color: c.textPrimary),
+            ),
+            if (enrolled) ...[
+              12.verticalSpace,
+              Text(
+                'course_already_enrolled'.tr(),
+                style: AppText.regular14.copyWith(color: c.textSecondary),
+              ),
+            ],
+            16.verticalSpace,
+            _option(
+              c,
+              context: context,
+              option: 'trial',
+              title: 'course_trial_title'
+                  .tr(namedArgs: {'count': '${detail.trialLessons.length}'}),
+              subtitle: 'course_trial_subtitle'.tr(),
+              price: detail.trialPrice,
+              enabled: canTrial,
+              disabledLabel: hasTrial ? 'course_trial_bought'.tr() : null,
+            ),
+            10.verticalSpace,
+            _option(
+              c,
+              context: context,
+              option: 'full',
+              title: 'course_full_title'.tr(),
+              subtitle: 'course_lessons_count'
+                  .tr(namedArgs: {'count': '${detail.courseLessons.length}'}),
+              price: detail.coursePrice,
+              enabled: canFull,
+              disabledLabel: detail.isFull
+                  ? 'course_full_no_seats'.tr()
+                  : enrolled
+                      ? 'course_already_enrolled_short'.tr()
+                      : null,
+              // Stated, not hidden: the trial fee is not credited toward this.
+              note: hasTrial ? 'course_upsell_body_short'.tr() : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _option(
+    AppColorScheme c, {
+    required BuildContext context,
+    required String option,
+    required String title,
+    required String subtitle,
+    required num price,
+    required bool enabled,
+    String? disabledLabel,
+    String? note,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? () => Navigator.of(context).pop(option) : null,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(color: c.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(title,
+                        style:
+                            AppText.semibold16.copyWith(color: c.textPrimary)),
+                  ),
+                  8.horizontalSpace,
+                  Text(
+                    price.toRawUzsPrice(),
+                    style: AppText.bold16.copyWith(color: c.primary),
+                  ),
+                ],
+              ),
+              4.verticalSpace,
+              Text(subtitle,
+                  style: AppText.regular13.copyWith(color: c.textSecondary)),
+              if (note != null) ...[
+                6.verticalSpace,
+                Text(note,
+                    style: AppText.regular12.copyWith(color: c.textMuted)),
+              ],
+              if (!enabled && disabledLabel != null) ...[
+                6.verticalSpace,
+                Text(disabledLabel,
+                    style: AppText.regular12.copyWith(color: c.textMuted)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Inert CTA shown in place of "Buy tickets" when a class is hidden from the
+/// catalogue. Deliberately not a disabled [GradientButton]: a greyed-out
+/// gradient reads as "temporarily broken", where this reads as "not yet".
+class _ComingSoonButton extends StatelessWidget {
+  const _ComingSoonButton({required this.c});
+
+  final AppColorScheme c;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 16.h),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: c.controlBorder),
+      ),
+      child: Text(
+        'coming_soon'.tr(),
+        style: AppText.semibold16.copyWith(color: c.textSecondary),
+      ),
+    );
+  }
 }

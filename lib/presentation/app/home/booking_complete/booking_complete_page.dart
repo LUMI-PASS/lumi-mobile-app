@@ -143,18 +143,26 @@ class _BookingCompletePageState extends State<BookingCompletePage>
                         padding: EdgeInsets.symmetric(horizontal: 16.w),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(minHeight: box.maxHeight),
-                          child: Column(
-                            children: [
-                              const Spacer(flex: 2),
-                              _outcome(c, v),
-                              const Spacer(flex: 2),
-                              if (showCard)
-                                _OrderCard(
-                                  result: widget.result!,
-                                  lines: widget.lines,
-                                ),
-                              16.verticalSpace,
-                            ],
+                          // IntrinsicHeight gives the Column a bounded height
+                          // (max of its content and the viewport). Without it the
+                          // SingleChildScrollView hands down an unbounded height
+                          // and the Spacer/Expanded children below throw
+                          // "RenderFlex … unbounded height", which cascades into a
+                          // "RenderBox was not laid out" crash on this page.
+                          child: IntrinsicHeight(
+                            child: Column(
+                              children: [
+                                const Spacer(flex: 2),
+                                _outcome(c, v),
+                                const Spacer(flex: 2),
+                                if (showCard)
+                                  _OrderCard(
+                                    result: widget.result!,
+                                    lines: widget.lines,
+                                  ),
+                                16.verticalSpace,
+                              ],
+                            ),
                           ),
                         ),
                       ),

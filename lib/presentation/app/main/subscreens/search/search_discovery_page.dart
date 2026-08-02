@@ -17,9 +17,15 @@ class SearchDiscoveryPage
     super.key,
     this.initialCategory,
     this.classesOnly = false,
+    this.autofocusSearch = false,
   });
 
   final HomCategory? initialCategory;
+
+  /// Opens with the keyboard already up. Home's header search field comes in
+  /// this way — the tap was the user asking to type. Category taps and
+  /// "see all" don't, since those arrive with the list they wanted.
+  final bool autofocusSearch;
 
   /// Opens as an activities-only list — no Darslar / Ta'lim markazlari chips,
   /// just every activity behind the search field and filters. Home's
@@ -38,6 +44,7 @@ class SearchDiscoveryPage
       state: state,
       onBack: () => context.router.maybePop(),
       classesOnly: classesOnly,
+      autofocusSearch: autofocusSearch,
     );
   }
 }

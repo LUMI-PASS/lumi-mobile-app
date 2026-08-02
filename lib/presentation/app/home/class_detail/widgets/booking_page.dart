@@ -1,5 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/utils/coupon_discount.dart';
+import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -86,9 +88,21 @@ class _BookingPageState extends State<BookingPage> {
   String? _error;
 
   // ─── Coupon discount ──────────────────────────────────────────────────────
-  int get _couponPct {
+  /// Whether the buyer owns an active coupon plan at all. Distinct from
+  /// [_hasCoupon]: owning a plan is what locks promocodes out, even on a class
+  /// the plan can't discount.
+  bool get _hasCouponPlan {
     final s = getIt<Storage>();
-    return s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
+    return s.hasPremium() == true && (s.planDiscountPercentage() ?? 0) > 0;
+  }
+
+  /// The coupon's percentage on THIS class. A coupon is funded from Lumi's
+  /// share of the booking, so it is capped at that share (and is 0 on a class
+  /// whose share is too thin to carry one) — exactly what checkout charges.
+  num get _couponPct {
+    final s = getIt<Storage>();
+    final plan = s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
+    return effectiveCouponPercent(plan, widget.clazz.discountPercentage);
   }
   bool get _hasCoupon => _couponPct > 0;
   num _applyDiscount(num price) =>
@@ -97,8 +111,8 @@ class _BookingPageState extends State<BookingPage> {
 
   // ─── Promocode ─────────────────────────────────────────────────────────────
   // Coupon plans and promocodes never stack, so this whole block is hidden
-  // (and never sent) whenever [_hasCoupon] is true. Only customers without an
-  // active coupon plan can enter a promocode.
+  // (and never sent) whenever [_hasCouponPlan] is true. Only customers without
+  // an active coupon plan can enter a promocode.
   final TextEditingController _promoCtrl = TextEditingController();
   PromocodePreview? _appliedPromo;
   bool _promoLoading = false;
@@ -110,7 +124,7 @@ class _BookingPageState extends State<BookingPage> {
   /// mutually exclusive: the coupon plan auto-discounts (and hides the promo
   /// field); otherwise an applied promocode reduces the total.
   num get _payableTotal {
-    if (_hasCoupon) return _discountedTotal;
+    if (_hasCouponPlan) return _discountedTotal;
     final t = _total - _promoDiscount;
     return t < 0 ? 0 : t;
   }
@@ -121,7 +135,8 @@ class _BookingPageState extends State<BookingPage> {
   /// redirect — it goes straight to the success screen. Restricted to
   /// promocodes: a coupon plan that happens to hit 100% still runs the normal
   /// pay flow.
-  bool get _isFree => !_hasCoupon && _totalTickets > 0 && _payableTotal == 0;
+  bool get _isFree =>
+      !_hasCouponPlan && _totalTickets > 0 && _payableTotal == 0;
 
   /// Validate the entered code against the current subtotal and show a preview
   /// of the new total. The discount is re-checked server-side at checkout.
@@ -138,6 +153,7 @@ class _BookingPageState extends State<BookingPage> {
         code: code,
         subtotal: _total,
         activityId: widget.clazz.id,
+        count: _totalTickets,
       );
       if (!mounted) return;
       setState(() {
@@ -172,6 +188,10 @@ class _BookingPageState extends State<BookingPage> {
         final raw = data['max_order_amount'];
         final amount = raw is num ? raw : num.tryParse('$raw') ?? 0;
         return 'promo_max_order'.tr(args: [amount.toRawUzsPrice()]);
+      }
+      // The class's margin is too thin to fund any promocode discount.
+      if (code == 'promo_not_applicable') {
+        return 'promo_not_applicable'.tr();
       }
       final message = data['message'];
       if (message != null) {
@@ -787,18 +807,24 @@ class _BookingPageState extends State<BookingPage> {
   /// still missing — when the user can't pay yet.
   bool _validateForPayment() {
     if (_error != null) setState(() => _error = null);
+    // Each branch says what is missing as well as shaking the field. A shake
+    // alone reads as "the button is broken" — the buyer taps Pay, no request
+    // goes out, and nothing on screen explains why.
     if (_totalTickets == 0) {
       _flag(_ticketShake);
+      setState(() => _error = 'book_select_tickets'.tr());
       return false;
     }
     if (_selectedDate == null) {
       _flag(_dateShake);
+      setState(() => _error = 'book_pick_date'.tr());
       return false;
     }
     // Required-booking classes carry a per-ticket [start, end]; the backend
     // records the window per booking, so an unset one can't be sent.
     if (_requiresBookingSlot && !_windowsComplete) {
       _flag(_timeShake);
+      setState(() => _error = 'book_select_time'.tr());
       return false;
     }
     // Slot-based classes: the class may not run on the chosen day (slots loaded
@@ -813,6 +839,7 @@ class _BookingPageState extends State<BookingPage> {
       }
       if (slots.isNotEmpty && _selectedSlot == null) {
         _flag(_timeShake);
+        setState(() => _error = 'book_pick_slot'.tr());
         return false;
       }
     }
@@ -846,7 +873,7 @@ class _BookingPageState extends State<BookingPage> {
         ticketDate: _selectedDate!.isoKey,
         // Coupon plan and promocode never stack — only send a code when the
         // user has no coupon plan (the promo field is hidden in that case).
-        promoCode: _hasCoupon ? null : _appliedPromo?.code,
+        promoCode: _hasCouponPlan ? null : _appliedPromo?.code,
         // A saved-card checkout sends only saved_card_id (no provider): the
         // order is created PENDING and charged via the token afterwards.
         paymentProvider: savedCardId != null ? null : provider,
@@ -880,9 +907,13 @@ class _BookingPageState extends State<BookingPage> {
       final low = raw.toLowerCase();
       final isDayUnavailable = low.contains('run on') &&
           (low.contains('available') || low.contains("doesn't") || low.contains('does not'));
+      // A gateway code ("card_not_found", "insufficient_funds") arrives wrapped
+      // in our own prose. Say what the buyer can actually do about it rather
+      // than surfacing the machine string.
+      final gateway = PaymentError.fromText(raw);
       final msg = isDayUnavailable
           ? 'book_no_slots_for_day'.tr()
-          : (raw.isNotEmpty ? raw : 'book_network_error'.tr());
+          : gateway ?? (raw.isNotEmpty ? raw : 'book_network_error'.tr());
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutFailed,
         params: {
@@ -1009,7 +1040,7 @@ class _BookingPageState extends State<BookingPage> {
             '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
       ));
     }
-    if (!_hasCoupon && _promoDiscount > 0) {
+    if (!_hasCouponPlan && _promoDiscount > 0) {
       out.add(_SummaryLine(
         icon: Assets.icons.detail.iconsaxTicketDiscount,
         label: 'promo_discount'.tr(),
@@ -1120,7 +1151,7 @@ class _BookingPageState extends State<BookingPage> {
                               child: _paymentMethodRow(c),
                             ),
                           ],
-                          if (!_hasCoupon) ...[
+                          if (!_hasCouponPlan) ...[
                             20.kh,
                             _promoSection(c),
                           ],
@@ -1433,13 +1464,90 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-  /// Opens the chooser sheet. It only picks a rail (and a card) — the charge
-  /// happens later, from the pay CTA.
+  /// Charges a card typed into the chooser sheet, without closing it first.
+  ///
+  /// This is the same path the pay CTA takes — `checkout(payment_provider:
+  /// card)` then the OTP sheet — run from inside the chooser, because entering
+  /// a card there is the buyer saying "charge this", not "remember this".
+  ///
+  /// Returns null once it's done with (paid, or the buyer dismissed the OTP);
+  /// a message otherwise, which the sheet shows above the card form.
+  Future<String?> _payWithEnteredCard(PaymentCard card) async {
+    // Same guards as the CTA — a missing slot or date must not create an order.
+    // The messages land on the booking page under the sheet, so repeat the
+    // reason here where the buyer is actually looking.
+    if (!_validateForPayment()) {
+      return _error ?? 'book_pick_slot'.tr();
+    }
+    try {
+      // A bound card is charged server-side by its token — no PAN, no OTP.
+      // Anything else is a card typed this session, charged through the Paylov
+      // card checkout with an OTP.
+      if (card.savedCardId != null) {
+        final order = await _runCheckout(savedCardId: card.savedCardId);
+        if (!mounted) return null;
+        final paid = await getIt<OrdersApi>().payOrderWithSavedCard(
+          orderId: order.orderId,
+          cardId: card.savedCardId!,
+        );
+        if (!mounted) return null;
+        if (paid.success) {
+          _completeCardPaid(order);
+          return null;
+        }
+        return paid.message ?? 'pay_generic_error'.tr();
+      }
+
+      final result = await _runCheckout(
+        provider: PaymentRail.card.providerKey,
+        cardNumber: card.pan,
+        expireDate: _toYyMm(card.expiry),
+      );
+      if (!mounted) return null;
+
+      if (result.isCardOtpPending) {
+        final paid = await showCardOtpSheet(
+          context,
+          checkout: result,
+          confirmCard: ({
+            required String transactionId,
+            required String cid,
+            required String otp,
+          }) =>
+              getIt<OrdersApi>().paylovConfirmCard(
+            transactionId: transactionId,
+            cid: cid,
+            otp: otp,
+          ),
+        );
+        if (paid == true && mounted) _completeCardPaid(result);
+        return null;
+      }
+      // The gateway chose to redirect this card instead of an OTP — hand off
+      // exactly like the other rails.
+      if (result.checkoutUrl.isNotEmpty) {
+        await _completeRedirect(result);
+        return null;
+      }
+      // Neither a transaction nor a URL: Paylov's own message if it sent one.
+      return result.paylovMessage ?? 'pay_generic_error'.tr();
+    } on CheckoutFriendlyError catch (e) {
+      return e.message;
+    } catch (e) {
+      // Never surface a raw Dio/stack string to a buyer.
+      return PaymentError.fromDio(e) ?? 'pay_generic_error'.tr();
+    }
+  }
+
+  /// Opens the chooser sheet. Picking a rail returns a selection to pay with
+  /// from the CTA; typing a card charges it inside the sheet
+  /// ([_payWithEnteredCard]).
   Future<void> _openChooser() async {
     final picked = await showPaymentChooser(
       context,
       initial: _payment,
       cards: _cards,
+      onCardSubmitted: _payWithEnteredCard,
     );
     if (picked == null || !mounted) return;
     setState(() {

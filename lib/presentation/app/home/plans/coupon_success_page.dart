@@ -160,8 +160,12 @@ class _CouponSuccessPageState extends State<CouponSuccessPage>
                                     ),
                                   ],
                                 ),
+                                // A ceiling, not a flat rate — the coupon is
+                                // capped at Lumi's share of each class.
                                 child: Text(
-                                  '−${widget.discountPercentage}%',
+                                  'coupon_up_to'.tr(namedArgs: {
+                                    'percent': '${widget.discountPercentage}',
+                                  }),
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 22.sp,
@@ -385,7 +389,9 @@ class _EligibleCountCard extends StatelessWidget {
                       if (count != null) ...[
                         4.kh,
                         Text(
-                          '−$discountPercentage% ${'coupon_discount_label'.tr()}',
+                          'coupon_cond_discount'.tr(
+                            namedArgs: {'percent': '$discountPercentage'},
+                          ),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.6),
                             fontSize: 12.sp,

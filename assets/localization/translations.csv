@@ -225,6 +225,8 @@ booking_cancel_action,Отменить,Bekor qilish,Cancel
 booking_cancelling,Отмена...,Bekor qilinmoqda...,Cancelling...
 booking_cancelled_label,Бронирование отменено,Bron bekor qilindi,Booking cancelled
 booking_cancel_failed,Не удалось отменить: {},Bekor qilinmadi: {},Could not cancel: {}
+booking_refund_auto,"Бронирование отменено. Деньги вернутся на карту в течение нескольких рабочих дней.","Bron bekor qilindi. Pul bir necha ish kuni ichida kartangizga qaytariladi.","Booking cancelled. The money returns to your card within a few working days."
+booking_refund_manual,"Бронирование отменено. Возврат оформит наша команда — мы свяжемся с вами.","Bron bekor qilindi. Pulni jamoamiz qaytaradi — siz bilan bog'lanamiz.","Booking cancelled. Our team will process the refund and contact you."
 booking_could_not_load,Не удалось загрузить бронирование,Bronni yuklab bo‘lmadi,Could not load booking
 booking_retry,Повторить,Qayta urinish,Retry
 amount_due,К оплате,To‘lov uchun,Amount due
@@ -756,6 +758,7 @@ promo_apply,Применить,Qo'llash,Apply
 promo_applied_saved,Сэкономлено {},Tejadingiz {},You saved {}
 promo_invalid,Промокод недействителен,Promokod yaroqsiz,Invalid promo code
 promo_max_order,Промокод действует только для заказов до {},Promokod faqat {} gacha buyurtmalar uchun amal qiladi,This promocode is valid only for orders up to {}
+promo_not_applicable,Этот промокод не действует для этого занятия,Bu promokod ushbu mashg'ulot uchun ishlamaydi,This promo code does not work for this activity
 plan_how_title,Как это работает,Bu qanday ishlaydi,How it works
 plan_step1,Выберите подходящий купон,O'zingizga mos kuponni tanlang,Choose the coupon that fits you
 plan_step2,Оплатите купон и активируйте его,Kuponni to'lang va faollashtiring,Pay for the coupon and activate it
@@ -779,7 +782,7 @@ booking_promocode_discount,Скидка по промокоду,Promokod chegirm
 booking_original_price,Цена без скидки,Chegirmasiz narx,Original price
 coupon_eligible_loading,Считаем занятия...,Mashg'ulotlar hisoblanmoqda...,Counting activities...
 coupon_start_exploring,Начать поиск,Qidiruvni boshlash,Start Exploring
-coupon_activated_subtitle,Ваш план активирован. Бронируйте занятия со скидкой {percent}%.,Rejangiz faollashtirildi. {percent}% chegirma bilan mashg'ulotlarni bron qiling.,Your plan is active. Book activities with {percent}% off.
+coupon_activated_subtitle,Ваш план активирован. Бронируйте занятия со скидкой до {percent}%.,Rejangiz faollashtirildi. {percent}% gacha chegirma bilan mashg'ulotlarni bron qiling.,Your plan is active. Book activities with up to {percent}% off.
 coupon_tab_plans,Тарифы,Tariflar,Plans
 coupon_tab_history,История,Tarix,History
 sub_history_empty,Покупок пока нет,Xaridlar yo'q hali,No purchases yet
@@ -806,7 +809,7 @@ auth_subtitle,Введите номер телефона для входа в а
 confirm_title,Подтверждение,Tasdiqlash,Confirmation
 confirm_code_sent_prefix,Код подтверждения отправлен на номер ,Tasdiqlash kodi ,We sent a confirmation code to 
 confirm_code_sent_suffix,, raqamiga yuborildi,
-greeting,Привет,Salom,Hi
+greeting,Добро пожаловать,Xush kelibsiz,Welcome
 view_all,Посмотреть все,Barchasini ko'rish,View all
 watch,Смотреть,Ko'rish,View
 courses,Курсы,Kurslar,Courses
@@ -945,13 +948,14 @@ map_location_off,Геолокация выключена,Joylashuv o'chirilgan,L
 map_location_denied,Нет доступа к геолокации,Joylashuvga ruxsat yo'q,Location permission denied
 map_location_error,Не удалось определить местоположение,Joylashuvni aniqlab bo'lmadi,Could not get your location
 coupon_one_time_only,Только для разовых занятий,Faqat bir martalik mashg'ulotlar uchun,Only for one-time activities
-coupon_lessons_short,{count} занятий,{count} dars,{count} lessons
+coupon_lessons_short,{count} занятий,{count} mashg'ulot,{count} lessons
 coupon_valid_days_short,{days} дней,{days} kun,{days} days
 profile_prompt_title,Улучшите рекомендации,Tavsiyalarni yaxshilang,Improve your recommendations
 profile_prompt_sub,Добавьте своё имя и ребёнка — подберём занятия точнее,Ismingiz va bolangizni qo'shing — mashg'ulotlarni aniqroq tanlaymiz,Add your name and child so we can filter and recommend better
 profile_prompt_action,Добавить,Qo'shish,Add
-coupon_discount_word,скидка,chegirma,discount
-coupon_for_word,на,uchun,for
+coupon_discount_word,,gacha chegirma,off
+coupon_up_to_prefix,скидка до,,up to
+coupon_for_word,на,,for
 courses_section,Курсы,Kurslar,Courses
 course_trial_title,Пробные уроки ({count}),Sinov darslari ({count}),Trial lessons ({count})
 course_trial_subtitle,Попробуйте курс — оплата за каждый урок отдельно,Kursni sinab ko‘ring — har bir dars alohida to‘lanadi,Try the course — each lesson priced separately
@@ -969,4 +973,28 @@ course_already_enrolled,Вы записаны на этот курс,Siz ushbu k
 course_already_enrolled_short,Вы уже записаны,Siz allaqachon yozilgansiz,Already enrolled
 course_upsell_title,Продолжить весь курс?,Butun kursni davom ettirasizmi?,Continue with the whole course?
 course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.
+course_buy_cta,Купить курс,Kursni sotib olish,Buy the course
+course_schedule_title,Расписание курса,Kurs jadvali,Course schedule
+course_upsell_body_short,Стоимость пробных уроков не вычитается,Sinov darslari narxi ayirilmaydi,The trial fee is not credited
 search_tab_courses,Курсы,Kurslar,Courses
+filter_district,Район,Tuman,District
+district_bektemir,Бектемир,Bektemir,Bektemir
+district_chilonzor,Чиланзар,Chilonzor,Chilonzor
+district_mirobod,Мирабад,Mirobod,Mirobod
+district_mirzo_ulugbek,Мирзо-Улугбек,Mirzo Ulug'bek,Mirzo Ulugbek
+district_olmazor,Алмазар,Olmazor,Olmazor
+district_sergeli,Сергели,Sergeli,Sergeli
+district_shayxontohur,Шайхантахур,Shayxontohur,Shaykhantakhur
+district_uchtepa,Учтепа,Uchtepa,Uchtepa
+district_yakkasaroy,Яккасарай,Yakkasaroy,Yakkasaroy
+district_yangihayot,Янгихаёт,Yangihayot,Yangihayot
+district_yashnobod,Яшнабад,Yashnobod,Yashnobod
+district_yunusobod,Юнусабад,Yunusobod,Yunusobod
+pay_err_card_not_found,"Данные карты неверны. Проверьте номер и срок действия.","Karta ma'lumotlari noto'g'ri. Raqam va amal qilish muddatini tekshiring.","The card details are incorrect. Check the number and expiry date."
+pay_err_insufficient_funds,"Недостаточно средств на карте.","Kartada mablag' yetarli emas.","Insufficient funds on the card."
+pay_err_card_expired,"Срок действия карты истёк.","Karta amal qilish muddati tugagan.","The card has expired."
+pay_err_card_blocked,"Карта заблокирована. Обратитесь в банк.","Karta bloklangan. Bankka murojaat qiling.","The card is blocked. Please contact your bank."
+pay_err_otp_invalid,"Неверный код из SMS. Попробуйте ещё раз.","SMS kod noto'g'ri. Qayta urinib ko'ring.","Wrong SMS code. Please try again."
+pay_err_otp_expired,"Срок действия кода истёк. Запросите новый.","Kod muddati tugagan. Yangisini so'rang.","The code has expired. Request a new one."
+pay_err_limit_exceeded,"Превышен лимит по карте.","Karta limiti oshib ketdi.","The card limit has been exceeded."
+payment_method,Способ оплаты,To'lov usuli,Payment method

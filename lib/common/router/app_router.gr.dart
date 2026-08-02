@@ -307,6 +307,7 @@ abstract class _$AppRouter extends RootStackRouter {
           key: args.key,
           initialCategory: args.initialCategory,
           classesOnly: args.classesOnly,
+          autofocusSearch: args.autofocusSearch,
         ),
       );
     },
@@ -1283,6 +1284,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
     Key? key,
     HomCategory? initialCategory,
     bool classesOnly = false,
+    bool autofocusSearch = false,
     List<PageRouteInfo>? children,
   }) : super(
           SearchDiscoveryRoute.name,
@@ -1290,6 +1292,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
             key: key,
             initialCategory: initialCategory,
             classesOnly: classesOnly,
+            autofocusSearch: autofocusSearch,
           ),
           initialChildren: children,
         );
@@ -1305,6 +1308,7 @@ class SearchDiscoveryRouteArgs {
     this.key,
     this.initialCategory,
     this.classesOnly = false,
+    this.autofocusSearch = false,
   });
 
   final Key? key;
@@ -1313,9 +1317,11 @@ class SearchDiscoveryRouteArgs {
 
   final bool classesOnly;
 
+  final bool autofocusSearch;
+
   @override
   String toString() {
-    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, classesOnly: $classesOnly}';
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, classesOnly: $classesOnly, autofocusSearch: $autofocusSearch}';
   }
 }
 

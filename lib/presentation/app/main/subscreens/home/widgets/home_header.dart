@@ -13,8 +13,10 @@ import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 
-/// Home top bar — avatar + greeting on the left, notification and search
-/// controls on the right (Figma `User bar`).
+/// Home top bar — avatar + greeting with the notification bell on the right,
+/// and a tappable search field underneath (Figma `User bar`). The field is a
+/// button, not an input: tapping it opens the search screen, which owns the
+/// real `TextField`.
 class HomeHeader extends StatelessWidget {
   const HomeHeader({
     super.key,
@@ -32,61 +34,106 @@ class HomeHeader extends StatelessWidget {
     final c = context.colors;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onProfileTap,
-              child: Row(
-                children: [
-                  ValueListenableBuilder<String?>(
-                    valueListenable: parentAvatarNotifier,
-                    builder: (_, __, ___) => Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: c.controlBorder),
-                      ),
-                      child: UserAvatar(
-                        file: parentAvatarFile(),
-                        size: 40,
-                        shape: BoxShape.rectangle,
-                        borderRadius: BorderRadius.circular(16.r),
-                        background: c.control,
-                        iconColor: c.textSecondary,
-                      ),
-                    ),
-                  ),
-                  8.horizontalSpace,
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${'greeting'.tr()},',
-                          style: AppText.regular13
-                              .copyWith(color: AppColors.greeting),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onProfileTap,
+                  child: Row(
+                    children: [
+                      ValueListenableBuilder<String?>(
+                        valueListenable: parentAvatarNotifier,
+                        builder: (_, __, ___) => Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: c.controlBorder),
+                          ),
+                          child: UserAvatar(
+                            file: parentAvatarFile(),
+                            size: 40,
+                            shape: BoxShape.rectangle,
+                            borderRadius: BorderRadius.circular(16.r),
+                            background: c.control,
+                            iconColor: c.textSecondary,
+                          ),
                         ),
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.semibold16
-                              .copyWith(color: c.textPrimary),
+                      ),
+                      8.horizontalSpace,
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${'greeting'.tr()},',
+                              style: AppText.regular13
+                                  .copyWith(color: AppColors.greeting),
+                            ),
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppText.semibold16
+                                  .copyWith(color: c.textPrimary),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              8.horizontalSpace,
+              const _NotificationButton(),
+            ],
+          ),
+          8.verticalSpace,
+          _SearchFieldButton(onTap: onSearchTap),
+        ],
+      ),
+    );
+  }
+}
+
+/// Looks like the search screen's field, behaves like a button.
+class _SearchFieldButton extends StatelessWidget {
+  const _SearchFieldButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        height: 40.h,
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: c.controlBorder),
+        ),
+        child: Row(
+          children: [
+            HomeIcon(Assets.icons.home.search,
+                size: 16, color: c.textPlaceholder),
+            8.horizontalSpace,
+            Expanded(
+              child: Text(
+                'search_hint'.tr(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.regular14.copyWith(color: c.textPlaceholder),
               ),
             ),
-          ),
-          8.horizontalSpace,
-          const _NotificationButton(),
-          8.horizontalSpace,
-          _ControlButton(icon: Assets.icons.home.search, onTap: onSearchTap),
-        ],
+          ],
+        ),
       ),
     );
   }

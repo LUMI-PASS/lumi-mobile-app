@@ -12,6 +12,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -344,9 +345,14 @@ class _PriceText extends StatelessWidget {
         : v.toRawUzsPrice();
 
     final storage = getIt<Storage>();
-    final planPct = storage.planDiscountPercentage() ?? 0;
     final hasPremium = storage.hasPremium() == true;
-    if (!hasPremium || planPct <= 0) {
+    // The coupon can't cut deeper than Lumi's share of this class, so the
+    // preview is capped the same way the charge will be.
+    final planPct = effectiveCouponPercent(
+      hasPremium ? (storage.planDiscountPercentage() ?? 0) : 0,
+      hc?.discountPercentage,
+    );
+    if (planPct <= 0) {
       return Text(label(effectivePrice), style: baseStyle);
     }
 

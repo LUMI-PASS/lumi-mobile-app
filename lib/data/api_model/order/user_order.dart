@@ -11,6 +11,11 @@ import 'package:lumi_pass/common/utils/image_url.dart';
 class UserOrder {
   final String id;
   final String status; // pending | paid | canceled
+
+  /// Which rail the buyer paid on: payme | click | uzum | paylov | card, or
+  /// `paycom` for the direct Payme flow. Null on an order that was never
+  /// charged (free) or predates the field.
+  final String? paymentProvider;
   final num totalAmount;
   final num paidAmount;
   /// Original subtotal before any coupon/promocode discount. Equals
@@ -37,6 +42,7 @@ class UserOrder {
   const UserOrder({
     required this.id,
     required this.status,
+    this.paymentProvider,
     required this.totalAmount,
     required this.paidAmount,
     required this.subtotalAmount,
@@ -118,6 +124,9 @@ class UserOrder {
     return UserOrder(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       status: json['status']?.toString() ?? 'pending',
+      paymentProvider: (json['paylov_provider'] ??
+              (json['paycom_transaction_id'] != null ? 'paycom' : null))
+          ?.toString(),
       totalAmount: totalAmt,
       paidAmount: (json['paid_amount'] as num?) ?? 0,
       subtotalAmount: subtotalAmt,

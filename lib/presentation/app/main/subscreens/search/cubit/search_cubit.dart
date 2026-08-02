@@ -46,6 +46,18 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   static List<HomCategory> cachedCategories = [];
 
   static const int _pageLimit = 10;
+
+  /// The map has no "load more" — it plots every centre at once, so it asks for
+  /// them in big pages instead of ten at a time, and walks the rest.
+  static const int _mapPageLimit = 100;
+
+  /// Backstop on the page walk, so a backend that keeps reporting more pages
+  /// can't spin here forever.
+  static const int _maxMapPages = 20;
+
+  /// Set by the map: branch fetches must return *all* centres, not page one.
+  bool _allBranches = false;
+
   Timer? _debounce;
 
   /// [tab] selects which result set to load first — 0 classes, 1 branches. The
@@ -55,8 +67,17 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   /// [category] is seeded *before* the first fetch so that opening search from
   /// a category costs one filtered request, not an unfiltered one followed by
   /// a filtered one (which also flashed the wrong results on screen).
-  Future<void> init({int tab = 0, HomCategory? category}) async {
+  ///
+  /// [allBranches] makes every branch fetch (including the ones a category chip
+  /// triggers later) load all pages instead of the first — the map plots pins,
+  /// so a paged list would silently hide most centres.
+  Future<void> init({
+    int tab = 0,
+    HomCategory? category,
+    bool allBranches = false,
+  }) async {
     _lastLang = currentLang;
+    _allBranches = allBranches;
     build((b) => b.copyWith(
           isLoading: true,
           activeTab: tab,
@@ -245,6 +266,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
                 maxPrice: maxPrice,
                 lat: _lat,
                 lng: _lng,
+                districts: filter?.districts.toList(),
               );
 
         _classesContent = tab;
@@ -276,7 +298,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
       } else {
         final result = await _repo.getDiscoveryBranches(
           page: page,
-          limit: _pageLimit,
+          limit: _allBranches ? _mapPageLimit : _pageLimit,
           search: search,
           categoryId: buildable.selectedCategory?.id,
           lat: _lat,
@@ -303,6 +325,16 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
                 branchesTotalPages: result.totalPages,
                 branchesLoaded: true,
               ));
+
+          // Map mode: walk the remaining pages so every centre gets a pin. Each
+          // page appends, so the map fills in as they land rather than waiting
+          // for the last one.
+          if (_allBranches) {
+            final lastPage = result.totalPages.clamp(1, _maxMapPages);
+            for (var next = 2; next <= lastPage; next++) {
+              await _fetchTab(tab, page: next, append: true);
+            }
+          }
         }
       }
     } on DioException catch (error) {
@@ -325,6 +357,9 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     if (f.gender != Gender.any) count++;
     if (f.pricePreset == PricePreset.custom) count++;
     if (f.datePreset != DatePreset.none) count++;
+    // Districts count once however many are ticked — the badge says "how many
+    // filters are on", not "how many values did you pick".
+    if (f.districts.isNotEmpty) count++;
     return count;
   }
 
