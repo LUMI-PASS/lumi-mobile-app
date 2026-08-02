@@ -1582,7 +1582,10 @@ class _BookingPageState extends State<BookingPage> {
       context,
       initial: _payment,
       cards: _cards,
-      onCardSubmitted: _payWithEnteredCard,
+      // Paying by card isn't live yet — the rail shows, but inert. With the
+      // rail disabled the card form is unreachable, so no charge handler.
+      cardsComingSoon: !kCardPaymentsEnabled,
+      onCardSubmitted: kCardPaymentsEnabled ? _payWithEnteredCard : null,
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -1614,6 +1617,10 @@ class _BookingPageState extends State<BookingPage> {
       if (mounted) setState(() => _payment = PaymentSelection(rail: rail!));
       return;
     }
+    // A card was the last method used before the rail went dark. Restoring it
+    // would pre-select a rail the chooser no longer offers, so leave the buyer
+    // with no selection and let them pick again.
+    if (!kCardPaymentsEnabled) return;
     final savedId = storage.lastSavedCardId();
     if (savedId == null || savedId.isEmpty) return;
     try {

@@ -16,6 +16,16 @@ import 'package:lumi_pass/data/api_model/order/saved_card.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 
+/// Whether paying by card is live.
+///
+/// The rail is built end-to-end — chooser form → `checkout(provider: card)` →
+/// OTP confirm, plus bound-card token payment — but it stays dark until the
+/// merchant is registered on WLCM's side. While it's false the card row still
+/// renders in the chooser, dimmed, with a "coming soon" badge: the buyer should
+/// see that paying by card is on the way, but can't pick it. Flip to true to
+/// light the rail up; nothing else needs to change.
+const bool kCardPaymentsEnabled = false;
+
 /// Confirms the OTP for a Paylov card payment.
 typedef PaymentConfirmCard = Future<PaylovCardConfirmResult> Function({
   required String transactionId,
