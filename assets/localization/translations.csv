@@ -759,6 +759,10 @@ promo_applied_saved,Сэкономлено {},Tejadingiz {},You saved {}
 promo_invalid,Промокод недействителен,Promokod yaroqsiz,Invalid promo code
 promo_max_order,Промокод действует только для заказов до {},Promokod faqat {} gacha buyurtmalar uchun amal qiladi,This promocode is valid only for orders up to {}
 promo_not_applicable,Этот промокод не действует для этого занятия,Bu promokod ushbu mashg'ulot uchun ishlamaydi,This promo code does not work for this activity
+promo_already_used,Вы уже использовали этот промокод,Siz bu promokoddan allaqachon foydalangansiz,You have already used this promo code
+promo_one_ticket_only,Промокод действует только на один билет,Promokod faqat bitta chiptaga amal qiladi,This promo code can only be used for one ticket
+promo_ticket_limit,Промокод действует максимум на {} билетов,Promokod ko'pi bilan {} ta chiptaga amal qiladi,This promo code can only be used for up to {} tickets
+promo_course_only,Промокод не действует для курсов,Promokod kurslar uchun amal qilmaydi,Promo codes cannot be used for courses
 plan_how_title,Как это работает,Bu qanday ishlaydi,How it works
 plan_step1,Выберите подходящий купон,O'zingizga mos kuponni tanlang,Choose the coupon that fits you
 plan_step2,Оплатите купон и активируйте его,Kuponni to'lang va faollashtiring,Pay for the coupon and activate it

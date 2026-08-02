@@ -18,6 +18,7 @@ import 'package:lumi_pass/common/widget/shaker.dart';
 import 'package:lumi_pass/common/widget/time_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/data/api_model/order/promo_error_code.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
@@ -179,26 +180,60 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   /// Turns a backend promocode error into a localized, user-facing message.
-  /// Known structured errors (with an `error_code`) are localized here; anything
-  /// else falls back to the server message, then a generic invalid string.
+  /// Known structured errors (tagged with an `error_code`) are localized here;
+  /// anything else falls back to the server message, then a generic invalid
+  /// string.
   String _promoErrorMessage(dynamic data) {
-    if (data is Map) {
-      final code = data['error_code'];
-      if (code == 'promo_max_order') {
+    if (data is! Map) return 'promo_invalid'.tr();
+    final rawCode = data['error_code'];
+    final serverMessage = _serverMessage(data['message']);
+
+    switch (PromoErrorCode.fromKey(rawCode is String ? rawCode : null)) {
+      case PromoErrorCode.maxOrder:
         final raw = data['max_order_amount'];
         final amount = raw is num ? raw : num.tryParse('$raw') ?? 0;
         return 'promo_max_order'.tr(args: [amount.toRawUzsPrice()]);
-      }
       // The class's margin is too thin to fund any promocode discount.
-      if (code == 'promo_not_applicable') {
+      case PromoErrorCode.notApplicable:
         return 'promo_not_applicable'.tr();
-      }
-      final message = data['message'];
-      if (message != null) {
-        return message is List ? message.join(', ') : message.toString();
-      }
+      case PromoErrorCode.courseOnly:
+        return 'promo_course_only'.tr();
+      // Nothing left to redeem for this buyer.
+      case PromoErrorCode.alreadyUsed:
+        return 'promo_already_used'.tr();
+      // Uses remain, but fewer than the tickets in this order. Usage is counted
+      // by tickets, so name the cap — the buyer can still book a smaller order.
+      case PromoErrorCode.ticketLimit:
+        final raw = data['ticket_limit'];
+        final limit = raw is num ? raw.toInt() : int.tryParse('$raw') ?? 1;
+        return limit <= 1
+            ? 'promo_one_ticket_only'.tr()
+            : 'promo_ticket_limit'.tr(args: ['$limit']);
+      case PromoErrorCode.unknown:
+        return _untaggedUsageMessage(serverMessage) ??
+            serverMessage ??
+            'promo_invalid'.tr();
     }
-    return 'promo_invalid'.tr();
+  }
+
+  /// The backend's own `message`, which is either a string or a list of
+  /// validation strings.
+  static String? _serverMessage(dynamic message) {
+    if (message == null) return null;
+    return message is List ? message.join(', ') : message.toString();
+  }
+
+  /// Servers that predate the tagged usage errors send the limit rejections as
+  /// plain English prose with no `error_code`. Match their wording so an older
+  /// backend still shows a localized message instead of leaking English.
+  static String? _untaggedUsageMessage(String? message) {
+    if (message == null) return null;
+    final m = message.toLowerCase();
+    if (m.contains('usage limit reached') ||
+        m.contains('already used this promocode')) {
+      return 'promo_already_used'.tr();
+    }
+    return null;
   }
 
   void _removePromo() {
