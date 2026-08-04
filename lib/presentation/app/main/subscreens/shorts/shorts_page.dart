@@ -4,16 +4,21 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:focus_detector/focus_detector.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import 'shorts_feed.dart';
@@ -380,7 +385,12 @@ class _ShortSlide extends StatelessWidget {
   // exist, show the lowest paid price; show a "from" price when there are
   // multiple tiers. Falls back to the flat price. Returns null when there's
   // nothing meaningful to show.
-  String? _priceLabel() {
+  //
+  // Also mirrors the home cards' coupon preview: when the buyer has an active
+  // plan, [discountedLabel] carries the discounted price to show alongside
+  // the struck-through original, capped the same way the charge will be —
+  // this page was the one place still showing the raw price.
+  ({String label, String? discountedLabel})? _priceInfo(BuildContext context) {
     final snap = ClassPricingCache.get(hc.id);
     final hasFreeAndPaid =
         snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
@@ -391,11 +401,23 @@ class _ShortSlide extends StatelessWidget {
             : (hc.price ?? 0);
     final showFrom = hasFreeAndPaid ||
         (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
-    if (effectivePrice < 100) return 'price_free'.tr();
-    if (showFrom) {
-      return 'price_from'.tr(args: [effectivePrice.toRawUzsPrice()]);
+    if (effectivePrice < 100) {
+      return (label: 'price_free'.tr(), discountedLabel: null);
     }
-    return effectivePrice.toRawUzsPrice();
+
+    String fmt(num v) =>
+        showFrom ? 'price_from'.tr(args: [v.toRawUzsPrice()]) : v.toRawUzsPrice();
+
+    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final planPct = effectiveCouponPercent(
+      app.hasPremium ? app.planDiscountPercentage : 0,
+      hc.discountPercentage,
+      isCourse: hc.isCourse ?? false,
+    );
+    if (planPct <= 0) return (label: fmt(effectivePrice), discountedLabel: null);
+
+    final discounted = effectivePrice * (1 - planPct / 100);
+    return (label: fmt(effectivePrice), discountedLabel: fmt(discounted));
   }
 
   @override
@@ -552,7 +574,7 @@ class _ShortSlide extends StatelessWidget {
             ],
           ),
         ),
-        if (_priceLabel() != null)
+        if (_priceInfo(context) != null)
           Positioned(
             right: 12.w,
             bottom: 32.h + bottomInset,
@@ -562,14 +584,43 @@ class _ShortSlide extends StatelessWidget {
                 color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(14.r),
               ),
-              child: Text(
-                _priceLabel()!,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2E3D5D),
-                ),
-              ),
+              child: Builder(builder: (context) {
+                final info = _priceInfo(context)!;
+                if (info.discountedLabel == null) {
+                  return Text(
+                    info.label,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF2E3D5D),
+                    ),
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      info.label,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF9AA2B1),
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: const Color(0xFF9AA2B1),
+                      ),
+                    ),
+                    Text(
+                      info.discountedLabel!,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.green,
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ),
           ),
         if (showSwipeHint)

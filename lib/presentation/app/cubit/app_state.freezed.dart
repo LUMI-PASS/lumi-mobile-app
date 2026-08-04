@@ -15,13 +15,22 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$AppBuildable {}
+mixin _$AppBuildable {
+  bool get hasPremium => throw _privateConstructorUsedError;
+  int get planDiscountPercentage => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $AppBuildableCopyWith<AppBuildable> get copyWith =>
+      throw _privateConstructorUsedError;
+}
 
 /// @nodoc
 abstract class $AppBuildableCopyWith<$Res> {
   factory $AppBuildableCopyWith(
           AppBuildable value, $Res Function(AppBuildable) then) =
       _$AppBuildableCopyWithImpl<$Res, AppBuildable>;
+  @useResult
+  $Res call({bool hasPremium, int planDiscountPercentage});
 }
 
 /// @nodoc
@@ -33,13 +42,35 @@ class _$AppBuildableCopyWithImpl<$Res, $Val extends AppBuildable>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? hasPremium = null,
+    Object? planDiscountPercentage = null,
+  }) {
+    return _then(_value.copyWith(
+      hasPremium: null == hasPremium
+          ? _value.hasPremium
+          : hasPremium // ignore: cast_nullable_to_non_nullable
+              as bool,
+      planDiscountPercentage: null == planDiscountPercentage
+          ? _value.planDiscountPercentage
+          : planDiscountPercentage // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
 }
 
 /// @nodoc
-abstract class _$$AppBuildableImplCopyWith<$Res> {
+abstract class _$$AppBuildableImplCopyWith<$Res>
+    implements $AppBuildableCopyWith<$Res> {
   factory _$$AppBuildableImplCopyWith(
           _$AppBuildableImpl value, $Res Function(_$AppBuildableImpl) then) =
       __$$AppBuildableImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({bool hasPremium, int planDiscountPercentage});
 }
 
 /// @nodoc
@@ -49,30 +80,79 @@ class __$$AppBuildableImplCopyWithImpl<$Res>
   __$$AppBuildableImplCopyWithImpl(
       _$AppBuildableImpl _value, $Res Function(_$AppBuildableImpl) _then)
       : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? hasPremium = null,
+    Object? planDiscountPercentage = null,
+  }) {
+    return _then(_$AppBuildableImpl(
+      hasPremium: null == hasPremium
+          ? _value.hasPremium
+          : hasPremium // ignore: cast_nullable_to_non_nullable
+              as bool,
+      planDiscountPercentage: null == planDiscountPercentage
+          ? _value.planDiscountPercentage
+          : planDiscountPercentage // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
 }
 
 /// @nodoc
 
 class _$AppBuildableImpl implements _AppBuildable {
-  const _$AppBuildableImpl();
+  const _$AppBuildableImpl(
+      {this.hasPremium = false, this.planDiscountPercentage = 0});
+
+  @override
+  @JsonKey()
+  final bool hasPremium;
+  @override
+  @JsonKey()
+  final int planDiscountPercentage;
 
   @override
   String toString() {
-    return 'AppBuildable()';
+    return 'AppBuildable(hasPremium: $hasPremium, planDiscountPercentage: $planDiscountPercentage)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$AppBuildableImpl);
+        (other.runtimeType == runtimeType &&
+            other is _$AppBuildableImpl &&
+            (identical(other.hasPremium, hasPremium) ||
+                other.hasPremium == hasPremium) &&
+            (identical(other.planDiscountPercentage, planDiscountPercentage) ||
+                other.planDiscountPercentage == planDiscountPercentage));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode =>
+      Object.hash(runtimeType, hasPremium, planDiscountPercentage);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AppBuildableImplCopyWith<_$AppBuildableImpl> get copyWith =>
+      __$$AppBuildableImplCopyWithImpl<_$AppBuildableImpl>(this, _$identity);
 }
 
 abstract class _AppBuildable implements AppBuildable {
-  const factory _AppBuildable() = _$AppBuildableImpl;
+  const factory _AppBuildable(
+      {final bool hasPremium,
+      final int planDiscountPercentage}) = _$AppBuildableImpl;
+
+  @override
+  bool get hasPremium;
+  @override
+  int get planDiscountPercentage;
+  @override
+  @JsonKey(ignore: true)
+  _$$AppBuildableImplCopyWith<_$AppBuildableImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc

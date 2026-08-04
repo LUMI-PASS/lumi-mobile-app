@@ -8,7 +8,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 
 @RoutePage()
 class CouponsPage extends StatefulWidget {
@@ -26,6 +29,11 @@ class _CouponsPageState extends State<CouponsPage>
   bool _isLoading = false;
   _PromoResult? _result;
   String? _errorMessage;
+
+  /// Payment method the buyer means to redeem this coupon with, picked from
+  /// the same rail chooser the order checkout uses. Nothing is charged here —
+  /// redeeming still happens at checkout, per `coupon_apply_at_checkout`.
+  PaymentSelection? _payment;
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -106,6 +114,18 @@ class _CouponsPageState extends State<CouponsPage>
     }
   }
 
+  /// Opens the same rail chooser used at order checkout. It only picks — it
+  /// never charges — so this stays a plain selection stored in state.
+  Future<void> _choosePayment() async {
+    final picked = await showPaymentChooser(
+      context,
+      initial: _payment,
+      cardsComingSoon: !kCardPaymentsEnabled,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _payment = picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = context.colors.primary;
@@ -135,7 +155,16 @@ class _CouponsPageState extends State<CouponsPage>
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
                       child: _result != null
-                          ? _SuccessCard(result: _result!, primary: primary)
+                          ? Column(
+                              children: [
+                                _SuccessCard(result: _result!, primary: primary),
+                                16.kh,
+                                _PaymentMethodSection(
+                                  payment: _payment,
+                                  onTap: _choosePayment,
+                                ),
+                              ],
+                            )
                           : _ErrorCard(message: _errorMessage!),
                     ),
                   ),
@@ -591,6 +620,54 @@ class _SuccessCard extends StatelessWidget {
       return '${s.substring(0, s.length - 3)} ${s.substring(s.length - 3)}';
     }
     return v.toInt().toString();
+  }
+}
+
+// ─── Payment method row ─────────────────────────────────────────────────────
+
+/// The rail picker row, shown once a coupon validates — the same [PillCard]
+/// shape and [showPaymentChooser] sheet the order checkout uses (Payme,
+/// Click, Uzum, card), so the buyer picks how they mean to pay before they
+/// ever reach checkout.
+class _PaymentMethodSection extends StatelessWidget {
+  const _PaymentMethodSection({required this.payment, required this.onTap});
+
+  final PaymentSelection? payment;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PillCard(
+      onTap: onTap,
+      leading: PillIconBadge(child: _leading(payment)),
+      child: PillCaption(
+        title: payment == null ? 'coupon_pick_payment'.tr() : payment!.rail.brandName,
+        subtitle: 'coupon_pay_method_label'.tr(),
+        captionFirst: true,
+        titleColor: payment == null ? AppColors.greeting : null,
+      ),
+      trailing: PillActionChip(
+        label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  /// Rail brand mark, or a neutral card glyph while nothing is picked yet
+  /// (same square marks the booking row uses — the pill badge is too narrow
+  /// for the full wordmarks).
+  Widget _leading(PaymentSelection? p) {
+    switch (p?.rail) {
+      case PaymentRail.payme:
+        return Assets.images.pay.paymeLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.click:
+        return Assets.images.pay.clickLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.uzum:
+        return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.card:
+      case null:
+        return Icon(CupertinoIcons.creditcard, size: 20.sp, color: AppColors.ink);
+    }
   }
 }
 

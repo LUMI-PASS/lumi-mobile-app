@@ -4,6 +4,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
@@ -13,13 +14,15 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/adaptive_card.dart';
+import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
-import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/plans/coupon_success_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
 import 'package:shimmer/shimmer.dart';
@@ -48,6 +51,10 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
   bool _isLoading = true;
   String? _purchasingId;
   int _selected = 0;
+
+  /// Rail the buyer picked from the same chooser the order checkout uses.
+  /// Nothing is picked for them — buying is blocked until this is set.
+  PaymentSelection? _payment;
 
   /// A redirect checkout the buyer was sent off to pay. The rails open an
   /// external app, so the only signal we get back is the OS resuming us — at
@@ -137,33 +144,57 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
 
   void _openHistory() => context.router.push(const PaymentHistoryRoute());
 
-  /// Buy CTA. Coupons are sold on Payme only, so there is no rail to choose —
-  /// tapping buy goes straight to the charge.
-  Future<void> _purchase(PremiumPlan plan) async {
-    if (plan.id == null || _purchasingId != null) return;
-    await _pay(plan);
+  /// Opens the same rail chooser the order checkout uses, then immediately
+  /// checks out with whatever the buyer picked — picking a rail here IS the
+  /// instruction to pay, not just a preference to remember for later.
+  Future<void> _choosePaymentAndPay(PremiumPlan? plan) async {
+    if (plan?.id == null || _purchasingId != null) return;
+    final picked = await showPaymentChooser(
+      context,
+      initial: _payment,
+      cardsComingSoon: !kCardPaymentsEnabled,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _payment = picked);
+    await _pay(plan!, picked);
   }
 
-  /// Charges the plan through direct Payme (Paycom).
-  ///
-  /// Omitting `payment_provider` is what selects that path: with it set, the
-  /// backend routes the order through the Paylov (WLCM) aggregator instead —
-  /// which is what activity bookings do. Coupons deliberately do not, so this
-  /// call passes the tariff alone. Paycom always answers with a checkout URL,
-  /// so there is no in-app OTP step here.
-  Future<void> _pay(PremiumPlan plan) async {
+  /// Buy CTA: pays with the rail already picked, or opens the chooser (and
+  /// pays right after) when nothing was picked yet.
+  Future<void> _purchase(PremiumPlan plan) async {
+    if (plan.id == null || _purchasingId != null) return;
+    final payment = _payment;
+    if (payment != null) {
+      await _pay(plan, payment);
+      return;
+    }
+    await _choosePaymentAndPay(plan);
+  }
+
+  /// Charges the plan through the picked rail via Paylov (WLCM) — the same
+  /// aggregator activity bookings pay through. Payme/Click/Uzum all answer
+  /// with a checkout URL to redirect to; the card rail can't reach here while
+  /// [kCardPaymentsEnabled] is false, since the chooser shows it disabled.
+  Future<void> _pay(PremiumPlan plan, PaymentSelection payment) async {
     setState(() => _purchasingId = plan.id);
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.planPurchaseStarted,
       params: {
         'plan_id': plan.id!,
-        'payment_provider': 'payme',
+        'payment_provider': payment.rail.providerKey,
         if (plan.discountPercentage != null)
           'discount_percentage': plan.discountPercentage!.round(),
       },
     );
     try {
-      final result = await _api.checkoutSubscription(tariffId: plan.id!);
+      final result = await _api.checkoutSubscription(
+        tariffId: plan.id!,
+        paymentProvider: payment.rail.providerKey,
+        // Every reachable rail here is a redirect one (card can't be picked
+        // while kCardPaymentsEnabled is false) — WLCM needs to know where to
+        // bounce the buyer back to after paying, same as the booking checkout.
+        returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
+      );
       if (!mounted) return;
       setState(() => _purchasingId = null);
 
@@ -176,6 +207,28 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
       if (!mounted) return;
       setState(() => _purchasingId = null);
       _showError(e.toString());
+    }
+  }
+
+  /// Glyph inside the payment row's [PillIconBadge]: the rail's brand mark, or
+  /// a neutral card icon when nothing is picked. Mirrors the booking screen's
+  /// `_paymentLeading` — square marks, since the round badge is too narrow for
+  /// the full wordmarks.
+  Widget _paymentLeading(PaymentSelection? payment) {
+    switch (payment?.rail) {
+      case PaymentRail.payme:
+        return Assets.images.pay.paymeLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.click:
+        return Assets.images.pay.clickLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.uzum:
+        return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.card:
+      case null:
+        return Assets.icons.icCard.svg(
+          width: 20.w,
+          height: 20.w,
+          colorFilter: const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+        );
     }
   }
 
@@ -228,10 +281,10 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
         if (discount != null) 'discount_percentage': discount,
       },
     );
-    await getIt<Storage>().hasPremium.set(true);
-    if (discount != null) {
-      await getIt<Storage>().planDiscountPercentage.set(discount);
-    }
+    // Goes through the cubit (not a direct Storage write) so every card and
+    // the detail page — which now watch AppCubit's state — reflect the new
+    // plan immediately, not just on the next cold start.
+    await getIt<AppCubit>().syncSubscription();
     if (!mounted) return;
 
     await Navigator.of(context).push(
@@ -367,6 +420,41 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
                         12.kh,
                         _Dots(count: _plans.length, active: _selected),
                       ],
+                      32.kh,
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'book_payment_method'.tr(),
+                              style: AppText.semibold18
+                                  .copyWith(color: context.colors.textSection),
+                            ),
+                            16.kh,
+                            PillCard(
+                              onTap: () => _choosePaymentAndPay(plan),
+                              leading:
+                                  PillIconBadge(child: _paymentLeading(_payment)),
+                              child: PillCaption(
+                                title: _payment == null
+                                    ? 'book_pick_payment'.tr()
+                                    : _payment!.rail.brandName,
+                                subtitle: 'book_pay_method_label'.tr(),
+                                captionFirst: true,
+                                titleColor:
+                                    _payment == null ? AppColors.greeting : null,
+                              ),
+                              trailing: PillActionChip(
+                                label: _payment == null
+                                    ? 'book_choose'.tr()
+                                    : 'book_change'.tr(),
+                                onTap: () => _choosePaymentAndPay(plan),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       32.kh,
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16.w),

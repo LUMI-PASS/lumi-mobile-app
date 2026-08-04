@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
@@ -28,6 +29,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
@@ -92,18 +94,25 @@ class _BookingPageState extends State<BookingPage> {
   /// Whether the buyer owns an active coupon plan at all. Distinct from
   /// [_hasCoupon]: owning a plan is what locks promocodes out, even on a class
   /// the plan can't discount.
+  ///
+  /// Reads `AppCubit`'s watched Cubit state, not a one-off `Storage` read, so
+  /// this rebuilds the instant a purchase completes or a sync resolves.
   bool get _hasCouponPlan {
-    final s = getIt<Storage>();
-    return s.hasPremium() == true && (s.planDiscountPercentage() ?? 0) > 0;
+    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    return app.hasPremium && app.planDiscountPercentage > 0;
   }
 
   /// The coupon's percentage on THIS class. A coupon is funded from Lumi's
   /// share of the booking, so it is capped at that share (and is 0 on a class
   /// whose share is too thin to carry one) — exactly what checkout charges.
   num get _couponPct {
-    final s = getIt<Storage>();
-    final plan = s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
-    return effectiveCouponPercent(plan, widget.clazz.discountPercentage);
+    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final plan = app.hasPremium ? app.planDiscountPercentage : 0;
+    return effectiveCouponPercent(
+      plan,
+      widget.clazz.discountPercentage,
+      isCourse: widget.clazz.isCourse,
+    );
   }
   bool get _hasCoupon => _couponPct > 0;
   num _applyDiscount(num price) =>

@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
@@ -15,6 +16,7 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
@@ -28,6 +30,9 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
@@ -61,6 +66,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   CourseDetail? _course;
   bool _buyingCourse = false;
 
+  /// The buyer's payment choice for a course purchase, restored from the last
+  /// checkout and remembered across this page's lifetime — same pattern as
+  /// [BookingPage], so a returning buyer isn't made to repick every time.
+  PaymentSelection? _payment;
+
   /// A course is sold as a package, not per session. Known from the list model
   /// before the detail lands, so the CTA never flashes the ticket wording.
   bool get _isCourse =>
@@ -73,12 +83,18 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   // ─── Coupon discount helpers ──────────────────────────────────────────────
   /// The coupon's percentage on THIS class — the plan's percentage capped at
   /// Lumi's share of the class, which is what checkout will actually charge.
+  ///
+  /// Reads the plan's percentage from `AppCubit`'s Cubit state (watched, not
+  /// a one-off `Storage` read) so this rebuilds the instant a purchase
+  /// completes or a subscription is synced, instead of showing whatever was
+  /// true the last time this page happened to build.
   num get _couponPct {
-    final s = getIt<Storage>();
-    final plan = s.hasPremium() == true ? (s.planDiscountPercentage() ?? 0) : 0;
+    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final plan = app.hasPremium ? app.planDiscountPercentage : 0;
     return effectiveCouponPercent(
       plan,
       _full?.discountPercentage ?? widget.classModel.discountPercentage,
+      isCourse: _isCourse,
     );
   }
 
@@ -87,6 +103,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     super.initState();
     _loadImages();
     _loadFull();
+    _loadLastPaymentMethod();
     _startAutoSlide();
     _scrollController.addListener(_onScroll);
     final cm = widget.classModel;
@@ -377,18 +394,68 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       backgroundColor: Colors.transparent,
       builder: (_) => _CoursePurchaseSheet(detail: detail),
     );
-    if (option != null && mounted) await _buyCourse(option);
+    if (option == null || !mounted) return;
+
+    // No method chosen yet (or none restored from last time) → open the same
+    // rail chooser the per-session booking flow uses; proceed only once one
+    // is picked. Already-chosen rails go straight to charging, same as
+    // BookingPage._pay.
+    if (_payment == null) {
+      await _openChooser();
+      if (!mounted || _payment == null) return;
+    }
+    await _buyCourse(option);
   }
 
-  /// Charges the chosen package and hands off to the shared checkout screen —
-  /// the same one the per-session booking flow ends on.
+  /// Opens the payment rail chooser and remembers the pick for next time.
+  Future<void> _openChooser() async {
+    final picked = await showPaymentChooser(
+      context,
+      initial: _payment,
+      cardsComingSoon: !kCardPaymentsEnabled,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _payment = picked);
+    _persistPaymentMethod(picked);
+  }
+
+  /// Persists the chosen rail so the next course checkout pre-selects it.
+  void _persistPaymentMethod(PaymentSelection sel) {
+    getIt<Storage>().lastPaymentRail.set(sel.rail.name);
+  }
+
+  /// Restores the buyer's last-used payment rail, same as BookingPage. The
+  /// card rail is never restored here — it can't be picked while
+  /// [kCardPaymentsEnabled] is false, so there's nothing to resume.
+  Future<void> _loadLastPaymentMethod() async {
+    final railKey = getIt<Storage>().lastPaymentRail();
+    if (railKey == null || railKey.isEmpty) return;
+    for (final r in PaymentRail.values) {
+      if (r.name == railKey && r != PaymentRail.card) {
+        if (mounted) setState(() => _payment = PaymentSelection(rail: r));
+        return;
+      }
+    }
+  }
+
+  /// Charges the chosen package through the picked rail via Paylov (WLCM) —
+  /// the same aggregator activity bookings pay through — and hands off to the
+  /// shared checkout screen the per-session booking flow ends on.
   Future<void> _buyCourse(String option) async {
     final id = _full?.id ?? widget.classModel.id;
-    if (id == null || _buyingCourse) return;
+    final payment = _payment;
+    if (id == null || payment == null || _buyingCourse) return;
     setState(() => _buyingCourse = true);
     try {
-      final result =
-          await getIt<CoursesApi>().checkout(activityId: id, option: option);
+      final result = await getIt<CoursesApi>().checkout(
+        activityId: id,
+        option: option,
+        paymentProvider: payment.rail.providerKey,
+        // Every reachable rail here is a redirect one (card can't be picked
+        // while kCardPaymentsEnabled is false) — WLCM needs to know where to
+        // bounce the buyer back to after paying.
+        returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
+      );
       if (!mounted) return;
       setState(() => _buyingCourse = false);
       if (result.checkoutUrl.isEmpty) {
@@ -398,7 +465,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         return;
       }
       await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PaycomCheckoutPage(result: result)),
+        MaterialPageRoute(
+          builder: (_) => PaycomCheckoutPage(
+            result: result,
+            provider: payment.rail.providerKey,
+          ),
+        ),
       );
       // The enrolment may have changed — refresh so the sheet reflects it.
       if (mounted) await _loadCourse(id);

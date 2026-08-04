@@ -749,6 +749,8 @@ coupon_valid_title,Купон действителен!,Kupon to'g'ri!,Coupon Va
 coupon_invalid_title,Неверный купон,Noto'g'ri kupon,Invalid Coupon
 coupon_discount_off,скидка,chegirma,off
 coupon_apply_at_checkout,Используйте код при оформлении бронирования,Bron qilishda ushbu kodni ishlating,Use this code when completing your booking
+coupon_pick_payment,Выберите способ оплаты,To'lov turini tanlang,Choose a payment method
+coupon_pay_method_label,Способ оплаты,To'lov usuli,Payment method
 coupon_how_title,Как использовать купон?,Kuponni qanday ishlatish kerak?,How to use a coupon?
 coupon_step1,Скопируйте или запомните код купона от партнёра,Hamkordan kupon kodini nusxa oling yoki eslab qoling,Copy or note the coupon code from the partner
 coupon_step2,Введите код выше и нажмите «Проверить»,Yuqorida kodni kiriting va «Tekshirish» ni bosing,Enter the code above and tap Check

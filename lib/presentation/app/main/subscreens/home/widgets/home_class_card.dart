@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -16,8 +17,8 @@ import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/data/storage/storage.dart';
-import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:shimmer/shimmer.dart';
@@ -344,13 +345,13 @@ class _PriceText extends StatelessWidget {
         ? 'price_from'.tr(args: [v.toRawUzsPrice()])
         : v.toRawUzsPrice();
 
-    final storage = getIt<Storage>();
-    final hasPremium = storage.hasPremium() == true;
+    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     // The coupon can't cut deeper than Lumi's share of this class, so the
     // preview is capped the same way the charge will be.
     final planPct = effectiveCouponPercent(
-      hasPremium ? (storage.planDiscountPercentage() ?? 0) : 0,
+      app.hasPremium ? app.planDiscountPercentage : 0,
       hc?.discountPercentage,
+      isCourse: hc?.isCourse ?? false,
     );
     if (planPct <= 0) {
       return Text(label(effectivePrice), style: baseStyle);

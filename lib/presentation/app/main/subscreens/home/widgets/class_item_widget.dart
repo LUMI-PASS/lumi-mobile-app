@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
@@ -13,8 +14,8 @@ import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/data/storage/storage.dart';
-import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ClassItemWidget extends StatefulWidget {
@@ -66,14 +67,16 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     final hc = widget.homClass;
     final fullPrice = hc?.price;
 
-    // Coupon (plan) discount state — used for badge and price display.
-    final storage = getIt<Storage>();
-    final hasPremium = storage.hasPremium() == true;
+    // Coupon (plan) discount state — used for badge and price display. Watches
+    // AppCubit's Cubit state (not a one-off Storage read) so this rebuilds the
+    // instant a purchase completes or a sync resolves.
+    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     // The coupon comes off Lumi's share of this class, so it is capped at that
     // share — the badge and the price must show what will actually be charged.
     final couponPct = effectiveCouponPercent(
-      hasPremium ? (storage.planDiscountPercentage() ?? 0) : 0,
+      app.hasPremium ? app.planDiscountPercentage : 0,
       hc?.discountPercentage,
+      isCourse: hc?.isCourse ?? false,
     );
     final showDiscountBadge = couponPct > 0;
 
@@ -465,12 +468,12 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     required int discountPct,
     bool showFrom = false,
   }) {
-    final storage = getIt<Storage>();
-    final hasPremium = storage.hasPremium() == true;
+    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     // Capped at this class's partner share — see effectiveCouponPercent.
     final planPct = effectiveCouponPercent(
-      hasPremium ? (storage.planDiscountPercentage() ?? 0) : 0,
+      app.hasPremium ? app.planDiscountPercentage : 0,
       widget.homClass?.discountPercentage,
+      isCourse: widget.homClass?.isCourse ?? false,
     );
     if (planPct <= 0) {
       return originalWidget;

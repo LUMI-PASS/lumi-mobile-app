@@ -13,7 +13,13 @@ import 'app_state.dart';
 @injectable
 class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
   AppCubit(this._repo, this._push, this._storage)
-      : super(const AppBuildable()) {
+      : super(AppBuildable(
+          // Seed from the last-known Hive value so a watcher gets the right
+          // answer on the very first frame, before the network sync below
+          // has had a chance to resolve — avoids a flash of "no discount".
+          hasPremium: _storage.hasPremium() == true,
+          planDiscountPercentage: _storage.planDiscountPercentage() ?? 0,
+        )) {
     final analytics = getIt<AnalyticsService>();
     // Re-register the FCM token on warm start so token rotations during
     // background time make it back to the server. Skipped when not logged in;
@@ -40,28 +46,30 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
   Future<void> syncSubscription() => _syncSubscriptionStatus();
 
   /// Fetches the user's active subscription from the backend and updates
-  /// local storage. This ensures `hasPremium` and `planDiscountPercentage`
-  /// are correct on every device, not just the one that made the payment.
+  /// both Hive (survives a restart) and Cubit state (every watcher rebuilds
+  /// right now). This ensures `hasPremium` and `planDiscountPercentage` are
+  /// correct on every device, not just the one that made the payment — and
+  /// that a card on screen at the moment reflects it immediately instead of
+  /// only on the next cold start that happens to re-run this cubit.
   ///
-  /// - Server returns a subscription  → write hasPremium=true + discount %
+  /// - Server returns a subscription  → hasPremium=true + discount %
   /// - Server returns null (expired / exhausted) → clear both flags
-  /// - Network / auth error            → keep existing local state unchanged
+  /// - Network / auth error            → keep existing state unchanged
   Future<void> _syncSubscriptionStatus() async {
     try {
       final ordersApi = getIt<OrdersApi>();
       final sub = await ordersApi.getActiveSubscription();
-      if (sub != null) {
-        await _storage.hasPremium.set(true);
-        final discountPct = (sub['discount_percentage'] as num?)?.toInt() ?? 0;
-        await _storage.planDiscountPercentage.set(discountPct);
-      } else {
-        // Server confirmed no active subscription — clear local flags so
-        // expired plans don't linger after reinstall on a new device.
-        await _storage.hasPremium.set(false);
-        await _storage.planDiscountPercentage.set(0);
-      }
+      final hasPremium = sub != null;
+      final discountPct =
+          hasPremium ? (sub['discount_percentage'] as num?)?.toInt() ?? 0 : 0;
+      await _storage.hasPremium.set(hasPremium);
+      await _storage.planDiscountPercentage.set(discountPct);
+      build((b) => b.copyWith(
+            hasPremium: hasPremium,
+            planDiscountPercentage: discountPct,
+          ));
     } catch (_) {
-      // Network / auth failure — leave local state as-is.
+      // Network / auth failure — leave state as-is.
     }
   }
 }
