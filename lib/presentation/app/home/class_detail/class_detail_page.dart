@@ -354,7 +354,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   /// Course CTA. Opens the package picker — trial lessons vs the whole course.
-  Future<void> _openCoursePurchase() async {
+  ///
+  /// [level] is passed when the parent came from a level panel that already
+  /// shows that level's dates and prices: the sheet then skips straight to the
+  /// package step instead of asking them to pick the level a second time.
+  Future<void> _openCoursePurchase({CourseLevel? level}) async {
     final detail = _course;
     if (detail == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -375,7 +379,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _CoursePurchaseSheet(detail: detail),
+      builder: (_) =>
+          _CoursePurchaseSheet(detail: detail, initialLevel: level),
     );
     if (choice != null && mounted) await _buyCourse(choice);
   }
@@ -395,6 +400,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       activityId: id,
       option: choice.option,
       subcourseId: choice.levelId,
+      trialDates: choice.trialDates,
     );
 
     if (!mounted) return;
@@ -502,19 +508,24 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     child: Column(
                       children: [
                         _mainCard(c, title, description, branchTitle),
-                        // Which days the course actually runs — the first thing
-                        // a parent needs to check before the price. A course
-                        // sold as LEVELS has no single calendar (Beginner and
-                        // Advanced run at different times), so it lists the
-                        // levels instead and the dates come with the one the
-                        // parent picks.
+                        // Which days the course actually runs, what the trial
+                        // lessons cost and when they are — the things a parent
+                        // decides on, so they belong on the page rather than
+                        // behind the buy button. A course sold as LEVELS has no
+                        // single calendar (Beginner and Advanced run at
+                        // different times), so each level carries its own.
                         if (_course?.hasLevels == true) ...[
                           6.verticalSpace,
                           _courseLevelsCard(c, _course!),
-                        ] else if (_course != null &&
-                            _courseCalendar(_course!.flat).isNotEmpty) ...[
-                          6.verticalSpace,
-                          _courseLessonsCard(c, _course!.flat),
+                        ] else if (_course != null) ...[
+                          if (_course!.flat.trialLessons.isNotEmpty) ...[
+                            6.verticalSpace,
+                            _courseTrialCard(c, _course!.flat),
+                          ],
+                          if (_courseCalendar(_course!.flat).isNotEmpty) ...[
+                            6.verticalSpace,
+                            _courseLessonsCard(c, _course!.flat),
+                          ],
                         ],
                         if (priceRows.isNotEmpty) ...[
                           6.verticalSpace,
@@ -627,8 +638,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         text: _isCourse
                             ? 'course_buy_cta'.tr()
                             : 'buy_tickets'.tr(),
-                        onPressed:
-                            _isCourse ? _openCoursePurchase : _openBooking,
+                        onPressed: _isCourse
+                            ? () => _openCoursePurchase()
+                            : _openBooking,
                       ),
               ),
             ),
@@ -887,11 +899,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// A parent buying a course is committing to a fixed set of days, so the
   /// screen shows exactly which ones rather than "Tue/Thu/Sat" and leaving them
   /// to work out the dates.
-  /// The levels a course is sold as.
+  /// The levels a course is sold as, each opening onto its own two calendars.
   ///
   /// A levelled course has no single schedule or price to show — each level has
-  /// its own — so the page lists what is on offer and leaves the dates to the
-  /// level the parent picks in the purchase sheet.
+  /// its own — so every level is a panel carrying the whole picture: the dated
+  /// trial lessons with what each costs, the dated course lessons, the seats
+  /// and the price. It is on the page, not in the purchase sheet: these are the
+  /// facts a parent decides on, and a sheet that has to be opened to read them
+  /// hides the decision behind the commitment.
   Widget _courseLevelsCard(AppColorScheme c, CourseDetail detail) {
     return DetailCard(
       c: c,
@@ -909,45 +924,52 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             'course_levels_subtitle'.tr(),
             style: AppText.regular13.copyWith(color: c.textSecondary),
           ),
-          16.verticalSpace,
+          14.verticalSpace,
           ...List.generate(detail.levels.length, (i) {
             final level = detail.levels[i];
             return Padding(
               padding: EdgeInsets.only(
                 bottom: i == detail.levels.length - 1 ? 0 : 10.h,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          level.name ?? '',
-                          style:
-                              AppText.medium14.copyWith(color: c.textPrimary),
-                        ),
-                        2.verticalSpace,
-                        Text(
-                          'course_lessons_count'.tr(namedArgs: {
-                            'count': '${level.courseLessons.length}',
-                          }),
-                          style: AppText.regular12
-                              .copyWith(color: c.textSecondary),
-                        ),
-                      ],
-                    ),
+              child: _CourseLevelPanel(
+                // The first level opens with the page. Dates and trial prices
+                // are what the parent came to check, so at least one full set
+                // is readable without a tap.
+                initiallyExpanded: i == 0,
+                level: level,
+                weekdays: _courseWeekdays(_courseCalendar(level)),
+                onBuy: () => _openCoursePurchase(level: level),
+                onBuyTrial: (dates) => _buyCourse(
+                  CoursePurchaseChoice(
+                    option: CoursePurchaseOption.trial,
+                    levelId: level.id,
+                    trialDates: dates,
                   ),
-                  8.horizontalSpace,
-                  Text(
-                    level.coursePrice.toRawUzsPrice(),
-                    style: AppText.semibold14.copyWith(color: c.primary),
-                  ),
-                ],
+                ),
               ),
             );
           }),
         ],
+      ),
+    );
+  }
+
+  /// The trial lessons of a course that isn't sold as levels: which dates, and
+  /// what each one costs. Priced per lesson, so the per-lesson figures are
+  /// shown alongside the total rather than only the sum.
+  Widget _courseTrialCard(AppColorScheme c, CourseLevel level) {
+    return DetailCard(
+      c: c,
+      child: _CourseTrialSection(
+        level: level,
+        showTitle: true,
+        onBuy: (dates) => _buyCourse(
+          CoursePurchaseChoice(
+            option: CoursePurchaseOption.trial,
+            levelId: level.id,
+            trialDates: dates,
+          ),
+        ),
       ),
     );
   }
@@ -1395,7 +1417,12 @@ class _Duration {
 
 // ─── Course lesson row ───────────────────────────────────────────────────────
 
-/// One dated lesson: its position, the date, and the time window.
+/// One dated lesson: its position, the date, the time window and — for a trial
+/// lesson, which is priced on its own — what it costs.
+///
+/// The price forces a second line: "12 Aug, Tue · 10:00 – 11:00 · 30 000 сум"
+/// on one row overflows on a small phone, and none of the three may be the one
+/// that gets clipped.
 class _CourseLessonRow extends StatelessWidget {
   const _CourseLessonRow({
     required this.c,
@@ -1418,33 +1445,683 @@ class _CourseLessonRow extends StatelessWidget {
         .whereType<String>()
         .where((t) => t.isNotEmpty)
         .join(' – ');
+    final price = lesson.price;
+    // A lesson that has already run is still listed — the set of dates is what
+    // the parent is reading — but it is visibly not part of what is on sale.
+    final passed = lesson.hasPassed;
 
-    return Row(
-      children: [
-        Container(
-          width: 28.w,
-          height: 28.w,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: c.control, shape: BoxShape.circle),
-          child: Text(
-            '$index',
-            style: AppText.semibold12.copyWith(color: c.textSecondary),
+    return Opacity(
+      opacity: passed ? 0.45 : 1,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 28.w,
+            height: 28.w,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: c.control, shape: BoxShape.circle),
+            child: Text(
+              '$index',
+              style: AppText.semibold12.copyWith(color: c.textSecondary),
+            ),
           ),
-        ),
-        10.horizontalSpace,
-        Expanded(
-          child: Text(
-            label,
+          10.horizontalSpace,
+          Expanded(
+            child: price == null
+                ? Text(
+                    label,
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style:
+                            AppText.semibold14.copyWith(color: c.textPrimary),
+                      ),
+                      if (time.isNotEmpty)
+                        Text(
+                          time,
+                          style: AppText.regular12
+                              .copyWith(color: c.textSecondary),
+                        ),
+                    ],
+                  ),
+          ),
+          if (price == null && time.isNotEmpty) ...[
+            6.horizontalSpace,
+            Text(time,
+                style: AppText.regular13.copyWith(color: c.textSecondary)),
+          ],
+          if (price != null) ...[
+            8.horizontalSpace,
+            Text(
+              price.toRawUzsPrice(),
+              style: AppText.semibold14.copyWith(color: c.textPrimary),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Course level sections ───────────────────────────────────────────────────
+
+/// Why a purchase is refused, in words for the parent.
+///
+/// Mostly the reason's own message, but "wait for your first trial lesson" is
+/// useless without the date — the parent's question is *when*, and they hold a
+/// booking that answers it.
+String _blockedMessage(CourseLevel level, CourseBlockedReason reason) {
+  if (reason == CourseBlockedReason.trialPending) {
+    final raw = level.enrollment?.trialFirstDate;
+    final date = raw == null ? null : DateTime.tryParse(raw);
+    if (date != null) {
+      return 'course_blocked_trial_pending_date'.tr(namedArgs: {
+        'date': '${date.day} ${'month_short_${date.month}'.tr()}',
+      });
+    }
+  }
+  return reason.messageKey.tr();
+}
+
+/// The trial block: every trial date, what each one costs, and the total.
+///
+/// A trial is not a discount on the course — each lesson is sold at its own
+/// price and the fee is not credited toward enrolling — so the per-lesson
+/// figures are shown, not just the sum a parent would otherwise have to accept
+/// on trust.
+class _CourseTrialSection extends StatefulWidget {
+  const _CourseTrialSection({
+    required this.level,
+    required this.onBuy,
+    this.showTitle = false,
+  });
+
+  final CourseLevel level;
+
+  /// Buy the picked sessions, as YYYY-MM-DD dates.
+  final void Function(List<String> dates) onBuy;
+
+  /// True when this section is the whole card and needs the gradient header.
+  final bool showTitle;
+
+  @override
+  State<_CourseTrialSection> createState() => _CourseTrialSectionState();
+}
+
+class _CourseTrialSectionState extends State<_CourseTrialSection> {
+  /// Picked sessions, by date. Keyed on the date because the offered set rolls
+  /// forward — an index would silently point at a different day tomorrow.
+  late Set<String> _picked = _initialPick();
+
+  /// What to tick on arrival: the mandatory lessons if there are any, else the
+  /// next single lesson.
+  ///
+  /// Never the whole set — that would quote four lessons to someone who came to
+  /// try one. But a mandatory lesson is not optional, so leaving it unticked
+  /// would let a parent buy a lesson that gets them no closer to enrolling.
+  Set<String> _initialPick() {
+    final available = widget.level.availableTrialLessons;
+    final mandatory =
+        available.where((l) => l.isMandatory).map((l) => l.date).toSet();
+    if (mandatory.isNotEmpty) return mandatory;
+    final first = available.firstOrNull;
+    return first == null ? <String>{} : {first.date};
+  }
+
+  @override
+  void didUpdateWidget(_CourseTrialSection old) {
+    super.didUpdateWidget(old);
+    // After a purchase the lessons come back with `purchased` set; a stale pick
+    // would keep a bought lesson ticked.
+    if (widget.level.trialLessons.length != old.level.trialLessons.length ||
+        widget.level.availableTrialLessons.length !=
+            old.level.availableTrialLessons.length) {
+      _picked = _initialPick();
+    }
+  }
+
+  num get _total => widget.level.trialLessons
+      .where((l) => _picked.contains(l.date))
+      .fold<num>(0, (sum, l) => sum + (l.price ?? 0));
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final level = widget.level;
+    final lessons = level.trialLessons;
+    final blocked = !level.canBuyTrial ? level.trialBlockedReason : null;
+    final anyAvailable = level.availableTrialLessons.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.showTitle)
+          DetailCardHeader(
+            c: c,
+            icon: Assets.icons.detail.icDiscount,
+            iconGradient: AppGradients.green,
+            title: 'course_trial_title'
+                .tr(namedArgs: {'count': '${lessons.length}'}),
+          )
+        else
+          Text(
+            'course_trial_title'.tr(namedArgs: {'count': '${lessons.length}'}),
             style: AppText.semibold14.copyWith(color: c.textPrimary),
           ),
+        6.verticalSpace,
+        Text(
+          'course_trial_pick_hint'.tr(),
+          style: AppText.regular12.copyWith(color: c.textMuted),
         ),
-        if (time.isNotEmpty) ...[
-          6.horizontalSpace,
-          Text(time,
-              style: AppText.regular13.copyWith(color: c.textSecondary)),
+        // Said here, before the price of the course itself: where a lesson is
+        // mandatory the parent's first purchase is not the one they came for,
+        // and finding that out at checkout is finding it out too late. Which
+        // lessons is shown on the rows themselves.
+        if (level.hasMandatoryTrial) ...[
+          8.verticalSpace,
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: c.control,
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: c.controlBorder),
+            ),
+            child: Text(
+              'course_trial_required_note'.tr(namedArgs: {
+                'count': '${level.mandatoryTrialLessons.length}',
+              }),
+              style: AppText.regular12.copyWith(color: c.textPrimary),
+            ),
+          ),
+        ],
+        12.verticalSpace,
+        ...List.generate(lessons.length, (i) {
+          final l = lessons[i];
+          return Padding(
+            padding: EdgeInsets.only(bottom: i == lessons.length - 1 ? 0 : 8.h),
+            child: _TrialLessonRow(
+              c: c,
+              lesson: l,
+              index: i + 1,
+              picked: _picked.contains(l.date),
+              onToggle: !l.isAvailable
+                  ? null
+                  : () => setState(() {
+                        if (!_picked.remove(l.date)) _picked.add(l.date);
+                      }),
+            ),
+          );
+        }),
+        if (anyAvailable) ...[
+          12.verticalSpace,
+          Divider(height: 1, color: c.border),
+          10.verticalSpace,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'course_trial_selected'
+                      .tr(namedArgs: {'count': '${_picked.length}'}),
+                  style: AppText.semibold14.copyWith(color: c.textPrimary),
+                ),
+              ),
+              Text(
+                _total.toRawUzsPrice(),
+                style: AppText.bold16.copyWith(color: c.primary),
+              ),
+            ],
+          ),
+          10.verticalSpace,
+          _buyButton(c, enabled: _picked.isNotEmpty && level.canBuyTrial),
+        ],
+        if (blocked != null) ...[
+          8.verticalSpace,
+          Text(
+            _blockedMessage(level, blocked),
+            style: AppText.regular12.copyWith(color: c.textMuted),
+          ),
         ],
       ],
     );
+  }
+
+  Widget _buyButton(AppColorScheme c, {required bool enabled}) {
+    return SizedBox(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: enabled
+            ? () => widget.onBuy(_picked.toList()..sort())
+            : null,
+        behavior: HitTestBehavior.opaque,
+        child: Opacity(
+          opacity: enabled ? 1 : 0.5,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: AppGradients.green,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Text(
+              'course_buy_trial'.tr(),
+              style: AppText.semibold14.copyWith(color: Colors.white),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One trial lesson, with the tick that puts it in the basket.
+///
+/// Three states, and they must not be confused: available (tickable), already
+/// bought (stated, not tickable — buying it twice is refused server-side), and
+/// past (dimmed, gone).
+class _TrialLessonRow extends StatelessWidget {
+  const _TrialLessonRow({
+    required this.c,
+    required this.lesson,
+    required this.index,
+    required this.picked,
+    required this.onToggle,
+  });
+
+  final AppColorScheme c;
+  final CourseLesson lesson;
+  final int index;
+  final bool picked;
+  final VoidCallback? onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateTime.tryParse(lesson.date);
+    final label = date == null
+        ? lesson.date
+        : '${date.day} ${'month_short_${date.month}'.tr()}, '
+            '${'weekday_short_${date.weekday}'.tr()}';
+    final time = [lesson.startTime, lesson.endTime]
+        .whereType<String>()
+        .where((t) => t.isNotEmpty)
+        .join(' – ');
+    final selectable = onToggle != null;
+
+    return GestureDetector(
+      onTap: onToggle,
+      behavior: HitTestBehavior.opaque,
+      child: Opacity(
+        opacity: selectable ? 1 : 0.5,
+        child: Row(
+          children: [
+            Container(
+              width: 22.w,
+              height: 22.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: picked ? c.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(6.r),
+                border: Border.all(
+                  color: picked ? c.primary : c.border,
+                  width: 1.5,
+                ),
+              ),
+              child: picked || lesson.purchased
+                  ? Icon(Icons.check_rounded,
+                      size: 14.sp,
+                      color: lesson.purchased && !picked
+                          ? c.success
+                          : Colors.white)
+                  : null,
+            ),
+            10.horizontalSpace,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '$index. $label',
+                          style:
+                              AppText.semibold14.copyWith(color: c.textPrimary),
+                        ),
+                      ),
+                      // Which lesson is required, on the lesson itself — a note
+                      // at the top of the list cannot say "this one".
+                      if (lesson.isMandatory) ...[
+                        6.horizontalSpace,
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: c.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            'course_trial_mandatory'.tr(),
+                            style: AppText.semibold12.copyWith(color: c.primary),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (time.isNotEmpty || lesson.purchased)
+                    Text(
+                      lesson.purchased
+                          ? [time, 'course_trial_bought_one'.tr()]
+                              .where((t) => t.isNotEmpty)
+                              .join(' · ')
+                          : time,
+                      style: AppText.regular12.copyWith(
+                        color: lesson.purchased ? c.success : c.textSecondary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            8.horizontalSpace,
+            Text(
+              (lesson.price ?? 0).toRawUzsPrice(),
+              style: AppText.semibold14.copyWith(color: c.textPrimary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The course's own dated calendar for one level, under the level panel.
+///
+/// Long courses are capped: twenty rows would bury everything below them, so
+/// the first [_visible] are shown with a tap to reveal the rest.
+class _CourseScheduleSection extends StatefulWidget {
+  const _CourseScheduleSection({required this.level, required this.weekdays});
+
+  final CourseLevel level;
+
+  /// "Tue, Thu · 12 lessons", computed by the page off the same lesson list.
+  final String weekdays;
+
+  @override
+  State<_CourseScheduleSection> createState() => _CourseScheduleSectionState();
+}
+
+class _CourseScheduleSectionState extends State<_CourseScheduleSection> {
+  static const int _visible = 5;
+
+  bool _all = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final lessons = widget.level.courseLessons
+        .where((l) => l.date.isNotEmpty)
+        .toList()
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        return byDate != 0
+            ? byDate
+            : (a.startTime ?? '').compareTo(b.startTime ?? '');
+      });
+    final shown = _all ? lessons : lessons.take(_visible).toList();
+    final hidden = lessons.length - shown.length;
+    final blocked = !widget.level.canBuyFull ? widget.level.blockedReason : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'course_schedule_title'.tr(),
+                style: AppText.semibold14.copyWith(color: c.textPrimary),
+              ),
+            ),
+            8.horizontalSpace,
+            Text(
+              widget.level.coursePrice.toRawUzsPrice(),
+              style: AppText.semibold14.copyWith(color: c.primary),
+            ),
+          ],
+        ),
+        if (widget.weekdays.isNotEmpty) ...[
+          6.verticalSpace,
+          Text(
+            widget.weekdays,
+            style: AppText.regular12.copyWith(color: c.textMuted),
+          ),
+        ],
+        12.verticalSpace,
+        ...List.generate(shown.length, (i) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: i == shown.length - 1 ? 0 : 8.h),
+            child: _CourseLessonRow(c: c, lesson: shown[i], index: i + 1),
+          );
+        }),
+        if (hidden > 0 || _all) ...[
+          8.verticalSpace,
+          GestureDetector(
+            onTap: () => setState(() => _all = !_all),
+            behavior: HitTestBehavior.opaque,
+            child: Text(
+              _all
+                  ? 'course_show_less'.tr()
+                  : 'course_more_lessons'.tr(namedArgs: {'count': '$hidden'}),
+              style: AppText.semibold14.copyWith(color: c.primary),
+            ),
+          ),
+        ],
+        if (blocked != null) ...[
+          8.verticalSpace,
+          Text(
+            _blockedMessage(widget.level, blocked),
+            style: AppText.regular12.copyWith(color: c.textMuted),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// One level of a levelled course, expanded in place on the detail page.
+///
+/// Collapsed it states the commitment — name, price, lesson count, seats.
+/// Opened it carries everything the purchase sheet used to hold back: the
+/// description, the dated trial lessons with their individual prices, and the
+/// course calendar. The sheet is then only the act of buying.
+class _CourseLevelPanel extends StatefulWidget {
+  const _CourseLevelPanel({
+    required this.level,
+    required this.weekdays,
+    required this.onBuy,
+    required this.onBuyTrial,
+    this.initiallyExpanded = false,
+  });
+
+  final CourseLevel level;
+  final String weekdays;
+
+  /// Buy the whole level — opens the purchase sheet.
+  final VoidCallback onBuy;
+
+  /// Buy the picked trial sessions of this level, as YYYY-MM-DD dates.
+  final void Function(List<String> dates) onBuyTrial;
+  final bool initiallyExpanded;
+
+  @override
+  State<_CourseLevelPanel> createState() => _CourseLevelPanelState();
+}
+
+class _CourseLevelPanelState extends State<_CourseLevelPanel> {
+  late bool _open = widget.initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final level = widget.level;
+    final enrolled = level.enrollment?.isEnrolled == true;
+    final hasTrial = level.enrollment?.hasTrial == true;
+    final canBuy = level.canBuyFull || level.canBuyTrial;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: c.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _open = !_open),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: EdgeInsets.all(14.w),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          level.name ?? '',
+                          style: AppText.semibold16
+                              .copyWith(color: c.textPrimary),
+                        ),
+                        4.verticalSpace,
+                        Text(
+                          _summary(level),
+                          style: AppText.regular12
+                              .copyWith(color: c.textSecondary),
+                        ),
+                        if (enrolled || hasTrial || level.seatsLeft != null) ...[
+                          4.verticalSpace,
+                          Text(
+                            enrolled
+                                ? 'course_level_enrolled'.tr()
+                                : hasTrial
+                                    ? 'course_level_trial'.tr()
+                                    : level.isFull
+                                        ? 'course_full_no_seats'.tr()
+                                        : 'course_seats_left'.tr(namedArgs: {
+                                            'count': '${level.seatsLeft}',
+                                          }),
+                            style: AppText.regular12.copyWith(
+                              color: enrolled || hasTrial
+                                  ? c.success
+                                  : level.isFull
+                                      ? c.error
+                                      : c.textMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  8.horizontalSpace,
+                  Text(
+                    level.coursePrice.toRawUzsPrice(),
+                    style: AppText.bold16.copyWith(color: c.primary),
+                  ),
+                  2.horizontalSpace,
+                  AnimatedRotation(
+                    turns: _open ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20.sp,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_open)
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if ((level.description ?? '').trim().isNotEmpty) ...[
+                    Text(
+                      level.description!.trim(),
+                      style:
+                          AppText.regular13.copyWith(color: c.textSecondary),
+                    ),
+                    12.verticalSpace,
+                  ],
+                  if (level.trialLessons.isNotEmpty) ...[
+                    Divider(height: 1, color: c.border),
+                    12.verticalSpace,
+                    _CourseTrialSection(
+                      level: level,
+                      onBuy: widget.onBuyTrial,
+                    ),
+                    12.verticalSpace,
+                  ],
+                  if (level.courseLessons.isNotEmpty) ...[
+                    Divider(height: 1, color: c.border),
+                    12.verticalSpace,
+                    _CourseScheduleSection(
+                      level: level,
+                      weekdays: widget.weekdays,
+                    ),
+                    12.verticalSpace,
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: GestureDetector(
+                      onTap: canBuy ? widget.onBuy : null,
+                      behavior: HitTestBehavior.opaque,
+                      child: Opacity(
+                        opacity: canBuy ? 1 : 0.5,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: c.control,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: c.controlBorder),
+                          ),
+                          child: Text(
+                            canBuy
+                                ? 'course_buy_level'.tr()
+                                : 'course_blocked_unavailable'.tr(),
+                            style: AppText.semibold14
+                                .copyWith(color: c.textPrimary),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// "12 lessons · 3 trial" — the shape of the commitment in one line.
+  String _summary(CourseLevel level) {
+    final parts = <String>[
+      'course_lessons_count'
+          .tr(namedArgs: {'count': '${level.courseLessons.length}'}),
+      if (level.trialLessons.isNotEmpty)
+        'course_trial_count'
+            .tr(namedArgs: {'count': '${level.trialLessons.length}'}),
+    ];
+    return parts.join(' · ');
   }
 }
 
@@ -1453,10 +2130,19 @@ class _CourseLessonRow extends StatelessWidget {
 /// What the purchase sheet returns: which level (null when the course has none)
 /// and which of the two packages.
 class CoursePurchaseChoice {
-  const CoursePurchaseChoice({required this.option, this.levelId});
+  const CoursePurchaseChoice({
+    required this.option,
+    this.levelId,
+    this.trialDates,
+  });
 
   final CoursePurchaseOption option;
   final String? levelId;
+
+  /// Which trial sessions, as YYYY-MM-DD. Trials are sold one at a time and
+  /// picked by date because the offered set rolls forward; null on a
+  /// whole-course purchase.
+  final List<String>? trialDates;
 }
 
 /// The two things a course sells. Kept as a picker rather than two CTAs on the
@@ -1468,16 +2154,20 @@ class CoursePurchaseChoice {
 /// … first, then the package for that level. The second step is identical
 /// either way, because a level and a level-less course expose the same fields.
 class _CoursePurchaseSheet extends StatefulWidget {
-  const _CoursePurchaseSheet({required this.detail});
+  const _CoursePurchaseSheet({required this.detail, this.initialLevel});
 
   final CourseDetail detail;
+
+  /// Set when the parent opened the sheet from a level panel that already
+  /// shows that level's dates and prices — the level step is then skipped.
+  final CourseLevel? initialLevel;
 
   @override
   State<_CoursePurchaseSheet> createState() => _CoursePurchaseSheetState();
 }
 
 class _CoursePurchaseSheetState extends State<_CoursePurchaseSheet> {
-  CourseLevel? _selected;
+  late CourseLevel? _selected = widget.initialLevel;
 
   bool get _needsLevel => widget.detail.hasLevels && _selected == null;
 
@@ -1647,22 +2337,10 @@ class _CoursePurchaseSheetState extends State<_CoursePurchaseSheet> {
         ),
       ],
       16.verticalSpace,
-      if (level.trialLessons.isNotEmpty) ...[
-        _option(
-          c,
-          level: level,
-          option: CoursePurchaseOption.trial,
-          title: 'course_trial_title'
-              .tr(namedArgs: {'count': '${level.trialLessons.length}'}),
-          subtitle: 'course_trial_subtitle'.tr(),
-          price: level.trialPrice,
-          // The server decides what may be bought, so the sheet and checkout
-          // can never disagree.
-          enabled: level.canBuyTrial,
-          disabledLabel: level.trialBlockedReason?.messageKey.tr(),
-        ),
-        10.verticalSpace,
-      ],
+      // Only the whole course is sold here. Trial lessons go one at a time and
+      // the parent picks the dates, so they are bought from the trial section
+      // on the page — a sheet that quoted the whole set as one price would be
+      // selling something that no longer exists.
       _option(
         c,
         level: level,
@@ -1679,7 +2357,9 @@ class _CoursePurchaseSheetState extends State<_CoursePurchaseSheet> {
                 .tr(namedArgs: {'count': '${level.courseLessons.length}'}),
         price: level.coursePrice,
         enabled: level.canBuyFull,
-        disabledLabel: level.blockedReason?.messageKey.tr(),
+        disabledLabel: level.blockedReason == null
+            ? null
+            : _blockedMessage(level, level.blockedReason!),
         // Stated, not hidden: the trial fee is not credited toward this.
         note: hasTrial ? 'course_upsell_body_short'.tr() : null,
       ),

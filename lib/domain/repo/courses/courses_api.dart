@@ -53,6 +53,12 @@ enum CourseBlockedReason {
   /// Already enrolled in this course/level.
   alreadyEnrolled('already_enrolled'),
 
+  /// This course only takes children who have sat the trial lessons.
+  trialRequired('trial_required'),
+
+  /// The trial is bought, but the first lesson hasn't come round yet.
+  trialPending('trial_pending'),
+
   /// A reason this build doesn't know about — show a generic message.
   unknown('unknown');
 
@@ -83,6 +89,10 @@ enum CourseBlockedReason {
         return 'course_trial_bought';
       case CourseBlockedReason.alreadyEnrolled:
         return 'course_already_enrolled_short';
+      case CourseBlockedReason.trialRequired:
+        return 'course_blocked_trial_required';
+      case CourseBlockedReason.trialPending:
+        return 'course_blocked_trial_pending';
       case CourseBlockedReason.unknown:
         return 'course_blocked_unavailable';
     }
@@ -97,6 +107,9 @@ class CourseLesson {
     this.startTime,
     this.endTime,
     this.isTrial = false,
+    this.price,
+    this.purchased = false,
+    this.isMandatory = false,
   });
 
   final int lessonNo;
@@ -105,12 +118,43 @@ class CourseLesson {
   final String? endTime;
   final bool isTrial;
 
-  factory CourseLesson.fromJson(Map<String, dynamic> j) => CourseLesson(
+  /// Trial lessons only: each is priced separately, and the screen shows what
+  /// each one costs. Null on the course's own lessons — those are sold as one
+  /// package, so an individual lesson has no price of its own.
+  final num? price;
+
+  /// Trial lessons only: the user already bought this one. Trials are sold
+  /// individually, so this is per lesson rather than per course.
+  final bool purchased;
+
+  /// Trial lessons only: this one must be bought, and must have taken place,
+  /// before the whole course can be bought. Any of them may be marked.
+  final bool isMandatory;
+
+  /// Still on sale to this user: ahead of them, and not already theirs.
+  bool get isAvailable => !purchased && !hasPassed;
+
+  /// True once the lesson is in the past. Trials that have already run are
+  /// still listed (so the dates read as a set) but are not on sale.
+  bool get hasPassed {
+    final d = DateTime.tryParse(date);
+    if (d == null) return false;
+    final now = DateTime.now();
+    return d.isBefore(DateTime(now.year, now.month, now.day));
+  }
+
+  factory CourseLesson.fromJson(Map<String, dynamic> j, {num? price}) =>
+      CourseLesson(
         lessonNo: (j['lesson_no'] as num?)?.toInt() ?? 0,
         date: j['date'] as String? ?? '',
         startTime: j['start_time'] as String?,
         endTime: j['end_time'] as String?,
         isTrial: j['is_trial'] as bool? ?? false,
+        // The server prices each trial lesson on the lesson itself; the
+        // separate `prices` list is the fallback for older responses.
+        price: (j['price'] as num?) ?? price,
+        purchased: j['purchased'] as bool? ?? false,
+        isMandatory: j['is_mandatory'] as bool? ?? false,
       );
 }
 
@@ -120,11 +164,22 @@ class CourseEnrollment {
     required this.status,
     required this.trialLessonsBooked,
     required this.upcomingLessons,
+    required this.trialStarted,
+    this.trialFirstDate,
   });
 
   final CourseEnrollmentStatus status;
   final int trialLessonsBooked;
   final int upcomingLessons;
+
+  /// The user's own first trial lesson (YYYY-MM-DD), null if they hold none.
+  /// Their first, not the course's — someone who buys the trial late only gets
+  /// the lessons that were still ahead.
+  final String? trialFirstDate;
+
+  /// True once that lesson has come round. What a mandatory trial is measured
+  /// against: the centre has to have seen the child, and paying isn't that.
+  final bool trialStarted;
 
   bool get isEnrolled => status.isEnrolled;
   bool get hasTrial => status.hasTrial;
@@ -133,6 +188,8 @@ class CourseEnrollment {
         status: CourseEnrollmentStatus.fromKey(j['status'] as String?),
         trialLessonsBooked: (j['trial_lessons_booked'] as num?)?.toInt() ?? 0,
         upcomingLessons: (j['upcoming_lessons'] as num?)?.toInt() ?? 0,
+        trialFirstDate: j['trial_first_date'] as String?,
+        trialStarted: j['trial_started'] as bool? ?? false,
       );
 }
 
@@ -152,6 +209,7 @@ class CourseLevel {
     required this.order,
     required this.trialLessons,
     required this.trialPrice,
+    required this.trialLessonsLeft,
     required this.courseLessons,
     required this.lessonsLeft,
     required this.coursePrice,
@@ -171,8 +229,22 @@ class CourseLevel {
   final String? description;
   final int order;
 
+  /// The dated trial lessons, each carrying its own [CourseLesson.price].
   final List<CourseLesson> trialLessons;
+
+  /// What the whole trial set costs — the sum of the lesson prices.
   final num trialPrice;
+
+  /// Trials still ahead. Fewer than [trialLessons] once some have run.
+  final int trialLessonsLeft;
+
+  /// The trial lessons that must be taken before the course can be bought.
+  /// Stated on the page rather than sprung at checkout — it changes what a
+  /// parent has to buy first.
+  List<CourseLesson> get mandatoryTrialLessons =>
+      trialLessons.where((l) => l.isMandatory).toList();
+
+  bool get hasMandatoryTrial => mandatoryTrialLessons.isNotEmpty;
 
   final List<CourseLesson> courseLessons;
 
@@ -198,6 +270,11 @@ class CourseLevel {
 
   bool get isFull => seatsLeft != null && seatsLeft! <= 0;
 
+  /// The trial lessons still on sale to this user — upcoming, not already
+  /// bought. Trials are sold individually, so this is what the picker offers.
+  List<CourseLesson> get availableTrialLessons =>
+      trialLessons.where((l) => l.isAvailable).toList();
+
   /// True once every lesson has passed.
   bool get hasEnded => blockedReason == CourseBlockedReason.ended;
 
@@ -206,15 +283,21 @@ class CourseLevel {
     final course = Map<String, dynamic>.from(j['course'] as Map? ?? {});
     final enrol = j['enrollment'];
     final upsell = j['upsell'];
+    // Each trial lesson carries its own price and its own mandatory flag —
+    // the server stamps both onto the lesson.
+    final trialLessons = ((trial['lessons'] as List?) ?? [])
+        .map((e) =>
+            CourseLesson.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
     return CourseLevel(
       id: j['id'] as String?,
       name: j['name'] as String?,
       description: j['description'] as String?,
       order: (j['order'] as num?)?.toInt() ?? 0,
-      trialLessons: ((trial['lessons'] as List?) ?? [])
-          .map((e) => CourseLesson.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList(),
+      trialLessons: trialLessons,
       trialPrice: (trial['total_price'] as num?) ?? 0,
+      trialLessonsLeft:
+          (trial['lessons_left'] as num?)?.toInt() ?? trialLessons.length,
       courseLessons: ((course['lessons'] as List?) ?? [])
           .map((e) => CourseLesson.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
@@ -302,10 +385,15 @@ class CoursesApi {
 
   /// [subcourseId] picks the level on a levelled course. Omitting it lets the
   /// server fall back to the cheapest level with seats left.
+  ///
+  /// [trialDates] picks which trial sessions to buy — they are sold one at a
+  /// time, and by date rather than position because the offered set rolls
+  /// forward. Omitting it buys every upcoming session not already held.
   Future<CheckoutResult> checkout({
     required String activityId,
     required CoursePurchaseOption option,
     String? subcourseId,
+    List<String>? trialDates,
     String? lang,
     String? returnUrl,
     String? paymentProvider,
@@ -317,6 +405,10 @@ class CoursesApi {
       'option': option.key,
       if (subcourseId != null && subcourseId.isNotEmpty)
         'subcourse_id': subcourseId,
+      if (option == CoursePurchaseOption.trial &&
+          trialDates != null &&
+          trialDates.isNotEmpty)
+        'trial_dates': trialDates,
       if (lang != null) 'lang': lang,
       if (returnUrl != null) 'return_url': returnUrl,
       if (paymentProvider != null) 'payment_provider': paymentProvider,

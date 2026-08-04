@@ -62,16 +62,20 @@ String _messageFor(Object error) {
 
 bool get _isSignedIn => getIt<Storage>().tokens.call()?.access != null;
 
-/// Buy a course — the trial lessons, or the whole thing.
+/// Buy a course — trial lessons, or the whole thing.
 ///
 /// Shared by the flat course screen and the per-level screen: both need the same
 /// sign-in check, the same payment hand-off and the same error mapping, and the
 /// only thing that differs is which level [subcourseId] names.
+///
+/// [trialDates] is the parent's pick: trial sessions are sold one at a time,
+/// so a purchase is for the dates they chose, not for the whole set.
 Future<CoursePurchaseResult> runCoursePurchase(
   BuildContext context, {
   required String activityId,
   required CoursePurchaseOption option,
   String? subcourseId,
+  List<String>? trialDates,
 }) async {
   // A course detail page is public, so the buy button is the first place a
   // signed-out user can hit auth. Send them to login rather than letting the
@@ -86,6 +90,7 @@ Future<CoursePurchaseResult> runCoursePurchase(
       activityId: activityId,
       option: option,
       subcourseId: subcourseId,
+      trialDates: trialDates,
       lang: context.locale.languageCode,
     );
 
