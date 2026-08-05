@@ -248,7 +248,9 @@ class SearchChips extends StatelessWidget {
   });
 
   final List<String> labels;
-  final int activeIndex;
+
+  /// Null when no chip is picked — the unfiltered state, where none is lit.
+  final int? activeIndex;
   final ValueChanged<int> onSelect;
 
   @override

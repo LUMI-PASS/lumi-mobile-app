@@ -4,6 +4,14 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter
 
 part 'search_state.freezed.dart';
 
+/// No type chip picked — the screen's opening state everywhere except the two
+/// home "see all" links, which arrive with the chip their row implies.
+///
+/// It is not a fourth endpoint: the cubit fans out to activities *and* courses
+/// and interleaves them into the one grid, so "no filter" reads as everything
+/// rather than as a silently pre-applied one.
+const int kSearchTabAll = -1;
+
 @freezed
 class SearchBuildable with _$SearchBuildable {
   const factory SearchBuildable({
@@ -11,7 +19,7 @@ class SearchBuildable with _$SearchBuildable {
     @Default(false) bool isLoadingMore,
     @Default(false) bool classesLoaded,
     @Default(false) bool branchesLoaded,
-    @Default(0) int activeTab,
+    @Default(kSearchTabAll) int activeTab,
     @Default('') String searchTerm,
     @Default([]) List<HomClass> classes,
     @Default([]) List<HomBranch> branches,

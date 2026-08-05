@@ -8,6 +8,7 @@ import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:injectable/injectable.dart';
 import 'verify_state.dart';
 
@@ -85,6 +86,11 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
           } else {
             await _storage.needsOnboarding.set(false);
           }
+          // Pull this account's plan now. AppCubit lives for the whole run and
+          // synced at cold start — when that happened before sign-in it found
+          // no session, so without this the buyer's coupon prices wouldn't
+          // appear until the next launch.
+          await getIt<AppCubit>().onSignedIn();
           invoke(const VerifyListenable(VerifyEffect.success));
         },
         onErrorData: (error) => display.error(error),

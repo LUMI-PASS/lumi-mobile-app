@@ -6,7 +6,9 @@ import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:injectable/injectable.dart';
 
 import 'profile_state.dart';
@@ -91,6 +93,10 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
     await _storage.logout();
     displayNameNotifier.value = null;
     parentAvatarNotifier.value = null;
+    // AppCubit outlives the session, so the plan has to be dropped from its
+    // state too — clearing the box alone would leave the next account signed
+    // in on this run showing the previous buyer's discounted prices.
+    getIt<AppCubit>().clearSubscription();
   }
 
   Future<void> logout() => callable(

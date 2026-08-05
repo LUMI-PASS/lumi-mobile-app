@@ -119,6 +119,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   RangeValues _range =
       const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
 
+  /// Mirrors the age fields' emptiness so [_onAgeTyped] can tell when the Clear
+  /// button's enabled state actually needs a rebuild.
+  bool _ageFieldsEmpty = true;
+
   @override
   void initState() {
     super.initState();
@@ -131,13 +135,30 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _range = init.priceRange;
     if (init.ageYears != null) _ageFromController.text = '${init.ageYears}';
     if (init.ageToYears != null) _ageToController.text = '${init.ageToYears}';
+    _ageFieldsEmpty = _ageFieldsAreEmpty;
+    _ageFromController.addListener(_onAgeTyped);
+    _ageToController.addListener(_onAgeTyped);
   }
 
   @override
   void dispose() {
+    _ageFromController.removeListener(_onAgeTyped);
+    _ageToController.removeListener(_onAgeTyped);
     _ageFromController.dispose();
     _ageToController.dispose();
     super.dispose();
+  }
+
+  bool get _ageFieldsAreEmpty =>
+      _ageFromController.text.isEmpty && _ageToController.text.isEmpty;
+
+  /// Typing in a `TextField` doesn't rebuild the sheet, so the Clear button
+  /// would stay greyed out after an age is entered. Only the empty↔filled flip
+  /// matters here, so this rebuilds on that and not on every keystroke.
+  void _onAgeTyped() {
+    if (_ageFieldsAreEmpty != _ageFieldsEmpty) {
+      setState(() => _ageFieldsEmpty = _ageFieldsAreEmpty);
+    }
   }
 
   int? _parseAge(TextEditingController controller) {
@@ -149,6 +170,35 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   bool get _isPriceChanged =>
       _range.start != FilterResult.minPrice ||
       _range.end != FilterResult.maxPrice;
+
+  /// Whether anything is set — drives the Clear button's enabled look, so it
+  /// never invites a tap that would do nothing.
+  bool get _hasAnyFilter =>
+      _datePreset != DatePreset.none ||
+      _fromDate != null ||
+      _toDate != null ||
+      !_ageFieldsAreEmpty ||
+      _gender != Gender.any ||
+      _districts.isNotEmpty ||
+      _isPriceChanged;
+
+  /// Resets every control back to its default. Stays in the sheet on purpose:
+  /// the buyer sees the chips deselect and the sliders spring back, then
+  /// commits with Apply — same two-step as changing any other filter.
+  void _clearAll() {
+    // Outside setState: clearing a controller notifies its listeners straight
+    // away, and [_onAgeTyped] sets state of its own.
+    _ageFromController.clear();
+    _ageToController.clear();
+    setState(() {
+      _datePreset = DatePreset.none;
+      _fromDate = null;
+      _toDate = null;
+      _gender = Gender.any;
+      _districts = <String>{};
+      _range = const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
+    });
+  }
 
   FilterResult _buildResult() => FilterResult(
         datePreset: _datePreset,
@@ -392,8 +442,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               children: [
                 Expanded(
                   child: _SheetButton(
-                    label: 'cancel_button'.tr(),
-                    onTap: () => Navigator.of(context).pop(),
+                    label: 'clear_button'.tr(),
+                    enabled: _hasAnyFilter,
+                    onTap: _clearAll,
                   ),
                 ),
                 8.kw,
@@ -534,30 +585,43 @@ class _SheetButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.gradient,
+    this.enabled = true,
   });
 
   final String label;
   final VoidCallback onTap;
   final Gradient? gradient;
 
+  /// Greyed out and inert — used by Clear when there is nothing to clear.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
 
-    return Bouncing(
-      onTap: onTap,
-      child: Container(
-        height: 50.h,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: gradient == null ? c.control : null,
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(44.r),
-        ),
-        child: Text(
-          label,
-          style: AppText.medium16.copyWith(
-            color: gradient == null ? c.textPrimary : AppColors.onBrand,
+    // IgnorePointer rather than a null `onTap`: Bouncing always dereferences
+    // its callback after the bounce, so a disabled button has to stop the tap
+    // before it gets there.
+    return IgnorePointer(
+      ignoring: !enabled,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: Bouncing(
+          onTap: onTap,
+          child: Container(
+            height: 50.h,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: gradient == null ? c.control : null,
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(44.r),
+            ),
+            child: Text(
+              label,
+              style: AppText.medium16.copyWith(
+                color: gradient == null ? c.textPrimary : AppColors.onBrand,
+              ),
+            ),
           ),
         ),
       ),

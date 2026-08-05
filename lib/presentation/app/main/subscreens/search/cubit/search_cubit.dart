@@ -36,10 +36,22 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
         return _branchesTotal;
       case 2:
         return _coursesTotal;
+      case kSearchTabAll:
+        // The unfiltered grid holds both, so the count row has to say both.
+        return _classesTotal + _coursesTotal;
       default:
         return _classesTotal;
     }
   }
+
+  /// Whether courses can join the unfiltered grid right now.
+  ///
+  /// `discovery/courses` takes only a search term — no category, no date, age,
+  /// price or district. So the moment any of those is on, courses that don't
+  /// honour it would be lying next to activities that do, and the grid narrows
+  /// to activities alone.
+  bool get _coursesMatchFilters =>
+      buildable.selectedCategory == null && activeFilterCount == 0;
 
   /// Categories cached from the home feed (have resolved title strings).
   /// Used by search so we don't depend on the raw categories/ endpoint.
@@ -60,9 +72,11 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
 
   Timer? _debounce;
 
-  /// [tab] selects which result set to load first — 0 classes, 1 branches. The
-  /// map screen opens straight on branches, so it doesn't pay for a classes
-  /// fetch it will never show.
+  /// [tab] selects which result set to load first — [kSearchTabAll] (the
+  /// default: activities and courses together, no chip lit), 0 activities,
+  /// 1 branches, 2 courses. The map screen opens straight on branches, so it
+  /// doesn't pay for a classes fetch it will never show; the two home "see all"
+  /// links pass the chip their row implies.
   ///
   /// [category] is seeded *before* the first fetch so that opening search from
   /// a category costs one filtered request, not an unfiltered one followed by
@@ -72,7 +86,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   /// triggers later) load all pages instead of the first — the map plots pins,
   /// so a paged list would silently hide most centres.
   Future<void> init({
-    int tab = 0,
+    int tab = kSearchTabAll,
     HomCategory? category,
     bool allBranches = false,
   }) async {
@@ -124,21 +138,24 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   }
 
   Future<void> setTab(int tab) async {
-    if (buildable.activeTab == tab) return;
-    build((b) => b.copyWith(activeTab: tab));
-    // Tabs 0 (activities) and 2 (courses) share the `classes` slot, so it's only
-    // "already loaded" when it currently holds THIS tab's content.
-    final alreadyLoaded = tab == 1
+    // Tapping the lit chip turns it off, back to the unfiltered grid — without
+    // that there is no way back to "everything" once a chip has been picked.
+    final next = buildable.activeTab == tab ? kSearchTabAll : tab;
+    if (buildable.activeTab == next) return;
+    build((b) => b.copyWith(activeTab: next));
+    // Tabs 0 (activities), 2 (courses) and the merged view share the `classes`
+    // slot, so it's only "already loaded" when it holds THIS tab's content.
+    final alreadyLoaded = next == 1
         ? buildable.branchesLoaded
-        : (buildable.classesLoaded && _classesContent == tab);
+        : (buildable.classesLoaded && _classesContent == next);
     if (!alreadyLoaded) {
       build((b) => b.copyWith(
             isLoading: true,
             // Clear the shared slot when swapping activities <-> courses so the
             // old content doesn't flash while the new one loads.
-            classes: tab == 1 ? buildable.classes : const [],
+            classes: next == 1 ? buildable.classes : const [],
           ));
-      await _fetchTab(tab, page: 1, append: false);
+      await _fetchTab(next, page: 1, append: false);
       build((b) => b.copyWith(isLoading: false));
     }
   }
@@ -193,7 +210,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
       final search =
           buildable.searchTerm.isEmpty ? null : buildable.searchTerm;
 
-      if (tab == 0 || tab == 2) {
+      if (tab != 1) {
         String? fromDate;
         String? toDate;
         int? age;
@@ -245,53 +262,73 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           }
         }
 
-        // Courses (tab 2) have their own catalogue endpoint and ignore the
-        // activity filters; they still render through the shared classes slot.
-        final result = tab == 2
-            ? await _repo.getDiscoveryCourses(
-                page: page,
-                limit: _pageLimit,
-                search: search,
-              )
-            : await _repo.getDiscoveryClasses(
-                page: page,
-                limit: _pageLimit,
-                search: search,
-                categoryId: buildable.selectedCategory?.id,
-                fromDate: fromDate,
-                toDate: toDate,
-                age: age,
-                classGender: classGender,
-                minPrice: minPrice,
-                maxPrice: maxPrice,
-                lat: _lat,
-                lng: _lng,
-                districts: filter?.districts.toList(),
-              );
+        // Courses have their own catalogue endpoint and ignore the activity
+        // filters; both render through the shared classes slot. The unfiltered
+        // grid asks for the same page of each and interleaves the two, so the
+        // user sees a mix rather than every activity before the first course.
+        final wantsActivities = tab == 0 || tab == kSearchTabAll;
+        final wantsCourses =
+            tab == 2 || (tab == kSearchTabAll && _coursesMatchFilters);
+
+        final results = await Future.wait([
+          if (wantsActivities)
+            _repo.getDiscoveryClasses(
+              page: page,
+              limit: _pageLimit,
+              search: search,
+              categoryId: buildable.selectedCategory?.id,
+              fromDate: fromDate,
+              toDate: toDate,
+              age: age,
+              classGender: classGender,
+              minPrice: minPrice,
+              maxPrice: maxPrice,
+              lat: _lat,
+              lng: _lng,
+              districts: filter?.districts.toList(),
+            ),
+          if (wantsCourses)
+            _repo.getDiscoveryCourses(
+              page: page,
+              limit: _pageLimit,
+              search: search,
+            ),
+        ]);
+
+        final activityResult = wantsActivities ? results.first : null;
+        final courseResult = wantsCourses ? results.last : null;
 
         _classesContent = tab;
-        if (tab == 2) {
-          _coursesTotal = result.total;
-        } else {
-          _classesTotal = result.total;
-        }
+        if (wantsActivities) _classesTotal = activityResult!.total;
+        // Courses left out of the merge contribute nothing to the count row.
+        _coursesTotal = wantsCourses ? courseResult!.total : 0;
+
+        final merged = _interleave(
+          activityResult?.classes ?? const [],
+          courseResult?.classes ?? const [],
+        );
+        // Whichever list runs longer decides when "load more" stops; the
+        // shorter one simply returns nothing for the later pages.
+        final totalPages = [
+          activityResult?.totalPages ?? 1,
+          courseResult?.totalPages ?? 1,
+        ].reduce((a, b) => a > b ? a : b);
 
         if (append) {
           final existingIds = buildable.classes.map((c) => c.id).toSet();
-          final unique = result.classes
-              .where((c) => !existingIds.contains(c.id))
-              .toList();
+          final unique =
+              merged.where((c) => !existingIds.contains(c.id)).toList();
           build((b) => b.copyWith(
                 classes: [...b.classes, ...unique],
                 classesPage: page + 1,
-                classesTotalPages: result.totalPages,
+                classesTotalPages: totalPages,
                 classesLoaded: true,
               ));
         } else {
           build((b) => b.copyWith(
-                classes: result.classes,
+                classes: merged,
                 classesPage: 2,
-                classesTotalPages: result.totalPages,
+                classesTotalPages: totalPages,
                 classesLoaded: true,
               ));
         }
@@ -361,6 +398,20 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     // filters are on", not "how many values did you pick".
     if (f.districts.isNotEmpty) count++;
     return count;
+  }
+
+  /// One from each list, in turn, so the grid alternates instead of stacking
+  /// all activities above all courses. The longer list finishes on its own.
+  List<HomClass> _interleave(List<HomClass> a, List<HomClass> b) {
+    if (a.isEmpty) return b;
+    if (b.isEmpty) return a;
+    final out = <HomClass>[];
+    final longest = a.length > b.length ? a.length : b.length;
+    for (var i = 0; i < longest; i++) {
+      if (i < a.length) out.add(a[i]);
+      if (i < b.length) out.add(b[i]);
+    }
+    return out;
   }
 
   String _fmtDate(DateTime d) =>

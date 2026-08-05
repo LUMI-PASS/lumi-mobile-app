@@ -14,9 +14,9 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
-import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/coupon_success_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
@@ -141,10 +141,11 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
     getIt<AnalyticsService>()
         .logEvent(AnalyticsEvent.paymentSucceeded, params: _funnelParams);
     if (widget.isSubscription) {
-      await getIt<Storage>().hasPremium.set(true);
-      if (widget.planDiscountPercentage != null) {
-        await getIt<Storage>().planDiscountPercentage.set(widget.planDiscountPercentage!);
-      }
+      // Through the cubit, not a raw Storage write: the cards and the detail
+      // page watch AppCubit's state, and a write to Hive alone leaves every one
+      // of them showing undiscounted prices until the next cold start.
+      await getIt<AppCubit>()
+          .applyPurchasedPlan(widget.planDiscountPercentage ?? 0);
       if (!mounted) return;
       // If the plan carries a coupon discount, show the coupon success screen
       // (which also fetches and displays the eligible activity count).

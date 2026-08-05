@@ -10,7 +10,16 @@ import 'package:injectable/injectable.dart';
 
 import 'app_state.dart';
 
-@injectable
+/// One instance for the whole run — deliberately a singleton, not a factory.
+///
+/// The root `BlocProvider` (MyApp) resolves this from `getIt`, and every price
+/// on screen watches that instance. Checkout flows reach the cubit the only way
+/// they can from outside the tree, `getIt<AppCubit>()`; as a factory that call
+/// built a *second*, throwaway cubit — it synced the subscription into Hive and
+/// into its own state, then was discarded, so the cards and the detail page
+/// kept rendering the pre-purchase state until the next cold start (and every
+/// such call re-fired `app_open` and re-registered the FCM token as a bonus).
+@lazySingleton
 class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
   AppCubit(this._repo, this._push, this._storage)
       : super(AppBuildable(
@@ -45,6 +54,32 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
   /// reached (coins hit 0 at checkout time, not at payment time).
   Future<void> syncSubscription() => _syncSubscriptionStatus();
 
+  /// Called when a plan purchase is confirmed paid. Marks the plan active
+  /// straight away — the payment is settled, so the prices on screen should
+  /// drop on this frame — then confirms against the server, which is what
+  /// fills in the authoritative percentage and catches an already-exhausted
+  /// coupon.
+  Future<void> applyPurchasedPlan(int discountPercentage) async {
+    await _storage.hasPremium.set(true);
+    await _storage.planDiscountPercentage.set(discountPercentage);
+    build((b) => b.copyWith(
+          hasPremium: true,
+          planDiscountPercentage: discountPercentage,
+        ));
+    await _syncSubscriptionStatus();
+  }
+
+  /// Signing out has to drop the plan from memory too: `Storage.logout()`
+  /// clears the box, but this cubit outlives the session, so without this the
+  /// next account signed in on the same run would inherit the discount.
+  void clearSubscription() =>
+      build((b) => b.copyWith(hasPremium: false, planDiscountPercentage: 0));
+
+  /// Signing in is the other half of that: the cubit was built at cold start,
+  /// possibly logged out, so pull the new account's plan now rather than at the
+  /// next launch.
+  Future<void> onSignedIn() => _syncSubscriptionStatus();
+
   /// Fetches the user's active subscription from the backend and updates
   /// both Hive (survives a restart) and Cubit state (every watcher rebuilds
   /// right now). This ensures `hasPremium` and `planDiscountPercentage` are
@@ -72,4 +107,11 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
       // Network / auth failure — leave state as-is.
     }
   }
+
+  /// The root `BlocProvider` closes whatever it creates when it is disposed.
+  /// This cubit is shared with every `getIt<AppCubit>()` caller, so closing it
+  /// would silently kill later syncs — `BaseCubit.build` bails out on
+  /// `isClosed`. It is meant to live for the whole run.
+  @override
+  Future<void> close() async {}
 }

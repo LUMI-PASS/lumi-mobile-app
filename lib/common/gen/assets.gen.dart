@@ -220,6 +220,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/sucess.svg
   SvgGenImage get sucess => const SvgGenImage('assets/icons/sucess.svg');
 
+  /// File path: assets/icons/telegram.svg
+  SvgGenImage get telegram => const SvgGenImage('assets/icons/telegram.svg');
+
   /// File path: assets/icons/time.svg
   SvgGenImage get time => const SvgGenImage('assets/icons/time.svg');
 
@@ -287,6 +290,7 @@ class $AssetsIconsGen {
         searchSelected,
         searchUnselected,
         sucess,
+        telegram,
         time,
         user,
         walletUnselected

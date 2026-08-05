@@ -144,6 +144,11 @@ class HomClass with _$HomClass {
     int? maxAge,
     String? gender,
     bool? isActive,
+
+    /// False when the centre has taken this class off sale. It still browses
+    /// and still opens — only booking is closed, which the detail screen says
+    /// on its CTA. Absent counts as visible.
+    bool? isVisible,
     bool? hasPhoto,
     String? image,
     double? distance,

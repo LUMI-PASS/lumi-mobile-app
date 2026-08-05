@@ -24,7 +24,6 @@ class SearchView extends StatefulWidget {
     super.key,
     required this.state,
     this.onBack,
-    this.classesOnly = false,
     this.autofocusSearch = false,
   });
 
@@ -36,12 +35,6 @@ class SearchView extends StatefulWidget {
 
   /// Omit on the root tab — there is nothing behind it to go back to.
   final VoidCallback? onBack;
-
-  /// Drops the Darslar / Ta'lim markazlari chips and the result count, leaving
-  /// every activity behind the search field and the filters. Set when the
-  /// screen is opened as "see all activities" from Home, where the user asked
-  /// for one list and switching it to centres would be a non-sequitur.
-  final bool classesOnly;
 
   @override
   State<SearchView> createState() => _SearchViewState();
@@ -83,8 +76,21 @@ class _SearchViewState extends State<SearchView> {
   /// A category filter is *not* named here — the removable chip above the map
   /// row already carries it, and repeating it in the title said the same word
   /// twice while implying the screen was locked to that category.
-  String get _title =>
-      widget.classesOnly ? 'all_activities'.tr() : 'search'.tr();
+  /// Follows the chips rather than the entry point: arriving from Home's "see
+  /// all activities" opens on Mashg'ulotlar and reads as such, but the user can
+  /// switch chips from here and the header must not keep claiming the old one.
+  String get _title {
+    switch (widget.state.activeTab) {
+      case 0:
+        return 'all_activities'.tr();
+      case 1:
+        return 'search_tab_centers'.tr();
+      case 2:
+        return 'search_tab_courses'.tr();
+      default:
+        return 'search'.tr();
+    }
+  }
 
   Future<void> _openFilter() async {
     final cubit = context.read<SearchCubit>();
@@ -112,7 +118,7 @@ class _SearchViewState extends State<SearchView> {
     final state = widget.state;
     // Tabs 0 (activities) and 2 (courses) both render the classes grid — courses
     // are loaded into the same `classes` slot. Only tab 1 shows branches.
-    final isClasses = widget.classesOnly || state.activeTab != 1;
+    final isClasses = state.activeTab != 1;
     final items = isClasses ? state.classes : state.branches;
 
     // The active category filter, shown as a removable chip. A category with no
@@ -142,21 +148,23 @@ class _SearchViewState extends State<SearchView> {
               filterCount: cubit.activeFilterCount,
               autofocus: widget.autofocusSearch,
             ),
-            if (!widget.classesOnly) ...[
-              16.verticalSpace,
-              SearchChips(
-                // Display order Activities · Courses · Centres. The cubit keeps
-                // branches at tab 1 (the map opens straight on it), so we remap
-                // display position <-> tab index with this self-inverse table.
-                labels: [
-                  'search_tab_classes'.tr(),
-                  'search_tab_courses'.tr(),
-                  'search_tab_centers'.tr(),
-                ],
-                activeIndex: const [0, 2, 1][state.activeTab],
-                onSelect: (i) => cubit.setTab(const [0, 2, 1][i]),
-              ),
-            ],
+            16.verticalSpace,
+            SearchChips(
+              // Display order Activities · Courses · Centres. The cubit keeps
+              // branches at tab 1 (the map opens straight on it), so we remap
+              // display position <-> tab index with this self-inverse table.
+              labels: [
+                'search_tab_classes'.tr(),
+                'search_tab_courses'.tr(),
+                'search_tab_centers'.tr(),
+              ],
+              // No chip lit until one is picked (or the entry point implied
+              // one); tapping the lit one turns it back off.
+              activeIndex: state.activeTab == kSearchTabAll
+                  ? null
+                  : const [0, 2, 1][state.activeTab],
+              onSelect: (i) => cubit.setTab(const [0, 2, 1][i]),
+            ),
             if (category != null) ...[
               16.verticalSpace,
               SearchCategoryChip(
@@ -167,10 +175,8 @@ class _SearchViewState extends State<SearchView> {
             16.verticalSpace,
             SearchMapCard(onTap: _openMap),
             24.verticalSpace,
-            if (!widget.classesOnly) ...[
-              SearchCountRow(count: cubit.resultCount),
-              14.verticalSpace,
-            ],
+            SearchCountRow(count: cubit.resultCount),
+            14.verticalSpace,
             Expanded(
               child: Builder(
                 builder: (context) {

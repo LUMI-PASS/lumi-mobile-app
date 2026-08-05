@@ -324,7 +324,7 @@ class _$SearchBuildableImpl implements _SearchBuildable {
       this.isLoadingMore = false,
       this.classesLoaded = false,
       this.branchesLoaded = false,
-      this.activeTab = 0,
+      this.activeTab = kSearchTabAll,
       this.searchTerm = '',
       final List<HomClass> classes = const [],
       final List<HomBranch> branches = const [],

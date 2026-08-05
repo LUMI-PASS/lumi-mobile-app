@@ -282,9 +282,9 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
       },
     );
     // Goes through the cubit (not a direct Storage write) so every card and
-    // the detail page — which now watch AppCubit's state — reflect the new
-    // plan immediately, not just on the next cold start.
-    await getIt<AppCubit>().syncSubscription();
+    // the detail page — which watch AppCubit's state — reflect the new plan
+    // immediately, not just on the next cold start.
+    await getIt<AppCubit>().applyPurchasedPlan(discount ?? 0);
     if (!mounted) return;
 
     await Navigator.of(context).push(

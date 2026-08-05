@@ -16,7 +16,6 @@ import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
-import 'package:lumi_pass/presentation/app/home/see_all/classes_grid_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
@@ -214,10 +213,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         8.verticalSpace,
         HomeSectionHeader(
           title: 'popular_activities'.tr(),
-          // Every activity, searchable and filterable — the discovery screen
-          // without its Darslar / Ta'lim markazlari chips.
+          // Every activity, searchable and filterable. The chips come along and
+          // open on Mashg'ulotlar — this row is the one place the user did name
+          // a type, so it's the one place a chip starts lit.
           onViewAll: () => context.router.push(
-            SearchDiscoveryRoute(classesOnly: true),
+            SearchDiscoveryRoute(initialTab: 0),
           ),
         ),
         10.verticalSpace,
@@ -275,14 +275,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         8.verticalSpace,
         HomeSectionHeader(
           title: title,
+          // Same discovery screen as the activities row, opened on the Kurslar
+          // chip — so "see all courses" is one tap away from the rest of the
+          // catalogue instead of a dead-end grid.
           onViewAll: () => context.router.push(
-            ClassesGridRoute(
-              title: title,
-              // Courses have their own catalogue endpoint — "see all" must load
-              // ALL courses, not the activity feed.
-              list: HomeClassList.courses,
-              initialClasses: list,
-            ),
+            SearchDiscoveryRoute(initialTab: 2),
           ),
         ),
         10.verticalSpace,

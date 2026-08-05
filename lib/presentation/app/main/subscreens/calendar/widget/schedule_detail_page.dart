@@ -18,8 +18,10 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/strip_html.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
@@ -359,7 +361,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                     ],
                   ),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 100.h + safeBottom)),
+                // Clears the sticky bar, which is now two rows tall on an
+                // active order (status + cancel, plus the cut-off note).
+                SliverToBoxAdapter(child: SizedBox(height: 172.h + safeBottom)),
               ],
             ),
             // Frosted scrim under the top controls.
@@ -528,6 +532,16 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
               icon: Assets.icons.detail.icLocation,
               label: 'booking_location'.tr(),
               value: branch,
+              // Getting there is the point of this row on a booking you've
+              // already paid for.
+              trailing: _venueLat != null && _venueLng != null
+                  ? RouteIconButton(
+                      lat: _venueLat!,
+                      lng: _venueLng!,
+                      title: branch,
+                      subtitle: _venueAddress,
+                    )
+                  : null,
             ),
           ],
         ],
@@ -725,49 +739,78 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
               loading: _launchingPayment,
               onPressed: _pay,
             ),
-          _cancelLink(c),
+          8.verticalSpace,
+          _cancelButton(c),
         ],
       );
     }
-    // Paid and still inside the cancellation window: state it, and offer the
-    // way out right here. Cancelling used to be reachable only by tapping a
-    // ticket through to the receipt screen, which nobody finds.
-    if (_canCancel()) {
+    // Paid and still upcoming — an active booking always offers the way out
+    // right here, rather than only when the window happens to be open (and
+    // before that, only by tapping a ticket through to the receipt screen,
+    // which nobody finds). Visited and missed orders are terminal.
+    if (_effectiveStatus == 'active') {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _StatusBar(c: c, label: 'order_paid'.tr(), color: AppColors.green),
-          _cancelLink(c),
+          8.verticalSpace,
+          _cancelButton(c),
         ],
       );
     }
     return _StatusBar(c: c, label: 'order_paid'.tr(), color: AppColors.green);
   }
 
-  /// The "Отменить бронирование" row under the status bar. Renders nothing when
-  /// the order can't be cancelled (already past, already cancelled), so both
-  /// call sites can include it unconditionally.
-  Widget _cancelLink(AppColorScheme c) {
-    if (!_canCancel()) return const SizedBox.shrink();
-    return Padding(
-      padding: EdgeInsets.only(top: 8.h),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: _cancelling ? null : _confirmCancel,
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 14.h),
-          alignment: Alignment.center,
-          child: Text(
-            _cancelling
-                ? 'booking_cancelling'.tr()
-                : 'booking_cancel_title'.tr(),
-            style: AppText.semibold14.copyWith(
-              color: _cancelling ? c.textSecondary : AppColors.error,
+  /// "Отменить бронирование" as a real destructive button under the status bar.
+  ///
+  /// Shown on every active order. Past the cancellation cut-off it stays
+  /// visible but inert, with the reason under it — the backend refuses those
+  /// anyway, and a button that silently isn't there reads as a missing feature.
+  Widget _cancelButton(AppColorScheme c) {
+    final allowed = _canCancel();
+    final label =
+        _cancelling ? 'booking_cancelling'.tr() : 'booking_cancel_title'.tr();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // IgnorePointer, not a null callback: Bouncing dereferences its onTap
+        // after the bounce, so a disabled button has to stop the tap earlier.
+        IgnorePointer(
+          ignoring: !allowed || _cancelling,
+          child: Opacity(
+            opacity: allowed && !_cancelling ? 1 : 0.5,
+            child: Bouncing(
+              onTap: _confirmCancel,
+              child: Container(
+                height: 50.h,
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(44.r),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.40),
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: AppText.semibold16.copyWith(color: AppColors.error),
+                ),
+              ),
             ),
           ),
         ),
-      ),
+        if (!allowed) ...[
+          6.verticalSpace,
+          Text(
+            'booking_cancel_window_closed'
+                .tr(args: ['${_detail!.cancellationWindowHours}']),
+            textAlign: TextAlign.center,
+            style: AppText.regular12.copyWith(color: c.textMuted),
+          ),
+        ],
+      ],
     );
   }
 
@@ -874,6 +917,18 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
   String? _branchTitle() => _classFull?.branch?.title;
 
+  /// Venue coordinates for the route sheet. Only the class payload carries
+  /// them — the order itself has no location — so the button appears once
+  /// `/classes/:id` has landed, and stays hidden if that call soft-failed.
+  double? get _venueLat => _classFull?.branch?.lat;
+  double? get _venueLng => _classFull?.branch?.lng;
+
+  String? get _venueAddress {
+    final address = _classFull?.branch?.address;
+    if (address == null || address.isEmpty) return null;
+    return _readLang(address)?.trim();
+  }
+
   String? _readLang(Map<String, dynamic> field) {
     final code = context.locale.languageCode;
     final v = field[code] ?? field['ru'] ?? field['en'] ?? field['uz'];
@@ -972,6 +1027,7 @@ class _DetailPill extends StatelessWidget {
     required this.value,
     this.action,
     this.onTap,
+    this.trailing,
   });
 
   final AppColorScheme c;
@@ -982,6 +1038,10 @@ class _DetailPill extends StatelessWidget {
   /// Trailing chip. Purely an affordance — the tap target is the whole pill.
   final String? action;
   final VoidCallback? onTap;
+
+  /// Trailing widget with a tap target of its own (the route button), shown
+  /// after [action].
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -1038,6 +1098,10 @@ class _DetailPill extends StatelessWidget {
                 child: Text(act,
                     style: AppText.regular12.copyWith(color: c.textPrimary)),
               ),
+            ],
+            if (trailing != null) ...[
+              8.horizontalSpace,
+              trailing!,
             ],
           ],
         ),

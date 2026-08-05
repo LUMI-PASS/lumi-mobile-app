@@ -27,6 +27,7 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
@@ -49,9 +50,19 @@ String _isoDateStatic(DateTime d) {
 /// router as a page with a real [SafeArea].
 @RoutePage()
 class BookingPage extends StatefulWidget {
-  const BookingPage({super.key, required this.clazz});
+  const BookingPage({super.key, required this.clazz, this.coursePrice});
 
   final ClassFullModel clazz;
+
+  /// Set only for a course: the package price from `/courses/:id`, which the
+  /// detail page already had. Null falls back to the class's own price, so a
+  /// failed side fetch never blocks the sale.
+  ///
+  /// A course runs through this same page rather than one of its own — it just
+  /// has nothing to pick, so the date strip, the ticket steppers, the slot
+  /// picker and the promo field all drop out and what's left is the summary,
+  /// the payment method and the total.
+  final num? coursePrice;
 
   @override
   State<BookingPage> createState() => _BookingPageState();
@@ -95,18 +106,26 @@ class _BookingPageState extends State<BookingPage> {
   /// [_hasCoupon]: owning a plan is what locks promocodes out, even on a class
   /// the plan can't discount.
   ///
-  /// Reads `AppCubit`'s watched Cubit state, not a one-off `Storage` read, so
-  /// this rebuilds the instant a purchase completes or a sync resolves.
+  /// Reads `AppCubit`'s live Cubit state, not a one-off `Storage` read, so this
+  /// answers correctly the instant a purchase completes or a sync resolves.
+  ///
+  /// `read`, not `watch`: this getter is reached from [_pay] as well as from
+  /// build, and `watch` outside a build throws
+  /// ("Tried to listen to a value exposed with provider, from outside of the
+  /// widget tree"). The rebuild is subscribed once in [build] instead.
   bool get _hasCouponPlan {
-    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final app = _appState;
     return app.hasPremium && app.planDiscountPercentage > 0;
   }
+
+  AppBuildable get _appState =>
+      context.read<AppCubit>().state.buildable ?? const AppBuildable();
 
   /// The coupon's percentage on THIS class. A coupon is funded from Lumi's
   /// share of the booking, so it is capped at that share (and is 0 on a class
   /// whose share is too thin to carry one) — exactly what checkout charges.
   num get _couponPct {
-    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final app = _appState;
     final plan = app.hasPremium ? app.planDiscountPercentage : 0;
     return effectiveCouponPercent(
       plan,
@@ -134,6 +153,11 @@ class _BookingPageState extends State<BookingPage> {
   /// mutually exclusive: the coupon plan auto-discounts (and hides the promo
   /// field); otherwise an applied promocode reduces the total.
   num get _payableTotal {
+    // A course is charged as a package: `/courses/:id/checkout` has no
+    // promocode field and the service applies none, so subtracting one here
+    // would show a total the gateway is never going to charge. The field is on
+    // screen — it just can't move the money until the backend takes one.
+    if (_isCourse) return _total;
     if (_hasCouponPlan) return _discountedTotal;
     final t = _total - _promoDiscount;
     return t < 0 ? 0 : t;
@@ -672,7 +696,16 @@ class _BookingPageState extends State<BookingPage> {
     return '${d.year}-${two(d.month)}-${two(d.day)}';
   }
 
+  /// A course is sold as one package: no dates, no seats, no slots.
+  bool get _isCourse => widget.clazz.isCourse;
+
   num get _total {
+    if (_isCourse) {
+      final package = widget.coursePrice ?? 0;
+      if (package > 0) return package;
+      final min = widget.clazz.priceMin;
+      return min > 0 ? min : widget.clazz.price;
+    }
     if (_hasAgeTiers) {
       num sum = 0;
       for (var t = 0; t < _tierCounts.length; t++) {
@@ -851,6 +884,9 @@ class _BookingPageState extends State<BookingPage> {
   /// still missing — when the user can't pay yet.
   bool _validateForPayment() {
     if (_error != null) setState(() => _error = null);
+    // A course has no tickets, date or slot to validate — only the id it is
+    // bought against, and the payment method, which _pay asks for.
+    if (_isCourse) return widget.clazz.id != null;
     // Each branch says what is missing as well as shaking the field. A shake
     // alone reads as "the button is broken" — the buyer taps Pay, no request
     // goes out, and nothing on screen explains why.
@@ -1024,6 +1060,16 @@ class _BookingPageState extends State<BookingPage> {
   List<_SummaryLine> _summaryLines() {
     final out = <_SummaryLine>[];
 
+    // A course is priced as one package, so it leads with that line instead of
+    // per-ticket rows — the date and promocode lines below still apply.
+    if (_isCourse) {
+      out.add(_SummaryLine(
+        icon: Assets.icons.detail.iconsaxAiCalendar,
+        label: 'course_full_title'.tr(),
+        value: _total.toRawUzsPrice(),
+      ));
+    }
+
     void addTicket({
       required int ageFrom,
       required int? ageTo,
@@ -1042,7 +1088,9 @@ class _BookingPageState extends State<BookingPage> {
       ));
     }
 
-    if (_hasAgeTiers) {
+    if (_isCourse) {
+      // no per-ticket rows: the package line above is the price
+    } else if (_hasAgeTiers) {
       for (var t = 0; t < _tierCounts.length; t++) {
         final tier = widget.clazz.ageTiers[t];
         for (var d = 0; d < _tierCounts[t].length; d++) {
@@ -1084,7 +1132,7 @@ class _BookingPageState extends State<BookingPage> {
             '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
       ));
     }
-    if (!_hasCouponPlan && _promoDiscount > 0) {
+    if (!_isCourse && !_hasCouponPlan && _promoDiscount > 0) {
       out.add(_SummaryLine(
         icon: Assets.icons.detail.iconsaxTicketDiscount,
         label: 'promo_discount'.tr(),
@@ -1142,6 +1190,11 @@ class _BookingPageState extends State<BookingPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    // The one subscription to the coupon plan. The getters that read it
+    // ([_hasCouponPlan], [_couponPct]) use `read`, because [_pay] reaches them
+    // too and `watch` may only be called during a build — so the dependency is
+    // registered here, once, and the page still rebuilds when a plan lands.
+    context.watch<AppCubit>();
     return Scaffold(
       backgroundColor: c.canvas,
       body: SafeArea(
@@ -1178,6 +1231,14 @@ class _BookingPageState extends State<BookingPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // A course shows everything an activity does — the
+                          // schedule, the tariffs, the slots, the promocode —
+                          // with its package pill on top naming what is being
+                          // bought and for how much.
+                          if (_isCourse) ...[
+                            _courseSection(c),
+                            20.kh,
+                          ],
                           Shaker(key: _ticketShake, child: _ticketSection(c)),
                           20.kh,
                           Shaker(
@@ -1239,7 +1300,7 @@ class _BookingPageState extends State<BookingPage> {
             ),
             Expanded(
               child: Text(
-                'buy_tickets'.tr(),
+                _isCourse ? 'course_buy_cta'.tr() : 'buy_tickets'.tr(),
                 textAlign: TextAlign.center,
                 style: AppText.medium16.copyWith(color: c.textPrimary),
               ),
@@ -1374,6 +1435,45 @@ class _BookingPageState extends State<BookingPage> {
       );
 
   // "Оплата" — payment method row. Opens the chooser; it never charges.
+  /// What is being bought, for a course: the course and where it runs. Stands
+  /// in for the ticket rows, which a package has none of.
+  Widget _courseSection(AppColorScheme c) {
+    final branch = widget.clazz.branch?.title?.trim() ?? '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'course_full_title'.tr()),
+        PillCard(
+          leading: PillIconBadge(
+            child: Assets.icons.detail.iconsaxAiCalendar.svg(
+              width: 20.w,
+              height: 20.w,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+            ),
+          ),
+          trailing: PillActionChip(label: _total.toRawUzsPrice()),
+          child: PillCaption(
+            title: _courseTitle,
+            subtitle: branch.isEmpty ? 'course_full_title'.tr() : branch,
+            captionFirst: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The class name in the current language, with the same fallback chain the
+  /// API models use.
+  String get _courseTitle {
+    final name = widget.clazz.name;
+    for (final key in [context.locale.languageCode, 'ru', 'en', 'uz']) {
+      final v = name[key];
+      if (v is String && v.trim().isNotEmpty) return v.trim();
+    }
+    return '';
+  }
+
   Widget _paymentMethodRow(AppColorScheme c) {
     final payment = _payment;
     final card = payment?.card;
@@ -1696,6 +1796,40 @@ class _BookingPageState extends State<BookingPage> {
     }
     final payment = _payment!;
     final card = payment.card;
+
+    // A course buys the whole package through its own endpoint, then lands on
+    // the same checkout page an activity does. No level is named — the backend
+    // picks the cheapest one with seats when `subcourse_id` is absent.
+    if (_isCourse) {
+      setState(() {
+        _submitting = true;
+        _error = null;
+      });
+      try {
+        final result = await getIt<CoursesApi>().checkout(
+          activityId: widget.clazz.id!,
+          option: 'full',
+          paymentProvider: payment.rail.providerKey,
+          returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
+        );
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        if (result.checkoutUrl.isEmpty) {
+          setState(() => _error = 'pay_generic_error'.tr());
+          return;
+        }
+        await _completeRedirect(result);
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _submitting = false;
+          _error = e is CheckoutFriendlyError
+              ? e.message
+              : (PaymentError.fromDio(e) ?? 'pay_generic_error'.tr());
+        });
+      }
+      return;
+    }
 
     setState(() {
       _submitting = true;

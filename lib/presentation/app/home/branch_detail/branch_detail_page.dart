@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
@@ -22,7 +23,6 @@ import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Hero carousel height — also the distance the top scrim fades in over.
 const double _kHeroHeight = 300;
@@ -191,19 +191,19 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
     }
   }
 
-  Future<void> _openGoogleMaps() async {
+  /// Lets the visitor pick their maps app rather than assuming Google — Yandex
+  /// is what most people here navigate with.
+  void _openRouteSheet() {
     final lat = widget.branch.latitude;
     final lng = widget.branch.longitude;
     if (lat == null || lng == null) return;
-    final uri = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {
-      // No maps app / launch refused — nothing actionable for the user here.
-    }
+    MapRouteSheet.show(
+      context,
+      lat: lat,
+      lng: lng,
+      title: widget.branch.title,
+      subtitle: widget.branch.address,
+    );
   }
 
   @override
@@ -415,8 +415,19 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
             subvalue: landmark.isEmpty ? null : landmark,
             // The whole pill opens the route; the chip is the visible
             // affordance. Both are inert without coordinates to navigate to.
+            // Chip first, route icon on the outside edge — same arrangement as
+            // the venue row on class detail. Everything in the row (pill, chip,
+            // icon) opens the same app chooser.
             action: _hasMap ? 'branch_build_route'.tr() : null,
-            onTap: _hasMap ? _openGoogleMaps : null,
+            onTap: _hasMap ? _openRouteSheet : null,
+            trailing: _hasMap
+                ? RouteIconButton(
+                    lat: widget.branch.latitude!,
+                    lng: widget.branch.longitude!,
+                    title: widget.branch.title,
+                    subtitle: widget.branch.address,
+                  )
+                : null,
           ),
         ],
       ),
@@ -517,6 +528,7 @@ class _InfoPill extends StatelessWidget {
     this.subvalue,
     this.action,
     this.onTap,
+    this.trailing,
   });
 
   final AppColorScheme c;
@@ -528,6 +540,10 @@ class _InfoPill extends StatelessWidget {
   /// Trailing chip. Purely an affordance — the tap target is the whole pill.
   final String? action;
   final VoidCallback? onTap;
+
+  /// Trailing widget with a tap target of its own (the route button), shown
+  /// after [action].
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -595,6 +611,10 @@ class _InfoPill extends StatelessWidget {
                 child: Text(act,
                     style: AppText.regular12.copyWith(color: c.textSecondary)),
               ),
+            ],
+            if (trailing != null) ...[
+              8.horizontalSpace,
+              trailing!,
             ],
           ],
         ),

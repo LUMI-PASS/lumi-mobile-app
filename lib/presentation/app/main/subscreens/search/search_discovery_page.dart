@@ -16,25 +16,29 @@ class SearchDiscoveryPage
   const SearchDiscoveryPage({
     super.key,
     this.initialCategory,
-    this.classesOnly = false,
+    this.initialTab,
     this.autofocusSearch = false,
   });
 
   final HomCategory? initialCategory;
+
+  /// Which type chip to open lit: 0 activities, 2 courses (1 is centres, which
+  /// nothing links to yet). Null — the usual case — opens with none lit and
+  /// activities and courses merged into one grid. Only Home's two "see all"
+  /// rows pass a value, because only there did the user name a type.
+  final int? initialTab;
 
   /// Opens with the keyboard already up. Home's header search field comes in
   /// this way — the tap was the user asking to type. Category taps and
   /// "see all" don't, since those arrive with the list they wanted.
   final bool autofocusSearch;
 
-  /// Opens as an activities-only list — no Darslar / Ta'lim markazlari chips,
-  /// just every activity behind the search field and filters. Home's
-  /// "see all popular activities" comes in this way.
-  final bool classesOnly;
-
   @override
   void init(BuildContext context) {
-    context.read<SearchCubit>().init(category: initialCategory);
+    context.read<SearchCubit>().init(
+          tab: initialTab ?? kSearchTabAll,
+          category: initialCategory,
+        );
     super.init(context);
   }
 
@@ -43,7 +47,6 @@ class SearchDiscoveryPage
     return SearchView(
       state: state,
       onBack: () => context.router.maybePop(),
-      classesOnly: classesOnly,
       autofocusSearch: autofocusSearch,
     );
   }

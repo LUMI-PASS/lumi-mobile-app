@@ -2,7 +2,7 @@ str,ru_RU,uz_UZ,en_EN
 skip,Пропустить,O‘tkazish,Skip
 filter_active,Активные,Faol,Active
 filter_completed,Завершённые,Yakunlangan,Completed
-booking_date,Дата брони,Bron sanasi,Booking date
+booking_date,Бронь создана,Bron yaratildi,Booking created
 order_date,Дата,Sana,Date
 order_sum,Сумма,Summa,Amount
 status_completed,Завершена,Yakunlangan,Completed
@@ -35,6 +35,11 @@ without_nds,Без НДС,QQS siz,VAT Not Included
 notification_title,Уведомления,Xabarnomalar,Notifcations
 duplicate_title,Дубликат,Duplikat,Duplicate
 telegram_channel,Telegram канал,Telegram kanali,Telegram channel
+contact_support,Связаться с поддержкой,Qo‘llab-quvvatlash bilan bog‘lanish,Contact support
+support_sheet_subtitle,Выберите удобный способ связи,Qulay bog‘lanish usulini tanlang,Pick how you would like to reach us
+support_via_telegram,Написать в Telegram,Telegram orqali yozish,Message us on Telegram
+support_via_phone,Позвонить,Qo‘ng‘iroq qilish,Call us
+support_open_failed,Не удалось открыть,Ochib bo‘lmadi,Could not open
 tiktok,TikTok,TikTok,TikTok
 youtube,YouTube,YouTube,YouTube
 volume_unit,м³,m³,m³
@@ -46,6 +51,7 @@ tab_explore,Учреждения,Muassasalar,Institutions
 tab_profile,Профиль,Profil,Profile
 coming_soon,Скоро,Tez orada,Coming soon
 coming_soon_desc,Мы уже готовим этот раздел. Загляните чуть позже.,Bu bo'lim tayyorlanmoqda. Birozdan so'ng qayting.,We're getting this section ready. Check back soon.
+booking_available_soon,Бронирование скоро будет доступно,Bron tez orada mavjud bo‘ladi,Booking will be available soon
 hello,ПРИВЕТ,SALOM,HELLO
 all_categories,Все категории,Barcha kategoriyalar,All Categories
 newly_added_classes,Новые занятия,Yangi mashg'ulotlar,New Activities
@@ -227,6 +233,7 @@ booking_cancelled_label,Бронирование отменено,Bron bekor qil
 booking_cancel_failed,Не удалось отменить: {},Bekor qilinmadi: {},Could not cancel: {}
 booking_refund_auto,"Бронирование отменено. Деньги вернутся на карту в течение нескольких рабочих дней.","Bron bekor qilindi. Pul bir necha ish kuni ichida kartangizga qaytariladi.","Booking cancelled. The money returns to your card within a few working days."
 booking_refund_manual,"Бронирование отменено. Возврат оформит наша команда — мы свяжемся с вами.","Bron bekor qilindi. Pulni jamoamiz qaytaradi — siz bilan bog'lanamiz.","Booking cancelled. Our team will process the refund and contact you."
+booking_cancel_window_closed,Отмена возможна не позднее чем за {} ч. до начала.,Bekor qilish boshlanishidan kamida {} soat oldin mumkin.,Cancellation is only possible at least {} hours before the start.
 booking_could_not_load,Не удалось загрузить бронирование,Bronni yuklab bo‘lmadi,Could not load booking
 booking_retry,Повторить,Qayta urinish,Retry
 amount_due,К оплате,To‘lov uchun,Amount due
@@ -323,6 +330,7 @@ branch_address,Адрес,Manzil,Address
 branch_landmark,Ориентир,Mo'ljal,Landmark
 branch_view_on_maps,Посмотреть на карте,Xaritada ko’rish,View on map
 branch_build_route,Построить маршрут,Yo’nalish qurish,Build route
+route_open_failed,Не удалось открыть карты,Xaritalarni ochib bo‘lmadi,Could not open maps
 branch_about,О центре,Markaz haqida,About
 branch_no_classes,Занятий пока нет,Mashg’ulotlar hali yo’q ,No classes yet
 branch_load_more_classes,Загрузить ещё,Ko’proq yuklash,Load more

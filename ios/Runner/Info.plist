@@ -66,6 +66,14 @@
 			</array>
 		</dict>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<!-- Maps apps the "build route" sheet hands the venue off to. iOS
+		     answers canOpenURL: for a scheme only if it is declared here. -->
+		<string>yandexmaps</string>
+		<string>yandexnavi</string>
+		<string>comgooglemaps</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

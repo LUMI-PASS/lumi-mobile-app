@@ -2035,6 +2035,11 @@ mixin _$HomClass {
   int? get maxAge => throw _privateConstructorUsedError;
   String? get gender => throw _privateConstructorUsedError;
   bool? get isActive => throw _privateConstructorUsedError;
+
+  /// False when the centre has taken this class off sale. It still browses
+  /// and still opens — only booking is closed, which the detail screen says
+  /// on its CTA. Absent counts as visible.
+  bool? get isVisible => throw _privateConstructorUsedError;
   bool? get hasPhoto => throw _privateConstructorUsedError;
   String? get image => throw _privateConstructorUsedError;
   double? get distance => throw _privateConstructorUsedError;
@@ -2081,6 +2086,7 @@ abstract class $HomClassCopyWith<$Res> {
       int? maxAge,
       String? gender,
       bool? isActive,
+      bool? isVisible,
       bool? hasPhoto,
       String? image,
       double? distance,
@@ -2124,6 +2130,7 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? maxAge = freezed,
     Object? gender = freezed,
     Object? isActive = freezed,
+    Object? isVisible = freezed,
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? distance = freezed,
@@ -2190,6 +2197,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isVisible: freezed == isVisible
+          ? _value.isVisible
+          : isVisible // ignore: cast_nullable_to_non_nullable
               as bool?,
       hasPhoto: freezed == hasPhoto
           ? _value.hasPhoto
@@ -2281,6 +2292,7 @@ abstract class _$$HomClassImplCopyWith<$Res>
       int? maxAge,
       String? gender,
       bool? isActive,
+      bool? isVisible,
       bool? hasPhoto,
       String? image,
       double? distance,
@@ -2323,6 +2335,7 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? maxAge = freezed,
     Object? gender = freezed,
     Object? isActive = freezed,
+    Object? isVisible = freezed,
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? distance = freezed,
@@ -2389,6 +2402,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isVisible: freezed == isVisible
+          ? _value.isVisible
+          : isVisible // ignore: cast_nullable_to_non_nullable
               as bool?,
       hasPhoto: freezed == hasPhoto
           ? _value.hasPhoto
@@ -2464,6 +2481,7 @@ class _$HomClassImpl implements _HomClass {
       this.maxAge,
       this.gender,
       this.isActive,
+      this.isVisible,
       this.hasPhoto,
       this.image,
       this.distance,
@@ -2507,6 +2525,12 @@ class _$HomClassImpl implements _HomClass {
   final String? gender;
   @override
   final bool? isActive;
+
+  /// False when the centre has taken this class off sale. It still browses
+  /// and still opens — only booking is closed, which the detail screen says
+  /// on its CTA. Absent counts as visible.
+  @override
+  final bool? isVisible;
   @override
   final bool? hasPhoto;
   @override
@@ -2543,7 +2567,7 @@ class _$HomClassImpl implements _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, seats: $seats, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, seats: $seats, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2570,6 +2594,8 @@ class _$HomClassImpl implements _HomClass {
             (identical(other.gender, gender) || other.gender == gender) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
+            (identical(other.isVisible, isVisible) ||
+                other.isVisible == isVisible) &&
             (identical(other.hasPhoto, hasPhoto) ||
                 other.hasPhoto == hasPhoto) &&
             (identical(other.image, image) || other.image == image) &&
@@ -2613,6 +2639,7 @@ class _$HomClassImpl implements _HomClass {
         maxAge,
         gender,
         isActive,
+        isVisible,
         hasPhoto,
         image,
         distance,
@@ -2657,6 +2684,7 @@ abstract class _HomClass implements HomClass {
       final int? maxAge,
       final String? gender,
       final bool? isActive,
+      final bool? isVisible,
       final bool? hasPhoto,
       final String? image,
       final double? distance,
@@ -2700,6 +2728,12 @@ abstract class _HomClass implements HomClass {
   String? get gender;
   @override
   bool? get isActive;
+  @override
+
+  /// False when the centre has taken this class off sale. It still browses
+  /// and still opens — only booking is closed, which the detail screen says
+  /// on its CTA. Absent counts as visible.
+  bool? get isVisible;
   @override
   bool? get hasPhoto;
   @override

@@ -290,8 +290,21 @@ class OrderDetail {
         ? Map<String, dynamic>.from(json['order'] as Map)
         : <String, dynamic>{};
     final bookingsRaw = (json['bookings'] as List?) ?? const [];
+
+    // The detail endpoint hangs the seats off the payload root as `bookings`,
+    // not off the order itself, so the order arrives with no `tickets` — and
+    // everything derived from them falls back to its no-ticket default:
+    // [UserOrder.effectiveDisplayStatus] returns 'active'. A past, unattended
+    // booking therefore read "active" on the detail screen while the list card
+    // (whose endpoint does put `tickets` on the order) correctly said "missed".
+    // Same wire shape either way, so feed them in.
+    final orderRawWithTickets =
+        (orderRaw['tickets'] as List?)?.isNotEmpty == true || bookingsRaw.isEmpty
+            ? orderRaw
+            : {...orderRaw, 'tickets': bookingsRaw};
+
     return OrderDetail(
-      order: UserOrder.fromJson(orderRaw),
+      order: UserOrder.fromJson(orderRawWithTickets),
       tickets: bookingsRaw
           .whereType<Map>()
           .map((e) => OrderTicket.fromJson(Map<String, dynamic>.from(e)))

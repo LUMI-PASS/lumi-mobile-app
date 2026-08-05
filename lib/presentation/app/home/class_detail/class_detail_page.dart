@@ -16,24 +16,20 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
-import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
-import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
-import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
-import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
-import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
@@ -60,16 +56,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   ClassFullModel? _full;
   Timer? _slideTimer;
 
-  /// Set only for a course: its dated lessons and package prices, fetched from
-  /// `/api/courses/:id`. The lesson dates are expanded server-side from the
-  /// course's own weekday pattern, so the screen never re-derives them.
+  /// Set only for a course, from `/api/courses/:id`. Nothing on the page is
+  /// drawn from it any more — the lesson calendar is gone and the CTA sells the
+  /// whole course outright — so it is kept for one purpose: catching an
+  /// already-enrolled buyer or a full cohort before they reach checkout. A
+  /// failed or slow fetch therefore never blocks the sale.
   CourseDetail? _course;
-  bool _buyingCourse = false;
-
-  /// The buyer's payment choice for a course purchase, restored from the last
-  /// checkout and remembered across this page's lifetime — same pattern as
-  /// [BookingPage], so a returning buyer isn't made to repick every time.
-  PaymentSelection? _payment;
 
   /// A course is sold as a package, not per session. Known from the list model
   /// before the detail lands, so the CTA never flashes the ticket wording.
@@ -79,6 +71,45 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// 0 → hero fully visible, 1 → content scrolled under the top controls and
   /// the frosted scrim is fully on.
   double _topScrim = 0;
+
+  /// Whether this class is on sale right now.
+  ///
+  /// Read from both payloads, and pessimistically: the list model's
+  /// `is_active` (the feed's word for "approved") answers on the very first
+  /// frame and still answers if `/classes/:id` soft-failed, while the detail's
+  /// own visibility + moderation state is the authoritative one once it lands.
+  /// Either saying no is enough — checkout would reject the booking anyway.
+  bool get _isBookable {
+    final listed = widget.classModel;
+    if (listed.isActive == false || listed.isVisible == false) return false;
+    return _full?.isBookable ?? true;
+  }
+
+  // ─── Venue coordinates ────────────────────────────────────────────────────
+  /// Where the class actually takes place, for the route sheet. The list model
+  /// carries flat `latitude`/`longitude`; the detail's `branch_id` nests them
+  /// under `location` — prefer whichever has arrived, list model first so the
+  /// button is live before `/classes/:id` lands.
+  double? get _venueLat =>
+      widget.classModel.branch?.latitude ?? _full?.branch?.lat;
+
+  double? get _venueLng =>
+      widget.classModel.branch?.longitude ?? _full?.branch?.lng;
+
+  /// Street address for the sheet's subject line, if the payload carries one.
+  /// The list model has it already localized; the detail's is a per-language
+  /// map, so fall through the same chain the API models use.
+  String? get _venueAddress {
+    final listAddress = widget.classModel.branch?.address?.trim();
+    if (listAddress != null && listAddress.isNotEmpty) return listAddress;
+    final map = _full?.branch?.address;
+    if (map == null) return null;
+    for (final key in [currentLang, 'ru', 'en', 'uz']) {
+      final value = map[key];
+      if (value is String && value.trim().isNotEmpty) return value.trim();
+    }
+    return null;
+  }
 
   // ─── Coupon discount helpers ──────────────────────────────────────────────
   /// The coupon's percentage on THIS class — the plan's percentage capped at
@@ -103,7 +134,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     super.initState();
     _loadImages();
     _loadFull();
-    _loadLastPaymentMethod();
     _startAutoSlide();
     _scrollController.addListener(_onScroll);
     final cm = widget.classModel;
@@ -370,122 +400,44 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     context.router.push(BookingRoute(clazz: full));
   }
 
-  /// Course CTA. Opens the package picker — trial lessons vs the whole course.
+  /// Course CTA. Opens the course booking page — the same detail → booking →
+  /// checkout path an activity takes, rather than charging the remembered rail
+  /// on the spot.
+  ///
+  /// There is no package picker: trial lessons still exist on the backend, but
+  /// selling them is a decision the buyer no longer makes here.
   Future<void> _openCoursePurchase() async {
-    final detail = _course;
-    if (detail == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('cta_loading'.tr())),
-      );
+    final full = _full;
+    if (full == null) {
+      _toast('cta_loading'.tr());
       return;
     }
-    getIt<AnalyticsService>().logEvent(
-      AnalyticsEvent.bookButtonTapped,
-      params: {
-        if (_full?.id != null) 'class_id': _full!.id!,
-        if (widget.classModel.title != null)
-          'class_title': widget.classModel.title!,
-        'is_course': 'true',
-      },
-    );
-    final option = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _CoursePurchaseSheet(detail: detail),
-    );
-    if (option == null || !mounted) return;
 
-    // No method chosen yet (or none restored from last time) → open the same
-    // rail chooser the per-session booking flow uses; proceed only once one
-    // is picked. Already-chosen rails go straight to charging, same as
-    // BookingPage._pay.
-    if (_payment == null) {
-      await _openChooser();
-      if (!mounted || _payment == null) return;
+    // `/courses/:id` is a side fetch and may not have landed (or may have
+    // soft-failed), so it can only ever stop the sale, never gate it: when it
+    // is here it saves the buyer a checkout that the backend would refuse.
+    final detail = _course;
+    if (detail?.enrollment?.isEnrolled == true) {
+      _toast('course_already_enrolled'.tr());
+      return;
     }
-    await _buyCourse(option);
-  }
+    if (detail?.isFull == true) {
+      _toast('course_full_no_seats'.tr());
+      return;
+    }
 
-  /// Opens the payment rail chooser and remembers the pick for next time.
-  Future<void> _openChooser() async {
-    final picked = await showPaymentChooser(
-      context,
-      initial: _payment,
-      cardsComingSoon: !kCardPaymentsEnabled,
+    // The activity booking page, in its course mode — same screen, same
+    // checkout page after it. A course just has nothing to pick.
+    await context.router.push(
+      BookingRoute(clazz: full, coursePrice: detail?.coursePrice),
     );
-    if (picked == null || !mounted) return;
-    setState(() => _payment = picked);
-    _persistPaymentMethod(picked);
+    // The enrolment may have changed while they were away.
+    final id = full.id;
+    if (mounted && id != null) await _loadCourse(id);
   }
 
-  /// Persists the chosen rail so the next course checkout pre-selects it.
-  void _persistPaymentMethod(PaymentSelection sel) {
-    getIt<Storage>().lastPaymentRail.set(sel.rail.name);
-  }
-
-  /// Restores the buyer's last-used payment rail, same as BookingPage. The
-  /// card rail is never restored here — it can't be picked while
-  /// [kCardPaymentsEnabled] is false, so there's nothing to resume.
-  Future<void> _loadLastPaymentMethod() async {
-    final railKey = getIt<Storage>().lastPaymentRail();
-    if (railKey == null || railKey.isEmpty) return;
-    for (final r in PaymentRail.values) {
-      if (r.name == railKey && r != PaymentRail.card) {
-        if (mounted) setState(() => _payment = PaymentSelection(rail: r));
-        return;
-      }
-    }
-  }
-
-  /// Charges the chosen package through the picked rail via Paylov (WLCM) —
-  /// the same aggregator activity bookings pay through — and hands off to the
-  /// shared checkout screen the per-session booking flow ends on.
-  Future<void> _buyCourse(String option) async {
-    final id = _full?.id ?? widget.classModel.id;
-    final payment = _payment;
-    if (id == null || payment == null || _buyingCourse) return;
-    setState(() => _buyingCourse = true);
-    try {
-      final result = await getIt<CoursesApi>().checkout(
-        activityId: id,
-        option: option,
-        paymentProvider: payment.rail.providerKey,
-        // Every reachable rail here is a redirect one (card can't be picked
-        // while kCardPaymentsEnabled is false) — WLCM needs to know where to
-        // bounce the buyer back to after paying.
-        returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
-      );
-      if (!mounted) return;
-      setState(() => _buyingCourse = false);
-      if (result.checkoutUrl.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('pay_generic_error'.tr())),
-        );
-        return;
-      }
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PaycomCheckoutPage(
-            result: result,
-            provider: payment.rail.providerKey,
-          ),
-        ),
-      );
-      // The enrolment may have changed — refresh so the sheet reflects it.
-      if (mounted) await _loadCourse(id);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _buyingCourse = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text(PaymentError.fromDio(e) ?? 'pay_generic_error'.tr()),
-          backgroundColor: context.colors.error,
-        ),
-      );
-    }
-  }
+  void _toast(String message) => ScaffoldMessenger.of(context)
+      .showSnackBar(SnackBar(content: Text(message)));
 
   /// Price tiers derived for display: one row per age tier (min price), or the
   /// price-summary ranges as a fallback.
@@ -573,13 +525,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     child: Column(
                       children: [
                         _mainCard(c, title, description, branchTitle),
-                        // Which days the course actually runs — the first thing
-                        // a parent needs to check before the price.
-                        if (_course != null &&
-                            _courseCalendar(_course!).isNotEmpty) ...[
-                          6.verticalSpace,
-                          _courseLessonsCard(c, _course!),
-                        ],
                         if (priceRows.isNotEmpty) ...[
                           6.verticalSpace,
                           _pricesCard(c, priceRows),
@@ -677,15 +622,17 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   boxShadow: AppShadows.bottomBar,
                 ),
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + safeBottom),
-                // A class the centre has hidden can still be reached by direct
-                // link or from an existing booking, so the page opens — but it
-                // must not be bookable. Inert "coming soon" rather than a Book
-                // button that would fail at checkout.
+                // An inactive class — hidden by the centre, or not approved by
+                // moderation — can still be reached by direct link, from an
+                // existing booking, or from a feed page that loaded before it
+                // was taken down, so the page opens but must not be bookable.
+                // Inert "booking available soon" rather than a Book button that
+                // would fail at checkout.
                 // A course is bought as a package (trial lessons or the whole
                 // course), never as a dated ticket — so it gets its own
                 // wording and opens the course purchase sheet instead of the
                 // per-session booking flow.
-                child: _full?.isVisible == false
+                child: !_isBookable
                     ? _ComingSoonButton(c: c)
                     : GradientButton(
                         text: _isCourse
@@ -849,6 +796,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       ],
                     ),
                   ),
+                  // "View all" chip first, route icon on the outside edge.
                   if (widget.classModel.branch != null)
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
@@ -867,6 +815,15 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                 .copyWith(color: c.textPrimary)),
                       ),
                     ),
+                  if (_venueLat != null && _venueLng != null) ...[
+                    8.horizontalSpace,
+                    RouteIconButton(
+                      lat: _venueLat!,
+                      lng: _venueLng!,
+                      title: branchTitle,
+                      subtitle: _venueAddress,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -945,83 +902,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   // ─── Course lessons card ────────────────────────────────────────────────────
-
-  /// Every dated lesson of the course, not a weekly pattern.
-  ///
-  /// A parent buying a course is committing to a fixed set of days, so the
-  /// screen shows exactly which ones rather than "Tue/Thu/Sat" and leaving them
-  /// to work out the dates.
-  Widget _courseLessonsCard(AppColorScheme c, CourseDetail detail) {
-    final lessons = _courseCalendar(detail);
-    final pattern = _courseWeekdays(lessons);
-    return DetailCard(
-      c: c,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DetailCardHeader(
-            c: c,
-            icon: Assets.icons.detail.icCalendar,
-            iconGradient: AppGradients.brand,
-            title: 'course_schedule_title'.tr(),
-          ),
-          if (pattern.isNotEmpty) ...[
-            8.verticalSpace,
-            Text(
-              pattern,
-              style: AppText.regular13.copyWith(color: c.textSecondary),
-            ),
-          ],
-          16.verticalSpace,
-          ...List.generate(lessons.length, (i) {
-            final l = lessons[i];
-            return Padding(
-              padding:
-                  EdgeInsets.only(bottom: i == lessons.length - 1 ? 0 : 8.h),
-              child: _CourseLessonRow(c: c, lesson: l, index: i + 1),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  /// The course's own calendar, in date order — every lesson expanded from its
-  /// start date across its weekdays, through to the end date.
-  ///
-  /// Deliberately NOT merged with the trial lessons. A course has two
-  /// independent calendars: the trials come from the activity's schedule and
-  /// commonly run weeks before the course itself starts, so listing them here
-  /// would misstate which days the course runs. The trials are priced and
-  /// counted in the purchase sheet instead.
-  List<CourseLesson> _courseCalendar(CourseDetail detail) {
-    final lessons =
-        detail.courseLessons.where((l) => l.date.isNotEmpty).toList()
-          ..sort((a, b) {
-            final byDate = a.date.compareTo(b.date);
-            return byDate != 0
-                ? byDate
-                : (a.startTime ?? '').compareTo(b.startTime ?? '');
-          });
-    return lessons;
-  }
-
-  /// "Tue, Thu, Sat · 12 lessons" — the shape of the commitment, above the
-  /// dated list. Weekdays are read off the lessons themselves so the summary
-  /// can never disagree with the rows below it.
-  String _courseWeekdays(List<CourseLesson> lessons) {
-    if (lessons.isEmpty) return '';
-    final seen = <int>{};
-    final days = <String>[];
-    for (final l in lessons) {
-      final d = DateTime.tryParse(l.date);
-      if (d == null || !seen.add(d.weekday)) continue;
-      days.add('weekday_short_${d.weekday}'.tr());
-    }
-    final count =
-        'course_lessons_count'.tr(namedArgs: {'count': '${lessons.length}'});
-    return days.isEmpty ? count : '${days.join(', ')} · $count';
-  }
 
   // ─── Description card ───────────────────────────────────────────────────────
   Widget _descriptionCard(AppColorScheme c, String title, String description) {
@@ -1395,209 +1275,6 @@ class _Duration {
 // ─── Course lesson row ───────────────────────────────────────────────────────
 
 /// One dated lesson: its position, the date, and the time window.
-class _CourseLessonRow extends StatelessWidget {
-  const _CourseLessonRow({
-    required this.c,
-    required this.lesson,
-    required this.index,
-  });
-
-  final AppColorScheme c;
-  final CourseLesson lesson;
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    final date = DateTime.tryParse(lesson.date);
-    final label = date == null
-        ? lesson.date
-        : '${date.day} ${'month_short_${date.month}'.tr()}, '
-            '${'weekday_short_${date.weekday}'.tr()}';
-    final time = [lesson.startTime, lesson.endTime]
-        .whereType<String>()
-        .where((t) => t.isNotEmpty)
-        .join(' – ');
-
-    return Row(
-      children: [
-        Container(
-          width: 28.w,
-          height: 28.w,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: c.control, shape: BoxShape.circle),
-          child: Text(
-            '$index',
-            style: AppText.semibold12.copyWith(color: c.textSecondary),
-          ),
-        ),
-        10.horizontalSpace,
-        Expanded(
-          child: Text(
-            label,
-            style: AppText.semibold14.copyWith(color: c.textPrimary),
-          ),
-        ),
-        if (time.isNotEmpty) ...[
-          6.horizontalSpace,
-          Text(time,
-              style: AppText.regular13.copyWith(color: c.textSecondary)),
-        ],
-      ],
-    );
-  }
-}
-
-// ─── Course purchase sheet ───────────────────────────────────────────────────
-
-/// The two things a course sells. Kept as a picker rather than two CTAs on the
-/// page: the choice only matters once the parent has decided to buy, and the
-/// trial's "you still pay full price for the course afterwards" caveat needs
-/// room to be stated rather than hidden.
-class _CoursePurchaseSheet extends StatelessWidget {
-  const _CoursePurchaseSheet({required this.detail});
-
-  final CourseDetail detail;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final enrolled = detail.enrollment?.isEnrolled == true;
-    final hasTrial = detail.enrollment?.hasTrial == true;
-    final canTrial = detail.trialLessons.isNotEmpty && !enrolled && !hasTrial;
-    final canFull = detail.courseLessons.isNotEmpty && !enrolled &&
-        !detail.isFull;
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: c.scaffoldBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: c.border,
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
-              ),
-            ),
-            16.verticalSpace,
-            Text(
-              'course_buy_cta'.tr(),
-              style: AppText.semibold18.copyWith(color: c.textPrimary),
-            ),
-            if (enrolled) ...[
-              12.verticalSpace,
-              Text(
-                'course_already_enrolled'.tr(),
-                style: AppText.regular14.copyWith(color: c.textSecondary),
-              ),
-            ],
-            16.verticalSpace,
-            _option(
-              c,
-              context: context,
-              option: 'trial',
-              title: 'course_trial_title'
-                  .tr(namedArgs: {'count': '${detail.trialLessons.length}'}),
-              subtitle: 'course_trial_subtitle'.tr(),
-              price: detail.trialPrice,
-              enabled: canTrial,
-              disabledLabel: hasTrial ? 'course_trial_bought'.tr() : null,
-            ),
-            10.verticalSpace,
-            _option(
-              c,
-              context: context,
-              option: 'full',
-              title: 'course_full_title'.tr(),
-              subtitle: 'course_lessons_count'
-                  .tr(namedArgs: {'count': '${detail.courseLessons.length}'}),
-              price: detail.coursePrice,
-              enabled: canFull,
-              disabledLabel: detail.isFull
-                  ? 'course_full_no_seats'.tr()
-                  : enrolled
-                      ? 'course_already_enrolled_short'.tr()
-                      : null,
-              // Stated, not hidden: the trial fee is not credited toward this.
-              note: hasTrial ? 'course_upsell_body_short'.tr() : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _option(
-    AppColorScheme c, {
-    required BuildContext context,
-    required String option,
-    required String title,
-    required String subtitle,
-    required num price,
-    required bool enabled,
-    String? disabledLabel,
-    String? note,
-  }) {
-    return GestureDetector(
-      onTap: enabled ? () => Navigator.of(context).pop(option) : null,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.5,
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(14.w),
-          decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: c.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(title,
-                        style:
-                            AppText.semibold16.copyWith(color: c.textPrimary)),
-                  ),
-                  8.horizontalSpace,
-                  Text(
-                    price.toRawUzsPrice(),
-                    style: AppText.bold16.copyWith(color: c.primary),
-                  ),
-                ],
-              ),
-              4.verticalSpace,
-              Text(subtitle,
-                  style: AppText.regular13.copyWith(color: c.textSecondary)),
-              if (note != null) ...[
-                6.verticalSpace,
-                Text(note,
-                    style: AppText.regular12.copyWith(color: c.textMuted)),
-              ],
-              if (!enabled && disabledLabel != null) ...[
-                6.verticalSpace,
-                Text(disabledLabel,
-                    style: AppText.regular12.copyWith(color: c.textMuted)),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Inert CTA shown in place of "Buy tickets" when a class is hidden from the
 /// catalogue. Deliberately not a disabled [GradientButton]: a greyed-out
 /// gradient reads as "temporarily broken", where this reads as "not yet".
@@ -1610,7 +1287,9 @@ class _ComingSoonButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 16.h),
+      // Horizontal room too: this label is a sentence, not a word, and has to
+      // wrap rather than touch the border on a narrow phone.
+      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: c.control,
@@ -1618,7 +1297,11 @@ class _ComingSoonButton extends StatelessWidget {
         border: Border.all(color: c.controlBorder),
       ),
       child: Text(
-        'coming_soon'.tr(),
+        // Says what is unavailable, not just "soon" — the buyer is standing on
+        // a class page with a price on it and needs to know booking is what's
+        // off, and that it's temporary.
+        'booking_available_soon'.tr(),
+        textAlign: TextAlign.center,
         style: AppText.semibold16.copyWith(color: c.textSecondary),
       ),
     );

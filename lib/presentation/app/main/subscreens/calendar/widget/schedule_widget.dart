@@ -197,12 +197,6 @@ class BookingCard extends StatelessWidget {
               label: _ageRange(),
               value: '${order.totalSeats}',
             ),
-            12.kh,
-            _InfoRow(
-              icon: Assets.icons.detail.icCalendar,
-              label: 'booking_date'.tr(),
-              value: _dateTime(order.createdAt),
-            ),
             if (_sessionDateTime().isNotEmpty) ...[
               12.kh,
               _InfoRow(
@@ -220,9 +214,47 @@ class BookingCard extends StatelessWidget {
               14.kh,
               _PayNowFooter(order: order),
             ],
+            // When the booking was made. Card metadata rather than a detail of
+            // the session itself, so it closes the card a size down and muted —
+            // and no longer sits next to the session date, where two "date"
+            // rows read as a contradiction.
+            if (_dateTime(order.createdAt).isNotEmpty) ...[
+              10.kh,
+              _CreatedLine(value: _dateTime(order.createdAt)),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The "booking created" footer line — same label/value shape as [_InfoRow],
+/// two points smaller and muted on both sides.
+class _CreatedLine extends StatelessWidget {
+  const _CreatedLine({required this.value});
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'booking_date'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.regular12.copyWith(color: c.textMuted),
+          ),
+        ),
+        8.kw,
+        Text(
+          value,
+          style: AppText.medium12.copyWith(color: c.textMuted),
+        ),
+      ],
     );
   }
 }

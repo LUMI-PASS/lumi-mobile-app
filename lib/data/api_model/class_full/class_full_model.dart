@@ -23,6 +23,11 @@ class ClassFullModel {
   /// existing booking) but shows "coming soon" instead of a Book button.
   /// Absent counts as visible — older payloads don't carry the field.
   final bool isVisible;
+
+  /// Moderation state — 'pending' | 'approved' | 'rejected'. Only an approved
+  /// class is live; the discovery feed derives its `is_active` from exactly
+  /// this. Absent counts as approved, same reasoning as [isVisible].
+  final String? status;
   final num priceMin;
   final num priceMax;
   final bool hasMultiplePrices;
@@ -60,6 +65,7 @@ class ClassFullModel {
     required this.price,
     required this.hasAgePricing,
     this.isVisible = true,
+    this.status,
     required this.priceMin,
     required this.priceMax,
     required this.hasMultiplePrices,
@@ -78,6 +84,13 @@ class ClassFullModel {
     required this.isParentControlRequired,
     this.isCourse = false,
   });
+
+  /// Whether this class can be booked at all. Two independent switches take it
+  /// off sale — the centre hiding it ([isVisible]) and moderation not having
+  /// approved it ([status]) — and the detail page must refuse booking on
+  /// either, since checkout would reject it regardless.
+  bool get isBookable =>
+      isVisible && (status == null || status == 'approved');
 
   /// Returns the first non-empty video link (vimeo → youtube → videoUrl).
   String? get effectiveVideoUrl {
@@ -157,6 +170,7 @@ class ClassFullModel {
       price: (json['price'] as num?) ?? 0,
       hasAgePricing: json['has_age_pricing'] == true || ageTiers.isNotEmpty,
       isVisible: json['is_visible'] != false,
+      status: json['status']?.toString(),
       priceMin: priceMin,
       priceMax: priceMax,
       hasMultiplePrices:

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
@@ -112,6 +113,98 @@ class ProfilePage
         box == null ? null : box.localToGlobal(Offset.zero) & box.size;
     await Share.share(text,
         subject: 'share_app'.tr(), sharePositionOrigin: origin);
+  }
+
+  /// The two ways to reach support, both configured in Firebase Remote Config
+  /// (`support_telegram`, `support_phone`) so the numbers can change without an
+  /// app release. Either row is dropped when its value is blanked in the
+  /// console; the caller hides the whole entry when both are.
+  void _showSupportSheet(BuildContext context) {
+    final c = context.colors;
+    final config = RemoteConfigService.instance;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        padding: EdgeInsets.fromLTRB(
+          24.w,
+          16.h,
+          24.w,
+          16.h + MediaQuery.of(sheetContext).padding.bottom,
+        ),
+        decoration: BoxDecoration(
+          color: c.scaffoldBg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: c.control,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            24.kh,
+            Text(
+              'contact_support'.tr(),
+              style: AppText.heading20.copyWith(color: c.textPrimary),
+            ),
+            8.kh,
+            Text(
+              'support_sheet_subtitle'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.regular14.copyWith(color: c.textSecondary),
+            ),
+            20.kh,
+            if (config.hasSupportTelegram) ...[
+              _SupportOption(
+                iconAsset: _ProfileIcons.telegram,
+                title: 'support_via_telegram'.tr(),
+                value: config.supportTelegramLabel,
+                onTap: () => _openSupport(
+                  sheetContext,
+                  Uri.parse(config.supportTelegramUrl),
+                ),
+              ),
+              12.kh,
+            ],
+            if (config.hasSupportPhone)
+              _SupportOption(
+                iconAsset: _ProfileIcons.support,
+                title: 'support_via_phone'.tr(),
+                value: config.supportPhone,
+                onTap: () => _openSupport(
+                  sheetContext,
+                  // `tel:` wants the number unpunctuated.
+                  Uri.parse(
+                    'tel:${config.supportPhone.replaceAll(RegExp(r'[^0-9+]'), '')}',
+                  ),
+                ),
+              ),
+            8.kh,
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Closes the sheet, then hands off. Telegram's `https://t.me/...` opens the
+  /// app when it is installed and the browser when it isn't, so there is no
+  /// scheme to fall back from.
+  Future<void> _openSupport(BuildContext context, Uri uri) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    Navigator.of(context).pop();
+    try {
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {
+      // No app for it (a tablet with no dialer, say) — reported below.
+    }
+    messenger?.showSnackBar(
+      SnackBar(content: Text('support_open_failed'.tr())),
+    );
   }
 
   void _showLogoutSheet(BuildContext context) {
@@ -339,6 +432,18 @@ class ProfilePage
                       label: 'faq'.tr(),
                       onTap: () => context.router.push(const FaqRoute()),
                     ),
+                    // Hidden outright when the console has blanked both
+                    // contacts — a support row that opens an empty sheet is
+                    // worse than no row.
+                    if (RemoteConfigService.instance.hasSupportTelegram ||
+                        RemoteConfigService.instance.hasSupportPhone) ...[
+                      8.kh,
+                      _MenuRow(
+                        iconAsset: _ProfileIcons.support,
+                        label: 'contact_support'.tr(),
+                        onTap: () => _showSupportSheet(context),
+                      ),
+                    ],
                     8.kh,
                     _MenuRow(
                       iconAsset: _ProfileIcons.share,
@@ -704,7 +809,84 @@ class _ProfileIcons {
   static final language = Assets.icons.detail.iconsaxLanguageCircle;
   static final faq = Assets.icons.detail.iconsaxQuestionMark;
   static final share = Assets.icons.detail.iconsaxCircleShare;
+  static final support = Assets.icons.call;
+  static final telegram = Assets.icons.telegram;
   static final logout = Assets.icons.icLogout;
+}
+
+/// One way to reach support inside [_showSupportSheet] — the brand glyph, what
+/// it does, and the contact itself under it.
+class _SupportOption extends StatelessWidget {
+  const _SupportOption({
+    required this.iconAsset,
+    required this.title,
+    required this.value,
+    required this.onTap,
+  });
+
+  final SvgGenImage iconAsset;
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(40.r),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40.w,
+              height: 40.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.brandPurple.withOpacity(0.12),
+              ),
+              child: ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (rect) =>
+                    AppGradients.brand.createShader(rect),
+                child: iconAsset.svg(width: 20.sp, height: 20.sp),
+              ),
+            ),
+            12.kw,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
+                  ),
+                  2.kh,
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.regular12.copyWith(color: c.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                size: 20.sp, color: c.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MenuRow extends StatelessWidget {

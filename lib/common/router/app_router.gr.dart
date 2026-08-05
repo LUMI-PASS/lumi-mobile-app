@@ -78,6 +78,7 @@ abstract class _$AppRouter extends RootStackRouter {
         child: BookingPage(
           key: args.key,
           clazz: args.clazz,
+          coursePrice: args.coursePrice,
         ),
       );
     },
@@ -306,7 +307,7 @@ abstract class _$AppRouter extends RootStackRouter {
         child: SearchDiscoveryPage(
           key: args.key,
           initialCategory: args.initialCategory,
-          classesOnly: args.classesOnly,
+          initialTab: args.initialTab,
           autofocusSearch: args.autofocusSearch,
         ),
       );
@@ -568,12 +569,14 @@ class BookingRoute extends PageRouteInfo<BookingRouteArgs> {
   BookingRoute({
     Key? key,
     required ClassFullModel clazz,
+    num? coursePrice,
     List<PageRouteInfo>? children,
   }) : super(
           BookingRoute.name,
           args: BookingRouteArgs(
             key: key,
             clazz: clazz,
+            coursePrice: coursePrice,
           ),
           initialChildren: children,
         );
@@ -588,15 +591,18 @@ class BookingRouteArgs {
   const BookingRouteArgs({
     this.key,
     required this.clazz,
+    this.coursePrice,
   });
 
   final Key? key;
 
   final ClassFullModel clazz;
 
+  final num? coursePrice;
+
   @override
   String toString() {
-    return 'BookingRouteArgs{key: $key, clazz: $clazz}';
+    return 'BookingRouteArgs{key: $key, clazz: $clazz, coursePrice: $coursePrice}';
   }
 }
 
@@ -1283,7 +1289,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
   SearchDiscoveryRoute({
     Key? key,
     HomCategory? initialCategory,
-    bool classesOnly = false,
+    int? initialTab,
     bool autofocusSearch = false,
     List<PageRouteInfo>? children,
   }) : super(
@@ -1291,7 +1297,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
           args: SearchDiscoveryRouteArgs(
             key: key,
             initialCategory: initialCategory,
-            classesOnly: classesOnly,
+            initialTab: initialTab,
             autofocusSearch: autofocusSearch,
           ),
           initialChildren: children,
@@ -1307,7 +1313,7 @@ class SearchDiscoveryRouteArgs {
   const SearchDiscoveryRouteArgs({
     this.key,
     this.initialCategory,
-    this.classesOnly = false,
+    this.initialTab,
     this.autofocusSearch = false,
   });
 
@@ -1315,13 +1321,13 @@ class SearchDiscoveryRouteArgs {
 
   final HomCategory? initialCategory;
 
-  final bool classesOnly;
+  final int? initialTab;
 
   final bool autofocusSearch;
 
   @override
   String toString() {
-    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, classesOnly: $classesOnly, autofocusSearch: $autofocusSearch}';
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, initialTab: $initialTab, autofocusSearch: $autofocusSearch}';
   }
 }
 
