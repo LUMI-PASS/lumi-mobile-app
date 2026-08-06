@@ -1,6 +1,6 @@
+import 'package:auto_route/auto_route.dart';
 import 'dart:ui';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -46,11 +46,8 @@ class HomeCourseCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        final c = hc ?? const HomClass();
-        // Courses reuse the class detail screen + booking flow — no separate UI.
-        context.router.push(ClassDetailRoute(classModel: c));
-      },
+      onTap: () => context.router
+          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       child: Container(
         width: width ?? 168.w,
         margin: margin ?? EdgeInsets.only(left: 16.w),
@@ -91,11 +88,8 @@ class HomeNearbyCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        final c = hc ?? const HomClass();
-        // Courses reuse the class detail screen + booking flow — no separate UI.
-        context.router.push(ClassDetailRoute(classModel: c));
-      },
+      onTap: () => context.router
+          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         child: Column(
@@ -336,6 +330,23 @@ class _PriceText extends StatelessWidget {
         (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
 
     final baseStyle = AppText.semibold14.copyWith(color: c.textPrimary);
+
+    // A course is not priced per session, so the age-tier machinery above says
+    // nothing about it (and usually reads 0 → "Free"). It sells a trial and a
+    // whole course; when it has levels there is no single price at all, and the
+    // backend sends the cheapest one with price_from set.
+    if (hc?.isCourse == true) {
+      final coursePrice = hc?.coursePrice ?? 0;
+      if (coursePrice <= 0) {
+        return Text('price_free'.tr(), style: baseStyle);
+      }
+      return Text(
+        hc?.priceFrom == true
+            ? 'price_from'.tr(args: [coursePrice.toRawUzsPrice()])
+            : coursePrice.toRawUzsPrice(),
+        style: baseStyle,
+      );
+    }
 
     if (effectivePrice < 100) {
       return Text('price_free'.tr(), style: baseStyle);

@@ -1808,7 +1808,7 @@ class _BookingPageState extends State<BookingPage> {
       try {
         final result = await getIt<CoursesApi>().checkout(
           activityId: widget.clazz.id!,
-          option: 'full',
+          option: CoursePurchaseOption.full,
           paymentProvider: payment.rail.providerKey,
           returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
         );

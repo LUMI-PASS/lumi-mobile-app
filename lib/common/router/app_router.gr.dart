@@ -168,13 +168,16 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const CouponsPage(),
       );
     },
-    CourseDetailRoute.name: (routeData) {
-      final args = routeData.argsAs<CourseDetailRouteArgs>();
+    CourseBookingRoute.name: (routeData) {
+      final args = routeData.argsAs<CourseBookingRouteArgs>();
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: CourseDetailPage(
-          course: args.course,
+        child: CourseBookingPage(
           key: args.key,
+          activityId: args.activityId,
+          level: args.level,
+          courseTitle: args.courseTitle,
+          branchTitle: args.branchTitle,
         ),
       );
     },
@@ -887,40 +890,55 @@ class CouponsRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [CourseDetailPage]
-class CourseDetailRoute extends PageRouteInfo<CourseDetailRouteArgs> {
-  CourseDetailRoute({
-    required HomClass course,
+/// [CourseBookingPage]
+class CourseBookingRoute extends PageRouteInfo<CourseBookingRouteArgs> {
+  CourseBookingRoute({
     Key? key,
+    required String activityId,
+    required CourseLevel level,
+    required String courseTitle,
+    String? branchTitle,
     List<PageRouteInfo>? children,
   }) : super(
-          CourseDetailRoute.name,
-          args: CourseDetailRouteArgs(
-            course: course,
+          CourseBookingRoute.name,
+          args: CourseBookingRouteArgs(
             key: key,
+            activityId: activityId,
+            level: level,
+            courseTitle: courseTitle,
+            branchTitle: branchTitle,
           ),
           initialChildren: children,
         );
 
-  static const String name = 'CourseDetailRoute';
+  static const String name = 'CourseBookingRoute';
 
-  static const PageInfo<CourseDetailRouteArgs> page =
-      PageInfo<CourseDetailRouteArgs>(name);
+  static const PageInfo<CourseBookingRouteArgs> page =
+      PageInfo<CourseBookingRouteArgs>(name);
 }
 
-class CourseDetailRouteArgs {
-  const CourseDetailRouteArgs({
-    required this.course,
+class CourseBookingRouteArgs {
+  const CourseBookingRouteArgs({
     this.key,
+    required this.activityId,
+    required this.level,
+    required this.courseTitle,
+    this.branchTitle,
   });
-
-  final HomClass course;
 
   final Key? key;
 
+  final String activityId;
+
+  final CourseLevel level;
+
+  final String courseTitle;
+
+  final String? branchTitle;
+
   @override
   String toString() {
-    return 'CourseDetailRouteArgs{course: $course, key: $key}';
+    return 'CourseBookingRouteArgs{key: $key, activityId: $activityId, level: $level, courseTitle: $courseTitle, branchTitle: $branchTitle}';
   }
 }
 

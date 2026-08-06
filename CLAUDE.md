@@ -108,3 +108,11 @@ sources and in `lib/common/gen/`.
 
 RUNNING:
 DO NOT RUN APP IN ORDER TO TEST/VIEW IT
+
+BACKEND-DEPLOY:
+Since the backend merge (2026-07-11) all production traffic is served by the merged-backend container. The GitHub auto-deploy webhook was never updated — it still rebuilds the old mobile-backend / adminka-backend / partner-backend containers, which Caddy no longer routes any traffic to.
+So a push to main produces a green webhook delivery, a successful Docker build, and zero change in production. This has silently bitten several deploys.
+Every production deploy is manual:
+ssh root@82.118.227.32
+cd /opt/lumi/repos/mobile && git pull origin main
+cd /opt/lumi && docker compose up -d --build --no-deps merged-backend
