@@ -11,6 +11,7 @@ import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complet
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_page.dart';
+import 'package:lumi_pass/presentation/app/home/course_detail/course_booking_page.dart';
 import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/payment_history_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
@@ -40,6 +41,7 @@ import 'package:lumi_pass/presentation/start/language/language_page.dart';
 
 import '../../data/api_model/child_model/child_model.dart';
 import '../../data/api_model/order/user_order.dart';
+import '../../domain/repo/courses/courses_api.dart';
 import '../../presentation/app/profile/attendance/attendance_detail_page.dart';
 import '../../presentation/app/profile/attendance/attendance_history_page.dart';
 import '../../presentation/app/profile/children/add_child_page.dart';
@@ -113,6 +115,7 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: ClassDetailRoute.page),
     AutoRoute(page: BranchDetailRoute.page),
     AutoRoute(page: BookingRoute.page),
+    AutoRoute(page: CourseBookingRoute.page),
     AutoRoute(page: BookingCompleteRoute.page),
     AutoRoute(page: ProfileDetailRoute.page),
     AutoRoute(page: ChildDetailRoute.page),

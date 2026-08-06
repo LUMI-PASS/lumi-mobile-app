@@ -975,6 +975,7 @@ course_upsell_title,Продолжить весь курс?,Butun kursni davom e
 course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.
 course_buy_cta,Купить курс,Kursni sotib olish,Buy the course
 course_schedule_title,Расписание курса,Kurs jadvali,Course schedule
+course_until_date,До {date},{date} gacha,Until {date}
 course_upsell_body_short,Стоимость пробных уроков не вычитается,Sinov darslari narxi ayirilmaydi,The trial fee is not credited
 search_tab_courses,Курсы,Kurslar,Courses
 filter_district,Район,Tuman,District
@@ -998,8 +999,7 @@ pay_err_otp_invalid,"Неверный код из SMS. Попробуйте ещ
 pay_err_otp_expired,"Срок действия кода истёк. Запросите новый.","Kod muddati tugagan. Yangisini so'rang.","The code has expired. Request a new one."
 pay_err_limit_exceeded,"Превышен лимит по карте.","Karta limiti oshib ketdi.","The card limit has been exceeded."
 payment_method,Способ оплаты,To'lov usuli,Payment method
-course_levels_title,Уровни курса,Kurs darajalari,Course levels
-course_levels_subtitle,Выберите уровень — каждый покупается отдельно,Darajani tanlang — har biri alohida sotib olinadi,Pick a level — each is bought separately
+course_levels_title,Подкурсы,Kichik kurslar,Subcourses
 course_level_enrolled,Вы записаны,Yozilgansiz,Enrolled
 course_level_trial,Пробные куплены,Sinov olingan,Trial bought
 course_lessons_remaining,Осталось {left} из {total} уроков,{total} darsdan {left} tasi qoldi,{left} of {total} lessons left
@@ -1009,12 +1009,12 @@ course_blocked_ended,Занятия уже прошли,Darslar allaqachon o'tga
 course_blocked_unavailable,Сейчас недоступно,Hozir mavjud emas,Not available right now
 course_trial_count,{count} пробных,{count} ta sinov,{count} trial
 course_show_less,Свернуть,Yig'ish,Show less
-course_buy_level,Выбрать этот уровень,Shu darajani tanlash,Choose this level
+course_buy_level,Купить подкурс, Kursni sotib olish,Buy subcourse
 course_trial_required_note,"Обязательных пробных уроков: {count}. Записаться на курс можно только после них.","Majburiy sinov darslari: {count}. Kursga faqat ulardan keyin yozilish mumkin.","{count} trial lesson(s) are required — you can only enrol after them."
 course_trial_mandatory,Обязательный,Majburiy,Required
 course_blocked_trial_required,"Сначала купите обязательные пробные уроки.","Avval majburiy sinov darslarini sotib oling.","Buy the required trial lessons first."
 course_blocked_trial_pending,"Записаться на курс можно после обязательного пробного занятия.","Kursga majburiy sinov darsidan keyin yozilishingiz mumkin.","You can enrol after your required trial lesson."
 course_blocked_trial_pending_date,"Записаться на курс можно после обязательного занятия — {date}.","Kursga majburiy darsdan keyin yozilishingiz mumkin — {date}.","You can enrol after your required trial lesson on {date}."
-course_trial_pick_hint,"Выберите уроки, которые хотите посетить — каждый оплачивается отдельно.","Bormoqchi bo'lgan darslarni tanlang — har biri alohida to'lanadi.","Pick the lessons you want to attend — each is paid for separately."
+course_trial_pick_hint,"Выберите уроки, которые хотите посетить","Bormoqchi bo'lgan darslarni tanlang .","Pick the lessons you want to attend."
 course_trial_selected,Выбрано: {count},Tanlandi: {count},{count} selected
 course_trial_bought_one,Куплено,Sotib olingan,Bought

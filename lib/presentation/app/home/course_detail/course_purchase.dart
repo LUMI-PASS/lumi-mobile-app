@@ -51,10 +51,13 @@ String? _errorCode(Object error) {
   return null;
 }
 
-String _messageFor(Object error) {
-  // A course-specific refusal ("sold out", "already enrolled") is the most
-  // useful thing we can say; then the shared payment-gateway mapping; then a
-  // generic message. Never the raw exception.
+/// Shared by every course-checkout entry point (trial purchase here, and the
+/// whole-course review screen) so a Dio stack dump is never what a buyer sees.
+///
+/// A course-specific refusal ("sold out", "already enrolled") is the most
+/// useful thing we can say; then the shared payment-gateway mapping; then a
+/// generic message.
+String courseCheckoutErrorMessage(Object error) {
   final reason = CourseBlockedReason.fromKey(_errorCode(error));
   if (reason != null) return reason.messageKey.tr();
   return PaymentError.fromDio(error) ?? 'pay_generic_error'.tr();
@@ -111,6 +114,9 @@ Future<CoursePurchaseResult> runCoursePurchase(
     );
     return const CoursePurchaseResult(CoursePurchaseOutcome.completed);
   } catch (e) {
-    return CoursePurchaseResult(CoursePurchaseOutcome.failed, _messageFor(e));
+    return CoursePurchaseResult(
+      CoursePurchaseOutcome.failed,
+      courseCheckoutErrorMessage(e),
+    );
   }
 }
