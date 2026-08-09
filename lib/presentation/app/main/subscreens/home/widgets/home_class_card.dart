@@ -321,8 +321,11 @@ class _ClassInfo extends StatelessWidget {
 /// ONE lesson to try, and only falls back to the whole course price once there
 /// is nothing left to try. Which of those it is — and at what price — is
 /// decided by the server per user (see [CoursePriceKind]), because the same
-/// rules govern what checkout will charge; the card only words the verdict and
-/// adds the other figure underneath as context.
+/// rules govern what checkout will charge; the card only words the verdict.
+///
+/// A card shows ONE price, and it is the one being offered. A trial headline
+/// stands alone; only the whole-course headline carries a second line, breaking
+/// its own figure down per lesson.
 ///
 /// Coupons are deliberately absent: a plan discount never applies to a course
 /// (see `effectiveCouponPercent`), so there is no struck-through price here.
@@ -358,15 +361,18 @@ class _CoursePriceText extends StatelessWidget {
         label = money;
     }
 
-    // The figure the headline ISN'T showing. Under a trial that is what the
-    // course itself costs — the thing the trial is a taster for; under the
-    // course price it is what one lesson of it works out at.
-    final wholeCourse = hc.coursePrice ?? 0;
+    // The figure the headline ISN'T showing.
+    //
+    // Under a TRIAL headline that used to be the whole-course price. It is gone
+    // on purpose: a card's job is to get someone to try the course, and pinning
+    // the full commitment under a free or cheap first lesson argues against the
+    // offer being made right above it. The whole price belongs on the detail
+    // screen, where someone is actually deciding.
+    //
+    // Under a whole-course headline the per-lesson figure stays — there the
+    // number IS the ask, and breaking it down makes it easier to judge.
     final String? context2 = kind.isTrial
-        ? (wholeCourse > 0
-            ? 'course_card_whole_course'
-                .tr(namedArgs: {'price': wholeCourse.toRawUzsPrice()})
-            : null)
+        ? null
         : ((hc.perLessonPrice ?? 0) > 0
             ? 'course_card_per_lesson'
                 .tr(namedArgs: {'price': hc.perLessonPrice!.toRawUzsPrice()})

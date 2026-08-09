@@ -989,7 +989,7 @@ course_upsell_title,Продолжить весь курс?,Butun kursni davom e
 course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.
 course_buy_cta,Купить курс,Kursni sotib olish,Buy the course
 course_schedule_title,Расписание курса,Kurs jadvali,Course schedule
-course_card_try_free,Первый урок бесплатно,Birinchi dars bepul,First lesson free
+course_card_try_free,Попробовать бесплатно,Bepulga sinab ko‘rish,Try for free
 course_card_try_next_free,Следующий урок бесплатно,Keyingi dars bepul,Next lesson free
 course_card_try_for,Попробовать за {price},{price} ga sinab ko‘ring,Try for {price}
 course_card_next_lesson,Следующий урок — {price},Keyingi dars — {price},Next lesson {price}
