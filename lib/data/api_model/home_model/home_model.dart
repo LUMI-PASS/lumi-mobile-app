@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
 
 part 'home_model.freezed.dart';
 
@@ -129,6 +130,8 @@ class HomNearClasses with _$HomNearClasses {
 
 @freezed
 class HomClass with _$HomClass {
+  const HomClass._();
+
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory HomClass({
     String? id,
@@ -163,6 +166,31 @@ class HomClass with _$HomClass {
     num? coursePrice,
     /// Cohort size for full enrolment. null = unlimited.
     int? seats,
+
+    /// Which price this card is showing THIS user, as a raw string — read it
+    /// through [priceKind]. See [CoursePriceKind] for what each one means.
+    String? priceKind,
+
+    /// The figure to print, in UZS. Zero only when [priceKind] is
+    /// `trial_free`. Resolved per user by the server, so it is always the
+    /// amount checkout would actually charge them next.
+    num? cardPrice,
+
+    /// Which trial lesson [cardPrice] buys, 1-based. null once the card has
+    /// fallen through to quoting the whole course.
+    int? trialLessonNo,
+
+    /// Trial lessons this user has not used yet.
+    int? trialLessonsLeft,
+
+    /// How many lessons the whole course is sold as. null when the centre
+    /// never stated a length.
+    int? lessonsCount,
+
+    /// `coursePrice / lessonsCount` — what one lesson of the course works out
+    /// at. Informational: what the card OFFERS is [cardPrice], which comes from
+    /// the trial prices the centre set, not from this division.
+    num? perLessonPrice,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,
@@ -170,6 +198,10 @@ class HomClass with _$HomClass {
 
   factory HomClass.fromJson(Map<String, dynamic> json) =>
       _$HomClassFromJson(json);
+
+  /// [priceKind] as the typed value the card switches on. Never throws — an
+  /// unmodelled kind resolves to [CoursePriceKind.unknown].
+  CoursePriceKind get coursePriceKind => CoursePriceKind.fromKey(priceKind);
 }
 
 @freezed

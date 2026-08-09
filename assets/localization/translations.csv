@@ -56,7 +56,7 @@ hello,ПРИВЕТ,SALOM,HELLO
 all_categories,Все категории,Barcha kategoriyalar,All Categories
 newly_added_classes,Новые занятия,Yangi mashg'ulotlar,New Activities
 popular_activities,Популярные занятия,Mashhur mashg'ulotlar,Popular Activities
-near_you,Для вас,Siz uchun,For You
+near_you,Рядом с вами,Sizga yaqin,Near you
 my_account,Мой аккаунт,Mening akkauntim,My Account
 account_info,Информация аккаунта,Akkaunt ma'lumotlari,Account Information
 change_account_info,Изменить данные аккаунта,Hisob ma'lumotlarini o'zgartirish,Change account details
@@ -703,7 +703,7 @@ no_loads,"Вы еще не добавили груз. Пожалуйста, до
 no_transports,"Вы еще не добавили транспорт. Пожалуйста, добавьте транспорт, чтобы оставить заявку.","Siz hali transport qo‘shmagansiz. Iltimos, ariza yuborish uchun transport qo‘shing.",You have not added any transports yet. Please add a transport to leave a request.
 input_car_desc,Введите номер автомобиля,Avtomobil davlat raqamini kiriting,Enter car license plate
 newly_added_classes,Новые занятия,Yangi qo'shilgan mashg'ulotlar,Newly Added Activities
-near_you,Для вас,Siz uchun,For You
+near_you,Рядом с вами,Sizga yaqin,Near you
 my_account,Мой аккаунт,Mening hisobim,My Account
 account_info,Информация аккаунта,Hisob ma'lumotlari,Account Information
 faq_subtitle,Вопросы и ответы,Savollar va javoblar,Frequently asked questions
@@ -989,6 +989,12 @@ course_upsell_title,Продолжить весь курс?,Butun kursni davom e
 course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.
 course_buy_cta,Купить курс,Kursni sotib olish,Buy the course
 course_schedule_title,Расписание курса,Kurs jadvali,Course schedule
+course_card_try_free,Первый урок бесплатно,Birinchi dars bepul,First lesson free
+course_card_try_next_free,Следующий урок бесплатно,Keyingi dars bepul,Next lesson free
+course_card_try_for,Попробовать за {price},{price} ga sinab ko‘ring,Try for {price}
+course_card_next_lesson,Следующий урок — {price},Keyingi dars — {price},Next lesson {price}
+course_card_whole_course,Весь курс — {price},Butun kurs — {price},Whole course {price}
+course_card_per_lesson,{price} за урок,Darsiga {price},{price} per lesson
 course_upsell_body_short,Стоимость пробных уроков не вычитается,Sinov darslari narxi ayirilmaydi,The trial fee is not credited
 search_tab_courses,Курсы,Kurslar,Courses
 filter_district,Район,Tuman,District
