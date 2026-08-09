@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_view.dart';
 
 /// The pushed discovery screen — same view as the [SearchPage] tab, but with a
@@ -16,17 +17,20 @@ class SearchDiscoveryPage
   const SearchDiscoveryPage({
     super.key,
     this.initialCategory,
-    this.initialTab,
+    this.initialKind = ActivityKind.any,
     this.autofocusSearch = false,
   });
 
   final HomCategory? initialCategory;
 
-  /// Which type chip to open lit: 0 activities, 2 courses (1 is centres, which
-  /// nothing links to yet). Null — the usual case — opens with none lit and
-  /// activities and courses merged into one grid. Only Home's two "see all"
-  /// rows pass a value, because only there did the user name a type.
-  final int? initialTab;
+  /// Opens with the type filter already set to this.
+  ///
+  /// [ActivityKind.courses] is how Home's "see all courses" arrives: that row
+  /// named a type, so the screen it opens should be narrowed to it. It lands as
+  /// a real, visible filter — the badge counts it and the sheet shows it
+  /// selected — so the user can widen back to everything without guessing why
+  /// the list looked short. [ActivityKind.any], the default, shows both.
+  final ActivityKind initialKind;
 
   /// Opens with the keyboard already up. Home's header search field comes in
   /// this way — the tap was the user asking to type. Category taps and
@@ -36,8 +40,10 @@ class SearchDiscoveryPage
   @override
   void init(BuildContext context) {
     context.read<SearchCubit>().init(
-          tab: initialTab ?? kSearchTabAll,
           category: initialCategory,
+          filter: initialKind == ActivityKind.any
+              ? null
+              : FilterResult(kind: initialKind),
         );
     super.init(context);
   }

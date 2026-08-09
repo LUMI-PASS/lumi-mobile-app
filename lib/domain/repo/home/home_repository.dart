@@ -99,6 +99,10 @@ abstract class HomeRepository {
     double? lat,
     double? lng,
       List<String>? districts,
+    /// `activities` | `courses` | `all`. Omitted, the endpoint lists
+    /// activities only — what it has always done for a caller that says
+    /// nothing.
+    String? kind,
   });
 
   Future<ClassesPage> getDiscoveryShorts({

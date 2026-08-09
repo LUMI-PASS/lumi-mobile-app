@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -22,9 +23,21 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   bool _lastKnownHasPremium = false;
   int _lastKnownCouponPct = 0;
 
-  // Store location as instance fields so they're available immediately
+  // Where the "Near you" list is measured from. Held as instance fields so
+  // every fetch below — first load, refresh, load-more — asks from the same
+  // place; a page 2 measured from somewhere else would repeat and skip rows.
   double? _lat;
   double? _lng;
+
+  /// Set once the location has been resolved, so a later `initWithLocation`
+  /// (the page is re-entered on every tab switch) doesn't re-run the whole
+  /// permission dance.
+  bool _locationResolved = false;
+
+  late final _location = UserLocationResolver(
+    hasAsked: () async => _storage.locationAsked() == true,
+    markAsked: () => _storage.locationAsked.set(true),
+  );
 
   // Sync guards to prevent re-entrant load-more calls
   bool _newLoadLock = false;
@@ -33,11 +46,67 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   static const int _pageLimit = 10;
 
   Future<void> initWithLocation() async {
+    // Held up front and not by getHome alone: resolving the location below is
+    // an await of its own, and home treats an empty un-fetched state as a
+    // connection failure. Without this the offline view sits on screen for as
+    // long as the platform takes to answer.
+    build((b) => b.copyWith(isLoading: true));
     _lastLang = currentLang;
     _lastKnownHasPremium = _storage.hasPremium() == true;
     _lastKnownCouponPct = _storage.planDiscountPercentage() ?? 0;
+
+    // Already-granted permission costs one silent platform call, so the first
+    // paint can be ordered from the real position. Anything else (never asked,
+    // or refused) resolves to Tashkent centre without a dialog, and the prompt
+    // happens after the feed is on screen — see below.
+    await _applyLocation(prompt: false);
+
     // Load home feed and the full category list concurrently.
     await Future.wait([getHome(), _loadAllCategories()]);
+
+    // Now that home has rendered, ask for the permission — once, ever. Nothing
+    // is awaited by the caller: whether the user grants, refuses or ignores the
+    // sheet, the feed they are already looking at stands.
+    unawaited(_promptForLocation());
+  }
+
+  /// Asks for the location permission and, if that moved us off the fallback,
+  /// re-sorts the feed around where the user actually is.
+  Future<void> _promptForLocation() async {
+    if (_locationResolved) return;
+    final before = (_lat, _lng);
+    await _applyLocation(prompt: true);
+    if ((_lat, _lng) == before) return;
+    await refreshSilently();
+  }
+
+  /// Picks up a location permission granted outside the app, without ever
+  /// prompting. Returns whether that actually moved us off the fallback — the
+  /// caller only reloads the feed when it did.
+  Future<bool> _adoptLocationGrantedElsewhere() async {
+    if (_locationResolved) return false;
+    if (!await _location.isGranted) return false;
+    final before = (_lat, _lng);
+    await _applyLocation(prompt: false);
+    return (_lat, _lng) != before;
+  }
+
+  /// Resolves the location into [_lat]/[_lng]. Falls back to the centre of
+  /// Tashkent, so these are never null once home has loaded and the feed is
+  /// always ordered by distance from *something*.
+  Future<void> _applyLocation({required bool prompt}) async {
+    if (_locationResolved) return;
+    if (!prompt && !await _location.isGranted) {
+      _lat ??= kTashkentCentre.lat;
+      _lng ??= kTashkentCentre.lng;
+      return;
+    }
+    final here = await _location.resolve(prompt: prompt);
+    _lat = here.lat;
+    _lng = here.lng;
+    // A precise fix is the end of it. A fallback isn't: the user may still be
+    // sitting on an unanswered permission sheet.
+    if (here.isPrecise) _locationResolved = true;
   }
 
   /// Fetches the complete category list from the unlimited /categories endpoint
@@ -90,8 +159,13 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     final langChanged = _lastLang != lang;
     final couponChanged =
         _lastKnownHasPremium != hasPremium || _lastKnownCouponPct != couponPct;
+    // Someone who refused the prompt and then turned the permission on in
+    // Settings comes back to a feed that would otherwise stay ordered from the
+    // city centre for the rest of the session. Nothing else notices that
+    // change, so this is the place to catch it.
+    final locationChanged = await _adoptLocationGrantedElsewhere();
 
-    if (!langChanged && !couponChanged) return;
+    if (!langChanged && !couponChanged && !locationChanged) return;
 
     _lastLang = lang;
     _lastKnownHasPremium = hasPremium;

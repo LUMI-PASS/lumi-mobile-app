@@ -16,6 +16,7 @@ import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
+import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
@@ -308,6 +309,105 @@ class _ClassInfo extends StatelessWidget {
   }
 }
 
+/// Price line for a COURSE.
+///
+/// A course is not sold per session, so it gets its own line: the card offers
+/// ONE lesson to try, and only falls back to the whole course price once there
+/// is nothing left to try. Which of those it is — and at what price — is
+/// decided by the server per user (see [CoursePriceKind]), because the same
+/// rules govern what checkout will charge; the card only words the verdict.
+///
+/// A card shows ONE price, and it is the one being offered. A trial headline
+/// stands alone; only the whole-course headline carries a second line, breaking
+/// its own figure down per lesson.
+///
+/// Coupons are deliberately absent: a plan discount never applies to a course
+/// (see `effectiveCouponPercent`), so there is no struck-through price here.
+class _CoursePriceText extends StatelessWidget {
+  const _CoursePriceText({required this.hc});
+
+  final HomClass hc;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final kind = hc.coursePriceKind;
+    final price = hc.cardPrice ?? hc.coursePrice ?? 0;
+    final money = price.toRawUzsPrice();
+
+    final String label;
+    if (hc.priceFrom == true && kind != CoursePriceKind.trialFree) {
+      // A levelled course has no single card price. The server sends the
+      // cheapest eligible level, so keep the existing "From" treatment rather
+      // than presenting that floor as the price of every level.
+      label = 'price_from'.tr(args: [money]);
+    } else {
+      switch (kind) {
+        case CoursePriceKind.trialFree:
+          // "First lesson" only reads right for the first one — someone who
+          // has already been to one is being offered their next.
+          label = (hc.trialLessonNo ?? 1) <= 1
+              ? 'course_card_try_free'.tr()
+              : 'course_card_try_next_free'.tr();
+        case CoursePriceKind.trial:
+          label = 'course_card_try_for'.tr(namedArgs: {'price': money});
+        case CoursePriceKind.trialNext:
+          label = 'course_card_next_lesson'.tr(namedArgs: {'price': money});
+        case CoursePriceKind.full:
+          label = 'course_card_whole_course'.tr(namedArgs: {'price': money});
+        case CoursePriceKind.unknown:
+          // A kind this build doesn't model yet: print the figure and nothing
+          // around it. Wrong in emphasis, never wrong in money.
+          label = money;
+      }
+    }
+
+    // The figure the headline ISN'T showing.
+    //
+    // Under a TRIAL headline that used to be the whole-course price. It is gone
+    // on purpose: a card's job is to get someone to try the course, and pinning
+    // the full commitment under a free or cheap first lesson argues against the
+    // offer being made right above it. The whole price belongs on the detail
+    // screen, where someone is actually deciding.
+    //
+    // Under a whole-course headline the per-lesson figure stays — there the
+    // number IS the ask, and breaking it down makes it easier to judge.
+    final String? context2 = kind.isTrial
+        ? null
+        : ((hc.perLessonPrice ?? 0) > 0
+            ? 'course_card_per_lesson'
+                .tr(namedArgs: {'price': hc.perLessonPrice!.toRawUzsPrice()})
+            : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.semibold14.copyWith(
+            // A free lesson is the one thing on this card worth a colour.
+            color: kind == CoursePriceKind.trialFree
+                ? AppColors.green
+                : c.textPrimary,
+          ),
+        ),
+        if (context2 != null) ...[
+          2.verticalSpace,
+          Text(
+            context2,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.regular12.copyWith(color: c.textSecondary),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Price line — mirrors the effective-price + coupon-discount logic used
 /// elsewhere, rendered in the redesigned typography.
 class _PriceText extends StatelessWidget {
@@ -318,6 +418,11 @@ class _PriceText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+
+    // A course isn't priced per session, so none of the per-session machinery
+    // below applies to it — it has its own line. See [_CoursePriceText].
+    if (hc?.isCourse == true) return _CoursePriceText(hc: hc!);
+
     final snap = ClassPricingCache.get(hc?.id);
     final hasFreeAndPaid =
         snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
@@ -331,23 +436,6 @@ class _PriceText extends StatelessWidget {
 
     final baseStyle = AppText.semibold14.copyWith(color: c.textPrimary);
 
-    // A course is not priced per session, so the age-tier machinery above says
-    // nothing about it (and usually reads 0 → "Free"). It sells a trial and a
-    // whole course; when it has levels there is no single price at all, and the
-    // backend sends the cheapest one with price_from set.
-    if (hc?.isCourse == true) {
-      final coursePrice = hc?.coursePrice ?? 0;
-      if (coursePrice <= 0) {
-        return Text('price_free'.tr(), style: baseStyle);
-      }
-      return Text(
-        hc?.priceFrom == true
-            ? 'price_from'.tr(args: [coursePrice.toRawUzsPrice()])
-            : coursePrice.toRawUzsPrice(),
-        style: baseStyle,
-      );
-    }
-
     if (effectivePrice < 100) {
       return Text('price_free'.tr(), style: baseStyle);
     }
@@ -356,7 +444,8 @@ class _PriceText extends StatelessWidget {
         ? 'price_from'.tr(args: [v.toRawUzsPrice()])
         : v.toRawUzsPrice();
 
-    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final app =
+        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     // The coupon can't cut deeper than Lumi's share of this class, so the
     // preview is capped the same way the charge will be.
     final planPct = effectiveCouponPercent(

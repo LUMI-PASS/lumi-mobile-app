@@ -22,6 +22,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_banners.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_header.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_skeletons.dart';
@@ -213,11 +214,10 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         8.verticalSpace,
         HomeSectionHeader(
           title: 'popular_activities'.tr(),
-          // Every activity, searchable and filterable. The chips come along and
-          // open on Mashg'ulotlar — this row is the one place the user did name
-          // a type, so it's the one place a chip starts lit.
+          // Everything on offer, searchable and filterable. This row is a
+          // popularity row rather than a type, so it narrows to nothing.
           onViewAll: () => context.router.push(
-            SearchDiscoveryRoute(initialTab: 0),
+            SearchDiscoveryRoute(),
           ),
         ),
         10.verticalSpace,
@@ -275,11 +275,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         8.verticalSpace,
         HomeSectionHeader(
           title: title,
-          // Same discovery screen as the activities row, opened on the Kurslar
-          // chip — so "see all courses" is one tap away from the rest of the
-          // catalogue instead of a dead-end grid.
+          // The same discovery screen the activities row opens, narrowed to
+          // courses — this row named a type, so "see all" honours it. It lands
+          // as a visible filter rather than a mode, so the user can widen back
+          // to everything from the filter sheet.
           onViewAll: () => context.router.push(
-            SearchDiscoveryRoute(initialTab: 2),
+            SearchDiscoveryRoute(initialKind: ActivityKind.courses),
           ),
         ),
         10.verticalSpace,

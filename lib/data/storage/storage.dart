@@ -68,6 +68,15 @@ class Storage {
   BaseStorage<bool> get couponPromoShown =>
       BaseStorage(_box, 'couponPromoShown');
 
+  /// Whether we have already shown the OS location prompt once.
+  ///
+  /// The home feed asks for location on the user's first visit and never again:
+  /// re-prompting each launch is what pushes people into denying permanently.
+  /// A refusal just means the feed is ordered from the centre of Tashkent; if
+  /// they later grant it in Settings, the permission check picks that up
+  /// without this flag being involved.
+  BaseStorage<bool> get locationAsked => BaseStorage(_box, 'locationAsked');
+
   /// Whether the user dismissed the "add your name and child" prompt that sits
   /// above the bottom nav. Persisted, so once it is closed it stays closed
   /// across launches — the profile details are a nice-to-have, not a gate.

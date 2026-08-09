@@ -2067,6 +2067,31 @@ mixin _$HomClass {
 
   /// Cohort size for full enrolment. null = unlimited.
   int? get seats => throw _privateConstructorUsedError;
+
+  /// Which price this card is showing THIS user, as a raw string — read it
+  /// through [priceKind]. See [CoursePriceKind] for what each one means.
+  String? get priceKind => throw _privateConstructorUsedError;
+
+  /// The figure to print, in UZS. Zero only when [priceKind] is
+  /// `trial_free`. Resolved per user by the server, so it is always the
+  /// amount checkout would actually charge them next.
+  num? get cardPrice => throw _privateConstructorUsedError;
+
+  /// Which trial lesson [cardPrice] buys, 1-based. null once the card has
+  /// fallen through to quoting the whole course.
+  int? get trialLessonNo => throw _privateConstructorUsedError;
+
+  /// Trial lessons this user has not used yet.
+  int? get trialLessonsLeft => throw _privateConstructorUsedError;
+
+  /// How many lessons the whole course is sold as. null when the centre
+  /// never stated a length.
+  int? get lessonsCount => throw _privateConstructorUsedError;
+
+  /// `coursePrice / lessonsCount` — what one lesson of the course works out
+  /// at. Informational: what the card OFFERS is [cardPrice], which comes from
+  /// the trial prices the centre set, not from this division.
+  num? get perLessonPrice => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -2109,6 +2134,12 @@ abstract class $HomClassCopyWith<$Res> {
       bool? priceFrom,
       int? subcoursesCount,
       int? seats,
+      String? priceKind,
+      num? cardPrice,
+      int? trialLessonNo,
+      int? trialLessonsLeft,
+      int? lessonsCount,
+      num? perLessonPrice,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2155,6 +2186,12 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? priceFrom = freezed,
     Object? subcoursesCount = freezed,
     Object? seats = freezed,
+    Object? priceKind = freezed,
+    Object? cardPrice = freezed,
+    Object? trialLessonNo = freezed,
+    Object? trialLessonsLeft = freezed,
+    Object? lessonsCount = freezed,
+    Object? perLessonPrice = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2264,6 +2301,30 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.seats
           : seats // ignore: cast_nullable_to_non_nullable
               as int?,
+      priceKind: freezed == priceKind
+          ? _value.priceKind
+          : priceKind // ignore: cast_nullable_to_non_nullable
+              as String?,
+      cardPrice: freezed == cardPrice
+          ? _value.cardPrice
+          : cardPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
+      trialLessonNo: freezed == trialLessonNo
+          ? _value.trialLessonNo
+          : trialLessonNo // ignore: cast_nullable_to_non_nullable
+              as int?,
+      trialLessonsLeft: freezed == trialLessonsLeft
+          ? _value.trialLessonsLeft
+          : trialLessonsLeft // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lessonsCount: freezed == lessonsCount
+          ? _value.lessonsCount
+          : lessonsCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      perLessonPrice: freezed == perLessonPrice
+          ? _value.perLessonPrice
+          : perLessonPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2327,6 +2388,12 @@ abstract class _$$HomClassImplCopyWith<$Res>
       bool? priceFrom,
       int? subcoursesCount,
       int? seats,
+      String? priceKind,
+      num? cardPrice,
+      int? trialLessonNo,
+      int? trialLessonsLeft,
+      int? lessonsCount,
+      num? perLessonPrice,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2372,6 +2439,12 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? priceFrom = freezed,
     Object? subcoursesCount = freezed,
     Object? seats = freezed,
+    Object? priceKind = freezed,
+    Object? cardPrice = freezed,
+    Object? trialLessonNo = freezed,
+    Object? trialLessonsLeft = freezed,
+    Object? lessonsCount = freezed,
+    Object? perLessonPrice = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2481,6 +2554,30 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.seats
           : seats // ignore: cast_nullable_to_non_nullable
               as int?,
+      priceKind: freezed == priceKind
+          ? _value.priceKind
+          : priceKind // ignore: cast_nullable_to_non_nullable
+              as String?,
+      cardPrice: freezed == cardPrice
+          ? _value.cardPrice
+          : cardPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
+      trialLessonNo: freezed == trialLessonNo
+          ? _value.trialLessonNo
+          : trialLessonNo // ignore: cast_nullable_to_non_nullable
+              as int?,
+      trialLessonsLeft: freezed == trialLessonsLeft
+          ? _value.trialLessonsLeft
+          : trialLessonsLeft // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lessonsCount: freezed == lessonsCount
+          ? _value.lessonsCount
+          : lessonsCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      perLessonPrice: freezed == perLessonPrice
+          ? _value.perLessonPrice
+          : perLessonPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2500,7 +2597,7 @@ class __$$HomClassImplCopyWithImpl<$Res>
 /// @nodoc
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class _$HomClassImpl implements _HomClass {
+class _$HomClassImpl extends _HomClass {
   const _$HomClassImpl(
       {this.id,
       this.branch,
@@ -2528,9 +2625,16 @@ class _$HomClassImpl implements _HomClass {
       this.priceFrom,
       this.subcoursesCount,
       this.seats,
+      this.priceKind,
+      this.cardPrice,
+      this.trialLessonNo,
+      this.trialLessonsLeft,
+      this.lessonsCount,
+      this.perLessonPrice,
       this.createdAt,
       this.updatedAt,
-      this.deletedAt});
+      this.deletedAt})
+      : super._();
 
   factory _$HomClassImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomClassImplFromJson(json);
@@ -2606,6 +2710,37 @@ class _$HomClassImpl implements _HomClass {
   /// Cohort size for full enrolment. null = unlimited.
   @override
   final int? seats;
+
+  /// Which price this card is showing THIS user, as a raw string — read it
+  /// through [priceKind]. See [CoursePriceKind] for what each one means.
+  @override
+  final String? priceKind;
+
+  /// The figure to print, in UZS. Zero only when [priceKind] is
+  /// `trial_free`. Resolved per user by the server, so it is always the
+  /// amount checkout would actually charge them next.
+  @override
+  final num? cardPrice;
+
+  /// Which trial lesson [cardPrice] buys, 1-based. null once the card has
+  /// fallen through to quoting the whole course.
+  @override
+  final int? trialLessonNo;
+
+  /// Trial lessons this user has not used yet.
+  @override
+  final int? trialLessonsLeft;
+
+  /// How many lessons the whole course is sold as. null when the centre
+  /// never stated a length.
+  @override
+  final int? lessonsCount;
+
+  /// `coursePrice / lessonsCount` — what one lesson of the course works out
+  /// at. Informational: what the card OFFERS is [cardPrice], which comes from
+  /// the trial prices the centre set, not from this division.
+  @override
+  final num? perLessonPrice;
   @override
   final String? createdAt;
   @override
@@ -2615,7 +2750,7 @@ class _$HomClassImpl implements _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2666,6 +2801,18 @@ class _$HomClassImpl implements _HomClass {
             (identical(other.subcoursesCount, subcoursesCount) ||
                 other.subcoursesCount == subcoursesCount) &&
             (identical(other.seats, seats) || other.seats == seats) &&
+            (identical(other.priceKind, priceKind) ||
+                other.priceKind == priceKind) &&
+            (identical(other.cardPrice, cardPrice) ||
+                other.cardPrice == cardPrice) &&
+            (identical(other.trialLessonNo, trialLessonNo) ||
+                other.trialLessonNo == trialLessonNo) &&
+            (identical(other.trialLessonsLeft, trialLessonsLeft) ||
+                other.trialLessonsLeft == trialLessonsLeft) &&
+            (identical(other.lessonsCount, lessonsCount) ||
+                other.lessonsCount == lessonsCount) &&
+            (identical(other.perLessonPrice, perLessonPrice) ||
+                other.perLessonPrice == perLessonPrice) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -2704,6 +2851,12 @@ class _$HomClassImpl implements _HomClass {
         priceFrom,
         subcoursesCount,
         seats,
+        priceKind,
+        cardPrice,
+        trialLessonNo,
+        trialLessonsLeft,
+        lessonsCount,
+        perLessonPrice,
         createdAt,
         updatedAt,
         deletedAt
@@ -2723,7 +2876,7 @@ class _$HomClassImpl implements _HomClass {
   }
 }
 
-abstract class _HomClass implements HomClass {
+abstract class _HomClass extends HomClass {
   const factory _HomClass(
       {final String? id,
       final HomBranch? branch,
@@ -2751,9 +2904,16 @@ abstract class _HomClass implements HomClass {
       final bool? priceFrom,
       final int? subcoursesCount,
       final int? seats,
+      final String? priceKind,
+      final num? cardPrice,
+      final int? trialLessonNo,
+      final int? trialLessonsLeft,
+      final int? lessonsCount,
+      final num? perLessonPrice,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomClassImpl;
+  const _HomClass._() : super._();
 
   factory _HomClass.fromJson(Map<String, dynamic> json) =
       _$HomClassImpl.fromJson;
@@ -2828,6 +2988,37 @@ abstract class _HomClass implements HomClass {
 
   /// Cohort size for full enrolment. null = unlimited.
   int? get seats;
+  @override
+
+  /// Which price this card is showing THIS user, as a raw string — read it
+  /// through [priceKind]. See [CoursePriceKind] for what each one means.
+  String? get priceKind;
+  @override
+
+  /// The figure to print, in UZS. Zero only when [priceKind] is
+  /// `trial_free`. Resolved per user by the server, so it is always the
+  /// amount checkout would actually charge them next.
+  num? get cardPrice;
+  @override
+
+  /// Which trial lesson [cardPrice] buys, 1-based. null once the card has
+  /// fallen through to quoting the whole course.
+  int? get trialLessonNo;
+  @override
+
+  /// Trial lessons this user has not used yet.
+  int? get trialLessonsLeft;
+  @override
+
+  /// How many lessons the whole course is sold as. null when the centre
+  /// never stated a length.
+  int? get lessonsCount;
+  @override
+
+  /// `coursePrice / lessonsCount` — what one lesson of the course works out
+  /// at. Informational: what the card OFFERS is [cardPrice], which comes from
+  /// the trial prices the centre set, not from this division.
+  num? get perLessonPrice;
   @override
   String? get createdAt;
   @override

@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
@@ -47,7 +48,7 @@ class BranchesMapPage
     // `allBranches` — the map plots pins, so it needs every centre, not the
     // first page the list screens work through.
     context.read<SearchCubit>().init(
-          tab: 1,
+          tab: kSearchTabBranches,
           category: selectedCategory,
           allBranches: true,
         );
@@ -120,8 +121,10 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   /// unfiltered centres back onto the map mid-refresh.
   bool _everLoaded = false;
 
-  /// Tashkent — the fallback camera when there is nothing to fit to.
-  static const _defaultCenter = LatLng(41.3111, 69.2797);
+  /// Tashkent — the fallback camera when there is nothing to fit to. Shares the
+  /// home feed's fallback so the two never drift to different "centres".
+  static final _defaultCenter =
+      LatLng(kTashkentCentre.lat, kTashkentCentre.lng);
 
   /// Uzbekistan's bounding box, used only to drop coordinates the backend got
   /// wrong (0,0, swapped lat/lng, …). It is deliberately country-wide and not

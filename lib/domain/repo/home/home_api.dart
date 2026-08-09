@@ -234,6 +234,7 @@ class HomeApi {
     double? lat,
     double? lng,
     List<String>? districts,
+    String? kind,
   }) {
     return _dio.get('discovery/classes', queryParameters: {
       'page': page,
@@ -254,6 +255,7 @@ class HomeApi {
       // Comma-separated so the multi-select survives a plain query string.
       if (districts != null && districts.isNotEmpty)
         'districts': districts.join(','),
+      if (kind != null) 'kind': kind,
     });
   }
 

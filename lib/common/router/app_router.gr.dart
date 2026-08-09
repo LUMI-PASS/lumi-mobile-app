@@ -310,7 +310,7 @@ abstract class _$AppRouter extends RootStackRouter {
         child: SearchDiscoveryPage(
           key: args.key,
           initialCategory: args.initialCategory,
-          initialTab: args.initialTab,
+          initialKind: args.initialKind,
           autofocusSearch: args.autofocusSearch,
         ),
       );
@@ -1307,7 +1307,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
   SearchDiscoveryRoute({
     Key? key,
     HomCategory? initialCategory,
-    int? initialTab,
+    ActivityKind initialKind = ActivityKind.any,
     bool autofocusSearch = false,
     List<PageRouteInfo>? children,
   }) : super(
@@ -1315,7 +1315,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
           args: SearchDiscoveryRouteArgs(
             key: key,
             initialCategory: initialCategory,
-            initialTab: initialTab,
+            initialKind: initialKind,
             autofocusSearch: autofocusSearch,
           ),
           initialChildren: children,
@@ -1331,7 +1331,7 @@ class SearchDiscoveryRouteArgs {
   const SearchDiscoveryRouteArgs({
     this.key,
     this.initialCategory,
-    this.initialTab,
+    this.initialKind = ActivityKind.any,
     this.autofocusSearch = false,
   });
 
@@ -1339,13 +1339,13 @@ class SearchDiscoveryRouteArgs {
 
   final HomCategory? initialCategory;
 
-  final int? initialTab;
+  final ActivityKind initialKind;
 
   final bool autofocusSearch;
 
   @override
   String toString() {
-    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, initialTab: $initialTab, autofocusSearch: $autofocusSearch}';
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, initialKind: $initialKind, autofocusSearch: $autofocusSearch}';
   }
 }
 
