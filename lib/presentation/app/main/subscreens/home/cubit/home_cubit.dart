@@ -46,6 +46,11 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   static const int _pageLimit = 10;
 
   Future<void> initWithLocation() async {
+    // Held up front and not by getHome alone: resolving the location below is
+    // an await of its own, and home treats an empty un-fetched state as a
+    // connection failure. Without this the offline view sits on screen for as
+    // long as the platform takes to answer.
+    build((b) => b.copyWith(isLoading: true));
     _lastLang = currentLang;
     _lastKnownHasPremium = _storage.hasPremium() == true;
     _lastKnownCouponPct = _storage.planDiscountPercentage() ?? 0;

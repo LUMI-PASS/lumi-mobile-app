@@ -997,6 +997,9 @@ course_card_whole_course,Весь курс — {price},Butun kurs — {price},Wh
 course_card_per_lesson,{price} за урок,Darsiga {price},{price} per lesson
 course_upsell_body_short,Стоимость пробных уроков не вычитается,Sinov darslari narxi ayirilmaydi,The trial fee is not credited
 search_tab_courses,Курсы,Kurslar,Courses
+filter_kind,Тип,Turi,Type
+filter_kind_all,Все,Hammasi,All
+filter_kind_courses,Курсы,Kurslar,Courses
 filter_district,Район,Tuman,District
 district_bektemir,Бектемир,Bektemir,Bektemir
 district_chilonzor,Чиланзар,Chilonzor,Chilonzor

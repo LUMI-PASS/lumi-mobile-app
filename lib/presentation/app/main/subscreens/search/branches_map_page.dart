@@ -48,7 +48,7 @@ class BranchesMapPage
     // `allBranches` — the map plots pins, so it needs every centre, not the
     // first page the list screens work through.
     context.read<SearchCubit>().init(
-          tab: 1,
+          tab: kSearchTabBranches,
           category: selectedCategory,
           allBranches: true,
         );

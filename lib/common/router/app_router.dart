@@ -22,6 +22,9 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/branches_map_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discovery_page.dart';
+// SearchDiscoveryRoute takes an ActivityKind — the generated part file names
+// the type but, being a part, imports nothing of its own.
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/wallet/wallet_page.dart';

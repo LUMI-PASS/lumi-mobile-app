@@ -78,6 +78,21 @@ class UserLocationResolver {
         permission == LocationPermission.whileInUse;
   }
 
+  /// The last fix the OS still remembers, or null.
+  ///
+  /// Caught separately from the main flow: the web implementation doesn't
+  /// support this at all, and that must fall through to a live position rather
+  /// than being read as "no location".
+  Future<UserLocation?> _lastKnown() async {
+    try {
+      final position = await Geolocator.getLastKnownPosition();
+      if (position == null) return null;
+      return UserLocation.precise(position.latitude, position.longitude);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// The device's position if we may have it, else [kTashkentCentre].
   ///
   /// Set [prompt] false to never show the OS dialog on this call — used for the
@@ -103,6 +118,13 @@ class UserLocationResolver {
       // Granted but the device's location services are switched off entirely —
       // getCurrentPosition would just throw.
       if (!await Geolocator.isLocationServiceEnabled()) return kTashkentCentre;
+
+      // A position we already have beats one we wait for. This orders centres
+      // by which is nearer, and for that a fix from a few minutes ago is
+      // indistinguishable from a fresh one — while a cold GPS lock is seconds
+      // the home feed would spend on a shimmer.
+      final last = await _lastKnown();
+      if (last != null) return last;
 
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(

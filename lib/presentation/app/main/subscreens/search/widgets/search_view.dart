@@ -79,18 +79,13 @@ class _SearchViewState extends State<SearchView> {
   /// Follows the chips rather than the entry point: arriving from Home's "see
   /// all activities" opens on Mashg'ulotlar and reads as such, but the user can
   /// switch chips from here and the header must not keep claiming the old one.
-  String get _title {
-    switch (widget.state.activeTab) {
-      case 0:
-        return 'all_activities'.tr();
-      case 1:
-        return 'search_tab_centers'.tr();
-      case 2:
-        return 'search_tab_courses'.tr();
-      default:
-        return 'search'.tr();
-    }
-  }
+  ///
+  /// The type filter deliberately does NOT rename it. It is a filter over this
+  /// list like age or price, and none of those rename the screen either — the
+  /// filter badge is what says one is on.
+  String get _title => widget.state.activeTab == kSearchTabBranches
+      ? 'search_tab_centers'.tr()
+      : 'all_activities'.tr();
 
   Future<void> _openFilter() async {
     final cubit = context.read<SearchCubit>();
@@ -116,9 +111,7 @@ class _SearchViewState extends State<SearchView> {
     final c = context.colors;
     final cubit = context.read<SearchCubit>();
     final state = widget.state;
-    // Tabs 0 (activities) and 2 (courses) both render the classes grid — courses
-    // are loaded into the same `classes` slot. Only tab 1 shows branches.
-    final isClasses = state.activeTab != 1;
+    final isClasses = state.activeTab != kSearchTabBranches;
     final items = isClasses ? state.classes : state.branches;
 
     // The active category filter, shown as a removable chip. A category with no
@@ -150,20 +143,16 @@ class _SearchViewState extends State<SearchView> {
             ),
             16.verticalSpace,
             SearchChips(
-              // Display order Activities · Courses · Centres. The cubit keeps
-              // branches at tab 1 (the map opens straight on it), so we remap
-              // display position <-> tab index with this self-inverse table.
+              // Two chips, and one of them is always lit. Courses used to be a
+              // third: they now share the first list with activities, and
+              // narrowing to them is a filter (see `ActivityKind`) rather than
+              // a place. Display order matches the tab indices, so no remap.
               labels: [
                 'search_tab_classes'.tr(),
-                'search_tab_courses'.tr(),
                 'search_tab_centers'.tr(),
               ],
-              // No chip lit until one is picked (or the entry point implied
-              // one); tapping the lit one turns it back off.
-              activeIndex: state.activeTab == kSearchTabAll
-                  ? null
-                  : const [0, 2, 1][state.activeTab],
-              onSelect: (i) => cubit.setTab(const [0, 2, 1][i]),
+              activeIndex: state.activeTab,
+              onSelect: cubit.setTab,
             ),
             if (category != null) ...[
               16.verticalSpace,

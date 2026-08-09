@@ -17,6 +17,14 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$HomeBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
+
+  /// Starts TRUE, because a fresh home screen is always about to load.
+  ///
+  /// Home reads "no model and no classes" as a connection failure. On a
+  /// default state that description also fits a screen that simply hasn't
+  /// fetched yet — so a `false` here put the offline view on screen for every
+  /// frame between the page mounting and the first response landing, and the
+  /// user saw "no connection" on a perfectly good network.
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
   HomeModel? get homeModel => throw _privateConstructorUsedError;
@@ -314,7 +322,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
 class _$HomeBuildableImpl implements _HomeBuildable {
   const _$HomeBuildableImpl(
       {this.isSelected = false,
-      this.isLoading = false,
+      this.isLoading = true,
       this.success = false,
       this.homeModel,
       final List<HomCategory>? categories,
@@ -337,6 +345,14 @@ class _$HomeBuildableImpl implements _HomeBuildable {
   @override
   @JsonKey()
   final bool isSelected;
+
+  /// Starts TRUE, because a fresh home screen is always about to load.
+  ///
+  /// Home reads "no model and no classes" as a connection failure. On a
+  /// default state that description also fits a screen that simply hasn't
+  /// fetched yet — so a `false` here put the offline view on screen for every
+  /// frame between the page mounting and the first response landing, and the
+  /// user saw "no connection" on a perfectly good network.
   @override
   @JsonKey()
   final bool isLoading;
@@ -507,6 +523,14 @@ abstract class _HomeBuildable implements HomeBuildable {
   @override
   bool get isSelected;
   @override
+
+  /// Starts TRUE, because a fresh home screen is always about to load.
+  ///
+  /// Home reads "no model and no classes" as a connection failure. On a
+  /// default state that description also fits a screen that simply hasn't
+  /// fetched yet — so a `false` here put the offline view on screen for every
+  /// frame between the page mounting and the first response landing, and the
+  /// user saw "no connection" on a perfectly good network.
   bool get isLoading;
   @override
   bool get success;

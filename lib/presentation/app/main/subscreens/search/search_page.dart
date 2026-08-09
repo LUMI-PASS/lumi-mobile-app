@@ -21,7 +21,7 @@ class SearchPage
 
   @override
   void init(BuildContext context) {
-    context.read<SearchCubit>().init(tab: 1);
+    context.read<SearchCubit>().init(tab: kSearchTabBranches);
     super.init(context);
   }
 

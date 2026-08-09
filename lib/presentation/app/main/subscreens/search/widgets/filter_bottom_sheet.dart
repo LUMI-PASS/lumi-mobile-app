@@ -18,10 +18,41 @@ enum Gender { any, boy, girl }
 
 enum PricePreset { any, custom }
 
+/// What kind of thing the results list should hold.
+///
+/// Activities and courses share one grid — they answer the same question, "what
+/// is on for my child" — so narrowing is a FILTER here next to age and price,
+/// not a separate screen.
+///
+/// Only two choices, deliberately: everything, or courses alone. There is no
+/// "activities only" option because nobody shops that way — a parent looks for
+/// what is on, and sometimes specifically for a course to enrol in. A third
+/// chip excluding courses would only ever hide things from someone who never
+/// asked for them to be hidden.
+enum ActivityKind {
+  /// Both. The default, and what the screen opens on.
+  any,
+
+  /// Courses alone. What Home's "see all courses" arrives with.
+  courses;
+
+  /// The `kind` query param. [any] sends `all` explicitly, because the
+  /// endpoint's own default — what an older client gets by sending nothing —
+  /// is activities only, and this screen wants both.
+  String get queryValue => this == ActivityKind.courses ? 'courses' : 'all';
+
+  String get label => this == ActivityKind.courses
+      ? 'filter_kind_courses'.tr()
+      : 'filter_kind_all'.tr();
+}
+
 class FilterResult {
   final DatePreset datePreset;
   final DateTime? fromDate;
   final DateTime? toDate;
+
+  /// Activities, courses, or both. Both by default — see [ActivityKind].
+  final ActivityKind kind;
 
   /// Lower bound of the age range (the "от" field).
   final int? ageYears;
@@ -40,6 +71,7 @@ class FilterResult {
     this.datePreset = DatePreset.none,
     this.fromDate,
     this.toDate,
+    this.kind = ActivityKind.any,
     this.ageYears,
     this.ageToYears,
     this.gender = Gender.any,
@@ -58,6 +90,7 @@ class FilterResult {
     DatePreset? datePreset,
     DateTime? fromDate,
     DateTime? toDate,
+    ActivityKind? kind,
     int? ageYears,
     int? ageToYears,
     Gender? gender,
@@ -69,6 +102,7 @@ class FilterResult {
       datePreset: datePreset ?? this.datePreset,
       fromDate: fromDate ?? this.fromDate,
       toDate: toDate ?? this.toDate,
+      kind: kind ?? this.kind,
       ageYears: ageYears ?? this.ageYears,
       ageToYears: ageToYears ?? this.ageToYears,
       gender: gender ?? this.gender,
@@ -115,6 +149,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   final TextEditingController _ageFromController = TextEditingController();
   final TextEditingController _ageToController = TextEditingController();
   Gender _gender = Gender.any;
+  ActivityKind _kind = ActivityKind.any;
   Set<String> _districts = <String>{};
   RangeValues _range =
       const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
@@ -131,6 +166,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _fromDate = init.fromDate;
     _toDate = init.toDate;
     _gender = init.gender;
+    _kind = init.kind;
     _districts = {...init.districts};
     _range = init.priceRange;
     if (init.ageYears != null) _ageFromController.text = '${init.ageYears}';
@@ -179,6 +215,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _toDate != null ||
       !_ageFieldsAreEmpty ||
       _gender != Gender.any ||
+      _kind != ActivityKind.any ||
       _districts.isNotEmpty ||
       _isPriceChanged;
 
@@ -195,6 +232,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _fromDate = null;
       _toDate = null;
       _gender = Gender.any;
+      _kind = ActivityKind.any;
       _districts = <String>{};
       _range = const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
     });
@@ -207,6 +245,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ageYears: _parseAge(_ageFromController),
         ageToYears: _parseAge(_ageToController),
         gender: _gender,
+        kind: _kind,
         pricePreset: _isPriceChanged ? PricePreset.custom : PricePreset.any,
         priceRange: _range,
         districts: _districts,
@@ -283,6 +322,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     ),
                   ),
                   8.kh,
+                  // First, because it decides WHAT the other filters are
+                  // narrowing — a one-off class or a course you enrol in.
+                  _Section(
+                    label: 'filter_kind'.tr(),
+                    child: Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: [
+                        for (final kind in ActivityKind.values)
+                          _FilterChip(
+                            label: kind.label,
+                            selected: _kind == kind,
+                            onTap: () => setState(() => _kind = kind),
+                          ),
+                      ],
+                    ),
+                  ),
+                  16.kh,
                   _Section(
                     label: 'filter_date'.tr(),
                     child: Wrap(

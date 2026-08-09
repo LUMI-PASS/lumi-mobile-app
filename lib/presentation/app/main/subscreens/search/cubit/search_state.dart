@@ -4,13 +4,17 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter
 
 part 'search_state.freezed.dart';
 
-/// No type chip picked — the screen's opening state everywhere except the two
-/// home "see all" links, which arrive with the chip their row implies.
+/// The results grid: activities and courses together.
 ///
-/// It is not a fourth endpoint: the cubit fans out to activities *and* courses
-/// and interleaves them into the one grid, so "no filter" reads as everything
-/// rather than as a silently pre-applied one.
-const int kSearchTabAll = -1;
+/// There is no separate courses tab. A course and a class answer the same
+/// question — "what is on for my child" — so they share one list, and narrowing
+/// to one or the other is a FILTER over that list (`FilterResult.kind`) rather
+/// than a place you navigate to. The two tabs left are things you genuinely
+/// cannot show in one grid: sessions, and the centres that run them.
+const int kSearchTabClasses = 0;
+
+/// Centres. Kept at 1 because the map screen opens straight onto it.
+const int kSearchTabBranches = 1;
 
 @freezed
 class SearchBuildable with _$SearchBuildable {
@@ -19,7 +23,7 @@ class SearchBuildable with _$SearchBuildable {
     @Default(false) bool isLoadingMore,
     @Default(false) bool classesLoaded,
     @Default(false) bool branchesLoaded,
-    @Default(kSearchTabAll) int activeTab,
+    @Default(kSearchTabClasses) int activeTab,
     @Default('') String searchTerm,
     @Default([]) List<HomClass> classes,
     @Default([]) List<HomBranch> branches,

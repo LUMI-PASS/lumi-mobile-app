@@ -7,7 +7,15 @@ part 'home_state.freezed.dart';
 class HomeBuildable with _$HomeBuildable {
   const factory HomeBuildable({
     @Default(false) bool isSelected,
-    @Default(false) bool isLoading,
+
+    /// Starts TRUE, because a fresh home screen is always about to load.
+    ///
+    /// Home reads "no model and no classes" as a connection failure. On a
+    /// default state that description also fits a screen that simply hasn't
+    /// fetched yet — so a `false` here put the offline view on screen for every
+    /// frame between the page mounting and the first response landing, and the
+    /// user saw "no connection" on a perfectly good network.
+    @Default(true) bool isLoading,
     @Default(false) bool success,
     HomeModel? homeModel,
     List<HomCategory>? categories,

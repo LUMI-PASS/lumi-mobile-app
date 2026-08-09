@@ -98,6 +98,32 @@ void main() {
     });
   });
 
+  // A cold GPS lock is seconds the home feed would spend on a shimmer, and for
+  // "which centre is nearer" a slightly old fix is just as good.
+  group('remembered position', () {
+    setUp(() => geo.permission = LocationPermission.whileInUse);
+
+    test('is used instead of waiting for a fresh fix', () async {
+      geo.lastKnown = (41.29, 69.24);
+      expect(await resolver().resolve(), const UserLocation.precise(41.29, 69.24));
+      expect(geo.currentPositionCalls, 0);
+    });
+
+    test('falls through to a live fix when the OS has none', () async {
+      geo.lastKnown = null;
+      expect(await resolver().resolve(), const UserLocation.precise(41.35, 69.31));
+      expect(geo.currentPositionCalls, 1);
+    });
+
+    // Web has no such API. Throwing here must not read as "no location".
+    test('falls through to a live fix when the platform refuses it', () async {
+      geo.lastKnownError = UnsupportedError('not available on web');
+      final where = await resolver().resolve();
+      expect(where, const UserLocation.precise(41.35, 69.31));
+      expect(geo.currentPositionCalls, 1);
+    });
+  });
+
   test('the fallback is flagged as imprecise, so callers can ask again', () {
     expect(kTashkentCentre.isPrecise, isFalse);
     expect(const UserLocation.precise(1, 2).isPrecise, isTrue);
@@ -119,6 +145,11 @@ class _FakeGeolocator extends GeolocatorPlatform with MockPlatformInterfaceMixin
   Object? positionError;
   int requestCount = 0;
 
+  /// A remembered fix, as (lat, lng). Null means the OS has none.
+  (double, double)? lastKnown;
+  Object? lastKnownError;
+  int currentPositionCalls = 0;
+
   @override
   Future<LocationPermission> checkPermission() async => permission;
 
@@ -132,11 +163,23 @@ class _FakeGeolocator extends GeolocatorPlatform with MockPlatformInterfaceMixin
   Future<bool> isLocationServiceEnabled() async => serviceEnabled;
 
   @override
+  Future<Position?> getLastKnownPosition({bool forceLocationManager = false}) async {
+    if (lastKnownError != null) throw lastKnownError!;
+    if (lastKnown == null) return null;
+    return _at(lastKnown!.$1, lastKnown!.$2);
+  }
+
+  @override
   Future<Position> getCurrentPosition({LocationSettings? locationSettings}) async {
+    currentPositionCalls++;
     if (positionError != null) throw positionError!;
+    return _at(41.35, 69.31);
+  }
+
+  Position _at(double latitude, double longitude) {
     return Position(
-      latitude: 41.35,
-      longitude: 69.31,
+      latitude: latitude,
+      longitude: longitude,
       timestamp: DateTime.fromMillisecondsSinceEpoch(0),
       accuracy: 50,
       altitude: 0,
