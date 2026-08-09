@@ -59,6 +59,11 @@ enum CourseBlockedReason {
   /// The trial is bought, but the first lesson hasn't come round yet.
   trialPending('trial_pending'),
 
+  /// A trial lesson is already bought and hasn't happened yet — the next
+  /// trial lesson can't be bought until it does. Trials are sold one at a
+  /// time on purpose: this is what enforces that.
+  trialInProgress('trial_in_progress'),
+
   /// A reason this build doesn't know about — show a generic message.
   unknown('unknown');
 
@@ -93,6 +98,8 @@ enum CourseBlockedReason {
         return 'course_blocked_trial_required';
       case CourseBlockedReason.trialPending:
         return 'course_blocked_trial_pending';
+      case CourseBlockedReason.trialInProgress:
+        return 'course_blocked_trial_in_progress';
       case CourseBlockedReason.unknown:
         return 'course_blocked_unavailable';
     }
@@ -166,6 +173,7 @@ class CourseEnrollment {
     required this.upcomingLessons,
     required this.trialStarted,
     this.trialFirstDate,
+    this.trialLastDate,
   });
 
   final CourseEnrollmentStatus status;
@@ -176,6 +184,12 @@ class CourseEnrollment {
   /// Their first, not the course's — someone who buys the trial late only gets
   /// the lessons that were still ahead.
   final String? trialFirstDate;
+
+  /// The user's own LAST (most recently booked) trial lesson, null if they
+  /// hold none. Trials are sold one at a time — this is what "buy the next
+  /// trial only after this one" is checked against, as opposed to
+  /// [trialFirstDate].
+  final String? trialLastDate;
 
   /// True once that lesson has come round. What a mandatory trial is measured
   /// against: the centre has to have seen the child, and paying isn't that.
@@ -189,7 +203,35 @@ class CourseEnrollment {
         trialLessonsBooked: (j['trial_lessons_booked'] as num?)?.toInt() ?? 0,
         upcomingLessons: (j['upcoming_lessons'] as num?)?.toInt() ?? 0,
         trialFirstDate: j['trial_first_date'] as String?,
+        trialLastDate: j['trial_last_date'] as String?,
         trialStarted: j['trial_started'] as bool? ?? false,
+      );
+}
+
+/// One age bracket a FLAT course (no levels) can be bought at.
+///
+/// Only meaningful on the flat side: a level has its own single price, not
+/// tiers — the server sends an empty list there. The server also sorts these
+/// cheapest-first, which is what checkout defaults to when no tier is named.
+class CourseAgeTier {
+  const CourseAgeTier({
+    required this.ageFrom,
+    required this.ageTo,
+    required this.price,
+  });
+
+  final int ageFrom;
+
+  /// null = open-ended ("Adults").
+  final int? ageTo;
+  final num price;
+
+  String get rangeLabel => ageTo == null ? '$ageFrom+' : '$ageFrom-$ageTo';
+
+  factory CourseAgeTier.fromJson(Map<String, dynamic> j) => CourseAgeTier(
+        ageFrom: (j['age_from'] as num?)?.toInt() ?? 0,
+        ageTo: (j['age_to'] as num?)?.toInt(),
+        price: (j['price'] as num?) ?? 0,
       );
 }
 
@@ -221,6 +263,12 @@ class CourseLevel {
     this.seatsLeft,
     this.enrollment,
     this.upsellRecommended = false,
+    this.priceMax,
+    this.hasMultiplePriceTiers = false,
+    this.ageTiers = const [],
+    this.trialNextDates = const [],
+    this.trialNextPrice,
+    this.trialNextMandatory = false,
   });
 
   /// null for a course that isn't sold as levels.
@@ -238,6 +286,21 @@ class CourseLevel {
   /// Trials still ahead. Fewer than [trialLessons] once some have run.
   final int trialLessonsLeft;
 
+  /// Candidate dates (YYYY-MM-DD) for the NEXT trial lesson — a broad range
+  /// straight off the class's own schedule, not the narrow one-date-per-slot
+  /// list [trialLessons] carries. This is what the date picker offers; every
+  /// date here fills the same ladder slot, so they all share [trialNextPrice]
+  /// / [trialNextMandatory]. Empty once nothing is left to sell, or while
+  /// [trialBlockedReason] blocks a purchase (e.g. a held trial hasn't come
+  /// round yet).
+  final List<String> trialNextDates;
+
+  /// Price of the slot [trialNextDates] would fill. Null once none is left.
+  final num? trialNextPrice;
+
+  /// Whether that slot must be taken before the course can be bought.
+  final bool trialNextMandatory;
+
   /// The trial lessons that must be taken before the course can be bought.
   /// Stated on the page rather than sprung at checkout — it changes what a
   /// parent has to buy first.
@@ -250,7 +313,21 @@ class CourseLevel {
 
   /// Lessons still ahead. Enrolling mid-course buys only these — at full price.
   final int lessonsLeft;
+
+  /// The default/cheapest price — what checkout charges when no age tier is
+  /// named. See [ageTiers] for the full picker when [hasMultiplePriceTiers].
   final num coursePrice;
+
+  /// The most expensive tier's price. Only set when [hasMultiplePriceTiers].
+  final num? priceMax;
+
+  /// True on a flat course priced by more than one age tier — [coursePrice]
+  /// should then read "from X", and the age-tier picker should show.
+  final bool hasMultiplePriceTiers;
+
+  /// The age brackets a FLAT course can be bought at, cheapest first. Empty
+  /// for a level (a level has its own single price, not tiers).
+  final List<CourseAgeTier> ageTiers;
 
   /// Cohort size. null = unlimited.
   final int? seats;
@@ -286,8 +363,7 @@ class CourseLevel {
     // Each trial lesson carries its own price and its own mandatory flag —
     // the server stamps both onto the lesson.
     final trialLessons = ((trial['lessons'] as List?) ?? [])
-        .map((e) =>
-            CourseLesson.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map((e) => CourseLesson.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
     return CourseLevel(
       id: j['id'] as String?,
@@ -298,12 +374,24 @@ class CourseLevel {
       trialPrice: (trial['total_price'] as num?) ?? 0,
       trialLessonsLeft:
           (trial['lessons_left'] as num?)?.toInt() ?? trialLessons.length,
+      trialNextDates:
+          ((trial['next_dates'] as List?) ?? []).whereType<String>().toList(),
+      trialNextPrice: trial['next_price'] as num?,
+      trialNextMandatory: trial['next_mandatory'] as bool? ?? false,
       courseLessons: ((course['lessons'] as List?) ?? [])
-          .map((e) => CourseLesson.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+              (e) => CourseLesson.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
       lessonsLeft: (course['lessons_left'] as num?)?.toInt() ??
           ((course['lessons'] as List?) ?? []).length,
       coursePrice: (course['price'] as num?) ?? 0,
+      priceMax: course['price_max'] as num?,
+      hasMultiplePriceTiers:
+          course['has_multiple_price_tiers'] as bool? ?? false,
+      ageTiers: ((course['age_tiers'] as List?) ?? [])
+          .map((e) =>
+              CourseAgeTier.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
       seats: (course['seats'] as num?)?.toInt(),
       seatsLeft: (course['seats_left'] as num?)?.toInt(),
       enrollment: enrol is Map
@@ -315,7 +403,8 @@ class CourseLevel {
       canBuyFull: j['can_buy_full'] as bool? ?? false,
       trialBlockedReason:
           CourseBlockedReason.fromKey(j['trial_blocked_reason'] as String?),
-      blockedReason: CourseBlockedReason.fromKey(j['blocked_reason'] as String?),
+      blockedReason:
+          CourseBlockedReason.fromKey(j['blocked_reason'] as String?),
     );
   }
 }
@@ -386,13 +475,28 @@ class CoursesApi {
   /// [subcourseId] picks the level on a levelled course. Omitting it lets the
   /// server fall back to the cheapest level with seats left.
   ///
+  /// [ageFrom]/[ageTo] pick which age tier to buy the WHOLE course at, for a
+  /// flat course priced by more than one tier (`CourseLevel.ageTiers`).
+  /// Omitting them buys the cheapest tier — same fallback [subcourseId] gets
+  /// when omitted on a levelled course. Ignored for a trial purchase.
+  ///
   /// [trialDates] picks which trial sessions to buy — they are sold one at a
   /// time, and by date rather than position because the offered set rolls
   /// forward. Omitting it buys every upcoming session not already held.
+  ///
+  /// [startsAt] (YYYY-MM-DD) is when a full enrolment is considered to
+  /// start. Purely descriptive — nothing on the server selects lessons or
+  /// prices by it yet. Omit and the server defaults it to the first lesson
+  /// actually booked. No UI sets this today; the parameter exists so a
+  /// future picker has somewhere to plug in without another server round of
+  /// changes. Ignored for a trial purchase.
   Future<CheckoutResult> checkout({
     required String activityId,
     required CoursePurchaseOption option,
     String? subcourseId,
+    int? ageFrom,
+    int? ageTo,
+    String? startsAt,
     List<String>? trialDates,
     String? lang,
     String? returnUrl,
@@ -405,6 +509,16 @@ class CoursesApi {
       'option': option.key,
       if (subcourseId != null && subcourseId.isNotEmpty)
         'subcourse_id': subcourseId,
+      if (option == CoursePurchaseOption.full && ageFrom != null)
+        'age_from': ageFrom,
+      if (option == CoursePurchaseOption.full &&
+          ageFrom != null &&
+          ageTo != null)
+        'age_to': ageTo,
+      if (option == CoursePurchaseOption.full &&
+          startsAt != null &&
+          startsAt.isNotEmpty)
+        'starts_at': startsAt,
       if (option == CoursePurchaseOption.trial &&
           trialDates != null &&
           trialDates.isNotEmpty)
@@ -423,8 +537,7 @@ class CoursesApi {
     return CheckoutResult.fromJson(_unwrap(res.data));
   }
 
-  Map<String, dynamic> _unwrap(dynamic raw) =>
-      raw is Map && raw['data'] is Map
-          ? Map<String, dynamic>.from(raw['data'] as Map)
-          : Map<String, dynamic>.from(raw as Map);
+  Map<String, dynamic> _unwrap(dynamic raw) => raw is Map && raw['data'] is Map
+      ? Map<String, dynamic>.from(raw['data'] as Map)
+      : Map<String, dynamic>.from(raw as Map);
 }

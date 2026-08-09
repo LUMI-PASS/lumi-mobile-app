@@ -65,8 +65,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   /// A course is sold as a package, not per session. Known from the list model
   /// before the detail lands, so the CTA never flashes the ticket wording.
-  bool get _isCourse =>
-      _full?.isCourse ?? widget.classModel.isCourse ?? false;
+  bool get _isCourse => _full?.isCourse ?? widget.classModel.isCourse ?? false;
 
   /// 0 → hero fully visible, 1 → content scrolled under the top controls and
   /// the frosted scrim is fully on.
@@ -120,7 +119,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// completes or a subscription is synced, instead of showing whatever was
   /// true the last time this page happened to build.
   num get _couponPct {
-    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final app =
+        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     final plan = app.hasPremium ? app.planDiscountPercentage : 0;
     return effectiveCouponPercent(
       plan,
@@ -164,8 +164,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   void _onScroll() {
     final start = _kHeroHeight.h * 0.45;
     final end = _kHeroHeight.h * 0.85;
-    final t = ((_scrollController.offset - start) / (end - start))
-        .clamp(0.0, 1.0);
+    final t =
+        ((_scrollController.offset - start) / (end - start)).clamp(0.0, 1.0);
     if ((t - _topScrim).abs() > 0.01 || t == 0 || t == 1) {
       if (t != _topScrim) setState(() => _topScrim = t);
     }
@@ -291,7 +291,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       }
       if (full.ageTiers.isNotEmpty) {
         final tiers = full.ageTiers;
-        final from = tiers.map((t) => t.ageFrom).reduce((a, b) => a < b ? a : b);
+        final from =
+            tiers.map((t) => t.ageFrom).reduce((a, b) => a < b ? a : b);
         final tos = tiers.map((t) => t.ageTo ?? 99).toList();
         final to = tos.reduce((a, b) => a > b ? a : b);
         return (from: from, to: to);
@@ -516,18 +517,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     if (full == null) return rows;
     if (full.ageTiers.isNotEmpty) {
       for (final t in full.ageTiers) {
-        final prices = t.durations
-            .map((d) => d.price)
-            .where((p) => p > 0)
-            .toList();
-        final min = prices.isEmpty
-            ? 0
-            : prices.reduce((a, b) => a < b ? a : b);
+        final prices =
+            t.durations.map((d) => d.price).where((p) => p > 0).toList();
+        final min = prices.isEmpty ? 0 : prices.reduce((a, b) => a < b ? a : b);
         final adults = t.ageFrom >= 6 || t.ageTo == null;
         rows.add((
           range: t.rangeLabel,
-          subtitle:
-              adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr(),
+          subtitle: adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr(),
           price: min,
           icon: adults
               ? Assets.icons.home.profile2user
@@ -579,8 +575,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness:
-            darkIcons ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: darkIcons ? Brightness.dark : Brightness.light,
         statusBarBrightness: darkIcons ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
@@ -655,7 +650,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: hideMainCourseCta ? 16.h + safeBottom : 90.h + safeBottom,
+                    height: hideMainCourseCta
+                        ? 16.h + safeBottom
+                        : 90.h + safeBottom,
                   ),
                 ),
               ],
@@ -685,21 +682,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 children: [
                   DetailControlButton(
                     child: HomeIcon(Assets.icons.home.arrow,
-                        size: 16, color: AppColors.ink),
+                        size: 16, color: c.textPrimary),
                     onTap: () => context.router.pop(),
                   ),
                   const Spacer(),
                   DetailControlButton(
                     onTap: _shareClass,
                     child: HomeIcon(Assets.icons.home.share,
-                        size: 16, color: AppColors.inkMuted),
+                        size: 16, color: c.textSecondary),
                   ),
                   8.horizontalSpace,
                   DetailControlButton(
                     child: HomeIcon(Assets.icons.home.heart,
                         size: 16,
-                        color:
-                            _isFavorite ? AppColors.error : AppColors.inkMuted),
+                        color: _isFavorite ? AppColors.error : c.textSecondary),
                     onTap: () => setState(() => _isFavorite = !_isFavorite),
                   ),
                 ],
@@ -812,9 +808,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         width: 8.w,
                         height: 8.w,
                         decoration: BoxDecoration(
-                          color: active
-                              ? AppColors.ink
-                              : const Color(0xFFCECDD6),
+                          color: active ? c.textPrimary : c.textSecondary,
                           shape: BoxShape.circle,
                         ),
                       );
@@ -888,8 +882,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                           branchTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppText.semibold14
-                              .copyWith(color: c.textPrimary),
+                          style:
+                              AppText.semibold14.copyWith(color: c.textPrimary),
                         ),
                       ],
                     ),
@@ -1131,7 +1125,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           Wrap(
             spacing: 8.w,
             runSpacing: 8.h,
-            children: languages.map((lang) => _LangChip(c: c, lang: lang)).toList(),
+            children:
+                languages.map((lang) => _LangChip(c: c, lang: lang)).toList(),
           ),
         ],
       ),
@@ -1209,7 +1204,8 @@ class _HappyParents extends StatelessWidget {
                     border: Border.all(color: c.surface, width: 2),
                   ),
                   child: Text('+$extra',
-                      style: AppText.semibold12.copyWith(color: c.textSecondary)),
+                      style:
+                          AppText.semibold12.copyWith(color: c.textSecondary)),
                 ),
               ),
             ],
@@ -1257,8 +1253,7 @@ class _InfoTile extends StatelessWidget {
             style: AppText.semibold16.copyWith(color: c.textPrimary),
           ),
           4.verticalSpace,
-          Text(label,
-              style: AppText.regular12.copyWith(color: c.textPrimary)),
+          Text(label, style: AppText.regular12.copyWith(color: c.textPrimary)),
         ],
       ),
     );
@@ -1266,7 +1261,8 @@ class _InfoTile extends StatelessWidget {
 }
 
 class _PriceRow extends StatelessWidget {
-  const _PriceRow({required this.c, required this.row, required this.couponPct});
+  const _PriceRow(
+      {required this.c, required this.row, required this.couponPct});
   final AppColorScheme c;
   final ({String range, String subtitle, num price, SvgGenImage icon}) row;
   final num couponPct;
@@ -1393,7 +1389,10 @@ class _LangChip extends StatelessWidget {
     final l = lang.toLowerCase();
     if (l.contains('eng') || l.contains('англ')) return '🇬🇧';
     if (l.contains('rus') || l.contains('рус')) return '🇷🇺';
-    if (l.contains('uz') || l.contains('ўз') || l.contains('o‘z') || l.contains("o'z")) {
+    if (l.contains('uz') ||
+        l.contains('ўз') ||
+        l.contains('o‘z') ||
+        l.contains("o'z")) {
       return '🇺🇿';
     }
     return '🌐';
@@ -1434,7 +1433,6 @@ class _Duration {
   final int? minutes;
   final bool unbounded;
 }
-
 
 // ─── Course level sections ───────────────────────────────────────────────────
 
@@ -1492,15 +1490,26 @@ String _blockedMessage(CourseLevel level, CourseBlockedReason reason) {
       });
     }
   }
+  if (reason == CourseBlockedReason.trialInProgress) {
+    final raw = level.enrollment?.trialLastDate;
+    final date = raw == null ? null : DateTime.tryParse(raw);
+    if (date != null) {
+      return 'course_blocked_trial_in_progress_date'.tr(namedArgs: {
+        'date': '${date.day} ${'month_short_${date.month}'.tr()}',
+      });
+    }
+  }
   return reason.messageKey.tr();
 }
 
-/// The trial block: every trial date, what each one costs, and the total.
+/// The trial block: a horizontal date strip to pick ONE upcoming session —
+/// same shape as the ticket-booking flow's own date picker (`_DateStrip` in
+/// booking_page.dart) — plus its price and the buy button.
 ///
-/// A trial is not a discount on the course — each lesson is sold at its own
-/// price and the fee is not credited toward enrolling — so the per-lesson
-/// figures are shown, not just the sum a parent would otherwise have to accept
-/// on trust.
+/// Trials are sold ONE AT A TIME: a parent picks a single date to try, and
+/// cannot pick the next one until that lesson has come round. The server is
+/// authoritative on that gate (`canBuyTrial` / `trialBlockedReason`); this
+/// widget just can't offer a purchase the server would reject.
 class _CourseTrialSection extends StatefulWidget {
   const _CourseTrialSection({
     required this.level,
@@ -1511,17 +1520,14 @@ class _CourseTrialSection extends StatefulWidget {
 
   final CourseLevel level;
 
-  /// Buy the picked sessions, as YYYY-MM-DD dates.
+  /// Buy the picked session — always exactly one date.
   final void Function(List<String> dates) onBuy;
 
   /// True when this section is the whole card and needs the gradient header.
   final bool showTitle;
 
-  /// True when the enclosing card is a [FrostedCard] — always a light surface
-  /// regardless of theme — so text/dividers here must use fixed inks instead
-  /// of theme-aware [context.colors] roles that would go pale-on-pale (or
-  /// white-on-light) in dark mode. False on the flat-course [DetailCard],
-  /// which IS theme-aware and wants the normal roles.
+  /// True when the section is nested in a [FrostedCard]. This only selects the
+  /// branded header treatment; content colours remain theme-aware.
   final bool onFrosted;
 
   @override
@@ -1529,53 +1535,36 @@ class _CourseTrialSection extends StatefulWidget {
 }
 
 class _CourseTrialSectionState extends State<_CourseTrialSection> {
-  /// Picked sessions, by date. Keyed on the date because the offered set rolls
-  /// forward — an index would silently point at a different day tomorrow.
-  late Set<String> _picked = _initialPick();
+  /// The picked date, keyed on the date itself — the offered set rolls
+  /// forward, so an index would silently point at a different day tomorrow.
+  String? _picked;
 
-  /// What to tick on arrival: the mandatory lessons if there are any, else the
-  /// next single lesson.
-  ///
-  /// Never the whole set — that would quote four lessons to someone who came to
-  /// try one. But a mandatory lesson is not optional, so leaving it unticked
-  /// would let a parent buy a lesson that gets them no closer to enrolling.
-  Set<String> _initialPick() {
-    final available = widget.level.availableTrialLessons;
-    final mandatory =
-        available.where((l) => l.isMandatory).map((l) => l.date).toSet();
-    if (mandatory.isNotEmpty) return mandatory;
-    final first = available.firstOrNull;
-    return first == null ? <String>{} : {first.date};
+  @override
+  void initState() {
+    super.initState();
+    _picked = widget.level.trialNextDates.firstOrNull;
   }
 
   @override
   void didUpdateWidget(_CourseTrialSection old) {
     super.didUpdateWidget(old);
-    // After a purchase the lessons come back with `purchased` set; a stale pick
-    // would keep a bought lesson ticked.
-    if (widget.level.trialLessons.length != old.level.trialLessons.length ||
-        widget.level.availableTrialLessons.length !=
-            old.level.availableTrialLessons.length) {
-      _picked = _initialPick();
+    // After a purchase the offered set moves on; a stale pick would point at
+    // a date that's no longer being offered.
+    if (!widget.level.trialNextDates.contains(_picked)) {
+      _picked = widget.level.trialNextDates.firstOrNull;
     }
   }
-
-  num get _total => widget.level.trialLessons
-      .where((l) => _picked.contains(l.date))
-      .fold<num>(0, (sum, l) => sum + (l.price ?? 0));
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final level = widget.level;
-    final lessons = level.trialLessons;
     final blocked = !level.canBuyTrial ? level.trialBlockedReason : null;
-    final anyAvailable = level.availableTrialLessons.isNotEmpty;
-    final onFrosted = widget.onFrosted;
-    final textColor = onFrosted ? AppColors.ink : c.textPrimary;
-    final mutedColor = onFrosted ? AppColors.inkMuted : c.textMuted;
-    final dividerColor = onFrosted ? AppColors.lightBorder : c.border;
-    final priceColor = onFrosted ? AppColors.brandPurple : c.primary;
+    final textColor = c.textPrimary;
+    final mutedColor = c.textMuted;
+    final dividerColor = c.border;
+    final priceColor = c.primary;
+    final picked = _picked;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1586,77 +1575,105 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
             icon: Assets.icons.detail.icDiscount,
             iconGradient: AppGradients.green,
             title: 'course_trial_title'
-                .tr(namedArgs: {'count': '${lessons.length}'}),
+                .tr(namedArgs: {'count': '${level.trialLessons.length}'}),
           )
         else
           Text(
-            'course_trial_title'.tr(namedArgs: {'count': '${lessons.length}'}),
+            'course_trial_title'
+                .tr(namedArgs: {'count': '${level.trialLessons.length}'}),
             style: AppText.semibold14.copyWith(color: textColor),
           ),
         6.verticalSpace,
         Text(
-          'course_trial_pick_hint'.tr(),
+          blocked == null
+              ? 'course_trial_pick_date_hint'.tr()
+              : _blockedMessage(level, blocked),
           style: AppText.regular12.copyWith(color: mutedColor),
         ),
         12.verticalSpace,
-        ...List.generate(lessons.length, (i) {
-          final l = lessons[i];
-          return Padding(
-            padding: EdgeInsets.only(bottom: i == lessons.length - 1 ? 0 : 8.h),
-            child: _TrialLessonRow(
-              c: c,
-              lesson: l,
-              index: i + 1,
-              picked: _picked.contains(l.date),
-              onFrosted: onFrosted,
-              onToggle: !l.isAvailable
-                  ? null
-                  : () => setState(() {
-                        if (!_picked.remove(l.date)) _picked.add(l.date);
-                      }),
-            ),
-          );
-        }),
-        if (anyAvailable) ...[
+        _TrialDateStrip(
+          dates: level.trialNextDates,
+          selected: _picked,
+          onPick:
+              blocked == null ? (date) => setState(() => _picked = date) : null,
+        ),
+        if (picked != null) ...[
           12.verticalSpace,
           Divider(height: 1, color: dividerColor),
           10.verticalSpace,
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'course_trial_selected'
-                      .tr(namedArgs: {'count': '${_picked.length}'}),
-                  style: AppText.semibold14.copyWith(color: textColor),
-                ),
-              ),
-              Text(
-                _total.toRawUzsPrice(),
-                style: AppText.bold16.copyWith(color: priceColor),
-              ),
-            ],
-          ),
-          10.verticalSpace,
-          _buyButton(c, enabled: _picked.isNotEmpty && level.canBuyTrial),
+          _pickedRow(picked, level,
+              textColor: textColor,
+              mutedColor: mutedColor,
+              priceColor: priceColor,
+              onFrosted: widget.onFrosted),
         ],
-        if (blocked != null) ...[
-          8.verticalSpace,
-          Text(
-            _blockedMessage(level, blocked),
-            style: AppText.regular12.copyWith(color: mutedColor),
-          ),
+        if (blocked == null && picked != null) ...[
+          10.verticalSpace,
+          _buyButton(enabled: level.canBuyTrial),
         ],
       ],
     );
   }
 
-  Widget _buyButton(AppColorScheme c, {required bool enabled}) {
+  /// The date currently picked on the strip, and what it costs — the same
+  /// price/mandatory flag for every date on offer, since they all fill the
+  /// same ladder slot ([CourseLevel.trialNextPrice]).
+  Widget _pickedRow(
+    String date,
+    CourseLevel level, {
+    required Color textColor,
+    required Color mutedColor,
+    required Color priceColor,
+    required bool onFrosted,
+  }) {
+    final d = DateTime.tryParse(date);
+    final label = d == null
+        ? date
+        : '${d.day} ${'month_short_${d.month}'.tr()}, '
+            '${'weekday_short_${d.weekday}'.tr()}';
+    final primaryColor = onFrosted ? AppColors.brandPurple : priceColor;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(label,
+                    style: AppText.semibold14.copyWith(color: textColor)),
+              ),
+              if (level.trialNextMandatory) ...[
+                6.horizontalSpace,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    'course_trial_mandatory'.tr(),
+                    style: AppText.semibold12.copyWith(color: primaryColor),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        8.horizontalSpace,
+        Text(
+          (level.trialNextPrice ?? 0).toRawUzsPrice(),
+          style: AppText.bold16.copyWith(color: priceColor),
+        ),
+      ],
+    );
+  }
+
+  Widget _buyButton({required bool enabled}) {
     return SizedBox(
       width: double.infinity,
       child: GestureDetector(
-        onTap: enabled
-            ? () => widget.onBuy(_picked.toList()..sort())
-            : null,
+        onTap:
+            enabled && _picked != null ? () => widget.onBuy([_picked!]) : null,
         behavior: HitTestBehavior.opaque,
         child: Opacity(
           opacity: enabled ? 1 : 0.5,
@@ -1678,131 +1695,150 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
   }
 }
 
-/// One trial lesson, with the tick that puts it in the basket.
-///
-/// Three states, and they must not be confused: available (tickable), already
-/// bought (stated, not tickable — buying it twice is refused server-side), and
-/// past (dimmed, gone).
-class _TrialLessonRow extends StatelessWidget {
-  const _TrialLessonRow({
-    required this.c,
-    required this.lesson,
-    required this.index,
-    required this.picked,
-    required this.onToggle,
-    this.onFrosted = false,
+/// Horizontal day picker for trial lessons — the trial equivalent of
+/// `_DateStrip` in booking_page.dart, so trying a class feels like booking
+/// one. Auto-centres on the selected day when it changes.
+class _TrialDateStrip extends StatefulWidget {
+  const _TrialDateStrip({
+    required this.dates,
+    required this.selected,
+    required this.onPick,
   });
 
-  final AppColorScheme c;
-  final CourseLesson lesson;
-  final int index;
-  final bool picked;
-  final VoidCallback? onToggle;
+  final List<String> dates;
+  final String? selected;
 
-  /// See [_CourseTrialSection.onFrosted] — true on a [FrostedCard], which
-  /// stays light in both themes, so text/borders here must be fixed inks.
-  final bool onFrosted;
+  /// Null while the whole section is blocked (or nothing is buyable).
+  final ValueChanged<String>? onPick;
+
+  @override
+  State<_TrialDateStrip> createState() => _TrialDateStripState();
+}
+
+class _TrialDateStripState extends State<_TrialDateStrip> {
+  final ScrollController _scrollCtrl = ScrollController();
+
+  /// Chip width + separator. Kept in sync with [_TrialDateChip] so the
+  /// auto-scroll lands on the right day.
+  static const double _chipExtent = _TrialDateChip.width + 4;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
+  }
+
+  @override
+  void didUpdateWidget(_TrialDateStrip old) {
+    super.didUpdateWidget(old);
+    if (old.selected != widget.selected) _scrollToSelected();
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _scrollToSelected() {
+    if (!_scrollCtrl.hasClients) return;
+    final idx = widget.dates.indexOf(widget.selected ?? '');
+    if (idx <= 0) return;
+    final extent = _chipExtent.w;
+    final target =
+        idx * extent - (_scrollCtrl.position.viewportDimension - extent) / 2;
+    _scrollCtrl.animateTo(
+      target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final date = DateTime.tryParse(lesson.date);
-    final label = date == null
-        ? lesson.date
-        : '${date.day} ${'month_short_${date.month}'.tr()}, '
-            '${'weekday_short_${date.weekday}'.tr()}';
-    final time = [lesson.startTime, lesson.endTime]
-        .whereType<String>()
-        .where((t) => t.isNotEmpty)
-        .join(' – ');
-    final selectable = onToggle != null;
-    final primaryColor = onFrosted ? AppColors.brandPurple : c.primary;
-    final textColor = onFrosted ? AppColors.ink : c.textPrimary;
-    final mutedColor = onFrosted ? AppColors.greeting : c.textSecondary;
-    final borderColor = onFrosted ? AppColors.lightBorder : c.border;
-    final successColor = onFrosted ? AppColors.green : c.success;
-
-    return GestureDetector(
-      onTap: onToggle,
-      behavior: HitTestBehavior.opaque,
-      child: Opacity(
-        opacity: selectable ? 1 : 0.5,
-        child: Row(
-          children: [
-            Container(
-              width: 22.w,
-              height: 22.w,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: picked ? primaryColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(6.r),
-                border: Border.all(
-                  color: picked ? primaryColor : borderColor,
-                  width: 1.5,
-                ),
-              ),
-              child: picked || lesson.purchased
-                  ? Icon(Icons.check_rounded,
-                      size: 14.sp,
-                      color: lesson.purchased && !picked
-                          ? successColor
-                          : Colors.white)
+    return SingleChildScrollView(
+      controller: _scrollCtrl,
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < widget.dates.length; i++) ...[
+            if (i > 0) 4.horizontalSpace,
+            _TrialDateChip(
+              date: widget.dates[i],
+              isSelected: widget.selected == widget.dates[i],
+              onTap: widget.onPick != null
+                  ? () => widget.onPick!(widget.dates[i])
                   : null,
             ),
-            10.horizontalSpace,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          '$index. $label',
-                          style:
-                              AppText.semibold14.copyWith(color: textColor),
-                        ),
-                      ),
-                      // Which lesson is required, on the lesson itself — a note
-                      // at the top of the list cannot say "this one".
-                      if (lesson.isMandatory) ...[
-                        6.horizontalSpace,
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 6.w, vertical: 2.h),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                          child: Text(
-                            'course_trial_mandatory'.tr(),
-                            style: AppText.semibold12
-                                .copyWith(color: primaryColor),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (time.isNotEmpty || lesson.purchased)
-                    Text(
-                      lesson.purchased
-                          ? [time, 'course_trial_bought_one'.tr()]
-                              .where((t) => t.isNotEmpty)
-                              .join(' · ')
-                          : time,
-                      style: AppText.regular12.copyWith(
-                        color: lesson.purchased ? successColor : mutedColor,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            8.horizontalSpace,
-            Text(
-              (lesson.price ?? 0).toRawUzsPrice(),
-              style: AppText.semibold14.copyWith(color: textColor),
-            ),
           ],
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One candidate date for the next trial lesson. Dates come from
+/// [CourseLevel.trialNextDates], so each chip represents the same ladder slot
+/// and differs only by when the parent wants to attend it.
+class _TrialDateChip extends StatelessWidget {
+  const _TrialDateChip({
+    required this.date,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  /// Fixed so every chip is the same width whether or not it is selected —
+  /// otherwise the strip would jitter as the frosted pill moves between days.
+  static const double width = 48;
+
+  final String date;
+  final bool isSelected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final d = DateTime.tryParse(date);
+    final tappable = onTap != null;
+
+    final dayColor = c.textPrimary;
+    final mutedColor = c.textSecondary;
+
+    final content = d == null
+        ? Text(date, style: AppText.regular12.copyWith(color: mutedColor))
+        : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('weekday_short_${d.weekday}'.tr(),
+                  style: AppText.regular12.copyWith(color: mutedColor)),
+              4.verticalSpace,
+              Text('${d.day}',
+                  style: AppText.bold18.copyWith(color: dayColor, height: 1.0)),
+              4.verticalSpace,
+              Text('month_short_${d.month}'.tr(),
+                  style: AppText.regular12.copyWith(color: mutedColor)),
+            ],
+          );
+
+    final padding = EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w);
+
+    return Opacity(
+      opacity: tappable ? 1 : 0.4,
+      child: SizedBox(
+        width: width.w,
+        child: isSelected
+            ? FrostedCard(
+                onTap: onTap,
+                padding: padding,
+                borderRadius: BorderRadius.circular(56.r),
+                child: content,
+              )
+            : GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTap,
+                child: Padding(padding: padding, child: content),
+              ),
       ),
     );
   }
@@ -1814,9 +1850,7 @@ class _TrialLessonRow extends StatelessWidget {
 /// course rarely has more than a handful of levels, so hiding one behind a
 /// tap costs more than it saves.
 ///
-/// Sits on a [FrostedCard] — always a light surface regardless of theme — so
-/// every color here is a fixed ink ([AppColors.ink] etc.), never a
-/// [context.colors] role that would go white-on-light in dark mode.
+/// Sits on a theme-aware [FrostedCard], so its content uses theme roles too.
 class _CourseLevelPanel extends StatelessWidget {
   const _CourseLevelPanel({
     required this.level,
@@ -1836,6 +1870,7 @@ class _CourseLevelPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final enrolled = level.enrollment?.isEnrolled == true;
     final hasTrial = level.enrollment?.hasTrial == true;
     // Gates the button below, which buys the whole level — trial lessons are
@@ -1860,13 +1895,13 @@ class _CourseLevelPanel extends StatelessWidget {
                       Text(
                         level.name ?? '',
                         style: AppText.semibold16
-                            .copyWith(color: AppColors.ink),
+                            .copyWith(color: colors.textPrimary),
                       ),
                       4.verticalSpace,
                       Text(
                         _summary(level, weekdays),
                         style: AppText.regular12
-                            .copyWith(color: AppColors.greeting),
+                            .copyWith(color: colors.textSecondary),
                       ),
                       if (enrolled || hasTrial || level.seatsLeft != null) ...[
                         4.verticalSpace,
@@ -1885,7 +1920,7 @@ class _CourseLevelPanel extends StatelessWidget {
                                 ? AppColors.green
                                 : level.isFull
                                     ? AppColors.error
-                                    : AppColors.inkMuted,
+                                    : colors.textMuted,
                           ),
                         ),
                       ],
@@ -1903,7 +1938,7 @@ class _CourseLevelPanel extends StatelessWidget {
               10.verticalSpace,
               Text(
                 level.description!.trim(),
-                style: AppText.regular13.copyWith(color: AppColors.greeting),
+                style: AppText.regular13.copyWith(color: colors.textSecondary),
               ),
             ],
             if (level.trialLessons.isNotEmpty) ...[

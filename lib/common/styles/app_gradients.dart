@@ -28,6 +28,14 @@ class AppGradients {
     colors: [Color(0xFFF2F4FF), Color(0xFFF8F8F8)],
   );
 
+  /// Dark-theme counterpart of [frostedControl]. It keeps the same subtle
+  /// top-to-bottom lift without placing a pale card on a dark page.
+  static const LinearGradient frostedControlDark = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [AppColors.darkControl, AppColors.darkSurface],
+  );
+
   /// Partner / provider tag — light green → deep green.
   static const LinearGradient green = LinearGradient(
     begin: Alignment.centerLeft,

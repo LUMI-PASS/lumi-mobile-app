@@ -977,6 +977,7 @@ course_trial_total,Итого за пробные,Sinov uchun jami,Trial total
 course_buy_trial,Купить пробные уроки,Sinov darslarini sotib olish,Buy trial lessons
 course_trial_bought,Пробные уроки куплены,Sinov darslari sotib olingan,Trial lessons purchased
 course_full_title,Весь курс,Butun kurs,Whole course
+course_choose_age_title,Выберите возраст,Yoshni tanlang,Choose age
 course_lessons_count,{count} уроков,{count} ta dars,{count} lessons
 course_more_lessons,и ещё {count} уроков,yana {count} ta dars,and {count} more lessons
 course_full_price,Цена курса,Kurs narxi,Course price
@@ -1029,6 +1030,9 @@ course_trial_mandatory,Обязательный,Majburiy,Required
 course_blocked_trial_required,"Сначала купите обязательные пробные уроки.","Avval majburiy sinov darslarini sotib oling.","Buy the required trial lessons first."
 course_blocked_trial_pending,"Записаться на курс можно после обязательного пробного занятия.","Kursga majburiy sinov darsidan keyin yozilishingiz mumkin.","You can enrol after your required trial lesson."
 course_blocked_trial_pending_date,"Записаться на курс можно после обязательного занятия — {date}.","Kursga majburiy darsdan keyin yozilishingiz mumkin — {date}.","You can enrol after your required trial lesson on {date}."
+course_blocked_trial_in_progress,"Следующий пробный урок можно купить после того, как пройдёт текущий.","Keyingi sinov darsini joriy dars o'tgandan keyin sotib olishingiz mumkin.","You can book the next trial lesson after your current one has taken place."
+course_blocked_trial_in_progress_date,"Следующий пробный урок можно купить после {date}.","Keyingi sinov darsini {date} dan keyin sotib olishingiz mumkin.","You can book the next trial lesson after {date}."
 course_trial_pick_hint,"Выберите уроки, которые хотите посетить","Bormoqchi bo'lgan darslarni tanlang .","Pick the lessons you want to attend."
+course_trial_pick_date_hint,"Выберите дату пробного урока","Sinov darsi sanasini tanlang","Choose a date for your trial lesson"
 course_trial_selected,Выбрано: {count},Tanlandi: {count},{count} selected
 course_trial_bought_one,Куплено,Sotib olingan,Bought

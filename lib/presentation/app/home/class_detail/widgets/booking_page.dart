@@ -133,6 +133,7 @@ class _BookingPageState extends State<BookingPage> {
       isCourse: widget.clazz.isCourse,
     );
   }
+
   bool get _hasCoupon => _couponPct > 0;
   num _applyDiscount(num price) =>
       _hasCoupon ? (price * (100 - _couponPct) / 100).round() : price;
@@ -306,7 +307,7 @@ class _BookingPageState extends State<BookingPage> {
           behavior: HitTestBehavior.opaque,
           onTap: _removePromo,
           child: Icon(Icons.close_rounded,
-              size: 18.sp, color: AppColors.inkMuted),
+              size: 18.sp, color: context.colors.textSecondary),
         ),
       );
     }
@@ -330,14 +331,15 @@ class _BookingPageState extends State<BookingPage> {
               if (_promoError != null) setState(() => _promoError = null);
             },
             cursorColor: AppColors.link,
-            style: AppText.semibold14.copyWith(color: AppColors.ink),
+            style:
+                AppText.semibold14.copyWith(color: context.colors.textPrimary),
             decoration: InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.zero,
               border: InputBorder.none,
               hintText: 'promo_hint'.tr(),
-              hintStyle:
-                  AppText.semibold14.copyWith(color: AppColors.inkMuted),
+              hintStyle: AppText.semibold14
+                  .copyWith(color: context.colors.textSecondary),
             ),
           ),
           trailing: PillActionChip(
@@ -349,7 +351,8 @@ class _BookingPageState extends State<BookingPage> {
                     height: 14.w,
                     child: const CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandPink),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.brandPink),
                     ),
                   )
                 : null,
@@ -416,16 +419,12 @@ class _BookingPageState extends State<BookingPage> {
         .map((s) => _parseTime(s.startTime))
         .whereType<TimeOfDay>()
         .toList();
-    final ends = slots
-        .map((s) => _parseTime(s.endTime))
-        .whereType<TimeOfDay>()
-        .toList();
+    final ends =
+        slots.map((s) => _parseTime(s.endTime)).whereType<TimeOfDay>().toList();
     if (starts.isEmpty || ends.isEmpty) return null;
     int toMin(TimeOfDay t) => t.hour * 60 + t.minute;
-    final minT =
-        starts.reduce((a, b) => toMin(a) < toMin(b) ? a : b);
-    final maxT =
-        ends.reduce((a, b) => toMin(a) > toMin(b) ? a : b);
+    final minT = starts.reduce((a, b) => toMin(a) < toMin(b) ? a : b);
+    final maxT = ends.reduce((a, b) => toMin(a) > toMin(b) ? a : b);
     return (min: minT, max: maxT);
   }
 
@@ -441,7 +440,8 @@ class _BookingPageState extends State<BookingPage> {
       final today = DateTime(now.year, now.month, now.day);
       final from = _isoDate(today);
       final to = _isoDate(today.add(const Duration(days: _kLookaheadDays - 1)));
-      final days = await getIt<OrdersApi>().getScheduleDays(id, from: from, to: to);
+      final days =
+          await getIt<OrdersApi>().getScheduleDays(id, from: from, to: to);
       if (!mounted) return;
       setState(() {
         _scheduledDates = {
@@ -476,7 +476,8 @@ class _BookingPageState extends State<BookingPage> {
     final bounds = _slotBounds();
 
     // Default initial time: slot open time for start, one hour later for end.
-    TimeOfDay defaultStart = bounds?.min ?? const TimeOfDay(hour: 10, minute: 0);
+    TimeOfDay defaultStart =
+        bounds?.min ?? const TimeOfDay(hour: 10, minute: 0);
     TimeOfDay defaultEnd = bounds != null
         ? TimeOfDay(
             hour: (defaultStart.hour + 1).clamp(0, bounds.max.hour),
@@ -484,9 +485,8 @@ class _BookingPageState extends State<BookingPage> {
           )
         : const TimeOfDay(hour: 11, minute: 0);
 
-    final initial = start
-        ? (cur.start ?? defaultStart)
-        : (cur.end ?? defaultEnd);
+    final initial =
+        start ? (cur.start ?? defaultStart) : (cur.end ?? defaultEnd);
 
     // Clamp initial within slot bounds before opening picker.
     TimeOfDay clamped = initial;
@@ -818,8 +818,9 @@ class _BookingPageState extends State<BookingPage> {
       final descriptors = _ticketDescriptors();
       for (var i = 0; i < descriptors.length; i++) {
         final desc = descriptors[i];
-        final win =
-            i < _customWindows.length ? _customWindows[i] : const _TicketWindow();
+        final win = i < _customWindows.length
+            ? _customWindows[i]
+            : const _TicketWindow();
         items.add(CheckoutItem(
           ageFrom: desc.ageFrom,
           ageTo: desc.ageTo,
@@ -986,7 +987,9 @@ class _BookingPageState extends State<BookingPage> {
       // clean, localized message instead of the raw string.
       final low = raw.toLowerCase();
       final isDayUnavailable = low.contains('run on') &&
-          (low.contains('available') || low.contains("doesn't") || low.contains('does not'));
+          (low.contains('available') ||
+              low.contains("doesn't") ||
+              low.contains('does not'));
       // A gateway code ("card_not_found", "insufficient_funds") arrives wrapped
       // in our own prose. Say what the buyer can actually do about it rather
       // than surfacing the machine string.
@@ -1294,8 +1297,7 @@ class _BookingPageState extends State<BookingPage> {
               child: Assets.icons.detail.arrow.svg(
                 width: 16.w,
                 height: 16.w,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
               ),
             ),
             Expanded(
@@ -1332,8 +1334,8 @@ class _BookingPageState extends State<BookingPage> {
 
   Widget _sectionHeader(AppColorScheme c, String title) => Padding(
         padding: EdgeInsets.only(left: 8.w, bottom: 14.h),
-        child:
-            Text(title, style: AppText.semibold14.copyWith(color: c.textSecondary)),
+        child: Text(title,
+            style: AppText.semibold14.copyWith(color: c.textSecondary)),
       );
 
   // "Цены на билеты" — one frosted pill row per tariff, each with a stepper.
@@ -1448,8 +1450,7 @@ class _BookingPageState extends State<BookingPage> {
             child: Assets.icons.detail.iconsaxAiCalendar.svg(
               width: 20.w,
               height: 20.w,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
             ),
           ),
           trailing: PillActionChip(label: _total.toRawUzsPrice()),
@@ -1491,7 +1492,7 @@ class _BookingPageState extends State<BookingPage> {
                 : (card?.label ?? payment.rail.brandName),
             subtitle: 'book_pay_method_label'.tr(),
             captionFirst: true,
-            titleColor: payment == null ? AppColors.greeting : null,
+            titleColor: payment == null ? c.textSecondary : null,
           ),
           trailing: PillActionChip(
             label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
@@ -1537,7 +1538,7 @@ class _BookingPageState extends State<BookingPage> {
               ),
               6.kw,
               Text('book_payment_summary'.tr(),
-                  style: AppText.semibold16.copyWith(color: AppColors.ink)),
+                  style: AppText.semibold16.copyWith(color: c.textPrimary)),
             ],
           ),
           for (final l in _summaryLines()) ...[
@@ -1547,19 +1548,19 @@ class _BookingPageState extends State<BookingPage> {
                 l.icon.svg(
                   width: 20.w,
                   height: 20.w,
-                  colorFilter: const ColorFilter.mode(
-                      AppColors.greeting, BlendMode.srcIn),
+                  colorFilter:
+                      ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
                 ),
                 8.kw,
                 Expanded(
                   child: Text(l.label,
-                      style: AppText.regular14
-                          .copyWith(color: AppColors.inkMuted)),
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
                 ),
                 Text(
                   l.value,
                   style: AppText.semibold14.copyWith(
-                    color: l.negative ? AppColors.error : AppColors.ink,
+                    color: l.negative ? AppColors.error : c.textPrimary,
                   ),
                 ),
               ],
@@ -1570,10 +1571,10 @@ class _BookingPageState extends State<BookingPage> {
             children: [
               Expanded(
                 child: Text('book_grand_total'.tr(),
-                    style: AppText.bold18.copyWith(color: AppColors.inkMuted)),
+                    style: AppText.bold18.copyWith(color: c.textSecondary)),
               ),
               Text(_payableTotal.toRawUzsPrice(),
-                  style: AppText.bold18.copyWith(color: AppColors.ink)),
+                  style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
         ],
@@ -1583,7 +1584,7 @@ class _BookingPageState extends State<BookingPage> {
 
   /// The glyph inside the white [PillIconBadge]: the chosen card's brand
   /// artwork, the rail's brand mark, or a neutral card icon when nothing is
-  /// picked. Always on a light surface, so the icon uses [AppColors.ink].
+  /// picked.
   Widget _paymentLeading(PaymentSelection? payment) {
     final card = payment?.card;
     if (card != null) {
@@ -1603,7 +1604,8 @@ class _BookingPageState extends State<BookingPage> {
         return Assets.icons.icCard.svg(
           width: 20.w,
           height: 20.w,
-          colorFilter: const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+          colorFilter:
+              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
         );
     }
   }
@@ -2198,12 +2200,9 @@ class _DateChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final d = date.date;
-    // The selected chip sits on the pale frosted pill — which stays light in
-    // both themes — so it keeps the fixed inks. The rest are bare text on the
-    // canvas, which goes dark, so they must read their colours from the theme:
-    // fixed ink on a dark canvas is all but invisible.
-    final dayColor = isSelected ? AppColors.ink : c.textPrimary;
-    final mutedColor = isSelected ? AppColors.greeting : c.textSecondary;
+    // Both the selected frosted pill and the bare canvas use theme colours.
+    final dayColor = c.textPrimary;
+    final mutedColor = c.textSecondary;
 
     final content = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -2284,7 +2283,7 @@ class _TariffRow extends StatelessWidget {
           width: 20.w,
           height: 20.w,
           colorFilter:
-              const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
         ),
       ),
       trailing: _Stepper(count: count, onMinus: onMinus, onPlus: onPlus),
@@ -2292,7 +2291,9 @@ class _TariffRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: AppText.semibold14.copyWith(color: AppColors.ink)),
+          Text(label,
+              style: AppText.semibold14
+                  .copyWith(color: context.colors.textPrimary)),
           4.kh,
           // Wrap, not Row: a long duration + price pair wraps instead of
           // overflowing on narrow screens.
@@ -2303,11 +2304,11 @@ class _TariffRow extends StatelessWidget {
               if (durationLabel != null)
                 Text('$durationLabel ·',
                     style: AppText.regular12
-                        .copyWith(color: AppColors.greeting)),
+                        .copyWith(color: context.colors.textSecondary)),
               Text(
                 priceText,
                 style: AppText.regular12.copyWith(
-                  color: AppColors.greeting,
+                  color: context.colors.textSecondary,
                   decoration:
                       discounted != null ? TextDecoration.lineThrough : null,
                 ),
@@ -2315,8 +2316,7 @@ class _TariffRow extends StatelessWidget {
               if (discounted != null)
                 Text(
                   discounted > 0 ? discounted.toRawUzsPrice() : '—',
-                  style:
-                      AppText.semibold12.copyWith(color: AppColors.tagGreen),
+                  style: AppText.semibold12.copyWith(color: AppColors.tagGreen),
                 ),
             ],
           ),
@@ -2352,7 +2352,8 @@ class _Stepper extends StatelessWidget {
           width: 27.w,
           child: Center(
             child: Text('$count',
-                style: AppText.bold18.copyWith(color: AppColors.ink)),
+                style:
+                    AppText.bold18.copyWith(color: context.colors.textPrimary)),
           ),
         ),
         _StepperButton(icon: Icons.add, onTap: onPlus),
@@ -2379,14 +2380,15 @@ class _StepperButton extends StatelessWidget {
         width: 26.w,
         height: 26.w,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: AppColors.inkChip,
+        decoration: BoxDecoration(
+          color: context.colors.control,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
           size: 14.w,
-          color: disabled ? AppColors.inkMuted : AppColors.ink,
+          color:
+              disabled ? context.colors.textMuted : context.colors.textPrimary,
         ),
       ),
     );
@@ -2519,16 +2521,15 @@ class _PerTicketWindowCard extends StatelessWidget {
                 ),
                 child: Text(
                   'book_ticket_index'.tr(args: ['${index + 1}']),
-                  style:
-                      AppText.semibold12.copyWith(color: AppColors.onBrand),
+                  style: AppText.semibold12.copyWith(color: AppColors.onBrand),
                 ),
               ),
               8.kw,
               Expanded(
                 child: Text(
                   subtitle,
-                  style:
-                      AppText.regular12.copyWith(color: AppColors.greeting),
+                  style: AppText.regular12
+                      .copyWith(color: context.colors.textSecondary),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -2644,14 +2645,15 @@ class _TimeBox extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: AppColors.inkChip,
+          color: context.colors.control,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: AppText.regular12.copyWith(color: AppColors.greeting)),
+                style: AppText.regular12
+                    .copyWith(color: context.colors.textSecondary)),
             4.kh,
             Row(
               children: [
@@ -2662,7 +2664,9 @@ class _TimeBox extends StatelessWidget {
                   value,
                   style: AppText.semibold16.copyWith(
                     // An unfilled slot reads as a placeholder, not a value.
-                    color: unset ? AppColors.inkMuted : AppColors.ink,
+                    color: unset
+                        ? context.colors.textMuted
+                        : context.colors.textPrimary,
                   ),
                 ),
               ],
@@ -2725,7 +2729,10 @@ class _BookingRequestedPage extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppColors.brandPurple, const Color(0xFF9C7EF8)],
+                          colors: [
+                            AppColors.brandPurple,
+                            const Color(0xFF9C7EF8)
+                          ],
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -2769,8 +2776,7 @@ class _BookingRequestedPage extends StatelessWidget {
               28.kh,
               // Notification note card
               Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 16.w, vertical: 14.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                 decoration: BoxDecoration(
                   color: c.control,
                   borderRadius: BorderRadius.circular(16.r),

@@ -62,12 +62,46 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
   bool _submitting = false;
   String? _error;
 
-  bool get _isFree => widget.level.coursePrice <= 0;
+  /// Which age bracket to enrol at, for a FLAT course priced by more than one
+  /// tier (`widget.level.id == null` — a level has its own single price, not
+  /// tiers, so this stays null there). Defaults to the first tier, which the
+  /// server already sends cheapest-first — the same one checkout would
+  /// default to if none were named, so the price shown never disagrees with
+  /// what an untouched picker would charge.
+  CourseAgeTier? _selectedTier;
+
+  bool get _hasAgeTierChoice =>
+      widget.level.id == null && widget.level.ageTiers.length > 1;
+
+  /// The price actually being charged: the picked tier once there is a
+  /// choice to make, otherwise the level's own default price.
+  num get _price => _selectedTier?.price ?? widget.level.coursePrice;
+
+  bool get _isFree => _price <= 0;
+
+  /// When this enrolment starts. Purely descriptive — picking a date here
+  /// doesn't change which lessons are booked, the price, or seats; it's just
+  /// saved on the order (`Order.starts_at`). Picked from the course's own
+  /// upcoming lesson dates (`widget.level.courseLessons`) rather than an
+  /// open calendar, so every choice is a real lesson day. Defaults to the
+  /// first one, same as what checkout would default to if this were left
+  /// unsent.
+  DateTime? _selectedStartDate;
 
   @override
   void initState() {
     super.initState();
+    if (_hasAgeTierChoice) _selectedTier = widget.level.ageTiers.first;
+    if (widget.level.courseLessons.isNotEmpty) {
+      _selectedStartDate =
+          DateTime.tryParse(widget.level.courseLessons.first.date);
+    }
     _loadLastPaymentMethod();
+  }
+
+  static String _isoDate(DateTime d) {
+    String two(int v) => v < 10 ? '0$v' : '$v';
+    return '${d.year}-${two(d.month)}-${two(d.day)}';
   }
 
   Future<void> _loadLastPaymentMethod() async {
@@ -127,6 +161,10 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
         activityId: widget.activityId,
         option: CoursePurchaseOption.full,
         subcourseId: widget.level.id,
+        ageFrom: _selectedTier?.ageFrom,
+        ageTo: _selectedTier?.ageTo,
+        startsAt:
+            _selectedStartDate != null ? _isoDate(_selectedStartDate!) : null,
         lang: context.locale.languageCode,
         paymentProvider: savedCardId != null ? null : provider,
         returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
@@ -329,8 +367,9 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
       if (!mounted) return;
       setState(() {
         _submitting = false;
-        _error =
-            e is CheckoutFriendlyError ? e.message : courseCheckoutErrorMessage(e);
+        _error = e is CheckoutFriendlyError
+            ? e.message
+            : courseCheckoutErrorMessage(e);
       });
     }
   }
@@ -347,34 +386,50 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
             _header(c),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 16.w).copyWith(
-                  top: 16.h,
-                  bottom: 24.h,
-                ),
+                padding: EdgeInsets.only(top: 16.h, bottom: 24.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionHeader(c, 'course_full_title'.tr()),
-                    _courseCard(c),
-                    if (widget.level.enrollment?.hasTrial == true) ...[
-                      8.kh,
-                      Text(
-                        'course_upsell_body_short'.tr(),
-                        style: AppText.regular12.copyWith(color: c.textMuted),
+                    // Full-bleed, like the normal booking page's own date
+                    // strip: it has its own horizontal padding so its chips
+                    // scroll edge to edge, and sits right under the header
+                    // rather than inside the rest of the form's padding.
+                    _startDateSection(c),
+                    16.kh,
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionHeader(c, 'course_full_title'.tr()),
+                          _courseCard(c),
+                          if (_hasAgeTierChoice) ...[
+                            20.kh,
+                            _ageTierSection(c),
+                          ],
+                          if (widget.level.enrollment?.hasTrial == true) ...[
+                            8.kh,
+                            Text(
+                              'course_upsell_body_short'.tr(),
+                              style: AppText.regular12
+                                  .copyWith(color: c.textMuted),
+                            ),
+                          ],
+                          if (!_isFree) ...[
+                            20.kh,
+                            _paymentMethodRow(c),
+                          ],
+                          20.kh,
+                          _breakdownSection(c),
+                          if (_error != null) ...[
+                            12.kh,
+                            Text(_error!,
+                                style: AppText.regular12
+                                    .copyWith(color: AppColors.error)),
+                          ],
+                        ],
                       ),
-                    ],
-                    if (!_isFree) ...[
-                      20.kh,
-                      _paymentMethodRow(c),
-                    ],
-                    20.kh,
-                    _breakdownSection(c),
-                    if (_error != null) ...[
-                      12.kh,
-                      Text(_error!,
-                          style: AppText.regular12
-                              .copyWith(color: AppColors.error)),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -396,8 +451,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
               child: Assets.icons.detail.arrow.svg(
                 width: 16.w,
                 height: 16.w,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
               ),
             ),
             Expanded(
@@ -420,8 +474,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
       child: GradientButton(
         text: _isFree
             ? 'book_free_cta'.tr()
-            : 'book_pay_cta'
-                .tr(args: [widget.level.coursePrice.toRawUzsPrice()]),
+            : 'book_pay_cta'.tr(args: [_price.toRawUzsPrice()]),
         loading: _submitting,
         onPressed: _pay,
       ),
@@ -442,7 +495,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
         child: Assets.icons.detail.iconsaxReceipt.svg(
           width: 20.w,
           height: 20.w,
-          colorFilter: const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+          colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
         ),
       ),
       child: PillCaption(
@@ -450,7 +503,130 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
         title: level.name ?? widget.courseTitle,
         subtitle: widget.branchTitle,
       ),
-      trailing: PillActionChip(label: level.coursePrice.toRawUzsPrice()),
+      trailing: PillActionChip(label: _price.toRawUzsPrice()),
+    );
+  }
+
+  // "Yoshni tanlang" — single-select age-tier picker. Only shown for a FLAT
+  // course priced by more than one tier (`_hasAgeTierChoice`); a level has
+  // its own single price, so this never renders alongside a level purchase.
+  // Unlike a normal activity's ticket rows (+/- quantity per tier), this is
+  // pick-exactly-one, the same shape as choosing a level.
+  Widget _ageTierSection(AppColorScheme c) {
+    final tiers = widget.level.ageTiers;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'course_choose_age_title'.tr()),
+        Column(
+          children: [
+            for (final tier in tiers) ...[
+              if (tier != tiers.first) 8.kh,
+              PillCard(
+                onTap: () => setState(() => _selectedTier = tier),
+                leading: PillIconBadge(
+                  child: _radio(identical(_selectedTier, tier)),
+                ),
+                child: PillCaption(
+                  title: '${tier.rangeLabel} ${'age_years_suffix'.tr()}',
+                ),
+                trailing: PillActionChip(label: tier.price.toRawUzsPrice()),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  // "Boshlanish sanasi" — optional start date, picked from the course's own
+  // upcoming lesson dates so every choice is a real lesson day. Purely
+  // descriptive (see _selectedStartDate): picking one never changes which
+  // lessons are booked, the price, or seats, it's just saved on the order.
+  // Mirrors the normal booking page's own date strip exactly — same bare
+  // placement right under the header, no label, no fixed height (a fixed
+  // height is what overflowed here originally: the chip is three lines of
+  // text whose height moves with the user's text-scale factor). Duplicated
+  // locally rather than shared, since that strip is tightly coupled to
+  // per-session slot fetching this screen has no use for.
+  Widget _startDateSection(AppColorScheme c) {
+    final lessons = widget.level.courseLessons;
+    if (lessons.isEmpty) return const SizedBox.shrink();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      child: Row(
+        children: [
+          for (var i = 0; i < lessons.length; i++) ...[
+            if (i > 0) 4.kw,
+            _startDateChip(lessons[i]),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _startDateChip(CourseLesson lesson) {
+    final date = DateTime.tryParse(lesson.date);
+    if (date == null) return const SizedBox.shrink();
+    final isSelected = _selectedStartDate != null &&
+        _isoDate(_selectedStartDate!) == lesson.date;
+    final dayColor = context.colors.textPrimary;
+    final mutedColor = context.colors.textSecondary;
+    final content = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('weekday_short_${date.weekday}'.tr(),
+            style: AppText.regular12.copyWith(color: mutedColor)),
+        4.kh,
+        Text('${date.day}',
+            style: AppText.bold18.copyWith(color: dayColor, height: 1.0)),
+        4.kh,
+        Text('month_short_${date.month}'.tr(),
+            style: AppText.regular12.copyWith(color: mutedColor)),
+      ],
+    );
+    final padding = EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w);
+    return SizedBox(
+      width: 48.w,
+      child: isSelected
+          ? FrostedCard(
+              onTap: () => setState(() => _selectedStartDate = date),
+              padding: padding,
+              borderRadius: BorderRadius.circular(56.r),
+              child: content,
+            )
+          : GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _selectedStartDate = date),
+              child: Padding(padding: padding, child: content),
+            ),
+    );
+  }
+
+  /// Hollow ring, or a filled green disc with a white tick once picked —
+  /// same shape as the payment-method chooser's own radio dot.
+  Widget _radio(bool selected) {
+    if (selected) {
+      return Container(
+        width: 16.w,
+        height: 16.w,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: AppColors.tagGreen,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.check_rounded, size: 11.sp, color: AppColors.onBrand),
+      );
+    }
+    return Container(
+      width: 16.w,
+      height: 16.w,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: context.colors.textSecondary),
+      ),
     );
   }
 
@@ -470,7 +646,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                 : (card?.label ?? payment.rail.brandName),
             subtitle: 'book_pay_method_label'.tr(),
             captionFirst: true,
-            titleColor: payment == null ? AppColors.greeting : null,
+            titleColor: payment == null ? c.textSecondary : null,
           ),
           trailing: PillActionChip(
             label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
@@ -498,7 +674,8 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
         return Assets.icons.icCard.svg(
           width: 20.w,
           height: 20.w,
-          colorFilter: const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+          colorFilter:
+              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
         );
     }
   }
@@ -530,7 +707,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
               ),
               6.kw,
               Text('book_payment_summary'.tr(),
-                  style: AppText.semibold16.copyWith(color: AppColors.ink)),
+                  style: AppText.semibold16.copyWith(color: c.textPrimary)),
             ],
           ),
           16.kh,
@@ -539,8 +716,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
               Assets.icons.detail.iconsaxReceipt.svg(
                 width: 20.w,
                 height: 20.w,
-                colorFilter: const ColorFilter.mode(
-                    AppColors.greeting, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
               ),
               8.kw,
               Expanded(
@@ -548,13 +724,12 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                   'course_lessons_count'.tr(
                     namedArgs: {'count': '${level.courseLessons.length}'},
                   ),
-                  style:
-                      AppText.regular14.copyWith(color: AppColors.inkMuted),
+                  style: AppText.regular14.copyWith(color: c.textSecondary),
                 ),
               ),
               Text(
-                level.coursePrice.toRawUzsPrice(),
-                style: AppText.semibold14.copyWith(color: AppColors.ink),
+                _price.toRawUzsPrice(),
+                style: AppText.semibold14.copyWith(color: c.textPrimary),
               ),
             ],
           ),
@@ -563,10 +738,10 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
             children: [
               Expanded(
                 child: Text('book_grand_total'.tr(),
-                    style: AppText.bold18.copyWith(color: AppColors.inkMuted)),
+                    style: AppText.bold18.copyWith(color: c.textSecondary)),
               ),
-              Text(level.coursePrice.toRawUzsPrice(),
-                  style: AppText.bold18.copyWith(color: AppColors.ink)),
+              Text(_price.toRawUzsPrice(),
+                  style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
         ],

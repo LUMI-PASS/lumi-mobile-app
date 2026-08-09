@@ -6,18 +6,13 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 /// chrome: the app-bar back button, an accordion chevron, a row's trailing
 /// icon.
 ///
-/// This is the sibling of `FrostedCard`, and the two are **not**
-/// interchangeable:
+/// This is the flat sibling of `FrostedCard`:
 ///
 /// - [ControlChip] follows the theme (`control` fill + `controlBorder`
 ///   hairline). Use it on a themed page, where the surface underneath goes
 ///   dark in dark mode. Its glyph is tinted `context.colors.textPrimary`.
-/// - `FrostedCard` is always light *by design* — it sits on top of a photo
-///   (the hero back / share / heart chips, the carousel dots pill), so it must
-///   stay pale in both themes. Its glyphs use the fixed `AppColors.ink`.
-///
-/// Putting a `FrostedCard` on a themed page is the bug this widget exists to
-/// prevent: a white chip glued to a dark page, with a white glyph on it.
+/// - `FrostedCard` uses a subtle theme-aware gradient for raised cards and
+///   over-photo controls.
 class ControlChip extends StatelessWidget {
   const ControlChip({
     super.key,

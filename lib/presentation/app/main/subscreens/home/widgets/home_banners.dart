@@ -69,7 +69,8 @@ class HomeCouponBanner extends StatelessWidget {
                     'coupon_plans_title'.tr(),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.bold18.copyWith(color: AppColors.ink),
+                    style: AppText.bold18
+                        .copyWith(color: context.colors.textPrimary),
                   ),
                   6.verticalSpace,
                   // Flexible: the longer locales must ellipsize, not overflow
@@ -79,8 +80,8 @@ class HomeCouponBanner extends StatelessWidget {
                       'coupon_plans_subtitle'.tr(),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 3,
-                      style:
-                          AppText.regular14.copyWith(color: AppColors.greeting),
+                      style: AppText.regular14
+                          .copyWith(color: context.colors.textSecondary),
                     ),
                   ),
                 ],

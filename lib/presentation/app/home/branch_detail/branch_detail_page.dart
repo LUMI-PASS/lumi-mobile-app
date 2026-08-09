@@ -276,7 +276,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
               child: DetailControlButton(
                 onTap: () => context.router.pop(),
                 child: HomeIcon(Assets.icons.home.arrow,
-                    size: 16, color: AppColors.ink),
+                    size: 16, color: c.textPrimary),
               ),
             ),
           ],
@@ -358,8 +358,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                         width: 8.w,
                         height: 8.w,
                         decoration: BoxDecoration(
-                          color:
-                              active ? AppColors.ink : const Color(0xFFCECDD6),
+                          color: active ? c.textPrimary : c.textSecondary,
                           shape: BoxShape.circle,
                         ),
                       );

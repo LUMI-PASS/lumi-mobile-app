@@ -8,7 +8,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
@@ -136,7 +135,9 @@ class _CouponsPageState extends State<CouponsPage>
         behavior: HitTestBehavior.opaque,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _Header(primary: primary, onBack: () => context.router.maybePop())),
+            SliverToBoxAdapter(
+                child: _Header(
+                    primary: primary, onBack: () => context.router.maybePop())),
             SliverToBoxAdapter(
               child: _InputSection(
                 controller: _codeCtrl,
@@ -157,7 +158,8 @@ class _CouponsPageState extends State<CouponsPage>
                       child: _result != null
                           ? Column(
                               children: [
-                                _SuccessCard(result: _result!, primary: primary),
+                                _SuccessCard(
+                                    result: _result!, primary: primary),
                                 16.kh,
                                 _PaymentMethodSection(
                                   payment: _payment,
@@ -202,8 +204,7 @@ class _Header extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [primary, const Color(0xFFFF7093)],
             ),
-            borderRadius:
-                BorderRadius.vertical(bottom: Radius.circular(36.r)),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(36.r)),
           ),
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.h,
@@ -420,8 +421,8 @@ class _InputSection extends StatelessWidget {
                   onTap: isLoading ? null : onCheck,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 20.w, vertical: 14.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [primary, const Color(0xFFFF7093)],
@@ -527,8 +528,8 @@ class _SuccessCard extends StatelessWidget {
                     ),
                     6.kh,
                     Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 3.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2E7D32).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20.r),
@@ -641,10 +642,12 @@ class _PaymentMethodSection extends StatelessWidget {
       onTap: onTap,
       leading: PillIconBadge(child: _leading(payment)),
       child: PillCaption(
-        title: payment == null ? 'coupon_pick_payment'.tr() : payment!.rail.brandName,
+        title: payment == null
+            ? 'coupon_pick_payment'.tr()
+            : payment!.rail.brandName,
         subtitle: 'coupon_pay_method_label'.tr(),
         captionFirst: true,
-        titleColor: payment == null ? AppColors.greeting : null,
+        titleColor: payment == null ? context.colors.textSecondary : null,
       ),
       trailing: PillActionChip(
         label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
@@ -666,7 +669,7 @@ class _PaymentMethodSection extends StatelessWidget {
         return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
       case PaymentRail.card:
       case null:
-        return Icon(CupertinoIcons.creditcard, size: 20.sp, color: AppColors.ink);
+        return Icon(CupertinoIcons.creditcard, size: 20.sp);
     }
   }
 }
@@ -840,8 +843,8 @@ class _HowToUseSection extends StatelessWidget {
                   12.kw,
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(
-                          top: 4.h, bottom: isLast ? 0 : 16.h),
+                      padding:
+                          EdgeInsets.only(top: 4.h, bottom: isLast ? 0 : 16.h),
                       child: Text(
                         _steps[i].tr(),
                         style: TextStyle(

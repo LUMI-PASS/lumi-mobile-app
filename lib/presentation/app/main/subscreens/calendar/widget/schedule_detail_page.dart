@@ -37,7 +37,6 @@ import 'package:url_launcher/url_launcher.dart';
 /// Matches the class/branch detail screens.
 const double _kHeroHeight = 300;
 
-
 /// Booking detail: shows full class context for one order (transaction). For
 /// pending orders the sticky CTA relaunches Paycom; for paid orders it lists
 /// every ticket inside the order so the user can open an individual receipt.
@@ -282,7 +281,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 child: DetailControlButton(
                   onTap: () => context.router.maybePop(),
                   child: HomeIcon(Assets.icons.home.arrow,
-                      size: 16, color: AppColors.ink),
+                      size: 16, color: c.textPrimary),
                 ),
               ),
               Center(
@@ -327,8 +326,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     final title = _classFullTitle() ?? order.activityName ?? '';
     final description = _classDescription();
     final branch = _branchTitle();
-    final showReceipt =
-        order.isPaid && !_cancelledLocally && !order.isCanceled;
+    final showReceipt = order.isPaid && !_cancelledLocally && !order.isCanceled;
 
     // Over the hero the status bar sits on a photo (light icons); once the
     // scrim takes over on a light background the icons have to flip to dark.
@@ -391,7 +389,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                   DetailControlButton(
                     onTap: () => context.router.maybePop(),
                     child: HomeIcon(Assets.icons.home.arrow,
-                        size: 16, color: AppColors.ink),
+                        size: 16, color: c.textPrimary),
                   ),
                   const Spacer(),
                   _StatusChip(status: _effectiveStatus),
@@ -484,8 +482,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                         width: 8.w,
                         height: 8.w,
                         decoration: BoxDecoration(
-                          color:
-                              active ? AppColors.ink : const Color(0xFFCECDD6),
+                          color: active ? c.textPrimary : c.textSecondary,
                           shape: BoxShape.circle,
                         ),
                       );
@@ -844,8 +841,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
     setState(() => _cancelling = true);
     try {
-      final refund =
-          await getIt<OrdersApi>().cancelOrder(_detail!.order.id);
+      final refund = await getIt<OrdersApi>().cancelOrder(_detail!.order.id);
       if (!mounted) return;
       setState(() => _cancelling = false);
       _onCancelled();
@@ -964,8 +960,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   }
 }
 
-/// Status chip floating over the hero. Frosted (always light) because it sits
-/// on the photo — only the dot and the label carry the status colour.
+/// Theme-aware frosted status chip floating over the hero. Only the dot and
+/// label carry the status colour.
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
   final String status;

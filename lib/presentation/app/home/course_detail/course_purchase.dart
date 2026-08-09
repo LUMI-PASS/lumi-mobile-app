@@ -73,11 +73,22 @@ bool get _isSignedIn => getIt<Storage>().tokens.call()?.access != null;
 ///
 /// [trialDates] is the parent's pick: trial sessions are sold one at a time,
 /// so a purchase is for the dates they chose, not for the whole set.
+///
+/// [ageFrom]/[ageTo] pick which age tier to buy the WHOLE course at, for a
+/// flat course priced by more than one tier. Omitting them buys the
+/// cheapest tier. Ignored for a trial purchase.
+///
+/// [startsAt] (YYYY-MM-DD) is when a full enrolment is considered to start —
+/// purely descriptive today, see `CoursesApi.checkout`. No screen sets this
+/// yet.
 Future<CoursePurchaseResult> runCoursePurchase(
   BuildContext context, {
   required String activityId,
   required CoursePurchaseOption option,
   String? subcourseId,
+  int? ageFrom,
+  int? ageTo,
+  String? startsAt,
   List<String>? trialDates,
 }) async {
   // A course detail page is public, so the buy button is the first place a
@@ -93,6 +104,9 @@ Future<CoursePurchaseResult> runCoursePurchase(
       activityId: activityId,
       option: option,
       subcourseId: subcourseId,
+      ageFrom: ageFrom,
+      ageTo: ageTo,
+      startsAt: startsAt,
       trialDates: trialDates,
       lang: context.locale.languageCode,
     );

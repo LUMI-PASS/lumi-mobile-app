@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 
@@ -51,7 +52,7 @@ class PillCard extends StatelessWidget {
   }
 }
 
-/// White circular badge holding a 20px glyph — the leading element of a
+/// Circular badge holding a 20px glyph — the leading element of a
 /// [PillCard].
 class PillIconBadge extends StatelessWidget {
   const PillIconBadge({super.key, required this.child});
@@ -60,25 +61,26 @@ class PillIconBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Container(
       width: 40.w,
       height: 40.w,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.onBrand,
+      decoration: BoxDecoration(
+        color: colors.isDark ? colors.control : AppColors.onBrand,
         shape: BoxShape.circle,
       ),
-      child: child,
+      child: IconTheme.merge(
+        data: IconThemeData(color: colors.textPrimary),
+        child: child,
+      ),
     );
   }
 }
 
 /// The two stacked labels inside a [PillCard].
 ///
-/// [PillCard] is always a light frosted surface, so the text uses the
-/// theme-independent [AppColors.ink] / [AppColors.greeting] pair rather than
-/// theme tokens — otherwise the labels would turn white on a pale card in dark
-/// mode.
+/// Its text follows the frosted surface in both themes.
 class PillCaption extends StatelessWidget {
   const PillCaption({
     super.key,
@@ -104,9 +106,11 @@ class PillCaption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final titleText = Text(
       title,
-      style: AppText.semibold14.copyWith(color: titleColor ?? AppColors.ink),
+      style:
+          AppText.semibold14.copyWith(color: titleColor ?? colors.textPrimary),
     );
     final sub = subtitle;
     if (sub == null) return titleText;
@@ -114,7 +118,7 @@ class PillCaption extends StatelessWidget {
     final subtitleText = Text(
       sub,
       style: AppText.regular12
-          .copyWith(color: subtitleColor ?? AppColors.greeting),
+          .copyWith(color: subtitleColor ?? colors.textSecondary),
     );
 
     return Column(
@@ -144,19 +148,20 @@ class PillActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
         decoration: BoxDecoration(
-          color: AppColors.inkChip,
+          color: colors.isDark ? colors.control : AppColors.inkChip,
           borderRadius: BorderRadius.circular(40.r),
         ),
         child: child ??
             Text(
               label,
-              style: AppText.semibold12.copyWith(color: AppColors.ink),
+              style: AppText.semibold12.copyWith(color: colors.textPrimary),
             ),
       ),
     );
