@@ -79,6 +79,8 @@ abstract class _$AppRouter extends RootStackRouter {
           key: args.key,
           clazz: args.clazz,
           coursePrice: args.coursePrice,
+          level: args.level,
+          courseOption: args.courseOption,
         ),
       );
     },
@@ -178,6 +180,7 @@ abstract class _$AppRouter extends RootStackRouter {
           level: args.level,
           courseTitle: args.courseTitle,
           branchTitle: args.branchTitle,
+          trialLesson: args.trialLesson,
         ),
       );
     },
@@ -573,6 +576,8 @@ class BookingRoute extends PageRouteInfo<BookingRouteArgs> {
     Key? key,
     required ClassFullModel clazz,
     num? coursePrice,
+    CourseLevel? level,
+    CoursePurchaseOption? courseOption,
     List<PageRouteInfo>? children,
   }) : super(
           BookingRoute.name,
@@ -580,6 +585,8 @@ class BookingRoute extends PageRouteInfo<BookingRouteArgs> {
             key: key,
             clazz: clazz,
             coursePrice: coursePrice,
+            level: level,
+            courseOption: courseOption,
           ),
           initialChildren: children,
         );
@@ -595,6 +602,8 @@ class BookingRouteArgs {
     this.key,
     required this.clazz,
     this.coursePrice,
+    this.level,
+    this.courseOption,
   });
 
   final Key? key;
@@ -603,9 +612,13 @@ class BookingRouteArgs {
 
   final num? coursePrice;
 
+  final CourseLevel? level;
+
+  final CoursePurchaseOption? courseOption;
+
   @override
   String toString() {
-    return 'BookingRouteArgs{key: $key, clazz: $clazz, coursePrice: $coursePrice}';
+    return 'BookingRouteArgs{key: $key, clazz: $clazz, coursePrice: $coursePrice, level: $level, courseOption: $courseOption}';
   }
 }
 
@@ -898,6 +911,7 @@ class CourseBookingRoute extends PageRouteInfo<CourseBookingRouteArgs> {
     required CourseLevel level,
     required String courseTitle,
     String? branchTitle,
+    CourseLesson? trialLesson,
     List<PageRouteInfo>? children,
   }) : super(
           CourseBookingRoute.name,
@@ -907,6 +921,7 @@ class CourseBookingRoute extends PageRouteInfo<CourseBookingRouteArgs> {
             level: level,
             courseTitle: courseTitle,
             branchTitle: branchTitle,
+            trialLesson: trialLesson,
           ),
           initialChildren: children,
         );
@@ -924,6 +939,7 @@ class CourseBookingRouteArgs {
     required this.level,
     required this.courseTitle,
     this.branchTitle,
+    this.trialLesson,
   });
 
   final Key? key;
@@ -936,9 +952,11 @@ class CourseBookingRouteArgs {
 
   final String? branchTitle;
 
+  final CourseLesson? trialLesson;
+
   @override
   String toString() {
-    return 'CourseBookingRouteArgs{key: $key, activityId: $activityId, level: $level, courseTitle: $courseTitle, branchTitle: $branchTitle}';
+    return 'CourseBookingRouteArgs{key: $key, activityId: $activityId, level: $level, courseTitle: $courseTitle, branchTitle: $branchTitle, trialLesson: $trialLesson}';
   }
 }
 

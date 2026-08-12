@@ -766,6 +766,13 @@ coupon_step3,При бронировании введите код для пол
 promo_hint,Введите промокод,Promokodni kiriting,Enter promo code
 promo_apply,Применить,Qo'llash,Apply
 promo_applied_saved,Сэкономлено {},Tejadingiz {},You saved {}
+promo_title,Промокод,Promokod,Promo code
+promo_remove,Убрать,Olib tashlash,Remove
+promo_applied,Промокод применён: −{amount},Promokod qo‘llandi: −{amount},Promo applied: −{amount}
+book_discount,Скидка,Chegirma,Discount
+course_quantity_title,Сколько детей,Nechta bola,How many children
+course_quantity_label,Мест,Joylar,Places
+course_quantity_max,Больше мест нет: максимум {count},Ko‘proq joy yo‘q: eng ko‘pi {count},No more places: {count} maximum
 promo_invalid,Промокод недействителен,Promokod yaroqsiz,Invalid promo code
 promo_max_order,Промокод действует только для заказов до {},Promokod faqat {} gacha buyurtmalar uchun amal qiladi,This promocode is valid only for orders up to {}
 promo_not_applicable,Этот промокод не действует для этого занятия,Bu promokod ushbu mashg'ulot uchun ishlamaydi,This promo code does not work for this activity
@@ -994,7 +1001,7 @@ course_until_date,До {date},{date} gacha,Until {date}
 course_card_try_free,Попробовать бесплатно,Bepulga sinab ko‘rish,Try for free
 course_card_try_next_free,Следующий урок бесплатно,Keyingi dars bepul,Next lesson free
 course_card_try_for,Попробовать за {price},{price} ga sinab ko‘ring,Try for {price}
-course_card_next_lesson,Следующий урок — {price},Keyingi dars — {price},Next lesson {price}
+course_card_next_lesson,от {price},{price} dan boshlab,from {price}
 course_card_whole_course,Весь курс — {price},Butun kurs — {price},Whole course {price}
 course_card_per_lesson,{price} за урок,Darsiga {price},{price} per lesson
 course_upsell_body_short,Стоимость пробных уроков не вычитается,Sinov darslari narxi ayirilmaydi,The trial fee is not credited
@@ -1034,6 +1041,11 @@ course_blocked_unavailable,Сейчас недоступно,Hozir mavjud emas,N
 course_trial_count,{count} пробных,{count} ta sinov,{count} trial
 course_show_less,Свернуть,Yig'ish,Show less
 course_buy_level,Купить подкурс, Kursni sotib olish,Buy subcourse
+course_pick_level_cta,Выберите подкурс,Kichik kursni tanlang,Choose a subcourse
+course_trial_lesson_one,Пробный урок,Sinov darsi,Trial lesson
+course_month_schedule,Расписание на месяц · {count} занятий,Bir oylik jadval · {count} ta dars,This month · {count} lessons
+course_no_lesson_that_day,В этот день занятий нет,Bu kuni dars yo‘q,No lesson on this day
+see_centre,Посмотреть центр,Markazni ko‘rish,See centre
 course_trial_required_note,"Обязательных пробных уроков: {count}. Записаться на курс можно только после них.","Majburiy sinov darslari: {count}. Kursga faqat ulardan keyin yozilish mumkin.","{count} trial lesson(s) are required — you can only enrol after them."
 course_trial_mandatory,Обязательный,Majburiy,Required
 course_blocked_trial_required,"Сначала купите обязательные пробные уроки.","Avval majburiy sinov darslarini sotib oling.","Buy the required trial lessons first."
@@ -1045,3 +1057,9 @@ course_trial_pick_hint,"Выберите уроки, которые хотите
 course_trial_pick_date_hint,"Выберите дату пробного урока","Sinov darsi sanasini tanlang","Choose a date for your trial lesson"
 course_trial_selected,Выбрано: {count},Tanlandi: {count},{count} selected
 course_trial_bought_one,Куплено,Sotib olingan,Bought
+course_trial_lesson_no,{n}-е пробное занятие,{n}-sinov dars,Trial lesson {n}
+course_trial_pick_lesson_hint,Выберите пробное занятие,Sinov darsini tanlang,Pick a trial lesson
+course_book_trial_cta,Забронировать пробное занятие,Sinov darsini bron qilish,Book the trial lesson
+course_trial_passed,Прошло,O‘tib ketdi,Passed
+course_trial_locked,Сначала пройдите предыдущее занятие,Avval oldingi darsni o‘ting,Take the previous lesson first
+course_trial_book_title,Пробное занятие,Sinov darsi,Trial lesson

@@ -23,13 +23,14 @@ import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_chec
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/course_detail/course_purchase.dart';
 
-/// "Buy the course" — the review-and-pay screen for a whole course or a
-/// levelled subcourse.
+/// The review-and-pay screen for a course — the whole thing, a levelled
+/// subcourse, or a single TRIAL lesson.
 ///
-/// Trial lessons are NOT bought here: they're sold one at a time, by date,
-/// straight from the calendar on the course detail page — there's nothing
-/// left to review once the dates are picked. This screen only ever charges
-/// [CoursePurchaseOption.full].
+/// A trial used to be charged inline from the detail page, which meant the one
+/// purchase on the screen that skipped the payment-method picker, the saved
+/// cards and the error mapping every other purchase goes through. Passing
+/// [trialLesson] routes it through here instead, so trying a course is paid for
+/// exactly like booking a class is.
 ///
 /// Pops `true` once the purchase went through (paid in-app, or the buyer came
 /// back from the payment-gateway redirect) so the caller knows to reload the
@@ -42,6 +43,7 @@ class CourseBookingPage extends StatefulWidget {
     required this.level,
     required this.courseTitle,
     this.branchTitle,
+    this.trialLesson,
   });
 
   final String activityId;
@@ -51,6 +53,11 @@ class CourseBookingPage extends StatefulWidget {
   /// not as levels).
   final String courseTitle;
   final String? branchTitle;
+
+  /// Set to buy ONE trial lesson instead of the course. Its date is what the
+  /// order is written against — trials are sold by date, since which session
+  /// "lesson 2" refers to rolls forward as dates pass.
+  final CourseLesson? trialLesson;
 
   @override
   State<CourseBookingPage> createState() => _CourseBookingPageState();
@@ -70,14 +77,60 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
   /// what an untouched picker would charge.
   CourseAgeTier? _selectedTier;
 
+  /// Buying one trial lesson rather than the course.
+  bool get _isTrial => widget.trialLesson != null;
+
+  /// How many places to buy — one per child. Full enrolments only: a trial is
+  /// one child trying one lesson, and the server refuses a quantity on one.
+  int _quantity = 1;
+
+  /// Server-side ceiling (`MAX_COURSE_QUANTITY`). Mirrored so the stepper stops
+  /// where checkout would start refusing rather than after it.
+  static const int _maxQuantity = 10;
+
+  bool get _canPickQuantity => !_isTrial;
+
+  /// Places left in the cohort, when the centre capped it. The stepper stops
+  /// here too: offering a fourth place in a three-place cohort only produces a
+  /// refusal at the end of the flow.
+  int get _quantityCeiling {
+    final left = widget.level.seatsLeft;
+    if (left == null || left <= 0) return _maxQuantity;
+    return left < _maxQuantity ? left : _maxQuantity;
+  }
+
+  // ── Promocode ───────────────────────────────────────────────────────────────
+  final TextEditingController _promoCtrl = TextEditingController();
+  PromocodePreview? _appliedPromo;
+  bool _promoLoading = false;
+  String? _promoError;
+
+  num get _promoDiscount => _appliedPromo?.discountAmount ?? 0;
+
+  /// What the order costs before any discount: the per-place price times the
+  /// places bought.
+  num get _subtotal => _price * (_canPickQuantity ? _quantity : 1);
+
+  /// What is actually charged. Never below zero — a code worth more than the
+  /// order settles it free rather than owing the buyer money.
+  num get _payable {
+    final t = _subtotal - _promoDiscount;
+    return t < 0 ? 0 : t;
+  }
+
+  /// Age tiers price the WHOLE course; a trial lesson carries its own price,
+  /// so there is nothing to pick.
   bool get _hasAgeTierChoice =>
-      widget.level.id == null && widget.level.ageTiers.length > 1;
+      !_isTrial &&
+      widget.level.id == null &&
+      widget.level.ageTiers.length > 1;
 
-  /// The price actually being charged: the picked tier once there is a
-  /// choice to make, otherwise the level's own default price.
-  num get _price => _selectedTier?.price ?? widget.level.coursePrice;
+  /// The price actually being charged: the trial lesson's own price, else the
+  /// picked tier once there is a choice to make, else the level's own default.
+  num get _price =>
+      widget.trialLesson?.price ?? _selectedTier?.price ?? widget.level.coursePrice;
 
-  bool get _isFree => _price <= 0;
+  bool get _isFree => _payable <= 0;
 
   /// When this enrolment starts. Purely descriptive — picking a date here
   /// doesn't change which lessons are booked, the price, or seats; it's just
@@ -97,6 +150,58 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
           DateTime.tryParse(widget.level.courseLessons.first.date);
     }
     _loadLastPaymentMethod();
+  }
+
+  @override
+  void dispose() {
+    _promoCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Validate the code against the CURRENT subtotal and preview the new total.
+  /// Re-checked server-side at checkout — this only shows the buyer what to
+  /// expect, it never decides the charge.
+  Future<void> _applyPromo() async {
+    final code = _promoCtrl.text.trim();
+    if (code.isEmpty || _promoLoading) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _promoLoading = true;
+      _promoError = null;
+    });
+    try {
+      final preview = await getIt<OrdersApi>().validatePromocode(
+        code: code,
+        subtotal: _subtotal,
+        activityId: widget.activityId,
+        count: _canPickQuantity ? _quantity : 1,
+      );
+      if (!mounted) return;
+      setState(() {
+        _appliedPromo = preview;
+        _promoLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _appliedPromo = null;
+        // Reuses the course error mapping, which already turns a structured
+        // `error_code` into something a buyer can act on.
+        _promoError = courseCheckoutErrorMessage(e);
+        _promoLoading = false;
+      });
+    }
+  }
+
+  /// A applied code was priced against the old subtotal, so changing the number
+  /// of places has to drop it — otherwise the screen shows a discount the
+  /// server will recompute to something else.
+  void _setQuantity(int next) {
+    setState(() {
+      _quantity = next;
+      _appliedPromo = null;
+      _promoError = null;
+    });
   }
 
   static String _isoDate(DateTime d) {
@@ -159,12 +264,22 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     try {
       return await getIt<CoursesApi>().checkout(
         activityId: widget.activityId,
-        option: CoursePurchaseOption.full,
+        option: _isTrial
+            ? CoursePurchaseOption.trial
+            : CoursePurchaseOption.full,
         subcourseId: widget.level.id,
-        ageFrom: _selectedTier?.ageFrom,
-        ageTo: _selectedTier?.ageTo,
-        startsAt:
-            _selectedStartDate != null ? _isoDate(_selectedStartDate!) : null,
+        quantity: _canPickQuantity ? _quantity : null,
+        promocode: _appliedPromo != null ? _promoCtrl.text.trim() : null,
+        // Trials are selected by DATE server-side, and priced over exactly the
+        // lessons being sold — so this one date is the whole order.
+        trialDates: _isTrial ? [widget.trialLesson!.date] : null,
+        // Both belong to a full enrolment only; a trial has neither an age tier
+        // nor a start date to choose.
+        ageFrom: _isTrial ? null : _selectedTier?.ageFrom,
+        ageTo: _isTrial ? null : _selectedTier?.ageTo,
+        startsAt: !_isTrial && _selectedStartDate != null
+            ? _isoDate(_selectedStartDate!)
+            : null,
         lang: context.locale.languageCode,
         paymentProvider: savedCardId != null ? null : provider,
         returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
@@ -394,20 +509,48 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                     // strip: it has its own horizontal padding so its chips
                     // scroll edge to edge, and sits right under the header
                     // rather than inside the rest of the form's padding.
-                    _startDateSection(c),
-                    16.kh,
+                    //
+                    // A trial has no start date to PICK — the ladder decides
+                    // which lesson is on sale — but it still has a date and a
+                    // time, and the buyer is told both further down.
+                    if (!_isTrial) ...[
+                      _startDateSection(c),
+                      16.kh,
+                    ],
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _sectionHeader(c, 'course_full_title'.tr()),
+                          _sectionHeader(
+                            c,
+                            _isTrial
+                                ? 'course_trial_book_title'.tr()
+                                : 'course_full_title'.tr(),
+                          ),
                           _courseCard(c),
+                          // When the lesson runs. Sits right under the card the
+                          // way the class booking page puts its schedule under
+                          // the class — same question, same place on the page.
+                          if (_isTrial) ...[
+                            20.kh,
+                            _trialScheduleSection(c),
+                          ],
                           if (_hasAgeTierChoice) ...[
                             20.kh,
                             _ageTierSection(c),
                           ],
-                          if (widget.level.enrollment?.hasTrial == true) ...[
+                          if (_canPickQuantity) ...[
+                            20.kh,
+                            _quantitySection(c),
+                          ],
+                          20.kh,
+                          _promoSection(c),
+                          // "The trial fee isn't credited" is about buying the
+                          // COURSE after a trial — meaningless while buying the
+                          // trial itself.
+                          if (!_isTrial &&
+                              widget.level.enrollment?.hasTrial == true) ...[
                             8.kh,
                             Text(
                               'course_upsell_body_short'.tr(),
@@ -474,7 +617,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
       child: GradientButton(
         text: _isFree
             ? 'book_free_cta'.tr()
-            : 'book_pay_cta'.tr(args: [_price.toRawUzsPrice()]),
+            : 'book_pay_cta'.tr(args: [_payable.toRawUzsPrice()]),
         loading: _submitting,
         onPressed: _pay,
       ),
@@ -487,9 +630,23 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
             style: AppText.semibold14.copyWith(color: c.textSecondary)),
       );
 
-  // "Butun kurs" — what's being bought, and for how much.
+  // "Butun kurs" — what's being bought, and for how much. For a trial that is
+  // ONE named lesson on a given date, not the course, and the card has to say
+  // so: the price alone would look like a suspiciously cheap whole course.
   Widget _courseCard(AppColorScheme c) {
     final level = widget.level;
+    final trial = widget.trialLesson;
+
+    final title = trial != null
+        ? 'course_trial_lesson_no'.tr(namedArgs: {'n': '${trial.lessonNo}'})
+        : (level.name ?? widget.courseTitle);
+
+    final subtitle = trial != null
+        ? [_trialDateLabel(trial), level.name ?? widget.courseTitle]
+            .where((s) => s.isNotEmpty)
+            .join(' · ')
+        : widget.branchTitle;
+
     return PillCard(
       leading: PillIconBadge(
         child: Assets.icons.detail.iconsaxReceipt.svg(
@@ -500,10 +657,154 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
       ),
       child: PillCaption(
         captionFirst: true,
-        title: level.name ?? widget.courseTitle,
-        subtitle: widget.branchTitle,
+        title: title,
+        subtitle: subtitle,
       ),
-      trailing: PillActionChip(label: _price.toRawUzsPrice()),
+      trailing: PillActionChip(
+        label: _isFree ? 'price_free'.tr() : _price.toRawUzsPrice(),
+      ),
+    );
+  }
+
+  String _trialDateLabel(CourseLesson lesson) {
+    final d = DateTime.tryParse(lesson.date);
+    if (d == null) return lesson.date;
+    return '${d.day} ${'month_short_${d.month}'.tr()}, '
+        '${'weekday_short_${d.weekday}'.tr()}';
+  }
+
+  /// "Nechta bola?" — how many places this order buys.
+  ///
+  /// A place is a cohort seat, so the stepper stops at whichever comes first:
+  /// the product ceiling, or the seats the centre has left. Running past either
+  /// only earns a refusal at the end of the flow, after the buyer has picked a
+  /// card.
+  Widget _quantitySection(AppColorScheme c) {
+    final ceiling = _quantityCeiling;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'course_quantity_title'.tr()),
+        PillCard(
+          leading: PillIconBadge(
+            child: Assets.icons.home.profile2user.svg(
+              width: 20.w,
+              height: 20.w,
+              colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+            ),
+          ),
+          child: PillCaption(
+            title: 'course_quantity_label'.tr(),
+            subtitle: _price.toRawUzsPrice(),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _StepButton(
+                icon: Icons.remove_rounded,
+                onTap: _quantity > 1 ? () => _setQuantity(_quantity - 1) : null,
+              ),
+              SizedBox(
+                width: 36.w,
+                child: Text(
+                  '$_quantity',
+                  textAlign: TextAlign.center,
+                  style: AppText.bold16.copyWith(color: c.textPrimary),
+                ),
+              ),
+              _StepButton(
+                icon: Icons.add_rounded,
+                onTap: _quantity < ceiling
+                    ? () => _setQuantity(_quantity + 1)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+        if (_quantity >= ceiling) ...[
+          8.kh,
+          Text(
+            'course_quantity_max'.tr(namedArgs: {'count': '$ceiling'}),
+            style: AppText.regular12.copyWith(color: c.textMuted),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Promocode entry — the same affordance a class booking has.
+  ///
+  /// The discount is only ever a PREVIEW here: checkout revalidates it and the
+  /// server decides the charge, so a stale or spoofed preview cannot move money.
+  Widget _promoSection(AppColorScheme c) {
+    final applied = _appliedPromo;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'promo_title'.tr()),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _promoCtrl,
+                enabled: applied == null,
+                textCapitalization: TextCapitalization.characters,
+                style: AppText.regular14.copyWith(color: c.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'promo_hint'.tr(),
+                  hintStyle:
+                      AppText.regular14.copyWith(color: c.textMuted),
+                  filled: true,
+                  fillColor: c.surface,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: c.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: c.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: c.primary),
+                  ),
+                ),
+              ),
+            ),
+            8.kw,
+            applied == null
+                ? _PromoActionButton(
+                    label: 'promo_apply'.tr(),
+                    loading: _promoLoading,
+                    onTap: _applyPromo,
+                  )
+                : _PromoActionButton(
+                    label: 'promo_remove'.tr(),
+                    onTap: () => setState(() {
+                      _appliedPromo = null;
+                      _promoError = null;
+                      _promoCtrl.clear();
+                    }),
+                  ),
+          ],
+        ),
+        if (_promoError != null) ...[
+          8.kh,
+          Text(_promoError!,
+              style: AppText.regular12.copyWith(color: AppColors.error)),
+        ],
+        if (applied != null) ...[
+          8.kh,
+          Text(
+            'promo_applied'.tr(
+              namedArgs: {'amount': applied.discountAmount.toRawUzsPrice()},
+            ),
+            style: AppText.regular12.copyWith(color: AppColors.green),
+          ),
+        ],
+      ],
     );
   }
 
@@ -571,6 +872,20 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     if (date == null) return const SizedBox.shrink();
     final isSelected = _selectedStartDate != null &&
         _isoDate(_selectedStartDate!) == lesson.date;
+    return _dateChip(
+      date,
+      selected: isSelected,
+      onTap: () => setState(() => _selectedStartDate = date),
+    );
+  }
+
+  /// One day in a date strip. [onTap] null renders the same chip with nothing
+  /// to press — a date that is being STATED rather than offered.
+  Widget _dateChip(
+    DateTime date, {
+    required bool selected,
+    VoidCallback? onTap,
+  }) {
     final dayColor = context.colors.textPrimary;
     final mutedColor = context.colors.textSecondary;
     final content = Column(
@@ -590,18 +905,77 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     final padding = EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w);
     return SizedBox(
       width: 48.w,
-      child: isSelected
+      child: selected
           ? FrostedCard(
-              onTap: () => setState(() => _selectedStartDate = date),
+              onTap: onTap,
               padding: padding,
               borderRadius: BorderRadius.circular(56.r),
               child: content,
             )
           : GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _selectedStartDate = date),
+              onTap: onTap,
               child: Padding(padding: padding, child: content),
             ),
+    );
+  }
+
+  /// When the trial lesson runs — the date strip, then the window inside it.
+  ///
+  /// Laid out like the class booking page's own schedule, because a buyer is
+  /// answering the same question: "when is this?". It is STATED, not picked:
+  /// trials are a ladder and only the next unbought lesson is ever on sale (see
+  /// the trial section on the detail page), so there is exactly one date this
+  /// booking can be for. Offering a strip to choose from would be offering a
+  /// choice that doesn't exist — but saying nothing at all, which is what this
+  /// screen used to do, sent people to pay without ever being told the date.
+  Widget _trialScheduleSection(AppColorScheme c) {
+    final lesson = widget.trialLesson;
+    final date = lesson == null ? null : DateTime.tryParse(lesson.date);
+    if (date == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'book_date_time'.tr()),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _dateChip(date, selected: true),
+            12.kw,
+            Expanded(child: _trialTimeLabel(c, lesson!)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// The lesson's window, "10:00 – 11:00".
+  ///
+  /// Nothing at all when the centre never set times on the trial's schedule:
+  /// the chip beside it already carries the day, so an empty clock row would
+  /// add a heading and no fact.
+  Widget _trialTimeLabel(AppColorScheme c, CourseLesson lesson) {
+    final start = lesson.startTime?.trim() ?? '';
+    final end = lesson.endTime?.trim() ?? '';
+    if (start.isEmpty) return const SizedBox.shrink();
+    final value = end.isEmpty ? start : '$start – $end';
+
+    return Row(
+      children: [
+        Assets.icons.detail.icCalendar.svg(
+          width: 18.w,
+          height: 18.w,
+          colorFilter: ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
+        ),
+        8.kw,
+        Expanded(
+          child: Text(
+            value,
+            style: AppText.semibold14.copyWith(color: c.textPrimary),
+          ),
+        ),
+      ],
     );
   }
 
@@ -721,18 +1095,40 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
               8.kw,
               Expanded(
                 child: Text(
-                  'course_lessons_count'.tr(
-                    namedArgs: {'count': '${level.courseLessons.length}'},
-                  ),
+                  // A trial buys ONE lesson. Quoting the whole course's lesson
+                  // count against the trial's price read as though twelve
+                  // lessons were being charged for.
+                  _isTrial
+                      ? 'course_trial_lesson_one'.tr()
+                      : 'course_lessons_count'.tr(
+                          namedArgs: {
+                            'count': '${level.courseLessons.length}',
+                          },
+                        ),
                   style: AppText.regular14.copyWith(color: c.textSecondary),
                 ),
               ),
               Text(
-                _price.toRawUzsPrice(),
+                _subtotal.toRawUzsPrice(),
                 style: AppText.semibold14.copyWith(color: c.textPrimary),
               ),
             ],
           ),
+          if (_promoDiscount > 0) ...[
+            12.kh,
+            Row(
+              children: [
+                Expanded(
+                  child: Text('book_discount'.tr(),
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
+                ),
+                Text('- ${_promoDiscount.toRawUzsPrice()}',
+                    style:
+                        AppText.semibold14.copyWith(color: AppColors.green)),
+              ],
+            ),
+          ],
           16.kh,
           Row(
             children: [
@@ -740,11 +1136,86 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                 child: Text('book_grand_total'.tr(),
                     style: AppText.bold18.copyWith(color: c.textSecondary)),
               ),
-              Text(_price.toRawUzsPrice(),
+              Text(
+                  _isFree ? 'price_free'.tr() : _payable.toRawUzsPrice(),
                   style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Round +/- control for the places stepper. Disabled (null [onTap]) at the
+/// ends of the range rather than hidden, so the control keeps its shape.
+class _StepButton extends StatelessWidget {
+  const _StepButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final enabled = onTap != null;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 32.w,
+        height: 32.w,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: enabled ? c.primary.withValues(alpha: 0.12) : c.surface,
+          border: Border.all(color: enabled ? Colors.transparent : c.border),
+        ),
+        child: Icon(
+          icon,
+          size: 18.sp,
+          color: enabled ? c.primary : c.textMuted,
+        ),
+      ),
+    );
+  }
+}
+
+/// Apply / remove button beside the promocode field.
+class _PromoActionButton extends StatelessWidget {
+  const _PromoActionButton({
+    required this.label,
+    required this.onTap,
+    this.loading = false,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: loading ? null : onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 15.h),
+        decoration: BoxDecoration(
+          gradient: AppGradients.brand,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: loading
+            ? SizedBox(
+                width: 16.w,
+                height: 16.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                label,
+                style: AppText.semibold14.copyWith(color: Colors.white),
+              ),
       ),
     );
   }

@@ -175,6 +175,17 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     return order.effectiveDisplayStatus;
   }
 
+  /// The class's own age range, for bookings whose ticket carries none.
+  ///
+  /// Reads the loaded class detail rather than the order: a course booking has
+  /// no tier of its own, but the course is still for a particular age, and that
+  /// is what a parent is checking.
+  String? _classAgeRange() {
+    final tier = _classFull?.ageTiers.firstOrNull;
+    if (tier != null) return tier.rangeLabel;
+    return _classFull?.pricesSummary.firstOrNull?.rangeLabel;
+  }
+
   /// Immediately reflects cancellation in the UI then silently reloads.
   void _onCancelled() {
     setState(() => _cancelledLocally = true);
@@ -565,7 +576,18 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
               ),
               8.horizontalSpace,
               Text(
-                'tickets_count'.tr(args: ['${detail.tickets.length}']),
+                order.isCourseOrder
+                    // A course is one enrolment, not N tickets — saying "1
+                    // ticket" beside a term-long course reads like something
+                    // went missing. Name what was bought instead.
+                    ? [
+                        order.isTrialLesson
+                            ? 'course_trial_lesson_one'.tr()
+                            : 'course_full_title'.tr(),
+                        if (order.subcourseName?.isNotEmpty ?? false)
+                          order.subcourseName!,
+                      ].join(' · ')
+                    : 'tickets_count'.tr(args: ['${detail.tickets.length}']),
                 style: AppText.regular14.copyWith(color: c.textMuted),
               ),
             ],
@@ -597,6 +619,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 onCanceled: _onCancelled,
                 paidPrice: paidPerTicket,
                 fromPromocode: order.isPromocodeDiscount,
+                ageFallback: _classAgeRange(),
               ),
             );
           }),
@@ -811,32 +834,99 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     );
   }
 
+  /// The cancel confirmation, as a sheet rather than a dialog.
+  ///
+  /// Every other decision on this screen is taken in a bottom sheet, and a
+  /// centred dialog was the odd one out. Colours come from [context.colors], so
+  /// it follows the theme instead of the platform's own dialog palette — a
+  /// light card on a dark app was exactly the mismatch worth fixing.
+  ///
+  /// Returns true only if the destructive button was pressed; dismissing by
+  /// swipe or barrier keeps the booking.
+  Future<bool?> _showCancelSheet() {
+    final c = context.colors;
+    return showModalBottomSheet<bool>(
+      context: context,
+      useSafeArea: true,
+      backgroundColor: c.surface,
+      barrierColor: AppColors.ink.withValues(alpha: 0.8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Grabber — the same affordance the other sheets carry.
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: c.border,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            20.verticalSpace,
+            Text(
+              'booking_cancel_title'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.bold18.copyWith(color: c.textPrimary),
+            ),
+            8.verticalSpace,
+            Text(
+              'booking_cancel_confirm'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.regular14.copyWith(color: c.textSecondary),
+            ),
+            24.verticalSpace,
+            // Keeping the booking is the primary action: it is the safe one,
+            // and cancelling is irreversible with the refund on the gateway's
+            // schedule. The destructive choice stays available underneath, in
+            // red text rather than a red slab, so it reads as a deliberate
+            // second step instead of the obvious tap.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(ctx).pop(false),
+              child: Container(
+                height: 50.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: AppGradients.brand,
+                  borderRadius: BorderRadius.circular(44.r),
+                ),
+                child: Text(
+                  'booking_keep'.tr(),
+                  style: AppText.medium16.copyWith(color: AppColors.onBrand),
+                ),
+              ),
+            ),
+            8.verticalSpace,
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(ctx).pop(true),
+              child: Container(
+                height: 50.h,
+                alignment: Alignment.center,
+                child: Text(
+                  'booking_cancel_action'.tr(),
+                  style: AppText.medium16.copyWith(color: AppColors.error),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Asks first — cancelling is irreversible and the money comes back on the
   /// gateway's schedule, not ours.
   Future<void> _confirmCancel() async {
-    final c = context.colors;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: c.surface,
-        title: Text('booking_cancel_title'.tr(),
-            style: AppText.semibold16.copyWith(color: c.textPrimary)),
-        content: Text('booking_cancel_confirm'.tr(),
-            style: AppText.regular14.copyWith(color: c.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('booking_keep'.tr(),
-                style: TextStyle(color: c.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('booking_cancel_action'.tr(),
-                style: const TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
+    final ok = await _showCancelSheet();
     if (ok != true || !mounted) return;
 
     setState(() => _cancelling = true);
@@ -859,12 +949,42 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _cancelling = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showTopError('booking_cancel_failed'.tr(args: [_cancelMessage(e)]));
+    }
+  }
+
+  /// A failure banner at the TOP of the screen.
+  ///
+  /// The cancel button sits on the sticky bar at the bottom, and a bottom
+  /// snackbar appeared under the thumb that had just pressed it — often behind
+  /// it. A refusal is the one message here the user has to read before deciding
+  /// what to do next, so it goes where their eyes already are.
+  void _showTopError(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
         SnackBar(
-          content: Text('booking_cancel_failed'.tr(args: [_cancelMessage(e)])),
+          content: Text(
+            message,
+            style: AppText.regular14.copyWith(color: AppColors.onBrand),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+          // Floating snackbars are positioned from the bottom, so the top is
+          // reached by reserving everything below it as margin.
+          margin: EdgeInsets.only(
+            left: 16.w,
+            right: 16.w,
+            bottom: MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top -
+                120.h,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
         ),
       );
-    }
   }
 
   /// The server's reason (past the cancellation window, already cancelled, …)
@@ -1120,7 +1240,16 @@ class _TicketRow extends StatelessWidget {
     this.onCanceled,
     this.paidPrice,
     this.fromPromocode = false,
+    this.ageFallback,
   });
+
+  /// Age range to show when the TICKET carries none.
+  ///
+  /// A course booking is written without an age tier — it isn't sold per tier
+  /// the way a class ticket is — so `age_from`/`age_to` come back as 0 and the
+  /// chip vanished on exactly the bookings people were checking. The class's
+  /// own range is the honest answer there: it is who the session is for.
+  final String? ageFallback;
 
   final AppColorScheme c;
   final OrderTicket ticket;
@@ -1220,6 +1349,21 @@ class _TicketRow extends StatelessWidget {
                   c: c,
                   label: 'ticket_time_label'.tr(),
                   value: '${ticket.startTime} – ${ticket.endTime}',
+                  muted: isCancelled,
+                ),
+              // Which age tier this ticket was bought at. An order with two
+              // tiers priced differently showed two rows that read identically
+              // apart from the money, leaving the buyer to infer which child
+              // each one was for.
+              if (ticket.ageTo > 0 || (ageFallback?.isNotEmpty ?? false))
+                _TicketMetaChip(
+                  c: c,
+                  label: 'ticket_age_label'.tr(),
+                  value: ticket.ageTo > 0
+                      ? (ticket.ageFrom == ticket.ageTo
+                          ? '${ticket.ageFrom}'
+                          : '${ticket.ageFrom}–${ticket.ageTo}')
+                      : ageFallback!,
                   muted: isCancelled,
                 ),
               if (isCancelled)

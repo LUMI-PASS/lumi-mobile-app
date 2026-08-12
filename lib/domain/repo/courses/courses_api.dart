@@ -498,6 +498,11 @@ class CoursesApi {
     int? ageTo,
     String? startsAt,
     List<String>? trialDates,
+    /// How many places to buy, one per child. Full enrolments only — a trial
+    /// is one child trying one lesson.
+    int? quantity,
+    /// Validated and capped server-side; the client never computes a discount.
+    String? promocode,
     String? lang,
     String? returnUrl,
     String? paymentProvider,
@@ -523,6 +528,12 @@ class CoursesApi {
           trialDates != null &&
           trialDates.isNotEmpty)
         'trial_dates': trialDates,
+      if (option == CoursePurchaseOption.full &&
+          quantity != null &&
+          quantity > 1)
+        'quantity': quantity,
+      if (promocode != null && promocode.trim().isNotEmpty)
+        'promocode': promocode.trim(),
       if (lang != null) 'lang': lang,
       if (returnUrl != null) 'return_url': returnUrl,
       if (paymentProvider != null) 'payment_provider': paymentProvider,

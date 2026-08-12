@@ -20,6 +20,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:shimmer/shimmer.dart';
@@ -70,6 +71,10 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
     _loadClasses();
     _startAutoSlide();
     _scrollController.addListener(_onScroll);
+    // This centre's offerings include courses, and a course card is priced per
+    // viewer — buying a trial from one of these rows re-prices it. The page is
+    // pushed rather than a tab, so it gets no focus event to hang this on.
+    catalogRevision.addListener(_reloadClasses);
     final b = widget.branch;
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.branchDetailViewed,
@@ -85,6 +90,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
   @override
   void dispose() {
     _slideTimer?.cancel();
+    catalogRevision.removeListener(_reloadClasses);
     _pageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -138,6 +144,13 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
         curve: Curves.easeInOut,
       );
     });
+  }
+
+  /// Re-fetch the first page over the top of the current list. Used when a
+  /// purchase re-prices the cards; paging state is reset by [_loadClasses]
+  /// itself when `append` is false.
+  void _reloadClasses() {
+    if (mounted) _loadClasses();
   }
 
   Future<void> _loadClasses({int page = 1, bool append = false}) async {

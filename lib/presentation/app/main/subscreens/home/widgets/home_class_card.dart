@@ -354,7 +354,10 @@ class _CoursePriceText extends StatelessWidget {
         case CoursePriceKind.trialNext:
           label = 'course_card_next_lesson'.tr(namedArgs: {'price': money});
         case CoursePriceKind.full:
-          label = 'course_card_whole_course'.tr(namedArgs: {'price': money});
+          // Nothing left to try, so there is no offer left to word — the course
+          // price IS the price. A "Whole course —" prefix only competed with
+          // the figure beside it for the same single line.
+          label = money;
         case CoursePriceKind.unknown:
           // A kind this build doesn't model yet: print the figure and nothing
           // around it. Wrong in emphasis, never wrong in money.

@@ -5,6 +5,7 @@ import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
@@ -19,6 +20,11 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   double? _lat;
   double? _lng;
   String _lastLang = '';
+
+  /// The catalog revision these results were built from. Course cards are
+  /// priced per viewer, so a trial bought from a result re-prices the grid
+  /// behind it — see [catalogRevision].
+  int _lastCatalogRevision = catalogRevision.value;
 
   /// Total matching results per tab, surfaced in the "Все • N" count row.
   int _classesTotal = 0;
@@ -90,9 +96,20 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   }
 
   /// Re-fetches categories and results when the app language has changed.
+  /// Called when the tab regains focus: re-fetch when anything that changes
+  /// what the results should SAY has moved since the last load — the language,
+  /// or a purchase that re-priced the course cards.
   Future<void> refreshIfLanguageChanged() async {
     final lang = currentLang;
-    if (_lastLang == lang) return;
+    final langChanged = _lastLang != lang;
+    final catalogChanged = _lastCatalogRevision != catalogRevision.value;
+    if (!langChanged && !catalogChanged) return;
+    _lastCatalogRevision = catalogRevision.value;
+    if (!langChanged) {
+      // Prices moved, the vocabulary didn't — the category titles still stand.
+      await refresh();
+      return;
+    }
     _lastLang = lang;
     cachedCategories = [];
     await Future.wait([_fetchCategories(), refresh()]);
