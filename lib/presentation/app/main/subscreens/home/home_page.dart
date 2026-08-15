@@ -268,7 +268,18 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   /// reusing whichever activity list is passed in.
   Widget _buildCoursesRow(
       BuildContext context, String title, List<HomClass> list) {
-    final rowH = 126.h + 14.h + 118.h;
+    // Wider than the activities row's 168 on purpose: a course card carries
+    // more to read — a provider tag, a title, an address, and a price line that
+    // runs to two lines when it quotes a trial — and the extra width is what
+    // keeps those off the ellipsis.
+    //
+    // Sized per build, not once: `.w` scales against the current screen, so a
+    // value cached in a static would be stale on the first rotation.
+    final cardW = 200.w;
+    // Holds the 4:3 image frame the activities row uses. Widening the card
+    // without this would only crop its photo harder.
+    final cardImgH = cardW * 126 / 168;
+    final rowH = cardImgH + 14.h + 118.h;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -282,6 +293,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           onViewAll: () => context.router.push(
             SearchDiscoveryRoute(initialKind: ActivityKind.courses),
           ),
+          // Named rather than generic, because the tap is narrowed to courses.
+          viewAllLabel: 'view_all_courses'.tr(),
         ),
         10.verticalSpace,
         SizedBox(
@@ -293,6 +306,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             itemBuilder: (context, index) => HomeCourseCard(
               key: ValueKey('c2-${list[index].id ?? index}'),
               homClass: list[index],
+              width: cardW,
+              imageHeight: cardImgH,
               margin: EdgeInsets.only(left: 8.w),
               onViewAsReels: () => _openShorts(context, list, index),
             ),
@@ -323,15 +338,35 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       ),
       SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, index) => Padding(
-            padding: EdgeInsets.only(bottom: 12.h),
-            child: HomeNearbyCard(
-              key: ValueKey(state.nearClassesList[index].id ?? index),
-              homClass: state.nearClassesList[index],
-              onViewAsReels: () =>
-                  _openShorts(context, state.nearClassesList, index),
-            ),
-          ),
+          (context, index) {
+            final c = context.colors;
+            final isLast = index == state.nearClassesList.length - 1;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                HomeNearbyCard(
+                  key: ValueKey(state.nearClassesList[index].id ?? index),
+                  homClass: state.nearClassesList[index],
+                  onViewAsReels: () =>
+                      _openShorts(context, state.nearClassesList, index),
+                ),
+                // These cards are full-bleed photo over text, stacked straight
+                // down the page, so on a run of them the next photo reads as
+                // part of the previous card's price line. A rule and some air
+                // say where one entry stops and the next begins. The last one
+                // gets neither — there is nothing after it to divide from.
+                if (!isLast) ...[
+                  16.verticalSpace,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Divider(height: 1, thickness: 1, color: c.divider),
+                  ),
+                  16.verticalSpace,
+                ] else
+                  12.verticalSpace,
+              ],
+            );
+          },
           childCount: state.nearClassesList.length,
         ),
       ),

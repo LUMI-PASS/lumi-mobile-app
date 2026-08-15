@@ -12,10 +12,18 @@ class HomeSectionHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.onViewAll,
+    this.viewAllLabel,
   });
 
   final String title;
   final VoidCallback? onViewAll;
+
+  /// Overrides the generic "view all" wording.
+  ///
+  /// A row that names one kind of thing can say so — the courses row sends you
+  /// to *all courses*, not to everything — and naming it tells you where the
+  /// tap lands before you take it.
+  final String? viewAllLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +47,7 @@ class HomeSectionHeader extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.only(left: 8.w),
                 child: Text(
-                  'view_all'.tr(),
+                  viewAllLabel ?? 'view_all'.tr(),
                   style: AppText.medium13.copyWith(color: AppColors.brandPurple),
                 ),
               ),

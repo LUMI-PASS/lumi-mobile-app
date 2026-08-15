@@ -832,6 +832,7 @@ confirm_code_sent_prefix,Код подтверждения отправлен н
 confirm_code_sent_suffix,, raqamiga yuborildi,
 greeting,Добро пожаловать,Xush kelibsiz,Welcome
 view_all,Посмотреть все,Barchasini ko'rish,View all
+view_all_courses,Все курсы,Barcha kurslar,All courses
 watch,Смотреть,Ko'rish,View
 courses,Курсы,Kurslar,Courses
 no_internet_title,Ошибка подключения к интернету,Internetga ulanishda xatolik,Internet connection error
@@ -1030,7 +1031,8 @@ pay_err_otp_invalid,"Неверный код из SMS. Попробуйте ещ
 pay_err_otp_expired,"Срок действия кода истёк. Запросите новый.","Kod muddati tugagan. Yangisini so'rang.","The code has expired. Request a new one."
 pay_err_limit_exceeded,"Превышен лимит по карте.","Karta limiti oshib ketdi.","The card limit has been exceeded."
 payment_method,Способ оплаты,To'lov usuli,Payment method
-course_levels_title,Подкурсы,Kichik kurslar,Subcourses
+course_levels_title,Группы,Guruhlar,Groups
+course_group_default_name,Группа 1,1-guruh,Group 1
 course_level_enrolled,Вы записаны,Yozilgansiz,Enrolled
 course_level_trial,Пробные куплены,Sinov olingan,Trial bought
 course_lessons_remaining,Осталось {left} из {total} уроков,{total} darsdan {left} tasi qoldi,{left} of {total} lessons left
@@ -1041,7 +1043,7 @@ course_blocked_unavailable,Сейчас недоступно,Hozir mavjud emas,N
 course_trial_count,{count} пробных,{count} ta sinov,{count} trial
 course_show_less,Свернуть,Yig'ish,Show less
 course_buy_level,Купить подкурс, Kursni sotib olish,Buy subcourse
-course_pick_level_cta,Выберите подкурс,Kichik kursni tanlang,Choose a subcourse
+course_pick_level_cta,Выберите группу,Guruhni tanlang,Choose a group
 course_trial_lesson_one,Пробный урок,Sinov darsi,Trial lesson
 course_month_schedule,Расписание на месяц · {count} занятий,Bir oylik jadval · {count} ta dars,This month · {count} lessons
 course_no_lesson_that_day,В этот день занятий нет,Bu kuni dars yo‘q,No lesson on this day
