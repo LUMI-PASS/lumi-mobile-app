@@ -575,7 +575,18 @@ balance         == Σ amount over status='available' rows,
 pending_balance == Σ amount over status='pending' rows,
                    kinds { EARN, EARN_REVERSED }
 held_balance    == −Σ amount over kinds { HOLD, HOLD_RELEASED }
+                   + Σ amount over kind SPEND          ← see correction below
 ```
+
+> **Correction (2026-08-15, found by the step-4 tests).** The `held_balance`
+> line originally read `−Σ{HOLD, HOLD_RELEASED}` and was **wrong** — it
+> contradicts §3.1's own counter table, where `SPEND` moves *both* `balance`
+> and `held_balance`, because committing a hold discharges the reservation as
+> well as taking the money. Reconciling on the original formula reports
+> permanent phantom drift on every order that ever spent from the wallet, which
+> is exactly the cries-wolf failure this section warns about two paragraphs
+> later. `cashback-redemption.spec.ts` asserts the corrected relation after
+> every money test; the step-6 script must use that one.
 
 Two things make these come out clean. `EARN_MATURED` carries `amount: 0`, so it
 is inert in the first sum and only documents the `pending → available` move —
