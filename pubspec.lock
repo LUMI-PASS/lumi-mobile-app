@@ -679,7 +679,7 @@ packages:
     source: hosted
     version: "5.4.0"
   flutter_inappwebview:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_inappwebview
       sha256: "80092d13d3e29b6227e25b67973c67c7210bd5e35c4b747ca908e31eb71a46d5"
@@ -1994,6 +1994,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  vimeo_video_player:
+    dependency: "direct main"
+    description:
+      name: vimeo_video_player
+      sha256: b5dc8ad763489c94136e6080ba3ee89830742a48f5e7b2e28968f54d8c3734ad
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
   visibility_detector:
     dependency: transitive
     description:

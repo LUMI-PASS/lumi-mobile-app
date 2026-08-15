@@ -79,6 +79,12 @@ dependencies:
   carousel_slider: ^5.1.1
   youtube_player_flutter: ^9.1.1
   webview_flutter: ^4.7.0
+  # Vimeo shorts. `vimeo_video_player` renders the Vimeo iframe inside a
+  # `flutter_inappwebview` WebView; we depend on the WebView plugin directly
+  # (not just transitively) because `VimeoShortPlayer` drives it over JS to
+  # play/pause the slide and to read playback progress.
+  vimeo_video_player: ^1.0.3
+  flutter_inappwebview: ^6.1.5
   # Glass "pill" bottom navigation (same component nexus-mobile-app uses).
   dynamic_glass_glmv: ^0.2.4
   # The native UITabBar behind `dynamic_glass_glmv`'s iOS 26 path. Depended on

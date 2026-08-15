@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/video_provider.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
@@ -22,6 +23,17 @@ import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import 'shorts_feed.dart';
+import 'vimeo_short_player.dart';
+
+/// A feed item paired with the player that can actually open it.
+///
+/// [privacyHash] is Vimeo-only and set just for unlisted videos; YouTube
+/// items always leave it null.
+typedef _PlayableShort = ({
+  VideoProvider provider,
+  String id,
+  String? privacyHash,
+});
 
 // Autoplay immediately (with sound) and loop — the plugin's WebView is
 // configured to not require a user gesture, so the first short plays without a
@@ -45,10 +57,16 @@ class ShortsPage extends StatefulWidget {
 }
 
 class _ShortsPageState extends State<ShortsPage> {
-  // Created lazily once the first video arrives, with that video as the
-  // initial id + autoPlay — so it starts playing the moment the player mounts
-  // instead of showing a static placeholder until the user interacts.
+  // Created lazily once the first YouTube video arrives, with that video as
+  // the initial id + autoPlay — so it starts playing the moment the player
+  // mounts instead of showing a static placeholder until the user interacts.
+  // Null whenever the active slide is not a YouTube one.
   YoutubePlayerController? _yt;
+
+  // Vimeo's player has no Dart-side controller, so this handle stays alive for
+  // the whole page and re-binds to whichever Vimeo slide is mounted.
+  final VimeoShortController _vimeo = VimeoShortController();
+
   final HomeRepository _repo = getIt<HomeRepository>();
   PageController? _pageController;
   List<HomClass> _classes = [];
@@ -66,41 +84,117 @@ class _ShortsPageState extends State<ShortsPage> {
     }
   }
 
-  static String? _extractVideoId(HomClass hc) {
+  // Resolves what — if anything — this app can play for a feed item. Returns
+  // null for an item with no link, a link from a provider this build has no
+  // player for, or a link whose video id can't be read; the feed drops those.
+  static _PlayableShort? _playable(HomClass hc) {
     final url = hc.videoUrl;
     if (url == null || url.isEmpty) return null;
-    final id = YoutubePlayer.convertUrlToId(url);
-    return (id != null && id.isNotEmpty) ? id : null;
+
+    switch (VideoProvider.resolve(provider: hc.videoProvider, url: url)) {
+      case VideoProvider.youtube:
+        final id = YoutubePlayer.convertUrlToId(url);
+        return (id != null && id.isNotEmpty)
+            ? (provider: VideoProvider.youtube, id: id, privacyHash: null)
+            : null;
+      case VideoProvider.vimeo:
+        final link = VimeoShortPlayer.parseLink(url);
+        return link != null
+            ? (
+                provider: VideoProvider.vimeo,
+                id: link.id,
+                privacyHash: link.privacyHash,
+              )
+            : null;
+      case VideoProvider.unknown:
+        return null;
+    }
   }
 
-  // Spins up the player on the given slide's video. Call inside setState so the
-  // feed rebuilds with a ready-to-autoplay controller.
+  _PlayableShort? _playableAt(int index) =>
+      (index >= 0 && index < _classes.length)
+          ? _playable(_classes[index])
+          : null;
+
+  // Spins up the YouTube player on the given slide's video. Call inside
+  // setState so the feed rebuilds with a ready-to-autoplay controller. A
+  // non-YouTube slide leaves the controller unset — that's what tells
+  // [_buildFeed] not to host a YouTube player at all.
   void _createControllerFor(int index) {
-    if (index < 0 || index >= _classes.length) return;
-    final videoId = _extractVideoId(_classes[index]);
-    if (videoId == null) return;
-    _yt?.dispose();
-    _yt = YoutubePlayerController(
-      initialVideoId: videoId,
-      flags: _kPlayerFlags,
+    final playable = _playableAt(index);
+    if (playable == null || playable.provider != VideoProvider.youtube) {
+      _replaceYoutubeController(null);
+      return;
+    }
+    _replaceYoutubeController(
+      YoutubePlayerController(
+        initialVideoId: playable.id,
+        flags: _kPlayerFlags,
+      ),
     );
   }
 
-  // Switches the existing player to the slide's video (on swipe). Creates the
-  // controller if it doesn't exist yet.
+  /// Swaps the YouTube controller, disposing the outgoing one *after* the
+  /// frame that unmounts its player widget — tearing the WebView down while
+  /// it is still in the tree throws.
+  void _replaceYoutubeController(YoutubePlayerController? next) {
+    final previous = _yt;
+    _yt = next;
+    if (previous == null) return;
+    previous.pause();
+    WidgetsBinding.instance.addPostFrameCallback((_) => previous.dispose());
+  }
+
+  // Starts playback for the slide the user just landed on.
+  //
+  // Only the active slide mounts a player, so leaving a YouTube slide tears
+  // its WebView down with it. The controller can't outlive that — remounting
+  // would reload `initialVideoId`, not whatever `load()` last set — so moving
+  // onto a Vimeo slide drops it and moving back builds a fresh one. Swiping
+  // between two YouTube slides keeps the WebView and just swaps the video.
   void _showVideoAt(int index) {
-    if (index < 0 || index >= _classes.length) return;
-    final videoId = _extractVideoId(_classes[index]);
-    if (videoId == null) return;
-    final controller = _yt;
-    if (controller == null) {
-      setState(() => _createControllerFor(index));
-    } else if (controller.metadata.videoId == videoId) {
-      controller.seekTo(Duration.zero);
-      controller.play();
-    } else {
-      controller.load(videoId);
+    final playable = _playableAt(index);
+    if (playable == null) return;
+
+    switch (playable.provider) {
+      case VideoProvider.youtube:
+        final controller = _yt;
+        if (controller == null) {
+          setState(() => _createControllerFor(index));
+        } else if (controller.metadata.videoId == playable.id) {
+          controller.seekTo(Duration.zero);
+          controller.play();
+        } else {
+          controller.load(playable.id);
+        }
+      case VideoProvider.vimeo:
+        // The incoming slide mounts its own Vimeo player and autoplays; all
+        // that's left is to retire the YouTube one.
+        if (_yt != null) setState(() => _replaceYoutubeController(null));
+      case VideoProvider.unknown:
+        break;
     }
+  }
+
+  // Resumes whichever player belongs to the slide on screen (tab regained
+  // focus). Vimeo keeps its WebView across a focus loss, so it only needs a
+  // play command — no remount.
+  void _resumeCurrent() {
+    final playable = _playableAt(_currentIndex);
+    if (playable == null) return;
+    switch (playable.provider) {
+      case VideoProvider.youtube:
+        _yt?.play();
+      case VideoProvider.vimeo:
+        _vimeo.play();
+      case VideoProvider.unknown:
+        break;
+    }
+  }
+
+  void _pauseAll() {
+    _yt?.pause();
+    _vimeo.pause();
   }
 
   void _applyPending() {
@@ -109,7 +203,7 @@ class _ShortsPageState extends State<ShortsPage> {
     final requestedIndex = ShortsFeed.pendingIndex;
     ShortsFeed.clear();
 
-    final classes = allClasses.where((c) => _extractVideoId(c) != null).toList();
+    final classes = allClasses.where((c) => _playable(c) != null).toList();
     if (classes.isEmpty) {
       _loadDefaultFeed();
       return;
@@ -143,10 +237,10 @@ class _ShortsPageState extends State<ShortsPage> {
       // so a single request is enough — no client-side paging of the catalogue.
       final result = await _repo.getDiscoveryShorts(page: 1, limit: 30);
       if (!mounted) return;
-      // Keep only what this player can actually play (YouTube ids). Vimeo/other
-      // providers are filtered here until the player supports them.
+      // Keep only what this build can actually play — YouTube and Vimeo
+      // links whose video id resolves. Anything else is dropped here.
       final classes =
-          result.classes.where((c) => _extractVideoId(c) != null).toList();
+          result.classes.where((c) => _playable(c) != null).toList();
       _pageController?.dispose();
       setState(() {
         _classes = classes;
@@ -167,6 +261,7 @@ class _ShortsPageState extends State<ShortsPage> {
   void dispose() {
     _pageController?.dispose();
     _yt?.dispose();
+    _vimeo.dispose();
     super.dispose();
   }
 
@@ -180,11 +275,11 @@ class _ShortsPageState extends State<ShortsPage> {
           if (_classes.isEmpty && !_isLoadingDefault) {
             _loadDefaultFeed();
           } else {
-            _yt?.play();
+            _resumeCurrent();
           }
         }
       },
-      onFocusLost: () => _yt?.pause(),
+      onFocusLost: _pauseAll,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: _classes.isEmpty
@@ -284,43 +379,100 @@ class _ShortsPageState extends State<ShortsPage> {
     final bottomInset =
         MediaQuery.of(context).viewPadding.bottom + 56 + 4 + 12;
     final controller = _yt;
-    if (controller == null) return _buildLoadingState();
+    // On a Vimeo slide there is no YouTube controller to host — the feed still
+    // renders, it just has no YouTube player widget to hand out.
+    if (controller == null) {
+      return _buildPages(bottomInset: bottomInset, youtubePlayer: null);
+    }
     return YoutubePlayerBuilder(
       player: YoutubePlayer(
         controller: controller,
         showVideoProgressIndicator: false,
       ),
-      builder: (context, playerWidget) {
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              scrollDirection: Axis.vertical,
-              itemCount: _classes.length,
-              onPageChanged: (i) {
-                setState(() {
-                  _currentIndex = i;
-                  if (i > 0) _showSwipeHint = false;
-                });
-                _showVideoAt(i);
-              },
-              itemBuilder: (context, index) {
-                return _ShortSlide(
-                  hc: _classes[index],
-                  isActive: index == _currentIndex,
-                  player: playerWidget,
-                  controller: controller,
-                  showSwipeHint:
-                      index == 0 && _showSwipeHint && _classes.length > 1,
-                  bottomInset: bottomInset,
-                );
-              },
-            ),
-          ],
+      builder: (context, playerWidget) =>
+          _buildPages(bottomInset: bottomInset, youtubePlayer: playerWidget),
+    );
+  }
+
+  Widget _buildPages({
+    required double bottomInset,
+    required Widget? youtubePlayer,
+  }) {
+    return PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.vertical,
+      itemCount: _classes.length,
+      onPageChanged: (i) {
+        setState(() {
+          _currentIndex = i;
+          if (i > 0) _showSwipeHint = false;
+        });
+        _showVideoAt(i);
+      },
+      itemBuilder: (context, index) {
+        final isActive = index == _currentIndex;
+        return _ShortSlide(
+          hc: _classes[index],
+          media: isActive ? _buildMedia(index, youtubePlayer) : null,
+          tapLayer: isActive ? _buildTapLayer(index) : null,
+          showSwipeHint: index == 0 && _showSwipeHint && _classes.length > 1,
+          bottomInset: bottomInset,
         );
       },
     );
+  }
+
+  /// The player for the active slide, or null to fall back to its thumbnail.
+  Widget? _buildMedia(int index, Widget? youtubePlayer) {
+    final playable = _playableAt(index);
+    if (playable == null) return null;
+
+    switch (playable.provider) {
+      case VideoProvider.youtube:
+        if (youtubePlayer == null) return null;
+        return _CoverPlayer(player: youtubePlayer);
+      case VideoProvider.vimeo:
+        // Filling the slide outright, rather than going through _CoverPlayer.
+        // Vimeo's chrome is switched off in the iframe URL, so there is no
+        // chrome to crop away — and letting the player have the full rect
+        // shows the whole frame instead of trimming the sides off a video
+        // that isn't 9:16. Matches how the myschool app renders its shorts.
+        return VimeoShortPlayer(
+          key: ValueKey(playable.id),
+          videoId: playable.id,
+          privacyHash: playable.privacyHash,
+          controller: _vimeo,
+        );
+      case VideoProvider.unknown:
+        return null;
+    }
+  }
+
+  /// Tap-to-pause layer wired to whichever player the active slide is using.
+  Widget? _buildTapLayer(int index) {
+    final playable = _playableAt(index);
+    if (playable == null) return null;
+
+    switch (playable.provider) {
+      case VideoProvider.youtube:
+        final controller = _yt;
+        if (controller == null) return null;
+        return _PlayPauseTapLayer(
+          listenable: controller,
+          isPlaying: () => controller.value.isPlaying,
+          onToggle: () => controller.value.isPlaying
+              ? controller.pause()
+              : controller.play(),
+        );
+      case VideoProvider.vimeo:
+        return _PlayPauseTapLayer(
+          listenable: _vimeo,
+          isPlaying: () => _vimeo.isPlaying,
+          onToggle: _vimeo.toggle,
+        );
+      case VideoProvider.unknown:
+        return null;
+    }
   }
 }
 
@@ -330,6 +482,9 @@ class _ShortsPageState extends State<ShortsPage> {
 /// out inside the slide leaves bars. Instead it is sized to *cover* — height
 /// pinned to the slide, width derived from it — and the overflow is clipped,
 /// which is what "fullscreen" means for a Shorts feed.
+///
+/// Vimeo doesn't come through here: it has no chrome to crop, so its player
+/// is given the slide rect directly. See [_ShortsPageState._buildMedia].
 class _CoverPlayer extends StatelessWidget {
   const _CoverPlayer({required this.player});
 
@@ -367,17 +522,21 @@ class _CoverPlayer extends StatelessWidget {
 class _ShortSlide extends StatelessWidget {
   const _ShortSlide({
     required this.hc,
-    required this.isActive,
-    required this.player,
-    required this.controller,
+    required this.media,
+    required this.tapLayer,
     required this.showSwipeHint,
     required this.bottomInset,
   });
 
   final HomClass hc;
-  final bool isActive;
-  final Widget player;
-  final YoutubePlayerController controller;
+
+  /// The active slide's player. Null on every other slide — and on the active
+  /// one if its player couldn't be built — which falls back to the thumbnail.
+  final Widget? media;
+
+  /// Play/pause gesture layer for [media]. Null whenever [media] is.
+  final Widget? tapLayer;
+
   final bool showSwipeHint;
   final double bottomInset;
 
@@ -433,8 +592,8 @@ class _ShortSlide extends StatelessWidget {
         // bottom bar. Insetting it by `bottomInset` (as this used to) letterboxed
         // the video — dead space at the top and a visible seam where the player
         // ended above the nav.
-        if (isActive)
-          _CoverPlayer(player: player)
+        if (media != null)
+          media!
         else if (imageUrl != null)
           CachedNetworkImage(
             imageUrl: imageUrl,
@@ -446,13 +605,13 @@ class _ShortSlide extends StatelessWidget {
         // Tap anywhere on the video to pause/resume (native controls are
         // hidden). Sits above the player but below the text/buttons so those
         // stay tappable.
-        if (isActive)
+        if (tapLayer != null)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             bottom: bottomInset,
-            child: _PlayPauseTapLayer(controller: controller),
+            child: tapLayer!,
           ),
         Positioned.fill(
           child: IgnorePointer(
@@ -712,41 +871,59 @@ class _SwipeUpHintState extends State<_SwipeUpHint>
 }
 
 // Transparent gesture layer over the video: tap toggles play/pause and shows a
-// centred play glyph while paused. Listens to the controller so the glyph
-// tracks the real playback state (e.g. buffering / focus changes).
+// centred play glyph while paused. Listens to the player so the glyph tracks
+// the real playback state (e.g. buffering / focus changes).
+//
+// Player-agnostic on purpose — YouTube and Vimeo expose completely different
+// controllers, so this takes the three things it needs rather than one of them.
 class _PlayPauseTapLayer extends StatefulWidget {
-  const _PlayPauseTapLayer({required this.controller});
+  const _PlayPauseTapLayer({
+    required this.listenable,
+    required this.isPlaying,
+    required this.onToggle,
+  });
 
-  final YoutubePlayerController controller;
+  /// Notifies whenever playback state may have changed.
+  final Listenable listenable;
+
+  final bool Function() isPlaying;
+  final VoidCallback onToggle;
 
   @override
   State<_PlayPauseTapLayer> createState() => _PlayPauseTapLayerState();
 }
 
 class _PlayPauseTapLayerState extends State<_PlayPauseTapLayer> {
-  bool _paused = false;
+  late bool _paused = !widget.isPlaying();
 
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_onValue);
+    widget.listenable.addListener(_onValue);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PlayPauseTapLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.listenable != widget.listenable) {
+      oldWidget.listenable.removeListener(_onValue);
+      widget.listenable.addListener(_onValue);
+      _onValue();
+    }
   }
 
   @override
   void dispose() {
-    widget.controller.removeListener(_onValue);
+    widget.listenable.removeListener(_onValue);
     super.dispose();
   }
 
   void _onValue() {
-    final paused = !widget.controller.value.isPlaying;
+    final paused = !widget.isPlaying();
     if (paused != _paused && mounted) setState(() => _paused = paused);
   }
 
-  void _toggle() {
-    final c = widget.controller;
-    c.value.isPlaying ? c.pause() : c.play();
-  }
+  void _toggle() => widget.onToggle();
 
   @override
   Widget build(BuildContext context) {
