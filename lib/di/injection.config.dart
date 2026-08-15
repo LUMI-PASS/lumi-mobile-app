@@ -24,18 +24,18 @@ import 'package:lumi_pass/data/storage/storage.dart' as _i279;
 import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
 import 'package:lumi_pass/domain/impl/auth_repository_impl.dart' as _i98;
-import 'package:lumi_pass/domain/impl/booking_repository_impl.dart' as _i808;
 import 'package:lumi_pass/domain/impl/home_repository_impl.dart' as _i162;
+import 'package:lumi_pass/domain/impl/wallet_repository_impl.dart' as _i728;
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart' as _i79;
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart' as _i652;
-import 'package:lumi_pass/domain/repo/booking/booking_api.dart' as _i261;
-import 'package:lumi_pass/domain/repo/booking/booking_repository.dart' as _i760;
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart' as _i298;
 import 'package:lumi_pass/domain/repo/home/home_api.dart' as _i433;
 import 'package:lumi_pass/domain/repo/home/home_repository.dart' as _i526;
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart'
     as _i376;
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart' as _i748;
+import 'package:lumi_pass/domain/repo/wallet/wallet_api.dart' as _i605;
+import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart' as _i890;
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart' as _i915;
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/cubit/schedule_cubit.dart'
     as _i256;
@@ -45,8 +45,6 @@ import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile
     as _i868;
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart'
     as _i999;
-import 'package:lumi_pass/presentation/app/main/subscreens/wallet/cubit/wallet_cubit.dart'
-    as _i405;
 import 'package:lumi_pass/presentation/app/profile/attendance/cubit/attendance_cubit.dart'
     as _i24;
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart'
@@ -102,17 +100,13 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
-    gh.factory<_i261.BookingApi>(() => _i261.BookingApi(gh<_i361.Dio>()));
     gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
+    gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
     gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
-    gh.factory<_i760.BookingRepository>(() => _i808.BookingRepositoryImpl(
-          gh<_i261.BookingApi>(),
-          gh<_i279.Storage>(),
-        ));
     gh.factory<_i526.HomeRepository>(() => _i162.HomeRepositoryImpl(
           gh<_i433.HomeApi>(),
           gh<_i279.Storage>(),
@@ -131,8 +125,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i239.ChildrenCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i999.SearchCubit>(
         () => _i999.SearchCubit(gh<_i526.HomeRepository>()));
-    gh.factory<_i405.WalletCubit>(
-        () => _i405.WalletCubit(gh<_i526.HomeRepository>()));
+    gh.factory<_i890.WalletRepository>(
+        () => _i728.WalletRepositoryImpl(gh<_i605.WalletApi>()));
     gh.factory<_i749.VerifyCubit>(() => _i749.VerifyCubit(
           gh<_i652.AuthRepository>(),
           gh<_i279.Storage>(),
@@ -144,6 +138,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
           gh<_i279.Storage>(),
           gh<_i526.HomeRepository>(),
+          gh<_i890.WalletRepository>(),
         ));
     gh.lazySingleton<_i915.AppCubit>(() => _i915.AppCubit(
           gh<_i652.AuthRepository>(),

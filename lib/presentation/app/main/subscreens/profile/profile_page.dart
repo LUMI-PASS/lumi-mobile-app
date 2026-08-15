@@ -31,6 +31,7 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_state.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/profile/widgets/wallet_section.dart';
 
 import '../../../../../common/router/app_router.dart';
 
@@ -394,6 +395,19 @@ class ProfilePage
                             ? null
                             : () => _openAccountDetails(context, cubit, user),
                       ),
+                    // Wallet sits directly under the header: it's the only
+                    // number on this screen the user might be looking for.
+                    // Hidden for guests (no account, no wallet) and while the
+                    // balance is unknown — see ProfileBuildable.wallet.
+                    if (!showGuest && state.wallet != null) ...[
+                      20.kh,
+                      _SectionLabel('wallet_title'.tr()),
+                      12.kh,
+                      WalletSection(
+                        wallet: state.wallet!,
+                        debugError: state.walletError,
+                      ),
+                    ],
                     if (!showGuest) ...[
                       20.kh,
                       _SectionLabel('my_children'.tr()),

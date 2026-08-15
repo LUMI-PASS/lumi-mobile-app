@@ -359,12 +359,6 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
-    WalletRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const WalletPage(),
-      );
-    },
     WelcomeRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -1513,20 +1507,6 @@ class VerifyRouteArgs {
   String toString() {
     return 'VerifyRouteArgs{key: $key, verifyStatus: $verifyStatus, phoneOrEmail: $phoneOrEmail, codeHash: $codeHash, code: $code}';
   }
-}
-
-/// generated route for
-/// [WalletPage]
-class WalletRoute extends PageRouteInfo<void> {
-  const WalletRoute({List<PageRouteInfo>? children})
-      : super(
-          WalletRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'WalletRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

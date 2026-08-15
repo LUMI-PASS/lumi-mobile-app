@@ -162,14 +162,6 @@ days,дней,kun,days
 no_plans_yet,Тарифов пока нет,Hozircha tariflar yo'q,No plans yet
 no_plans_hint,Скоро появятся,Tez orada paydo bo'ladi,Check back soon
 premium_badge,ПРЕМИУМ,PREMIUM,PREMIUM
-wallet_title,Кошелек,Hamyon,Wallet
-your_balance_label,Ваш баланс,Balansingiz,Your Balance
-transaction_history,История транзакций,Tranzaksiyalar tarixi,Transaction History
-no_transactions,Нет транзакций,Tranzaksiyalar yo'q,No transactions
-choose_top_up,Выберите пополнение,To'ldirishni tanlang,Choose Top-up
-refund,Возврат,Qaytarilgan,Refund
-withdraw,Списание,Yechib olish,Withdraw
-incoming,Пополнение,To'ldirish,Incoming
 onboarding_title,Добро пожаловать в Lumi!,Lumi'ga xush kelibsiz!,Welcome to Lumi!
 onboarding_subtitle,Настройте профиль за несколько секунд,Profilingizni bir necha soniyada sozlang,Set up your profile in seconds
 onboarding_step1_title,Как вас зовут?,Ismingiz nima?,What's your name?
@@ -1063,3 +1055,8 @@ course_book_trial_cta,Забронировать пробное занятие,S
 course_trial_passed,Прошло,O‘tib ketdi,Passed
 course_trial_locked,Сначала пройдите предыдущее занятие,Avval oldingi darsni o‘ting,Take the previous lesson first
 course_trial_book_title,Пробное занятие,Sinov darsi,Trial lesson
+wallet_title,Кошелек,Hamyon,Wallet
+wallet_available_label,Доступно,Mavjud,Available
+wallet_pending_label,Начислено (ожидает),Hisoblangan (kutilmoqda),Pending
+wallet_held_label,Зарезервировано под заказ,Buyurtma uchun band qilingan,Reserved for an order
+wallet_frozen_note,Кошелек заморожен. Свяжитесь с поддержкой.,Hamyon muzlatilgan. Qo‘llab-quvvatlashga murojaat qiling.,This wallet is frozen. Please contact support.

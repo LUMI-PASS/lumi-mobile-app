@@ -277,20 +277,6 @@ class HomRelatedBooking with _$HomRelatedBooking {
       _$HomRelatedBookingFromJson(json);
 }
 
-@freezed
-class CoinFlow with _$CoinFlow {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory CoinFlow({
-    String? id,
-    num? amount,
-    String? type,
-    String? createdAt,
-  }) = _CoinFlow;
-
-  factory CoinFlow.fromJson(Map<String, dynamic> json) =>
-      _$CoinFlowFromJson(json);
-}
-
 class ClassesPage {
   final List<HomClass> classes;
   final int totalPages;

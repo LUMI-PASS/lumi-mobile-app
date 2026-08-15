@@ -27,7 +27,6 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discove
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/wallet/wallet_page.dart';
 import 'package:lumi_pass/presentation/app/profile/children/child_detail_page.dart';
 import 'package:lumi_pass/presentation/app/profile/language/change_language_page.dart';
 import 'package:lumi_pass/presentation/app/profile/payment/add_new_card_page.dart';
@@ -108,7 +107,6 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: ShortsRoute.page),
         AutoRoute(page: SearchRoute.page),
         AutoRoute(page: CalendarRoute.page),
-        AutoRoute(page: WalletRoute.page),
         AutoRoute(page: ProfileRoute.page),
       ],
     ),
