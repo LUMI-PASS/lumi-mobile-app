@@ -6,6 +6,9 @@
 	<string>Lumi uses your location to show the centres nearest you first, and to place you on the map.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Fed from the gitignored Flutter/Secrets.xcconfig; empty when absent. -->
+	<key>YandexMapKitKey</key>
+	<string>$(YANDEX_MAPKIT_KEY)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

@@ -166,3 +166,24 @@ dart run build_runner build --delete-conflicting-outputs
 # Run the app
 flutter run
 ```
+
+### Local secrets
+
+Two gitignored files hold keys the build reads. Copy the templates and fill
+them in — a checkout without them still builds, but the map renders blank
+(Android additionally needs `key.properties` to exist at all, for signing):
+
+```bash
+cp android/key.properties.example android/key.properties
+cp ios/Flutter/Secrets.example.xcconfig ios/Flutter/Secrets.xcconfig
+```
+
+The Yandex MapKit key comes from the Yandex Developer Dashboard
+(**API Interfaces → MapKit Mobile SDK**) and is bound to the app identifiers —
+`uz.lumi.mobileapp` on Android, `uz.lumipass.mobile` on iOS. See
+[docs/YANDEX_MAP_MIGRATION.md](docs/YANDEX_MAP_MIGRATION.md).
+
+### Platform minimums
+
+Yandex MapKit sets the floor: **Android API 26+** (`minSdk` is pinned in
+`android/app/build.gradle.kts`, not inherited from Flutter) and **iOS 15+**.
