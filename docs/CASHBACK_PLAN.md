@@ -696,6 +696,24 @@ Sequential — finish one, then start the next. Everything ships behind
 `is_enabled: false`, so nothing is user-visible in production until step 6 flips
 it. Step 0 is not a build step; it is the conversation that has to happen first.
 
+**Progress (2026-08-15).** Steps 1–3 are built and the backend halves are
+deployed to production, still dark (`is_enabled: false`, all percentages 0).
+
+| Step | State | Landed as |
+|---|---|---|
+| 1 — Wallet foundation | done | backend `0efe369`, mobile `e222ecb` |
+| 2 — Percentage control | done | backend `19b4971`, adminka `469d5a6` |
+| 3 — Accrual | done | backend `8f09cab`, mobile `c0148cc` |
+| 4 — Redemption | **next** — resolve D9 (§3.4a) first | — |
+
+Step 3 added one thing this plan didn't name: `GET /api/cashback/preview`.
+`/config` reports the *configured* percentage, but the share ceiling (§3.4b)
+means a 10% rule can pay 3.5% on one class and 0 on another — so the app cannot
+compute what a purchase earns, and a badge quoting the config would promise
+money the accrual refuses. The preview endpoint returns the ceiling-clamped rate
+for one activity; the app does only the arithmetic around it, mirrored in
+`lib/common/utils/cashback.dart`.
+
 | Step | Scope | Repos | Depends on |
 |---|---|---|---|
 | **0 — Decisions** | Settle D1–D8 with the business side. Confirm both fiscal-receipt questions (§3.4) with finance. Nail down the funding purse. **D9 (§3.4a) can wait until step 4** — see the note below. | — | — |
