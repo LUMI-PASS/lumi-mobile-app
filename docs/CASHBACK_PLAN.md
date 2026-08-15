@@ -704,7 +704,36 @@ deployed to production, still dark (`is_enabled: false`, all percentages 0).
 | 1 — Wallet foundation | done | backend `0efe369`, mobile `e222ecb` |
 | 2 — Percentage control | done | backend `19b4971`, adminka `469d5a6` |
 | 3 — Accrual | done | backend `8f09cab`, mobile `c0148cc` |
-| 4 — Redemption | **next** — resolve D9 (§3.4a) first | — |
+| 4 — Redemption | done | backend `ad6e747`, mobile `1fb3833` |
+| 5 — History | **next** | — |
+
+**D9 was resolved as option (a).** `total_amount` keeps meaning "what the order
+cost and what the partner is paid on"; a persisted `payable_amount` means "what
+the gateway is charged". Settlement and `PartnerShareService` needed no change —
+`computeSplit` reads `total_amount`, verified.
+
+Two corrections to §3.4a worth carrying forward:
+
+- **The call-site table was incomplete.** It misses Paycom's `GetStatement`,
+  which reports each transaction's amount for Payme's own reconciliation. Left
+  on `total_amount` it would flag every wallet-funded order as a mismatch.
+- **`buildFiscalDetail` was never a choice.** Payme validates that the receipt's
+  line total equals the transaction amount, so the receipt *must* report the
+  charged amount. The wallet-funded slice therefore appears on the fiscal
+  receipt as a discount. §3.4's "somebody has to decide which number the receipt
+  carries" is settled by the protocol, not by preference — but the finance side
+  should still be told that is what it now says.
+
+Rather than the per-site edits the plan describes, there is one exported
+`chargedAmountOf(order)` in `order.schema.ts`, and every outbound charge and
+inbound guard calls it. §7 asks for a test asserting "the two sides cannot
+drift apart"; with one expression, drift is unrepresentable rather than merely
+tested for. `src/models/charged-amount.spec.ts` covers it.
+
+**No backfill migration was needed.** `chargedAmountOf` falls back to
+`total_amount` when `payable_amount` is absent, so pre-deploy rows — including
+in-flight PENDING ones — resolve exactly as they did before. That is strictly
+safer than a production write that could half-apply.
 
 Step 3 added one thing this plan didn't name: `GET /api/cashback/preview`.
 `/config` reports the *configured* percentage, but the share ceiling (§3.4b)
