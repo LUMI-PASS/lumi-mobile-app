@@ -1072,7 +1072,7 @@ wallet_pending_badge,ожидает,kutilmoqda,pending
 wallet_empty_title,Пока пусто,Hozircha bo‘sh,Nothing here yet
 wallet_empty_body,Бронируйте занятия — часть суммы вернётся на баланс,Mashg‘ulot band qiling — summaning bir qismi balansga qaytadi,Book a class and part of what you pay comes back
 wallet_empty_body_rate,Бронируйте занятия — до {}% вернётся на баланс,Mashg‘ulot band qiling — {}% gacha balansga qaytadi,Book a class and get up to {}% back
-wallet_kind_earn,Кешбэк за бронирование,Bandlik uchun keshbek,Cashback earned
+wallet_kind_earn,Кешбэк за бронирование,Band qilganlik uchun keshbek,Cashback earned
 wallet_kind_earn_matured,Кешбэк доступен,Keshbek mavjud,Cashback unlocked
 wallet_kind_earn_reversed,Кешбэк отменён,Keshbek bekor qilindi,Cashback reversed
 wallet_kind_hold,Зарезервировано под заказ,Buyurtma uchun band qilindi,Reserved for an order
