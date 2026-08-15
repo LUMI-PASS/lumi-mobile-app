@@ -42,3 +42,32 @@ num cashbackFor(CashbackPreview preview, num orderAmount) {
 /// "3.5%" and 1% reads "1%" rather than "1.0%".
 String formatCashbackPercent(num percent) =>
     percent == percent.roundToDouble() ? '${percent.round()}' : '$percent';
+
+/// How much of [orderAmount] the wallet would cover, for the live preview under
+/// the "Use balance" switch.
+///
+/// Mirrors `CashbackService.quoteRedemption`. **This is a preview, not the
+/// decision** — the amount that lands on the order is whatever the server
+/// returns as `wallet_amount`, because the balance can move between rendering
+/// this and pressing pay. Render the server's number once you have one.
+///
+/// [available] is the spendable balance (`balance − held`), and
+/// [maxRedeemPercent] comes from the public cashback config.
+num walletRedeemableFor({
+  required num available,
+  required num orderAmount,
+  required num maxRedeemPercent,
+}) {
+  if (available <= 0 || orderAmount <= 0) return 0;
+
+  // A percentage OF THE POST-DISCOUNT COST — the same base the server clamps
+  // against. Measuring it against a pre-discount price would offer the buyer
+  // more than checkout will accept.
+  final percent = maxRedeemPercent.clamp(0, 100);
+  final ceiling = (orderAmount * percent / 100).floor();
+
+  final amount = [available, ceiling, orderAmount]
+      .reduce((a, b) => a < b ? a : b);
+  // Floor, always: never offer to redeem more than the server will.
+  return amount < 0 ? 0 : amount.floor();
+}

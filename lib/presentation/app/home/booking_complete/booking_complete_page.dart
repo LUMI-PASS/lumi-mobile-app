@@ -46,6 +46,7 @@ class BookingCompletePage extends StatefulWidget {
     this.result,
     this.lines = const [],
     this.cashbackEarned = 0,
+    this.walletApplied = 0,
   });
 
   final BookingResultStatus status;
@@ -64,6 +65,13 @@ class BookingCompletePage extends StatefulWidget {
   /// this screen does. Re-reading the balance here would show the credit
   /// missing as often as not, so the copy stays deliberately soft ("~").
   final num cashbackEarned;
+
+  /// Wallet balance that settled part of this order, in soum. 0 hides the line.
+  ///
+  /// The server's figure, carried through. The order card's grand total is
+  /// still what the order COST — this says how much of it came off the balance
+  /// rather than the card.
+  final num walletApplied;
 
   @override
   State<BookingCompletePage> createState() => _BookingCompletePageState();
@@ -177,6 +185,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
                                         widget.status == BookingResultStatus.paid
                                             ? widget.cashbackEarned
                                             : 0,
+                                    walletApplied: widget.walletApplied,
                                   ),
                                 16.verticalSpace,
                               ],
@@ -280,11 +289,13 @@ class _OrderCard extends StatelessWidget {
     required this.result,
     required this.lines,
     this.cashbackEarned = 0,
+    this.walletApplied = 0,
   });
 
   final CheckoutResult result;
   final List<OrderLine> lines;
   final num cashbackEarned;
+  final num walletApplied;
 
   @override
   Widget build(BuildContext context) {
@@ -356,6 +367,22 @@ class _OrderCard extends StatelessWidget {
                   style: AppText.bold18.copyWith(color: colors.textPrimary)),
             ],
           ),
+          // How the total was settled, when part of it came off the balance.
+          if (walletApplied > 0) ...[
+            12.verticalSpace,
+            Row(
+              children: [
+                Expanded(
+                  child: Text('wallet_paid_from_balance'.tr(),
+                      style: AppText.regular14
+                          .copyWith(color: colors.textSecondary)),
+                ),
+                Text('−${walletApplied.toRawUzsPrice()}',
+                    style:
+                        AppText.semibold14.copyWith(color: AppColors.green)),
+              ],
+            ),
+          ],
           if (cashbackEarned > 0) ...[
             12.verticalSpace,
             CashbackCreditedLine(amount: cashbackEarned),

@@ -33,6 +33,11 @@ class WalletBalance with _$WalletBalance {
   factory WalletBalance.fromJson(Map<String, dynamic> json) =>
       _$WalletBalanceFromJson(json);
 
+  /// No wallet, or one that couldn't be loaded. Every spend surface reads this
+  /// as "nothing to offer" and hides itself, which is the safe direction: a
+  /// balance we can't confirm must not be offered and then refused at checkout.
+  static const empty = WalletBalance();
+
   /// Spendable right now. Clamped at zero — a reservation must never render as
   /// a negative balance.
   num get available {

@@ -42,6 +42,25 @@ class CheckoutResult {
   final String ticketDate;
   final List<String> ticketNumbers;
 
+  // ── Wallet ─────────────────────────────────────────────────────────────────
+  /// Wallet balance the server actually applied, in soum.
+  ///
+  /// The client asks for a contribution with `use_wallet`; the server decides
+  /// the amount, clamping against the available balance, the per-order
+  /// redemption cap and the total. **Render this, never the local estimate** —
+  /// they disagree whenever the balance moved between the preview and the sale.
+  final num walletAmount;
+
+  /// What the gateway is actually charged: [totalAmount] − [walletAmount].
+  ///
+  /// [totalAmount] is still what the order cost, and is what the summary's
+  /// grand total shows. The wallet is a payment method, not a discount.
+  final num payableAmount;
+
+  /// What this order earns back, priced server-side off [payableAmount] —
+  /// the wallet-funded part earns nothing.
+  final num cashbackEstimate;
+
   // ── Paylov (WLCM) ──────────────────────────────────────────────────────────
   // Populated only when the checkout was routed through Paylov. For redirect
   // providers (payme/click/uzum/paylov) [checkoutUrl] is set and these stay
@@ -72,6 +91,9 @@ class CheckoutResult {
     required this.checkoutUrl,
     required this.ticketDate,
     required this.ticketNumbers,
+    this.walletAmount = 0,
+    this.payableAmount = 0,
+    this.cashbackEstimate = 0,
     this.paymentProvider,
     this.transactionId,
     this.cid,
@@ -105,6 +127,13 @@ class CheckoutResult {
       checkoutUrl: json['checkout_url']?.toString() ?? '',
       ticketDate: json['ticket_date']?.toString() ?? '',
       ticketNumbers: ticketsRaw.map((e) => e.toString()).toList(),
+      walletAmount: (json['wallet_amount'] as num?) ?? 0,
+      // Absent on a server that predates the wallet — fall back to the total,
+      // which is what such a server charges, so an older backend keeps working
+      // rather than reading as "nothing to pay".
+      payableAmount:
+          (json['payable_amount'] as num?) ?? (json['total_amount'] as num?) ?? 0,
+      cashbackEstimate: (json['cashback_estimate'] as num?) ?? 0,
       paymentProvider: nonEmpty(json['payment_provider']),
       transactionId: nonEmpty(json['transaction_id']),
       cid: nonEmpty(json['cid']),

@@ -1063,3 +1063,9 @@ wallet_frozen_note,Кошелек заморожен. Свяжитесь с по
 cashback_percent_chip,Кешбэк {}%,{}% keshbek,{}% cashback
 cashback_you_will_earn,Вернется на баланс,Balansga qaytadi,You'll earn
 cashback_credited,{} зачислено на ваш баланс,Balansingizga {} qo‘shildi,{} added to your balance
+home_feed_end,Это всё на сегодня,Bugungi uchun shu,That's everything for now
+wallet_use_balance,Использовать баланс,Balansdan foydalanish,Use balance
+wallet_available_amount,Доступно {},Mavjud {},{} available
+wallet_applied_amount,Списывается {},{} yechiladi,{} applied
+wallet_paid_from_balance,Оплачено с баланса,Balansdan to‘landi,Paid from balance
+wallet_left_to_pay,К оплате картой,Karta bilan to‘lanadi,Left to pay

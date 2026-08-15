@@ -30,6 +30,7 @@ class PaycomCheckoutPage extends StatefulWidget {
     this.planDiscountPercentage,
     this.provider,
     this.cashbackEarned = 0,
+    this.walletApplied = 0,
   });
 
   final CheckoutResult result;
@@ -40,6 +41,10 @@ class PaycomCheckoutPage extends StatefulWidget {
   /// down rather than re-fetched here: this page owns a webview and a poll
   /// loop, and has no business knowing how cashback is priced.
   final num cashbackEarned;
+
+  /// Wallet balance applied to this order, carried to the success screen for
+  /// the same reason [cashbackEarned] is.
+  final num walletApplied;
 
   /// Selected payment rail: 'payme' | 'click' | 'uzum' | 'paylov' | null.
   final String? provider;
@@ -179,6 +184,7 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
           result: widget.result,
           lines: _resultLines(widget.result),
           cashbackEarned: widget.cashbackEarned,
+          walletApplied: widget.walletApplied,
         ),
       ),
     );
