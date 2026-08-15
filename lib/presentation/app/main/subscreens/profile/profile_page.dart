@@ -364,9 +364,24 @@ class ProfilePage
               _DeletedInfoBar(onDismiss: () => cubit.dismissDeletedBanner()),
             Padding(
               padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
-              child: Text(
-                'profile_title'.tr(),
-                style: AppText.heading20.copyWith(color: c.textPrimary),
+              // The title row's right half is otherwise empty, so the mascot
+              // rides along there — on screen immediately, without costing the
+              // list a row of its own. Decorative only, hence no tap target.
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'profile_title'.tr(),
+                      style: AppText.heading20.copyWith(color: c.textPrimary),
+                    ),
+                  ),
+                  Assets.images.mascot.mascotHello.image(
+                    width: 40.w,
+                    height: 40.w,
+                    fit: BoxFit.contain,
+                    excludeFromSemantics: true,
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -395,19 +410,6 @@ class ProfilePage
                             ? null
                             : () => _openAccountDetails(context, cubit, user),
                       ),
-                    // Wallet sits directly under the header: it's the only
-                    // number on this screen the user might be looking for.
-                    // Hidden for guests (no account, no wallet) and while the
-                    // balance is unknown — see ProfileBuildable.wallet.
-                    if (!showGuest && state.wallet != null) ...[
-                      20.kh,
-                      _SectionLabel('wallet_title'.tr()),
-                      12.kh,
-                      WalletSection(
-                        wallet: state.wallet!,
-                        debugError: state.walletError,
-                      ),
-                    ],
                     if (!showGuest) ...[
                       20.kh,
                       _SectionLabel('my_children'.tr()),
@@ -417,6 +419,21 @@ class ProfilePage
                         onEdit: (child) =>
                             _openChildDetails(context, cubit, child),
                         onAdd: () => _openChildDetails(context, cubit, null),
+                      ),
+                    ],
+                    // Wallet follows the children section. Hidden for guests
+                    // (no account, no wallet) and while the balance is unknown
+                    // — see ProfileBuildable.wallet.
+                    if (!showGuest && state.wallet != null) ...[
+                      20.kh,
+                      _SectionLabel('wallet_title'.tr()),
+                      12.kh,
+                      WalletSection(
+                        wallet: state.wallet!,
+                        debugError: state.walletError,
+                        // The ledger screen exists now, so the card is
+                        // tappable and grows its chevron.
+                        onTap: () => context.router.push(const WalletRoute()),
                       ),
                     ],
                     20.kh,

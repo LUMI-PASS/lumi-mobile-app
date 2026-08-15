@@ -49,6 +49,7 @@ import '../../presentation/app/profile/attendance/attendance_history_page.dart';
 import '../../presentation/app/profile/children/add_child_page.dart';
 import '../../presentation/app/profile/faq/faq_page.dart';
 import '../../presentation/app/profile/my_bookings/my_bookings_page.dart';
+import '../../presentation/app/profile/wallet/wallet_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/schedule_detail_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/ticket_receipt_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/fiscal_receipt_page.dart';
@@ -137,6 +138,7 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: MyBookingsRoute.page),
     AutoRoute(page: PlansRoute.page),
     AutoRoute(page: PaymentHistoryRoute.page),
+    AutoRoute(page: WalletRoute.page),
     AutoRoute(page: ClassesGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
     AutoRoute(page: NotificationsRoute.page),

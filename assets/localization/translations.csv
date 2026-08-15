@@ -1067,3 +1067,18 @@ wallet_paid_from_balance,Оплачено с баланса,Balansdan to‘landi
 wallet_left_to_pay,К оплате картой,Karta bilan to‘lanadi,Left to pay
 wallet_applied_label,Списывается,Yechiladi,Applied
 cashback_credited_suffix,зачислено на ваш баланс,balansingizga qo‘shildi,added to your balance
+wallet_history_title,История,Tarix,History
+wallet_pending_badge,ожидает,kutilmoqda,pending
+wallet_empty_title,Пока пусто,Hozircha bo‘sh,Nothing here yet
+wallet_empty_body,Бронируйте занятия — часть суммы вернётся на баланс,Mashg‘ulot band qiling — summaning bir qismi balansga qaytadi,Book a class and part of what you pay comes back
+wallet_empty_body_rate,Бронируйте занятия — до {}% вернётся на баланс,Mashg‘ulot band qiling — {}% gacha balansga qaytadi,Book a class and get up to {}% back
+wallet_kind_earn,Кешбэк за бронирование,Bandlik uchun keshbek,Cashback earned
+wallet_kind_earn_matured,Кешбэк доступен,Keshbek mavjud,Cashback unlocked
+wallet_kind_earn_reversed,Кешбэк отменён,Keshbek bekor qilindi,Cashback reversed
+wallet_kind_hold,Зарезервировано под заказ,Buyurtma uchun band qilindi,Reserved for an order
+wallet_kind_hold_released,Резерв снят,Rezerv bekor qilindi,Reservation released
+wallet_kind_spend,Оплата с баланса,Balansdan to‘lov,Paid from balance
+wallet_kind_spend_refunded,Возврат на баланс,Balansga qaytarildi,Returned to balance
+wallet_kind_adjustment,Корректировка,Tuzatish,Adjustment
+wallet_kind_expired,Срок действия истёк,Amal qilish muddati tugadi,Expired
+wallet_kind_unknown,Операция,Amaliyot,Transaction
