@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -25,8 +24,8 @@ class MarkerBitmap {
   /// (0,0) is its top-left, (1,1) its bottom-right.
   final Offset anchor;
 
-  /// What to pass as `PlacemarkIconStyle.scale`. Platform-dependent — see
-  /// [BranchMarkerPainter._iconScale].
+  /// What to pass as `PlacemarkIconStyle.scale` — see
+  /// [BranchMarkerPainter._iconScale] for why it is 1 on every platform.
   final double scale;
 }
 
@@ -81,20 +80,19 @@ class BranchMarkerPainter {
   /// Drops every cached bitmap.
   static void clearCache() => _cache.clear();
 
-  /// MapKit sizes a placemark icon differently per platform, and getting this
-  /// wrong is not subtle — the marker comes out `devicePixelRatio` times too
-  /// big.
+  /// What to hand MapKit as `PlacemarkIconStyle.scale`: **1 on both platforms**.
   ///
   /// The bitmap is painted at `devicePixelRatio`, so it is (logical size × dpr)
-  /// **pixels**.
-  ///   - Android: the plugin does `BitmapFactory.decodeByteArray` →
-  ///     `ImageProvider.fromBitmap`, which MapKit draws one bitmap pixel to one
-  ///     screen pixel. Scale 1 already yields the intended logical size.
-  ///   - iOS: the plugin does `UIImage(data:)`, which defaults to `scale = 1.0`,
-  ///     so UIKit treats every pixel as a **point**. Without a correction the
-  ///     marker renders dpr× too large, so it is divided back out here.
-  static double _iconScale(double devicePixelRatio) =>
-      Platform.isIOS ? 1 / devicePixelRatio : 1.0;
+  /// **pixels**, and MapKit maps one bitmap pixel to one *physical* screen pixel
+  /// on Android and iOS alike — so scale 1 already yields the intended logical
+  /// size everywhere.
+  ///
+  /// This used to divide by dpr on iOS, on the theory that `UIImage(data:)`
+  /// (which is what the plugin does, defaulting to `scale = 1.0`) makes UIKit
+  /// read every pixel as a **point**. It does not: MapKit never sizes the icon
+  /// in UIKit points, so the correction only shrank every pill and cluster
+  /// bubble to a third of its size on a 3× phone.
+  static const double _iconScale = 1.0;
 
   /// Rasterises the pill for [title], memoised.
   static Future<MarkerBitmap> build({
@@ -212,7 +210,7 @@ class BranchMarkerPainter {
       bytes: data!.buffer.asUint8List(),
       // A bubble is centred on the point it stands for, unlike the pills.
       anchor: const Offset(0.5, 0.5),
-      scale: _iconScale(dpr),
+      scale: _iconScale,
     );
   }
 
@@ -354,7 +352,7 @@ class BranchMarkerPainter {
       // so that is `bleed/width` across and dead centre down.
       bytes: data!.buffer.asUint8List(),
       anchor: Offset(bleed / width, 0.5),
-      scale: _iconScale(dpr),
+      scale: _iconScale,
     );
   }
 }
