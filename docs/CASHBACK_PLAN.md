@@ -716,7 +716,8 @@ deployed to production, still dark (`is_enabled: false`, all percentages 0).
 | 2 — Percentage control | done | backend `19b4971`, adminka `469d5a6` |
 | 3 — Accrual | done | backend `8f09cab`, mobile `c0148cc` |
 | 4 — Redemption | done | backend `ad6e747`, mobile `1fb3833` |
-| 5 — History | **next** | — |
+| 5 — History | done | mobile `6ba8854` |
+| 6 — Rollout | **next** — reconciliation script + runbook | — |
 
 **D9 was resolved as option (a).** `total_amount` keeps meaning "what the order
 cost and what the partner is paid on"; a persisted `payable_amount` means "what
