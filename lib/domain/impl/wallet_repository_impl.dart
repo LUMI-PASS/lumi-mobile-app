@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/wallet/cashback_config.dart';
+import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_transaction.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_api.dart';
@@ -73,5 +74,26 @@ class WalletRepositoryImpl extends WalletRepository {
     return _api
         .getCashbackConfig()
         .then((res) => CashbackConfig.fromJson(_unwrap(res.data)));
+  }
+
+  @override
+  Future<CashbackPreview> getCashbackPreview({
+    required String activityId,
+    String? purchase,
+    num? amount,
+  }) async {
+    // Swallowed on purpose. A cashback badge is decoration on a screen whose
+    // job is to sell a class — a network blip must hide the badge, never break
+    // the page or block the booking.
+    try {
+      final res = await _api.getCashbackPreview(
+        activityId: activityId,
+        purchase: purchase,
+        amount: amount,
+      );
+      return CashbackPreview.fromJson(_unwrap(res.data));
+    } catch (_) {
+      return CashbackPreview.none;
+    }
   }
 }

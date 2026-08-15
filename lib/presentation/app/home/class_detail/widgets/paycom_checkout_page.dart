@@ -29,11 +29,17 @@ class PaycomCheckoutPage extends StatefulWidget {
     this.isSubscription = false,
     this.planDiscountPercentage,
     this.provider,
+    this.cashbackEarned = 0,
   });
 
   final CheckoutResult result;
   final bool isSubscription;
   final int? planDiscountPercentage;
+
+  /// Cashback the order earns, carried through to the success screen. Passed
+  /// down rather than re-fetched here: this page owns a webview and a poll
+  /// loop, and has no business knowing how cashback is priced.
+  final num cashbackEarned;
 
   /// Selected payment rail: 'payme' | 'click' | 'uzum' | 'paylov' | null.
   final String? provider;
@@ -172,6 +178,7 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
           status: BookingResultStatus.paid,
           result: widget.result,
           lines: _resultLines(widget.result),
+          cashbackEarned: widget.cashbackEarned,
         ),
       ),
     );

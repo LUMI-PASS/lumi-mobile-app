@@ -1,4 +1,5 @@
 import 'package:lumi_pass/data/api_model/wallet/cashback_config.dart';
+import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_transaction.dart';
 
@@ -31,4 +32,15 @@ abstract class WalletRepository {
   });
 
   Future<CashbackConfig> getCashbackConfig();
+
+  /// What buying [activityId] for [amount] would earn.
+  ///
+  /// Never throws: a failed preview resolves to [CashbackPreview.none], which
+  /// every earn surface reads as "show nothing". Promising cashback the server
+  /// then declines to pay is worse than showing no badge at all.
+  Future<CashbackPreview> getCashbackPreview({
+    required String activityId,
+    String? purchase,
+    num? amount,
+  });
 }

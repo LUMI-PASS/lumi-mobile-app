@@ -28,4 +28,24 @@ class WalletApi {
   Future<Response> getCashbackConfig() {
     return _dio.get('cashback/config', queryParameters: {'lang': currentLang});
   }
+
+  /// What one specific purchase would earn on [activityId].
+  ///
+  /// Separate from [getCashbackConfig] because the configured percentage is
+  /// only a ceiling request — the real rate depends on the partner's margin on
+  /// that class, which only the server knows. [purchase] is `trial` or `full`
+  /// on a course and omitted on a plain activity. No auth required: the class
+  /// detail screen renders the badge before anyone signs in.
+  Future<Response> getCashbackPreview({
+    required String activityId,
+    String? purchase,
+    num? amount,
+  }) {
+    return _dio.get('cashback/preview', queryParameters: {
+      'activity_id': activityId,
+      if (purchase != null) 'purchase': purchase,
+      if (amount != null) 'amount': amount.round(),
+      'lang': currentLang,
+    });
+  }
 }

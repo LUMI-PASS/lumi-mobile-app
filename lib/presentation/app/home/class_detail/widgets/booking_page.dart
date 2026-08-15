@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/utils/cashback.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:dio/dio.dart';
@@ -14,6 +15,7 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/common/widget/shaker.dart';
@@ -21,6 +23,7 @@ import 'package:lumi_pass/common/widget/time_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/promo_error_code.dart';
+import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
@@ -30,6 +33,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
@@ -122,6 +126,16 @@ class _BookingPageState extends State<BookingPage> {
   /// Gateway/network failures only. Validation never lands here — it shakes the
   /// offending control instead of printing a message at the bottom of the page.
   String? _error;
+
+  // ─── Cashback ──────────────────────────────────────────────────────────────
+  /// This class's cashback rate, fetched once on open.
+  ///
+  /// Only the *rate* is server-side — it depends on the partner's commission,
+  /// which the app doesn't have. The soum figure is then computed locally as
+  /// the order changes ([CashbackEarnLine]), so adding a ticket doesn't cost a
+  /// request. Starts at [CashbackPreview.none], so the line simply never
+  /// appears if the fetch fails or the feature is off.
+  CashbackPreview _cashback = CashbackPreview.none;
 
   // ─── Coupon discount ──────────────────────────────────────────────────────
   /// Whether the buyer owns an active coupon plan at all. Distinct from
@@ -643,6 +657,7 @@ class _BookingPageState extends State<BookingPage> {
     // all looked bookable, and emptiness was only discovered one tap at a time.
     // Courses answer this from their own calendar and need no round trip.
     if (!_isCourse) _prefetchScheduleDays();
+    _loadCashbackRate();
     // Auto-select so the user sees slots immediately on open: today for a
     // class, and for a course the nearest day it actually runs — today is
     // usually not one, and selecting it would open on a refusal.
@@ -660,6 +675,26 @@ class _BookingPageState extends State<BookingPage> {
 
   /// Buying one trial lesson rather than a whole course / a class ticket.
   bool get _isTrial => widget.courseOption == CoursePurchaseOption.trial;
+
+  /// Fetch the cashback rate for what's being bought here.
+  ///
+  /// `purchase` has to match what checkout will send, because it selects which
+  /// of the three configured rules prices the order — a trial lesson and a full
+  /// enrolment of the same course can carry different percentages.
+  ///
+  /// Never throws (the repository swallows), and a failure leaves the line
+  /// hidden: no cashback shown is always better than cashback promised and not
+  /// paid.
+  Future<void> _loadCashbackRate() async {
+    final id = widget.clazz.id;
+    if (id == null) return;
+    final preview = await getIt<WalletRepository>().getCashbackPreview(
+      activityId: id,
+      purchase: _isCourse ? (_isTrial ? 'trial' : 'full') : null,
+    );
+    if (!mounted) return;
+    setState(() => _cashback = preview);
+  }
 
   /// The days the calendar offers — a continuous run from today, for a course
   /// exactly as for a class.
@@ -1175,6 +1210,9 @@ class _BookingPageState extends State<BookingPage> {
           builder: (_) => PaycomCheckoutPage(
             result: result,
             provider: _payment?.rail.name ?? PaymentRail.card.name,
+            // Priced off the order that came back, not off local state, so the
+            // success screen agrees with the total it prints beside it.
+            cashbackEarned: cashbackFor(_cashback, result.totalAmount),
           ),
         ),
       );
@@ -1331,6 +1369,7 @@ class _BookingPageState extends State<BookingPage> {
             status: BookingResultStatus.paid,
             result: result,
             lines: lines,
+            cashbackEarned: cashbackFor(_cashback, result.totalAmount),
           ),
         ),
       );
@@ -1870,6 +1909,14 @@ class _BookingPageState extends State<BookingPage> {
                   style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
+          // What this booking earns back. Below the total, not among the
+          // summary lines above: cashback isn't a discount and must never read
+          // as one — the buyer pays the total in full and the wallet is
+          // credited afterwards.
+          if (cashbackFor(_cashback, _payableTotal) > 0) ...[
+            12.kh,
+            CashbackEarnLine(preview: _cashback, orderAmount: _payableTotal),
+          ],
         ],
       ),
     );

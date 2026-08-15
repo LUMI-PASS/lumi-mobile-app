@@ -11,14 +11,18 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/utils/cashback.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/course_detail/course_purchase.dart';
@@ -68,6 +72,13 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
   final List<PaymentCard> _cards = [];
   bool _submitting = false;
   String? _error;
+
+  /// This course's cashback rate, fetched once on open.
+  ///
+  /// A trial lesson and a full enrolment are priced by two different rules, so
+  /// the fetch has to say which is being bought. Starts at
+  /// [CashbackPreview.none], which renders nothing.
+  CashbackPreview _cashback = CashbackPreview.none;
 
   /// Which age bracket to enrol at, for a FLAT course priced by more than one
   /// tier (`widget.level.id == null` — a level has its own single price, not
@@ -150,12 +161,27 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
           DateTime.tryParse(widget.level.courseLessons.first.date);
     }
     _loadLastPaymentMethod();
+    _loadCashbackRate();
   }
 
   @override
   void dispose() {
     _promoCtrl.dispose();
     super.dispose();
+  }
+
+  /// Fetch the cashback rate for what's being bought — `trial` and `full` are
+  /// separately configured rules, so which one is asked for decides the rate.
+  ///
+  /// Never throws; a failure leaves the earn line hidden rather than promising
+  /// a credit that then doesn't arrive.
+  Future<void> _loadCashbackRate() async {
+    final preview = await getIt<WalletRepository>().getCashbackPreview(
+      activityId: widget.activityId,
+      purchase: _isTrial ? 'trial' : 'full',
+    );
+    if (!mounted) return;
+    setState(() => _cashback = preview);
   }
 
   /// Validate the code against the CURRENT subtotal and preview the new total.
@@ -309,6 +335,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
         builder: (_) => PaycomCheckoutPage(
           result: result,
           provider: _payment?.rail.name ?? PaymentRail.card.name,
+          cashbackEarned: cashbackFor(_cashback, result.totalAmount),
         ),
       ),
     );
@@ -1141,6 +1168,12 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                   style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
+          // Below the total, never among the discount rows above: cashback is
+          // credited after payment, not taken off the price.
+          if (cashbackFor(_cashback, _payable) > 0) ...[
+            12.kh,
+            CashbackEarnLine(preview: _cashback, orderAmount: _payable),
+          ],
         ],
       ),
     );

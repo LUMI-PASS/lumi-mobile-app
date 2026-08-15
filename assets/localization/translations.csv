@@ -1060,3 +1060,6 @@ wallet_available_label,Доступно,Mavjud,Available
 wallet_pending_label,Начислено (ожидает),Hisoblangan (kutilmoqda),Pending
 wallet_held_label,Зарезервировано под заказ,Buyurtma uchun band qilingan,Reserved for an order
 wallet_frozen_note,Кошелек заморожен. Свяжитесь с поддержкой.,Hamyon muzlatilgan. Qo‘llab-quvvatlashga murojaat qiling.,This wallet is frozen. Please contact support.
+cashback_percent_chip,Кешбэк {}%,{}% keshbek,{}% cashback
+cashback_you_will_earn,Вернется на баланс,Balansga qaytadi,You'll earn
+cashback_credited,{} зачислено на ваш баланс,Balansingizga {} qo‘shildi,{} added to your balance

@@ -10,6 +10,7 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 
@@ -44,6 +45,7 @@ class BookingCompletePage extends StatefulWidget {
     this.status = BookingResultStatus.paid,
     this.result,
     this.lines = const [],
+    this.cashbackEarned = 0,
   });
 
   final BookingResultStatus status;
@@ -54,6 +56,14 @@ class BookingCompletePage extends StatefulWidget {
 
   /// Breakdown rows (date, per-tier tickets, discounts) shown above the total.
   final List<OrderLine> lines;
+
+  /// Cashback this order earns, in soum. 0 hides the line.
+  ///
+  /// The estimate the booking sheet showed, carried through rather than read
+  /// back: the wallet is credited by the payment webhook, which can land after
+  /// this screen does. Re-reading the balance here would show the credit
+  /// missing as often as not, so the copy stays deliberately soft ("~").
+  final num cashbackEarned;
 
   @override
   State<BookingCompletePage> createState() => _BookingCompletePageState();
@@ -159,6 +169,14 @@ class _BookingCompletePageState extends State<BookingCompletePage>
                                   _OrderCard(
                                     result: widget.result!,
                                     lines: widget.lines,
+                                    // Only on a paid order: a pending or failed
+                                    // payment has earned nothing yet, and
+                                    // promising a credit there would be a lie
+                                    // the buyer reads before the refund.
+                                    cashbackEarned:
+                                        widget.status == BookingResultStatus.paid
+                                            ? widget.cashbackEarned
+                                            : 0,
                                   ),
                                 16.verticalSpace,
                               ],
@@ -258,10 +276,15 @@ class _BookingCompletePageState extends State<BookingCompletePage>
 /// "Детали брони" breakdown card: the same frosted summary the booking sheet
 /// shows before payment — per-tier tickets, date, discounts and the grand total.
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.result, required this.lines});
+  const _OrderCard({
+    required this.result,
+    required this.lines,
+    this.cashbackEarned = 0,
+  });
 
   final CheckoutResult result;
   final List<OrderLine> lines;
+  final num cashbackEarned;
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +356,10 @@ class _OrderCard extends StatelessWidget {
                   style: AppText.bold18.copyWith(color: colors.textPrimary)),
             ],
           ),
+          if (cashbackEarned > 0) ...[
+            12.verticalSpace,
+            CashbackCreditedLine(amount: cashbackEarned),
+          ],
         ],
       ),
     );
