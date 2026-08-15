@@ -59,6 +59,21 @@ class WalletEntryTile extends StatelessWidget {
     // an adjustment can go either way.
     final isReservation = entry.kind.isReservation;
 
+    // The class leads when we know it: "what was that for?" is the question
+    // this screen exists to answer, and a column of "Cashback earned" rows
+    // answers it for none of them. The kind then moves to the subtitle, where
+    // it explains the amount rather than labelling the row. Rows with no
+    // source — a manual adjustment — keep the kind as their title.
+    final source = entry.sourceLabel;
+    final kindLabel = d.key.tr();
+    final title = source ?? kindLabel;
+    final subtitle = [
+      if (source != null)
+        entry.isTrial ? 'wallet_source_trial'.tr(args: [kindLabel]) : kindLabel,
+      if (date != null) '${date.day} ${'month_short_${date.month}'.tr()}',
+      if ((entry.note ?? '').isNotEmpty) entry.note!,
+    ].join(' · ');
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
@@ -78,18 +93,17 @@ class WalletEntryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  d.key.tr(),
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: AppText.semibold14.copyWith(color: c.textPrimary),
                 ),
                 2.kh,
                 Text(
-                  [
-                    if (date != null)
-                      '${date.day} ${'month_short_${date.month}'.tr()}',
-                    // Support's note on a manual correction is the only
-                    // explanation the user will ever get for one.
-                    if ((entry.note ?? '').isNotEmpty) entry.note!,
-                  ].join(' · '),
+                  // The kind, the date, and support's note on a manual
+                  // correction — which is the only explanation a user will
+                  // ever get for one.
+                  subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppText.regular12.copyWith(color: c.textSecondary),

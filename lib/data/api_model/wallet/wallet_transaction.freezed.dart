@@ -43,6 +43,19 @@ mixin _$WalletTransactionModel {
   String? get note => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
 
+  /// The class this entry came from, resolved server-side in the caller's
+  /// language. Null on rows with no activity behind them — a manual
+  /// adjustment, most obviously.
+  String? get activityName => throw _privateConstructorUsedError;
+
+  /// Which sub-course was bought, when the order bought one. Snapshotted on
+  /// the order at purchase, so it still names a sub-course that has since
+  /// been retired.
+  String? get subcourseName => throw _privateConstructorUsedError;
+
+  /// `trial` or `full` on a course order; null on a plain class.
+  String? get coursePurchase => throw _privateConstructorUsedError;
+
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $WalletTransactionModelCopyWith<WalletTransactionModel> get copyWith =>
@@ -67,7 +80,10 @@ abstract class $WalletTransactionModelCopyWith<$Res> {
       num? baseAmount,
       String? status,
       String? note,
-      String? createdAt});
+      String? createdAt,
+      String? activityName,
+      String? subcourseName,
+      String? coursePurchase});
 }
 
 /// @nodoc
@@ -96,6 +112,9 @@ class _$WalletTransactionModelCopyWithImpl<$Res,
     Object? status = freezed,
     Object? note = freezed,
     Object? createdAt = freezed,
+    Object? activityName = freezed,
+    Object? subcourseName = freezed,
+    Object? coursePurchase = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -146,6 +165,18 @@ class _$WalletTransactionModelCopyWithImpl<$Res,
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      activityName: freezed == activityName
+          ? _value.activityName
+          : activityName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      subcourseName: freezed == subcourseName
+          ? _value.subcourseName
+          : subcourseName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      coursePurchase: freezed == coursePurchase
+          ? _value.coursePurchase
+          : coursePurchase // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -171,7 +202,10 @@ abstract class _$$WalletTransactionModelImplCopyWith<$Res>
       num? baseAmount,
       String? status,
       String? note,
-      String? createdAt});
+      String? createdAt,
+      String? activityName,
+      String? subcourseName,
+      String? coursePurchase});
 }
 
 /// @nodoc
@@ -199,6 +233,9 @@ class __$$WalletTransactionModelImplCopyWithImpl<$Res>
     Object? status = freezed,
     Object? note = freezed,
     Object? createdAt = freezed,
+    Object? activityName = freezed,
+    Object? subcourseName = freezed,
+    Object? coursePurchase = freezed,
   }) {
     return _then(_$WalletTransactionModelImpl(
       id: freezed == id
@@ -249,6 +286,18 @@ class __$$WalletTransactionModelImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      activityName: freezed == activityName
+          ? _value.activityName
+          : activityName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      subcourseName: freezed == subcourseName
+          ? _value.subcourseName
+          : subcourseName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      coursePurchase: freezed == coursePurchase
+          ? _value.coursePurchase
+          : coursePurchase // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -269,7 +318,10 @@ class _$WalletTransactionModelImpl extends _WalletTransactionModel {
       this.baseAmount,
       this.status,
       this.note,
-      this.createdAt})
+      this.createdAt,
+      this.activityName,
+      this.subcourseName,
+      this.coursePurchase})
       : super._();
 
   factory _$WalletTransactionModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -311,9 +363,25 @@ class _$WalletTransactionModelImpl extends _WalletTransactionModel {
   @override
   final String? createdAt;
 
+  /// The class this entry came from, resolved server-side in the caller's
+  /// language. Null on rows with no activity behind them — a manual
+  /// adjustment, most obviously.
+  @override
+  final String? activityName;
+
+  /// Which sub-course was bought, when the order bought one. Snapshotted on
+  /// the order at purchase, so it still names a sub-course that has since
+  /// been retired.
+  @override
+  final String? subcourseName;
+
+  /// `trial` or `full` on a course order; null on a plain class.
+  @override
+  final String? coursePurchase;
+
   @override
   String toString() {
-    return 'WalletTransactionModel(id: $id, kindRaw: $kindRaw, amount: $amount, balanceAfter: $balanceAfter, orderId: $orderId, activityId: $activityId, earnType: $earnType, percent: $percent, baseAmount: $baseAmount, status: $status, note: $note, createdAt: $createdAt)';
+    return 'WalletTransactionModel(id: $id, kindRaw: $kindRaw, amount: $amount, balanceAfter: $balanceAfter, orderId: $orderId, activityId: $activityId, earnType: $earnType, percent: $percent, baseAmount: $baseAmount, status: $status, note: $note, createdAt: $createdAt, activityName: $activityName, subcourseName: $subcourseName, coursePurchase: $coursePurchase)';
   }
 
   @override
@@ -337,7 +405,13 @@ class _$WalletTransactionModelImpl extends _WalletTransactionModel {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.note, note) || other.note == note) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.activityName, activityName) ||
+                other.activityName == activityName) &&
+            (identical(other.subcourseName, subcourseName) ||
+                other.subcourseName == subcourseName) &&
+            (identical(other.coursePurchase, coursePurchase) ||
+                other.coursePurchase == coursePurchase));
   }
 
   @JsonKey(ignore: true)
@@ -355,7 +429,10 @@ class _$WalletTransactionModelImpl extends _WalletTransactionModel {
       baseAmount,
       status,
       note,
-      createdAt);
+      createdAt,
+      activityName,
+      subcourseName,
+      coursePurchase);
 
   @JsonKey(ignore: true)
   @override
@@ -385,7 +462,10 @@ abstract class _WalletTransactionModel extends WalletTransactionModel {
       final num? baseAmount,
       final String? status,
       final String? note,
-      final String? createdAt}) = _$WalletTransactionModelImpl;
+      final String? createdAt,
+      final String? activityName,
+      final String? subcourseName,
+      final String? coursePurchase}) = _$WalletTransactionModelImpl;
   const _WalletTransactionModel._() : super._();
 
   factory _WalletTransactionModel.fromJson(Map<String, dynamic> json) =
@@ -424,6 +504,22 @@ abstract class _WalletTransactionModel extends WalletTransactionModel {
   String? get note;
   @override
   String? get createdAt;
+  @override
+
+  /// The class this entry came from, resolved server-side in the caller's
+  /// language. Null on rows with no activity behind them — a manual
+  /// adjustment, most obviously.
+  String? get activityName;
+  @override
+
+  /// Which sub-course was bought, when the order bought one. Snapshotted on
+  /// the order at purchase, so it still names a sub-course that has since
+  /// been retired.
+  String? get subcourseName;
+  @override
+
+  /// `trial` or `full` on a course order; null on a plain class.
+  String? get coursePurchase;
   @override
   @JsonKey(ignore: true)
   _$$WalletTransactionModelImplCopyWith<_$WalletTransactionModelImpl>

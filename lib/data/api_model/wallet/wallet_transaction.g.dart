@@ -21,6 +21,9 @@ _$WalletTransactionModelImpl _$$WalletTransactionModelImplFromJson(
       status: json['status'] as String?,
       note: json['note'] as String?,
       createdAt: json['created_at'] as String?,
+      activityName: json['activity_name'] as String?,
+      subcourseName: json['subcourse_name'] as String?,
+      coursePurchase: json['course_purchase'] as String?,
     );
 
 Map<String, dynamic> _$$WalletTransactionModelImplToJson(
@@ -38,4 +41,7 @@ Map<String, dynamic> _$$WalletTransactionModelImplToJson(
       'status': instance.status,
       'note': instance.note,
       'created_at': instance.createdAt,
+      'activity_name': instance.activityName,
+      'subcourse_name': instance.subcourseName,
+      'course_purchase': instance.coursePurchase,
     };

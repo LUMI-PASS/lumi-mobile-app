@@ -33,6 +33,19 @@ class WalletTransactionModel with _$WalletTransactionModel {
     String? status,
     String? note,
     String? createdAt,
+
+    /// The class this entry came from, resolved server-side in the caller's
+    /// language. Null on rows with no activity behind them — a manual
+    /// adjustment, most obviously.
+    String? activityName,
+
+    /// Which sub-course was bought, when the order bought one. Snapshotted on
+    /// the order at purchase, so it still names a sub-course that has since
+    /// been retired.
+    String? subcourseName,
+
+    /// `trial` or `full` on a course order; null on a plain class.
+    String? coursePurchase,
   }) = _WalletTransactionModel;
 
   const WalletTransactionModel._();
@@ -51,6 +64,23 @@ class WalletTransactionModel with _$WalletTransactionModel {
 
   /// Earned but not yet spendable.
   bool get isPending => status == 'pending';
+
+  /// What this entry was FOR, as one line: the class, narrowed to the
+  /// sub-course when there is one. Null when the row has no source — the
+  /// caller then falls back to naming the kind.
+  String? get sourceLabel {
+    final activity = activityName?.trim();
+    final sub = subcourseName?.trim();
+    if (activity == null || activity.isEmpty) {
+      return (sub == null || sub.isEmpty) ? null : sub;
+    }
+    if (sub == null || sub.isEmpty) return activity;
+    return '$activity · $sub';
+  }
+
+  /// A trial lesson reads differently from a whole-course enrolment, and the
+  /// two are priced by separate rules — so the history says which.
+  bool get isTrial => coursePurchase == 'trial';
 
   DateTime? get createdAtDate {
     final raw = createdAt;

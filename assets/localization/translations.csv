@@ -1082,3 +1082,4 @@ wallet_kind_spend_refunded,Возврат на баланс,Balansga qaytarildi,
 wallet_kind_adjustment,Корректировка,Tuzatish,Adjustment
 wallet_kind_expired,Срок действия истёк,Amal qilish muddati tugadi,Expired
 wallet_kind_unknown,Операция,Amaliyot,Transaction
+wallet_source_trial,{} · пробное занятие,{} · sinov darsi,{} · trial lesson
