@@ -10,6 +10,8 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/cashback_badge.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 
@@ -44,6 +46,8 @@ class BookingCompletePage extends StatefulWidget {
     this.status = BookingResultStatus.paid,
     this.result,
     this.lines = const [],
+    this.cashbackEarned = 0,
+    this.walletApplied = 0,
   });
 
   final BookingResultStatus status;
@@ -54,6 +58,21 @@ class BookingCompletePage extends StatefulWidget {
 
   /// Breakdown rows (date, per-tier tickets, discounts) shown above the total.
   final List<OrderLine> lines;
+
+  /// Cashback this order earns, in soum. 0 hides the line.
+  ///
+  /// The estimate the booking sheet showed, carried through rather than read
+  /// back: the wallet is credited by the payment webhook, which can land after
+  /// this screen does. Re-reading the balance here would show the credit
+  /// missing as often as not, so the copy stays deliberately soft ("~").
+  final num cashbackEarned;
+
+  /// Wallet balance that settled part of this order, in soum. 0 hides the line.
+  ///
+  /// The server's figure, carried through. The order card's grand total is
+  /// still what the order COST — this says how much of it came off the balance
+  /// rather than the card.
+  final num walletApplied;
 
   @override
   State<BookingCompletePage> createState() => _BookingCompletePageState();
@@ -86,11 +105,23 @@ class _BookingCompletePageState extends State<BookingCompletePage>
 
   /// Per-outcome illustration, copy and the tint of the ambient corner glow
   /// (Figma `Ellipse 1260`).
-  ({AssetGenImage image, Color glow, String title, String desc}) get _variant {
+  ///
+  /// [mascot] promotes the outcome to a branded celebration: the mascot becomes
+  /// the hero and [image] shrinks to a badge on its corner. Only the happy path
+  /// gets one — a cheerful character over "payment failed" reads as mockery, so
+  /// those states keep the plain status glyph.
+  ({
+    AssetGenImage image,
+    AssetGenImage? mascot,
+    Color glow,
+    String title,
+    String desc
+  }) get _variant {
     switch (widget.status) {
       case BookingResultStatus.paid:
         return (
           image: Assets.images.paymentSuccess,
+          mascot: Assets.images.mascot.mascotHello,
           glow: AppColors.green,
           title: 'order_paid_title'.tr(),
           desc: 'order_paid_desc'.tr(),
@@ -98,6 +129,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
       case BookingResultStatus.pending:
         return (
           image: Assets.images.paymentLoading,
+          mascot: null,
           glow: AppColors.warning,
           title: 'order_pending_title'.tr(),
           desc: 'order_pending_desc'.tr(),
@@ -105,6 +137,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
       case BookingResultStatus.failed:
         return (
           image: Assets.images.paymentWarning,
+          mascot: null,
           glow: AppColors.error,
           title: 'order_failed_title'.tr(),
           desc: 'order_failed_desc'.tr(),
@@ -159,6 +192,15 @@ class _BookingCompletePageState extends State<BookingCompletePage>
                                   _OrderCard(
                                     result: widget.result!,
                                     lines: widget.lines,
+                                    // Only on a paid order: a pending or failed
+                                    // payment has earned nothing yet, and
+                                    // promising a credit there would be a lie
+                                    // the buyer reads before the refund.
+                                    cashbackEarned:
+                                        widget.status == BookingResultStatus.paid
+                                            ? widget.cashbackEarned
+                                            : 0,
+                                    walletApplied: widget.walletApplied,
                                   ),
                                 16.verticalSpace,
                               ],
@@ -174,6 +216,40 @@ class _BookingCompletePageState extends State<BookingCompletePage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Mascot hero with the status glyph pinned to its lower-right, ringed in the
+  /// page background so it reads as a badge rather than a sticker. The glyph is
+  /// what actually says "paid" — the mascot only carries the brand — so it
+  /// stays present at a legible size instead of being dropped.
+  Widget _celebration(AppColorScheme c, AssetGenImage mascot, AssetGenImage glyph) {
+    return SizedBox(
+      width: 132.w,
+      height: 132.w,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          mascot.image(
+            width: 132.w,
+            height: 132.w,
+            fit: BoxFit.contain,
+            excludeFromSemantics: true,
+          ),
+          Positioned(
+            right: 0,
+            bottom: 4.h,
+            child: Container(
+              padding: EdgeInsets.all(3.w),
+              decoration: BoxDecoration(
+                color: c.scaffoldBg,
+                shape: BoxShape.circle,
+              ),
+              child: glyph.image(width: 36.w, height: 36.w),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -202,7 +278,13 @@ class _BookingCompletePageState extends State<BookingCompletePage>
   /// Status illustration + title + description, animated in on first frame.
   Widget _outcome(
     AppColorScheme c,
-    ({AssetGenImage image, Color glow, String title, String desc}) v,
+    ({
+      AssetGenImage image,
+      AssetGenImage? mascot,
+      Color glow,
+      String title,
+      String desc
+    }) v,
   ) =>
       Column(
         children: [
@@ -213,7 +295,9 @@ class _BookingCompletePageState extends State<BookingCompletePage>
                 curve: const Interval(0, 0.7, curve: Curves.easeOutBack),
               ),
             ),
-            child: v.image.image(width: 48.w, height: 48.w),
+            child: v.mascot == null
+                ? v.image.image(width: 48.w, height: 48.w)
+                : _celebration(c, v.mascot!, v.image),
           ),
           12.verticalSpace,
           FadeTransition(
@@ -258,10 +342,17 @@ class _BookingCompletePageState extends State<BookingCompletePage>
 /// "Детали брони" breakdown card: the same frosted summary the booking sheet
 /// shows before payment — per-tier tickets, date, discounts and the grand total.
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.result, required this.lines});
+  const _OrderCard({
+    required this.result,
+    required this.lines,
+    this.cashbackEarned = 0,
+    this.walletApplied = 0,
+  });
 
   final CheckoutResult result;
   final List<OrderLine> lines;
+  final num cashbackEarned;
+  final num walletApplied;
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +424,29 @@ class _OrderCard extends StatelessWidget {
                   style: AppText.bold18.copyWith(color: colors.textPrimary)),
             ],
           ),
+          // How the total was settled, when part of it came off the balance.
+          if (walletApplied > 0) ...[
+            12.verticalSpace,
+            Row(
+              children: [
+                Expanded(
+                  child: Text('wallet_paid_from_balance'.tr(),
+                      style: AppText.regular14
+                          .copyWith(color: colors.textSecondary)),
+                ),
+                CoinAmount(
+                  amount: walletApplied,
+                  prefix: '−',
+                  style: AppText.semibold14,
+                  color: AppColors.green,
+                ),
+              ],
+            ),
+          ],
+          if (cashbackEarned > 0) ...[
+            12.verticalSpace,
+            CashbackCreditedLine(amount: cashbackEarned),
+          ],
         ],
       ),
     );

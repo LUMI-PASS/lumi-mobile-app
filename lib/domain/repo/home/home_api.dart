@@ -76,10 +76,6 @@ class HomeApi {
     return _dio.get('users/children/', queryParameters: {'lang': currentLang});
   }
 
-  Future<Response> getTariffs() {
-    return _dio.get('tariffs/', queryParameters: {'lang': currentLang});
-  }
-
   Future<Response> getPremiumPlans({int page = 1, int limit = 12}) {
     return _dio.get(
       'tariffs/',
@@ -103,37 +99,10 @@ class HomeApi {
         });
   }
 
-  Future<Response> purchaseSubscription(String tariffId) {
-    return _dio.post('transaction/subscriptions/', queryParameters: {
-      'lang': currentLang
-    }, data: {
-      'tariff_id': tariffId,
-      'payment_method': 'PAYME',
-    });
-  }
-
   Future<Response> updateProfileData(HomForUser user) {
     return _dio.patch("users/parents/profile",
         queryParameters: {'profile_id': user.id, 'lang': currentLang},
         data: user.toJson()..remove("id"));
-  }
-
-  Future<Response> checkClassEligibility(String classId) {
-    return _dio.get('classes/$classId/check-eligibility',
-        queryParameters: {'lang': currentLang});
-  }
-
-  Future<Response> createBooking(Map<String, dynamic> bookingData) {
-    return _dio.post('bookings/',
-        queryParameters: {'lang': currentLang}, data: bookingData);
-  }
-
-  Future<Response> getUserBalance() {
-    return _dio.get('transaction/wallets/me', queryParameters: {'lang': currentLang});
-  }
-
-  Future<Response> getCoinHistory() {
-    return _dio.get('transaction/coin-flows/me', queryParameters: {'lang': currentLang});
   }
 
   Future<Response> uploadChildPhoto(String childId, File photo) async {

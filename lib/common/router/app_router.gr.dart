@@ -58,6 +58,8 @@ abstract class _$AppRouter extends RootStackRouter {
           status: args.status,
           result: args.result,
           lines: args.lines,
+          cashbackEarned: args.cashbackEarned,
+          walletApplied: args.walletApplied,
         ),
       );
     },
@@ -491,6 +493,8 @@ class BookingCompleteRoute extends PageRouteInfo<BookingCompleteRouteArgs> {
     BookingResultStatus status = BookingResultStatus.paid,
     CheckoutResult? result,
     List<OrderLine> lines = const [],
+    num cashbackEarned = 0,
+    num walletApplied = 0,
     List<PageRouteInfo>? children,
   }) : super(
           BookingCompleteRoute.name,
@@ -499,6 +503,8 @@ class BookingCompleteRoute extends PageRouteInfo<BookingCompleteRouteArgs> {
             status: status,
             result: result,
             lines: lines,
+            cashbackEarned: cashbackEarned,
+            walletApplied: walletApplied,
           ),
           initialChildren: children,
         );
@@ -515,6 +521,8 @@ class BookingCompleteRouteArgs {
     this.status = BookingResultStatus.paid,
     this.result,
     this.lines = const [],
+    this.cashbackEarned = 0,
+    this.walletApplied = 0,
   });
 
   final Key? key;
@@ -525,9 +533,13 @@ class BookingCompleteRouteArgs {
 
   final List<OrderLine> lines;
 
+  final num cashbackEarned;
+
+  final num walletApplied;
+
   @override
   String toString() {
-    return 'BookingCompleteRouteArgs{key: $key, status: $status, result: $result, lines: $lines}';
+    return 'BookingCompleteRouteArgs{key: $key, status: $status, result: $result, lines: $lines, cashbackEarned: $cashbackEarned, walletApplied: $walletApplied}';
   }
 }
 

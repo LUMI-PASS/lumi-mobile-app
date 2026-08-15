@@ -337,6 +337,8 @@ class $AssetsImagesGen {
   AssetGenImage get imageDiscount =>
       const AssetGenImage('assets/images/image_discount.png');
 
+  $AssetsImagesMascotGen get mascot => const $AssetsImagesMascotGen();
+
   /// File path: assets/images/no_internet.png
   AssetGenImage get noInternet =>
       const AssetGenImage('assets/images/no_internet.png');
@@ -821,6 +823,49 @@ class $AssetsImagesBannerGen {
 
   /// List of all assets
   List<AssetGenImage> get values => [bannerTicketPercentage];
+}
+
+class $AssetsImagesMascotGen {
+  const $AssetsImagesMascotGen();
+
+  /// File path: assets/images/mascot/mascot_calendar.webp
+  AssetGenImage get mascotCalendar =>
+      const AssetGenImage('assets/images/mascot/mascot_calendar.webp');
+
+  /// File path: assets/images/mascot/mascot_categories.webp
+  AssetGenImage get mascotCategories =>
+      const AssetGenImage('assets/images/mascot/mascot_categories.webp');
+
+  /// File path: assets/images/mascot/mascot_download.webp
+  AssetGenImage get mascotDownload =>
+      const AssetGenImage('assets/images/mascot/mascot_download.webp');
+
+  /// File path: assets/images/mascot/mascot_faq.webp
+  AssetGenImage get mascotFaq =>
+      const AssetGenImage('assets/images/mascot/mascot_faq.webp');
+
+  /// File path: assets/images/mascot/mascot_hello.webp
+  AssetGenImage get mascotHello =>
+      const AssetGenImage('assets/images/mascot/mascot_hello.webp');
+
+  /// File path: assets/images/mascot/mascot_info.webp
+  AssetGenImage get mascotInfo =>
+      const AssetGenImage('assets/images/mascot/mascot_info.webp');
+
+  /// File path: assets/images/mascot/mascot_partners.webp
+  AssetGenImage get mascotPartners =>
+      const AssetGenImage('assets/images/mascot/mascot_partners.webp');
+
+  /// List of all assets
+  List<AssetGenImage> get values => [
+        mascotCalendar,
+        mascotCategories,
+        mascotDownload,
+        mascotFaq,
+        mascotHello,
+        mascotInfo,
+        mascotPartners
+      ];
 }
 
 class $AssetsImagesPayGen {

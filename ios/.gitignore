@@ -19,6 +19,8 @@ Flutter/App.framework
 Flutter/Flutter.framework
 Flutter/Flutter.podspec
 Flutter/Generated.xcconfig
+# Holds YANDEX_MAPKIT_KEY — see Flutter/Secrets.example.xcconfig.
+Flutter/Secrets.xcconfig
 Flutter/ephemeral/
 Flutter/app.flx
 Flutter/app.zip

@@ -143,12 +143,17 @@ class OrdersApi {
     String? cardNumber,
     String? expireDate,
     String? savedCardId,
+    bool useWallet = false,
     bool test = false,
   }) async {
     final body = {
       'activity_id': activityId,
       'items': items.map((e) => e.toJson()).toList(),
       'ticket_date': ticketDate,
+      // Asks the server to apply the wallet; it decides how much. No amount is
+      // sent — v1 redemption is all-or-nothing, and letting the client name a
+      // figure only invites it to disagree with the one that lands.
+      if (useWallet) 'use_wallet': true,
       if (lang != null) 'lang': lang,
       if (returnUrl != null) 'return_url': returnUrl,
       if (promoCode != null && promoCode.trim().isNotEmpty)

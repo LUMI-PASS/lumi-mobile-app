@@ -439,8 +439,9 @@ class SearchCountRow extends StatelessWidget {
   }
 }
 
-/// Empty state — box-search glyph + title + description
-/// (Figma `Error Message` / "Результаты не найдены").
+/// Empty state — mascot + title + description
+/// (Figma `Error Message` / "Результаты не найдены"). The mascot points at a
+/// board of directions, which turns a dead end into a nudge to browse.
 class SearchEmptyView extends StatelessWidget {
   const SearchEmptyView({super.key});
 
@@ -453,8 +454,12 @@ class SearchEmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _SearchIcon(Assets.icons.home.boxSearch,
-                size: 36, color: c.textSecondary),
+            Assets.images.mascot.mascotCategories.image(
+              width: 160.w,
+              height: 160.w,
+              fit: BoxFit.contain,
+              excludeFromSemantics: true,
+            ),
             12.verticalSpace,
             Text(
               'results_not_found'.tr(),

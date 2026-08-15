@@ -1,0 +1,20 @@
+# Template for android/key.properties, which is gitignored.
+#
+# Copy this file to android/key.properties and fill in the real values:
+#
+#   cp android/key.properties.example android/key.properties
+#
+# Without it the Gradle build fails at configuration time — build.gradle.kts
+# loads this file unconditionally for the release signing config.
+
+# Release signing.
+storeFile=/absolute/path/to/lumi-release.jks
+storePassword=
+keyAlias=
+keyPassword=
+
+# Yandex MapKit key, from the Yandex Developer Dashboard
+# (API Interfaces -> MapKit Mobile SDK). Bound to the applicationId
+# uz.lumi.mobileapp. Leave empty to build without a working map.
+# The iOS counterpart is YANDEX_MAPKIT_KEY in ios/Flutter/Secrets.xcconfig.
+w

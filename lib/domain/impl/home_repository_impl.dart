@@ -2,15 +2,12 @@ import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.
 
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
-import 'package:lumi_pass/data/api_model/booking/booking_model.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
-import 'package:lumi_pass/data/api_model/eligibility/eligibility_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
-import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 
 import '../../data/storage/storage.dart';
@@ -150,15 +147,6 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
-  Future<List<Tariff>> getTariffs() {
-    return _api.getTariffs().then((value) {
-      return (value.data['data'] as List)
-          .map((e) => Tariff.fromJson(e))
-          .toList();
-    });
-  }
-
-  @override
   Future<List<PremiumPlan>> getPremiumPlans() {
     return _api.getPremiumPlans().then((value) {
       final list = value.data['data'];
@@ -177,11 +165,6 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
-  Future<void> purchaseSubscription(String tariffId) {
-    return _api.purchaseSubscription(tariffId);
-  }
-
-  @override
   Future<List<TimeSlot>> getCLassSchedules(
       String childId, String fromDate, String toDate, String classId) {
     return _api
@@ -190,66 +173,6 @@ class HomeRepositoryImpl extends HomeRepository {
       return (value.data['data']?['time_slots'] as List? ?? [])
           .map((e) => TimeSlot.fromJson(e))
           .toList();
-    });
-  }
-
-  @override
-  Future<ClassEligibilityData> checkClassEligibility(String classId) {
-    return _api.checkClassEligibility(classId).then((value) {
-      return ClassEligibilityData.fromJson(value.data['data']);
-    });
-  }
-
-  @override
-  Future<BookingResponse> createBooking(
-      String scheduleId, String childId, String subscriptionId) {
-    return _api.createBooking({
-      'schedule_id': scheduleId,
-      'child_id': childId,
-      'subscription_id': subscriptionId,
-    }).then((value) {
-      return BookingResponse.fromJson(value.data['data']);
-    });
-  }
-
-  @override
-  Future<num> getUserBalance() {
-    return _api.getUserBalance().then((value) {
-      final data = value.data;
-      // Handle both { balance: n } and { data: { balance: n } }
-      if (data is Map && data.containsKey('balance')) {
-        return data['balance'] as num;
-      }
-      return data['data']?['balance'] as num? ?? 0;
-    });
-  }
-
-  @override
-  Future<List<CoinFlow>> getCoinHistory() {
-    return _api.getCoinHistory().then((value) {
-      final data = value.data;
-      final list = (data is List)
-          ? data
-          : (data is Map ? (data['data'] ?? []) : []);
-      return (list as List)
-          .map((e) => CoinFlow.fromJson(e as Map<String, dynamic>))
-          .toList()
-        ..sort((a, b) {
-          final aDate = a.createdAt ?? '';
-          final bDate = b.createdAt ?? '';
-          return bDate.compareTo(aDate);
-        });
-    });
-  }
-
-  @override
-  Future<PurchaseResponse> purchaseSubscriptionWithResponse(String tariffId) {
-    return _api.purchaseSubscription(tariffId).then((value) {
-      final data = value.data;
-      final map = (data is Map && data['data'] is Map)
-          ? data['data'] as Map<String, dynamic>
-          : (data is Map ? data as Map<String, dynamic> : <String, dynamic>{});
-      return PurchaseResponse.fromJson(map);
     });
   }
 

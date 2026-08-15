@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/utils/cashback.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:dio/dio.dart';
@@ -14,13 +15,19 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/widget/cashback_badge.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/common/widget/shaker.dart';
 import 'package:lumi_pass/common/widget/time_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/promo_error_code.dart';
+import 'package:lumi_pass/data/api_model/wallet/cashback_config.dart';
+import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
+import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
@@ -30,6 +37,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
@@ -123,6 +131,31 @@ class _BookingPageState extends State<BookingPage> {
   /// offending control instead of printing a message at the bottom of the page.
   String? _error;
 
+  // ─── Cashback ──────────────────────────────────────────────────────────────
+  /// This class's cashback rate, fetched once on open.
+  ///
+  /// Only the *rate* is server-side — it depends on the partner's commission,
+  /// which the app doesn't have. The soum figure is then computed locally as
+  /// the order changes ([CashbackEarnLine]), so adding a ticket doesn't cost a
+  /// request. Starts at [CashbackPreview.none], so the line simply never
+  /// appears if the fetch fails or the feature is off.
+  CashbackPreview _cashback = CashbackPreview.none;
+
+  // ─── Wallet ────────────────────────────────────────────────────────────────
+  /// The buyer's spendable balance, fetched once on open. Zero until it lands,
+  /// which is what keeps the "Use balance" row hidden rather than flickering.
+  WalletBalance _wallet = WalletBalance.empty;
+
+  /// The ceiling on how much of one order the wallet may cover, from the public
+  /// config. 100 until read — the server clamps regardless, so an optimistic
+  /// default can only ever offer too much, never charge too much.
+  num _maxRedeemPercent = 100;
+
+  /// Whether the buyer switched "Use balance" on. The AMOUNT is not stored:
+  /// it is derived from the live total, so changing tickets or applying a
+  /// promocode re-prices it without a stale figure surviving underneath.
+  bool _useWallet = false;
+
   // ─── Coupon discount ──────────────────────────────────────────────────────
   /// Whether the buyer owns an active coupon plan at all. Distinct from
   /// [_hasCoupon]: owning a plan is what locks promocodes out, even on a class
@@ -195,6 +228,15 @@ class _BookingPageState extends State<BookingPage> {
       !_hasCouponPlan &&
       (_isCourse || _totalTickets > 0) &&
       _payableTotal == 0;
+
+  /// Nothing left for a gateway to charge — either the order was already free,
+  /// or the wallet covers it outright.
+  ///
+  /// Both take the SAME path: the order comes back terminal PAID with no
+  /// checkout_url, and the success screen shows without a webview. There is
+  /// deliberately no second free-order branch.
+  bool get _skipsGateway =>
+      _isFree || ((_isCourse || _totalTickets > 0) && _gatewayTotal == 0);
 
   /// Validate the entered code against the current subtotal and show a preview
   /// of the new total. The discount is re-checked server-side at checkout.
@@ -643,6 +685,8 @@ class _BookingPageState extends State<BookingPage> {
     // all looked bookable, and emptiness was only discovered one tap at a time.
     // Courses answer this from their own calendar and need no round trip.
     if (!_isCourse) _prefetchScheduleDays();
+    _loadCashbackRate();
+    _loadWallet();
     // Auto-select so the user sees slots immediately on open: today for a
     // class, and for a course the nearest day it actually runs — today is
     // usually not one, and selecting it would open on a refusal.
@@ -660,6 +704,69 @@ class _BookingPageState extends State<BookingPage> {
 
   /// Buying one trial lesson rather than a whole course / a class ticket.
   bool get _isTrial => widget.courseOption == CoursePurchaseOption.trial;
+
+  /// Fetch the cashback rate for what's being bought here.
+  ///
+  /// `purchase` has to match what checkout will send, because it selects which
+  /// of the three configured rules prices the order — a trial lesson and a full
+  /// enrolment of the same course can carry different percentages.
+  ///
+  /// Never throws (the repository swallows), and a failure leaves the line
+  /// hidden: no cashback shown is always better than cashback promised and not
+  /// paid.
+  Future<void> _loadCashbackRate() async {
+    final id = widget.clazz.id;
+    if (id == null) return;
+    final preview = await getIt<WalletRepository>().getCashbackPreview(
+      activityId: id,
+      purchase: _isCourse ? (_isTrial ? 'trial' : 'full') : null,
+    );
+    if (!mounted) return;
+    setState(() => _cashback = preview);
+  }
+
+  /// Load the wallet balance and the redemption cap.
+  ///
+  /// Both failures are swallowed into "no wallet": the buyer can still pay by
+  /// card, and offering a balance we couldn't confirm would only produce a
+  /// refusal at checkout.
+  Future<void> _loadWallet() async {
+    final repo = getIt<WalletRepository>();
+    final results = await Future.wait([
+      repo.getWallet().catchError((_) => WalletBalance.empty),
+      repo.getCashbackConfig().catchError((_) => const CashbackConfig()),
+    ]);
+    if (!mounted) return;
+    final wallet = results[0] as WalletBalance;
+    final config = results[1] as CashbackConfig;
+    setState(() {
+      _wallet = wallet;
+      _maxRedeemPercent = config.maxRedeemPercent;
+      // The feature can be switched off between the sheet opening and this
+      // landing; don't leave a switch on that checkout would ignore.
+      if (!config.isEnabled) _useWallet = false;
+    });
+  }
+
+  /// How much the wallet would take off this order right now.
+  ///
+  /// A live preview only — checkout re-decides it, and its answer is what the
+  /// success screen and the order actually carry.
+  num get _walletApplied {
+    if (!_useWallet) return 0;
+    return walletRedeemableFor(
+      available: _wallet.available,
+      // Against the post-discount total, exactly as the server clamps it.
+      orderAmount: _payableTotal,
+      maxRedeemPercent: _maxRedeemPercent,
+    );
+  }
+
+  /// What the card is actually charged, after the wallet.
+  num get _gatewayTotal {
+    final t = _payableTotal - _walletApplied;
+    return t < 0 ? 0 : t;
+  }
 
   /// The days the calendar offers — a continuous run from today, for a course
   /// exactly as for a class.
@@ -1096,6 +1203,10 @@ class _BookingPageState extends State<BookingPage> {
         cardNumber: cardNumber,
         expireDate: expireDate,
         savedCardId: savedCardId,
+        // The wallet stacks with whatever discount already applied — it is a
+        // payment method, not a competing discount. Only the intent is sent;
+        // the server decides the amount and returns it on the result.
+        useWallet: _useWallet,
       );
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutStarted,
@@ -1175,6 +1286,13 @@ class _BookingPageState extends State<BookingPage> {
           builder: (_) => PaycomCheckoutPage(
             result: result,
             provider: _payment?.rail.name ?? PaymentRail.card.name,
+            // The server's own figure, priced off what the card actually
+            // paid. The local preview is only the fallback, for a backend
+            // that doesn't send one yet.
+            cashbackEarned: result.cashbackEstimate > 0
+                ? result.cashbackEstimate
+                : cashbackFor(_cashback, result.payableAmount),
+            walletApplied: result.walletAmount,
           ),
         ),
       );
@@ -1331,6 +1449,10 @@ class _BookingPageState extends State<BookingPage> {
             status: BookingResultStatus.paid,
             result: result,
             lines: lines,
+            cashbackEarned: result.cashbackEstimate > 0
+                ? result.cashbackEstimate
+                : cashbackFor(_cashback, result.payableAmount),
+            walletApplied: result.walletAmount,
           ),
         ),
       );
@@ -1415,9 +1537,10 @@ class _BookingPageState extends State<BookingPage> {
                                     ? _customWindowsSection(c)
                                     : _slotsSection(c),
                           ),
-                          // A fully-discounted order has nothing to charge, so
-                          // the payment-method picker is hidden entirely.
-                          if (!_isFree) ...[
+                          // Nothing to charge — a full discount, or a wallet
+                          // that covers the order — so the payment-method
+                          // picker is hidden entirely.
+                          if (!_skipsGateway) ...[
                             20.kh,
                             Shaker(
                               key: _paymentShake,
@@ -1427,6 +1550,21 @@ class _BookingPageState extends State<BookingPage> {
                           if (!_hasCouponPlan) ...[
                             20.kh,
                             _promoSection(c),
+                          ],
+                          // Deliberately OUTSIDE the `!_hasCouponPlan` guard
+                          // above. That guard exists because a promocode and a
+                          // coupon plan are alternative discounts that never
+                          // stack — the wallet is neither, so it is offered to
+                          // coupon holders too.
+                          if (_wallet.available > 0) ...[
+                            20.kh,
+                            UseBalanceRow(
+                              wallet: _wallet,
+                              enabled: !_submitting,
+                              applied: _walletApplied,
+                              onChanged: (v) =>
+                                  setState(() => _useWallet = v),
+                            ),
                           ],
                           20.kh,
                           _breakdownSection(c),
@@ -1488,9 +1626,11 @@ class _BookingPageState extends State<BookingPage> {
       color: c.scaffoldBg,
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h + bottomInset),
       child: GradientButton(
-        text: _isFree
+        text: _skipsGateway
             ? 'book_free_cta'.tr()
-            : 'book_pay_cta'.tr(args: [_payableTotal.toRawUzsPrice()]),
+            // What the CARD is charged, after the wallet — the buyer is about
+            // to authorise this number, not the order total.
+            : 'book_pay_cta'.tr(args: [_gatewayTotal.toRawUzsPrice()]),
         loading: _submitting,
         onPressed: _pay,
       ),
@@ -1870,6 +2010,50 @@ class _BookingPageState extends State<BookingPage> {
                   style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
+          // The wallet split, shown only when it's actually being used. It
+          // hangs BELOW the grand total rather than reducing it: the order
+          // still costs the total, this is just how much of it is being
+          // settled from the balance instead of the card.
+          if (_walletApplied > 0) ...[
+            12.kh,
+            Row(
+              children: [
+                Expanded(
+                  child: Text('wallet_paid_from_balance'.tr(),
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
+                ),
+                CoinAmount(
+                  amount: _walletApplied,
+                  prefix: '−',
+                  style: AppText.semibold14,
+                  color: AppColors.green,
+                ),
+              ],
+            ),
+            8.kh,
+            Row(
+              children: [
+                Expanded(
+                  child: Text('wallet_left_to_pay'.tr(),
+                      style: AppText.semibold14.copyWith(color: c.textPrimary)),
+                ),
+                Text(_gatewayTotal.toRawUzsPrice(),
+                    style: AppText.bold18.copyWith(color: c.textPrimary)),
+              ],
+            ),
+          ],
+          // What this booking earns back. Below the total, not among the
+          // summary lines above: cashback isn't a discount and must never read
+          // as one — the buyer pays the total in full and the wallet is
+          // credited afterwards.
+          //
+          // Priced off what the CARD pays: money the wallet covered earns
+          // nothing, or the balance would refill itself.
+          if (cashbackFor(_cashback, _gatewayTotal) > 0) ...[
+            12.kh,
+            CashbackEarnLine(preview: _cashback, orderAmount: _gatewayTotal),
+          ],
         ],
       ),
     );
@@ -2059,10 +2243,11 @@ class _BookingPageState extends State<BookingPage> {
     if (_submitting) return;
     if (!_validateForPayment()) return;
 
-    // 100%-off (coupon plan or promocode): the order is still created, but with
-    // nothing to charge there's no payment method to pick and no gateway to hand
-    // off to. Create it, then go straight to the success screen.
-    if (_isFree) {
+    // Nothing to charge — a 100%-off discount, or a wallet covering the whole
+    // order. The order is still created, but there's no payment method to pick
+    // and no gateway to hand off to. Create it, then go straight to the success
+    // screen. One branch for both, deliberately.
+    if (_skipsGateway) {
       setState(() {
         _submitting = true;
         _error = null;
@@ -2081,6 +2266,7 @@ class _BookingPageState extends State<BookingPage> {
                 ? [_selectedDate!.isoKey]
                 : null,
             startsAt: !_isTrial ? _selectedDate?.isoKey : null,
+            useWallet: _useWallet,
           );
           if (!mounted) return;
           setState(() => _submitting = false);
@@ -2132,6 +2318,7 @@ class _BookingPageState extends State<BookingPage> {
               : null,
           // Whole course: the day picked above is when the enrolment starts.
           startsAt: !_isTrial ? _selectedDate?.isoKey : null,
+          useWallet: _useWallet,
           paymentProvider: payment.rail.providerKey,
           returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
         );

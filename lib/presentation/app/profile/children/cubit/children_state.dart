@@ -1,6 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
-import 'package:lumi_pass/data/api_model/eligibility/eligibility_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 
 part 'children_state.freezed.dart';
@@ -27,10 +26,6 @@ class ChildrenBuildable with _$ChildrenBuildable {
     @Default(null) DateTime? selectedDate,
     @Default(null) String? selectedScheduleId,
     @Default(-1) int selectedTimeIndex,
-    // Eligibility & booking state
-    @Default(null) ClassEligibilityData? eligibilityData,
-    @Default(false) bool eligibilityLoading,
-    @Default(false) bool bookingLoading,
     @Default(null) String? selectedChildId,
   }) = _ChildrenBuildable;
 }
@@ -39,16 +34,12 @@ class ChildrenBuildable with _$ChildrenBuildable {
 class ChildrenListenable with _$ChildrenListenable {
   const factory ChildrenListenable({
     required ChildrenEffect effect,
-    String? bookingId,
   }) = _ChildrenListenable;
 }
 
 enum ChildrenEffect {
   verify,
   reg,
-  bookingSuccess,
-  eligibilityLoaded,
-  eligibilityError,
   childCreated,
   photoUploaded,
   photoUploadError,

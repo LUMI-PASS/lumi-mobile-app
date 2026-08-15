@@ -2,14 +2,11 @@ import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.
 
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
-import 'package:lumi_pass/data/api_model/booking/booking_model.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
-import 'package:lumi_pass/data/api_model/eligibility/eligibility_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
-import 'package:lumi_pass/data/api_model/tarifff/tariff_model.dart';
 
 class ParentProfileResult {
   final List<ChildModel> children;
@@ -37,8 +34,6 @@ abstract class HomeRepository {
     double? lng,
   });
 
-  Future<void> purchaseSubscription(String tariffId);
-
   Future<List<HomCategory>> getAllCategories();
 
   Future<List<ChildModel>> getChildren();
@@ -62,22 +57,9 @@ abstract class HomeRepository {
 
   Future<List<ScheduleItem>> getScheduleList();
 
-  Future<List<Tariff>> getTariffs();
-
   Future<List<PremiumPlan>> getPremiumPlans();
 
   Future<bool> updateUser(HomForUser user);
-
-  Future<ClassEligibilityData> checkClassEligibility(String classId);
-
-  Future<BookingResponse> createBooking(
-      String scheduleId, String childId, String subscriptionId);
-
-  Future<num> getUserBalance();
-
-  Future<PurchaseResponse> purchaseSubscriptionWithResponse(String tariffId);
-
-  Future<List<CoinFlow>> getCoinHistory();
 
   Future<List<AttendanceRecord>> getChildAttendanceHistory(String childId);
 

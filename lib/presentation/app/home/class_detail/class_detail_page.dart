@@ -18,16 +18,19 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
@@ -55,6 +58,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   int _currentImageIndex = 0;
   ClassFullModel? _full;
   Timer? _slideTimer;
+
+  /// This class's cashback rate, for the badge on the prices card.
+  ///
+  /// A rate, not an amount: this page shows several prices (per age tier, per
+  /// level), so what it can honestly say is the percentage. The soum figure is
+  /// the booking sheet's job, once there is one order to price.
+  ///
+  /// Starts at [CashbackPreview.none] and stays there if the fetch fails, so
+  /// the badge is simply absent rather than wrong.
+  CashbackPreview _cashback = CashbackPreview.none;
 
   /// Set only for a course: its dated lessons and package prices, fetched from
   /// `/api/courses/:id`. The lesson dates are expanded server-side from the
@@ -175,6 +188,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     super.initState();
     _loadImages();
     _loadFull();
+    _loadCashbackRate();
     _startAutoSlide();
     _scrollController.addListener(_onScroll);
     final cm = widget.classModel;
@@ -190,6 +204,23 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           'discount_percentage': cm.discountPercentage!,
       },
     );
+  }
+
+  /// The cashback rate for this class.
+  ///
+  /// `purchase` is left unset here even for a course: the page shows both the
+  /// trial and the full-enrolment prices, and the two can be configured at
+  /// different rates — so the badge reports the full-course rate, and the
+  /// booking sheet asks again for whichever half is actually being bought.
+  Future<void> _loadCashbackRate() async {
+    final id = widget.classModel.id;
+    if (id == null) return;
+    final preview = await getIt<WalletRepository>().getCashbackPreview(
+      activityId: id,
+      purchase: _isCourse ? 'full' : null,
+    );
+    if (!mounted) return;
+    setState(() => _cashback = preview);
   }
 
   @override
@@ -1105,6 +1136,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             ),
             title: 'detail_prices'.tr(),
           ),
+          // One badge for the card, not one per row: the rate is the same
+          // whichever age tier is bought, and repeating it down the list would
+          // read as a per-row offer.
+          if (_cashback.hasRate) ...[
+            12.verticalSpace,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: CashbackChip(preview: _cashback),
+            ),
+          ],
           16.verticalSpace,
           ...List.generate(rows.length, (i) {
             final r = rows[i];

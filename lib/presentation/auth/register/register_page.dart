@@ -170,8 +170,11 @@ class RegisterPage
                           );
                         },
                         child: _PulsingImage(
-                          child: Assets.images.congrats
-                              .image(width: 120.w, height: 120.h),
+                          child: Assets.images.mascot.mascotHello.image(
+                            width: 120.w,
+                            height: 120.h,
+                            excludeFromSemantics: true,
+                          ),
                         ),
                       ),
                     ),
