@@ -55,11 +55,15 @@ extension PriceNumFormatter on num {
 
   /// Raw UZS amount (already in soums) → `"250 000 so'm"`.
   /// Use this for prices that are NOT stored in coins/tiyin.
-  String toRawUzsPrice() {
-    final formatted = toInt().toString().replaceAllMapped(
-          RegExp(r'\B(?=(\d{3})+(?!\d))'),
-          (match) => ' ',
-        );
-    return "$formatted ${_uzsCurrencyLabel()}";
-  }
+  String toRawUzsPrice() => "${toGrouped()} ${_uzsCurrencyLabel()}";
+
+  /// Just the digits, space-grouped: `250000` → `"250 000"`.
+  ///
+  /// For amounts whose unit is shown some other way — wallet balances carry the
+  /// Lumi coin mark instead of a "so'm" suffix (see [CoinAmount]), and printing
+  /// both would read as two different currencies.
+  String toGrouped() => toInt().toString().replaceAllMapped(
+        RegExp(r'\B(?=(\d{3})+(?!\d))'),
+        (match) => ' ',
+      );
 }

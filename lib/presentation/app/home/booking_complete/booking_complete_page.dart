@@ -11,6 +11,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 
@@ -104,11 +105,23 @@ class _BookingCompletePageState extends State<BookingCompletePage>
 
   /// Per-outcome illustration, copy and the tint of the ambient corner glow
   /// (Figma `Ellipse 1260`).
-  ({AssetGenImage image, Color glow, String title, String desc}) get _variant {
+  ///
+  /// [mascot] promotes the outcome to a branded celebration: the mascot becomes
+  /// the hero and [image] shrinks to a badge on its corner. Only the happy path
+  /// gets one — a cheerful character over "payment failed" reads as mockery, so
+  /// those states keep the plain status glyph.
+  ({
+    AssetGenImage image,
+    AssetGenImage? mascot,
+    Color glow,
+    String title,
+    String desc
+  }) get _variant {
     switch (widget.status) {
       case BookingResultStatus.paid:
         return (
           image: Assets.images.paymentSuccess,
+          mascot: Assets.images.mascot.mascotHello,
           glow: AppColors.green,
           title: 'order_paid_title'.tr(),
           desc: 'order_paid_desc'.tr(),
@@ -116,6 +129,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
       case BookingResultStatus.pending:
         return (
           image: Assets.images.paymentLoading,
+          mascot: null,
           glow: AppColors.warning,
           title: 'order_pending_title'.tr(),
           desc: 'order_pending_desc'.tr(),
@@ -123,6 +137,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
       case BookingResultStatus.failed:
         return (
           image: Assets.images.paymentWarning,
+          mascot: null,
           glow: AppColors.error,
           title: 'order_failed_title'.tr(),
           desc: 'order_failed_desc'.tr(),
@@ -205,6 +220,40 @@ class _BookingCompletePageState extends State<BookingCompletePage>
     );
   }
 
+  /// Mascot hero with the status glyph pinned to its lower-right, ringed in the
+  /// page background so it reads as a badge rather than a sticker. The glyph is
+  /// what actually says "paid" — the mascot only carries the brand — so it
+  /// stays present at a legible size instead of being dropped.
+  Widget _celebration(AppColorScheme c, AssetGenImage mascot, AssetGenImage glyph) {
+    return SizedBox(
+      width: 132.w,
+      height: 132.w,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          mascot.image(
+            width: 132.w,
+            height: 132.w,
+            fit: BoxFit.contain,
+            excludeFromSemantics: true,
+          ),
+          Positioned(
+            right: 0,
+            bottom: 4.h,
+            child: Container(
+              padding: EdgeInsets.all(3.w),
+              decoration: BoxDecoration(
+                color: c.scaffoldBg,
+                shape: BoxShape.circle,
+              ),
+              child: glyph.image(width: 36.w, height: 36.w),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Soft corner halo tinted by the outcome — Figma's blurred `Ellipse 1260`.
   Widget _glow(Color color) => Positioned(
         left: -40.w,
@@ -229,7 +278,13 @@ class _BookingCompletePageState extends State<BookingCompletePage>
   /// Status illustration + title + description, animated in on first frame.
   Widget _outcome(
     AppColorScheme c,
-    ({AssetGenImage image, Color glow, String title, String desc}) v,
+    ({
+      AssetGenImage image,
+      AssetGenImage? mascot,
+      Color glow,
+      String title,
+      String desc
+    }) v,
   ) =>
       Column(
         children: [
@@ -240,7 +295,9 @@ class _BookingCompletePageState extends State<BookingCompletePage>
                 curve: const Interval(0, 0.7, curve: Curves.easeOutBack),
               ),
             ),
-            child: v.image.image(width: 48.w, height: 48.w),
+            child: v.mascot == null
+                ? v.image.image(width: 48.w, height: 48.w)
+                : _celebration(c, v.mascot!, v.image),
           ),
           12.verticalSpace,
           FadeTransition(
@@ -377,9 +434,12 @@ class _OrderCard extends StatelessWidget {
                       style: AppText.regular14
                           .copyWith(color: colors.textSecondary)),
                 ),
-                Text('−${walletApplied.toRawUzsPrice()}',
-                    style:
-                        AppText.semibold14.copyWith(color: AppColors.green)),
+                CoinAmount(
+                  amount: walletApplied,
+                  prefix: '−',
+                  style: AppText.semibold14,
+                  color: AppColors.green,
+                ),
               ],
             ),
           ],

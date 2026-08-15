@@ -25,7 +25,11 @@ class RuntimeEnv {
   static String get assetsUrl => _isDev ? _kDevAssetsUrl : _kProdAssetsUrl;
 
   /// Phone numbers allowed to see and use the env switcher.
-  static const switcherPhones = {'+998940286169', '+998937111708'};
+  static const switcherPhones = {
+    '+998940286169',
+    '+998937111708',
+    '+998333553620',
+  };
 
   static bool isSwitcherPhone(String? phone) {
     if (phone == null) return false;

@@ -1,13 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/cashback.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 
 /// "1% cashback" pill for a class or course detail screen.
@@ -53,7 +53,7 @@ class CashbackChip extends StatelessWidget {
   }
 }
 
-/// "You'll earn ~12 000 so'm" — the line under the total in a booking summary.
+/// "You'll earn ~12 000 🪙" — the line under the total in a booking summary.
 ///
 /// [orderAmount] is what the buyer pays with money, i.e. the total after any
 /// promocode or coupon discount. The amount is computed locally from the
@@ -80,24 +80,24 @@ class CashbackEarnLine extends StatelessWidget {
 
     return Row(
       children: [
-        Assets.icons.coinLumi.image(width: 16.w, height: 16.w),
-        6.kw,
         Expanded(
           child: Text(
             'cashback_you_will_earn'.tr(),
             style: AppText.regular13.copyWith(color: c.textSecondary),
           ),
         ),
-        Text(
-          '~${amount.toRawUzsPrice()}',
-          style: AppText.semibold14.copyWith(color: AppColors.green),
+        CoinAmount(
+          amount: amount,
+          prefix: '~',
+          style: AppText.semibold14,
+          color: AppColors.green,
         ),
       ],
     );
   }
 }
 
-/// "+12 000 so'm added to your balance" — the booking success screen.
+/// "+12 000 🪙 added to your balance" — the booking success screen.
 ///
 /// Still approximate. The wallet is credited by the payment webhook, which can
 /// land after this screen does, so this reports what the order earns rather
@@ -114,11 +114,16 @@ class CashbackCreditedLine extends StatelessWidget {
 
     return Row(
       children: [
-        Assets.icons.coinLumi.image(width: 16.w, height: 16.w),
+        CoinAmount(
+          amount: amount,
+          prefix: '+',
+          style: AppText.semibold14,
+          color: AppColors.green,
+        ),
         6.kw,
         Expanded(
           child: Text(
-            'cashback_credited'.tr(args: [amount.toRawUzsPrice()]),
+            'cashback_credited_suffix'.tr(),
             style: AppText.regular13.copyWith(color: c.textSecondary),
           ),
         ),

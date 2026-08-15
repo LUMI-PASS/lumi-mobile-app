@@ -1,12 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 
@@ -69,17 +69,27 @@ class UseBalanceRow extends StatelessWidget {
                   style: AppText.semibold14.copyWith(color: c.textPrimary),
                 ),
                 2.kh,
-                Text(
-                  // What's on offer when off, what's being taken when on — the
-                  // buyer should never have to toggle it to find out.
-                  on
-                      ? 'wallet_applied_amount'
-                          .tr(args: [applied.toRawUzsPrice()])
-                      : 'wallet_available_amount'
-                          .tr(args: [wallet.available.toRawUzsPrice()]),
-                  style: AppText.regular12.copyWith(
-                    color: on ? AppColors.green : c.textSecondary,
-                  ),
+                // What's on offer when off, what's being taken when on — the
+                // buyer should never have to toggle it to find out. Built as a
+                // Row rather than an interpolated string so the amount can
+                // carry the coin mark.
+                Row(
+                  children: [
+                    Text(
+                      on
+                          ? 'wallet_applied_label'.tr()
+                          : 'wallet_available_label'.tr(),
+                      style: AppText.regular12.copyWith(
+                        color: on ? AppColors.green : c.textSecondary,
+                      ),
+                    ),
+                    4.kw,
+                    CoinAmount(
+                      amount: on ? applied : wallet.available,
+                      style: AppText.semibold12,
+                      color: on ? AppColors.green : c.textSecondary,
+                    ),
+                  ],
                 ),
               ],
             ),

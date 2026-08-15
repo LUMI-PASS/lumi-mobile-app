@@ -20,5 +20,6 @@ class AppEnv {
   static const List<String> devAllowedPhones = [
     '+998940286169',
     '+998937111708',
+    '+998333553620',
   ];
 }

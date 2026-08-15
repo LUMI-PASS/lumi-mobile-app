@@ -1,11 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 
@@ -59,10 +59,10 @@ class WalletSection extends StatelessWidget {
                       style: AppText.regular13.copyWith(color: c.textSecondary),
                     ),
                     6.kh,
-                    Text(
-                      wallet.available.toRawUzsPrice(),
-                      style:
-                          AppText.heading20.copyWith(color: c.textPrimary),
+                    CoinAmount(
+                      amount: wallet.available,
+                      style: AppText.heading20,
+                      color: c.textPrimary,
                     ),
                   ],
                 ),
@@ -147,9 +147,10 @@ class _WalletSubLine extends StatelessWidget {
             style: AppText.regular12.copyWith(color: color),
           ),
         ),
-        Text(
-          amount.toRawUzsPrice(),
-          style: AppText.semibold12.copyWith(color: color),
+        CoinAmount(
+          amount: amount,
+          style: AppText.semibold12,
+          color: color,
         ),
       ],
     );

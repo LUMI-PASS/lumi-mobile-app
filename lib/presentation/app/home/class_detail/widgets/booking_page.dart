@@ -16,6 +16,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
@@ -2022,9 +2023,12 @@ class _BookingPageState extends State<BookingPage> {
                       style:
                           AppText.regular14.copyWith(color: c.textSecondary)),
                 ),
-                Text('−${_walletApplied.toRawUzsPrice()}',
-                    style:
-                        AppText.semibold14.copyWith(color: AppColors.green)),
+                CoinAmount(
+                  amount: _walletApplied,
+                  prefix: '−',
+                  style: AppText.semibold14,
+                  color: AppColors.green,
+                ),
               ],
             ),
             8.kh,
