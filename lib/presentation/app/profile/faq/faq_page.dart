@@ -37,10 +37,22 @@ class _FaqPageState extends State<FaqPage> {
       appBar: BaseAppBar(title: 'faqs_title'.tr()),
       body: ListView.separated(
         padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
-        itemCount: _faqKeys.length,
+        // +1 for the mascot header, which scrolls with the list so a long
+        // expanded answer still gets the full screen height.
+        itemCount: _faqKeys.length + 1,
         separatorBuilder: (_, __) => SizedBox(height: 12.h),
         itemBuilder: (context, index) {
-          final keys = _faqKeys[index];
+          if (index == 0) {
+            return Center(
+              child: Assets.images.mascot.mascotFaq.image(
+                width: 160.w,
+                height: 160.w,
+                fit: BoxFit.contain,
+                excludeFromSemantics: true,
+              ),
+            );
+          }
+          final keys = _faqKeys[index - 1];
           return _FaqAccordion(
             question: keys.questionKey.tr(),
             answer: keys.answerKey.tr(),

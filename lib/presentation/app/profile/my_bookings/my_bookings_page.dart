@@ -187,23 +187,11 @@ class _EmptyState extends StatelessWidget {
 
     return Column(
       children: [
-        Container(
-          width: 72.w,
-          height: 72.w,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.08),
-            shape: BoxShape.circle,
-          ),
-          child: Assets.icons.coupons.icFiles.svg(
-            width: 32.w,
-            height: 32.w,
-            fit: BoxFit.scaleDown,
-            colorFilter: ColorFilter.mode(
-              colors.primary.withValues(alpha: 0.5),
-              BlendMode.srcIn,
-            ),
-          ),
+        Assets.images.mascot.mascotCalendar.image(
+          width: 160.w,
+          height: 160.w,
+          fit: BoxFit.contain,
+          excludeFromSemantics: true,
         ),
         16.verticalSpace,
         Text(

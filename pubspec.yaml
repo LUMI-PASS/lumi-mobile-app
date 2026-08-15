@@ -129,6 +129,7 @@ flutter:
     - assets/icons/coupons/
     - assets/images/
     - assets/images/banner/
+    - assets/images/mascot/
     - assets/images/pay/
     - assets/localization/
     - assets/lotties/
