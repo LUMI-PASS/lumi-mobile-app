@@ -44,8 +44,7 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
   final HomeRepository _repo = getIt<HomeRepository>();
   final OrdersApi _api = getIt<OrdersApi>();
 
-  final PageController _pageController =
-      PageController(viewportFraction: 0.92);
+  final PageController _pageController = PageController(viewportFraction: 0.92);
 
   List<PremiumPlan> _plans = [];
   bool _isLoading = true;
@@ -227,7 +226,8 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
         return Assets.icons.icCard.svg(
           width: 20.w,
           height: 20.w,
-          colorFilter: const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+          colorFilter:
+              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
         );
     }
   }
@@ -240,8 +240,7 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
       _showError('pay_generic_error'.tr());
       return;
     }
-    final launched =
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched) {
       _showError('pay_generic_error'.tr());
       return;
@@ -434,16 +433,17 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
                             16.kh,
                             PillCard(
                               onTap: () => _choosePaymentAndPay(plan),
-                              leading:
-                                  PillIconBadge(child: _paymentLeading(_payment)),
+                              leading: PillIconBadge(
+                                  child: _paymentLeading(_payment)),
                               child: PillCaption(
                                 title: _payment == null
                                     ? 'book_pick_payment'.tr()
                                     : _payment!.rail.brandName,
                                 subtitle: 'book_pay_method_label'.tr(),
                                 captionFirst: true,
-                                titleColor:
-                                    _payment == null ? AppColors.greeting : null,
+                                titleColor: _payment == null
+                                    ? context.colors.textSecondary
+                                    : null,
                               ),
                               trailing: PillActionChip(
                                 label: _payment == null
@@ -672,8 +672,7 @@ class _HistoryTile extends StatelessWidget {
               children: [
                 Text(
                   'coupon_history_title'.tr(),
-                  style:
-                      AppText.semibold14.copyWith(color: colors.textPrimary),
+                  style: AppText.semibold14.copyWith(color: colors.textPrimary),
                 ),
                 4.kh,
                 Text(
@@ -909,9 +908,8 @@ class _Dots extends StatelessWidget {
           height: 8.w,
           margin: EdgeInsets.symmetric(horizontal: 3.w),
           decoration: BoxDecoration(
-            color: isActive
-                ? context.colors.textPrimary
-                : context.colors.border,
+            color:
+                isActive ? context.colors.textPrimary : context.colors.border,
             shape: BoxShape.circle,
           ),
         );
@@ -1060,8 +1058,8 @@ class _BuyBar extends StatelessWidget {
               4.kh,
               Text(
                 price.toRawUzsPrice(),
-                style: AppText.bold16
-                    .copyWith(color: context.colors.textPrimary),
+                style:
+                    AppText.bold16.copyWith(color: context.colors.textPrimary),
               ),
             ],
           ),
@@ -1146,8 +1144,8 @@ class _EmptyPlans extends StatelessWidget {
           Text(
             'no_plans_hint'.tr(),
             textAlign: TextAlign.center,
-            style: AppText.regular13
-                .copyWith(color: context.colors.textSecondary),
+            style:
+                AppText.regular13.copyWith(color: context.colors.textSecondary),
           ),
         ],
       ),

@@ -234,8 +234,7 @@ class _BookingCompletePageState extends State<BookingCompletePage>
                   child: Text(
                     v.desc,
                     textAlign: TextAlign.center,
-                    style: AppText.regular14
-                        .copyWith(color: AppColors.greeting),
+                    style: AppText.regular14.copyWith(color: c.textSecondary),
                   ),
                 ),
               ],
@@ -266,6 +265,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return FrostedCard(
       borderWidth: 2,
       borderRadius: BorderRadius.circular(12.r),
@@ -290,7 +290,8 @@ class _OrderCard extends StatelessWidget {
               ),
               6.horizontalSpace,
               Text('order_details'.tr(),
-                  style: AppText.semibold16.copyWith(color: AppColors.ink)),
+                  style:
+                      AppText.semibold16.copyWith(color: colors.textPrimary)),
             ],
           ),
           for (final l in lines) ...[
@@ -301,20 +302,20 @@ class _OrderCard extends StatelessWidget {
                   l.iconAsset!.svg(
                     width: 20.w,
                     height: 20.w,
-                    colorFilter: const ColorFilter.mode(
-                        AppColors.greeting, BlendMode.srcIn),
+                    colorFilter:
+                        ColorFilter.mode(colors.textSecondary, BlendMode.srcIn),
                   ),
                   8.horizontalSpace,
                 ],
                 Expanded(
                   child: Text(l.label,
                       style: AppText.regular14
-                          .copyWith(color: AppColors.inkMuted)),
+                          .copyWith(color: colors.textSecondary)),
                 ),
                 Text(
                   l.value,
                   style: AppText.semibold14.copyWith(
-                    color: l.negative ? AppColors.error : AppColors.ink,
+                    color: l.negative ? AppColors.error : colors.textPrimary,
                   ),
                 ),
               ],
@@ -325,10 +326,11 @@ class _OrderCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text('book_grand_total'.tr(),
-                    style: AppText.bold18.copyWith(color: AppColors.inkMuted)),
+                    style:
+                        AppText.bold18.copyWith(color: colors.textSecondary)),
               ),
               Text(result.totalAmount.toRawUzsPrice(),
-                  style: AppText.bold18.copyWith(color: AppColors.ink)),
+                  style: AppText.bold18.copyWith(color: colors.textPrimary)),
             ],
           ),
         ],

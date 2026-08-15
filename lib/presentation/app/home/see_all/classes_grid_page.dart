@@ -7,6 +7,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
 
@@ -116,12 +117,18 @@ class _ClassesGridPageState extends State<ClassesGridPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // A course card is priced per viewer, so a purchase made from this grid
+    // (or from a detail page opened out of it) re-prices the rows behind it.
+    // Without this the buyer returns to a card still offering the trial they
+    // have just bought.
+    catalogRevision.addListener(_restart);
     _loadMore();
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    catalogRevision.removeListener(_restart);
     _scrollController.dispose();
     super.dispose();
   }

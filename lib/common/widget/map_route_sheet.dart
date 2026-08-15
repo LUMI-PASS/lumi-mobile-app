@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -265,10 +266,18 @@ class RouteIconButton extends StatelessWidget {
           color: detailChipFill(c),
           shape: BoxShape.circle,
         ),
-        child: Assets.icons.icMap.svg(
-          width: 16.w,
-          height: 16.w,
-          colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+        // The navigation arrow, not a folded map and not a tour marker: this
+        // button starts directions somewhere, and both of those read as "look
+        // at a map" instead. It is the glyph iOS itself puts on its navigate
+        // control, so it needs no learning.
+        //
+        // Cupertino rather than an SVG from `assets/icons` only because there
+        // is no arrow glyph in there yet — drop one in and this becomes
+        // `Assets.icons.<name>.svg(...)` like every other icon in the app.
+        child: Icon(
+          CupertinoIcons.location_north_fill,
+          size: 18.w,
+          color: c.textPrimary,
         ),
       ),
     );

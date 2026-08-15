@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/env/runtime_env.dart';
+import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -50,9 +51,30 @@ String _isoDateStatic(DateTime d) {
 /// router as a page with a real [SafeArea].
 @RoutePage()
 class BookingPage extends StatefulWidget {
-  const BookingPage({super.key, required this.clazz, this.coursePrice});
+  const BookingPage({
+    super.key,
+    required this.clazz,
+    this.coursePrice,
+    this.level,
+    this.courseOption,
+  });
 
   final ClassFullModel clazz;
+
+  /// Which subcourse is being bought, on a course sold as subcourses. Null on a
+  /// flat course (the whole thing is the product) and on a plain class.
+  ///
+  /// Also the source of the trial calendar: [CourseLevel.trialNextDates] is the
+  /// set of upcoming days the backend will accept for the next trial lesson.
+  final CourseLevel? level;
+
+  /// Buying the whole course, or ONE trial lesson. Null means this isn't a
+  /// course purchase at all.
+  ///
+  /// A trial changes what the date strip means: the days come from the course's
+  /// own schedule rather than a rolling lookahead, and the day the buyer picks
+  /// IS the lesson they are buying.
+  final CoursePurchaseOption? courseOption;
 
   /// Set only for a course: the package price from `/courses/:id`, which the
   /// detail page already had. Null falls back to the class's own price, so a
@@ -133,6 +155,7 @@ class _BookingPageState extends State<BookingPage> {
       isCourse: widget.clazz.isCourse,
     );
   }
+
   bool get _hasCoupon => _couponPct > 0;
   num _applyDiscount(num price) =>
       _hasCoupon ? (price * (100 - _couponPct) / 100).round() : price;
@@ -153,11 +176,6 @@ class _BookingPageState extends State<BookingPage> {
   /// mutually exclusive: the coupon plan auto-discounts (and hides the promo
   /// field); otherwise an applied promocode reduces the total.
   num get _payableTotal {
-    // A course is charged as a package: `/courses/:id/checkout` has no
-    // promocode field and the service applies none, so subtracting one here
-    // would show a total the gateway is never going to charge. The field is on
-    // screen — it just can't move the money until the backend takes one.
-    if (_isCourse) return _total;
     if (_hasCouponPlan) return _discountedTotal;
     final t = _total - _promoDiscount;
     return t < 0 ? 0 : t;
@@ -169,8 +187,14 @@ class _BookingPageState extends State<BookingPage> {
   /// redirect — it goes straight to the success screen. Restricted to
   /// promocodes: a coupon plan that happens to hit 100% still runs the normal
   /// pay flow.
+  /// A course has no tickets to count — a free trial IS the whole order — so
+  /// the ticket test would keep the payment picker on screen while asking the
+  /// buyer to choose a card for a lesson that costs nothing. What makes an
+  /// order free is simply that there is nothing left to charge.
   bool get _isFree =>
-      !_hasCouponPlan && _totalTickets > 0 && _payableTotal == 0;
+      !_hasCouponPlan &&
+      (_isCourse || _totalTickets > 0) &&
+      _payableTotal == 0;
 
   /// Validate the entered code against the current subtotal and show a preview
   /// of the new total. The discount is re-checked server-side at checkout.
@@ -306,7 +330,7 @@ class _BookingPageState extends State<BookingPage> {
           behavior: HitTestBehavior.opaque,
           onTap: _removePromo,
           child: Icon(Icons.close_rounded,
-              size: 18.sp, color: AppColors.inkMuted),
+              size: 18.sp, color: context.colors.textSecondary),
         ),
       );
     }
@@ -330,14 +354,15 @@ class _BookingPageState extends State<BookingPage> {
               if (_promoError != null) setState(() => _promoError = null);
             },
             cursorColor: AppColors.link,
-            style: AppText.semibold14.copyWith(color: AppColors.ink),
+            style:
+                AppText.semibold14.copyWith(color: context.colors.textPrimary),
             decoration: InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.zero,
               border: InputBorder.none,
               hintText: 'promo_hint'.tr(),
-              hintStyle:
-                  AppText.semibold14.copyWith(color: AppColors.inkMuted),
+              hintStyle: AppText.semibold14
+                  .copyWith(color: context.colors.textSecondary),
             ),
           ),
           trailing: PillActionChip(
@@ -349,7 +374,8 @@ class _BookingPageState extends State<BookingPage> {
                     height: 14.w,
                     child: const CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandPink),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.brandPink),
                     ),
                   )
                 : null,
@@ -416,16 +442,12 @@ class _BookingPageState extends State<BookingPage> {
         .map((s) => _parseTime(s.startTime))
         .whereType<TimeOfDay>()
         .toList();
-    final ends = slots
-        .map((s) => _parseTime(s.endTime))
-        .whereType<TimeOfDay>()
-        .toList();
+    final ends =
+        slots.map((s) => _parseTime(s.endTime)).whereType<TimeOfDay>().toList();
     if (starts.isEmpty || ends.isEmpty) return null;
     int toMin(TimeOfDay t) => t.hour * 60 + t.minute;
-    final minT =
-        starts.reduce((a, b) => toMin(a) < toMin(b) ? a : b);
-    final maxT =
-        ends.reduce((a, b) => toMin(a) > toMin(b) ? a : b);
+    final minT = starts.reduce((a, b) => toMin(a) < toMin(b) ? a : b);
+    final maxT = ends.reduce((a, b) => toMin(a) > toMin(b) ? a : b);
     return (min: minT, max: maxT);
   }
 
@@ -441,7 +463,8 @@ class _BookingPageState extends State<BookingPage> {
       final today = DateTime(now.year, now.month, now.day);
       final from = _isoDate(today);
       final to = _isoDate(today.add(const Duration(days: _kLookaheadDays - 1)));
-      final days = await getIt<OrdersApi>().getScheduleDays(id, from: from, to: to);
+      final days =
+          await getIt<OrdersApi>().getScheduleDays(id, from: from, to: to);
       if (!mounted) return;
       setState(() {
         _scheduledDates = {
@@ -450,6 +473,18 @@ class _BookingPageState extends State<BookingPage> {
         };
         _prefetchingDays = false;
       });
+      // The page opened on today before this landed. If today turns out to have
+      // no session, move to the first day that does — the buyer should arrive
+      // on a date they can actually book, not on an empty one they have to
+      // discover and correct themselves.
+      final selected = _selectedDate;
+      if (_scheduledDates.isNotEmpty &&
+          (selected == null || !_scheduledDates.contains(selected.isoKey))) {
+        final first = _availableDates
+            .where((d) => _scheduledDates.contains(d.isoKey))
+            .firstOrNull;
+        if (first != null) await _onDateTapped(first);
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _prefetchingDays = false);
@@ -476,7 +511,8 @@ class _BookingPageState extends State<BookingPage> {
     final bounds = _slotBounds();
 
     // Default initial time: slot open time for start, one hour later for end.
-    TimeOfDay defaultStart = bounds?.min ?? const TimeOfDay(hour: 10, minute: 0);
+    TimeOfDay defaultStart =
+        bounds?.min ?? const TimeOfDay(hour: 10, minute: 0);
     TimeOfDay defaultEnd = bounds != null
         ? TimeOfDay(
             hour: (defaultStart.hour + 1).clamp(0, bounds.max.hour),
@@ -484,9 +520,8 @@ class _BookingPageState extends State<BookingPage> {
           )
         : const TimeOfDay(hour: 11, minute: 0);
 
-    final initial = start
-        ? (cur.start ?? defaultStart)
-        : (cur.end ?? defaultEnd);
+    final initial =
+        start ? (cur.start ?? defaultStart) : (cur.end ?? defaultEnd);
 
     // Clamp initial within slot bounds before opening picker.
     TimeOfDay clamped = initial;
@@ -602,12 +637,18 @@ class _BookingPageState extends State<BookingPage> {
     // Pre-select the buyer's last-used payment method so repeat checkouts are
     // one tap. Async for the card rail (needs the saved-card lookup).
     _loadLastPaymentMethod();
-    // For required-booking classes, pre-fetch which days have schedules so
-    // we can grey out unavailable chips before the user taps anything.
-    if (_requiresBookingSlot) _prefetchScheduleDays();
-    // Auto-select today so the user sees slots immediately on open.
+    // Pre-fetch which days actually have sessions, so the strip greys out the
+    // ones that don't BEFORE the user taps anything. This used to run only for
+    // required-booking classes; every other class rendered a month of days that
+    // all looked bookable, and emptiness was only discovered one tap at a time.
+    // Courses answer this from their own calendar and need no round trip.
+    if (!_isCourse) _prefetchScheduleDays();
+    // Auto-select so the user sees slots immediately on open: today for a
+    // class, and for a course the nearest day it actually runs — today is
+    // usually not one, and selecting it would open on a refusal.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_availableDates.isNotEmpty) _onDateTapped(_availableDates.first);
+      final first = _isCourse ? _firstCourseDay : _availableDates.firstOrNull;
+      if (first != null) _onDateTapped(first);
     });
   }
 
@@ -617,6 +658,17 @@ class _BookingPageState extends State<BookingPage> {
     super.dispose();
   }
 
+  /// Buying one trial lesson rather than a whole course / a class ticket.
+  bool get _isTrial => widget.courseOption == CoursePurchaseOption.trial;
+
+  /// The days the calendar offers — a continuous run from today, for a course
+  /// exactly as for a class.
+  ///
+  /// It used to list ONLY a course's session dates, which made the strip skip
+  /// (10, 11, 12, 17, 18…) and read as broken. A calendar should show the days
+  /// either side of the ones you can pick; which of them the course actually
+  /// runs on is said by [_courseScheduleKeys] instead, and drawn as enabled vs
+  /// disabled.
   List<_AvailableDate> _buildLookaheadDates() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -626,10 +678,52 @@ class _BookingPageState extends State<BookingPage> {
     });
   }
 
+  /// The days this course actually runs, as ISO keys — everything else in the
+  /// calendar is a day it doesn't.
+  ///
+  /// A trial draws from the set the backend will accept for the buyer's next
+  /// trial lesson; a whole course from the subcourse's own lesson dates. Empty
+  /// for a plain class, and empty for a course whose dates didn't load — in
+  /// both cases the strip falls back to offering every day rather than
+  /// greying out the whole month.
+  Set<String> get _courseScheduleKeys {
+    if (!_isCourse) return const {};
+    final level = widget.level;
+    final iso = _isTrial
+        ? (level?.trialNextDates ?? const <String>[])
+        : (level?.courseLessons ?? const <CourseLesson>[])
+            .map((l) => l.date)
+            .toList();
+    return iso.toSet();
+  }
+
+  /// Whether [key] is a day this course runs. Always true when we have no
+  /// schedule to go on, so an unknown never blocks a purchase.
+  bool _isCourseDay(String key) {
+    final keys = _courseScheduleKeys;
+    return keys.isEmpty || keys.contains(key);
+  }
+
+  /// The nearest day the course runs, which is what the page opens on.
+  _AvailableDate? get _firstCourseDay {
+    for (final d in _availableDates) {
+      if (_isCourseDay(d.isoKey)) return d;
+    }
+    return _availableDates.isEmpty ? null : _availableDates.first;
+  }
+
   /// Fetches slots for [d] on demand and updates the selected day. Days are
   /// always rendered as active in the carousel — emptiness is only revealed
   /// after the user taps and the per-date response comes back.
   Future<void> _onDateTapped(_AvailableDate d) async {
+    // A course can't start — and a trial can't be booked — on a day it doesn't
+    // run. The chip is greyed to say so; the tap says why rather than silently
+    // moving the selection somewhere the backend would refuse.
+    if (_isCourse && !_isCourseDay(d.isoKey)) {
+      _flag(_dateShake);
+      setState(() => _error = 'course_no_lesson_that_day'.tr());
+      return;
+    }
     setState(() {
       _selectedDate = d;
       _selectedSlot = null;
@@ -638,10 +732,20 @@ class _BookingPageState extends State<BookingPage> {
     });
     final id = widget.clazz.id;
     if (id == null) return;
+    // Buying a WHOLE course books no single session: the day picked here is a
+    // start date, and the month it opens is shown instead of a slot list, so
+    // the query would be one whose answer nothing reads.
+    //
+    // A trial is the opposite — it books one session on one day, off the
+    // activity's own schedule, exactly like a class ticket. It must keep
+    // asking, or the times never load and the buyer picks a day with no hour
+    // attached to it.
+    if (_isCourse && !_isTrial) return;
 
-    // Pre-fetch already confirmed this date has no slots — skip the network call.
-    if (_requiresBookingSlot &&
-        !_prefetchingDays &&
+    // Pre-fetch already confirmed this date has no slots — skip the network
+    // call and say so. Applies to every class now that the pre-fetch runs for
+    // all of them: a day the strip greys out shouldn't still be queried.
+    if (!_prefetchingDays &&
         _scheduledDates.isNotEmpty &&
         !_scheduledDates.contains(d.isoKey)) {
       _slotCache[d.isoKey] = const [];
@@ -701,6 +805,27 @@ class _BookingPageState extends State<BookingPage> {
 
   num get _total {
     if (_isCourse) {
+      // The picked subcourse decides the price — Beginner and Advanced cost
+      // different amounts, and the class-level fallback below is the whole
+      // course's headline figure, which is the wrong number for either of them.
+      // A trial is priced per lesson, not per course.
+      final level = widget.level;
+      if (_isTrial) {
+        // A trial NEVER costs the course price — that is the thing it exists to
+        // avoid committing to. `next_price` of 0 is a real answer ("first
+        // lesson free"), so only a null may fall back, and only as far as the
+        // next unbought lesson's own price. Testing `> 0` here is what put the
+        // whole course's figure in front of a buyer being offered a free trial.
+        final next = level?.trialNextPrice;
+        if (next != null) return next;
+        final lesson = level?.trialLessons
+            .where((l) => l.isAvailable)
+            .firstOrNull;
+        return lesson?.price ?? 0;
+      }
+      if ((level?.coursePrice ?? 0) > 0) {
+        return level!.coursePrice;
+      }
       final package = widget.coursePrice ?? 0;
       if (package > 0) return package;
       final min = widget.clazz.priceMin;
@@ -818,8 +943,9 @@ class _BookingPageState extends State<BookingPage> {
       final descriptors = _ticketDescriptors();
       for (var i = 0; i < descriptors.length; i++) {
         final desc = descriptors[i];
-        final win =
-            i < _customWindows.length ? _customWindows[i] : const _TicketWindow();
+        final win = i < _customWindows.length
+            ? _customWindows[i]
+            : const _TicketWindow();
         items.add(CheckoutItem(
           ageFrom: desc.ageFrom,
           ageTo: desc.ageTo,
@@ -884,9 +1010,18 @@ class _BookingPageState extends State<BookingPage> {
   /// still missing — when the user can't pay yet.
   bool _validateForPayment() {
     if (_error != null) setState(() => _error = null);
-    // A course has no tickets, date or slot to validate — only the id it is
-    // bought against, and the payment method, which _pay asks for.
-    if (_isCourse) return widget.clazz.id != null;
+    // A course has no tickets or slots to validate, but it does have a day: the
+    // trial lesson being bought, or the month's start date. The calendar
+    // auto-selects the nearest one, so this only fires if that was cleared.
+    if (_isCourse) {
+      if (widget.clazz.id == null) return false;
+      if (_selectedDate == null && _availableDates.isNotEmpty) {
+        _flag(_dateShake);
+        setState(() => _error = 'book_pick_date'.tr());
+        return false;
+      }
+      return true;
+    }
     // Each branch says what is missing as well as shaking the field. A shake
     // alone reads as "the button is broken" — the buyer taps Pay, no request
     // goes out, and nothing on screen explains why.
@@ -986,7 +1121,9 @@ class _BookingPageState extends State<BookingPage> {
       // clean, localized message instead of the raw string.
       final low = raw.toLowerCase();
       final isDayUnavailable = low.contains('run on') &&
-          (low.contains('available') || low.contains("doesn't") || low.contains('does not'));
+          (low.contains('available') ||
+              low.contains("doesn't") ||
+              low.contains('does not'));
       // A gateway code ("card_not_found", "insufficient_funds") arrives wrapped
       // in our own prose. Say what the buyer can actually do about it rather
       // than surfacing the machine string.
@@ -1026,8 +1163,12 @@ class _BookingPageState extends State<BookingPage> {
     final usedCoupon = _hasCoupon;
     final requiresSlot = _requiresBookingSlot;
     final id = widget.clazz.id;
+    markCatalogChanged();
     if (!mounted) return;
-    Navigator.of(context).pop(); // close booking sheet
+    // Truthy for the same reason as in [_completeCardPaid]: the course detail
+    // page reloads on it, so a trial bought through the gateway unlocks the
+    // next rung instead of coming back to a stale ladder.
+    Navigator.of(context).pop(true); // close booking sheet
     if (!RemoteConfigService.instance.isInReview) {
       await Navigator.of(context).push(
         MaterialPageRoute(
@@ -1065,7 +1206,14 @@ class _BookingPageState extends State<BookingPage> {
     if (_isCourse) {
       out.add(_SummaryLine(
         icon: Assets.icons.detail.iconsaxAiCalendar,
-        label: 'course_full_title'.tr(),
+        // Name what is actually being bought: one trial lesson, a named
+        // subcourse, or the course. A subcourse charged under a bare "Course"
+        // line gave the buyer no way to check they picked the right one.
+        label: _isTrial
+            ? 'course_trial_lesson_one'.tr()
+            : (widget.level?.name?.trim().isNotEmpty == true
+                ? widget.level!.name!.trim()
+                : 'course_full_title'.tr()),
         value: _total.toRawUzsPrice(),
       ));
     }
@@ -1160,8 +1308,14 @@ class _BookingPageState extends State<BookingPage> {
     final requiresSlot = _requiresBookingSlot;
     final id = widget.clazz.id;
     final lines = _orderLines();
+    // Course card prices are per-viewer and this purchase just moved them.
+    markCatalogChanged();
     if (!mounted) return;
-    Navigator.of(context).pop(); // close booking sheet
+    // Pop TRUE, not bare: the course detail page reloads on a truthy result,
+    // and without it a bought trial left the ladder showing the old state —
+    // the next lesson stayed locked until the screen was reopened. Harmless
+    // for a class, whose caller doesn't read the result.
+    Navigator.of(context).pop(true); // close booking sheet
     if (requiresSlot) {
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingRequested,
@@ -1218,10 +1372,18 @@ class _BookingPageState extends State<BookingPage> {
                         child: _DateStrip(
                           dates: _availableDates,
                           selected: _selectedDate,
-                          unavailableDates:
-                              _requiresBookingSlot && !_prefetchingDays
-                                  ? _scheduledDates
-                                  : null,
+                          // "Days that DO have a session" — everything else is
+                          // greyed. For a course that is its own calendar; for
+                          // a required-booking class, the pre-fetched schedule.
+                          unavailableDates: _isCourse
+                              ? (_courseScheduleKeys.isEmpty
+                                  ? null
+                                  : _courseScheduleKeys)
+                              : (_prefetchingDays ? null : _scheduledDates),
+                          // The month a whole-course purchase covers, lit up in
+                          // the calendar itself. Moving the start date moves the
+                          // whole window with it.
+                          inRangeDates: _courseMonthKeys,
                           onPickDate: _onDateTapped,
                         ),
                       ),
@@ -1243,9 +1405,15 @@ class _BookingPageState extends State<BookingPage> {
                           20.kh,
                           Shaker(
                             key: _timeShake,
-                            child: _requiresBookingSlot
-                                ? _customWindowsSection(c)
-                                : _slotsSection(c),
+                            // Buying a whole month of a course: the lessons are
+                            // the course's own, not slots to be picked off the
+                            // activity's calendar, so the month is SHOWN rather
+                            // than chosen from.
+                            child: _isCourse && !_isTrial
+                                ? _courseMonthSection(c)
+                                : _requiresBookingSlot
+                                    ? _customWindowsSection(c)
+                                    : _slotsSection(c),
                           ),
                           // A fully-discounted order has nothing to charge, so
                           // the payment-method picker is hidden entirely.
@@ -1294,8 +1462,7 @@ class _BookingPageState extends State<BookingPage> {
               child: Assets.icons.detail.arrow.svg(
                 width: 16.w,
                 height: 16.w,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
               ),
             ),
             Expanded(
@@ -1332,8 +1499,8 @@ class _BookingPageState extends State<BookingPage> {
 
   Widget _sectionHeader(AppColorScheme c, String title) => Padding(
         padding: EdgeInsets.only(left: 8.w, bottom: 14.h),
-        child:
-            Text(title, style: AppText.semibold14.copyWith(color: c.textSecondary)),
+        child: Text(title,
+            style: AppText.semibold14.copyWith(color: c.textSecondary)),
       );
 
   // "Цены на билеты" — one frosted pill row per tariff, each with a stepper.
@@ -1349,9 +1516,11 @@ class _BookingPageState extends State<BookingPage> {
       required int count,
       required VoidCallback onMinus,
       required VoidCallback onPlus,
+      bool locked = false,
     }) {
       if (rows.isNotEmpty) rows.add(8.kh);
       rows.add(_TariffRow(
+        locked: locked,
         // Adult tiers get the "users" glyph, children the "baby" one — the same
         // split the order summary uses.
         icon: ageFrom >= 6 || ageTo == null
@@ -1367,7 +1536,31 @@ class _BookingPageState extends State<BookingPage> {
       ));
     }
 
-    if (_hasAgeTiers) {
+    // A trial is ONE lesson for ONE child — the ladder sells them singly, and
+    // the backend refuses more than one date per order. So it gets a single
+    // fixed row at the trial's own price, instead of the class's age-tier list
+    // whose steppers moved a total they never fed into.
+    if (_isTrial) {
+      // Who the lesson is for, said the way an activity says it — the age range
+      // is the one fact a parent checks before paying, and a bare "Trial
+      // lesson" left them to go back and look it up.
+      final tier = widget.clazz.ageTiers.firstOrNull;
+      final range = tier?.rangeLabel ??
+          widget.clazz.pricesSummary.firstOrNull?.rangeLabel;
+      addRow(
+        ageFrom: tier?.ageFrom ?? 0,
+        ageTo: tier?.ageTo,
+        label: range == null || range.isEmpty
+            ? 'course_trial_lesson_one'.tr()
+            : '${'course_trial_lesson_one'.tr()} · $range',
+        durationLabel: null,
+        price: _total,
+        count: 1,
+        locked: true,
+        onMinus: () {},
+        onPlus: () {},
+      );
+    } else if (_hasAgeTiers) {
       for (var t = 0; t < widget.clazz.ageTiers.length; t++) {
         final tier = widget.clazz.ageTiers[t];
         for (var d = 0; d < tier.durations.length; d++) {
@@ -1439,23 +1632,124 @@ class _BookingPageState extends State<BookingPage> {
   /// in for the ticket rows, which a package has none of.
   Widget _courseSection(AppColorScheme c) {
     final branch = widget.clazz.branch?.title?.trim() ?? '';
+    // A subcourse is the product being bought, so it takes the title and the
+    // course it belongs to drops beside the centre. A flat course has no
+    // subcourse and titles itself.
+    final levelName = widget.level?.name?.trim() ?? '';
+    final title = levelName.isNotEmpty ? levelName : _courseTitle;
+    final caption = [
+      if (levelName.isNotEmpty) _courseTitle,
+      if (branch.isNotEmpty) branch,
+    ].where((s) => s.isNotEmpty).join(' · ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(c, 'course_full_title'.tr()),
+        _sectionHeader(
+          c,
+          _isTrial ? 'course_trial_book_title'.tr() : 'course_full_title'.tr(),
+        ),
         PillCard(
           leading: PillIconBadge(
             child: Assets.icons.detail.iconsaxAiCalendar.svg(
               width: 20.w,
               height: 20.w,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
             ),
           ),
           trailing: PillActionChip(label: _total.toRawUzsPrice()),
           child: PillCaption(
-            title: _courseTitle,
-            subtitle: branch.isEmpty ? 'course_full_title'.tr() : branch,
+            title: title,
+            subtitle: caption.isEmpty ? 'course_full_title'.tr() : caption,
+            captionFirst: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The lessons a whole-course purchase actually buys: everything on the
+  /// subcourse's own calendar from the picked start date, for one month.
+  ///
+  /// One month because that is what the price is — a subcourse is sold by the
+  /// month — so the list and the figure beside it describe the same thing. The
+  /// start date moves the window, which is the point of picking it.
+  List<CourseLesson> get _courseMonthLessons {
+    final lessons = widget.level?.courseLessons ?? const <CourseLesson>[];
+    final start = _selectedDate?.date;
+    if (lessons.isEmpty || start == null) return const [];
+    final end = DateTime(start.year, start.month + 1, start.day);
+    final out = <CourseLesson>[];
+    for (final lesson in lessons) {
+      final d = DateTime.tryParse(lesson.date);
+      if (d == null) continue;
+      final day = DateTime(d.year, d.month, d.day);
+      if (day.isBefore(start) || !day.isBefore(end)) continue;
+      out.add(lesson);
+    }
+    out.sort((a, b) => a.date.compareTo(b.date));
+    return out;
+  }
+
+  /// The days of [_courseMonthLessons], for lighting them up in the calendar.
+  Set<String> get _courseMonthKeys {
+    if (!_isCourse || _isTrial) return const {};
+    return _courseMonthLessons.map((l) => l.date).toSet();
+  }
+
+  /// What the lit-up month adds up to: the window it spans, how many lessons
+  /// that is, and the time they run at.
+  ///
+  /// A line rather than the list of dates it used to be — the calendar above
+  /// already shows every one of those days, and printing them again underneath
+  /// said the same thing twice at ten times the height.
+  Widget _courseMonthSection(AppColorScheme c) {
+    final lessons = _courseMonthLessons;
+    if (lessons.isEmpty) return const SizedBox.shrink();
+
+    final first = DateTime.tryParse(lessons.first.date);
+    final last = DateTime.tryParse(lessons.last.date);
+    String day(DateTime d) => '${d.day} ${'month_short_${d.month}'.tr()}';
+    final range =
+        first == null || last == null ? '' : '${day(first)} – ${day(last)}';
+
+    final start = lessons.first.startTime?.trim() ?? '';
+    final end = lessons.first.endTime?.trim() ?? '';
+    final time = start.isEmpty ? '' : (end.isEmpty ? start : '$start – $end');
+
+    // Which weekdays it runs on, in week order rather than the order the dates
+    // happen to arrive in — "Mon, Tue, Thu" is how a parent holds a timetable,
+    // and it is the one fact the range and the clock don't tell them.
+    final weekdayNums = lessons
+        .map((l) => DateTime.tryParse(l.date)?.weekday)
+        .whereType<int>()
+        .toSet()
+        .toList()
+      ..sort();
+    final weekdays =
+        weekdayNums.map((w) => 'weekday_short_$w'.tr()).join(', ');
+    final caption =
+        [weekdays, time].where((s) => s.isNotEmpty).join('  ·  ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          c,
+          'course_month_schedule'.tr(
+            namedArgs: {'count': '${lessons.length}'},
+          ),
+        ),
+        PillCard(
+          leading: PillIconBadge(
+            child: Assets.icons.detail.icCalendar.svg(
+              width: 20.w,
+              height: 20.w,
+              colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+            ),
+          ),
+          child: PillCaption(
+            title: range,
+            subtitle: caption.isEmpty ? 'course_full_title'.tr() : caption,
             captionFirst: true,
           ),
         ),
@@ -1491,7 +1785,7 @@ class _BookingPageState extends State<BookingPage> {
                 : (card?.label ?? payment.rail.brandName),
             subtitle: 'book_pay_method_label'.tr(),
             captionFirst: true,
-            titleColor: payment == null ? AppColors.greeting : null,
+            titleColor: payment == null ? c.textSecondary : null,
           ),
           trailing: PillActionChip(
             label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
@@ -1537,7 +1831,7 @@ class _BookingPageState extends State<BookingPage> {
               ),
               6.kw,
               Text('book_payment_summary'.tr(),
-                  style: AppText.semibold16.copyWith(color: AppColors.ink)),
+                  style: AppText.semibold16.copyWith(color: c.textPrimary)),
             ],
           ),
           for (final l in _summaryLines()) ...[
@@ -1547,19 +1841,19 @@ class _BookingPageState extends State<BookingPage> {
                 l.icon.svg(
                   width: 20.w,
                   height: 20.w,
-                  colorFilter: const ColorFilter.mode(
-                      AppColors.greeting, BlendMode.srcIn),
+                  colorFilter:
+                      ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
                 ),
                 8.kw,
                 Expanded(
                   child: Text(l.label,
-                      style: AppText.regular14
-                          .copyWith(color: AppColors.inkMuted)),
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
                 ),
                 Text(
                   l.value,
                   style: AppText.semibold14.copyWith(
-                    color: l.negative ? AppColors.error : AppColors.ink,
+                    color: l.negative ? AppColors.error : c.textPrimary,
                   ),
                 ),
               ],
@@ -1570,10 +1864,10 @@ class _BookingPageState extends State<BookingPage> {
             children: [
               Expanded(
                 child: Text('book_grand_total'.tr(),
-                    style: AppText.bold18.copyWith(color: AppColors.inkMuted)),
+                    style: AppText.bold18.copyWith(color: c.textSecondary)),
               ),
               Text(_payableTotal.toRawUzsPrice(),
-                  style: AppText.bold18.copyWith(color: AppColors.ink)),
+                  style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
         ],
@@ -1583,7 +1877,7 @@ class _BookingPageState extends State<BookingPage> {
 
   /// The glyph inside the white [PillIconBadge]: the chosen card's brand
   /// artwork, the rail's brand mark, or a neutral card icon when nothing is
-  /// picked. Always on a light surface, so the icon uses [AppColors.ink].
+  /// picked.
   Widget _paymentLeading(PaymentSelection? payment) {
     final card = payment?.card;
     if (card != null) {
@@ -1603,7 +1897,8 @@ class _BookingPageState extends State<BookingPage> {
         return Assets.icons.icCard.svg(
           width: 20.w,
           height: 20.w,
-          colorFilter: const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+          colorFilter:
+              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
         );
     }
   }
@@ -1773,8 +2068,28 @@ class _BookingPageState extends State<BookingPage> {
         _error = null;
       });
       try {
-        // No provider/card — the backend creates the order and, with a zero
-        // total, marks it paid; there is no checkout URL to open.
+        // A course settles through its OWN endpoint — `_runCheckout` writes an
+        // activity order, which is the wrong kind of thing entirely. Same deal
+        // either way: no provider, because there is nothing to charge; the
+        // server marks it paid and fulfils it, and there is no URL to open.
+        if (_isCourse) {
+          final result = await getIt<CoursesApi>().checkout(
+            activityId: widget.clazz.id!,
+            option: widget.courseOption ?? CoursePurchaseOption.full,
+            subcourseId: widget.level?.id,
+            trialDates: _isTrial && _selectedDate != null
+                ? [_selectedDate!.isoKey]
+                : null,
+            startsAt: !_isTrial ? _selectedDate?.isoKey : null,
+          );
+          if (!mounted) return;
+          setState(() => _submitting = false);
+          // The server has already settled and fulfilled it, so this lands on
+          // the same success screen a 100%-promocode booking does — a free
+          // purchase that just closed the page looked like it had failed.
+          _completeCardPaid(result);
+          return;
+        }
         final order = await _runCheckout();
         if (!mounted) return;
         setState(() => _submitting = false);
@@ -1797,9 +2112,9 @@ class _BookingPageState extends State<BookingPage> {
     final payment = _payment!;
     final card = payment.card;
 
-    // A course buys the whole package through its own endpoint, then lands on
-    // the same checkout page an activity does. No level is named — the backend
-    // picks the cheapest one with seats when `subcourse_id` is absent.
+    // A course buys its package through its own endpoint, then lands on the
+    // same checkout page an activity does. With no subcourse named the backend
+    // picks the cheapest one with seats.
     if (_isCourse) {
       setState(() {
         _submitting = true;
@@ -1808,7 +2123,15 @@ class _BookingPageState extends State<BookingPage> {
       try {
         final result = await getIt<CoursesApi>().checkout(
           activityId: widget.clazz.id!,
-          option: 'full',
+          option: widget.courseOption ?? CoursePurchaseOption.full,
+          subcourseId: widget.level?.id,
+          // Trials are sold one at a time, by date: the day picked in the
+          // calendar above IS the lesson being bought.
+          trialDates: _isTrial && _selectedDate != null
+              ? [_selectedDate!.isoKey]
+              : null,
+          // Whole course: the day picked above is when the enrolment starts.
+          startsAt: !_isTrial ? _selectedDate?.isoKey : null,
           paymentProvider: payment.rail.providerKey,
           returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
         );
@@ -1945,6 +2268,7 @@ class _DateStrip extends StatefulWidget {
     required this.selected,
     required this.onPickDate,
     this.unavailableDates,
+    this.inRangeDates = const {},
   });
 
   final List<_AvailableDate> dates;
@@ -1954,6 +2278,10 @@ class _DateStrip extends StatefulWidget {
   /// dimmed — but stay tappable, so the user can tap one and read why it is
   /// empty instead of wondering why it does nothing.
   final Set<String>? unavailableDates;
+
+  /// ISO days a whole-course purchase covers, so the strip shows the month it
+  /// buys rather than making the buyer read a list underneath it.
+  final Set<String> inRangeDates;
 
   final ValueChanged<_AvailableDate> onPickDate;
 
@@ -2003,6 +2331,20 @@ class _DateStripState extends State<_DateStrip> {
     );
   }
 
+  /// Whether a day should read as OFF: nothing runs on it.
+  ///
+  /// Deliberately the ONLY reason a chip dims. A course day outside the month
+  /// being bought is not dimmed — it is a real session the buyer can start
+  /// from, and collapsing it into the same grey as "the course doesn't run that
+  /// day" was what made the strip unreadable. That distinction is carried by
+  /// the tint instead: [_DateChip.isInRange] marks the days this purchase
+  /// covers, leaving three legible states — off, on, and included.
+  bool _isDimmed(_AvailableDate date, Set<String>? unavailable) {
+    return unavailable != null &&
+        unavailable.isNotEmpty &&
+        !unavailable.contains(date.isoKey);
+  }
+
   @override
   Widget build(BuildContext context) {
     final unavailable = widget.unavailableDates;
@@ -2020,9 +2362,8 @@ class _DateStripState extends State<_DateStrip> {
             _DateChip(
               date: widget.dates[i],
               isSelected: widget.selected?.isoKey == widget.dates[i].isoKey,
-              isUnavailable: unavailable != null &&
-                  unavailable.isNotEmpty &&
-                  !unavailable.contains(widget.dates[i].isoKey),
+              isUnavailable: _isDimmed(widget.dates[i], unavailable),
+              isInRange: widget.inRangeDates.contains(widget.dates[i].isoKey),
               onTap: () => widget.onPickDate(widget.dates[i]),
             ),
           ],
@@ -2183,6 +2524,7 @@ class _DateChip extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.isUnavailable = false,
+    this.isInRange = false,
   });
 
   /// Fixed so every chip is the same width whether or not it is selected —
@@ -2192,18 +2534,22 @@ class _DateChip extends StatelessWidget {
   final _AvailableDate date;
   final bool isSelected;
   final bool isUnavailable;
+
+  /// One of the days a whole-course purchase covers, without being the start
+  /// date itself. Tinted rather than pilled: the buyer picks ONE day (the
+  /// start), and the rest are the consequence of that pick, not further
+  /// choices.
+  final bool isInRange;
+
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final d = date.date;
-    // The selected chip sits on the pale frosted pill — which stays light in
-    // both themes — so it keeps the fixed inks. The rest are bare text on the
-    // canvas, which goes dark, so they must read their colours from the theme:
-    // fixed ink on a dark canvas is all but invisible.
-    final dayColor = isSelected ? AppColors.ink : c.textPrimary;
-    final mutedColor = isSelected ? AppColors.greeting : c.textSecondary;
+    // Both the selected frosted pill and the bare canvas use theme colours.
+    final dayColor = c.textPrimary;
+    final mutedColor = c.textSecondary;
 
     final content = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -2236,7 +2582,16 @@ class _DateChip extends StatelessWidget {
             : GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onTap,
-                child: Padding(padding: padding, child: content),
+                child: isInRange
+                    ? Container(
+                        padding: padding,
+                        decoration: BoxDecoration(
+                          color: AppColors.brandPurple.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(56.r),
+                        ),
+                        child: content,
+                      )
+                    : Padding(padding: padding, child: content),
               ),
       ),
     );
@@ -2256,6 +2611,7 @@ class _TariffRow extends StatelessWidget {
     required this.onMinus,
     required this.onPlus,
     this.discountedPrice,
+    this.locked = false,
   });
 
   final SvgGenImage icon;
@@ -2273,6 +2629,10 @@ class _TariffRow extends StatelessWidget {
   final VoidCallback onMinus;
   final VoidCallback onPlus;
 
+  /// Quantity is fixed — render the number, not a stepper. A trial is one
+  /// lesson for one child; there is nothing to count up.
+  final bool locked;
+
   @override
   Widget build(BuildContext context) {
     final priceText = price > 0 ? price.toRawUzsPrice() : '—';
@@ -2284,15 +2644,22 @@ class _TariffRow extends StatelessWidget {
           width: 20.w,
           height: 20.w,
           colorFilter:
-              const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
         ),
       ),
-      trailing: _Stepper(count: count, onMinus: onMinus, onPlus: onPlus),
+      trailing: locked
+          // A fixed quantity gets the number alone. Showing +/- that refuse to
+          // move reads as a broken control; showing none says "this is one, and
+          // one is all it can be".
+          ? PillActionChip(label: '$count')
+          : _Stepper(count: count, onMinus: onMinus, onPlus: onPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: AppText.semibold14.copyWith(color: AppColors.ink)),
+          Text(label,
+              style: AppText.semibold14
+                  .copyWith(color: context.colors.textPrimary)),
           4.kh,
           // Wrap, not Row: a long duration + price pair wraps instead of
           // overflowing on narrow screens.
@@ -2303,11 +2670,11 @@ class _TariffRow extends StatelessWidget {
               if (durationLabel != null)
                 Text('$durationLabel ·',
                     style: AppText.regular12
-                        .copyWith(color: AppColors.greeting)),
+                        .copyWith(color: context.colors.textSecondary)),
               Text(
                 priceText,
                 style: AppText.regular12.copyWith(
-                  color: AppColors.greeting,
+                  color: context.colors.textSecondary,
                   decoration:
                       discounted != null ? TextDecoration.lineThrough : null,
                 ),
@@ -2315,8 +2682,7 @@ class _TariffRow extends StatelessWidget {
               if (discounted != null)
                 Text(
                   discounted > 0 ? discounted.toRawUzsPrice() : '—',
-                  style:
-                      AppText.semibold12.copyWith(color: AppColors.tagGreen),
+                  style: AppText.semibold12.copyWith(color: AppColors.tagGreen),
                 ),
             ],
           ),
@@ -2352,7 +2718,8 @@ class _Stepper extends StatelessWidget {
           width: 27.w,
           child: Center(
             child: Text('$count',
-                style: AppText.bold18.copyWith(color: AppColors.ink)),
+                style:
+                    AppText.bold18.copyWith(color: context.colors.textPrimary)),
           ),
         ),
         _StepperButton(icon: Icons.add, onTap: onPlus),
@@ -2379,14 +2746,15 @@ class _StepperButton extends StatelessWidget {
         width: 26.w,
         height: 26.w,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: AppColors.inkChip,
+        decoration: BoxDecoration(
+          color: context.colors.control,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
           size: 14.w,
-          color: disabled ? AppColors.inkMuted : AppColors.ink,
+          color:
+              disabled ? context.colors.textMuted : context.colors.textPrimary,
         ),
       ),
     );
@@ -2519,16 +2887,15 @@ class _PerTicketWindowCard extends StatelessWidget {
                 ),
                 child: Text(
                   'book_ticket_index'.tr(args: ['${index + 1}']),
-                  style:
-                      AppText.semibold12.copyWith(color: AppColors.onBrand),
+                  style: AppText.semibold12.copyWith(color: AppColors.onBrand),
                 ),
               ),
               8.kw,
               Expanded(
                 child: Text(
                   subtitle,
-                  style:
-                      AppText.regular12.copyWith(color: AppColors.greeting),
+                  style: AppText.regular12
+                      .copyWith(color: context.colors.textSecondary),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -2644,14 +3011,15 @@ class _TimeBox extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: AppColors.inkChip,
+          color: context.colors.control,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: AppText.regular12.copyWith(color: AppColors.greeting)),
+                style: AppText.regular12
+                    .copyWith(color: context.colors.textSecondary)),
             4.kh,
             Row(
               children: [
@@ -2662,7 +3030,9 @@ class _TimeBox extends StatelessWidget {
                   value,
                   style: AppText.semibold16.copyWith(
                     // An unfilled slot reads as a placeholder, not a value.
-                    color: unset ? AppColors.inkMuted : AppColors.ink,
+                    color: unset
+                        ? context.colors.textMuted
+                        : context.colors.textPrimary,
                   ),
                 ),
               ],
@@ -2725,7 +3095,10 @@ class _BookingRequestedPage extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppColors.brandPurple, const Color(0xFF9C7EF8)],
+                          colors: [
+                            AppColors.brandPurple,
+                            const Color(0xFF9C7EF8)
+                          ],
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -2769,8 +3142,7 @@ class _BookingRequestedPage extends StatelessWidget {
               28.kh,
               // Notification note card
               Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 16.w, vertical: 14.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                 decoration: BoxDecoration(
                   color: c.control,
                   borderRadius: BorderRadius.circular(16.r),

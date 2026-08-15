@@ -12,12 +12,11 @@ enum CardTone {
   control,
 }
 
-/// A card that keeps [FrostedCard]'s pale gradient in light, and swaps to a
-/// flat raised surface in dark.
+/// A card that uses [FrostedCard] in light and a selectable flat surface tone
+/// in dark.
 ///
-/// [FrostedCard] is a light-only treatment — its `#f2f4ff → #f8f8f8` gradient
-/// glows on an ink background. Screens that exist in both themes want this
-/// instead, so their text can stay on `context.colors` roles.
+/// Use this when the dark design calls for a flat `surface`/`control` tone;
+/// use [FrostedCard] when it should retain its gradient in both themes.
 class AdaptiveCard extends StatelessWidget {
   const AdaptiveCard({
     super.key,

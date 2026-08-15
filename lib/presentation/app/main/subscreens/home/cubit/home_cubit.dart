@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
+import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -28,6 +29,11 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   // place; a page 2 measured from somewhere else would repeat and skip rows.
   double? _lat;
   double? _lng;
+
+  /// The catalog revision this feed was built from. A course card is priced
+  /// per viewer, so buying a trial changes what its card should say — see
+  /// [catalogRevision].
+  int _lastCatalogRevision = catalogRevision.value;
 
   /// Set once the location has been resolved, so a later `initWithLocation`
   /// (the page is re-entered on every tab switch) doesn't re-run the whole
@@ -164,8 +170,17 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // city centre for the rest of the session. Nothing else notices that
     // change, so this is the place to catch it.
     final locationChanged = await _adoptLocationGrantedElsewhere();
+    // A purchase completed elsewhere in the app re-prices every course card:
+    // the trial just bought is no longer the one on offer.
+    final catalogChanged = _lastCatalogRevision != catalogRevision.value;
 
-    if (!langChanged && !couponChanged && !locationChanged) return;
+    if (!langChanged &&
+        !couponChanged &&
+        !locationChanged &&
+        !catalogChanged) {
+      return;
+    }
+    _lastCatalogRevision = catalogRevision.value;
 
     _lastLang = lang;
     _lastKnownHasPremium = hasPremium;

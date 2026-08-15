@@ -163,7 +163,15 @@ class HomClass with _$HomClass {
     /// How many trial lessons the course sells (normally 3).
     int? trialLessons,
     /// Price of the WHOLE course. `trialPrice` above is the trial total.
+    ///
+    /// For a course sold as LEVELS this is the CHEAPEST level's price — there is
+    /// no single course price — and [priceFrom] is true so the card renders it
+    /// as "from X".
     num? coursePrice,
+    /// True when this course is sold as levels, so [coursePrice] is a floor.
+    bool? priceFrom,
+    /// How many levels are on sale. 0 for a course without levels.
+    int? subcoursesCount,
     /// Cohort size for full enrolment. null = unlimited.
     int? seats,
 

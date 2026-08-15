@@ -1,6 +1,6 @@
+import 'package:auto_route/auto_route.dart';
 import 'dart:ui';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -47,11 +47,8 @@ class HomeCourseCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        final c = hc ?? const HomClass();
-        // Courses reuse the class detail screen + booking flow — no separate UI.
-        context.router.push(ClassDetailRoute(classModel: c));
-      },
+      onTap: () => context.router
+          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       child: Container(
         width: width ?? 168.w,
         margin: margin ?? EdgeInsets.only(left: 16.w),
@@ -92,11 +89,8 @@ class HomeNearbyCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        final c = hc ?? const HomClass();
-        // Courses reuse the class detail screen + booking flow — no separate UI.
-        context.router.push(ClassDetailRoute(classModel: c));
-      },
+      onTap: () => context.router
+          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         child: Column(
@@ -342,23 +336,33 @@ class _CoursePriceText extends StatelessWidget {
     final money = price.toRawUzsPrice();
 
     final String label;
-    switch (kind) {
-      case CoursePriceKind.trialFree:
-        // "First lesson" only reads right for the first one — someone who has
-        // already been to one is being offered their next.
-        label = (hc.trialLessonNo ?? 1) <= 1
-            ? 'course_card_try_free'.tr()
-            : 'course_card_try_next_free'.tr();
-      case CoursePriceKind.trial:
-        label = 'course_card_try_for'.tr(namedArgs: {'price': money});
-      case CoursePriceKind.trialNext:
-        label = 'course_card_next_lesson'.tr(namedArgs: {'price': money});
-      case CoursePriceKind.full:
-        label = 'course_card_whole_course'.tr(namedArgs: {'price': money});
-      case CoursePriceKind.unknown:
-        // A kind this build doesn't model yet: print the figure and nothing
-        // around it. Wrong in emphasis, never wrong in money.
-        label = money;
+    if (hc.priceFrom == true && kind != CoursePriceKind.trialFree) {
+      // A levelled course has no single card price. The server sends the
+      // cheapest eligible level, so keep the existing "From" treatment rather
+      // than presenting that floor as the price of every level.
+      label = 'price_from'.tr(args: [money]);
+    } else {
+      switch (kind) {
+        case CoursePriceKind.trialFree:
+          // "First lesson" only reads right for the first one — someone who
+          // has already been to one is being offered their next.
+          label = (hc.trialLessonNo ?? 1) <= 1
+              ? 'course_card_try_free'.tr()
+              : 'course_card_try_next_free'.tr();
+        case CoursePriceKind.trial:
+          label = 'course_card_try_for'.tr(namedArgs: {'price': money});
+        case CoursePriceKind.trialNext:
+          label = 'course_card_next_lesson'.tr(namedArgs: {'price': money});
+        case CoursePriceKind.full:
+          // Nothing left to try, so there is no offer left to word — the course
+          // price IS the price. A "Whole course —" prefix only competed with
+          // the figure beside it for the same single line.
+          label = money;
+        case CoursePriceKind.unknown:
+          // A kind this build doesn't model yet: print the figure and nothing
+          // around it. Wrong in emphasis, never wrong in money.
+          label = money;
+      }
     }
 
     // The figure the headline ISN'T showing.
@@ -443,7 +447,8 @@ class _PriceText extends StatelessWidget {
         ? 'price_from'.tr(args: [v.toRawUzsPrice()])
         : v.toRawUzsPrice();
 
-    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final app =
+        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     // The coupon can't cut deeper than Lumi's share of this class, so the
     // preview is capped the same way the charge will be.
     final planPct = effectiveCouponPercent(

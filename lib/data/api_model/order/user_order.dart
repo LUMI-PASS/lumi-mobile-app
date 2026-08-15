@@ -39,6 +39,23 @@ class UserOrder {
   /// from a coupon plan (or when there was no discount).
   final String? promocodeCode;
 
+  /// 'trial' | 'full' when this order bought a COURSE, null for a class ticket.
+  ///
+  /// The detail endpoint returns the whole order document, so these have always
+  /// been on the wire — the app simply never read them, and a course booking was
+  /// indistinguishable from a class one on screen.
+  final String? coursePurchase;
+
+  /// Which sub-course, when the course is sold as sub-courses.
+  final String? subcourseName;
+
+  /// When the enrolment starts (YYYY-MM-DD), for a whole-course purchase.
+  final String? startsAt;
+
+  bool get isCourseOrder => coursePurchase != null;
+  bool get isWholeCourse => coursePurchase == 'full';
+  bool get isTrialLesson => coursePurchase == 'trial';
+
   const UserOrder({
     required this.id,
     required this.status,
@@ -56,6 +73,9 @@ class UserOrder {
     required this.createdAt,
     required this.updatedAt,
     this.promocodeCode,
+    this.coursePurchase,
+    this.subcourseName,
+    this.startsAt,
   });
 
   /// True when a coupon or promocode discount was applied to this order.
@@ -134,6 +154,13 @@ class UserOrder {
       promocodeCode: (json['promocode_code']?.toString().isNotEmpty ?? false)
           ? json['promocode_code'].toString()
           : null,
+      coursePurchase: (json['course_purchase']?.toString().isNotEmpty ?? false)
+          ? json['course_purchase'].toString()
+          : null,
+      subcourseName: (json['subcourse_name']?.toString().isNotEmpty ?? false)
+          ? json['subcourse_name'].toString()
+          : null,
+      startsAt: json['starts_at']?.toString().split('T').first,
       activityId: activityId,
       activityName: _readLocalized(activityMap?['name']),
       activityImage: sanitizeImageUrl(activityMap?['image']?.toString()),
