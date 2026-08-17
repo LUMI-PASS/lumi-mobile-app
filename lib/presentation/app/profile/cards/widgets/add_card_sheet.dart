@@ -55,7 +55,7 @@ class _AddCardSheetState extends State<_AddCardSheet> {
   String get _pan => _numberCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
 
   bool get _isValid =>
-      _pan.length >= 16 && expiryToMmYy(_expiryCtrl.text).isNotEmpty;
+      _pan.length >= 16 && expiryToYyMm(_expiryCtrl.text).isNotEmpty;
 
   /// Starts verification (which charges the card) and hands off to the OTP
   /// step. The two sheets are stacked rather than merged so backing out of the
@@ -69,7 +69,7 @@ class _AddCardSheetState extends State<_AddCardSheet> {
     try {
       final session = await getIt<OrdersApi>().verifyCard(
         cardNumber: _pan,
-        expireDate: expiryToMmYy(_expiryCtrl.text),
+        expireDate: expiryToYyMm(_expiryCtrl.text),
       );
       if (!mounted) return;
       setState(() => _busy = false);
@@ -77,7 +77,7 @@ class _AddCardSheetState extends State<_AddCardSheet> {
         context,
         session: session,
         pan: _pan,
-        expiry: expiryToMmYy(_expiryCtrl.text),
+        expiry: expiryToYyMm(_expiryCtrl.text),
       );
       if (!mounted || saved == null) return;
       Navigator.of(context).pop(saved);

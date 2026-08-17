@@ -51,9 +51,19 @@ class ExpiryInputFormatter extends TextInputFormatter {
   }
 }
 
-/// `MM/YY` (or four bare digits) → `MMYY`, the form the gateway expects.
+/// `MM/YY` (as typed) → `YYMM` (as the gateway wants). `09/30` → `3009`.
+///
+/// **The order is the whole point, and it is easy to get backwards.** WLCM's
+/// own type comment calls this field "MMYY, e.g. 3003" — but 3003 cannot be
+/// MMYY, because there is no month 30. Their Subscribe API documents `YYMM`
+/// outright, and both booking screens have sent YYMM since the rail was built.
+///
+/// Sending MMYY does not fail loudly: `0930` is read as year 09, and the
+/// gateway answers `card_is_expired` for a card that expires in 2030.
+///
 /// Returns '' when the input isn't a complete expiry.
-String expiryToMmYy(String input) {
+String expiryToYyMm(String input) {
   final digits = input.replaceAll(RegExp(r'\D'), '');
-  return digits.length == 4 ? digits : '';
+  if (digits.length != 4) return '';
+  return digits.substring(2, 4) + digits.substring(0, 2);
 }

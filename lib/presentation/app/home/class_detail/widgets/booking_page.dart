@@ -43,6 +43,7 @@ import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
+import 'package:lumi_pass/common/utils/card_input_formatters.dart';
 
 const _kLookaheadDays = 30;
 
@@ -1262,11 +1263,13 @@ class _BookingPageState extends State<BookingPage> {
   /// MM/YY (as typed) -> YYMM (as WLCM expects). Anything that isn't exactly
   /// four digits is passed through untouched — the backend rejects it with a
   /// clear 400 rather than us silently reordering something unexpected.
+  /// MM/YY as typed → YYMM as the gateway wants. Delegates to the shared
+  /// converter so the swap has exactly one definition — getting it backwards
+  /// reports a valid card as expired.
   static String? _toYyMm(String? expiry) {
     if (expiry == null) return null;
-    final digits = expiry.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.length != 4) return expiry;
-    return digits.substring(2, 4) + digits.substring(0, 2);
+    final converted = expiryToYyMm(expiry);
+    return converted.isEmpty ? expiry : converted;
   }
 
   Future<void> _completeRedirect(CheckoutResult result) async {

@@ -8,7 +8,7 @@ class SavedCard {
   final String id; // our UserCard document id — what /pay and DELETE take
   final String? maskedNumber; // "860012******9012"
   final String? vendor; // Uzcard | Humo | Visa | Mastercard | Card
-  final String? expireDate; // MMYY
+  final String? expireDate; // YYMM — the order the gateway uses
   final String? owner; // always null on this rail — kept for the fallback
   final String? cardName;
 
@@ -36,11 +36,11 @@ class SavedCard {
     return '$brand •••• $last4';
   }
 
-  /// Expiry formatted MM/YY from the stored MMYY, or '' when unknown.
+  /// Expiry as MM/YY for display, from the stored YYMM. '' when unknown.
   String get expiryDisplay {
     final e = (expireDate ?? '').replaceAll(RegExp(r'[^0-9]'), '');
     if (e.length != 4) return '';
-    return '${e.substring(0, 2)}/${e.substring(2, 4)}';
+    return '${e.substring(2, 4)}/${e.substring(0, 2)}';
   }
 
   factory SavedCard.fromJson(Map<String, dynamic> json) {

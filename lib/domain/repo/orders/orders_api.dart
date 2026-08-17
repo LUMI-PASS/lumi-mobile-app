@@ -129,7 +129,7 @@ class OrdersApi {
   /// (Paycom) flow and returns a `checkout_url`. When set, the order is routed
   /// through the Paylov (WLCM) aggregator:
   ///  • redirect providers (payme/click/uzum/paylov) → `checkout_url` to open;
-  ///  • `card` → also send [cardNumber] + [expireDate] (MMYY); the result
+  ///  • `card` → also send [cardNumber] + [expireDate] (YYMM); the result
   ///    carries `transaction_id`/`cid` and the client confirms the OTP via
   ///    [paylovConfirmCard].
   Future<CheckoutResult> checkout({

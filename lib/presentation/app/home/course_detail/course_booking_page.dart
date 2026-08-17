@@ -30,6 +30,7 @@ import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/course_detail/course_purchase.dart';
+import 'package:lumi_pass/common/utils/card_input_formatters.dart';
 
 /// The review-and-pay screen for a course — the whole thing, a levelled
 /// subcourse, or a single TRIAL lesson.
@@ -379,11 +380,13 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     }
   }
 
+  /// MM/YY as typed → YYMM as the gateway wants. Delegates to the shared
+  /// converter so the swap has exactly one definition — getting it backwards
+  /// reports a valid card as expired.
   static String? _toYyMm(String? expiry) {
     if (expiry == null) return null;
-    final digits = expiry.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.length != 4) return expiry;
-    return digits.substring(2, 4) + digits.substring(0, 2);
+    final converted = expiryToYyMm(expiry);
+    return converted.isEmpty ? expiry : converted;
   }
 
   /// Redirect rails (Payme, Click/Uzum via Paylov): open the gateway page and,
