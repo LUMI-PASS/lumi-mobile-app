@@ -47,6 +47,8 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_c
     as _i999;
 import 'package:lumi_pass/presentation/app/profile/attendance/cubit/attendance_cubit.dart'
     as _i24;
+import 'package:lumi_pass/presentation/app/profile/cards/cubit/my_cards_cubit.dart'
+    as _i571;
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart'
     as _i239;
 import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_detail_cubit.dart'
@@ -137,6 +139,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i567.RegisterCubit(gh<_i652.AuthRepository>()));
     gh.factory<_i296.LoginCubit>(
         () => _i296.LoginCubit(gh<_i652.AuthRepository>()));
+    gh.factory<_i571.MyCardsCubit>(
+        () => _i571.MyCardsCubit(gh<_i748.OrdersApi>()));
     gh.factory<_i822.WalletCubit>(
         () => _i822.WalletCubit(gh<_i890.WalletRepository>()));
     gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(

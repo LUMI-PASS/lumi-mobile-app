@@ -447,6 +447,14 @@ class ProfilePage
                             context.router.push(const MyBookingsRoute()),
                       ),
                       8.kh,
+                      // Guests have nothing to save a card against — the whole
+                      // flow needs a user to attach it to.
+                      _MenuRow(
+                        iconAsset: _ProfileIcons.cards,
+                        label: 'my_cards'.tr(),
+                        onTap: () => context.router.push(const MyCardsRoute()),
+                      ),
+                      8.kh,
                     ],
                     const _ThemeToggleRow(),
                     8.kh,
@@ -837,6 +845,7 @@ class _DashedCirclePainter extends CustomPainter {
 /// Figma (node 96-1829) Iconsax glyphs used by the profile settings rows.
 class _ProfileIcons {
   static final bookings = Assets.icons.detail.iconsaxAiCalendar;
+  static final cards = Assets.icons.icCard;
   static final language = Assets.icons.detail.iconsaxLanguageCircle;
   static final faq = Assets.icons.detail.iconsaxQuestionMark;
   static final share = Assets.icons.detail.iconsaxCircleShare;

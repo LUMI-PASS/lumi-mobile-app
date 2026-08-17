@@ -314,7 +314,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     try {
       final cards = await getIt<OrdersApi>().getSavedCards();
       for (final c in cards) {
-        if (c.cardId == savedId) {
+        if (c.id == savedId) {
           if (mounted) {
             setState(() {
               final pc = PaymentCard.saved(c);
@@ -414,19 +414,38 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
   /// mirrors the ticket-booking flow's own [CardSubmitted] handler.
   Future<String?> _payWithEnteredCard(PaymentCard card) async {
     try {
+      // A saved card spares the buyer typing the number — not the code: this
+      // rail challenges every charge.
       if (card.savedCardId != null) {
         final order = await _runCheckout(savedCardId: card.savedCardId);
         if (!mounted) return null;
-        final paid = await getIt<OrdersApi>().payOrderWithSavedCard(
+        final charge = await getIt<OrdersApi>().payOrderWithSavedCard(
           orderId: order.orderId,
           cardId: card.savedCardId!,
         );
         if (!mounted) return null;
-        if (paid.success) {
+        if (!charge.otpRequired) {
           _completePaid();
           return null;
         }
-        return paid.message ?? 'pay_generic_error'.tr();
+        final paid = await showCardOtpSheet(
+          context,
+          transactionId: charge.transactionId ?? '',
+          cid: charge.cid ?? '',
+          otpSentPhone: charge.otpSentPhone,
+          confirmCard: ({
+            required String transactionId,
+            required String cid,
+            required String otp,
+          }) =>
+              getIt<OrdersApi>().paylovConfirmCard(
+            transactionId: transactionId,
+            cid: cid,
+            otp: otp,
+          ),
+        );
+        if (paid == true && mounted) _completePaid();
+        return null;
       }
 
       final result = await _runCheckout(
@@ -439,7 +458,9 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
       if (result.isCardOtpPending) {
         final paid = await showCardOtpSheet(
           context,
-          checkout: result,
+          transactionId: result.transactionId ?? '',
+          cid: result.cid ?? '',
+          otpSentPhone: result.otpSentPhone,
           confirmCard: ({
             required String transactionId,
             required String cid,
@@ -524,19 +545,33 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     try {
       if (card != null && card.isSaved) {
         final order = await _runCheckout(savedCardId: card.savedCardId);
-        final paid = await getIt<OrdersApi>().payOrderWithSavedCard(
+        final charge = await getIt<OrdersApi>().payOrderWithSavedCard(
           orderId: order.orderId,
           cardId: card.savedCardId!,
         );
         if (!mounted) return;
-        if (paid.success) {
+        if (!charge.otpRequired) {
           _completePaid();
-        } else {
-          setState(() {
-            _submitting = false;
-            _error = paid.message ?? 'pay_generic_error'.tr();
-          });
+          return;
         }
+        setState(() => _submitting = false);
+        final paid = await showCardOtpSheet(
+          context,
+          transactionId: charge.transactionId ?? '',
+          cid: charge.cid ?? '',
+          otpSentPhone: charge.otpSentPhone,
+          confirmCard: ({
+            required String transactionId,
+            required String cid,
+            required String otp,
+          }) =>
+              getIt<OrdersApi>().paylovConfirmCard(
+            transactionId: transactionId,
+            cid: cid,
+            otp: otp,
+          ),
+        );
+        if (paid == true && mounted) _completePaid();
         return;
       }
 
@@ -551,7 +586,9 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
       if (result.isCardOtpPending) {
         final paid = await showCardOtpSheet(
           context,
-          checkout: result,
+          transactionId: result.transactionId ?? '',
+          cid: result.cid ?? '',
+          otpSentPhone: result.otpSentPhone,
           confirmCard: ({
             required String transactionId,
             required String cid,

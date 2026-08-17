@@ -2103,22 +2103,40 @@ class _BookingPageState extends State<BookingPage> {
       return _error ?? 'book_pick_slot'.tr();
     }
     try {
-      // A bound card is charged server-side by its token — no PAN, no OTP.
-      // Anything else is a card typed this session, charged through the Paylov
-      // card checkout with an OTP.
+      // A saved card spares the buyer typing the number — not the code. This
+      // rail challenges every charge, so a saved card opens an OTP session just
+      // like a freshly typed one; the server holds the PAN.
       if (card.savedCardId != null) {
         final order = await _runCheckout(savedCardId: card.savedCardId);
         if (!mounted) return null;
-        final paid = await getIt<OrdersApi>().payOrderWithSavedCard(
+        final charge = await getIt<OrdersApi>().payOrderWithSavedCard(
           orderId: order.orderId,
           cardId: card.savedCardId!,
         );
         if (!mounted) return null;
-        if (paid.success) {
+        // Already paid (a retry of a settled order) needs no code.
+        if (!charge.otpRequired) {
           _completeCardPaid(order);
           return null;
         }
-        return paid.message ?? 'pay_generic_error'.tr();
+        final paid = await showCardOtpSheet(
+          context,
+          transactionId: charge.transactionId ?? '',
+          cid: charge.cid ?? '',
+          otpSentPhone: charge.otpSentPhone,
+          confirmCard: ({
+            required String transactionId,
+            required String cid,
+            required String otp,
+          }) =>
+              getIt<OrdersApi>().paylovConfirmCard(
+            transactionId: transactionId,
+            cid: cid,
+            otp: otp,
+          ),
+        );
+        if (paid == true && mounted) _completeCardPaid(order);
+        return null;
       }
 
       final result = await _runCheckout(
@@ -2131,7 +2149,9 @@ class _BookingPageState extends State<BookingPage> {
       if (result.isCardOtpPending) {
         final paid = await showCardOtpSheet(
           context,
-          checkout: result,
+          transactionId: result.transactionId ?? '',
+          cid: result.cid ?? '',
+          otpSentPhone: result.otpSentPhone,
           confirmCard: ({
             required String transactionId,
             required String cid,
@@ -2214,7 +2234,7 @@ class _BookingPageState extends State<BookingPage> {
     try {
       final cards = await getIt<OrdersApi>().getSavedCards();
       for (final c in cards) {
-        if (c.cardId == savedId) {
+        if (c.id == savedId) {
           if (mounted) {
             setState(() {
               final pc = PaymentCard.saved(c);
@@ -2346,21 +2366,38 @@ class _BookingPageState extends State<BookingPage> {
       _error = null;
     });
     try {
-      // Bound (saved) card → token pay: create the PENDING order, then charge
-      // the token server-side (no OTP). No redirect, no card entry.
+      // Saved card → create the PENDING order, then charge it. No redirect and
+      // no card entry, but still an OTP: the rail has no token that would let
+      // us skip it.
       if (card != null && card.isSaved) {
         final order = await _runCheckout(savedCardId: card.savedCardId);
-        final paid = await getIt<OrdersApi>().payOrderWithSavedCard(
+        final charge = await getIt<OrdersApi>().payOrderWithSavedCard(
           orderId: order.orderId,
           cardId: card.savedCardId!,
         );
         if (!mounted) return;
         setState(() => _submitting = false);
-        if (paid.success) {
+        if (!charge.otpRequired) {
           _completeCardPaid(order);
-        } else {
-          setState(() => _error = paid.message ?? 'pay_generic_error'.tr());
+          return;
         }
+        final paid = await showCardOtpSheet(
+          context,
+          transactionId: charge.transactionId ?? '',
+          cid: charge.cid ?? '',
+          otpSentPhone: charge.otpSentPhone,
+          confirmCard: ({
+            required String transactionId,
+            required String cid,
+            required String otp,
+          }) =>
+              getIt<OrdersApi>().paylovConfirmCard(
+            transactionId: transactionId,
+            cid: cid,
+            otp: otp,
+          ),
+        );
+        if (paid == true && mounted) _completeCardPaid(order);
         return;
       }
 
@@ -2381,7 +2418,9 @@ class _BookingPageState extends State<BookingPage> {
       if (result.isCardOtpPending) {
         final paid = await showCardOtpSheet(
           context,
-          checkout: result,
+          transactionId: result.transactionId ?? '',
+          cid: result.cid ?? '',
+          otpSentPhone: result.otpSentPhone,
           confirmCard: ({
             required String transactionId,
             required String cid,

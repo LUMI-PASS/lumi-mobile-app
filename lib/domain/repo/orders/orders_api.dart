@@ -194,9 +194,14 @@ class OrdersApi {
     return PaylovCardConfirmResult.fromJson(data);
   }
 
-  // ── Saved cards (WLCM Subscribe/Merchant API, via our backend) ──────────────
+  // ── Saved cards (WLCM Partner API card rail, via our backend) ───────────────
+  //
+  // The rail has no card-binding call, so a card is proven by charging it 100
+  // soum and confirming the bank's OTP — see the backend's CardsService. That
+  // also means a saved card is not a token: paying with one opens a fresh OTP
+  // challenge every time.
 
-  /// Lists the user's saved (bound) cards (`GET /api/paylov/cards`).
+  /// Lists the user's saved cards (`GET /api/paylov/cards`).
   Future<List<SavedCard>> getSavedCards() async {
     final response = await _dio.get('paylov/cards');
     final raw = response.data;
@@ -209,36 +214,39 @@ class OrdersApi {
         .toList();
   }
 
-  /// Begins binding a card (`POST /api/paylov/cards`). Sends the PAN + expiry to
-  /// WLCM, which SMSes an OTP; confirm it with [confirmSavedCard]. The card is
-  /// only persisted after the OTP is confirmed — the PAN is never stored.
-  Future<CardAddSession> addSavedCard({
+  /// Starts verifying a card (`POST /api/paylov/cards/verify`).
+  ///
+  /// **This charges the card 100 soum** — that is how the rail proves a card
+  /// exists — and the bank SMSes a code to the cardholder. Confirm it with
+  /// [confirmCardVerification]; nothing is saved until then.
+  ///
+  /// Calling it again for the same card while an attempt is still live returns
+  /// that attempt (`reused: true`) instead of charging a second time, which is
+  /// what makes "resend code" safe.
+  Future<CardVerifySession> verifyCard({
     required String cardNumber,
     required String expireDate,
-    String? phoneNumber,
   }) async {
-    final response = await _dio.post('paylov/cards', data: {
-      'card_number': cardNumber.replaceAll(RegExp(r'\s'), ''),
+    final response = await _dio.post('paylov/cards/verify', data: {
+      'card_number': cardNumber.replaceAll(RegExp(r'[^0-9]'), ''),
       'expire_date': expireDate.replaceAll(RegExp(r'[^0-9]'), ''),
-      if (phoneNumber != null && phoneNumber.trim().isNotEmpty)
-        'phone_number': phoneNumber.trim(),
     });
     final raw = response.data;
     final data = raw is Map && raw['data'] is Map
         ? Map<String, dynamic>.from(raw['data'] as Map)
         : Map<String, dynamic>.from(raw as Map);
-    return CardAddSession.fromJson(data);
+    return CardVerifySession.fromJson(data);
   }
 
-  /// Confirms the OTP and saves the bound card
-  /// (`POST /api/paylov/cards/confirm`).
-  Future<SavedCard> confirmSavedCard({
-    required String cid,
+  /// Confirms the OTP and saves the card
+  /// (`POST /api/paylov/cards/verify/confirm`).
+  Future<SavedCard> confirmCardVerification({
+    required String verificationId,
     required String otp,
     String? cardName,
   }) async {
-    final response = await _dio.post('paylov/cards/confirm', data: {
-      'cid': cid,
+    final response = await _dio.post('paylov/cards/verify/confirm', data: {
+      'verification_id': verificationId,
       'otp': otp.trim(),
       if (cardName != null && cardName.trim().isNotEmpty)
         'card_name': cardName.trim(),
@@ -250,16 +258,18 @@ class OrdersApi {
     return SavedCard.fromJson(data);
   }
 
-  /// Deletes a saved card (`DELETE /api/paylov/cards/:cardId`), unbinding it on
-  /// WLCM too.
-  Future<void> deleteSavedCard(String cardId) async {
-    await _dio.delete('paylov/cards/$cardId');
+  /// Forgets a saved card (`DELETE /api/paylov/cards/:id`). [id] is our own
+  /// document id ([SavedCard.id]) — there is no gateway token to unbind.
+  Future<void> deleteSavedCard(String id) async {
+    await _dio.delete('paylov/cards/$id');
   }
 
-  /// Charges a PENDING order with a bound card token
-  /// (`POST /api/paylov/cards/pay`). Synchronous — no OTP, since the card is
-  /// already tokenized. Returns the paid order status.
-  Future<PaylovCardConfirmResult> payOrderWithSavedCard({
+  /// Charges a PENDING order with a saved card (`POST /api/paylov/cards/pay`).
+  ///
+  /// Does **not** complete the payment: the rail challenges every charge, so
+  /// this returns an OTP session to finish with [paylovConfirmCard]. A saved
+  /// card spares the user typing the number, not the code.
+  Future<SavedCardCharge> payOrderWithSavedCard({
     required String orderId,
     required String cardId,
   }) async {
@@ -271,7 +281,7 @@ class OrdersApi {
     final data = raw is Map && raw['data'] is Map
         ? Map<String, dynamic>.from(raw['data'] as Map)
         : Map<String, dynamic>.from(raw as Map);
-    return PaylovCardConfirmResult.fromJson(data);
+    return SavedCardCharge.fromJson(data);
   }
 
   /// Previews a promocode against an order subtotal without committing it.

@@ -10,21 +10,31 @@ import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/auth_fields.dart';
 import 'package:lumi_pass/common/widget/auth/auth_misc.dart';
-import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
+import 'package:lumi_pass/common/utils/card_input_formatters.dart';
+import 'package:lumi_pass/common/widget/payment_sheet_chrome.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/saved_card.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 
+// CardBrand and CardArtwork moved to the shared chrome; re-exported so the
+// booking screens that import them from here keep working.
+export 'package:lumi_pass/common/widget/payment_sheet_chrome.dart'
+    show CardArtwork, CardBrand;
+
 /// Whether paying by card is live.
 ///
 /// The rail is built end-to-end — chooser form → `checkout(provider: card)` →
-/// OTP confirm, plus bound-card token payment — but it stays dark until the
-/// merchant is registered on WLCM's side. While it's false the card row still
-/// renders in the chooser, dimmed, with a "coming soon" badge: the buyer should
-/// see that paying by card is on the way, but can't pick it. Flip to true to
-/// light the rail up; nothing else needs to change.
-const bool kCardPaymentsEnabled = false;
+/// OTP confirm, plus saved cards charged through the same OTP challenge.
+///
+/// Set false to dim the card row back down: it still renders, with a "coming
+/// soon" badge, so the buyer sees the rail is on the way but can't pick it.
+/// That is the switch to reach for if the gateway starts refusing cards —
+/// nothing else needs to change.
+///
+/// It does NOT gate the subscriptions screen, which pins the card row off for
+/// its own reason (see `plans_page.dart`).
+const bool kCardPaymentsEnabled = true;
 
 /// Confirms the OTP for a Paylov card payment.
 typedef PaymentConfirmCard = Future<PaylovCardConfirmResult> Function({
@@ -50,57 +60,6 @@ enum PaymentRail {
   /// Wordmark shown in the booking row. Empty for [card], whose row shows the
   /// chosen card's brand + masked number instead.
   final String brandName;
-}
-
-/// Card brands we can show artwork for.
-///
-/// A fixed vocabulary the backend will eventually send, so it is modelled as an
-/// enum with a non-throwing [fromKey] and an [unknown] fallback rather than raw
-/// strings.
-enum CardBrand {
-  uzcard('uzcard', 'UzCard'),
-  humo('humo', 'Humo'),
-  mastercard('mastercard', 'MasterCard'),
-  unknown('unknown', 'Card');
-
-  const CardBrand(this.key, this.label);
-
-  /// Wire value.
-  final String key;
-
-  /// Display name shown next to the masked digits.
-  final String label;
-
-  static CardBrand fromKey(String? key) {
-    final k = key?.trim().toLowerCase();
-    for (final b in values) {
-      if (b.key == k) return b;
-    }
-    return CardBrand.unknown;
-  }
-
-  /// Best-effort brand detection from the PAN's issuer prefix — the gateway
-  /// doesn't tell us the brand, and the row has to show the right artwork.
-  static CardBrand fromPan(String pan) {
-    final d = pan.replaceAll(RegExp(r'[^0-9]'), '');
-    if (d.length < 4) return CardBrand.unknown;
-    final p4 = int.tryParse(d.substring(0, 4)) ?? 0;
-    final p2 = int.tryParse(d.substring(0, 2)) ?? 0;
-    if (p4 == 8600 || p4 == 5614) return CardBrand.uzcard;
-    if (p4 == 9860) return CardBrand.humo;
-    if (p2 >= 51 && p2 <= 55) return CardBrand.mastercard;
-    if (p4 >= 2221 && p4 <= 2720) return CardBrand.mastercard;
-    return CardBrand.unknown;
-  }
-
-  /// Brand artwork, or `null` for [unknown] — the row then falls back to a
-  /// neutral card tile.
-  AssetGenImage? get artwork => switch (this) {
-        CardBrand.uzcard => Assets.images.pay.uzcard,
-        CardBrand.humo => Assets.images.pay.humo,
-        CardBrand.mastercard => Assets.images.pay.mastercard,
-        CardBrand.unknown => null,
-      };
 }
 
 /// A card offered in the chooser. Two flavours:
@@ -147,7 +106,7 @@ class PaymentCard {
             : CardBrand.fromKey(c.vendor),
         pan: c.maskedNumber ?? '',
         expiry: '',
-        savedCardId: c.cardId,
+        savedCardId: c.id,
       );
 }
 
@@ -205,7 +164,9 @@ typedef CardSubmitted = Future<String?> Function(PaymentCard card);
 /// out.
 Future<bool?> showCardOtpSheet(
   BuildContext context, {
-  required CheckoutResult checkout,
+  required String transactionId,
+  required String cid,
+  String? otpSentPhone,
   required PaymentConfirmCard confirmCard,
 }) {
   return showModalBottomSheet<bool>(
@@ -214,223 +175,19 @@ Future<bool?> showCardOtpSheet(
     isScrollControlled: true,
     useSafeArea: false,
     isDismissible: false,
-    builder: (_) => _OtpSheet(checkout: checkout, confirmCard: confirmCard),
+    builder: (_) => _OtpSheet(
+      transactionId: transactionId,
+      cid: cid,
+      otpSentPhone: otpSentPhone,
+      confirmCard: confirmCard,
+    ),
   );
 }
 
 // ─── Shared sheet chrome ──────────────────────────────────────────────────────
 
-class _SheetShell extends StatelessWidget {
-  const _SheetShell({required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final media = MediaQuery.of(context);
-    // Clear the home indicator from *inside* the sheet, and lift the whole
-    // thing above the keyboard when a field is focused.
-    final bottomInset = media.padding.bottom + media.viewInsets.bottom;
-    return Container(
-      constraints: BoxConstraints(maxHeight: 0.9.sh),
-      decoration: BoxDecoration(
-        color: c.scaffoldBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      padding: EdgeInsets.only(
-        left: 14.w,
-        right: 14.w,
-        top: 12.h,
-        bottom: 12.h + bottomInset,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 32.w,
-            height: 4.h,
-            margin: EdgeInsets.only(bottom: 12.h),
-            decoration: BoxDecoration(
-              // Figma `Pull`: rgba(170,178,188,0.35).
-              color: const Color(0xFFAAB2BC).withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-          ),
-          // The card list can outgrow the sheet on small screens, so the body
-          // scrolls inside the shell instead of overflowing it.
-          Flexible(
-            child: SingleChildScrollView(child: child),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Inline error banner shown inside a payment step when a gateway call fails.
-class _ErrorNote extends StatelessWidget {
-  const _ErrorNote({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10.r),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline_rounded,
-              size: 16.sp, color: AppColors.error),
-          8.horizontalSpace,
-          Expanded(
-            child: Text(message,
-                style: AppText.regular12.copyWith(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Figma `Input Bg` — the dark tile behind the "add card" plus. Screen-local.
 const Color _kAddCardTile = Color(0xFF2A2A2A);
-
-/// A pale input on the payment sheets (card number, expiry).
-class _PayField extends StatelessWidget {
-  const _PayField({
-    required this.controller,
-    required this.hint,
-    this.keyboardType,
-    this.inputFormatters,
-    this.suffix,
-  });
-
-  final TextEditingController controller;
-  final String hint;
-  final TextInputType? keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
-  final Widget? suffix;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 48.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
-        color: context.colors.control,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: keyboardType,
-              inputFormatters: inputFormatters,
-              cursorColor: AppColors.link,
-              style: AppText.medium16.copyWith(color: context.colors.textPrimary),
-              decoration: InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                border: InputBorder.none,
-                hintText: hint,
-                hintStyle:
-                    AppText.medium16.copyWith(color: context.colors.textSecondary),
-              ),
-            ),
-          ),
-          if (suffix != null) suffix!,
-        ],
-      ),
-    );
-  }
-}
-
-/// The paired "Cancel" / gradient-CTA footer shared by the payment sheets.
-class _SheetActions extends StatelessWidget {
-  const _SheetActions({
-    required this.primaryLabel,
-    required this.onPrimary,
-    required this.onCancel,
-    this.busy = false,
-  });
-
-  final String primaryLabel;
-  final VoidCallback? onPrimary;
-  final VoidCallback? onCancel;
-  final bool busy;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onCancel,
-            child: Container(
-              height: 50.h,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.colors.divider,
-                borderRadius: BorderRadius.circular(44.r),
-              ),
-              child: Text('cancel'.tr(),
-                  style:
-                      AppText.medium16.copyWith(color: context.colors.textSecondary)),
-            ),
-          ),
-        ),
-        8.horizontalSpace,
-        Expanded(
-          child: GradientButton(
-            text: primaryLabel,
-            loading: busy,
-            onPressed: onPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// The 44×28 brand tile in the saved-card list. Falls back to a neutral card
-/// glyph when the brand has no artwork ([CardBrand.unknown]).
-///
-/// The artwork is fitted, not cropped: the brand marks don't share an aspect
-/// ratio (UzCard/Humo ship as card rectangles, MasterCard as a near-square
-/// logo), so `cover` would slice the edges off the square ones.
-class CardArtwork extends StatelessWidget {
-  const CardArtwork({super.key, required this.brand, this.width = 44, this.height = 28});
-
-  final CardBrand brand;
-  final double width;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    final art = brand.artwork;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4.r),
-      child: SizedBox(
-        width: width.w,
-        height: height.h,
-        child: art == null
-            ? ColoredBox(
-                color: context.colors.control,
-                child: Icon(Icons.credit_card_rounded,
-                    size: 16.sp, color: context.colors.textSecondary),
-              )
-            : art.image(fit: BoxFit.contain),
-      ),
-    );
-  }
-}
 
 // ─── Chooser sheet (rail + card) ──────────────────────────────────────────────
 
@@ -479,8 +236,9 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   /// second OTP by tapping again.
   bool _busy = false;
 
-  /// The in-progress card binding: WLCM has SMSed an OTP and is waiting for it.
-  CardAddSession? _binding;
+  /// The in-progress card verification: the card has been charged 100 soum and
+  /// the bank has SMSed an OTP we're waiting on.
+  CardVerifySession? _binding;
 
   @override
   void initState() {
@@ -501,7 +259,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
         final tokens = _cards.map((c) => c.savedCardId).whereType<String>().toSet();
         var i = 0;
         for (final s in saved) {
-          if (tokens.contains(s.cardId)) continue;
+          if (tokens.contains(s.id)) continue;
           _cards.insert(i++, PaymentCard.saved(s));
         }
       });
@@ -626,8 +384,10 @@ class _ChooserSheetState extends State<_ChooserSheet> {
       _error = null;
     });
     try {
-      final saved = await getIt<OrdersApi>()
-          .confirmSavedCard(cid: session.cid, otp: otp);
+      final saved = await getIt<OrdersApi>().confirmCardVerification(
+        verificationId: session.verificationId,
+        otp: otp,
+      );
       if (!mounted) return;
       final card = PaymentCard.saved(saved);
       setState(() {
@@ -713,7 +473,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     final c = context.colors;
     final isCard = !widget.cardsComingSoon && _rail == PaymentRail.card;
     final selection = _selection;
-    return _SheetShell(
+    return PaymentSheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -723,7 +483,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
                 style: AppText.heading20.copyWith(color: c.textPrimary)),
           ),
           20.verticalSpace,
-          if (_error != null) _ErrorNote(message: _error!),
+          if (_error != null) PaymentErrorNote(message: _error!),
           // The Click wordmark ships in two tints; the rail tiles are always the
           // pale `inkChip` fill, so the dark glyph is the one that reads.
           _railTile(
@@ -754,7 +514,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             _addCardRow(),
           ],
           20.verticalSpace,
-          _SheetActions(
+          PaymentSheetActions(
             primaryLabel: 'pay_select'.tr(),
             onCancel: () => Navigator.of(context).pop(),
             // Stays disabled until the choice can actually be paid with: a rail,
@@ -917,7 +677,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   // ── Step: add card (Figma 131:3526) ─────────────────────────────────────────
   Widget _buildAddCard() {
     final c = context.colors;
-    return _SheetShell(
+    return PaymentSheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -938,15 +698,15 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             ),
           ),
           20.verticalSpace,
-          if (_error != null) _ErrorNote(message: _error!),
-          _PayField(
+          if (_error != null) PaymentErrorNote(message: _error!),
+          PaymentField(
             controller: _numberCtrl,
             hint: 'pay_card_number_hint'.tr(),
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(16),
-              _CardNumberFormatter(),
+              const CardNumberInputFormatter(),
             ],
             suffix: Assets.icons.icCardScan.svg(
               width: 24.w,
@@ -959,19 +719,19 @@ class _ChooserSheetState extends State<_ChooserSheet> {
           // The expiry is a short field in the design, not full-bleed.
           SizedBox(
             width: 170.w,
-            child: _PayField(
+            child: PaymentField(
               controller: _expiryCtrl,
               hint: 'pay_card_expiry_hint'.tr(),
               keyboardType: TextInputType.number,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(4),
-                _ExpiryFormatter(),
+                const ExpiryInputFormatter(),
               ],
             ),
           ),
           24.verticalSpace,
-          _SheetActions(
+          PaymentSheetActions(
             primaryLabel: 'pay_add_card'.tr(),
             busy: _busy,
             onCancel: _busy
@@ -993,7 +753,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   Widget _buildBindOtp() {
     final c = context.colors;
     final phone = _binding?.otpSentPhone;
-    return _SheetShell(
+    return PaymentSheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1008,10 +768,10 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             style: AppText.regular14.copyWith(color: c.textSecondary),
           ),
           20.verticalSpace,
-          if (_error != null) _ErrorNote(message: _error!),
+          if (_error != null) PaymentErrorNote(message: _error!),
           OtpCodeField(controller: _otpCtrl, length: 6),
           20.verticalSpace,
-          _SheetActions(
+          PaymentSheetActions(
             primaryLabel: 'next'.tr(),
             busy: _busy,
             // Backing out drops the half-finished binding — the card is only
@@ -1057,9 +817,19 @@ class _ComingSoonBadge extends StatelessWidget {
 // ─── OTP sheet (card charge confirmation) ─────────────────────────────────────
 
 class _OtpSheet extends StatefulWidget {
-  const _OtpSheet({required this.checkout, required this.confirmCard});
+  const _OtpSheet({
+    required this.transactionId,
+    required this.cid,
+    required this.otpSentPhone,
+    required this.confirmCard,
+  });
 
-  final CheckoutResult checkout;
+  /// The gateway's OTP session. Taken as loose fields rather than a
+  /// [CheckoutResult] because two different calls open one: a card typed at
+  /// checkout, and a saved card being charged.
+  final String transactionId;
+  final String cid;
+  final String? otpSentPhone;
   final PaymentConfirmCard confirmCard;
 
   @override
@@ -1089,8 +859,8 @@ class _OtpSheetState extends State<_OtpSheet> {
     });
     try {
       final res = await widget.confirmCard(
-        transactionId: widget.checkout.transactionId ?? '',
-        cid: widget.checkout.cid ?? '',
+        transactionId: widget.transactionId,
+        cid: widget.cid,
         otp: otp,
       );
       if (!mounted) return;
@@ -1120,8 +890,8 @@ class _OtpSheetState extends State<_OtpSheet> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final phone = widget.checkout.otpSentPhone;
-    return _SheetShell(
+    final phone = widget.otpSentPhone;
+    return PaymentSheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1136,7 +906,7 @@ class _OtpSheetState extends State<_OtpSheet> {
             style: AppText.regular14.copyWith(color: c.textSecondary),
           ),
           20.verticalSpace,
-          if (_error != null) _ErrorNote(message: _error!),
+          if (_error != null) PaymentErrorNote(message: _error!),
           OtpCodeField(controller: _otpCtrl, length: 6),
           16.verticalSpace,
           const CountdownTimer(seconds: 57),
@@ -1144,7 +914,7 @@ class _OtpSheetState extends State<_OtpSheet> {
           Text('pay_resend'.tr(),
               style: AppText.medium14.copyWith(color: c.textSecondary)),
           20.verticalSpace,
-          _SheetActions(
+          PaymentSheetActions(
             primaryLabel: 'next'.tr(),
             busy: _busy,
             onCancel: _busy ? null : () => Navigator.of(context).pop(false),
@@ -1163,39 +933,4 @@ class CheckoutFriendlyError implements Exception {
   final String message;
   @override
   String toString() => message;
-}
-
-class _CardNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final digits = newValue.text.replaceAll(' ', '');
-    final buf = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i != 0 && i % 4 == 0) buf.write(' ');
-      buf.write(digits[i]);
-    }
-    return TextEditingValue(
-      text: buf.toString(),
-      selection: TextSelection.collapsed(offset: buf.length),
-    );
-  }
-}
-
-/// Formats an expiry as MM/YY while the underlying value stays 4 digits (MMYY).
-class _ExpiryFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    final buf = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i == 2) buf.write('/');
-      buf.write(digits[i]);
-    }
-    return TextEditingValue(
-      text: buf.toString(),
-      selection: TextSelection.collapsed(offset: buf.length),
-    );
-  }
 }

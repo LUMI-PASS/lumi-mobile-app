@@ -1085,3 +1085,9 @@ wallet_kind_adjustment,Корректировка,Tuzatish,Adjustment
 wallet_kind_expired,Срок действия истёк,Amal qilish muddati tugadi,Expired
 wallet_kind_unknown,Операция,Amaliyot,Transaction
 wallet_source_trial,{} · пробное занятие,{} · sinov darsi,{} · trial lesson
+my_cards,Мои карты,Mening kartalarim,My cards
+card_none_sub,"Добавьте карту, чтобы оплачивать быстрее","Tezroq to'lash uchun karta qo'shing","Add a card to pay faster"
+card_already_saved,Эта карта уже сохранена,Bu karta allaqachon saqlangan,This card is already saved
+card_verify_notice,"Чтобы проверить карту, с неё спишется 100 сум. Мы сразу отправляем запрос на возврат.","Kartani tekshirish uchun undan 100 so'm yechiladi. Biz darhol qaytarish so'rovini yuboramiz.","To verify the card, 100 soum is charged to it. We request a refund straight away."
+card_continue,Продолжить,Davom etish,Continue
+card_resend_code,Отправить код снова,Kodni qayta yuborish,Resend code
