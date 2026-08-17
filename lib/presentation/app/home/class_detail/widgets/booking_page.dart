@@ -44,6 +44,7 @@ import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_chec
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/common/utils/card_input_formatters.dart';
+import 'package:lumi_pass/common/utils/checkout_target.dart';
 
 const _kLookaheadDays = 30;
 
@@ -1189,7 +1190,54 @@ class _BookingPageState extends State<BookingPage> {
     // never redirects, so it doesn't need one. Derived from the live base URL so
     // dev and prod each hit their own /paylov/return.
     final isRedirect = provider != null && provider != 'card';
+    // Naming the card rail without a card is a request the gateway can only
+    // reject. Catch it here, where we can say something useful, instead of
+    // surfacing "Card number, expire date, and amount are required".
+    if (!cardCheckoutIsComplete(
+      provider: provider,
+      cardNumber: cardNumber,
+      expireDate: expireDate,
+      savedCardId: savedCardId,
+    )) {
+      throw CheckoutFriendlyError('book_pick_payment'.tr());
+    }
     try {
+      // A course is sold as a package through its own endpoint and has no
+      // `items[]`. Routing it here rather than at each call site is deliberate:
+      // when only the redirect rails could reach this screen, the card paths
+      // went to the activity endpoint and a course died on
+      // "items must contain at least 1 elements".
+      if (checkoutTargetFor(isCourse: _isCourse) == CheckoutTarget.course) {
+        final result = await getIt<CoursesApi>().checkout(
+          activityId: id,
+          option: widget.courseOption ?? CoursePurchaseOption.full,
+          subcourseId: widget.level?.id,
+          // Trials are sold one at a time, by date: the day picked in the
+          // calendar above IS the lesson being bought.
+          trialDates:
+              _isTrial && _selectedDate != null ? [_selectedDate!.isoKey] : null,
+          // Whole course: the day picked above is when the enrolment starts.
+          startsAt: !_isTrial ? _selectedDate?.isoKey : null,
+          promocode: _hasCouponPlan ? null : _appliedPromo?.code,
+          lang: context.locale.languageCode,
+          paymentProvider: savedCardId != null ? null : provider,
+          returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
+          cardNumber: cardNumber,
+          expireDate: expireDate,
+          savedCardId: savedCardId,
+          useWallet: _useWallet,
+        );
+        getIt<AnalyticsService>().logEvent(
+          AnalyticsEvent.bookingCheckoutStarted,
+          params: {
+            'activity_id': id,
+            'is_course': 'true',
+            'provider': provider ?? (savedCardId != null ? 'saved_card' : 'payme'),
+          },
+        );
+        return result;
+      }
+
       final result = await getIt<OrdersApi>().checkout(
         activityId: id,
         items: items,
@@ -2321,49 +2369,13 @@ class _BookingPageState extends State<BookingPage> {
     final payment = _payment!;
     final card = payment.card;
 
-    // A course buys its package through its own endpoint, then lands on the
-    // same checkout page an activity does. With no subcourse named the backend
-    // picks the cheapest one with seats.
-    if (_isCourse) {
-      setState(() {
-        _submitting = true;
-        _error = null;
-      });
-      try {
-        final result = await getIt<CoursesApi>().checkout(
-          activityId: widget.clazz.id!,
-          option: widget.courseOption ?? CoursePurchaseOption.full,
-          subcourseId: widget.level?.id,
-          // Trials are sold one at a time, by date: the day picked in the
-          // calendar above IS the lesson being bought.
-          trialDates: _isTrial && _selectedDate != null
-              ? [_selectedDate!.isoKey]
-              : null,
-          // Whole course: the day picked above is when the enrolment starts.
-          startsAt: !_isTrial ? _selectedDate?.isoKey : null,
-          useWallet: _useWallet,
-          paymentProvider: payment.rail.providerKey,
-          returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
-        );
-        if (!mounted) return;
-        setState(() => _submitting = false);
-        if (result.checkoutUrl.isEmpty) {
-          setState(() => _error = 'pay_generic_error'.tr());
-          return;
-        }
-        await _completeRedirect(result);
-      } catch (e) {
-        if (!mounted) return;
-        setState(() {
-          _submitting = false;
-          _error = e is CheckoutFriendlyError
-              ? e.message
-              : (PaymentError.fromDio(e) ?? 'pay_generic_error'.tr());
-        });
-      }
-      return;
-    }
-
+    // A course used to be checked out by its own block here, which named the
+    // rail and nothing else. That was fine while only redirect rails could be
+    // picked; the moment card became selectable it sent `payment_provider: card`
+    // with no card and the gateway answered "Card number, expire date, and
+    // amount are required for card checkout". [_runCheckout] now picks the
+    // course endpoint itself, so a course and a class pay by the same code and
+    // a rail can only be added once.
     setState(() {
       _submitting = true;
       _error = null;
