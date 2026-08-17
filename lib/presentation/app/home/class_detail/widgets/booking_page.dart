@@ -1480,37 +1480,46 @@ class _BookingPageState extends State<BookingPage> {
     // Course card prices are per-viewer and this purchase just moved them.
     markCatalogChanged();
     if (!mounted) return;
-    // Pop TRUE, not bare: the course detail page reloads on a truthy result,
-    // and without it a bought trial left the ladder showing the old state —
-    // the next lesson stayed locked until the screen was reopened. Harmless
-    // for a class, whose caller doesn't read the result.
-    Navigator.of(context).pop(true); // close booking sheet
-    if (requiresSlot) {
-      getIt<AnalyticsService>().logEvent(
-        AnalyticsEvent.bookingRequested,
-        params: {'activity_id': id},
-      );
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const _BookingRequestedPage()),
-      );
-    } else {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => BookingCompletePage(
-            status: BookingResultStatus.paid,
-            result: result,
-            lines: lines,
-            cashbackEarned: result.cashbackEstimate > 0
-                ? result.cashbackEstimate
-                : cashbackFor(_cashback, result.payableAmount),
-            walletApplied: result.walletAmount,
+    // A card payment lands here from inside the OTP sheet's own dismissal, so
+    // the Navigator is still mid-transaction and refuses to be reentered
+    // (`!_debugLocked`) — the payment succeeded and the app threw anyway.
+    // Everything below pops this sheet and pushes the result screen, so it
+    // waits for the navigation already in flight to finish. The NavigatorState
+    // is captured now because this context is gone once the pop lands.
+    final navigator = Navigator.of(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Pop TRUE, not bare: the course detail page reloads on a truthy result,
+      // and without it a bought trial left the ladder showing the old state —
+      // the next lesson stayed locked until the screen was reopened. Harmless
+      // for a class, whose caller doesn't read the result.
+      navigator.pop(true); // close booking sheet
+      if (requiresSlot) {
+        getIt<AnalyticsService>().logEvent(
+          AnalyticsEvent.bookingRequested,
+          params: {'activity_id': id},
+        );
+        navigator.push(
+          MaterialPageRoute(builder: (_) => const _BookingRequestedPage()),
+        );
+      } else {
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => BookingCompletePage(
+              status: BookingResultStatus.paid,
+              result: result,
+              lines: lines,
+              cashbackEarned: result.cashbackEstimate > 0
+                  ? result.cashbackEstimate
+                  : cashbackFor(_cashback, result.payableAmount),
+              walletApplied: result.walletAmount,
+            ),
           ),
-        ),
-      );
-    }
-    if (usedCoupon) {
-      getIt<AppCubit>().syncSubscription();
-    }
+        );
+      }
+      if (usedCoupon) {
+        getIt<AppCubit>().syncSubscription();
+      }
+    });
   }
 
   // ─── Single-screen booking page (Figma 60:6122) ───────────────────────────

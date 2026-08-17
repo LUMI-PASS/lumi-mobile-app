@@ -410,7 +410,12 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
   }
 
   void _completePaid() {
-    if (mounted) Navigator.of(context).pop(true);
+    if (!mounted) return;
+    // Same reason as the booking sheet's [_completeCardPaid]: a card payment
+    // finishes inside the OTP sheet's dismissal, and popping this screen while
+    // that is still in flight trips Navigator's `!_debugLocked` assertion.
+    final navigator = Navigator.of(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => navigator.pop(true));
   }
 
   /// Charges a card typed into the chooser sheet, without closing it first —

@@ -341,31 +341,19 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   ///
   /// Falls back to plain selection when the host gave us no way to pay (the
   /// profile wallet, where the sheet only chooses).
-  Future<void> _payWithCard(PaymentCard card) async {
-    final submit = widget.onCardSubmitted;
-    if (submit == null) {
-      setState(() {
-        _error = null;
-        _rail = PaymentRail.card;
-        _card = card;
-      });
-      return;
-    }
+  /// Picks a card from the list. **Selection only — this must not charge.**
+  ///
+  /// It used to pay on tap, on the reasoning that choosing a card is the
+  /// instruction to pay with it. That held while the only cards here were typed
+  /// during checkout. Saved cards broke it: the row carries a radio button and
+  /// the sheet has its own Select button, so tapping reads as "choose this" —
+  /// and it was instead charging the card and sending an OTP before the buyer
+  /// had seen the Pay button, let alone pressed it.
+  void _selectCard(PaymentCard card) {
     setState(() {
       _error = null;
-      _busy = true;
       _rail = PaymentRail.card;
       _card = card;
-    });
-    final error = await submit(card);
-    if (!mounted) return;
-    if (error == null) {
-      Navigator.of(context).pop();
-      return;
-    }
-    setState(() {
-      _busy = false;
-      _error = error;
     });
   }
 
@@ -594,7 +582,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     final selected = identical(_card, card);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => _payWithCard(card),
+      onTap: () => _selectCard(card),
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 14.h),
         child: Row(
