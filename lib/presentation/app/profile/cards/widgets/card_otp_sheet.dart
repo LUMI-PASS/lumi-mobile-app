@@ -206,6 +206,10 @@ class _CardOtpSheetState extends State<_CardOtpSheet> {
                 ),
               ),
               forceErrorState: _error != null,
+              // Without this the Confirm button below never re-evaluates: it
+              // reads the controller during build, and nothing else rebuilds
+              // this sheet while the user types.
+              onChanged: (_) => setState(() {}),
               // Six digits in means there is nothing left to decide — asking
               // for a second tap on Confirm only adds a step.
               onCompleted: (_) => _confirm(),
