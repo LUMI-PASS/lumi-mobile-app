@@ -116,3 +116,10 @@ Every production deploy is manual:
 ssh root@82.118.227.32
 cd /opt/lumi/repos/mobile && git pull origin main
 cd /opt/lumi && docker compose up -d --build --no-deps merged-backend
+
+TEMPORARY — OTP IS RETURNED IN THE API RESPONSE (added 2026-08-15, NOT yet reverted):
+`POST /api/auth/send-otp` returns the OTP code in the response body as `debug_otp` (backend commit 272dafd, `sendOtp` in `src/api/auth/auth.service.ts`). It is unconditional — there is no env flag — so anyone who can reach the API and knows a phone number can obtain that account's code and log in as them. This was added deliberately and knowingly, because Eskiz SMS delivery is broken and logins were otherwise impossible; it is a stopgap, not a design decision.
+Do NOT remove it as drive-by cleanup — it is what currently makes login work. Remove it only once SMS actually delivers again, which needs BOTH of these fixed:
+1. Outbound connectivity from the prod box to notify.eskiz.uz. The send fails with undici's opaque `fetch failed` (no HTTP response at all — DNS/TCP/TLS), and `SmsService` logs only `error.message`, which for a fetch TypeError is always that same useless string. The real reason is in `error.cause`, which the code discards.
+2. `SMS_FROM` in the prod `.env`. It is still `4546`, Eskiz's test nickname, which only works with the literal template "This is test from Eskiz". The bilingual OTP template will be rejected even after connectivity returns; it needs the approved branded sender (e.g. LUMIPASS).
+To revert when the time comes: `grep -n debug_otp src/api/auth/auth.service.ts`, delete the field and its TEMPORARY comment, then redeploy manually per BACKEND-DEPLOY above.

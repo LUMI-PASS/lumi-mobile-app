@@ -162,14 +162,6 @@ days,дней,kun,days
 no_plans_yet,Тарифов пока нет,Hozircha tariflar yo'q,No plans yet
 no_plans_hint,Скоро появятся,Tez orada paydo bo'ladi,Check back soon
 premium_badge,ПРЕМИУМ,PREMIUM,PREMIUM
-wallet_title,Кошелек,Hamyon,Wallet
-your_balance_label,Ваш баланс,Balansingiz,Your Balance
-transaction_history,История транзакций,Tranzaksiyalar tarixi,Transaction History
-no_transactions,Нет транзакций,Tranzaksiyalar yo'q,No transactions
-choose_top_up,Выберите пополнение,To'ldirishni tanlang,Choose Top-up
-refund,Возврат,Qaytarilgan,Refund
-withdraw,Списание,Yechib olish,Withdraw
-incoming,Пополнение,To'ldirish,Incoming
 onboarding_title,Добро пожаловать в Lumi!,Lumi'ga xush kelibsiz!,Welcome to Lumi!
 onboarding_subtitle,Настройте профиль за несколько секунд,Profilingizni bir necha soniyada sozlang,Set up your profile in seconds
 onboarding_step1_title,Как вас зовут?,Ismingiz nima?,What's your name?
@@ -1065,3 +1057,37 @@ course_book_trial_cta,Забронировать пробное занятие,S
 course_trial_passed,Прошло,O‘tib ketdi,Passed
 course_trial_locked,Сначала пройдите предыдущее занятие,Avval oldingi darsni o‘ting,Take the previous lesson first
 course_trial_book_title,Пробное занятие,Sinov darsi,Trial lesson
+wallet_title,Кошелек,Hamyon,Wallet
+wallet_available_label,Доступно,Mavjud,Available
+wallet_pending_label,Начислено (ожидает),Hisoblangan (kutilmoqda),Pending
+wallet_held_label,Зарезервировано под заказ,Buyurtma uchun band qilingan,Reserved for an order
+wallet_frozen_note,Кошелек заморожен. Свяжитесь с поддержкой.,Hamyon muzlatilgan. Qo‘llab-quvvatlashga murojaat qiling.,This wallet is frozen. Please contact support.
+cashback_percent_chip,Кешбэк {}%,{}% keshbek,{}% cashback
+cashback_you_will_earn,Вернется на баланс,Balansga qaytadi,You'll earn
+wallet_use_balance,Использовать баланс,Balansdan foydalanish,Use balance
+wallet_paid_from_balance,Оплачено с баланса,Balansdan to‘landi,Paid from balance
+wallet_left_to_pay,К оплате картой,Karta bilan to‘lanadi,Left to pay
+wallet_applied_label,Списывается,Yechiladi,Applied
+cashback_credited_suffix,зачислено на ваш баланс,balansingizga qo‘shildi,added to your balance
+wallet_history_title,История,Tarix,History
+wallet_pending_badge,ожидает,kutilmoqda,pending
+wallet_empty_title,Пока пусто,Hozircha bo‘sh,Nothing here yet
+wallet_empty_body,Бронируйте занятия — часть суммы вернётся на баланс,Mashg‘ulot band qiling — summaning bir qismi balansga qaytadi,Book a class and part of what you pay comes back
+wallet_empty_body_rate,Бронируйте занятия — до {}% вернётся на баланс,Mashg‘ulot band qiling — {}% gacha balansga qaytadi,Book a class and get up to {}% back
+wallet_kind_earn,Кешбэк за бронирование,Band qilganlik uchun keshbek,Cashback earned
+wallet_kind_earn_matured,Кешбэк доступен,Keshbek mavjud,Cashback unlocked
+wallet_kind_earn_reversed,Кешбэк отменён,Keshbek bekor qilindi,Cashback reversed
+wallet_kind_hold,Зарезервировано под заказ,Buyurtma uchun band qilindi,Reserved for an order
+wallet_kind_hold_released,Резерв снят,Rezerv bekor qilindi,Reservation released
+wallet_kind_spend,Оплата с баланса,Balansdan to‘lov,Paid from balance
+wallet_kind_spend_refunded,Возврат на баланс,Balansga qaytarildi,Returned to balance
+wallet_kind_adjustment,Корректировка,Tuzatish,Adjustment
+wallet_kind_expired,Срок действия истёк,Amal qilish muddati tugadi,Expired
+wallet_kind_unknown,Операция,Amaliyot,Transaction
+wallet_source_trial,{} · пробное занятие,{} · sinov darsi,{} · trial lesson
+my_cards,Мои карты,Mening kartalarim,My cards
+card_none_sub,"Добавьте карту, чтобы оплачивать быстрее","Tezroq to'lash uchun karta qo'shing","Add a card to pay faster"
+card_already_saved,Эта карта уже сохранена,Bu karta allaqachon saqlangan,This card is already saved
+card_verify_notice,"Чтобы проверить карту, с неё спишется 100 сум. Мы сразу отправляем запрос на возврат.","Kartani tekshirish uchun undan 100 so'm yechiladi. Biz darhol qaytarish so'rovini yuboramiz.","To verify the card, 100 soum is charged to it. We request a refund straight away."
+card_continue,Продолжить,Davom etish,Continue
+card_resend_code,Отправить код снова,Kodni qayta yuborish,Resend code

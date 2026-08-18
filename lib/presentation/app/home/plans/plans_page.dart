@@ -151,7 +151,12 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
     final picked = await showPaymentChooser(
       context,
       initial: _payment,
-      cardsComingSoon: !kCardPaymentsEnabled,
+      // Pinned off here even when the card rail is live everywhere else:
+      // `POST /api/transaction/subscriptions` ignores `payment_provider`
+      // entirely and always goes direct-Paycom (see PAYLOV.md, "Known gap").
+      // Offering a card row would take the buyer's card details and then
+      // silently charge them through another rail.
+      cardsComingSoon: true,
     );
     if (picked == null || !mounted) return;
     setState(() => _payment = picked);
@@ -172,8 +177,8 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
 
   /// Charges the plan through the picked rail via Paylov (WLCM) — the same
   /// aggregator activity bookings pay through. Payme/Click/Uzum all answer
-  /// with a checkout URL to redirect to; the card rail can't reach here while
-  /// [kCardPaymentsEnabled] is false, since the chooser shows it disabled.
+  /// with a checkout URL to redirect to; the card rail can't reach here at all,
+  /// because this screen pins it off in the chooser (see [_choosePaymentAndPay]).
   Future<void> _pay(PremiumPlan plan, PaymentSelection payment) async {
     setState(() => _purchasingId = plan.id);
     getIt<AnalyticsService>().logEvent(
@@ -189,9 +194,9 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
       final result = await _api.checkoutSubscription(
         tariffId: plan.id!,
         paymentProvider: payment.rail.providerKey,
-        // Every reachable rail here is a redirect one (card can't be picked
-        // while kCardPaymentsEnabled is false) — WLCM needs to know where to
-        // bounce the buyer back to after paying, same as the booking checkout.
+        // Every reachable rail here is a redirect one (the chooser pins card
+        // off on this screen) — WLCM needs to know where to bounce the buyer
+        // back to after paying, same as the booking checkout.
         returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
       );
       if (!mounted) return;

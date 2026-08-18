@@ -34,12 +34,7 @@ mixin _$ChildrenBuildable {
       throw _privateConstructorUsedError; // Ticket booking selection state
   DateTime? get selectedDate => throw _privateConstructorUsedError;
   String? get selectedScheduleId => throw _privateConstructorUsedError;
-  int get selectedTimeIndex =>
-      throw _privateConstructorUsedError; // Eligibility & booking state
-  ClassEligibilityData? get eligibilityData =>
-      throw _privateConstructorUsedError;
-  bool get eligibilityLoading => throw _privateConstructorUsedError;
-  bool get bookingLoading => throw _privateConstructorUsedError;
+  int get selectedTimeIndex => throw _privateConstructorUsedError;
   String? get selectedChildId => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -69,13 +64,9 @@ abstract class $ChildrenBuildableCopyWith<$Res> {
       DateTime? selectedDate,
       String? selectedScheduleId,
       int selectedTimeIndex,
-      ClassEligibilityData? eligibilityData,
-      bool eligibilityLoading,
-      bool bookingLoading,
       String? selectedChildId});
 
   $ParentTrialSummaryCopyWith<$Res>? get trialSummary;
-  $ClassEligibilityDataCopyWith<$Res>? get eligibilityData;
 }
 
 /// @nodoc
@@ -106,9 +97,6 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
     Object? selectedDate = freezed,
     Object? selectedScheduleId = freezed,
     Object? selectedTimeIndex = null,
-    Object? eligibilityData = freezed,
-    Object? eligibilityLoading = null,
-    Object? bookingLoading = null,
     Object? selectedChildId = freezed,
   }) {
     return _then(_value.copyWith(
@@ -172,18 +160,6 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
           ? _value.selectedTimeIndex
           : selectedTimeIndex // ignore: cast_nullable_to_non_nullable
               as int,
-      eligibilityData: freezed == eligibilityData
-          ? _value.eligibilityData
-          : eligibilityData // ignore: cast_nullable_to_non_nullable
-              as ClassEligibilityData?,
-      eligibilityLoading: null == eligibilityLoading
-          ? _value.eligibilityLoading
-          : eligibilityLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      bookingLoading: null == bookingLoading
-          ? _value.bookingLoading
-          : bookingLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
       selectedChildId: freezed == selectedChildId
           ? _value.selectedChildId
           : selectedChildId // ignore: cast_nullable_to_non_nullable
@@ -200,19 +176,6 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
 
     return $ParentTrialSummaryCopyWith<$Res>(_value.trialSummary!, (value) {
       return _then(_value.copyWith(trialSummary: value) as $Val);
-    });
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $ClassEligibilityDataCopyWith<$Res>? get eligibilityData {
-    if (_value.eligibilityData == null) {
-      return null;
-    }
-
-    return $ClassEligibilityDataCopyWith<$Res>(_value.eligibilityData!,
-        (value) {
-      return _then(_value.copyWith(eligibilityData: value) as $Val);
     });
   }
 }
@@ -241,15 +204,10 @@ abstract class _$$ChildrenBuildableImplCopyWith<$Res>
       DateTime? selectedDate,
       String? selectedScheduleId,
       int selectedTimeIndex,
-      ClassEligibilityData? eligibilityData,
-      bool eligibilityLoading,
-      bool bookingLoading,
       String? selectedChildId});
 
   @override
   $ParentTrialSummaryCopyWith<$Res>? get trialSummary;
-  @override
-  $ClassEligibilityDataCopyWith<$Res>? get eligibilityData;
 }
 
 /// @nodoc
@@ -278,9 +236,6 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
     Object? selectedDate = freezed,
     Object? selectedScheduleId = freezed,
     Object? selectedTimeIndex = null,
-    Object? eligibilityData = freezed,
-    Object? eligibilityLoading = null,
-    Object? bookingLoading = null,
     Object? selectedChildId = freezed,
   }) {
     return _then(_$ChildrenBuildableImpl(
@@ -344,18 +299,6 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
           ? _value.selectedTimeIndex
           : selectedTimeIndex // ignore: cast_nullable_to_non_nullable
               as int,
-      eligibilityData: freezed == eligibilityData
-          ? _value.eligibilityData
-          : eligibilityData // ignore: cast_nullable_to_non_nullable
-              as ClassEligibilityData?,
-      eligibilityLoading: null == eligibilityLoading
-          ? _value.eligibilityLoading
-          : eligibilityLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      bookingLoading: null == bookingLoading
-          ? _value.bookingLoading
-          : bookingLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
       selectedChildId: freezed == selectedChildId
           ? _value.selectedChildId
           : selectedChildId // ignore: cast_nullable_to_non_nullable
@@ -383,9 +326,6 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
       this.selectedDate = null,
       this.selectedScheduleId = null,
       this.selectedTimeIndex = -1,
-      this.eligibilityData = null,
-      this.eligibilityLoading = false,
-      this.bookingLoading = false,
       this.selectedChildId = null})
       : _childrenList = childrenList,
         _timeSlots = timeSlots;
@@ -452,23 +392,13 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
   @override
   @JsonKey()
   final int selectedTimeIndex;
-// Eligibility & booking state
-  @override
-  @JsonKey()
-  final ClassEligibilityData? eligibilityData;
-  @override
-  @JsonKey()
-  final bool eligibilityLoading;
-  @override
-  @JsonKey()
-  final bool bookingLoading;
   @override
   @JsonKey()
   final String? selectedChildId;
 
   @override
   String toString() {
-    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, selectedGender: $selectedGender, selectedBirthDate: $selectedBirthDate, childrenList: $childrenList, timeSlots: $timeSlots, trialSummary: $trialSummary, parentCity: $parentCity, parentDistrict: $parentDistrict, currentStep: $currentStep, newChildId: $newChildId, selectedDate: $selectedDate, selectedScheduleId: $selectedScheduleId, selectedTimeIndex: $selectedTimeIndex, eligibilityData: $eligibilityData, eligibilityLoading: $eligibilityLoading, bookingLoading: $bookingLoading, selectedChildId: $selectedChildId)';
+    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, selectedGender: $selectedGender, selectedBirthDate: $selectedBirthDate, childrenList: $childrenList, timeSlots: $timeSlots, trialSummary: $trialSummary, parentCity: $parentCity, parentDistrict: $parentDistrict, currentStep: $currentStep, newChildId: $newChildId, selectedDate: $selectedDate, selectedScheduleId: $selectedScheduleId, selectedTimeIndex: $selectedTimeIndex, selectedChildId: $selectedChildId)';
   }
 
   @override
@@ -506,39 +436,29 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
                 other.selectedScheduleId == selectedScheduleId) &&
             (identical(other.selectedTimeIndex, selectedTimeIndex) ||
                 other.selectedTimeIndex == selectedTimeIndex) &&
-            (identical(other.eligibilityData, eligibilityData) ||
-                other.eligibilityData == eligibilityData) &&
-            (identical(other.eligibilityLoading, eligibilityLoading) ||
-                other.eligibilityLoading == eligibilityLoading) &&
-            (identical(other.bookingLoading, bookingLoading) ||
-                other.bookingLoading == bookingLoading) &&
             (identical(other.selectedChildId, selectedChildId) ||
                 other.selectedChildId == selectedChildId));
   }
 
   @override
-  int get hashCode => Object.hashAll([
-        runtimeType,
-        isLoading,
-        buttonLoading,
-        selectedIndex,
-        selectedGender,
-        selectedBirthDate,
-        const DeepCollectionEquality().hash(_childrenList),
-        const DeepCollectionEquality().hash(_timeSlots),
-        trialSummary,
-        parentCity,
-        parentDistrict,
-        currentStep,
-        newChildId,
-        selectedDate,
-        selectedScheduleId,
-        selectedTimeIndex,
-        eligibilityData,
-        eligibilityLoading,
-        bookingLoading,
-        selectedChildId
-      ]);
+  int get hashCode => Object.hash(
+      runtimeType,
+      isLoading,
+      buttonLoading,
+      selectedIndex,
+      selectedGender,
+      selectedBirthDate,
+      const DeepCollectionEquality().hash(_childrenList),
+      const DeepCollectionEquality().hash(_timeSlots),
+      trialSummary,
+      parentCity,
+      parentDistrict,
+      currentStep,
+      newChildId,
+      selectedDate,
+      selectedScheduleId,
+      selectedTimeIndex,
+      selectedChildId);
 
   @JsonKey(ignore: true)
   @override
@@ -565,9 +485,6 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
       final DateTime? selectedDate,
       final String? selectedScheduleId,
       final int selectedTimeIndex,
-      final ClassEligibilityData? eligibilityData,
-      final bool eligibilityLoading,
-      final bool bookingLoading,
       final String? selectedChildId}) = _$ChildrenBuildableImpl;
 
   @override
@@ -600,12 +517,6 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
   String? get selectedScheduleId;
   @override
   int get selectedTimeIndex;
-  @override // Eligibility & booking state
-  ClassEligibilityData? get eligibilityData;
-  @override
-  bool get eligibilityLoading;
-  @override
-  bool get bookingLoading;
   @override
   String? get selectedChildId;
   @override
@@ -617,7 +528,6 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
 /// @nodoc
 mixin _$ChildrenListenable {
   ChildrenEffect get effect => throw _privateConstructorUsedError;
-  String? get bookingId => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ChildrenListenableCopyWith<ChildrenListenable> get copyWith =>
@@ -630,7 +540,7 @@ abstract class $ChildrenListenableCopyWith<$Res> {
           ChildrenListenable value, $Res Function(ChildrenListenable) then) =
       _$ChildrenListenableCopyWithImpl<$Res, ChildrenListenable>;
   @useResult
-  $Res call({ChildrenEffect effect, String? bookingId});
+  $Res call({ChildrenEffect effect});
 }
 
 /// @nodoc
@@ -647,17 +557,12 @@ class _$ChildrenListenableCopyWithImpl<$Res, $Val extends ChildrenListenable>
   @override
   $Res call({
     Object? effect = null,
-    Object? bookingId = freezed,
   }) {
     return _then(_value.copyWith(
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
               as ChildrenEffect,
-      bookingId: freezed == bookingId
-          ? _value.bookingId
-          : bookingId // ignore: cast_nullable_to_non_nullable
-              as String?,
     ) as $Val);
   }
 }
@@ -670,7 +575,7 @@ abstract class _$$ChildrenListenableImplCopyWith<$Res>
       __$$ChildrenListenableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({ChildrenEffect effect, String? bookingId});
+  $Res call({ChildrenEffect effect});
 }
 
 /// @nodoc
@@ -685,17 +590,12 @@ class __$$ChildrenListenableImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? effect = null,
-    Object? bookingId = freezed,
   }) {
     return _then(_$ChildrenListenableImpl(
       effect: null == effect
           ? _value.effect
           : effect // ignore: cast_nullable_to_non_nullable
               as ChildrenEffect,
-      bookingId: freezed == bookingId
-          ? _value.bookingId
-          : bookingId // ignore: cast_nullable_to_non_nullable
-              as String?,
     ));
   }
 }
@@ -703,16 +603,14 @@ class __$$ChildrenListenableImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$ChildrenListenableImpl implements _ChildrenListenable {
-  const _$ChildrenListenableImpl({required this.effect, this.bookingId});
+  const _$ChildrenListenableImpl({required this.effect});
 
   @override
   final ChildrenEffect effect;
-  @override
-  final String? bookingId;
 
   @override
   String toString() {
-    return 'ChildrenListenable(effect: $effect, bookingId: $bookingId)';
+    return 'ChildrenListenable(effect: $effect)';
   }
 
   @override
@@ -720,13 +618,11 @@ class _$ChildrenListenableImpl implements _ChildrenListenable {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ChildrenListenableImpl &&
-            (identical(other.effect, effect) || other.effect == effect) &&
-            (identical(other.bookingId, bookingId) ||
-                other.bookingId == bookingId));
+            (identical(other.effect, effect) || other.effect == effect));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, effect, bookingId);
+  int get hashCode => Object.hash(runtimeType, effect);
 
   @JsonKey(ignore: true)
   @override
@@ -737,14 +633,11 @@ class _$ChildrenListenableImpl implements _ChildrenListenable {
 }
 
 abstract class _ChildrenListenable implements ChildrenListenable {
-  const factory _ChildrenListenable(
-      {required final ChildrenEffect effect,
-      final String? bookingId}) = _$ChildrenListenableImpl;
+  const factory _ChildrenListenable({required final ChildrenEffect effect}) =
+      _$ChildrenListenableImpl;
 
   @override
   ChildrenEffect get effect;
-  @override
-  String? get bookingId;
   @override
   @JsonKey(ignore: true)
   _$$ChildrenListenableImplCopyWith<_$ChildrenListenableImpl> get copyWith =>

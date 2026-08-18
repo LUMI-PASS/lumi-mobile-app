@@ -509,9 +509,13 @@ class CoursesApi {
     String? cardNumber,
     String? expireDate,
     String? savedCardId,
+    /// Ask the server to apply the wallet balance. It decides the amount — see
+    /// [CheckoutResult.walletAmount].
+    bool useWallet = false,
   }) async {
     final body = {
       'option': option.key,
+      if (useWallet) 'use_wallet': true,
       if (subcourseId != null && subcourseId.isNotEmpty)
         'subcourse_id': subcourseId,
       if (option == CoursePurchaseOption.full && ageFrom != null)

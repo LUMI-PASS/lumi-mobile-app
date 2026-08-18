@@ -27,13 +27,8 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discove
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/wallet/wallet_page.dart';
 import 'package:lumi_pass/presentation/app/profile/children/child_detail_page.dart';
 import 'package:lumi_pass/presentation/app/profile/language/change_language_page.dart';
-import 'package:lumi_pass/presentation/app/profile/payment/add_new_card_page.dart';
-import 'package:lumi_pass/presentation/app/profile/payment/checkout_page.dart';
-import 'package:lumi_pass/presentation/app/profile/payment/payment_cards_page.dart';
-import 'package:lumi_pass/presentation/app/profile/payment/payment_page.dart';
 import 'package:lumi_pass/presentation/app/profile/profile_detail/profile_detail_page.dart';
 import 'package:lumi_pass/presentation/auth/login/login_page.dart';
 import 'package:lumi_pass/presentation/auth/register/register_page.dart';
@@ -47,9 +42,11 @@ import '../../data/api_model/order/user_order.dart';
 import '../../domain/repo/courses/courses_api.dart';
 import '../../presentation/app/profile/attendance/attendance_detail_page.dart';
 import '../../presentation/app/profile/attendance/attendance_history_page.dart';
+import '../../presentation/app/profile/cards/my_cards_page.dart';
 import '../../presentation/app/profile/children/add_child_page.dart';
 import '../../presentation/app/profile/faq/faq_page.dart';
 import '../../presentation/app/profile/my_bookings/my_bookings_page.dart';
+import '../../presentation/app/profile/wallet/wallet_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/schedule_detail_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/ticket_receipt_page.dart';
 import '../../presentation/app/main/subscreens/calendar/widget/fiscal_receipt_page.dart';
@@ -108,7 +105,6 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: ShortsRoute.page),
         AutoRoute(page: SearchRoute.page),
         AutoRoute(page: CalendarRoute.page),
-        AutoRoute(page: WalletRoute.page),
         AutoRoute(page: ProfileRoute.page),
       ],
     ),
@@ -124,10 +120,6 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: ChildDetailRoute.page),
     AutoRoute(page: AddChildRoute.page),
     AutoRoute(page: ChangeLanguageRoute.page),
-    AutoRoute(page: PaymentRoute.page),
-    AutoRoute(page: PaymentCardsRoute.page),
-    AutoRoute(page: AddNewCardRoute.page),
-    AutoRoute(page: CheckoutRoute.page),
     AutoRoute(page: SearchDiscoveryRoute.page),
     AutoRoute(page: BranchesMapRoute.page),
     AutoRoute(page: AttendanceHistoryRoute.page),
@@ -139,6 +131,8 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: MyBookingsRoute.page),
     AutoRoute(page: PlansRoute.page),
     AutoRoute(page: PaymentHistoryRoute.page),
+    AutoRoute(page: WalletRoute.page),
+    AutoRoute(page: MyCardsRoute.page),
     AutoRoute(page: ClassesGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
     AutoRoute(page: NotificationsRoute.page),

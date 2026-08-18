@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
@@ -245,15 +246,11 @@ class _EmptyBookings extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 80.w,
-            height: 80.w,
-            decoration: BoxDecoration(
-              color: AppColors.brandPurple.withOpacity(0.10),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.receipt_long_rounded,
-                size: 40.w, color: AppColors.brandPurple),
+          Assets.images.mascot.mascotCalendar.image(
+            width: 160.w,
+            height: 160.w,
+            fit: BoxFit.contain,
+            excludeFromSemantics: true,
           ),
           20.kh,
           Text('no_bookings_yet'.tr(),

@@ -6,8 +6,6 @@ import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
-import 'package:lumi_pass/data/api_model/eligibility/eligibility_model.dart';
-import 'package:lumi_pass/data/api_model/booking/booking_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'children_state.dart';
@@ -66,56 +64,6 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
         display.error(error);
       },
       buildOnDone: () => buildable.copyWith(isLoading: false),
-    );
-  }
-
-  Future<void> checkClassEligibility(String classId) {
-    return callable(
-      future: _repo.checkClassEligibility(classId),
-      buildOnStart: () => buildable.copyWith(eligibilityLoading: true),
-      buildOnData: (ClassEligibilityData data) {
-        return buildable.copyWith(eligibilityData: data);
-      },
-      invokeOnData: (data) => const ChildrenListenable(
-        effect: ChildrenEffect.eligibilityLoaded,
-      ),
-      onErrorData: (error) {
-        final status = (error as DioException);
-        if (status.response?.statusCode == 500 ||
-            status.response?.statusCode == 502) {
-          display.error(Strings.serverErrorTryLater);
-        } else if (status.type == DioExceptionType.connectionError ||
-            status.type == DioExceptionType.connectionTimeout) {
-          display.error(Strings.connectionError);
-        }
-        display.error(error);
-      },
-      buildOnDone: () => buildable.copyWith(eligibilityLoading: false),
-    );
-  }
-
-  Future<void> createBooking(
-      String scheduleId, String childId, String subscriptionId) {
-    return callable(
-      future: _repo.createBooking(scheduleId, childId, subscriptionId),
-      buildOnStart: () => buildable.copyWith(bookingLoading: true),
-      invokeOnData: (BookingResponse data) => ChildrenListenable(
-        effect: ChildrenEffect.bookingSuccess,
-        bookingId: data.id,
-      ),
-      onErrorData: (error) {
-        final status = (error as DioException);
-        if (status.response?.statusCode == 500 ||
-            status.response?.statusCode == 502) {
-          display.error(Strings.serverErrorTryLater);
-        } else if (status.type == DioExceptionType.connectionError ||
-            status.type == DioExceptionType.connectionTimeout) {
-          display.error(Strings.connectionError);
-        } else {
-          display.error("Booking failed. Please try again.");
-        }
-      },
-      buildOnDone: () => buildable.copyWith(bookingLoading: false),
     );
   }
 

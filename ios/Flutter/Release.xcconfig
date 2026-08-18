@@ -1,2 +1,5 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+// Gitignored, holds YANDEX_MAPKIT_KEY. Optional include so a checkout without
+// it still builds — the map just renders blank. See Secrets.example.xcconfig.
+#include? "Secrets.xcconfig"

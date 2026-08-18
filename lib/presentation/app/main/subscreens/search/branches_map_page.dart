@@ -3,30 +3,29 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/common/utils/map_marker_bitmap.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 /// "На карте" — the centres of the current search plotted on a map (Figma
 /// `На карте`).
 ///
-/// Each centre is a labelled pill; tapping one drops a pin and raises its card
-/// at the bottom. The category chips along the bottom re-query, which is why
-/// this screen carries its own [SearchCubit] rather than a frozen list.
+/// Each centre is a labelled pill; tapping one raises its card at the bottom.
+/// The category chips along the bottom re-query, which is why this screen
+/// carries its own [SearchCubit] rather than a frozen list.
 @RoutePage()
 class BranchesMapPage
     extends BasePage<SearchCubit, SearchBuildable, SearchListenable> {
@@ -98,14 +97,34 @@ class _BranchesMapView extends StatefulWidget {
 }
 
 class _BranchesMapViewState extends State<_BranchesMapView> {
-  final _mapController = MapController();
+  YandexMapController? _mapController;
 
   HomBranch? _selected;
   bool _mapReady = false;
 
-  /// The device's location, once fetched via the "my location" button.
-  LatLng? _myLocation;
   bool _locating = false;
+
+  /// The rasterised pills currently on the map. Rebuilt asynchronously — Yandex
+  /// placemarks take a bitmap, so markers cannot simply be produced inside
+  /// `build`.
+  ///
+  /// These are handed to a [ClusterizedPlacemarkCollection] rather than plotted
+  /// directly: the pills are ~160pt wide, so a city-dense result set overlaps
+  /// into an unreadable wall at anything below street zoom.
+  List<PlacemarkMapObject> _markers = const [];
+
+  /// Distance in units below which two pills collapse into one bubble.
+  static const _clusterRadius = 60.0;
+
+  /// Clusters are shown at this zoom and below; above it every centre is drawn
+  /// separately. Chosen to sit at [_maxFitZoom] so selecting a branch — which
+  /// zooms to exactly that level — always lands on a real pill rather than
+  /// leaving the user's pick swallowed by a bubble.
+  static const _clusterMinZoom = 15;
+
+  /// Guards against an older marker rebuild finishing after a newer one and
+  /// putting stale pills back on the map.
+  int _markerSync = 0;
 
   /// Signature (sorted ids) of the branch set the camera last fitted to. Guards
   /// against re-fitting on every cubit emit (loading toggles etc.) — the camera
@@ -115,6 +134,18 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   static const _minZoom = 4.0;
   static const _maxZoom = 18.0;
 
+  /// The old `CameraFit.bounds(maxZoom: 15)` — a lone centre, or a tight
+  /// cluster, must not leave the camera zoomed to the building.
+  static const _maxFitZoom = 15.0;
+
+  /// Stands in for the old `padding: EdgeInsets.all(56.w)` on the camera fit.
+  /// MapKit fits a geometry edge-to-edge, so the equivalent is to back off by a
+  /// fraction of a zoom level afterwards. (`CameraUpdate.newGeometry` does take
+  /// a `focusRect`, which would be exact — but it is specified in raw screen
+  /// pixels, and Android and iOS disagree about whether those are physical
+  /// pixels or points. This is the portable version.)
+  static const _fitPaddingZoom = 0.35;
+
   /// Flips once this screen's own fetch has landed. Until then the seed from
   /// the search screen stands in; after it, the seed is stale and the cubit is
   /// the only source — otherwise picking a category would flash the original
@@ -123,8 +154,10 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
 
   /// Tashkent — the fallback camera when there is nothing to fit to. Shares the
   /// home feed's fallback so the two never drift to different "centres".
-  static final _defaultCenter =
-      LatLng(kTashkentCentre.lat, kTashkentCentre.lng);
+  static final _defaultCenter = Point(
+    latitude: kTashkentCentre.lat,
+    longitude: kTashkentCentre.lng,
+  );
 
   /// Uzbekistan's bounding box, used only to drop coordinates the backend got
   /// wrong (0,0, swapped lat/lng, …). It is deliberately country-wide and not
@@ -134,13 +167,6 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   static const _maxLat = 45.7;
   static const _minLng = 55.9;
   static const _maxLng = 73.2;
-
-  /// CartoDB raster basemaps — the same provider the app already used, in the
-  /// variant that matches the active theme.
-  static const _darkTiles =
-      'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}@2x.png';
-  static const _lightTiles =
-      'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}@2x.png';
 
   /// The centres this screen should be showing right now.
   List<HomBranch> get _source {
@@ -166,6 +192,12 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncMarkers());
+  }
+
+  @override
   void didUpdateWidget(covariant _BranchesMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.branchesLoaded) _everLoaded = true;
@@ -175,49 +207,243 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
       // Map mode streams the centres in page by page, so a set change is not
       // necessarily a new search — keep the user's pick if it's still plotted.
       final selectedId = _selected?.id;
-      if (selectedId == null ||
-          !_plottable.any((b) => b.id == selectedId)) {
+      if (selectedId == null || !_plottable.any((b) => b.id == selectedId)) {
         _selected = null;
       }
+      _syncMarkers();
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitToBranches());
     }
   }
 
-  void _onMapReady() {
+  void _onMapCreated(YandexMapController controller) {
+    _mapController = controller;
     _mapReady = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitToBranches());
   }
 
-  void _fitToBranches() {
-    if (!_mapReady || !mounted) return;
-    _fittedSig = _sig;
-    final points =
-        _plottable.map((b) => LatLng(b.latitude!, b.longitude!)).toList();
+  /// Rasterises a pill per plotted centre and swaps them onto the map.
+  ///
+  /// Bitmaps are memoised by (title, selected, dpr), so this is cheap on every
+  /// call after the first — a selection change re-renders two pills, not all of
+  /// them.
+  Future<void> _syncMarkers() async {
+    if (!mounted) return;
+    final token = ++_markerSync;
 
-    if (points.isEmpty) {
-      _mapController.move(_defaultCenter, 12);
-      return;
+    final branches = _plottable;
+    final selectedId = _selected?.id;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+
+    final built = <PlacemarkMapObject>[];
+    for (var i = 0; i < branches.length; i++) {
+      final branch = branches[i];
+      final isSelected = branch.id != null && branch.id == selectedId;
+      final bitmap = await BranchMarkerPainter.build(
+        title: branch.title ?? '',
+        isSelected: isSelected,
+        devicePixelRatio: dpr,
+      );
+      built.add(
+        PlacemarkMapObject(
+          mapId: MapObjectId('branch_${branch.id ?? i}'),
+          point: Point(
+            latitude: branch.latitude!,
+            longitude: branch.longitude!,
+          ),
+          // Defaults to 0.5 — without this every pill is half transparent.
+          opacity: 1,
+          // The selected pill draws over any neighbour it overlaps, which is
+          // what the old code achieved by emitting it last.
+          zIndex: isSelected ? 1 : 0,
+          consumeTapEvents: true,
+          icon: PlacemarkIcon.single(
+            PlacemarkIconStyle(
+              image: BitmapDescriptor.fromBytes(bitmap.bytes),
+              anchor: bitmap.anchor,
+              scale: bitmap.scale,
+            ),
+          ),
+          onTap: (_, __) => _select(branch),
+        ),
+      );
     }
-    if (points.length == 1) {
-      _mapController.move(points.first, 15);
-      return;
-    }
-    _mapController.fitCamera(
-      CameraFit.bounds(
-        bounds: LatLngBounds.fromPoints(points),
-        padding: EdgeInsets.all(56.w),
-        maxZoom: 15,
+
+    // A newer sync started while this one was awaiting — its result wins.
+    if (!mounted || token != _markerSync) return;
+    setState(() => _markers = built);
+  }
+
+  /// Gives a freshly formed cluster its bubble.
+  ///
+  /// MapKit hands us an appearance placemark carrying only an id and a point —
+  /// no icon, and the usual 0.5 opacity — so without this every cluster would
+  /// be an invisible hole where a group of centres used to be.
+  Future<Cluster> _onClusterAdded(
+    ClusterizedPlacemarkCollection self,
+    Cluster cluster,
+  ) async {
+    if (!mounted) return cluster;
+    final bitmap = await BranchMarkerPainter.buildCluster(
+      count: cluster.size,
+      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+    );
+    return cluster.copyWith(
+      appearance: cluster.appearance.copyWith(
+        opacity: 1,
+        icon: PlacemarkIcon.single(
+          PlacemarkIconStyle(
+            image: BitmapDescriptor.fromBytes(bitmap.bytes),
+            anchor: bitmap.anchor,
+            scale: bitmap.scale,
+          ),
+        ),
       ),
+    );
+  }
+
+  void _onClusterTap(ClusterizedPlacemarkCollection self, Cluster cluster) {
+    _zoomIntoCluster(cluster);
+  }
+
+  /// Opens a cluster by fitting its members, then guaranteeing the camera ends
+  /// up past [_clusterMinZoom].
+  ///
+  /// The guarantee is the point: centres at (or very near) the same coordinate
+  /// produce a degenerate bounding box, so fitting alone would leave the camera
+  /// where it was and the bubble would feel dead to the touch.
+  Future<void> _zoomIntoCluster(Cluster cluster) async {
+    final controller = _mapController;
+    if (controller == null || cluster.placemarks.isEmpty) return;
+
+    final points = cluster.placemarks.map((p) => p.point).toList();
+    var minLat = points.first.latitude;
+    var maxLat = minLat;
+    var minLng = points.first.longitude;
+    var maxLng = minLng;
+    for (final point in points) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+
+    const animation = MapAnimation(duration: 0.3);
+    final degenerate = maxLat - minLat < 1e-6 && maxLng - minLng < 1e-6;
+
+    if (!degenerate) {
+      await controller.moveCamera(
+        CameraUpdate.newGeometry(
+          Geometry.fromBoundingBox(
+            BoundingBox(
+              southWest: Point(latitude: minLat, longitude: minLng),
+              northEast: Point(latitude: maxLat, longitude: maxLng),
+            ),
+          ),
+        ),
+        animation: animation,
+      );
+      if (!mounted) return;
+    }
+
+    final cam = await controller.getCameraPosition();
+    if (!mounted) return;
+    // Below this the cluster would simply re-form and nothing would appear to
+    // have happened.
+    const floor = _clusterMinZoom + 1.0;
+    if (cam.zoom >= floor) return;
+    await controller.moveCamera(
+      CameraUpdate.newCameraPosition(
+        cam.copyWith(
+          zoom: floor.clamp(_minZoom, _maxZoom),
+          target: degenerate ? points.first : cam.target,
+        ),
+      ),
+      animation: animation,
+    );
+  }
+
+  Future<void> _fitToBranches() async {
+    final controller = _mapController;
+    if (!_mapReady || controller == null || !mounted) return;
+    _fittedSig = _sig;
+
+    final branches = _plottable;
+
+    if (branches.isEmpty) {
+      await controller.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: _defaultCenter, zoom: 12),
+        ),
+      );
+      return;
+    }
+
+    if (branches.length == 1) {
+      await controller.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: Point(
+              latitude: branches.first.latitude!,
+              longitude: branches.first.longitude!,
+            ),
+            zoom: _maxFitZoom,
+          ),
+        ),
+      );
+      return;
+    }
+
+    var minLat = branches.first.latitude!;
+    var maxLat = minLat;
+    var minLng = branches.first.longitude!;
+    var maxLng = minLng;
+    for (final branch in branches) {
+      final lat = branch.latitude!;
+      final lng = branch.longitude!;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+    }
+
+    await controller.moveCamera(
+      CameraUpdate.newGeometry(
+        Geometry.fromBoundingBox(
+          BoundingBox(
+            southWest: Point(latitude: minLat, longitude: minLng),
+            northEast: Point(latitude: maxLat, longitude: maxLng),
+          ),
+        ),
+      ),
+    );
+
+    // Back off to stand in for the old fit padding, and hold the old maxZoom.
+    if (!mounted) return;
+    final cam = await controller.getCameraPosition();
+    final zoom =
+        (cam.zoom - _fitPaddingZoom).clamp(_minZoom, _maxFitZoom);
+    if (zoom == cam.zoom || !mounted) return;
+    await controller.moveCamera(
+      CameraUpdate.newCameraPosition(cam.copyWith(zoom: zoom)),
     );
   }
 
   /// Zooms in/out by [delta] around the current centre, clamped to the map's
   /// zoom range so the buttons can't drive it into empty grey space.
-  void _zoomBy(double delta) {
-    if (!_mapReady) return;
-    final cam = _mapController.camera;
-    final z = (cam.zoom + delta).clamp(_minZoom, _maxZoom);
-    _mapController.move(cam.center, z);
+  ///
+  /// Asynchronous where the `flutter_map` version was not: MapKit only reports
+  /// its camera over the platform channel, so the current zoom has to be
+  /// awaited before it can be clamped.
+  Future<void> _zoomBy(double delta) async {
+    final controller = _mapController;
+    if (!_mapReady || controller == null) return;
+    final cam = await controller.getCameraPosition();
+    final zoom = (cam.zoom + delta).clamp(_minZoom, _maxZoom);
+    if (zoom == cam.zoom) return;
+    await controller.moveCamera(
+      CameraUpdate.newCameraPosition(cam.copyWith(zoom: zoom)),
+      animation: const MapAnimation(duration: 0.3),
+    );
   }
 
   /// Centres the map on the device's location, requesting permission first.
@@ -240,9 +466,16 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
       }
       final pos = await Geolocator.getCurrentPosition();
       if (!mounted) return;
-      final here = LatLng(pos.latitude, pos.longitude);
-      setState(() => _myLocation = here);
-      _mapController.move(here, 15);
+      final here = Point(latitude: pos.latitude, longitude: pos.longitude);
+      // MapKit's own location layer replaces the hand-drawn dot the
+      // `flutter_map` version used — it is the platform-standard puck, and it
+      // keeps following the device instead of freezing at the fetched fix.
+      await _mapController?.toggleUserLayer(visible: true);
+      await _mapController?.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: here, zoom: _maxFitZoom),
+        ),
+      );
     } catch (_) {
       _showMsg('map_location_error'.tr());
     } finally {
@@ -252,17 +485,38 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
 
   void _showMsg(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   void _select(HomBranch branch) {
     setState(() => _selected = branch);
-    final zoom = _mapController.camera.zoom;
-    _mapController.move(
-      LatLng(branch.latitude!, branch.longitude!),
-      zoom < 15 ? 15 : zoom,
+    _syncMarkers();
+    _zoomToSelected(branch);
+  }
+
+  Future<void> _zoomToSelected(HomBranch branch) async {
+    final controller = _mapController;
+    if (controller == null) return;
+    final cam = await controller.getCameraPosition();
+    if (!mounted) return;
+    await controller.moveCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: Point(
+            latitude: branch.latitude!,
+            longitude: branch.longitude!,
+          ),
+          zoom: cam.zoom < _maxFitZoom ? _maxFitZoom : cam.zoom,
+        ),
+      ),
+      animation: const MapAnimation(duration: 0.3),
     );
+  }
+
+  void _clearSelection() {
+    if (_selected == null) return;
+    setState(() => _selected = null);
+    _syncMarkers();
   }
 
   void _selectCategory(int index) {
@@ -276,7 +530,6 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final branches = _plottable;
     final selected = _selected;
     final activeIndex = widget.categories
         .indexWhere((cat) => cat.id == widget.selectedCategory?.id);
@@ -300,71 +553,41 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                     padding: EdgeInsets.symmetric(horizontal: 8.w),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16.r),
-                      child: FlutterMap(
-                        mapController: _mapController,
-                        options: MapOptions(
-                          initialCenter: _defaultCenter,
-                          initialZoom: 12,
-                          minZoom: _minZoom,
-                          maxZoom: _maxZoom,
-                          onMapReady: _onMapReady,
-                          onTap: (_, __) => setState(() => _selected = null),
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate: c.isDark ? _darkTiles : _lightTiles,
-                            userAgentPackageName: 'com.lumi.pass',
-                            maxZoom: 19,
-                            retinaMode: true,
-                          ),
-                          MarkerLayer(
-                            markers: [
-                              if (_myLocation != null)
-                                Marker(
-                                  point: _myLocation!,
-                                  width: 26.w,
-                                  height: 26.w,
-                                  child: const _MyLocationDot(),
-                                ),
-                              // Selecting a branch doesn't swap its marker for a
-                              // different shape — the pill stays exactly as it
-                              // is and only picks up a selected state, so the
-                              // map doesn't reflow under the user's finger. The
-                              // selected pill is emitted last so it draws over
-                              // any neighbour it overlaps.
-                              for (final branch in branches)
-                                if (branch.id != selected?.id)
-                                  Marker(
-                                    point: LatLng(
-                                        branch.latitude!, branch.longitude!),
-                                    width: 160.w,
-                                    height: 28.h,
-                                    alignment: Alignment.centerLeft,
-                                    child: _BranchLabel(
-                                      title: branch.title ?? '',
-                                      onTap: () => _select(branch),
-                                    ),
-                                  ),
-                              if (selected != null)
-                                Marker(
-                                  point: LatLng(
-                                      selected.latitude!, selected.longitude!),
-                                  width: 160.w,
-                                  height: 28.h,
-                                  alignment: Alignment.centerLeft,
-                                  child: _BranchLabel(
-                                    title: selected.title ?? '',
-                                    isSelected: true,
-                                    onTap: () => _select(selected),
-                                  ),
-                                ),
-                            ],
+                      child: YandexMap(
+                        onMapCreated: _onMapCreated,
+                        onMapTap: (_) => _clearSelection(),
+                        // Replaces the light/dark CartoDB tile URLs the
+                        // `flutter_map` version switched between.
+                        nightModeEnabled: c.isDark,
+                        mapObjects: [
+                          ClusterizedPlacemarkCollection(
+                            mapId: const MapObjectId('branches'),
+                            placemarks: _markers,
+                            radius: _clusterRadius,
+                            minZoom: _clusterMinZoom,
+                            onClusterAdded: _onClusterAdded,
+                            onClusterTap: _onClusterTap,
                           ),
                         ],
+                        cameraBounds: const CameraBounds(
+                          minZoom: _minZoom,
+                          maxZoom: _maxZoom,
+                        ),
+                        // Yandex's terms require the logo to stay visible, so it
+                        // is moved clear of the zoom controls and the bottom
+                        // card rather than hidden.
+                        logoAlignment: const MapAlignment(
+                          horizontal: HorizontalAlignment.left,
+                          vertical: VerticalAlignment.bottom,
+                        ),
+                        logoPadding: MapPadding(
+                          horizontal: 8.w.round(),
+                          vertical: 72.h.round(),
+                        ),
                       ),
                     ),
                   ),
-                  if (widget.isLoading && branches.isEmpty)
+                  if (widget.isLoading && _markers.isEmpty)
                     const Center(child: CircularProgressIndicator()),
                   // Zoom + locate controls, clear of the bottom chips/card.
                   Positioned(
@@ -422,85 +645,6 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
   }
 }
 
-/// Branch marker — a labelled pill (Figma `Tag`). The grey pill and its white
-/// label are theme-invariant by design: they sit on the map, not on the page.
-///
-/// Selecting a branch does not change the marker's shape, size or contents — it
-/// is the same pill, tinted to the brand purple and ringed in white. Swapping it
-/// for a different glyph made the map appear to jump as markers resized.
-class _BranchLabel extends StatelessWidget {
-  const _BranchLabel({
-    required this.title,
-    required this.onTap,
-    this.isSelected = false,
-  });
-
-  final String title;
-  final VoidCallback onTap;
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          padding: EdgeInsets.fromLTRB(2.w, 2.h, 10.w, 2.h),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.brandPurple : AppColors.chipGrey,
-            borderRadius: BorderRadius.circular(8.r),
-            border: isSelected
-                ? Border.all(color: AppColors.white, width: 1.5)
-                : null,
-            boxShadow: [
-              BoxShadow(
-                color: isSelected
-                    ? AppColors.brandPurple.withValues(alpha: 0.40)
-                    : Colors.black.withValues(alpha: 0.10),
-                blurRadius: 11.5,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 24.w,
-                height: 24.w,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.link,
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: Assets.icons.home.building.svg(
-                  width: 16.w,
-                  height: 16.w,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.white,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
-              4.horizontalSpace,
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.semibold12.copyWith(color: AppColors.white),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// A round, theme-aware map control (zoom / locate).
 class _MapButton extends StatelessWidget {
   const _MapButton({
@@ -545,35 +689,6 @@ class _MapButton extends StatelessWidget {
                 ),
               )
             : Icon(icon, size: 22.sp, color: c.textPrimary),
-      ),
-    );
-  }
-}
-
-/// The pulsing blue "you are here" dot.
-class _MyLocationDot extends StatelessWidget {
-  const _MyLocationDot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(4.w),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.link,
-          shape: BoxShape.circle,
-        ),
       ),
     );
   }

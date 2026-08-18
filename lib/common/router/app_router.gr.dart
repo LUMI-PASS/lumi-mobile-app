@@ -26,12 +26,6 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
-    AddNewCardRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const AddNewCardPage(),
-      );
-    },
     AttendanceDetailRoute.name: (routeData) {
       final args = routeData.argsAs<AttendanceDetailRouteArgs>();
       return AutoRoutePage<dynamic>(
@@ -58,6 +52,8 @@ abstract class _$AppRouter extends RootStackRouter {
           status: args.status,
           result: args.result,
           lines: args.lines,
+          cashbackEarned: args.cashbackEarned,
+          walletApplied: args.walletApplied,
         ),
       );
     },
@@ -117,12 +113,6 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const ChangeLanguagePage(),
-      );
-    },
-    CheckoutRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const CheckoutPage(),
       );
     },
     ChildDetailRoute.name: (routeData) {
@@ -239,6 +229,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const MyBookingsPage(),
       );
     },
+    MyCardsRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const MyCardsPage(),
+      );
+    },
     NotificationsRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -253,22 +249,10 @@ abstract class _$AppRouter extends RootStackRouter {
         child: OnboardingPage(key: args.key),
       );
     },
-    PaymentCardsRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const PaymentCardsPage(),
-      );
-    },
     PaymentHistoryRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const PaymentHistoryPage(),
-      );
-    },
-    PaymentRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const PaymentPage(),
       );
     },
     PlansRoute.name: (routeData) {
@@ -418,20 +402,6 @@ class AddChildRouteArgs {
 }
 
 /// generated route for
-/// [AddNewCardPage]
-class AddNewCardRoute extends PageRouteInfo<void> {
-  const AddNewCardRoute({List<PageRouteInfo>? children})
-      : super(
-          AddNewCardRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'AddNewCardRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
 /// [AttendanceDetailPage]
 class AttendanceDetailRoute extends PageRouteInfo<AttendanceDetailRouteArgs> {
   AttendanceDetailRoute({
@@ -491,6 +461,8 @@ class BookingCompleteRoute extends PageRouteInfo<BookingCompleteRouteArgs> {
     BookingResultStatus status = BookingResultStatus.paid,
     CheckoutResult? result,
     List<OrderLine> lines = const [],
+    num cashbackEarned = 0,
+    num walletApplied = 0,
     List<PageRouteInfo>? children,
   }) : super(
           BookingCompleteRoute.name,
@@ -499,6 +471,8 @@ class BookingCompleteRoute extends PageRouteInfo<BookingCompleteRouteArgs> {
             status: status,
             result: result,
             lines: lines,
+            cashbackEarned: cashbackEarned,
+            walletApplied: walletApplied,
           ),
           initialChildren: children,
         );
@@ -515,6 +489,8 @@ class BookingCompleteRouteArgs {
     this.status = BookingResultStatus.paid,
     this.result,
     this.lines = const [],
+    this.cashbackEarned = 0,
+    this.walletApplied = 0,
   });
 
   final Key? key;
@@ -525,9 +501,13 @@ class BookingCompleteRouteArgs {
 
   final List<OrderLine> lines;
 
+  final num cashbackEarned;
+
+  final num walletApplied;
+
   @override
   String toString() {
-    return 'BookingCompleteRouteArgs{key: $key, status: $status, result: $result, lines: $lines}';
+    return 'BookingCompleteRouteArgs{key: $key, status: $status, result: $result, lines: $lines, cashbackEarned: $cashbackEarned, walletApplied: $walletApplied}';
   }
 }
 
@@ -732,20 +712,6 @@ class ChangeLanguageRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'ChangeLanguageRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
-/// [CheckoutPage]
-class CheckoutRoute extends PageRouteInfo<void> {
-  const CheckoutRoute({List<PageRouteInfo>? children})
-      : super(
-          CheckoutRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'CheckoutRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }
@@ -1116,6 +1082,20 @@ class MyBookingsRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [MyCardsPage]
+class MyCardsRoute extends PageRouteInfo<void> {
+  const MyCardsRoute({List<PageRouteInfo>? children})
+      : super(
+          MyCardsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'MyCardsRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
 /// [NotificationsPage]
 class NotificationsRoute extends PageRouteInfo<void> {
   const NotificationsRoute({List<PageRouteInfo>? children})
@@ -1159,20 +1139,6 @@ class OnboardingRouteArgs {
 }
 
 /// generated route for
-/// [PaymentCardsPage]
-class PaymentCardsRoute extends PageRouteInfo<void> {
-  const PaymentCardsRoute({List<PageRouteInfo>? children})
-      : super(
-          PaymentCardsRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'PaymentCardsRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
 /// [PaymentHistoryPage]
 class PaymentHistoryRoute extends PageRouteInfo<void> {
   const PaymentHistoryRoute({List<PageRouteInfo>? children})
@@ -1182,20 +1148,6 @@ class PaymentHistoryRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'PaymentHistoryRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
-/// [PaymentPage]
-class PaymentRoute extends PageRouteInfo<void> {
-  const PaymentRoute({List<PageRouteInfo>? children})
-      : super(
-          PaymentRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'PaymentRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }
