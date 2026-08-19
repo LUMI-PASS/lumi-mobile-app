@@ -797,6 +797,7 @@ coupon_eligible_loading,Считаем занятия...,Mashg'ulotlar hisoblanm
 coupon_start_exploring,Начать поиск,Qidiruvni boshlash,Start Exploring
 coupon_activated_subtitle,Ваш план активирован. Бронируйте занятия со скидкой до {percent}%.,Rejangiz faollashtirildi. {percent}% gacha chegirma bilan mashg'ulotlarni bron qiling.,Your plan is active. Book activities with up to {percent}% off.
 coupon_tab_plans,Тарифы,Tariflar,Plans
+coupon_tab_info,Информация,Ma'lumot,Info
 coupon_tab_history,История,Tarix,History
 sub_history_empty,Покупок пока нет,Xaridlar yo'q hali,No purchases yet
 sub_history_empty_hint,Купите тариф — здесь появится история,Tarif sotib oling — tarix shu yerda paydo bo'ladi,Buy a plan and your history will appear here
@@ -978,6 +979,9 @@ course_buy_trial,Купить пробные уроки,Sinov darslarini sotib o
 course_trial_bought,Пробные уроки куплены,Sinov darslari sotib olingan,Trial lessons purchased
 course_full_title,Весь курс,Butun kurs,Whole course
 course_choose_age_title,Выберите возраст,Yoshni tanlang,Choose age
+course_choose_age_sub,Отметьте возраст каждого ребёнка — цена сложится,Har bir bolaning yoshini belgilang — narx qo‘shiladi,Tick each child’s age — the prices add up
+course_age_total,Итого за {count} детей,{count} bola uchun jami,Total for {count} children
+course_run_dates,С {from} по {to},{from} — {to},{from} — {to}
 course_lessons_count,{count} уроков,{count} ta dars,{count} lessons
 course_more_lessons,и ещё {count} уроков,yana {count} ta dars,and {count} more lessons
 course_full_price,Цена курса,Kurs narxi,Course price

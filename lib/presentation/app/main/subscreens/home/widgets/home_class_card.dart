@@ -11,10 +11,12 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -87,28 +89,45 @@ class HomeNearbyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hc = homClass;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    // Each entry is its own raised surface rather than a slice of the page.
+    // These cards are full-bleed photo over text stacked straight down the
+    // feed, so without an edge the next photo read as part of the previous
+    // card's price line. The frosted fill plus [AppShadows.card] draws that
+    // edge — which is what the hairline rule between entries used to do, and
+    // why `_buildNearYou` no longer has one.
+    return FrostedCard(
       onTap: () => context.router
           .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ClassImage(
-              imageUrl: sanitizeImageUrl(hc?.image),
-              height: 160.h,
-              category: hc?.category,
-              discountPercentage: hc?.discountPercentage ?? 0,
-              onViewAsReels: onViewAsReels,
-              fit: BoxFit.cover,
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      // 8 of padding around a 12-radius photo makes the outer corner 20, so
+      // the two curves stay concentric.
+      padding: EdgeInsets.all(8.w),
+      borderRadius: BorderRadius.circular(20.r),
+      boxShadow: AppShadows.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ClassImage(
+            imageUrl: sanitizeImageUrl(hc?.image),
+            height: 160.h,
+            category: hc?.category,
+            discountPercentage: hc?.discountPercentage ?? 0,
+            onViewAsReels: onViewAsReels,
+            fit: BoxFit.cover,
+          ),
+          12.verticalSpace,
+          // The text is inset past the photo's edge — flush against the card
+          // padding it read as crowded into the corner.
+          Padding(
+            padding: EdgeInsets.fromLTRB(4.w, 0, 4.w, 4.h),
+            child: _ClassInfo(
+              hc: hc,
+              crossAxis: CrossAxisAlignment.start,
+              branchInline: true,
             ),
-            14.verticalSpace,
-            _ClassInfo(hc: hc, crossAxis: CrossAxisAlignment.start),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -268,22 +287,46 @@ class _BlurredFill extends StatelessWidget {
 }
 
 class _ClassInfo extends StatelessWidget {
-  const _ClassInfo({required this.hc, required this.crossAxis});
+  const _ClassInfo({
+    required this.hc,
+    required this.crossAxis,
+    this.branchInline = false,
+  });
 
   final HomClass? hc;
   final CrossAxisAlignment crossAxis;
+
+  /// Put the centre's name and its address on ONE line, under the title.
+  ///
+  /// They answer the same question — *where is this* — so on the full-width
+  /// card they read as one fact, and stacking them spent three lines on it
+  /// while pushing the price further from the title. Off by default: the
+  /// compact card in the horizontal rows is 168pt wide, where a chip and a
+  /// street address on one line would leave a couple of characters of each.
+  final bool branchInline;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final provider = hc?.branch?.title;
     final address = hc?.branch?.address;
+    final hasProvider = provider != null && provider.isNotEmpty;
+    final hasAddress = address != null && address.isNotEmpty;
+
+    final addressText = hasAddress
+        ? Text(
+            address,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.regular12.copyWith(color: c.textSecondary),
+          )
+        : null;
 
     return Column(
       crossAxisAlignment: crossAxis,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (provider != null && provider.isNotEmpty) ...[
+        if (hasProvider && !branchInline) ...[
           HomePillTag(label: provider, gradient: AppGradients.green),
           6.verticalSpace,
         ],
@@ -293,14 +336,27 @@ class _ClassInfo extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: AppText.semibold16.copyWith(color: c.textPrimary),
         ),
-        if (address != null && address.isNotEmpty) ...[
+        if (branchInline && (hasProvider || hasAddress)) ...[
           6.verticalSpace,
-          Text(
-            address,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.regular12.copyWith(color: c.textSecondary),
+          Row(
+            children: [
+              if (hasProvider)
+                // Flexible, not fixed: a long centre name gives way to the
+                // address rather than pushing it off the card entirely — the
+                // pill ellipsizes its own label (see [HomePillTag]).
+                Flexible(
+                  child: HomePillTag(
+                    label: provider,
+                    gradient: AppGradients.green,
+                  ),
+                ),
+              if (hasProvider && hasAddress) 6.horizontalSpace,
+              if (addressText != null) Expanded(child: addressText),
+            ],
           ),
+        ] else if (addressText != null) ...[
+          6.verticalSpace,
+          addressText,
         ],
         6.verticalSpace,
         _PriceText(hc: hc),

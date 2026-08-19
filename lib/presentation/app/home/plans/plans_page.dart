@@ -9,14 +9,15 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/adaptive_card.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
+import 'package:lumi_pass/common/widget/segmented_tabs.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
+import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
@@ -25,12 +26,17 @@ import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/plans/coupon_success_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
+import 'package:lumi_pass/presentation/app/home/plans/widgets/coupon_history_list.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Height of a coupon card in the horizontal carousel. Fixed so the [PageView]
 /// can size itself; the cards' content is top-aligned inside it.
 const double _kCouponCardHeight = 172;
+
+/// Indices of the two tabs the page switches between.
+const int _kInfoTab = 0;
+const int _kHistoryTab = 1;
 
 @RoutePage()
 class PlansPage extends StatefulWidget {
@@ -50,6 +56,16 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
   bool _isLoading = true;
   String? _purchasingId;
   int _selected = 0;
+
+  /// Which of the two tabs is showing — the coupon info, or the buyer's
+  /// purchase history.
+  int _tab = _kInfoTab;
+
+  /// History is fetched the first time the tab is opened, not on page
+  /// load — most visits never leave the info tab.
+  List<SubscriptionRecord> _history = [];
+  bool _historyLoading = false;
+  bool _historyLoaded = false;
 
   /// Rail the buyer picked from the same chooser the order checkout uses.
   /// Nothing is picked for them — buying is blocked until this is set.
@@ -141,7 +157,32 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
     }
   }
 
-  void _openHistory() => context.router.push(const PaymentHistoryRoute());
+  void _onTabChanged(int index) {
+    if (index == _tab) return;
+    setState(() => _tab = index);
+    if (index == _kHistoryTab) _loadHistory();
+  }
+
+  /// Fetches the purchase history once. A failed load leaves `_historyLoaded`
+  /// set, so the empty state shows rather than a spinner that never ends;
+  /// a fresh purchase clears the flag so the next visit refetches.
+  Future<void> _loadHistory() async {
+    if (_historyLoaded || _historyLoading) return;
+    setState(() => _historyLoading = true);
+    try {
+      final data = await _api.getSubscriptionHistory();
+      if (!mounted) return;
+      setState(() => _history = data);
+    } catch (_) {
+    } finally {
+      if (mounted) {
+        setState(() {
+          _historyLoading = false;
+          _historyLoaded = true;
+        });
+      }
+    }
+  }
 
   /// Opens the same rail chooser the order checkout uses, then immediately
   /// checks out with whatever the buyer picked — picking a rail here IS the
@@ -283,6 +324,11 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
       params: {
         'plan_id': plan.id ?? '',
         if (discount != null) 'discount_percentage': discount,
+        // What was actually charged. AppsFlyer maps this onto af_revenue —
+        // without it the plan purchase lands in the dashboard as a zero-value
+        // conversion and ROAS per campaign is wrong.
+        'amount': result.totalAmount,
+        'currency': result.currency,
       },
     );
     // Goes through the cubit (not a direct Storage write) so every card and
@@ -303,7 +349,11 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
       _navigated = false;
       _pendingCheckout = null;
       _pendingPlan = null;
+      // The purchase just made the cached history stale.
+      _historyLoaded = false;
+      _history = [];
     });
+    if (_tab == _kHistoryTab) _loadHistory();
   }
 
   void _showError(String message) {
@@ -366,118 +416,135 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
                       _Hero(bestDiscount: _bestDiscount),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: _HistoryTile(onTap: _openHistory),
-                      ),
-                      24.kh,
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: Text(
-                          'coupons_title'.tr(),
-                          style: AppText.semibold18
-                              .copyWith(color: context.colors.textSection),
+                        child: SegmentedTabs(
+                          segments: [
+                            'coupon_tab_info'.tr(),
+                            'coupon_tab_history'.tr(),
+                          ],
+                          selected: _tab,
+                          onChanged: _onTabChanged,
                         ),
                       ),
-                      16.kh,
-                      if (_isLoading)
-                        const _CouponsShimmer()
-                      else if (_plans.isEmpty)
-                        const _EmptyPlans()
-                      // A lone coupon has nothing to page to, so it spans the
-                      // width rather than leaving the carousel's peek gap.
-                      else if (_plans.length == 1)
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: SizedBox(
-                            height: _kCouponCardHeight.h,
-                            child: _CouponCard(
-                              plan: _plans.first,
-                              isBestOffer: _bestOfferIndex == 0,
-                            ),
-                          ),
+                      if (_tab == _kHistoryTab)
+                        CouponHistoryList(
+                          records: _history,
+                          isLoading: _historyLoading,
                         )
                       else ...[
-                        SizedBox(
-                          height: _kCouponCardHeight.h,
-                          // A finger on the carousel halts the auto-advance;
-                          // it picks back up once the touch ends.
-                          child: Listener(
-                            onPointerDown: (_) => _autoScrollTimer?.cancel(),
-                            onPointerUp: (_) => _startAutoScroll(),
-                            onPointerCancel: (_) => _startAutoScroll(),
-                            child: PageView.builder(
-                              controller: _pageController,
-                              itemCount: _plans.length,
-                              padEnds: false,
-                              itemBuilder: (_, i) => Padding(
-                                padding: EdgeInsets.only(
-                                  left: 16.w,
-                                  right: i == _plans.length - 1 ? 16.w : 0,
-                                ),
-                                child: _CouponCard(
-                                  plan: _plans[i],
-                                  isBestOffer: i == _bestOfferIndex,
-                                ),
-                              ),
-                            ),
+                        16.kh,
+                        // ── The coupons on offer ──────────────────────────
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: Text(
+                            'coupons_title'.tr(),
+                            style: AppText.semibold18
+                                .copyWith(color: context.colors.textSection),
                           ),
                         ),
                         12.kh,
-                        _Dots(count: _plans.length, active: _selected),
-                      ],
-                      32.kh,
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'book_payment_method'.tr(),
-                              style: AppText.semibold18
-                                  .copyWith(color: context.colors.textSection),
-                            ),
-                            16.kh,
-                            PillCard(
-                              onTap: () => _choosePaymentAndPay(plan),
-                              leading: PillIconBadge(
-                                  child: _paymentLeading(_payment)),
-                              child: PillCaption(
-                                title: _payment == null
-                                    ? 'book_pick_payment'.tr()
-                                    : _payment!.rail.brandName,
-                                subtitle: 'book_pay_method_label'.tr(),
-                                captionFirst: true,
-                                titleColor: _payment == null
-                                    ? context.colors.textSecondary
-                                    : null,
+                        if (_isLoading)
+                          const _CouponsShimmer()
+                        else if (_plans.isEmpty)
+                          const _EmptyPlans()
+                        // A lone coupon has nothing to page to, so it spans the
+                        // width rather than leaving the carousel's peek gap.
+                        else if (_plans.length == 1)
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            child: SizedBox(
+                              height: _kCouponCardHeight.h,
+                              child: _CouponCard(
+                                plan: _plans.first,
+                                isBestOffer: _bestOfferIndex == 0,
                               ),
-                              trailing: PillActionChip(
-                                label: _payment == null
-                                    ? 'book_choose'.tr()
-                                    : 'book_change'.tr(),
+                            ),
+                          )
+                        else ...[
+                          SizedBox(
+                            height: _kCouponCardHeight.h,
+                            // A finger on the carousel halts the auto-advance;
+                            // it picks back up once the touch ends.
+                            child: Listener(
+                              onPointerDown: (_) => _autoScrollTimer?.cancel(),
+                              onPointerUp: (_) => _startAutoScroll(),
+                              onPointerCancel: (_) => _startAutoScroll(),
+                              child: PageView.builder(
+                                controller: _pageController,
+                                itemCount: _plans.length,
+                                padEnds: false,
+                                itemBuilder: (_, i) => Padding(
+                                  padding: EdgeInsets.only(
+                                    left: 16.w,
+                                    right: i == _plans.length - 1 ? 16.w : 0,
+                                  ),
+                                  child: _CouponCard(
+                                    plan: _plans[i],
+                                    isBestOffer: i == _bestOfferIndex,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          12.kh,
+                          _Dots(count: _plans.length, active: _selected),
+                        ],
+                        20.kh,
+                        // ── How it works ─────────────────────────────────
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: Text(
+                            'plan_how_title'.tr(),
+                            style: AppText.semibold18
+                                .copyWith(color: context.colors.textSection),
+                          ),
+                        ),
+                        12.kh,
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: _HowItWorks(),
+                        ),
+                        20.kh,
+                        // ── Payment method ───────────────────────────────
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'book_payment_method'.tr(),
+                                style: AppText.semibold18.copyWith(
+                                    color: context.colors.textSection),
+                              ),
+                              12.kh,
+                              PillCard(
                                 onTap: () => _choosePaymentAndPay(plan),
+                                leading: PillIconBadge(
+                                    child: _paymentLeading(_payment)),
+                                child: PillCaption(
+                                  title: _payment == null
+                                      ? 'book_pick_payment'.tr()
+                                      : _payment!.rail.brandName,
+                                  subtitle: 'book_pay_method_label'.tr(),
+                                  captionFirst: true,
+                                  titleColor: _payment == null
+                                      ? context.colors.textSecondary
+                                      : null,
+                                ),
+                                trailing: PillActionChip(
+                                  label: _payment == null
+                                      ? 'book_choose'.tr()
+                                      : 'book_change'.tr(),
+                                  onTap: () => _choosePaymentAndPay(plan),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      32.kh,
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: Text(
-                          'plan_how_title'.tr(),
-                          style: AppText.semibold18
-                              .copyWith(color: context.colors.textSection),
-                        ),
-                      ),
-                      16.kh,
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: _HowItWorks(),
-                      ),
+                      ],
                     ],
                   ),
                 ),
-                if (plan != null)
+                if (_tab == _kInfoTab && plan != null)
                   _BuyBar(
                     price: plan.price ?? 0,
                     isLoading: _purchasingId == plan.id,
@@ -508,7 +575,7 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
   }
 }
 
-// ─── Hero — ticket artwork, rotated chips, close button, title ────────────────
+// ─── Hero — ticket artwork, rotated chips, subtitle ──────────────────────────
 
 class _Hero extends StatelessWidget {
   const _Hero({required this.bestDiscount});
@@ -564,25 +631,14 @@ class _Hero extends StatelessWidget {
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 48.w),
-          child: Column(
-            children: [
-              Text(
-                'coupon_offers_title'.tr(),
-                textAlign: TextAlign.center,
-                style: AppText.semibold24
-                    .copyWith(color: context.colors.textPrimary),
-              ),
-              4.kh,
-              Text(
-                'coupon_plans_subtitle'.tr(),
-                textAlign: TextAlign.center,
-                style: AppText.regular12
-                    .copyWith(color: context.colors.textSecondary),
-              ),
-            ],
+          child: Text(
+            'coupon_plans_subtitle'.tr(),
+            textAlign: TextAlign.center,
+            style: AppText.regular12
+                .copyWith(color: context.colors.textSecondary),
           ),
         ),
-        24.kh,
+        16.kh,
       ],
     );
   }
@@ -632,71 +688,6 @@ class _ArtChip extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ─── Payment-history entry row ───────────────────────────────────────────────
-
-class _HistoryTile extends StatelessWidget {
-  const _HistoryTile({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return AdaptiveCard(
-      onTap: onTap,
-      tone: CardTone.control,
-      borderRadius: BorderRadius.circular(40.r),
-      padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
-      child: Row(
-        children: [
-          Container(
-            width: 40.w,
-            height: 40.w,
-            decoration: BoxDecoration(
-              color: colors.surface,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Assets.icons.coupons.icFiles.svg(
-                width: 20.w,
-                height: 20.w,
-                colorFilter:
-                    ColorFilter.mode(colors.textPrimary, BlendMode.srcIn),
-              ),
-            ),
-          ),
-          8.kw,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'coupon_history_title'.tr(),
-                  style: AppText.semibold14.copyWith(color: colors.textPrimary),
-                ),
-                4.kh,
-                Text(
-                  'coupon_history_subtitle'.tr(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style:
-                      AppText.regular12.copyWith(color: colors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          8.kw,
-          Icon(
-            Icons.chevron_right_rounded,
-            size: 24.sp,
-            color: colors.textPrimary,
-          ),
-        ],
       ),
     );
   }

@@ -480,6 +480,16 @@ class CoursesApi {
   /// Omitting them buys the cheapest tier — same fallback [subcourseId] gets
   /// when omitted on a levelled course. Ignored for a trial purchase.
   ///
+  /// [ageTiers] enrols SEVERAL children at once, one place per bracket, and is
+  /// what a parent picking more than one bracket on the detail page buys. Sent
+  /// as `age_tiers: [{age_from, age_to}]`; [ageFrom]/[ageTo] are still sent
+  /// alongside, carrying the first bracket, so a server that doesn't read the
+  /// list yet charges one place rather than rejecting the order.
+  ///
+  /// NOTE: summing the brackets is a server-side change that has not landed —
+  /// until it does, a multi-bracket order is charged for its first bracket
+  /// only. See `resolveAgeTierPrice` in the backend's `courses.service.ts`.
+  ///
   /// [trialDates] picks which trial sessions to buy — they are sold one at a
   /// time, and by date rather than position because the offered set rolls
   /// forward. Omitting it buys every upcoming session not already held.
@@ -496,6 +506,7 @@ class CoursesApi {
     String? subcourseId,
     int? ageFrom,
     int? ageTo,
+    List<CourseAgeTier>? ageTiers,
     String? startsAt,
     List<String>? trialDates,
     /// How many places to buy, one per child. Full enrolments only — a trial
@@ -524,6 +535,13 @@ class CoursesApi {
           ageFrom != null &&
           ageTo != null)
         'age_to': ageTo,
+      if (option == CoursePurchaseOption.full &&
+          ageTiers != null &&
+          ageTiers.isNotEmpty)
+        'age_tiers': [
+          for (final t in ageTiers)
+            {'age_from': t.ageFrom, if (t.ageTo != null) 'age_to': t.ageTo},
+        ],
       if (option == CoursePurchaseOption.full &&
           startsAt != null &&
           startsAt.isNotEmpty)

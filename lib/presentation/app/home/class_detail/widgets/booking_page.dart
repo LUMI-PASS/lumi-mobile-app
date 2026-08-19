@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/utils/cashback.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
+import 'package:lumi_pass/common/utils/course_period.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -67,6 +68,7 @@ class BookingPage extends StatefulWidget {
     this.coursePrice,
     this.level,
     this.courseOption,
+    this.ageTiers = const [],
   });
 
   final ClassFullModel clazz;
@@ -95,6 +97,12 @@ class BookingPage extends StatefulWidget {
   /// picker and the promo field all drop out and what's left is the summary,
   /// the payment method and the total.
   final num? coursePrice;
+
+  /// The age brackets picked on the detail page, one place per bracket. Empty
+  /// on a group sold at a single price, and on a trial (a trial is one child
+  /// trying one lesson). What makes the total below the sum of several
+  /// children rather than one course price.
+  final List<CourseAgeTier> ageTiers;
 
   @override
   State<BookingPage> createState() => _BookingPageState();
@@ -932,6 +940,14 @@ class _BookingPageState extends State<BookingPage> {
             .firstOrNull;
         return lesson?.price ?? 0;
       }
+      // Several brackets picked is several children being enrolled, so the
+      // course price is charged once per bracket. One bracket still goes
+      // through here — its own price is the right figure, not the group's
+      // headline "from" one.
+      final tiers = widget.ageTiers;
+      if (tiers.isNotEmpty) {
+        return tiers.fold<num>(0, (sum, t) => sum + t.price);
+      }
       if ((level?.coursePrice ?? 0) > 0) {
         return level!.coursePrice;
       }
@@ -1212,6 +1228,12 @@ class _BookingPageState extends State<BookingPage> {
           activityId: id,
           option: widget.courseOption ?? CoursePurchaseOption.full,
           subcourseId: widget.level?.id,
+          // Which brackets are being enrolled, one place per child. The first
+          // is repeated in age_from/age_to for a server that doesn't read the
+          // list — see CoursesApi.checkout.
+          ageTiers: _isTrial || widget.ageTiers.isEmpty ? null : widget.ageTiers,
+          ageFrom: _isTrial ? null : widget.ageTiers.firstOrNull?.ageFrom,
+          ageTo: _isTrial ? null : widget.ageTiers.firstOrNull?.ageTo,
           // Trials are sold one at a time, by date: the day picked in the
           // calendar above IS the lesson being bought.
           trialDates:
@@ -1583,8 +1605,17 @@ class _BookingPageState extends State<BookingPage> {
                             _courseSection(c),
                             20.kh,
                           ],
-                          Shaker(key: _ticketShake, child: _ticketSection(c)),
-                          20.kh,
+                          // Buying the whole course: no ticket rows and no
+                          // "Prices" list. A course is one package at one
+                          // price — the pill above already names it and what
+                          // it costs — so the activity's age-tier rows were
+                          // steppers that moved nothing and a second, lower
+                          // price beside the one actually being charged. A
+                          // trial keeps its row: that one IS the thing bought.
+                          if (!_isCourse || _isTrial) ...[
+                            Shaker(key: _ticketShake, child: _ticketSection(c)),
+                            20.kh,
+                          ],
                           Shaker(
                             key: _timeShake,
                             // Buying a whole month of a course: the lessons are
@@ -1877,7 +1908,7 @@ class _BookingPageState extends State<BookingPage> {
     final lessons = widget.level?.courseLessons ?? const <CourseLesson>[];
     final start = _selectedDate?.date;
     if (lessons.isEmpty || start == null) return const [];
-    final end = DateTime(start.year, start.month + 1, start.day);
+    final end = courseMonthEnd(start);
     final out = <CourseLesson>[];
     for (final lesson in lessons) {
       final d = DateTime.tryParse(lesson.date);
@@ -1906,11 +1937,16 @@ class _BookingPageState extends State<BookingPage> {
     final lessons = _courseMonthLessons;
     if (lessons.isEmpty) return const SizedBox.shrink();
 
-    final first = DateTime.tryParse(lessons.first.date);
-    final last = DateTime.tryParse(lessons.last.date);
+    // The month BOUGHT, counted off the picked start date: 22 Sep – 22 Oct.
+    // Not the first and last lesson inside that window — those land wherever
+    // the timetable puts them, so a course starting on the 22nd read as
+    // "22 Sep – 19 Oct" and looked like it stopped three days early. What is
+    // being sold is the month; the lessons are what falls in it.
+    final periodStart = _selectedDate?.date;
     String day(DateTime d) => '${d.day} ${'month_short_${d.month}'.tr()}';
-    final range =
-        first == null || last == null ? '' : '${day(first)} – ${day(last)}';
+    final range = periodStart == null
+        ? ''
+        : '${day(periodStart)} – ${day(courseMonthEnd(periodStart))}';
 
     final start = lessons.first.startTime?.trim() ?? '';
     final end = lessons.first.endTime?.trim() ?? '';

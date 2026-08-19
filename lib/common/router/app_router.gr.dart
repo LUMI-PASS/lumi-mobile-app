@@ -77,6 +77,7 @@ abstract class _$AppRouter extends RootStackRouter {
           coursePrice: args.coursePrice,
           level: args.level,
           courseOption: args.courseOption,
+          ageTiers: args.ageTiers,
         ),
       );
     },
@@ -558,6 +559,7 @@ class BookingRoute extends PageRouteInfo<BookingRouteArgs> {
     num? coursePrice,
     CourseLevel? level,
     CoursePurchaseOption? courseOption,
+    List<CourseAgeTier> ageTiers = const [],
     List<PageRouteInfo>? children,
   }) : super(
           BookingRoute.name,
@@ -567,6 +569,7 @@ class BookingRoute extends PageRouteInfo<BookingRouteArgs> {
             coursePrice: coursePrice,
             level: level,
             courseOption: courseOption,
+            ageTiers: ageTiers,
           ),
           initialChildren: children,
         );
@@ -584,6 +587,7 @@ class BookingRouteArgs {
     this.coursePrice,
     this.level,
     this.courseOption,
+    this.ageTiers = const [],
   });
 
   final Key? key;
@@ -596,9 +600,11 @@ class BookingRouteArgs {
 
   final CoursePurchaseOption? courseOption;
 
+  final List<CourseAgeTier> ageTiers;
+
   @override
   String toString() {
-    return 'BookingRouteArgs{key: $key, clazz: $clazz, coursePrice: $coursePrice, level: $level, courseOption: $courseOption}';
+    return 'BookingRouteArgs{key: $key, clazz: $clazz, coursePrice: $coursePrice, level: $level, courseOption: $courseOption, ageTiers: $ageTiers}';
   }
 }
 

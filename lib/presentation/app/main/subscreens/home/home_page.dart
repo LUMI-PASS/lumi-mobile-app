@@ -339,7 +339,6 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            final c = context.colors;
             final isLast = index == state.nearClassesList.length - 1;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -350,20 +349,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                   onViewAsReels: () =>
                       _openShorts(context, state.nearClassesList, index),
                 ),
-                // These cards are full-bleed photo over text, stacked straight
-                // down the page, so on a run of them the next photo reads as
-                // part of the previous card's price line. A rule and some air
-                // say where one entry stops and the next begins. The last one
-                // gets neither — there is nothing after it to divide from.
-                if (!isLast) ...[
-                  16.verticalSpace,
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Divider(height: 1, thickness: 1, color: c.divider),
-                  ),
-                  16.verticalSpace,
-                ] else
-                  12.verticalSpace,
+                // Each card now carries its own frosted edge and shadow, so
+                // the gap alone separates one entry from the next — the rule
+                // that used to sit here would only fight that edge. The last
+                // one gets less air: there is nothing after it to divide from.
+                if (!isLast) 16.verticalSpace else 12.verticalSpace,
               ],
             );
           },
