@@ -25,14 +25,22 @@ import YandexMapsMobile
   private func configureYandexMapKit() {
     // Fed from the gitignored Flutter/Secrets.xcconfig. Missing on a fresh
     // checkout, which must not crash the app — the map renders blank instead.
-    let key = Bundle.main.object(forInfoDictionaryKey: "YandexMapKitKey") as? String ?? ""
-    guard !key.isEmpty else {
+    let configured = Bundle.main.object(forInfoDictionaryKey: "YandexMapKitKey") as? String ?? ""
+    if configured.isEmpty {
       NSLog("[YandexMapKit] no API key — set YANDEX_MAPKIT_KEY in ios/Flutter/Secrets.xcconfig")
-      return
     }
-    YMKMapKit.setApiKey(key)
+    // Skipping setApiKey is NOT an option: yandex_mapkit's plugin registration
+    // calls YMKMapKit.sharedInstance(), which raises an NSAssertion ("set the
+    // apikey before creating MapKit") and aborts the process before the first
+    // frame. A syntactically valid placeholder keeps MapKit constructible —
+    // its tile requests are then rejected and the map draws blank, which is
+    // the intended keyless behaviour. Mirrors MainApplication.onCreate().
+    YMKMapKit.setApiKey(configured.isEmpty ? Self.placeholderMapKitKey : configured)
     YMKMapKit.setLocale(mapKitLocale())
   }
+
+  /// Stands in for a real key on a checkout without Secrets.xcconfig.
+  private static let placeholderMapKitKey = "00000000-0000-0000-0000-000000000000"
 
   /// The map's language, read from the locale easy_localization persisted.
   /// Mirrors `MainApplication.mapKitLocale()` on Android.

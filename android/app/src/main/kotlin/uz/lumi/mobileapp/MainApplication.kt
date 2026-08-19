@@ -16,21 +16,29 @@ import com.yandex.mapkit.MapKitFactory
 class MainApplication : Application() {
     private companion object {
         const val TAG = "YandexMapKit"
+
+        /** Stands in for a real key on a checkout without key.properties. */
+        const val PLACEHOLDER_KEY = "00000000-0000-0000-0000-000000000000"
     }
 
     override fun onCreate() {
         super.onCreate()
 
-        // Absent on a checkout without key.properties. Don't hand MapKit an
-        // empty key — skip setup entirely so the app still starts and only the
-        // map is dead. Mirrors configureYandexMapKit() in AppDelegate.swift.
+        // Absent on a checkout without key.properties, which must not crash
+        // the app — the map renders blank instead.
         val key = BuildConfig.YANDEX_MAPKIT_KEY
         if (key.isEmpty()) {
             Log.w(TAG, "no API key — set yandexMapkitKey in android/key.properties")
-            return
         }
 
-        MapKitFactory.setApiKey(key)
+        // Skipping setApiKey is NOT an option: yandex_mapkit's plugin
+        // registration calls MapKitFactory.initialize(), which throws unless a
+        // key was set first, killing the app before the first frame. A
+        // syntactically valid placeholder keeps MapKit constructible — its tile
+        // requests are then rejected and the map draws blank, which is the
+        // intended keyless behaviour. Mirrors configureYandexMapKit() in
+        // AppDelegate.swift.
+        MapKitFactory.setApiKey(key.ifEmpty { PLACEHOLDER_KEY })
         MapKitFactory.setLocale(mapKitLocale())
     }
 
