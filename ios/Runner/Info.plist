@@ -33,6 +33,26 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- ── AppsFlyer / attribution ─────────────────────────────────────────
+	     Shown in the ATT prompt AppsFlyerService raises after the first frame.
+	     Without an authorized verdict here iOS withholds the IDFA and installs
+	     can only be attributed probabilistically. -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Lumi uses this to see which ads brought you here, so we can show you classes you'll actually care about.</string>
+	<!-- Routes SKAdNetwork install postbacks to AppsFlyer as well as to Apple,
+	     which is what makes SKAN campaigns visible in the AppsFlyer dashboard. -->
+	<key>NSAdvertisingAttributionReportEndpoint</key>
+	<string>https://appsflyer-skadnetwork.com/</string>
+	<!-- AppsFlyer's own SKAdNetwork id. Every ad network we buy from needs its
+	     id added here too, or its installs go unattributed — copy the current
+	     list from AppsFlyer → Configuration → SKAdNetwork before a campaign. -->
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>su67r6k2v3.skadnetwork</string>
+		</dict>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to take photos for your child's profile.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

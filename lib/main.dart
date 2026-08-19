@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/fixed_csv_asset_loader.dart';
 import 'package:lumi_pass/common/widget/display/display_widget.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/data/service/appsflyer_service.dart';
 import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/data/service/push_notification_manager.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
@@ -179,6 +180,14 @@ Future<void> _runNative() async {
   // up synchronously before runApp returns, so no messages are missed.
   unawaited(getIt<PushNotificationManager>().initializeNotification());
   unawaited(getIt<DeeplinkService>().init());
+
+  // AppsFlyer, unlike app_links, resolves OneLinks itself and hands back the
+  // target — so point it at the same router the native links go through.
+  // Awaited: the SDK must be up before AppCubit fires its first event, and it
+  // is only a method-channel hop. Web is skipped inside init().
+  final appsFlyer = getIt<AppsFlyerService>();
+  appsFlyer.onDeepLink = getIt<DeeplinkService>().handleAppsFlyerLink;
+  await appsFlyer.init();
 
   initLangIfNeeded('uz');
   SystemChrome.setSystemUIOverlayStyle(

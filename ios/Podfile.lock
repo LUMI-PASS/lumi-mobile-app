@@ -1,6 +1,16 @@
 PODS:
   - app_links (6.4.1):
     - Flutter
+  - app_tracking_transparency (0.0.1):
+    - Flutter
+  - appsflyer_sdk (6.18.1):
+    - appsflyer_sdk/Core (= 6.18.1)
+  - appsflyer_sdk/Core (6.18.1):
+    - AppsFlyerFramework (= 6.18.1)
+    - Flutter
+  - AppsFlyerFramework (6.18.1):
+    - AppsFlyerFramework/Main (= 6.18.1)
+  - AppsFlyerFramework/Main (6.18.1)
   - connectivity_plus (0.0.1):
     - Flutter
   - cupertino_native_glmv (0.1.6):
@@ -187,6 +197,8 @@ PODS:
 
 DEPENDENCIES:
   - app_links (from `.symlinks/plugins/app_links/ios`)
+  - app_tracking_transparency (from `.symlinks/plugins/app_tracking_transparency/ios`)
+  - appsflyer_sdk (from `.symlinks/plugins/appsflyer_sdk/ios`)
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - cupertino_native_glmv (from `.symlinks/plugins/cupertino_native_glmv/ios`)
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
@@ -210,6 +222,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - AppsFlyerFramework
     - Firebase
     - FirebaseABTesting
     - FirebaseAnalytics
@@ -232,6 +245,10 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   app_links:
     :path: ".symlinks/plugins/app_links/ios"
+  app_tracking_transparency:
+    :path: ".symlinks/plugins/app_tracking_transparency/ios"
+  appsflyer_sdk:
+    :path: ".symlinks/plugins/appsflyer_sdk/ios"
   connectivity_plus:
     :path: ".symlinks/plugins/connectivity_plus/ios"
   cupertino_native_glmv:
@@ -275,6 +292,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   app_links: 3dbc685f76b1693c66a6d9dd1e9ab6f73d97dc0a
+  app_tracking_transparency: 3d84f147f67ca82d3c15355c36b1fa6b66ca7c92
+  appsflyer_sdk: f0bd7be69dca64aef6d569aa6bd3ef8cd8228236
+  AppsFlyerFramework: 319c8357ea52a559c27a7b474f0b50833e76e3eb
   connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   cupertino_native_glmv: c74a97b9eaca395d285a430d9f7d4406df8cc797
   Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e

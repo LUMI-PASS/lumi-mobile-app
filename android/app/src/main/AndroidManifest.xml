@@ -36,7 +36,7 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="lumi" android:host="class"/>
             </intent-filter>
-            <!-- App Links: opens /share/class/* directly in the app -->
+            <!-- App Links: opens /share/class/* directly in the app. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -45,6 +45,23 @@
                     android:scheme="https"
                     android:host="mobile-api.lumipass.uz"
                     android:pathPrefix="/share/class/"/>
+            </intent-filter>
+            <!-- AppsFlyer OneLink. BOTH hosts are claimed: campaigns use the
+                 branded domain, but AppsFlyer also serves every link from the
+                 raw OneLink subdomain, and its own setup snippet asks for that
+                 one. Whichever the click came from has to resolve in-app.
+                 No pathPrefix — the path starts with the template id (JBWe),
+                 which changes if a second template is ever added.
+                 Verification needs AppsFlyer to serve assetlinks.json for each
+                 host — see docs/APPSFLYER.md §Deep links. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="link.lumipass.uz"/>
+                <data android:scheme="http" android:host="link.lumipass.uz"/>
+                <data android:scheme="https" android:host="lumipass.onelink.me"/>
+                <data android:scheme="http" android:host="lumipass.onelink.me"/>
             </intent-filter>
         </activity>
         <!-- Default FCM notification channel for Android 8+ -->

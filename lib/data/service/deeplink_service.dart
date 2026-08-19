@@ -47,6 +47,18 @@ class DeeplinkService {
     _sub?.cancel();
   }
 
+  /// Entry point for links AppsFlyer resolved for us — a OneLink click, or the
+  /// deferred deep link replayed on the first launch after an install.
+  ///
+  /// AppsFlyer owns those URLs (they never reach `app_links`), so this is the
+  /// only way they get routed. [deferred] is treated as a cold start: the app
+  /// is coming up from scratch, so the router stack may not exist yet, which
+  /// is exactly the case [_navigateToClass] retries around.
+  void handleAppsFlyerLink(Uri uri, {required bool deferred}) {
+    log('[Deeplink] appsflyer link: $uri (deferred=$deferred)');
+    _handleUri(uri, cold: deferred);
+  }
+
   void _handleUri(Uri uri, {required bool cold}) {
     String? classId;
 

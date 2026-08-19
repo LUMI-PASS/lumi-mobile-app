@@ -19,6 +19,7 @@ import 'package:lumi_pass/data/interceptor/auth_interceptor.dart' as _i948;
 import 'package:lumi_pass/data/interceptor/connectivity_interceptor.dart'
     as _i359;
 import 'package:lumi_pass/data/service/analytics_service.dart' as _i594;
+import 'package:lumi_pass/data/service/appsflyer_service.dart' as _i260;
 import 'package:lumi_pass/data/service/push_notification_service.dart' as _i361;
 import 'package:lumi_pass/data/storage/storage.dart' as _i279;
 import 'package:lumi_pass/di/app_module.dart' as _i591;
@@ -93,8 +94,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i948.AuthInterceptor>(),
           gh<_i359.ConnectivityInterceptor>(),
         ));
-    gh.lazySingleton<_i594.AnalyticsService>(
-        () => _i594.AnalyticsService(gh<_i279.Storage>()));
+    gh.lazySingleton<_i260.AppsFlyerService>(
+        () => _i260.AppsFlyerService(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
     gh.lazySingleton<_i361.PushNotificationService>(
@@ -111,6 +112,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
+    gh.lazySingleton<_i594.AnalyticsService>(() => _i594.AnalyticsService(
+          gh<_i279.Storage>(),
+          gh<_i260.AppsFlyerService>(),
+        ));
     gh.factory<_i526.HomeRepository>(() => _i162.HomeRepositoryImpl(
           gh<_i433.HomeApi>(),
           gh<_i279.Storage>(),

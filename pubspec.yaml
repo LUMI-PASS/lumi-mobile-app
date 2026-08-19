@@ -86,6 +86,8 @@ dependencies:
   # directly so `CustomBottomBar` can drive `CNTabBar` itself and keep our own
   # tab SVGs template-tinted — see the note in custom_bottomnavigation.dart.
   cupertino_native_glmv: ^0.1.5
+  appsflyer_sdk: ^6.18.1
+  app_tracking_transparency: ^2.0.7
 
 
 dev_dependencies:

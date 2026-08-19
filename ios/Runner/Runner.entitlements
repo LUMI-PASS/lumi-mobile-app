@@ -7,6 +7,9 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:mobile-api.lumipass.uz</string>
+		<!-- AppsFlyer OneLink branded domain; see docs/APPSFLYER.md -->
+		<string>applinks:link.lumipass.uz</string>
+		<string>applinks:lumipass.onelink.me</string>
 	</array>
 </dict>
 </plist>

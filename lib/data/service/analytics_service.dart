@@ -1,54 +1,35 @@
+import 'dart:async';
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/data/service/appsflyer_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
+
+// [AnalyticsEvent] used to live here; it moved so the AppsFlyer service can
+// read it without an import cycle. Re-exported so every existing
+// `import '.../analytics_service.dart'` still sees it.
+export 'package:lumi_pass/data/service/analytics_event.dart';
 
 // ignore: avoid_print
 void _log(String msg) => print('[Analytics] $msg');
-
-/// Canonical analytics event names. Keep these stable — renaming an event
-/// breaks historical reporting in the Firebase console.
-class AnalyticsEvent {
-  const AnalyticsEvent._();
-
-  static const appOpen = 'app_open';
-  static const classDetailViewed = 'class_detail_viewed';
-  static const activityDetailViewed = 'activity_detail_viewed';
-  static const branchDetailViewed = 'branch_detail_viewed';
-  static const otpRequested = 'otp_requested';
-  static const otpResent = 'otp_resent';
-  static const login = 'login';
-  static const signUp = 'sign_up';
-  static const registrationCompleted = 'registration_completed';
-  static const logout = 'logout';
-  // ─── Purchase / booking funnel ──────────────────────────────────────────
-  // Ordered funnel: book_button_tapped → booking_checkout_started →
-  // checkout_page_opened → payme_redirect → payment_succeeded.
-  // Failure branches: booking_checkout_failed, payme_open_failed.
-  static const bookButtonTapped = 'book_button_tapped';
-  static const bookingCheckoutStarted = 'booking_checkout_started';
-  static const bookingCheckoutFailed = 'booking_checkout_failed';
-  static const bookingRequested = 'booking_requested';
-  static const planPurchaseStarted = 'plan_purchase_started';
-  static const subscriptionPurchaseStarted = 'subscription_purchase_started';
-  static const checkoutPageOpened = 'checkout_page_opened';
-  static const paymeRedirect = 'payme_redirect';
-  static const paymeOpenFailed = 'payme_open_failed';
-  static const paymentSucceeded = 'payment_succeeded';
-  static const paymentAbandoned = 'payment_abandoned';
-}
 
 /// Thin wrapper around [FirebaseAnalytics] that stamps **every** event with the
 /// logged-in user's `user_id` and `phone_number`, as requested. Read the values
 /// from [Storage] on each call so events fired right after login (before the
 /// service is re-identified) still carry the freshest identity.
 ///
+/// Every event is also mirrored into AppsFlyer through [AppsFlyerService], so
+/// screens keep a single analytics entry point and attribution stays in step
+/// with the product funnel automatically.
+///
 /// All methods are best-effort and never throw — analytics must never break a
 /// user flow.
 @lazySingleton
 class AnalyticsService {
-  AnalyticsService(this._storage);
+  AnalyticsService(this._storage, this._appsFlyer);
 
   final Storage _storage;
+  final AppsFlyerService _appsFlyer;
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   /// Sets the Firebase user id and a `phone_number` user property so funnels
@@ -57,6 +38,9 @@ class AnalyticsService {
     try {
       final userId = _storage.userId();
       final phone = _currentPhone();
+      // Before Firebase, for the same reason logEvent fires AppsFlyer first:
+      // a Firebase throw must not leave AppsFlyer un-identified.
+      _appsFlyer.setCustomerUserId(userId);
       await _analytics.setUserId(id: userId);
       if (phone != null && phone.isNotEmpty) {
         await _analytics.setUserProperty(name: 'phone_number', value: phone);
@@ -71,6 +55,7 @@ class AnalyticsService {
   /// previous user.
   Future<void> clear() async {
     try {
+      _appsFlyer.clearCustomerUserId();
       await _analytics.setUserId(id: null);
       await _analytics.setUserProperty(name: 'phone_number', value: null);
     } catch (e) {
@@ -96,6 +81,10 @@ class AnalyticsService {
           merged[key] = value is num ? value : value.toString();
         });
       }
+
+      // First, and unawaited: it guards itself, and a Firebase throw further
+      // down must not cost us the AppsFlyer copy of the event.
+      unawaited(_appsFlyer.logAppEvent(name, merged));
 
       await _analytics.logEvent(
         name: name,
