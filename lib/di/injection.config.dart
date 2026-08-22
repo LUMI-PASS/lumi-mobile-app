@@ -60,6 +60,8 @@ import 'package:lumi_pass/presentation/auth/login/bloc/login_cubit.dart'
     as _i296;
 import 'package:lumi_pass/presentation/auth/register/cubit/register_cubit.dart'
     as _i567;
+import 'package:lumi_pass/presentation/auth/telegram/cubit/telegram_login_cubit.dart'
+    as _i1012;
 import 'package:lumi_pass/presentation/auth/verify/cubit/verify_cubit.dart'
     as _i749;
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_cubit.dart'
@@ -137,6 +139,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i890.WalletRepository>(
         () => _i728.WalletRepositoryImpl(gh<_i605.WalletApi>()));
     gh.factory<_i749.VerifyCubit>(() => _i749.VerifyCubit(
+          gh<_i652.AuthRepository>(),
+          gh<_i279.Storage>(),
+        ));
+    gh.factory<_i1012.TelegramLoginCubit>(() => _i1012.TelegramLoginCubit(
           gh<_i652.AuthRepository>(),
           gh<_i279.Storage>(),
         ));

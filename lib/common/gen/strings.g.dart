@@ -1005,4 +1005,11 @@ class Strings {
   static String get noInternetTitle => 'no_internet_title'.tr();
   static String get noInternetDesc => 'no_internet_desc'.tr();
   static String get retry => 'retry'.tr();
+
+  // telegram login
+  // The page's own strings are read inline with .tr(), as the other auth
+  // screens do; only what the cubit surfaces needs a getter here.
+  static String get telegramLoginUnavailable =>
+      'telegram_login_unavailable'.tr();
+  static String get telegramOpenFailed => 'telegram_open_failed'.tr();
 }

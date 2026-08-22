@@ -46,7 +46,42 @@ class AuthRepositoryImpl extends AuthRepository {
   @override
   Future<VerifyOtpResult> verifyOtp(String phone, String code) async {
     final response = await _api.verifyOtp(phone, code);
-    final data = response.data['data'] as Map<String, dynamic>;
+    return _completeSignIn(
+      response.data['data'] as Map<String, dynamic>,
+      fallbackPhone: phone,
+      method: 'phone_otp',
+    );
+  }
+
+  @override
+  Future<TelegramLoginInfo> telegramLoginLink() async {
+    final response = await _api.telegramLoginLink();
+    return TelegramLoginInfo.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
+  }
+
+  @override
+  Future<VerifyOtpResult> telegramLogin(String code) async {
+    final response = await _api.telegramLogin(code);
+    return _completeSignIn(
+      response.data['data'] as Map<String, dynamic>,
+      // The server resolves the phone from the code — the user never typed one.
+      fallbackPhone: '',
+      method: 'telegram',
+    );
+  }
+
+  /// Everything that has to happen once the server says "signed in", whichever
+  /// way the user got there. Shared rather than copied: the token, the FCM
+  /// registration and the analytics identity all have to land for BOTH paths,
+  /// and a Telegram sign-in that quietly skipped one would only surface later,
+  /// as push notifications that never arrive for those users.
+  Future<VerifyOtpResult> _completeSignIn(
+    Map<String, dynamic> data, {
+    required String fallbackPhone,
+    required String method,
+  }) async {
     final isNewUser = data['is_new_user'] as bool? ?? false;
     final token = data['access_token'] as String?;
     if (token != null) {
@@ -64,14 +99,14 @@ class AuthRepositoryImpl extends AuthRepository {
     if (user?.id != null && user!.id!.isNotEmpty) {
       await _storage.userId.set(user.id);
     }
-    final userPhone = user?.phoneNumber ?? phone;
+    final userPhone = user?.phoneNumber ?? fallbackPhone;
     if (userPhone.isNotEmpty) {
       await _storage.userPhone.set(userPhone);
     }
     await _analytics.identify();
     await _analytics.logEvent(
       isNewUser ? AnalyticsEvent.signUp : AnalyticsEvent.login,
-      params: {'method': 'phone_otp'},
+      params: {'method': method},
     );
 
     return VerifyOtpResult(

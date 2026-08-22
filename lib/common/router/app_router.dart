@@ -32,6 +32,7 @@ import 'package:lumi_pass/presentation/app/profile/language/change_language_page
 import 'package:lumi_pass/presentation/app/profile/profile_detail/profile_detail_page.dart';
 import 'package:lumi_pass/presentation/auth/login/login_page.dart';
 import 'package:lumi_pass/presentation/auth/register/register_page.dart';
+import 'package:lumi_pass/presentation/auth/telegram/telegram_login_page.dart';
 import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 import 'package:lumi_pass/presentation/start/onboard/onboard_page.dart';
 import 'package:lumi_pass/presentation/start/welcome/welcome_page.dart';
@@ -91,6 +92,7 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: LoginRoute.page),
     AutoRoute(page: RegisterRoute.page),
     AutoRoute(page: VerifyRoute.page),
+    AutoRoute(page: TelegramLoginRoute.page),
 
     /// Start
     AutoRoute(page: WelcomeRoute.page),

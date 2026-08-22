@@ -30,4 +30,16 @@ class AuthApi {
     });
   }
 
+  /// Which Telegram bot the "Telegram orqali kirish" button should open. Asked
+  /// of the server rather than hardcoded so the bot can be swapped (test → real)
+  /// without shipping an app release.
+  Future<Response> telegramLoginLink() {
+    return _dio.get('auth/telegram/link');
+  }
+
+  /// Redeems the code the bot showed the user. No phone number — not having to
+  /// type one is the point of this flow.
+  Future<Response> telegramLogin(String code) {
+    return _dio.post('auth/telegram/login', data: {'code': code.trim()});
+  }
 }
