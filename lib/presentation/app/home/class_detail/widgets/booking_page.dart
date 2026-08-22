@@ -772,6 +772,23 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
+  /// The wallet switch. Turning it on with nothing bought yet used to look
+  /// broken: the redeemable amount is computed against the order total, so on a
+  /// 0 so'm order it comes back 0, the switch renders off again and the tap
+  /// appears to do nothing. The buyer isn't missing the wallet — they're
+  /// missing tickets, so send them there instead.
+  void _onWalletToggled(bool v) {
+    if (v && !_isCourse && _totalTickets == 0) {
+      _flag(_ticketShake);
+      setState(() => _error = 'book_select_tickets'.tr());
+      return;
+    }
+    setState(() {
+      _useWallet = v;
+      if (_error != null) _error = null;
+    });
+  }
+
   /// What the card is actually charged, after the wallet.
   num get _gatewayTotal {
     final t = _payableTotal - _walletApplied;
@@ -1653,8 +1670,7 @@ class _BookingPageState extends State<BookingPage> {
                               wallet: _wallet,
                               enabled: !_submitting,
                               applied: _walletApplied,
-                              onChanged: (v) =>
-                                  setState(() => _useWallet = v),
+                              onChanged: _onWalletToggled,
                             ),
                           ],
                           20.kh,
