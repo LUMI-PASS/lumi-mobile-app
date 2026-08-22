@@ -1097,7 +1097,6 @@ card_continue,Продолжить,Davom etish,Continue
 card_resend_code,Отправить код снова,Kodni qayta yuborish,Resend code
 telegram_login_button,Войти через Telegram,Telegram orqali kirish,Sign in with Telegram
 telegram_login_title,Вход через Telegram,Telegram orqali kirish,Sign in with Telegram
-telegram_login_step1,"Откройте бота @{} и нажмите «Старт»","@{} botini oching va «Start» tugmasini bosing","Open the @{} bot and press Start"
 telegram_login_step2,Бот пришлёт код — введите его ниже,Bot kod yuboradi — uni quyida kiriting,The bot sends you a code — enter it below
 telegram_login_open,Открыть Telegram,Telegramni ochish,Open Telegram
 telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now

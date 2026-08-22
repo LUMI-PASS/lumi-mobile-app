@@ -23,7 +23,6 @@ mixin _$TelegramLoginBuildable {
   /// Digits the bot's code has. The server owns this number; 6 is only the
   /// value assumed until /telegram/link answers.
   int get codeLength => throw _privateConstructorUsedError;
-  String? get botUsername => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
 
   /// What is currently in the code field. Held here so the Confirm button
@@ -46,7 +45,6 @@ abstract class $TelegramLoginBuildableCopyWith<$Res> {
       {bool openingBot,
       bool loading,
       int codeLength,
-      String? botUsername,
       String? error,
       String code});
 }
@@ -68,7 +66,6 @@ class _$TelegramLoginBuildableCopyWithImpl<$Res,
     Object? openingBot = null,
     Object? loading = null,
     Object? codeLength = null,
-    Object? botUsername = freezed,
     Object? error = freezed,
     Object? code = null,
   }) {
@@ -85,10 +82,6 @@ class _$TelegramLoginBuildableCopyWithImpl<$Res,
           ? _value.codeLength
           : codeLength // ignore: cast_nullable_to_non_nullable
               as int,
-      botUsername: freezed == botUsername
-          ? _value.botUsername
-          : botUsername // ignore: cast_nullable_to_non_nullable
-              as String?,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -114,7 +107,6 @@ abstract class _$$TelegramLoginBuildableImplCopyWith<$Res>
       {bool openingBot,
       bool loading,
       int codeLength,
-      String? botUsername,
       String? error,
       String code});
 }
@@ -135,7 +127,6 @@ class __$$TelegramLoginBuildableImplCopyWithImpl<$Res>
     Object? openingBot = null,
     Object? loading = null,
     Object? codeLength = null,
-    Object? botUsername = freezed,
     Object? error = freezed,
     Object? code = null,
   }) {
@@ -152,10 +143,6 @@ class __$$TelegramLoginBuildableImplCopyWithImpl<$Res>
           ? _value.codeLength
           : codeLength // ignore: cast_nullable_to_non_nullable
               as int,
-      botUsername: freezed == botUsername
-          ? _value.botUsername
-          : botUsername // ignore: cast_nullable_to_non_nullable
-              as String?,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -175,7 +162,6 @@ class _$TelegramLoginBuildableImpl implements _TelegramLoginBuildable {
       {this.openingBot = false,
       this.loading = false,
       this.codeLength = 6,
-      this.botUsername = null,
       this.error = null,
       this.code = ''});
 
@@ -194,9 +180,6 @@ class _$TelegramLoginBuildableImpl implements _TelegramLoginBuildable {
   final int codeLength;
   @override
   @JsonKey()
-  final String? botUsername;
-  @override
-  @JsonKey()
   final String? error;
 
   /// What is currently in the code field. Held here so the Confirm button
@@ -208,7 +191,7 @@ class _$TelegramLoginBuildableImpl implements _TelegramLoginBuildable {
 
   @override
   String toString() {
-    return 'TelegramLoginBuildable(openingBot: $openingBot, loading: $loading, codeLength: $codeLength, botUsername: $botUsername, error: $error, code: $code)';
+    return 'TelegramLoginBuildable(openingBot: $openingBot, loading: $loading, codeLength: $codeLength, error: $error, code: $code)';
   }
 
   @override
@@ -221,15 +204,13 @@ class _$TelegramLoginBuildableImpl implements _TelegramLoginBuildable {
             (identical(other.loading, loading) || other.loading == loading) &&
             (identical(other.codeLength, codeLength) ||
                 other.codeLength == codeLength) &&
-            (identical(other.botUsername, botUsername) ||
-                other.botUsername == botUsername) &&
             (identical(other.error, error) || other.error == error) &&
             (identical(other.code, code) || other.code == code));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, openingBot, loading, codeLength, botUsername, error, code);
+  int get hashCode =>
+      Object.hash(runtimeType, openingBot, loading, codeLength, error, code);
 
   @JsonKey(ignore: true)
   @override
@@ -244,7 +225,6 @@ abstract class _TelegramLoginBuildable implements TelegramLoginBuildable {
       {final bool openingBot,
       final bool loading,
       final int codeLength,
-      final String? botUsername,
       final String? error,
       final String code}) = _$TelegramLoginBuildableImpl;
 
@@ -259,8 +239,6 @@ abstract class _TelegramLoginBuildable implements TelegramLoginBuildable {
   /// Digits the bot's code has. The server owns this number; 6 is only the
   /// value assumed until /telegram/link answers.
   int get codeLength;
-  @override
-  String? get botUsername;
   @override
   String? get error;
   @override

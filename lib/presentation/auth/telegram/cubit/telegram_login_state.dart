@@ -12,7 +12,6 @@ class TelegramLoginBuildable with _$TelegramLoginBuildable {
     /// Digits the bot's code has. The server owns this number; 6 is only the
     /// value assumed until /telegram/link answers.
     @Default(6) int codeLength,
-    @Default(null) String? botUsername,
     @Default(null) String? error,
 
     /// What is currently in the code field. Held here so the Confirm button

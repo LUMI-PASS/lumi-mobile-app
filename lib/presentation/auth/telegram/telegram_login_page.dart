@@ -55,7 +55,6 @@ class TelegramLoginPage extends BasePage<TelegramLoginCubit,
   Widget builder(BuildContext context, TelegramLoginBuildable state) {
     final colors = context.colors;
     final hasError = state.error != null;
-    final bot = state.botUsername;
     final complete = state.code.length == state.codeLength;
 
     return AuthScaffold(
@@ -78,26 +77,11 @@ class TelegramLoginPage extends BasePage<TelegramLoginCubit,
                   SizedBox(height: 8.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Column(
-                      children: [
-                        // The bot's name only arrives with /telegram/link, so
-                        // until then show just the half that is true regardless.
-                        if (bot != null && bot.isNotEmpty) ...[
-                          Text(
-                            'telegram_login_step1'.tr(args: [bot]),
-                            textAlign: TextAlign.center,
-                            style: AppText.regular14
-                                .copyWith(color: colors.textSecondary),
-                          ),
-                          SizedBox(height: 4.h),
-                        ],
-                        Text(
-                          'telegram_login_step2'.tr(),
-                          textAlign: TextAlign.center,
-                          style: AppText.regular14
-                              .copyWith(color: colors.textSecondary),
-                        ),
-                      ],
+                    child: Text(
+                      'telegram_login_step2'.tr(),
+                      textAlign: TextAlign.center,
+                      style: AppText.regular14
+                          .copyWith(color: colors.textSecondary),
                     ),
                   ),
                   SizedBox(height: 20.h),

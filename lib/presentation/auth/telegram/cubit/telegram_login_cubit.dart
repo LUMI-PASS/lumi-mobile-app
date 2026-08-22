@@ -30,10 +30,7 @@ class TelegramLoginCubit
           _info = info;
           await _open(info);
         },
-        buildOnData: (info) => buildable.copyWith(
-          codeLength: info.codeLength,
-          botUsername: info.botUsername,
-        ),
+        buildOnData: (info) => buildable.copyWith(codeLength: info.codeLength),
         onErrorData: (error) => display.error(error),
         buildOnError: (_) =>
             buildable.copyWith(error: Strings.telegramLoginUnavailable),
