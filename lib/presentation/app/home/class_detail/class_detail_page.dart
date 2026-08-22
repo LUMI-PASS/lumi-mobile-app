@@ -28,6 +28,7 @@ import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
+import 'package:lumi_pass/data/service/interest_reporter.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -537,6 +538,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           'class_title': widget.classModel.title!,
       },
     );
+    // The one interest signal the backend cannot see for itself: if they walk
+    // away from here, no request is ever made and nothing records that they
+    // nearly booked. Queued and sent in the background — see [InterestReporter].
+    if (full.id != null) getIt<InterestReporter>().bookTapped(full.id!);
     context.router.push(BookingRoute(clazz: full));
   }
 
@@ -626,6 +631,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         'course_option': 'trial',
       },
     );
+    getIt<InterestReporter>().bookTapped(id);
     final full = _full;
     if (full == null) return;
     // The SAME booking page a class ticket goes through — calendar on top, the
@@ -666,6 +672,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         'is_course': 'true',
       },
     );
+    getIt<InterestReporter>().bookTapped(id);
     final full = _full;
     if (full == null) return;
     // Same page as a class ticket — see [_onBookTrialTapped].

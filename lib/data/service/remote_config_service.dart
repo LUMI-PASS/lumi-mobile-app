@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -55,6 +57,46 @@ class RemoteConfigService {
   bool get hasSupportTelegram => supportTelegramUrl.isNotEmpty;
   bool get hasSupportPhone => supportPhone.isNotEmpty;
 
+  // ─── App update gate ───────────────────────────────────────────────────────
+  // Two version floors decide, per installed build, whether the user is shown
+  // nothing, a dismissible "there is a new version" sheet, or a blocking
+  // update screen. Both are plain version strings ("2.1.0") in the console:
+  //
+  //   installed <  min_supported_version                  → forced update
+  //   min_supported_version <= installed < latest_app_version → optional update
+  //   otherwise                                            → nothing
+  //
+  // Leaving both keys empty (the shipped default) turns the whole gate off, so
+  // a console that was never filled in can never lock anyone out.
+
+  static const _defaultStoreLinkAndroid =
+      'https://play.google.com/store/apps/details?id=uz.lumi.mobileapp';
+  static const _defaultStoreLinkIos =
+      'https://apps.apple.com/uz/app/lumipass/id6761327966';
+
+  /// Builds below this must update before they can use the app. Empty = off.
+  String get minSupportedVersion => _string('min_supported_version', '');
+
+  /// Newest build in the stores. Anything older (but still supported) gets the
+  /// dismissible sheet. Empty = no optional prompt.
+  String get latestAppVersion => _string('latest_app_version', '');
+
+  /// Optional console-authored subtitle ("what's new"), shown in place of the
+  /// built-in localized copy when set. Empty = use the app's own text.
+  String get updateDescription => _string('update_description', '');
+
+  /// Where the update button sends the user, per store.
+  String get storeLink {
+    final isIos = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+    final key = isIos ? 'store_link_ios' : 'store_link_android';
+    final fallback = isIos ? _defaultStoreLinkIos : _defaultStoreLinkAndroid;
+    final value = _string(key, fallback);
+    return value.isEmpty ? fallback : value;
+  }
+
+  /// The installed build's version ("2.0.5"), read once at [init].
+  String get currentVersion => _currentVersion;
+
   /// Remote value, trimmed. [fallback] covers the case where Remote Config
   /// never initialized at all; once it has, the registered defaults already
   /// stand in until the first fetch lands — and a value the console blanks on
@@ -77,6 +119,11 @@ class RemoteConfigService {
         'is_in_review': '',
         'support_telegram': _defaultTelegram,
         'support_phone': _defaultPhone,
+        'min_supported_version': '',
+        'latest_app_version': '',
+        'update_description': '',
+        'store_link_android': _defaultStoreLinkAndroid,
+        'store_link_ios': _defaultStoreLinkIos,
       });
 
       await _remoteConfig?.setConfigSettings(RemoteConfigSettings(

@@ -9,7 +9,9 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 
 @RoutePage()
@@ -50,6 +52,48 @@ class _CouponsPageState extends State<CouponsPage>
       begin: const Offset(0, 0.18),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+    _loadLastPaymentMethod();
+  }
+
+  /// Opens the pill on the method the buyer last chose — the same two storage
+  /// keys the booking screens read and write, so a card added here and a card
+  /// picked at checkout are one choice rather than two that disagree.
+  Future<void> _loadLastPaymentMethod() async {
+    final storage = getIt<Storage>();
+    final railKey = storage.lastPaymentRail();
+    if (railKey == null || railKey.isEmpty) return;
+    PaymentRail? rail;
+    for (final r in PaymentRail.values) {
+      if (r.name == railKey) {
+        rail = r;
+        break;
+      }
+    }
+    if (rail == null) return;
+    if (rail != PaymentRail.card) {
+      if (mounted) setState(() => _payment = PaymentSelection(rail: rail!));
+      return;
+    }
+    if (!kCardPaymentsEnabled) return;
+    // A card rail with no card can't be redeemed with, so restore it only once
+    // the card behind it is confirmed to still be saved.
+    final savedId = storage.lastSavedCardId();
+    if (savedId == null || savedId.isEmpty) return;
+    try {
+      final cards = await getIt<OrdersApi>().getSavedCards();
+      if (!mounted) return;
+      for (final c in cards) {
+        if (c.id == savedId) {
+          setState(() => _payment = PaymentSelection(
+                rail: PaymentRail.card,
+                card: PaymentCard.saved(c),
+              ));
+          return;
+        }
+      }
+    } catch (_) {
+      // Non-fatal — the buyer can pick a method themselves.
+    }
   }
 
   @override
@@ -113,16 +157,26 @@ class _CouponsPageState extends State<CouponsPage>
     }
   }
 
-  /// Opens the same rail chooser used at order checkout. It only picks — it
-  /// never charges — so this stays a plain selection stored in state.
+  /// Opens the same chooser used at order checkout, cards included: a card
+  /// typed into it is bound (100 soum + OTP) and saved to the buyer's account,
+  /// which is the only thing this screen can do with one — redeeming still
+  /// happens at checkout, and nothing here is ever charged for a coupon.
+  ///
+  /// The pick is remembered so checkout opens on the same method.
   Future<void> _choosePayment() async {
     final picked = await showPaymentChooser(
       context,
       initial: _payment,
+      // Seeds the list with the card already picked; the sheet loads the rest
+      // and skips any it already has, so this can't show it twice.
+      cards: [if (_payment?.card != null) _payment!.card!],
       cardsComingSoon: !kCardPaymentsEnabled,
     );
     if (picked == null || !mounted) return;
     setState(() => _payment = picked);
+    final storage = getIt<Storage>();
+    storage.lastPaymentRail.set(picked.rail.name);
+    storage.lastSavedCardId.set(picked.card?.savedCardId);
   }
 
   @override
@@ -642,9 +696,14 @@ class _PaymentMethodSection extends StatelessWidget {
       onTap: onTap,
       leading: PillIconBadge(child: _leading(payment)),
       child: PillCaption(
+        // The card rail carries no wordmark — the card itself is its name, as
+        // in the booking row. Reading brandName for it left the pill blank
+        // after picking a card.
         title: payment == null
             ? 'coupon_pick_payment'.tr()
-            : payment!.rail.brandName,
+            : payment!.rail == PaymentRail.card
+                ? (payment!.card?.label ?? 'pay_with_card'.tr())
+                : payment!.rail.brandName,
         subtitle: 'coupon_pay_method_label'.tr(),
         captionFirst: true,
         titleColor: payment == null ? context.colors.textSecondary : null,

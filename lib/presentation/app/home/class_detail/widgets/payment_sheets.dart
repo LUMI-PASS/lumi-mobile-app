@@ -124,16 +124,17 @@ class PaymentSelection {
 
 /// Opens the "choose a payment type" sheet (Figma "Выберите тип оплаты").
 ///
-/// This sheet only *chooses* — it never charges. It returns the selection (or
-/// null if dismissed); the caller pays with it from its own CTA. Cards added in
-/// the sheet come back attached to the selection so the caller can remember
-/// them for the rest of the session.
+/// This sheet only *chooses* — it never charges the order. A card typed into it
+/// is BOUND (`/cards/verify` + OTP) and saved to the buyer's list; paying with
+/// it is a separate, deliberate act on the caller's own Pay CTA.
+///
+/// Returns the selection (or null if dismissed). Cards added in the sheet come
+/// back attached to it so the caller can remember them for the session.
 Future<PaymentSelection?> showPaymentChooser(
   BuildContext context, {
   PaymentSelection? initial,
   List<PaymentCard> cards = const [],
   bool cardsComingSoon = false,
-  CardSubmitted? onCardSubmitted,
 }) {
   return showModalBottomSheet<PaymentSelection>(
     context: context,
@@ -146,18 +147,9 @@ Future<PaymentSelection?> showPaymentChooser(
       initial: initial,
       cards: cards,
       cardsComingSoon: cardsComingSoon,
-      onCardSubmitted: onCardSubmitted,
     ),
   );
 }
-
-/// Charges a card chosen inside the chooser, right there in the sheet — a
-/// freshly typed one, or one the buyer tapped in the list.
-///
-/// Returns null when it handled the payment (paid, or the buyer backed out of
-/// the OTP) and the sheet should close. A non-null string is an error to show
-/// inline, keeping the buyer on the form with what they typed intact.
-typedef CardSubmitted = Future<String?> Function(PaymentCard card);
 
 /// Opens the OTP step for a Paylov card charge that is awaiting confirmation.
 /// Resolves true once the payment is confirmed, false/null if the buyer backs
@@ -198,15 +190,10 @@ class _ChooserSheet extends StatefulWidget {
     required this.initial,
     required this.cards,
     this.cardsComingSoon = false,
-    this.onCardSubmitted,
   });
 
   final PaymentSelection? initial;
   final List<PaymentCard> cards;
-
-  /// When set, submitting the card form charges it immediately from this sheet
-  /// (checkout + OTP) instead of only selecting it for the caller's own CTA.
-  final CardSubmitted? onCardSubmitted;
 
   /// Shows the card rail as an inert "coming soon" row: no radio, no card list,
   /// no add-card step. The rail still appears — the buyer should see that paying
@@ -286,61 +273,136 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     return sel.isPayable ? sel : null;
   }
 
-  /// Validates the typed PAN + expiry and hands the card to the booking screen,
-  /// which pays it through Paylov exactly like the payme / click / uzum rails:
-  /// `checkout(payment_provider: card, card_number, expire_date)` returns a
-  /// transaction to confirm with the OTP the bank SMSes.
+  /// Validates the typed PAN + expiry and **binds** the card: `/cards/verify`
+  /// charges it 100 soum, the bank SMSes the cardholder a code, and confirming
+  /// that code on the next step is what saves the card ([_confirmBinding]).
   ///
-  /// No binding step. Binding lives on WLCM's Subscribe API — a different
-  /// onboarding we don't have credentials for — and the Partner API we pay
-  /// through returns no reusable card token, so there is nothing to save. This
-  /// used to attempt the bind first and fall back on the 503, which cost a
-  /// round-trip and could only ever fail.
+  /// Adding a card does not pay for anything. This sheet used to run the whole
+  /// checkout from here — typing a card charged the full order on the spot and
+  /// saved nothing — so a buyer who only meant to add a card was billed for the
+  /// booking. Now the card lands in their list and they press Pay themselves.
   Future<void> _saveCard() async {
     final pan = _numberCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
-    final expiry = _expiryCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    // Two orders of the same four digits: the field is typed MM/YY, the gateway
+    // reads YYMM. Sending it as typed reports every valid card as expired, so
+    // the bind gets the converted form and a session card keeps the typed one
+    // (the booking screen converts that itself on the way out).
+    final typed = _expiryCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final expiry = expiryToYyMm(_expiryCtrl.text);
     if (pan.length < 16) {
       setState(() => _error = 'pay_card_number_invalid'.tr());
       return;
     }
-    if (expiry.length < 4) {
+    if (expiry.isEmpty) {
       setState(() => _error = 'pay_card_expiry_invalid'.tr());
       return;
     }
-    setState(() => _error = null);
-
-    // Adding a card here IS the payment: the caller runs the checkout and the
-    // OTP step while this sheet stays up, so the buyer isn't sent back to hunt
-    // for a Pay button after typing their card.
-    final submit = widget.onCardSubmitted;
-    if (submit == null) {
-      _useSessionCard(pan, expiry);
-      return;
-    }
-    setState(() => _busy = true);
-    final error = await submit(PaymentCard(
-      brand: CardBrand.fromPan(pan),
-      pan: pan,
-      expiry: expiry,
-    ));
-    if (!mounted) return;
-    if (error == null) {
-      Navigator.of(context).pop();
-      return;
-    }
-    // Keep the buyer on the form with what they typed — a rejected card is
-    // usually a typo, and clearing it makes them start over.
     setState(() {
-      _busy = false;
-      _error = error;
+      _busy = true;
+      _error = null;
     });
+    try {
+      final session = await getIt<OrdersApi>().verifyCard(
+        cardNumber: pan,
+        expireDate: expiry,
+      );
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _binding = session;
+        _otpCtrl.clear();
+        _step = _Step.bindOtp;
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final status = e.response?.statusCode;
+      // Already bound. "Add this card" is satisfied by picking the one they
+      // have, rather than by an error about a card that is sitting right there.
+      if (status == 409) {
+        if (await _selectAlreadySavedCard(pan)) return;
+        if (!mounted) return;
+      }
+      // Card management is off in this environment (no WLCM credentials, no PAN
+      // cipher). The rail still works one-shot, so keep the number for this
+      // booking — the charge is still the buyer's own Pay tap, never this sheet.
+      if (status == 503) {
+        _useSessionCard(pan, typed);
+        return;
+      }
+      // Keep the buyer on the form with what they typed — a rejected card is
+      // usually a typo, and clearing it makes them start over.
+      setState(() {
+        _busy = false;
+        _error = PaymentError.fromDio(e) ??
+            _dioMessage(
+              e,
+              status == 409
+                  ? 'card_already_saved'.tr()
+                  : 'card_save_error'.tr(),
+            );
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'card_save_error'.tr();
+      });
+    }
   }
 
-  /// Charges a card the buyer tapped in the list, without making them find a
-  /// second button: picking a card IS the instruction to pay with it.
+  /// Selects the card the buyer just tried to add again, when the backend
+  /// refuses the bind because it is already saved.
   ///
-  /// Falls back to plain selection when the host gave us no way to pay (the
-  /// profile wallet, where the sheet only chooses).
+  /// Matched on what survives masking — see [_maskMatchesPan]. Returns false
+  /// when there is no match — a 409 also covers "a verification for this card is
+  /// already in progress", which no card in the list can satisfy — so the caller
+  /// shows the refusal instead.
+  Future<bool> _selectAlreadySavedCard(String pan) async {
+    List<SavedCard> saved;
+    try {
+      saved = await getIt<OrdersApi>().getSavedCards();
+    } catch (_) {
+      return false;
+    }
+    SavedCard? match;
+    for (final c in saved) {
+      if (_maskMatchesPan(c.maskedNumber, pan)) {
+        match = c;
+        break;
+      }
+    }
+    if (match == null) return false;
+    if (!mounted) return true;
+    final card = PaymentCard.saved(match);
+    setState(() {
+      _busy = false;
+      _error = null;
+      _binding = null;
+      _cards.removeWhere((c) => c.savedCardId == card.savedCardId);
+      _cards.insert(0, card);
+      _card = card;
+      _rail = PaymentRail.card;
+      _numberCtrl.clear();
+      _expiryCtrl.clear();
+      _step = _Step.choose;
+    });
+    return true;
+  }
+
+  /// Whether a masked PAN from the server is the number the buyer just typed.
+  ///
+  /// Compares the BIN as well as the last four: "860012******9012" keeps both,
+  /// and two of a buyer's cards sharing their last four digits is not rare
+  /// enough to guess at — the card picked here is the one that gets charged.
+  /// Falls back to the last four when the mask hides the BIN too.
+  bool _maskMatchesPan(String? masked, String pan) {
+    final m = (masked ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+    if (m.length < 4 || pan.length < 4) return false;
+    if (m.substring(m.length - 4) != pan.substring(pan.length - 4)) return false;
+    if (m.length < 10) return true;
+    return m.substring(0, 6) == pan.substring(0, 6);
+  }
+
   /// Picks a card from the list. **Selection only — this must not charge.**
   ///
   /// It used to pay on tap, on the reasoning that choosing a card is the
@@ -357,8 +419,10 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     });
   }
 
-  /// Exchanges the SMS code for a bound card, then selects it. From here the
-  /// booking screen charges it by token — no PAN, and no second OTP.
+  /// Exchanges the SMS code for a saved card, then selects it and returns to
+  /// the list. Nothing is paid here: the buyer confirms the choice and presses
+  /// Pay, which charges the order through `/cards/pay` — and gets its own OTP,
+  /// because this rail issues no token and challenges every charge.
   Future<void> _confirmBinding() async {
     final session = _binding;
     final otp = _otpCtrl.text.trim();
@@ -408,8 +472,9 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     }
   }
 
-  /// The pre-binding behaviour: keep the PAN in memory for this booking only
-  /// and charge it one-shot. Used when the backend can't bind cards yet.
+  /// Fallback for a backend that can't bind (503): keep the PAN in memory for
+  /// this booking only, to be charged one-shot from the caller's Pay CTA. The
+  /// card is not saved, so it is gone when the sheet is.
   void _useSessionCard(String pan, String expiry) {
     final card = PaymentCard(
       brand: CardBrand.fromPan(pan),

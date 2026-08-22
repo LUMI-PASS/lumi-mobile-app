@@ -374,6 +374,11 @@ class OrdersApi {
   /// returns the Paylov OTP fields instead (see [paylovConfirmCard]). Omitting
   /// it keeps the legacy direct-Payme body. [returnUrl] is where the redirect
   /// rails bounce the buyer back to after paying — same as [checkout].
+  ///
+  /// [savedCardId] pays with a card the buyer already saved, and replaces
+  /// [paymentProvider] rather than accompanying it: the server answers with the
+  /// PENDING order and no gateway call, to be charged through
+  /// [payOrderWithSavedCard]. Exactly as [checkout] behaves.
   Future<CheckoutResult> checkoutSubscription({
     required String tariffId,
     String? lang,
@@ -381,13 +386,19 @@ class OrdersApi {
     String? returnUrl,
     String? cardNumber,
     String? expireDate,
+    String? savedCardId,
     bool test = false,
   }) async {
+    final saved = savedCardId?.trim();
+    final hasSaved = saved != null && saved.isNotEmpty;
     final body = {
       'tariff_id': tariffId,
-      if (paymentProvider != null)
+      if (hasSaved) 'saved_card_id': saved,
+      if (paymentProvider != null && !hasSaved)
         'payment_provider': paymentProvider
-      else
+      // The legacy body means "direct Payme"; sending it alongside a saved card
+      // would name a second way to pay the same order.
+      else if (!hasSaved)
         'payment_method': 'PAYME',
       if (returnUrl != null) 'return_url': returnUrl,
       if (cardNumber != null && cardNumber.trim().isNotEmpty)

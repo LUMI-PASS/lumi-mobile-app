@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/widgets.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/service/interest_source.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
 // Matches https://mobile-api.lumipass.uz/share/class/<id>
@@ -92,6 +93,11 @@ class DeeplinkService {
       // Navigate with a minimal HomClass — the ClassDetailPage calls
       // _loadFull() in initState so full data loads immediately on screen.
       final minimal = HomClass(id: classId);
+      // That `_loadFull()` is the request the backend records the interest
+      // from, and no route can say where this one came from — the user was
+      // not in the app at all. Pin it before the push, while the observer is
+      // still one frame away from overwriting it.
+      InterestSourceTracker.instance.pin(InterestSource.deeplink);
       await _appRouter.push(ClassDetailRoute(classModel: minimal));
     } catch (e) {
       log('[Deeplink] navigation error: $e');

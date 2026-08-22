@@ -49,6 +49,14 @@ class Storage {
   /// stamp every analytics event with the user's phone.
   BaseStorage<String> get userPhone => BaseStorage(_box, 'user_phone');
 
+  /// Booking-intent events not yet accepted by the backend.
+  ///
+  /// Persisted rather than held in memory because the whole point of the
+  /// signal is a user who lost interest and left — quite possibly closing the
+  /// app, quite possibly on no connection. See [InterestReporter].
+  BaseStorage<List> get pendingInterestEvents =>
+      BaseStorage(_box, 'pending_interest_events');
+
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
   /// Path of the parent's avatar on this device. The backend has no endpoint
@@ -82,6 +90,12 @@ class Storage {
   /// across launches — the profile details are a nice-to-have, not a gate.
   BaseStorage<bool> get profilePromptDismissed =>
       BaseStorage(_box, 'profilePromptDismissed');
+
+  /// The `latest_app_version` the user last tapped "Later" on in the optional
+  /// update sheet. The sheet stays quiet until the console names a newer one.
+  /// Device-level, not account-level, so it survives a sign-out.
+  BaseStorage<String?> get updateSkippedVersion =>
+      BaseStorage(_box, 'updateSkippedVersion');
 
   /// The buyer's last-used payment rail ('payme'|'click'|'uzum'|'card'), so the
   /// booking sheet can pre-select it on the next checkout.

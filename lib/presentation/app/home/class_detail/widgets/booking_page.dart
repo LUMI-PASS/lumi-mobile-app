@@ -2183,113 +2183,17 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-  /// Charges a card typed into the chooser sheet, without closing it first.
-  ///
-  /// This is the same path the pay CTA takes — `checkout(payment_provider:
-  /// card)` then the OTP sheet — run from inside the chooser, because entering
-  /// a card there is the buyer saying "charge this", not "remember this".
-  ///
-  /// Returns null once it's done with (paid, or the buyer dismissed the OTP);
-  /// a message otherwise, which the sheet shows above the card form.
-  Future<String?> _payWithEnteredCard(PaymentCard card) async {
-    // Same guards as the CTA — a missing slot or date must not create an order.
-    // The messages land on the booking page under the sheet, so repeat the
-    // reason here where the buyer is actually looking.
-    if (!_validateForPayment()) {
-      return _error ?? 'book_pick_slot'.tr();
-    }
-    try {
-      // A saved card spares the buyer typing the number — not the code. This
-      // rail challenges every charge, so a saved card opens an OTP session just
-      // like a freshly typed one; the server holds the PAN.
-      if (card.savedCardId != null) {
-        final order = await _runCheckout(savedCardId: card.savedCardId);
-        if (!mounted) return null;
-        final charge = await getIt<OrdersApi>().payOrderWithSavedCard(
-          orderId: order.orderId,
-          cardId: card.savedCardId!,
-        );
-        if (!mounted) return null;
-        // Already paid (a retry of a settled order) needs no code.
-        if (!charge.otpRequired) {
-          _completeCardPaid(order);
-          return null;
-        }
-        final paid = await showCardOtpSheet(
-          context,
-          transactionId: charge.transactionId ?? '',
-          cid: charge.cid ?? '',
-          otpSentPhone: charge.otpSentPhone,
-          confirmCard: ({
-            required String transactionId,
-            required String cid,
-            required String otp,
-          }) =>
-              getIt<OrdersApi>().paylovConfirmCard(
-            transactionId: transactionId,
-            cid: cid,
-            otp: otp,
-          ),
-        );
-        if (paid == true && mounted) _completeCardPaid(order);
-        return null;
-      }
-
-      final result = await _runCheckout(
-        provider: PaymentRail.card.providerKey,
-        cardNumber: card.pan,
-        expireDate: _toYyMm(card.expiry),
-      );
-      if (!mounted) return null;
-
-      if (result.isCardOtpPending) {
-        final paid = await showCardOtpSheet(
-          context,
-          transactionId: result.transactionId ?? '',
-          cid: result.cid ?? '',
-          otpSentPhone: result.otpSentPhone,
-          confirmCard: ({
-            required String transactionId,
-            required String cid,
-            required String otp,
-          }) =>
-              getIt<OrdersApi>().paylovConfirmCard(
-            transactionId: transactionId,
-            cid: cid,
-            otp: otp,
-          ),
-        );
-        if (paid == true && mounted) _completeCardPaid(result);
-        return null;
-      }
-      // The gateway chose to redirect this card instead of an OTP — hand off
-      // exactly like the other rails.
-      if (result.checkoutUrl.isNotEmpty) {
-        await _completeRedirect(result);
-        return null;
-      }
-      // Neither a transaction nor a URL: Paylov's own message if it sent one.
-      return result.paylovMessage ?? 'pay_generic_error'.tr();
-    } on CheckoutFriendlyError catch (e) {
-      return e.message;
-    } catch (e) {
-      // Never surface a raw Dio/stack string to a buyer.
-      return PaymentError.fromDio(e) ?? 'pay_generic_error'.tr();
-    }
-  }
-
-  /// Opens the chooser sheet. Picking a rail returns a selection to pay with
-  /// from the CTA; typing a card charges it inside the sheet
-  /// ([_payWithEnteredCard]).
+  /// Opens the chooser sheet. It only picks a method — a card typed into it is
+  /// bound and saved there, and nothing is charged until the CTA below runs
+  /// [_pay].
   Future<void> _openChooser() async {
     final picked = await showPaymentChooser(
       context,
       initial: _payment,
       cards: _cards,
       // Paying by card isn't live yet — the rail shows, but inert. With the
-      // rail disabled the card form is unreachable, so no charge handler.
+      // rail disabled the card form is unreachable.
       cardsComingSoon: !kCardPaymentsEnabled,
-      onCardSubmitted: kCardPaymentsEnabled ? _payWithEnteredCard : null,
     );
     if (picked == null || !mounted) return;
     setState(() {

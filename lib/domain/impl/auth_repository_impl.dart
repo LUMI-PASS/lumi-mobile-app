@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
 import 'package:lumi_pass/data/base_model/token/tokens.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
+import 'package:lumi_pass/data/service/interest_reporter.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/data/service/push_notification_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart';
@@ -108,6 +110,10 @@ class AuthRepositoryImpl extends AuthRepository {
       isNewUser ? AnalyticsEvent.signUp : AnalyticsEvent.login,
       params: {'method': method},
     );
+    // A booking sheet can be opened before signing in, and the endpoint needs a
+    // token to know whose history the event belongs to — so anything queued
+    // while signed out goes now, rather than waiting for the next cold start.
+    unawaited(getIt<InterestReporter>().flush());
 
     return VerifyOtpResult(
       isNewUser: isNewUser,

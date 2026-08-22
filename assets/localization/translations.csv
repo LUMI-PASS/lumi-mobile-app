@@ -871,7 +871,7 @@ pay_card_expiry_invalid,Введите срок действия карты,Kart
 pay_enter_code,Введите код подтверждения,Tasdiqlash kodini kiriting,Enter the confirmation code
 pay_code_invalid,Неверный код. Попробуйте снова,Kod noto'g'ri. Qayta urinib ko'ring,Invalid code. Please try again
 pay_generic_error,Не удалось выполнить платёж. Попробуйте снова,To'lovni amalga oshirib bo'lmadi. Qayta urinib ko'ring,Could not complete the payment. Please try again
-pay_add_card_subtitle,Введите данные карты для оплаты,To'lov uchun karta ma'lumotlarini kiriting,Enter your card details to pay
+pay_add_card_subtitle,Для проверки карты спишем 100 сум. Оплатить можно будет на следующем шаге,Kartani tekshirish uchun 100 so'm yechiladi. To'lovni keyingi bosqichda qilasiz,We'll charge 100 soum to verify the card. You'll pay on the next step
 pay_card_number_hint,Номер карты,Karta raqami,Card number
 pay_card_expiry_hint,мм/гг,oo/yy,mm/yy
 detail_happy_parents,Довольные родители,Mamnun ota-onalar,Happy parents
@@ -1101,3 +1101,10 @@ telegram_login_step2,Бот пришлёт код — введите его ни
 telegram_login_open,Открыть Telegram,Telegramni ochish,Open Telegram
 telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
 telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
+update_force_title,Пора обновить приложение,Ilovani yangilash vaqti keldi,Time to update the app
+update_force_subtitle,"Мы добавили новые возможности и полностью обновили приложение. Установите свежую версию, чтобы пользоваться Lumi дальше.","Biz yangi imkoniyatlar qo‘shdik va ilovani to‘liq yangiladik. Lumi’dan foydalanishda davom etish uchun yangi versiyani o‘rnating.","We have added new features and rebuilt a lot under the hood. Install the latest version to keep using Lumi."
+update_optional_title,Доступна новая версия,Yangi versiya mavjud,A new version is available
+update_optional_subtitle,Мы всё улучшили и починили. Обновитесь — станет удобнее.,Biz ilovani yaxshiladik va xatolarni tuzatdik. Yangilang — yanada qulay bo‘ladi.,We polished things up and fixed a few bugs. Update for a smoother ride.
+update_version_label,Версия {},{} versiyasi,Version {}
+update_now,Обновить,Yangilash,Update
+update_later,Позже,Keyinroq,Later

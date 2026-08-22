@@ -12,6 +12,8 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/utils/card_input_formatters.dart';
+import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/adaptive_card.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/common/widget/segmented_tabs.dart';
@@ -184,23 +186,41 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
     }
   }
 
-  /// Opens the same rail chooser the order checkout uses, then immediately
-  /// checks out with whatever the buyer picked — picking a rail here IS the
-  /// instruction to pay, not just a preference to remember for later.
-  Future<void> _choosePaymentAndPay(PremiumPlan? plan) async {
-    if (plan?.id == null || _purchasingId != null) return;
+  /// Opens the rail chooser and remembers what the buyer picked. **Picking
+  /// alone never charges**: a card typed into the sheet is bound and saved
+  /// there, and the plan is paid from the Buy bar.
+  ///
+  /// The method row used to pay the moment a rail was picked, on the reasoning
+  /// that picking one IS the instruction to pay. That was survivable while the
+  /// row only offered redirect rails; with cards live, "Change" — or adding a
+  /// card — would have charged the plan on the spot, before the buyer ever
+  /// pressed Buy.
+  Future<PaymentSelection?> _choosePayment() async {
+    if (_purchasingId != null) return null;
     final picked = await showPaymentChooser(
       context,
       initial: _payment,
-      // Pinned off here even when the card rail is live everywhere else:
-      // `POST /api/transaction/subscriptions` ignores `payment_provider`
-      // entirely and always goes direct-Paycom (see PAYLOV.md, "Known gap").
-      // Offering a card row would take the buyer's card details and then
-      // silently charge them through another rail.
-      cardsComingSoon: true,
+      // The card rail was pinned off here while `POST /api/transaction/
+      // subscriptions` ignored `payment_provider` and always went direct-Paycom
+      // — offering the row would have taken card details and then charged
+      // through another rail. That endpoint now honours the provider, a saved
+      // card, and the card OTP flow, so the rail follows the same switch as
+      // everywhere else.
+      cards: [if (_payment?.card != null) _payment!.card!],
+      cardsComingSoon: !kCardPaymentsEnabled,
     );
-    if (picked == null || !mounted) return;
+    if (picked == null || !mounted) return null;
     setState(() => _payment = picked);
+    return picked;
+  }
+
+  /// The Buy path with no method picked yet: choose one and pay with it. The
+  /// buyer has already pressed Buy here, so the pick completes that instruction
+  /// rather than starting a payment they didn't ask for.
+  Future<void> _choosePaymentAndPay(PremiumPlan? plan) async {
+    if (plan?.id == null || _purchasingId != null) return;
+    final picked = await _choosePayment();
+    if (picked == null || !mounted) return;
     await _pay(plan!, picked);
   }
 
@@ -217,9 +237,12 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
   }
 
   /// Charges the plan through the picked rail via Paylov (WLCM) — the same
-  /// aggregator activity bookings pay through. Payme/Click/Uzum all answer
-  /// with a checkout URL to redirect to; the card rail can't reach here at all,
-  /// because this screen pins it off in the chooser (see [_choosePaymentAndPay]).
+  /// aggregator activity bookings pay through.
+  ///
+  /// Payme/Click/Uzum answer with a checkout URL to redirect to. The card rail
+  /// answers with an OTP session instead and finishes in [_confirmCardOtp]
+  /// without ever leaving this screen — a saved card included, since this rail
+  /// has no token and challenges every charge.
   Future<void> _pay(PremiumPlan plan, PaymentSelection payment) async {
     setState(() => _purchasingId = plan.id);
     getIt<AnalyticsService>().logEvent(
@@ -231,28 +254,97 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
           'discount_percentage': plan.discountPercentage!.round(),
       },
     );
+    final card = payment.rail == PaymentRail.card ? payment.card : null;
+    final isRedirect = payment.rail != PaymentRail.card;
     try {
+      // A saved card creates the order and nothing else; the charge is its own
+      // call, which is what opens the OTP session.
+      if (card != null && card.isSaved) {
+        final order = await _api.checkoutSubscription(
+          tariffId: plan.id!,
+          savedCardId: card.savedCardId,
+        );
+        if (!mounted) return;
+        final charge = await _api.payOrderWithSavedCard(
+          orderId: order.orderId,
+          cardId: card.savedCardId!,
+        );
+        if (!mounted) return;
+        setState(() => _purchasingId = null);
+        if (!charge.otpRequired) {
+          await _finishSuccess(plan, order);
+          return;
+        }
+        await _confirmCardOtp(
+          plan,
+          order,
+          transactionId: charge.transactionId ?? '',
+          cid: charge.cid ?? '',
+          otpSentPhone: charge.otpSentPhone,
+        );
+        return;
+      }
+
       final result = await _api.checkoutSubscription(
         tariffId: plan.id!,
         paymentProvider: payment.rail.providerKey,
-        // Every reachable rail here is a redirect one (the chooser pins card
-        // off on this screen) — WLCM needs to know where to bounce the buyer
-        // back to after paying, same as the booking checkout.
-        returnUrl: '${RuntimeEnv.baseUrl}paylov/return',
+        // Only a redirect rail has anywhere to bounce the buyer back from; the
+        // card rail never leaves the app.
+        returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
+        cardNumber: card?.pan,
+        // Typed MM/YY, sent YYMM — the same conversion the booking screens run.
+        expireDate: card == null ? null : expiryToYyMm(card.expiry),
       );
       if (!mounted) return;
       setState(() => _purchasingId = null);
 
-      if (result.checkoutUrl.isNotEmpty) {
+      if (result.isCardOtpPending) {
+        await _confirmCardOtp(
+          plan,
+          result,
+          transactionId: result.transactionId ?? '',
+          cid: result.cid ?? '',
+          otpSentPhone: result.otpSentPhone,
+        );
+      } else if (result.checkoutUrl.isNotEmpty) {
         await _openRedirect(plan, result);
       } else {
-        _showError('pay_generic_error'.tr());
+        _showError(result.paylovMessage ?? 'pay_generic_error'.tr());
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _purchasingId = null);
-      _showError(e.toString());
+      _showError(PaymentError.fromDio(e) ?? 'pay_generic_error'.tr());
     }
+  }
+
+  /// Collects the SMS code for a card charge and, once the gateway confirms it,
+  /// hands off to the same success path a redirect payment takes. Backing out
+  /// of the sheet leaves the order PENDING — nothing is charged.
+  Future<void> _confirmCardOtp(
+    PremiumPlan plan,
+    CheckoutResult order, {
+    required String transactionId,
+    required String cid,
+    String? otpSentPhone,
+  }) async {
+    final paid = await showCardOtpSheet(
+      context,
+      transactionId: transactionId,
+      cid: cid,
+      otpSentPhone: otpSentPhone,
+      confirmCard: ({
+        required String transactionId,
+        required String cid,
+        required String otp,
+      }) =>
+          _api.paylovConfirmCard(
+        transactionId: transactionId,
+        cid: cid,
+        otp: otp,
+      ),
+    );
+    if (paid == true && mounted) await _finishSuccess(plan, order);
   }
 
   /// Glyph inside the payment row's [PillIconBadge]: the rail's brand mark, or
@@ -517,13 +609,18 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
                               ),
                               12.kh,
                               PillCard(
-                                onTap: () => _choosePaymentAndPay(plan),
+                                onTap: _choosePayment,
                                 leading: PillIconBadge(
                                     child: _paymentLeading(_payment)),
                                 child: PillCaption(
+                                  // The card rail has no wordmark — the card
+                                  // itself is its name, as in the booking row.
                                   title: _payment == null
                                       ? 'book_pick_payment'.tr()
-                                      : _payment!.rail.brandName,
+                                      : _payment!.rail == PaymentRail.card
+                                          ? (_payment!.card?.label ??
+                                              'pay_with_card'.tr())
+                                          : _payment!.rail.brandName,
                                   subtitle: 'book_pay_method_label'.tr(),
                                   captionFirst: true,
                                   titleColor: _payment == null
@@ -534,7 +631,7 @@ class _PlansPageState extends State<PlansPage> with WidgetsBindingObserver {
                                   label: _payment == null
                                       ? 'book_choose'.tr()
                                       : 'book_change'.tr(),
-                                  onTap: () => _choosePaymentAndPay(plan),
+                                  onTap: _choosePayment,
                                 ),
                               ),
                             ],

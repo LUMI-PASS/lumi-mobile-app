@@ -14,6 +14,8 @@ import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/fixed_csv_asset_loader.dart';
 import 'package:lumi_pass/common/widget/display/display_widget.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/data/service/interest_source.dart';
+import 'package:lumi_pass/data/service/app_update_service.dart';
 import 'package:lumi_pass/data/service/appsflyer_service.dart';
 import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/data/service/push_notification_manager.dart';
@@ -230,6 +232,12 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
   @override
   void init(BuildContext context) {
     super.init(context);
+    // The update gate rides on the root navigator, which only exists once the
+    // router below has built — hence the post-frame hop. It is a no-op unless
+    // Remote Config puts this build below one of the two version floors.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppUpdateService.instance.maybeShow();
+    });
   }
 
   @override
@@ -247,6 +255,11 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
             debugShowCheckedModeBanner: AppEnv.isDev,
             routerConfig: getIt<AppRouter>().config(
               deepLinkBuilder: kIsWeb ? _initialWebDeepLink : _nativeDeepLink,
+              // A builder, called once per router — the nested one behind the
+              // bottom tabs included. Every instance writes into the one shared
+              // tracker, which is what tells the backend whether a class was
+              // opened from the home row or out of a search.
+              navigatorObservers: () => [InterestSourceObserver()],
             ),
             scrollBehavior: _LumiScrollBehavior(),
             // Innermost wrapper on purpose: the theme flips above it, so the

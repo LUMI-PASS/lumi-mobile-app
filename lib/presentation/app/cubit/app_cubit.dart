@@ -1,5 +1,6 @@
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
+import 'package:lumi_pass/data/service/interest_reporter.dart';
 import 'package:lumi_pass/data/service/push_notification_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -41,6 +42,10 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
       // Sync premium/coupon status from the server so it works across
       // devices and after reinstalls — local Hive storage alone is not enough.
       _syncSubscriptionStatus();
+      // Send any booking sheet abandoned on a bad connection last time. The
+      // whole signal is a user who lost interest and left, so the send has to
+      // survive the app being closed — see [InterestReporter].
+      getIt<InterestReporter>().flush();
     }
     analytics.logEvent(AnalyticsEvent.appOpen);
   }

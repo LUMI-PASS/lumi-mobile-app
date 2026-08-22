@@ -418,89 +418,13 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => navigator.pop(true));
   }
 
-  /// Charges a card typed into the chooser sheet, without closing it first —
-  /// mirrors the ticket-booking flow's own [CardSubmitted] handler.
-  Future<String?> _payWithEnteredCard(PaymentCard card) async {
-    try {
-      // A saved card spares the buyer typing the number — not the code: this
-      // rail challenges every charge.
-      if (card.savedCardId != null) {
-        final order = await _runCheckout(savedCardId: card.savedCardId);
-        if (!mounted) return null;
-        final charge = await getIt<OrdersApi>().payOrderWithSavedCard(
-          orderId: order.orderId,
-          cardId: card.savedCardId!,
-        );
-        if (!mounted) return null;
-        if (!charge.otpRequired) {
-          _completePaid();
-          return null;
-        }
-        final paid = await showCardOtpSheet(
-          context,
-          transactionId: charge.transactionId ?? '',
-          cid: charge.cid ?? '',
-          otpSentPhone: charge.otpSentPhone,
-          confirmCard: ({
-            required String transactionId,
-            required String cid,
-            required String otp,
-          }) =>
-              getIt<OrdersApi>().paylovConfirmCard(
-            transactionId: transactionId,
-            cid: cid,
-            otp: otp,
-          ),
-        );
-        if (paid == true && mounted) _completePaid();
-        return null;
-      }
-
-      final result = await _runCheckout(
-        provider: PaymentRail.card.providerKey,
-        cardNumber: card.pan,
-        expireDate: _toYyMm(card.expiry),
-      );
-      if (!mounted) return null;
-
-      if (result.isCardOtpPending) {
-        final paid = await showCardOtpSheet(
-          context,
-          transactionId: result.transactionId ?? '',
-          cid: result.cid ?? '',
-          otpSentPhone: result.otpSentPhone,
-          confirmCard: ({
-            required String transactionId,
-            required String cid,
-            required String otp,
-          }) =>
-              getIt<OrdersApi>().paylovConfirmCard(
-            transactionId: transactionId,
-            cid: cid,
-            otp: otp,
-          ),
-        );
-        if (paid == true && mounted) _completePaid();
-        return null;
-      }
-      if (result.checkoutUrl.isNotEmpty) {
-        await _completeRedirect(result);
-        return null;
-      }
-      return result.paylovMessage ?? 'pay_generic_error'.tr();
-    } on CheckoutFriendlyError catch (e) {
-      return e.message;
-    } catch (e) {
-      return courseCheckoutErrorMessage(e);
-    }
-  }
-
+  /// Opens the chooser sheet. It only picks a method — a card typed into it is
+  /// bound and saved there, and nothing is charged until the buyer presses Pay.
   Future<void> _openChooser() async {
     final picked = await showPaymentChooser(
       context,
       initial: _payment,
       cards: _cards,
-      onCardSubmitted: _payWithEnteredCard,
     );
     if (picked == null || !mounted) return;
     setState(() {
