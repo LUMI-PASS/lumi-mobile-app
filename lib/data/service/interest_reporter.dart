@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/service/interest_source.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -59,32 +61,53 @@ class InterestReporter {
 
   /// Sends whatever is queued. Safe to call on app start and after login.
   ///
-  /// Nothing is dropped on failure — the queue is only cleared once the server
-  /// has accepted it. A signed-out user's events wait: the endpoint needs a
-  /// token to know whose history they are.
+  /// A signed-out user's events wait: the endpoint needs a token to know whose
+  /// history they are.
+  ///
+  /// Retries are for failures that a retry can fix. A 4xx is the server saying
+  /// the batch itself is wrong, and re-sending it will fail identically every
+  /// time — so it is DROPPED. Kept, it would sit at the head of the queue and
+  /// block every later event behind it, because `ValidationPipe` rejects the
+  /// whole request if any one element is invalid. Losing an abandoned booking
+  /// is a rounding error; losing all of them for a week is not.
   Future<void> flush() async {
     if (_flushing) return;
     _flushing = true;
+    List<Map<String, dynamic>> batch = const [];
     try {
       final pending = _readQueue();
       if (pending.isEmpty) return;
       if (_storage.tokens() == null) return;
 
-      final batch = pending.take(_maxBatch).toList();
+      batch = pending.take(_maxBatch).toList();
       await _api.report(batch.map(_toPayload).toList());
-
-      // Only what was actually sent is removed. Anything queued while the
-      // request was in flight stays for the next flush.
-      final sent = batch.map((e) => e['queued_at']).toSet();
-      _writeQueue(
-        _readQueue().where((e) => !sent.contains(e['queued_at'])).toList(),
-      );
+      _drop(batch);
       _log('flushed ${batch.length}');
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      // 401 is the exception among 4xx: the token expired mid-flush, which the
+      // next sign-in fixes. That one is worth keeping.
+      if (status != null && status >= 400 && status < 500 && status != 401) {
+        _drop(batch);
+        _log('flush rejected ($status), dropped ${batch.length}');
+      } else {
+        _log('flush failed (kept for retry): $e');
+      }
     } catch (e) {
       _log('flush failed (kept for retry): $e');
     } finally {
       _flushing = false;
     }
+  }
+
+  /// Removes exactly what was sent. Anything queued while the request was in
+  /// flight stays for the next flush.
+  void _drop(List<Map<String, dynamic>> batch) {
+    if (batch.isEmpty) return;
+    final sent = batch.map((e) => e['queued_at']).toSet();
+    _writeQueue(
+      _readQueue().where((e) => !sent.contains(e['queued_at'])).toList(),
+    );
   }
 
   /// Turns a queued event into what the endpoint takes.
