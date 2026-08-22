@@ -1,4 +1,5 @@
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/data/api_model/order/course_purchase.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 
 /// Plain Dart models for the user-facing orders API.
@@ -39,12 +40,13 @@ class UserOrder {
   /// from a coupon plan (or when there was no discount).
   final String? promocodeCode;
 
-  /// 'trial' | 'full' when this order bought a COURSE, null for a class ticket.
+  /// What this order bought: a trial lesson, a whole course, or (the common
+  /// case) a normal activity booking.
   ///
-  /// The detail endpoint returns the whole order document, so these have always
-  /// been on the wire — the app simply never read them, and a course booking was
+  /// The detail endpoint returns the whole order document, so this has always
+  /// been on the wire — the app simply never read it, and a course booking was
   /// indistinguishable from a class one on screen.
-  final String? coursePurchase;
+  final CoursePurchase coursePurchase;
 
   /// Which sub-course, when the course is sold as sub-courses.
   final String? subcourseName;
@@ -52,9 +54,66 @@ class UserOrder {
   /// When the enrolment starts (YYYY-MM-DD), for a whole-course purchase.
   final String? startsAt;
 
-  bool get isCourseOrder => coursePurchase != null;
-  bool get isWholeCourse => coursePurchase == 'full';
-  bool get isTrialLesson => coursePurchase == 'trial';
+  /// Part of [totalAmount] settled from the cashback wallet, if any. A payment
+  /// METHOD rather than a discount — the order still cost [totalAmount].
+  final num walletAmount;
+
+  bool get isCourseOrder => coursePurchase.isCourse;
+  bool get isWholeCourse => coursePurchase == CoursePurchase.full;
+  bool get isTrialLesson => coursePurchase == CoursePurchase.trial;
+
+  /// True when part of this order was paid out of the wallet.
+  bool get hasWalletPayment => walletAmount > 0;
+
+  /// Every session this order booked, earliest first.
+  ///
+  /// Sorted here rather than trusted: the dates are ISO `YYYY-MM-DD`, which
+  /// sorts correctly as text, and the endpoints make no promise about order.
+  List<String> get _sessionDates {
+    final dates = ticketSummaries
+        .map((t) => t.ticketDate ?? '')
+        .where((d) => d.isNotEmpty)
+        .toList()
+      ..sort();
+    return dates;
+  }
+
+  /// When what was bought begins.
+  ///
+  /// The enrolment's own start date when the backend recorded one — it may
+  /// precede the first lesson — otherwise the first session booked, which is
+  /// the only answer an order written before that field has.
+  String? get startDate {
+    if (startsAt?.isNotEmpty ?? false) return startsAt;
+    final dates = _sessionDates;
+    return dates.isEmpty ? null : dates.first;
+  }
+
+  /// When it ends: the last session booked. Null when nothing is dated yet.
+  String? get endDate {
+    final dates = _sessionDates;
+    return dates.isEmpty ? null : dates.last;
+  }
+
+  /// True when this order runs over more than one day — a course, or a class
+  /// booked for several sessions. Such an order has a span to state; a
+  /// single-session one just has a date and a time.
+  bool get spansDates {
+    final start = startDate;
+    final end = endDate;
+    return start != null && end != null && start != end;
+  }
+
+  /// Whether the seats on this order name an age bracket someone chose.
+  ///
+  /// A course order carries none (its items are empty, and its bookings are
+  /// stamped 0–99 for "whoever the course admits"), so there is nothing to
+  /// show and the row is left out rather than printed blank.
+  bool get hasAgeBracket {
+    if (items.isEmpty) return false;
+    final it = items.first;
+    return !(it.ageFrom == 0 && it.ageTo >= 99);
+  }
 
   const UserOrder({
     required this.id,
@@ -73,9 +132,10 @@ class UserOrder {
     required this.createdAt,
     required this.updatedAt,
     this.promocodeCode,
-    this.coursePurchase,
+    this.coursePurchase = CoursePurchase.none,
     this.subcourseName,
     this.startsAt,
+    this.walletAmount = 0,
   });
 
   /// True when a coupon or promocode discount was applied to this order.
@@ -154,13 +214,12 @@ class UserOrder {
       promocodeCode: (json['promocode_code']?.toString().isNotEmpty ?? false)
           ? json['promocode_code'].toString()
           : null,
-      coursePurchase: (json['course_purchase']?.toString().isNotEmpty ?? false)
-          ? json['course_purchase'].toString()
-          : null,
+      coursePurchase: CoursePurchase.fromKey(json['course_purchase']?.toString()),
       subcourseName: (json['subcourse_name']?.toString().isNotEmpty ?? false)
           ? json['subcourse_name'].toString()
           : null,
       startsAt: json['starts_at']?.toString().split('T').first,
+      walletAmount: (json['wallet_amount'] as num?) ?? 0,
       activityId: activityId,
       activityName: _readLocalized(activityMap?['name']),
       activityImage: sanitizeImageUrl(activityMap?['image']?.toString()),
@@ -243,6 +302,19 @@ class OrderTicket {
   final int ageFrom;
   final int ageTo;
   final num price;
+
+  /// The duration tier this seat was bought at, in minutes.
+  ///
+  /// Null means either the UNLIMITED tier or a booking written before the
+  /// backend recorded it — [hasDurationTier] separates the two. It is what
+  /// explains a price: the same bracket at 60 minutes and "as long as you
+  /// like" are two different amounts, and without this the ticket showed the
+  /// amount and not the reason.
+  final int? duration;
+
+  /// Whether this booking knows which duration tier it bought at all.
+  final bool hasDurationTier;
+
   final String status; // pending | confirmed | canceled
   final String? createdAt;
 
@@ -257,9 +329,14 @@ class OrderTicket {
     required this.price,
     required this.status,
     required this.createdAt,
+    this.duration,
+    this.hasDurationTier = false,
   });
 
   bool get isConfirmed => status.toLowerCase() == 'confirmed';
+
+  /// True when this seat was bought on the unlimited tier.
+  bool get isUnlimitedDuration => hasDurationTier && duration == null;
 
   factory OrderTicket.fromJson(Map<String, dynamic> json) {
     return OrderTicket(
@@ -271,6 +348,10 @@ class OrderTicket {
       ageFrom: (json['age_from'] as num?)?.toInt() ?? 0,
       ageTo: (json['age_to'] as num?)?.toInt() ?? 0,
       price: (json['price'] as num?) ?? 0,
+      // `duration: null` is a REAL tier (unlimited), so the key being present
+      // is what says the tier is known — not the value being non-null.
+      duration: (json['duration'] as num?)?.toInt(),
+      hasDurationTier: json.containsKey('duration'),
       status: json['status']?.toString() ?? 'pending',
       createdAt: json['created_at']?.toString(),
     );

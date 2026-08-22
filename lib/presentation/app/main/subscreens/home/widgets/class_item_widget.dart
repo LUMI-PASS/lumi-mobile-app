@@ -76,7 +76,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     final couponPct = effectiveCouponPercent(
       app.hasPremium ? app.planDiscountPercentage : 0,
       hc?.discountPercentage,
-      isCourse: hc?.isCourse ?? false,
+      isWholeCourse: hc?.showsWholeCoursePrice ?? false,
     );
     final showDiscountBadge = couponPct > 0;
 
@@ -473,7 +473,7 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     final planPct = effectiveCouponPercent(
       app.hasPremium ? app.planDiscountPercentage : 0,
       widget.homClass?.discountPercentage,
-      isCourse: widget.homClass?.isCourse ?? false,
+      isWholeCourse: widget.homClass?.showsWholeCoursePrice ?? false,
     );
     if (planPct <= 0) {
       return originalWidget;

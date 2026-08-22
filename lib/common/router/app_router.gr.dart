@@ -334,6 +334,7 @@ abstract class _$AppRouter extends RootStackRouter {
           branch: args.branch,
           orderId: args.orderId,
           canCancel: args.canCancel,
+          price: args.price,
           paidPrice: args.paidPrice,
           fromPromocode: args.fromPromocode,
         ),
@@ -1400,6 +1401,7 @@ class TicketReceiptRoute extends PageRouteInfo<TicketReceiptRouteArgs> {
     String? branch,
     String? orderId,
     bool canCancel = false,
+    num? price,
     num? paidPrice,
     bool fromPromocode = false,
     List<PageRouteInfo>? children,
@@ -1412,6 +1414,7 @@ class TicketReceiptRoute extends PageRouteInfo<TicketReceiptRouteArgs> {
             branch: branch,
             orderId: orderId,
             canCancel: canCancel,
+            price: price,
             paidPrice: paidPrice,
             fromPromocode: fromPromocode,
           ),
@@ -1432,6 +1435,7 @@ class TicketReceiptRouteArgs {
     this.branch,
     this.orderId,
     this.canCancel = false,
+    this.price,
     this.paidPrice,
     this.fromPromocode = false,
   });
@@ -1448,13 +1452,15 @@ class TicketReceiptRouteArgs {
 
   final bool canCancel;
 
+  final num? price;
+
   final num? paidPrice;
 
   final bool fromPromocode;
 
   @override
   String toString() {
-    return 'TicketReceiptRouteArgs{key: $key, ticket: $ticket, className: $className, branch: $branch, orderId: $orderId, canCancel: $canCancel, paidPrice: $paidPrice, fromPromocode: $fromPromocode}';
+    return 'TicketReceiptRouteArgs{key: $key, ticket: $ticket, className: $className, branch: $branch, orderId: $orderId, canCancel: $canCancel, price: $price, paidPrice: $paidPrice, fromPromocode: $fromPromocode}';
   }
 }
 

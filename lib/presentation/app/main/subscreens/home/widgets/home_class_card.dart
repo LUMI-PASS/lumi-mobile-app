@@ -99,9 +99,9 @@ class HomeNearbyCard extends StatelessWidget {
       onTap: () => context.router
           .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
       margin: EdgeInsets.symmetric(horizontal: 16.w),
-      // 8 of padding around a 12-radius photo makes the outer corner 20, so
-      // the two curves stay concentric.
-      padding: EdgeInsets.all(8.w),
+      // The photo runs full-bleed to the card's edges: no padding on top or
+      // the sides, only the bottom strip that separates it from the text.
+      padding: EdgeInsets.only(bottom: 8.h),
       borderRadius: BorderRadius.circular(20.r),
       boxShadow: AppShadows.card,
       child: Column(
@@ -115,12 +115,16 @@ class HomeNearbyCard extends StatelessWidget {
             discountPercentage: hc?.discountPercentage ?? 0,
             onViewAsReels: onViewAsReels,
             fit: BoxFit.cover,
+            // Flush with the card, so the photo takes the card's own top
+            // corners instead of leaving the fill showing through at 12.
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
           ),
           12.verticalSpace,
-          // The text is inset past the photo's edge — flush against the card
-          // padding it read as crowded into the corner.
+          // The card no longer pads its sides, so the text carries the whole
+          // inset itself — flush against the edge it read as crowded into the
+          // corner.
           Padding(
-            padding: EdgeInsets.fromLTRB(4.w, 0, 4.w, 4.h),
+            padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 4.h),
             child: _ClassInfo(
               hc: hc,
               crossAxis: CrossAxisAlignment.start,
@@ -143,6 +147,7 @@ class _ClassImage extends StatelessWidget {
     required this.discountPercentage,
     required this.onViewAsReels,
     this.fit = BoxFit.cover,
+    this.borderRadius,
   });
 
   final String? imageUrl;
@@ -160,6 +165,11 @@ class _ClassImage extends StatelessWidget {
   /// frame still reads as full-bleed, and nothing is cut off.
   final BoxFit fit;
 
+  /// Corner radius of the photo frame. Defaults to `BorderRadius.circular(12.r)`
+  /// — the inset look; pass the card's own radius when the photo sits flush
+  /// against its edges.
+  final BorderRadius? borderRadius;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -169,7 +179,7 @@ class _ClassImage extends StatelessWidget {
         .firstWhere((s) => s.isNotEmpty, orElse: () => '');
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: borderRadius ?? BorderRadius.circular(12.r),
       child: SizedBox(
         width: double.infinity,
         height: height,
@@ -377,8 +387,10 @@ class _ClassInfo extends StatelessWidget {
 /// stands alone; only the whole-course headline carries a second line, breaking
 /// its own figure down per lesson.
 ///
-/// Coupons are deliberately absent: a plan discount never applies to a course
-/// (see `effectiveCouponPercent`), so there is no struck-through price here.
+/// A coupon plan discounts a TRIAL headline — a trial is one lesson bought one
+/// at a time, the shape the plan is sold against — and never a whole-course
+/// one. So the struck-through price appears here only while the card is still
+/// offering a trial. See `effectiveCouponPercent`.
 class _CoursePriceText extends StatelessWidget {
   const _CoursePriceText({required this.hc});
 
@@ -389,37 +401,56 @@ class _CoursePriceText extends StatelessWidget {
     final c = context.colors;
     final kind = hc.coursePriceKind;
     final price = hc.cardPrice ?? hc.coursePrice ?? 0;
-    final money = price.toRawUzsPrice();
 
-    final String label;
-    if (hc.priceFrom == true && kind != CoursePriceKind.trialFree) {
-      // A levelled course has no single card price. The server sends the
-      // cheapest eligible level, so keep the existing "From" treatment rather
-      // than presenting that floor as the price of every level.
-      label = 'price_from'.tr(args: [money]);
-    } else {
+    /// The headline for a given figure. Taken as a parameter rather than closed
+    /// over one, because a coupon has to word the SAME offer around a different
+    /// number — "Try for 35 000" is the offer, 50 000 is only what it replaces.
+    String labelFor(num value) {
+      final money = value.toRawUzsPrice();
+      if (hc.priceFrom == true && kind != CoursePriceKind.trialFree) {
+        // A levelled course has no single card price. The server sends the
+        // cheapest eligible level, so keep the existing "From" treatment rather
+        // than presenting that floor as the price of every level.
+        return 'price_from'.tr(args: [money]);
+      }
       switch (kind) {
         case CoursePriceKind.trialFree:
           // "First lesson" only reads right for the first one — someone who
           // has already been to one is being offered their next.
-          label = (hc.trialLessonNo ?? 1) <= 1
+          return (hc.trialLessonNo ?? 1) <= 1
               ? 'course_card_try_free'.tr()
               : 'course_card_try_next_free'.tr();
         case CoursePriceKind.trial:
-          label = 'course_card_try_for'.tr(namedArgs: {'price': money});
+          return 'course_card_try_for'.tr(namedArgs: {'price': money});
         case CoursePriceKind.trialNext:
-          label = 'course_card_next_lesson'.tr(namedArgs: {'price': money});
+          return 'course_card_next_lesson'.tr(namedArgs: {'price': money});
         case CoursePriceKind.full:
           // Nothing left to try, so there is no offer left to word — the course
           // price IS the price. A "Whole course —" prefix only competed with
           // the figure beside it for the same single line.
-          label = money;
+          return money;
         case CoursePriceKind.unknown:
           // A kind this build doesn't model yet: print the figure and nothing
           // around it. Wrong in emphasis, never wrong in money.
-          label = money;
+          return money;
       }
     }
+
+    // Only a trial headline can carry one — `showsWholeCoursePrice` is what
+    // keeps the whole-course price out of it, and the cap is Lumi's share of
+    // this course, so the card previews what checkout will charge.
+    final app =
+        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final couponPct = effectiveCouponPercent(
+      app.hasPremium ? app.planDiscountPercentage : 0,
+      hc.discountPercentage,
+      isWholeCourse: hc.showsWholeCoursePrice,
+    );
+    // A free first lesson has nothing left to discount.
+    final num? discounted = couponPct > 0 && price > 0
+        ? (price * (100 - couponPct) / 100).round()
+        : null;
+    final label = labelFor(discounted ?? price);
 
     // The figure the headline ISN'T showing.
     //
@@ -442,13 +473,27 @@ class _CoursePriceText extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // What the coupon took off, above the offer it changed — the same
+        // struck-original-then-green-figure shape a class card uses.
+        if (discounted != null)
+          Text(
+            price.toRawUzsPrice(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.regular12.copyWith(
+              color: c.textMuted,
+              decoration: TextDecoration.lineThrough,
+              decorationColor: c.textMuted,
+            ),
+          ),
         Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppText.semibold14.copyWith(
-            // A free lesson is the one thing on this card worth a colour.
-            color: kind == CoursePriceKind.trialFree
+            // A free lesson is the one thing on this card worth a colour — and
+            // so is a couponed one, for the same reason.
+            color: kind == CoursePriceKind.trialFree || discounted != null
                 ? AppColors.green
                 : c.textPrimary,
           ),
@@ -510,7 +555,7 @@ class _PriceText extends StatelessWidget {
     final planPct = effectiveCouponPercent(
       app.hasPremium ? app.planDiscountPercentage : 0,
       hc?.discountPercentage,
-      isCourse: hc?.isCourse ?? false,
+      isWholeCourse: hc?.showsWholeCoursePrice ?? false,
     );
     if (planPct <= 0) {
       return Text(label(effectivePrice), style: baseStyle);

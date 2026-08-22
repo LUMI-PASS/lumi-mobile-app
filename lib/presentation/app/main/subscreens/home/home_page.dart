@@ -205,9 +205,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   Widget _buildCourses(BuildContext context, HomeBuildable state) {
     final rowH = 126.h + 14.h + 118.h;
-    // Activities row must never show courses — they have their own row/endpoint.
-    final activities =
-        state.newClassesList.where((c) => c.isCourse != true).toList();
+    // Whatever the adminka has FEATURED, course or class alike. The row is the
+    // centre's own pick, and a course it picked is as much that as a class is —
+    // the card prices each its own way off `is_course`, the same as "Near you",
+    // which has always carried both.
+    final popular = state.newClassesList;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -238,13 +240,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                   key: const PageStorageKey('new-classes-list'),
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.only(left: 8.w, right: 16.w),
-                  itemCount: activities.length,
+                  itemCount: popular.length,
                   itemBuilder: (context, index) => HomeCourseCard(
-                    key: ValueKey(activities[index].id ?? index),
-                    homClass: activities[index],
+                    key: ValueKey(popular[index].id ?? index),
+                    homClass: popular[index],
                     margin: EdgeInsets.only(left: 8.w),
                     onViewAsReels: () =>
-                        _openShorts(context, activities, index),
+                        _openShorts(context, popular, index),
                   ),
                 ),
                 if (state.isLoadingNewClasses)
@@ -268,17 +270,29 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   /// reusing whichever activity list is passed in.
   Widget _buildCoursesRow(
       BuildContext context, String title, List<HomClass> list) {
-    // Wider than the activities row's 168 on purpose: a course card carries
-    // more to read — a provider tag, a title, an address, and a price line that
-    // runs to two lines when it quotes a trial — and the extra width is what
-    // keeps those off the ellipsis.
+    // Sized so ONE AND A HALF cards fill the screen: the half-card at the right
+    // edge is what says the row scrolls, and a course card carries more to read
+    // than an activity's — a provider tag, a title, an address, and a price
+    // line that runs to two lines when it quotes a trial — so the width is what
+    // keeps all of that off the ellipsis.
     //
-    // Sized per build, not once: `.w` scales against the current screen, so a
+    // The 24 is the row's own left inset (8 of list padding + the card's 8
+    // margin) plus the 8 gap before the half-card, so the arithmetic is against
+    // the space a card actually gets rather than the raw screen.
+    //
+    // Clamped at the top for tablets, where a strict 1.5 would produce a card
+    // wider than the phone this row was designed on; at the bottom so a narrow
+    // phone never goes below the width the text was fitted to.
+    //
+    // Sized per build, not once: this scales against the current screen, so a
     // value cached in a static would be stale on the first rotation.
-    final cardW = 200.w;
-    // Holds the 4:3 image frame the activities row uses. Widening the card
-    // without this would only crop its photo harder.
-    final cardImgH = cardW * 126 / 168;
+    final cardW = ((1.sw - 24.w) / 1.5).clamp(200.0, 320.0);
+    // FIXED, deliberately not derived from [cardW]: only the width follows the
+    // screen. Tying the photo's height to the width made the whole card grow
+    // taller as it widened, which is the row getting bigger rather than the
+    // card getting wider. It is the height the 200-wide card had, so the frame
+    // simply shows more of the photo instead of standing taller.
+    final cardImgH = 150.w;
     final rowH = cardImgH + 14.h + 118.h;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -31,6 +31,12 @@ class HomeApi {
       'near_class_limit': nearClassLimit,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
+      // This build draws a course card in the popular row, so ask for the
+      // payload that says which items are courses. Without it the server
+      // dresses a featured course as an activity — the 2.0.5 home screen threw
+      // courses out of that row itself, and a plain card was the only way to
+      // show one at all. See the API's `popular_courses`.
+      'popular_courses': 1,
       'lang': currentLang,
     });
   }

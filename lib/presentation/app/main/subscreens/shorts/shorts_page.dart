@@ -412,7 +412,7 @@ class _ShortSlide extends StatelessWidget {
     final planPct = effectiveCouponPercent(
       app.hasPremium ? app.planDiscountPercentage : 0,
       hc.discountPercentage,
-      isCourse: hc.isCourse ?? false,
+      isWholeCourse: hc.showsWholeCoursePrice,
     );
     if (planPct <= 0) return (label: fmt(effectivePrice), discountedLabel: null);
 

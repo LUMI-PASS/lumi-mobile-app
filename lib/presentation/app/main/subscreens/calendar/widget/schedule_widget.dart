@@ -12,6 +12,7 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/common/widget/purchase_kind_chip.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -180,11 +181,29 @@ class BookingCard extends StatelessWidget {
                 ),
                 12.kw,
                 Expanded(
-                  child: Text(
-                    order.activityName ?? 'Class',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.semibold16.copyWith(color: c.textPrimary),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        order.activityName ?? 'Class',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.semibold16.copyWith(color: c.textPrimary),
+                      ),
+                      // WHAT was bought. Three products come through one
+                      // checkout and land on this same card, where a term-long
+                      // enrolment and a single visit differed only by price.
+                      6.kh,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: PurchaseKindChip(
+                          kind: order.coursePurchase,
+                          subcourseName: order.subcourseName,
+                          compact: true,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 8.kw,
@@ -192,20 +211,43 @@ class BookingCard extends StatelessWidget {
               ],
             ),
             16.kh,
-            _InfoRow(
-              icon: Assets.icons.detail.babyGirl,
-              label: _ageRange(),
-              value: '${order.totalSeats}',
-            ),
-            if (_sessionDateTime().isNotEmpty) ...[
+            // Seats, and who they are for — but only when the order actually
+            // names an age bracket. A course order carries none, and the row
+            // used to render with an empty label beside a seat count that
+            // meant nothing on a term-long enrolment.
+            if (order.hasAgeBracket && order.totalSeats > 0) ...[
+              _InfoRow(
+                icon: Assets.icons.detail.babyGirl,
+                label: _ageRange(),
+                value: '${order.totalSeats}',
+              ),
               12.kh,
+            ],
+            // An order that runs over several days — a course, or a class
+            // booked for a run of sessions — is a span, and the two dates a
+            // parent plans around are when it starts and when it ends. One
+            // date and a time window is right only when there is one session.
+            if (order.spansDates) ...[
+              _InfoRow(
+                icon: Assets.icons.detail.icCalendar,
+                label: 'filter_start_date'.tr(),
+                value: _dateOnly(order.startDate),
+              ),
+              12.kh,
+              _InfoRow(
+                icon: Assets.icons.detail.icCalendar,
+                label: 'filter_end_date'.tr(),
+                value: _dateOnly(order.endDate),
+              ),
+              12.kh,
+            ] else if (_sessionDateTime().isNotEmpty) ...[
               _InfoRow(
                 icon: Assets.icons.detail.icCalendar,
                 label: 'order_date'.tr(),
                 value: _sessionDateTime(),
               ),
+              12.kh,
             ],
-            12.kh,
             _InfoRow(
               label: 'order_sum'.tr(),
               value: order.totalAmount.toRawUzsPrice(),

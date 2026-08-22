@@ -210,6 +210,16 @@ class HomClass with _$HomClass {
   /// [priceKind] as the typed value the card switches on. Never throws — an
   /// unmodelled kind resolves to [CoursePriceKind.unknown].
   CoursePriceKind get coursePriceKind => CoursePriceKind.fromKey(priceKind);
+
+  /// Whether the figure this card is showing is a WHOLE-COURSE enrolment —
+  /// the one purchase a coupon plan never discounts (see
+  /// `effectiveCouponPercent`).
+  ///
+  /// A course still offering a trial is showing that trial lesson's price, and
+  /// a coupon does discount that — so "is a course" is the wrong question to
+  /// ask here, and this is what every price line must ask instead.
+  bool get showsWholeCoursePrice =>
+      (isCourse ?? false) && !coursePriceKind.isTrial;
 }
 
 @freezed

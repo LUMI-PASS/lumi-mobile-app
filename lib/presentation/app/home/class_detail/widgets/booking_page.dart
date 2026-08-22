@@ -195,7 +195,11 @@ class _BookingPageState extends State<BookingPage> {
     return effectiveCouponPercent(
       plan,
       widget.clazz.discountPercentage,
-      isCourse: widget.clazz.isCourse,
+      // A TRIAL bought through this sheet is one lesson bought one at a time —
+      // the shape a coupon plan is sold against — so it carries the coupon
+      // exactly as a class booking does. Enrolling in the whole course does
+      // not, which is the one case this flag turns off.
+      isWholeCourse: _isCourse && !_isTrial,
     );
   }
 
@@ -1493,6 +1497,19 @@ class _BookingPageState extends State<BookingPage> {
         icon: Assets.icons.detail.iconsaxTicketDiscount,
         label: 'promo_discount'.tr(),
         value: '−${_promoDiscount.toRawUzsPrice()}',
+        negative: true,
+      ));
+    }
+    // A course leads with ONE package line at its list price, so a coupon has
+    // nowhere to show itself there — without this row the grand total is simply
+    // smaller than the only figure above it, with nothing saying why. (A class
+    // needs no such row: its ticket lines are already priced net of the
+    // coupon.)
+    if (_isCourse && _hasCoupon) {
+      out.add(_SummaryLine(
+        icon: Assets.icons.detail.iconsaxTicketDiscount,
+        label: 'book_discount'.tr(),
+        value: '−${(_total - _discountedTotal).toRawUzsPrice()}',
         negative: true,
       ));
     }

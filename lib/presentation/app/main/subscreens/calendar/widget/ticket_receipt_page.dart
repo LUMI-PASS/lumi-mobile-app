@@ -30,6 +30,7 @@ class TicketReceiptPage extends StatefulWidget {
     this.branch,
     this.orderId,
     this.canCancel = false,
+    this.price,
     this.paidPrice,
     this.fromPromocode = false,
   });
@@ -40,8 +41,14 @@ class TicketReceiptPage extends StatefulWidget {
   final String? orderId;
   final bool canCancel;
 
+  /// What this seat cost before any discount. Null falls back to
+  /// [OrderTicket.price] — which is right for a class ticket, and wrong for a
+  /// whole-course enrolment: that is booked at zero because a course is bought
+  /// once and not per lesson, so the caller passes the order's own subtotal.
+  final num? price;
+
   /// Per-ticket amount the user actually paid after coupon discount.
-  /// Null when no discount was applied — falls back to [ticket.price].
+  /// Null when no discount was applied — falls back to [price].
   final num? paidPrice;
 
   /// True when the discount came from a promocode (vs an auto coupon plan) —
@@ -105,7 +112,8 @@ class _TicketReceiptPageState extends State<TicketReceiptPage> {
           branch: widget.branch,
           ageFrom: t.ageFrom,
           ageTo: t.ageTo,
-          price: t.price,
+          duration: t.hasDurationTier ? _durationLabel(t) : null,
+          price: widget.price ?? t.price,
           paidPrice: widget.paidPrice,
           fromPromocode: widget.fromPromocode,
         ),
@@ -128,6 +136,20 @@ class _TicketReceiptPageState extends State<TicketReceiptPage> {
   }
 }
 
+/// "1 soat" / "45 daq" / "Cheklanmagan" — the duration tier this seat was
+/// bought at, worded as the booking sheet worded it when it was sold.
+String _durationLabel(OrderTicket ticket) {
+  final minutes = ticket.duration;
+  if (minutes == null || minutes <= 0) return 'duration_unbounded'.tr();
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  final hUnit = 'duration_h_unit'.tr();
+  final mUnit = 'duration_min_unit'.tr();
+  if (h > 0 && m > 0) return '$h$hUnit $m$mUnit';
+  if (h > 0) return '$h $hUnit';
+  return '$m $mUnit';
+}
+
 // ─── The ticket ───────────────────────────────────────────────────────────────
 
 class _TicketCard extends StatelessWidget {
@@ -141,6 +163,7 @@ class _TicketCard extends StatelessWidget {
     required this.branch,
     required this.ageFrom,
     required this.ageTo,
+    required this.duration,
     required this.price,
     required this.paidPrice,
     required this.fromPromocode,
@@ -155,6 +178,11 @@ class _TicketCard extends StatelessWidget {
   final String? branch;
   final int ageFrom;
   final int ageTo;
+
+  /// How long this seat bought, already worded ("1 soat", "Cheklanmagan").
+  /// Null on a booking that never recorded a duration tier.
+  final String? duration;
+
   final num price;
   final num? paidPrice;
   final bool fromPromocode;
@@ -254,13 +282,30 @@ class _TicketCard extends StatelessWidget {
                   value: branch!,
                 ),
               ],
-              16.verticalSpace,
-              _DetailRow(
-                c: c,
-                icon: Assets.icons.detail.babyGirl,
-                label: 'detail_age'.tr(),
-                value: 'ticket_age_value'.tr(args: ['$ageFrom', '$ageTo']),
-              ),
+              // 0–99 is what a course booking is stamped with — it admits
+              // whoever the course admits — so it is not a tier to report back
+              // to the buyer as though they had chosen it.
+              if (ageTo > 0 && !(ageFrom == 0 && ageTo >= 99)) ...[
+                16.verticalSpace,
+                _DetailRow(
+                  c: c,
+                  icon: Assets.icons.detail.babyGirl,
+                  label: 'detail_age'.tr(),
+                  value: 'ticket_age_value'.tr(args: ['$ageFrom', '$ageTo']),
+                ),
+              ],
+              // What the amount below is for. An hour and a whole day in the
+              // same age bracket are two prices, so the ticket has to say
+              // which one it is.
+              if (duration != null) ...[
+                16.verticalSpace,
+                _DetailRow(
+                  c: c,
+                  icon: Assets.icons.detail.icCalendar,
+                  label: 'booking_duration'.tr(),
+                  value: duration!,
+                ),
+              ],
             ],
           ),
         ),
@@ -277,7 +322,10 @@ class _TicketCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text('order_sum'.tr(),
+                  // "Сумма" read as the order total on a screen showing ONE
+                  // seat of it — an order of three tickets quoted a third of
+                  // itself under a label that claimed to be the whole.
+                  Text('ticket_price_per_seat'.tr(),
                       style:
                           AppText.regular14.copyWith(color: c.textSecondary)),
                   const Spacer(),

@@ -24,6 +24,8 @@ import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
+import 'package:lumi_pass/common/widget/purchase_kind_chip.dart';
+import 'package:lumi_pass/data/api_model/order/course_purchase.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -525,6 +527,38 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
+          // WHAT this order bought, stated before anything about where and
+          // when: a whole course, one trial lesson off its ladder, or a single
+          // activity booking. The three are sold through one checkout and the
+          // screen used to look identical for all of them.
+          8.verticalSpace,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: PurchaseKindChip(
+              kind: _detail?.order.coursePurchase ?? CoursePurchase.none,
+              subcourseName: _detail?.order.subcourseName,
+            ),
+          ),
+          // When it runs, for an order that runs over days rather than at one
+          // session. `starts_at` is only set on newer enrolments, so the dates
+          // fall back to the sessions actually booked — which is all an older
+          // order has, and is what the buyer is planning around either way.
+          if (_detail?.order.spansDates ?? false) ...[
+            12.verticalSpace,
+            _DetailPill(
+              c: c,
+              icon: Assets.icons.detail.icCalendar,
+              label: 'filter_start_date'.tr(),
+              value: _detail!.order.startDate!,
+            ),
+            12.verticalSpace,
+            _DetailPill(
+              c: c,
+              icon: Assets.icons.detail.icCalendar,
+              label: 'filter_end_date'.tr(),
+              value: _detail!.order.endDate!,
+            ),
+          ],
           if (description != null) ...[
             6.verticalSpace,
             Text(
@@ -598,12 +632,24 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
             final cancelled = _cancelledLocally ||
                 order.isCanceled ||
                 t.status.toLowerCase() == 'canceled';
-            // Per-ticket paid price: scale ticket.price by the order-level
-            // discount ratio so each age-tier gets the correct share.
+            // What this seat cost.
+            //
+            // A WHOLE-COURSE enrolment is booked as one seat priced at zero —
+            // the money lives on the order, because the course is bought once
+            // and not per lesson — so the ticket quoted "0 so'm" for a term-long
+            // enrolment. It is the only seat on such an order, so the order's
+            // own subtotal IS its price. A trial lesson carries its own price
+            // and needs none of this.
+            final seatPrice = order.isWholeCourse && t.price <= 0
+                ? order.subtotalAmount
+                : t.price;
+            // Per-ticket paid price: scale by the order-level discount ratio so
+            // each age tier gets the correct share.
             num? paidPerTicket;
             if (order.hasDiscount && order.subtotalAmount > 0) {
               paidPerTicket =
-                  (t.price * order.totalAmount / order.subtotalAmount).round();
+                  (seatPrice * order.totalAmount / order.subtotalAmount)
+                      .round();
             }
             return Padding(
               padding: EdgeInsets.only(
@@ -611,6 +657,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
               child: _TicketRow(
                 c: c,
                 ticket: t,
+                price: seatPrice,
                 className: _classFullTitle() ?? order.activityName,
                 branch: _branchTitle(),
                 orderId: order.id,
@@ -700,6 +747,20 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 ),
             ],
           ),
+          // Part of the total settled from the cashback wallet. A payment
+          // METHOD, not a discount — so it sits beside the rail below rather
+          // than next to the struck-through subtotal, which would read as
+          // money off. Without it the card rail is quoted for an amount the
+          // card was never charged.
+          if (order.hasWalletPayment) ...[
+            12.verticalSpace,
+            _DetailPill(
+              c: c,
+              icon: Assets.icons.home.money,
+              label: 'wallet_paid_from_balance'.tr(),
+              value: order.walletAmount.toRawUzsPrice(),
+            ),
+          ],
           // Which rail the money went out on — the first thing anyone asks
           // when a payment is queried, and previously only visible in the DB.
           if (order.paymentProvider != null) ...[
@@ -1228,10 +1289,25 @@ class _DetailPill extends StatelessWidget {
 
 /// One ticket inside the order. Tapping opens its receipt; a cancelled ticket
 /// is inert and reads as a muted row with a red status chip.
+/// "1 soat" / "45 daq" / "Cheklanmagan" — the duration tier a seat was bought
+/// at, in the words the booking sheet used when it was sold.
+String _durationLabel(OrderTicket ticket) {
+  final minutes = ticket.duration;
+  if (minutes == null || minutes <= 0) return 'duration_unbounded'.tr();
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  final hUnit = 'duration_h_unit'.tr();
+  final mUnit = 'duration_min_unit'.tr();
+  if (h > 0 && m > 0) return '$h$hUnit $m$mUnit';
+  if (h > 0) return '$h $hUnit';
+  return '$m $mUnit';
+}
+
 class _TicketRow extends StatelessWidget {
   const _TicketRow({
     required this.c,
     required this.ticket,
+    required this.price,
     required this.className,
     required this.branch,
     this.orderId,
@@ -1242,6 +1318,15 @@ class _TicketRow extends StatelessWidget {
     this.fromPromocode = false,
     this.ageFallback,
   });
+
+  /// Whether the ticket names an age bracket someone actually chose.
+  ///
+  /// A course booking is stamped 0–99 — it admits whoever the course admits —
+  /// and that is not a tier a buyer picked, so it read as a bizarre "0–99 years"
+  /// chip on every course ticket. Treated as no bracket, which hands the chip
+  /// to [ageFallback]: the class's own range, the honest answer there.
+  bool get _hasOwnAgeRange =>
+      ticket.ageTo > 0 && !(ticket.ageFrom == 0 && ticket.ageTo >= 99);
 
   /// Age range to show when the TICKET carries none.
   ///
@@ -1266,11 +1351,18 @@ class _TicketRow extends StatelessWidget {
   /// Per-ticket amount actually paid (after coupon discount). Null = no discount.
   final num? paidPrice;
 
+  /// What this seat cost, before any discount.
+  ///
+  /// Not always `ticket.price`: a whole-course enrolment is booked at zero,
+  /// because a course is bought once and not per lesson, so the caller passes
+  /// the order's own subtotal — the single seat IS the order.
+  final num price;
+
   @override
   Widget build(BuildContext context) {
     final titleColor = isCancelled ? c.textMuted : c.textPrimary;
-    final discounted = paidPrice != null && paidPrice != ticket.price;
-    final paid = discounted ? paidPrice! : ticket.price;
+    final discounted = paidPrice != null && paidPrice != price;
+    final paid = discounted ? paidPrice! : price;
 
     // Figma 96:3667: green gradient glyph badge + "Билет №N" on the left, the
     // price on the right, and the metadata as pills on a second row — so a
@@ -1312,24 +1404,38 @@ class _TicketRow extends StatelessWidget {
                 ),
               ),
               8.horizontalSpace,
-              if (discounted)
-                Text(
-                  ticket.price.toRawUzsPrice(),
-                  style: AppText.regular12.copyWith(
-                    color: c.textMuted,
-                    decoration: TextDecoration.lineThrough,
+              // The amount used to float unlabelled beside the ticket number,
+              // where it could be read as the order total rather than what
+              // this one seat cost. It says which it is now, and keeps the
+              // struck-through original above it when a coupon moved it.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'ticket_price_label'.tr(),
+                    style: AppText.regular12.copyWith(color: c.textMuted),
                   ),
-                ),
-              if (discounted) 4.horizontalSpace,
-              Text(
-                paid.toRawUzsPrice(),
-                style: AppText.semibold14.copyWith(
-                  color: isCancelled
-                      ? c.textMuted
-                      : discounted
-                          ? AppColors.green
-                          : c.textPrimary,
-                ),
+                  2.verticalSpace,
+                  if (discounted)
+                    Text(
+                      price.toRawUzsPrice(),
+                      style: AppText.regular12.copyWith(
+                        color: c.textMuted,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  Text(
+                    paid.toRawUzsPrice(),
+                    style: AppText.semibold14.copyWith(
+                      color: isCancelled
+                          ? c.textMuted
+                          : discounted
+                              ? AppColors.green
+                              : c.textPrimary,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1351,15 +1457,27 @@ class _TicketRow extends StatelessWidget {
                   value: '${ticket.startTime} – ${ticket.endTime}',
                   muted: isCancelled,
                 ),
+              // How long this seat bought. The same age bracket sold by the
+              // hour and for the whole day is two prices, so a ticket that
+              // named neither left the amount unexplained. Only shown when the
+              // booking actually recorded a tier — an older one did not, and
+              // guessing "unlimited" would be inventing a fact.
+              if (ticket.hasDurationTier)
+                _TicketMetaChip(
+                  c: c,
+                  label: 'booking_duration'.tr(),
+                  value: _durationLabel(ticket),
+                  muted: isCancelled,
+                ),
               // Which age tier this ticket was bought at. An order with two
               // tiers priced differently showed two rows that read identically
               // apart from the money, leaving the buyer to infer which child
               // each one was for.
-              if (ticket.ageTo > 0 || (ageFallback?.isNotEmpty ?? false))
+              if (_hasOwnAgeRange || (ageFallback?.isNotEmpty ?? false))
                 _TicketMetaChip(
                   c: c,
                   label: 'ticket_age_label'.tr(),
-                  value: ticket.ageTo > 0
+                  value: _hasOwnAgeRange
                       ? (ticket.ageFrom == ticket.ageTo
                           ? '${ticket.ageFrom}'
                           : '${ticket.ageFrom}–${ticket.ageTo}')
@@ -1395,6 +1513,7 @@ class _TicketRow extends StatelessWidget {
           branch: branch,
           orderId: orderId,
           canCancel: canCancel,
+          price: price,
           paidPrice: paidPrice,
           fromPromocode: fromPromocode,
         ));

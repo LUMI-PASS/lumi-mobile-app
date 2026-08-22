@@ -223,16 +223,25 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// a one-off `Storage` read) so this rebuilds the instant a purchase
   /// completes or a subscription is synced, instead of showing whatever was
   /// true the last time this page happened to build.
-  num get _couponPct {
+  num _couponPercent({required bool isWholeCourse}) {
     final app =
         context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     final plan = app.hasPremium ? app.planDiscountPercentage : 0;
     return effectiveCouponPercent(
       plan,
       _full?.discountPercentage ?? widget.classModel.discountPercentage,
-      isCourse: _isCourse,
+      isWholeCourse: isWholeCourse,
     );
   }
+
+  /// The coupon on the price this page's ACTIVITY rows show. Zero on a course:
+  /// what a course page prices there is the enrolment, and a coupon never
+  /// discounts that.
+  num get _couponPct => _couponPercent(isWholeCourse: _isCourse);
+
+  /// The coupon on ONE trial lesson — the course purchase a coupon does
+  /// discount, so the trial ladder prices it even though [_couponPct] is 0.
+  num get _trialCouponPct => _couponPercent(isWholeCourse: false);
 
   @override
   void initState() {
@@ -697,34 +706,56 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     if (purchased == true && mounted) await _loadCourse(id);
   }
 
-  /// Price tiers derived for display: one row per age tier (min price), or the
-  /// price-summary ranges as a fallback.
-  List<({String range, String subtitle, num price, SvgGenImage icon})>
-      _priceRows() {
+  /// Price rows for display: ONE PER (age tier x duration), which is the same
+  /// list the booking sheet sells from.
+  ///
+  /// A bracket priced by how long the child stays is several prices, not one.
+  /// Quoting the cheapest of them and calling it the bracket's price put a
+  /// figure on this card that checkout then charged more than — so each
+  /// duration gets its own row, named by [_PriceRowData.duration] so two rows
+  /// under the same age read as the two things they are.
+  ///
+  /// The flat price-summary ranges are the fallback, and carry no duration.
+  List<_PriceRowData> _priceRows() {
     final full = _full;
-    final rows =
-        <({String range, String subtitle, num price, SvgGenImage icon})>[];
+    final rows = <_PriceRowData>[];
     if (full == null) return rows;
     if (full.ageTiers.isNotEmpty) {
       for (final t in full.ageTiers) {
-        final prices =
-            t.durations.map((d) => d.price).where((p) => p > 0).toList();
-        final min = prices.isEmpty ? 0 : prices.reduce((a, b) => a < b ? a : b);
         final adults = t.ageFrom >= 6 || t.ageTo == null;
-        rows.add((
-          range: t.rangeLabel,
-          subtitle: adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr(),
-          price: min,
-          icon: adults
-              ? Assets.icons.home.profile2user
-              : Assets.icons.home.babyGirl,
-        ));
+        final subtitle =
+            adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr();
+        final icon = adults
+            ? Assets.icons.home.profile2user
+            : Assets.icons.home.babyGirl;
+        // A tier with no durations still names a bracket the class admits —
+        // it just has no price to quote, same as before.
+        if (t.durations.isEmpty) {
+          rows.add((
+            range: t.rangeLabel,
+            subtitle: subtitle,
+            duration: null,
+            price: 0,
+            icon: icon,
+          ));
+          continue;
+        }
+        for (final d in t.durations) {
+          rows.add((
+            range: t.rangeLabel,
+            subtitle: subtitle,
+            duration: d.durationLabel,
+            price: d.price,
+            icon: icon,
+          ));
+        }
       }
     } else {
       for (final r in full.pricesSummary) {
         rows.add((
           range: r.rangeLabel,
           subtitle: 'price_tier_children'.tr(),
+          duration: null,
           price: r.price,
           icon: Assets.icons.home.babyGirl,
         ));
@@ -1195,10 +1226,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   // ─── Prices card ────────────────────────────────────────────────────────────
-  Widget _pricesCard(
-      AppColorScheme c,
-      List<({String range, String subtitle, num price, SvgGenImage icon})>
-          rows) {
+  Widget _pricesCard(AppColorScheme c, List<_PriceRowData> rows) {
     return DetailCard(
       c: c,
       child: Column(
@@ -1273,6 +1301,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               child: _CourseLevelPanel(
                 level: level,
                 weekdays: _courseWeekdays(_courseCalendar(level)),
+                trialCouponPct: _trialCouponPct,
                 // The lone group is always the one being bought, so it reads as
                 // picked without a radio to tap.
                 selectable: !single,
@@ -1355,7 +1384,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               child: _AgeTierRow(
                 tier: tier,
                 selected: selected,
-                couponPct: _couponPct,
                 // Unticking the last bracket is refused rather than hidden:
                 // the row stays tappable so the tap has an obvious effect
                 // everywhere else, and the one case that would leave the sale
@@ -1597,11 +1625,23 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
+/// One line of the prices card: an age bracket at one of its durations.
+typedef _PriceRowData = ({
+  String range,
+  String subtitle,
+
+  /// e.g. "1 soat" — only age-tier pricing carries a duration; the flat
+  /// price-summary fallback has none.
+  String? duration,
+  num price,
+  SvgGenImage icon,
+});
+
 class _PriceRow extends StatelessWidget {
   const _PriceRow(
       {required this.c, required this.row, required this.couponPct});
   final AppColorScheme c;
-  final ({String range, String subtitle, num price, SvgGenImage icon}) row;
+  final _PriceRowData row;
   final num couponPct;
 
   @override
@@ -1630,8 +1670,15 @@ class _PriceRow extends StatelessWidget {
                 Text(row.range,
                     style: AppText.semibold14.copyWith(color: c.textPrimary)),
                 4.verticalSpace,
-                Text(row.subtitle,
-                    style: AppText.regular12.copyWith(color: c.textPrimary)),
+                // Duration first: it is what separates two rows sharing an age
+                // bracket, so it has to be the part the eye lands on. Same
+                // "duration ·" lead-in the booking sheet's rows use.
+                Text(
+                  row.duration == null
+                      ? row.subtitle
+                      : '${row.duration} · ${row.subtitle}',
+                  style: AppText.regular12.copyWith(color: c.textPrimary),
+                ),
               ],
             ),
           ),
@@ -1893,12 +1940,18 @@ String _blockedMessage(CourseLevel level, CourseBlockedReason reason) {
 class _CourseTrialSection extends StatefulWidget {
   const _CourseTrialSection({
     required this.level,
+    required this.couponPct,
     this.onBuy,
     this.onSelectionChanged,
     this.onFrosted = false,
   });
 
   final CourseLevel level;
+
+  /// The buyer's coupon on one trial lesson, capped to this course. A trial is
+  /// bought one lesson at a time — the shape a coupon plan is sold against — so
+  /// unlike the enrolment price beside it, this ladder prices the discount.
+  final num couponPct;
 
   /// Open the booking screen for the picked lesson. Null when the sticky bottom
   /// CTA drives it instead.
@@ -2008,6 +2061,7 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
           _TrialLessonRow(
             lesson: lessons[i],
             selected: lessons[i].date == _pickedDate,
+            couponPct: widget.couponPct,
             onFrosted: widget.onFrosted,
             // Locked until the rungs below it are done — see [_nextRungDate].
             locked: lessons[i].isAvailable && lessons[i].date != _nextRungDate,
@@ -2058,6 +2112,7 @@ class _TrialLessonRow extends StatelessWidget {
   const _TrialLessonRow({
     required this.lesson,
     required this.selected,
+    required this.couponPct,
     required this.onTap,
     required this.onFrosted,
     this.locked = false,
@@ -2065,6 +2120,10 @@ class _TrialLessonRow extends StatelessWidget {
 
   final CourseLesson lesson;
   final bool selected;
+
+  /// The coupon this lesson carries, already capped to the course's share —
+  /// what checkout will actually take off. 0 renders the plain price.
+  final num couponPct;
 
   /// Null when this lesson cannot be picked right now.
   final VoidCallback? onTap;
@@ -2080,7 +2139,14 @@ class _TrialLessonRow extends StatelessWidget {
     final c = context.colors;
     final accent = onFrosted ? AppColors.brandPurple : c.primary;
     final enabled = onTap != null;
-    final free = (lesson.price ?? 0) <= 0;
+    final price = lesson.price ?? 0;
+    final free = price <= 0;
+    // A free lesson has nothing to discount, and neither has one already taken
+    // or gone — striking a price the parent will never be charged only
+    // confuses the row.
+    final num? discounted = couponPct > 0 && !free && enabled
+        ? (price * (100 - couponPct) / 100).round()
+        : null;
 
     return GestureDetector(
       onTap: onTap,
@@ -2154,11 +2220,31 @@ class _TrialLessonRow extends StatelessWidget {
                 ),
               ),
               8.horizontalSpace,
-              Text(
-                free ? 'price_free'.tr() : (lesson.price ?? 0).toRawUzsPrice(),
-                style: AppText.bold16
-                    .copyWith(color: free ? AppColors.green : c.primary),
-              ),
+              if (discounted == null)
+                Text(
+                  free ? 'price_free'.tr() : price.toRawUzsPrice(),
+                  style: AppText.bold16
+                      .copyWith(color: free ? AppColors.green : c.primary),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      price.toRawUzsPrice(),
+                      style: AppText.regular12.copyWith(
+                        color: c.textMuted,
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: c.textMuted,
+                      ),
+                    ),
+                    Text(
+                      discounted.toRawUzsPrice(),
+                      style: AppText.bold16.copyWith(color: AppColors.green),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -2177,25 +2263,17 @@ class _AgeTierRow extends StatelessWidget {
   const _AgeTierRow({
     required this.tier,
     required this.selected,
-    required this.couponPct,
     required this.onTap,
   });
 
   final CourseAgeTier tier;
   final bool selected;
-
-  /// The plan discount already capped to this class — the same figure the
-  /// price rows use, so a coupon holder reads one set of numbers on the page.
-  final num couponPct;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     const accent = AppColors.brandPurple;
-    final discounted = couponPct > 0 && tier.price > 0
-        ? (tier.price * (100 - couponPct) / 100).round()
-        : null;
 
     return GestureDetector(
       onTap: onTap,
@@ -2221,30 +2299,13 @@ class _AgeTierRow extends StatelessWidget {
               ),
             ),
             8.horizontalSpace,
-            if (discounted == null)
-              Text(
-                tier.price.toRawUzsPrice(),
-                style: AppText.semibold14.copyWith(color: c.textPrimary),
-              )
-            else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    tier.price.toRawUzsPrice(),
-                    style: AppText.regular12.copyWith(
-                      color: c.textMuted,
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                  Text(
-                    discounted.toRawUzsPrice(),
-                    style:
-                        AppText.semibold14.copyWith(color: AppColors.green),
-                  ),
-                ],
-              ),
+            // No coupon treatment here: a bracket prices the WHOLE course, and
+            // that is the one purchase a coupon plan never discounts. The trial
+            // ladder above is where a coupon holder sees a struck price.
+            Text(
+              tier.price.toRawUzsPrice(),
+              style: AppText.semibold14.copyWith(color: c.textPrimary),
+            ),
           ],
         ),
       ),
@@ -2544,12 +2605,18 @@ class _CourseLevelPanel extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     required this.onBuyTrial,
+    required this.trialCouponPct,
     this.onTrialSelectionChanged,
     this.selectable = true,
   });
 
   final CourseLevel level;
   final String weekdays;
+
+  /// The coupon on ONE trial lesson, already capped to this course. Passed
+  /// down to the ladder rows — the group's own course price is NOT discounted
+  /// by it, so it goes no further than the trial section.
+  final num trialCouponPct;
 
   /// Whether this is the picked group. Single select across the list; always
   /// true when this is the only group.
@@ -2720,6 +2787,7 @@ class _CourseLevelPanel extends StatelessWidget {
                 12.verticalSpace,
                 _CourseTrialSection(
                   level: level,
+                  couponPct: trialCouponPct,
                   onBuy: onBuyTrial,
                   onSelectionChanged: onTrialSelectionChanged,
                   onFrosted: true,

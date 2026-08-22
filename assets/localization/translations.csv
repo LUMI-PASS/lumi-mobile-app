@@ -1095,16 +1095,3 @@ card_already_saved,Эта карта уже сохранена,Bu karta allaqach
 card_verify_notice,"Чтобы проверить карту, с неё спишется 100 сум. Мы сразу отправляем запрос на возврат.","Kartani tekshirish uchun undan 100 so'm yechiladi. Biz darhol qaytarish so'rovini yuboramiz.","To verify the card, 100 soum is charged to it. We request a refund straight away."
 card_continue,Продолжить,Davom etish,Continue
 card_resend_code,Отправить код снова,Kodni qayta yuborish,Resend code
-telegram_login_button,Войти через Telegram,Telegram orqali kirish,Sign in with Telegram
-telegram_login_title,Вход через Telegram,Telegram orqali kirish,Sign in with Telegram
-telegram_login_step2,Бот пришлёт код — введите его ниже,Bot kod yuboradi — uni quyida kiriting,The bot sends you a code — enter it below
-telegram_login_open,Открыть Telegram,Telegramni ochish,Open Telegram
-telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
-telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
-update_force_title,Пора обновить приложение,Ilovani yangilash vaqti keldi,Time to update the app
-update_force_subtitle,"Мы добавили новые возможности и полностью обновили приложение. Установите свежую версию, чтобы пользоваться Lumi дальше.","Biz yangi imkoniyatlar qo‘shdik va ilovani to‘liq yangiladik. Lumi’dan foydalanishda davom etish uchun yangi versiyani o‘rnating.","We have added new features and rebuilt a lot under the hood. Install the latest version to keep using Lumi."
-update_optional_title,Доступна новая версия,Yangi versiya mavjud,A new version is available
-update_optional_subtitle,Мы всё улучшили и починили. Обновитесь — станет удобнее.,Biz ilovani yaxshiladik va xatolarni tuzatdik. Yangilang — yanada qulay bo‘ladi.,We polished things up and fixed a few bugs. Update for a smoother ride.
-update_version_label,Версия {},{} versiyasi,Version {}
-update_now,Обновить,Yangilash,Update
-update_later,Позже,Keyinroq,Later

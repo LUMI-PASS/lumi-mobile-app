@@ -22,22 +22,27 @@ const num kMinDiscountableSharePercent = 5;
 /// two in step.
 const num kPaylovFeePercent = 2.5;
 
-/// The coupon percentage that actually applies to a class — the plan's
+/// The coupon percentage that actually applies to a purchase — the plan's
 /// percentage, capped at the class's partner share minus the aggregator's fee
-/// (same ceiling a promocode gets). Returns 0 when the class can't carry a
+/// (same ceiling a promocode gets). Returns 0 when the purchase can't carry a
 /// coupon discount.
 ///
-/// [isCourse] must be true for a course (`HomClass.isCourse` /
-/// `ClassFullModel.isCourse`): a coupon plan only discounts one-time
-/// activities — `OrdersService.courseCheckout` on the backend never applies
-/// it — so a course always returns 0 here regardless of its share, and every
-/// caller must pass this rather than assume it.
+/// WHAT A COUPON DISCOUNTS: a one-time activity booking, and a course TRIAL
+/// lesson — both are one session bought one at a time, which is the shape the
+/// plan is sold against. It never discounts a WHOLE-COURSE enrolment, so
+/// [isWholeCourse] must be true whenever the figure being priced is the course
+/// price rather than a trial lesson's (on a card: `HomClass.showsWholeCoursePrice`).
+/// Every caller must pass this rather than assume it.
+///
+/// This mirrors `OrdersService.applyCouponPlan` on the backend, which
+/// `courseCheckout` reaches only for `kind === 'trial'`. Keep the two in step —
+/// this function is only a preview of what that code will charge.
 num effectiveCouponPercent(
   num planPercent,
   num? classSharePercent, {
-  required bool isCourse,
+  required bool isWholeCourse,
 }) {
-  if (isCourse) return 0;
+  if (isWholeCourse) return 0;
   final share = classSharePercent ?? 0;
   if (planPercent <= 0 || share <= kMinDiscountableSharePercent) return 0;
   final ceiling = share - kPaylovFeePercent;
