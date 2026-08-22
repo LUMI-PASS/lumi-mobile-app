@@ -2,13 +2,11 @@ import 'dart:async';
 
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
-import 'package:lumi_pass/common/utils/avatar_notifier.dart';
-import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/auth/sign_in_session.dart';
 import 'package:injectable/injectable.dart';
 import 'verify_state.dart';
 
@@ -57,40 +55,11 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
             (buildable.code ?? 0).toString()),
         buildOnStart: () => buildable.copyWith(loading: true),
         onData: (result) async {
-          // Signing in is the authoritative sync point for who this device
-          // belongs to. The server's answer wins outright — including when the
-          // answer is "this account has no name yet". Only *setting* a name here
-          // left the previous account's name in the box for anyone who signs in
-          // without having explicitly logged out first, and Home then greeted
-          // the new user by the old user's name.
-          final name = result.user?.firstName;
-          if (name != null && name.isNotEmpty) {
-            await _storage.parentName.set(name);
-            displayNameNotifier.value = name;
-          } else {
-            await _storage.parentName.set(null);
-            displayNameNotifier.value = null;
-          }
-
-          if (result.isNewUser) {
-            // Nothing on this device belongs to a brand-new account — drop the
-            // last user's child and avatar, and let the profile prompt come back.
-            await _storage.childName.set(null);
-            await _storage.childAge.set(null);
-            await _storage.avatarPath.set(null);
-            await _storage.profilePromptDismissed.set(null);
-            parentAvatarNotifier.value = null;
-
-            await _storage.needsOnboarding.set(true);
-            await _storage.pendingPhone.set(phoneNumber.replaceAll("-", ""));
-          } else {
-            await _storage.needsOnboarding.set(false);
-          }
-          // Pull this account's plan now. AppCubit lives for the whole run and
-          // synced at cold start — when that happened before sign-in it found
-          // no session, so without this the buyer's coupon prices wouldn't
-          // appear until the next launch.
-          await getIt<AppCubit>().onSignedIn();
+          await applySignedInSession(
+            storage: _storage,
+            result: result,
+            phone: phoneNumber.replaceAll("-", ""),
+          );
           invoke(const VerifyListenable(VerifyEffect.success));
         },
         onErrorData: (error) => display.error(error),

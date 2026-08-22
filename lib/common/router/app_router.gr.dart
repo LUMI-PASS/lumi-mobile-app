@@ -315,6 +315,14 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const ShortsPage(),
       );
     },
+    TelegramLoginRoute.name: (routeData) {
+      final args = routeData.argsAs<TelegramLoginRouteArgs>(
+          orElse: () => const TelegramLoginRouteArgs());
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: TelegramLoginPage(key: args.key),
+      );
+    },
     TicketReceiptRoute.name: (routeData) {
       final args = routeData.argsAs<TicketReceiptRouteArgs>();
       return AutoRoutePage<dynamic>(
@@ -1351,6 +1359,35 @@ class ShortsRoute extends PageRouteInfo<void> {
   static const String name = 'ShortsRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [TelegramLoginPage]
+class TelegramLoginRoute extends PageRouteInfo<TelegramLoginRouteArgs> {
+  TelegramLoginRoute({
+    Key? key,
+    List<PageRouteInfo>? children,
+  }) : super(
+          TelegramLoginRoute.name,
+          args: TelegramLoginRouteArgs(key: key),
+          initialChildren: children,
+        );
+
+  static const String name = 'TelegramLoginRoute';
+
+  static const PageInfo<TelegramLoginRouteArgs> page =
+      PageInfo<TelegramLoginRouteArgs>(name);
+}
+
+class TelegramLoginRouteArgs {
+  const TelegramLoginRouteArgs({this.key});
+
+  final Key? key;
+
+  @override
+  String toString() {
+    return 'TelegramLoginRouteArgs{key: $key}';
+  }
 }
 
 /// generated route for

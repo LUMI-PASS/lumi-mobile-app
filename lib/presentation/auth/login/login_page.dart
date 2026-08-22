@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/widget/auth/auth_scaffold.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/presentation/auth/login/bloc/login_cubit.dart';
 import 'package:lumi_pass/presentation/auth/login/bloc/login_state.dart';
+import 'package:lumi_pass/presentation/auth/telegram/telegram_login_page.dart';
 import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 
 /// "Авторизация" — phone-number entry.
@@ -99,6 +100,12 @@ class LoginPage extends BasePage<LoginCubit, LoginBuildable, LoginListenable> {
                   loading: state.isLoading,
                   enabled: state.isSelected,
                   onPressed: () => context.read<LoginCubit>().login(_phone),
+                ),
+                SizedBox(height: 12.h),
+                // The way in that does not depend on SMS arriving.
+                TelegramLoginButton(
+                  onPressed: () =>
+                      context.router.push(TelegramLoginRoute()),
                 ),
                 SizedBox(height: 16.h),
                 AuthAgreementText(

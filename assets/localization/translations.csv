@@ -1095,3 +1095,10 @@ card_already_saved,Эта карта уже сохранена,Bu karta allaqach
 card_verify_notice,"Чтобы проверить карту, с неё спишется 100 сум. Мы сразу отправляем запрос на возврат.","Kartani tekshirish uchun undan 100 so'm yechiladi. Biz darhol qaytarish so'rovini yuboramiz.","To verify the card, 100 soum is charged to it. We request a refund straight away."
 card_continue,Продолжить,Davom etish,Continue
 card_resend_code,Отправить код снова,Kodni qayta yuborish,Resend code
+telegram_login_button,Войти через Telegram,Telegram orqali kirish,Sign in with Telegram
+telegram_login_title,Вход через Telegram,Telegram orqali kirish,Sign in with Telegram
+telegram_login_step1,"Откройте бота @{} и нажмите «Старт»","@{} botini oching va «Start» tugmasini bosing","Open the @{} bot and press Start"
+telegram_login_step2,Бот пришлёт код — введите его ниже,Bot kod yuboradi — uni quyida kiriting,The bot sends you a code — enter it below
+telegram_login_open,Открыть Telegram,Telegramni ochish,Open Telegram
+telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
+telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
