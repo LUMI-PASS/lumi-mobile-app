@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/service/appsflyer_service.dart';
+import 'package:lumi_pass/data/service/meta_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 
 // [AnalyticsEvent] used to live here; it moved so the AppsFlyer service can
@@ -18,18 +19,20 @@ void _log(String msg) => print('[Analytics] $msg');
 /// from [Storage] on each call so events fired right after login (before the
 /// service is re-identified) still carry the freshest identity.
 ///
-/// Every event is also mirrored into AppsFlyer through [AppsFlyerService], so
-/// screens keep a single analytics entry point and attribution stays in step
-/// with the product funnel automatically.
+/// Every event is also mirrored into AppsFlyer and Meta App Events through
+/// [AppsFlyerService] and [MetaService], so screens keep a single analytics
+/// entry point and attribution stays in step with the product funnel
+/// automatically.
 ///
 /// All methods are best-effort and never throw — analytics must never break a
 /// user flow.
 @lazySingleton
 class AnalyticsService {
-  AnalyticsService(this._storage, this._appsFlyer);
+  AnalyticsService(this._storage, this._appsFlyer, this._meta);
 
   final Storage _storage;
   final AppsFlyerService _appsFlyer;
+  final MetaService _meta;
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   /// Sets the Firebase user id and a `phone_number` user property so funnels
@@ -39,8 +42,9 @@ class AnalyticsService {
       final userId = _storage.userId();
       final phone = _currentPhone();
       // Before Firebase, for the same reason logEvent fires AppsFlyer first:
-      // a Firebase throw must not leave AppsFlyer un-identified.
+      // a Firebase throw must not leave AppsFlyer/Meta un-identified.
       _appsFlyer.setCustomerUserId(userId);
+      unawaited(_meta.setUserData(phone: phone));
       await _analytics.setUserId(id: userId);
       if (phone != null && phone.isNotEmpty) {
         await _analytics.setUserProperty(name: 'phone_number', value: phone);
@@ -56,6 +60,7 @@ class AnalyticsService {
   Future<void> clear() async {
     try {
       _appsFlyer.clearCustomerUserId();
+      unawaited(_meta.clearUserData());
       await _analytics.setUserId(id: null);
       await _analytics.setUserProperty(name: 'phone_number', value: null);
     } catch (e) {
@@ -82,9 +87,10 @@ class AnalyticsService {
         });
       }
 
-      // First, and unawaited: it guards itself, and a Firebase throw further
-      // down must not cost us the AppsFlyer copy of the event.
+      // First, and unawaited: they guard themselves, and a Firebase throw
+      // further down must not cost us the AppsFlyer/Meta copy of the event.
       unawaited(_appsFlyer.logAppEvent(name, merged));
+      unawaited(_meta.logAppEvent(name, merged));
 
       await _analytics.logEvent(
         name: name,

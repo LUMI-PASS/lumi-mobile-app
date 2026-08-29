@@ -8,6 +8,20 @@
         android:label="Lumi"
         android:name=".MainApplication"
         android:icon="@mipmap/ic_launcher">
+        <!-- ── Meta App Events ────────────────────────────────────────────
+             Placeholder — the Facebook SDK auto-initializes at process start
+             via its own ContentProvider and crashes on a missing/empty App
+             ID, so this can't be left blank the way YANDEX_MAPKIT_KEY is.
+             Non-functional until replaced with the real values from Meta for
+             Developers → App settings; MetaService itself stays a no-op
+             until META_APP_ID/META_CLIENT_TOKEN are also passed via
+             --dart-define, so the placeholder alone sends nothing. -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="0000000000000000"/>
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="00000000000000000000000000000000"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

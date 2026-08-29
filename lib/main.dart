@@ -18,6 +18,7 @@ import 'package:lumi_pass/data/service/interest_source.dart';
 import 'package:lumi_pass/data/service/app_update_service.dart';
 import 'package:lumi_pass/data/service/appsflyer_service.dart';
 import 'package:lumi_pass/data/service/deeplink_service.dart';
+import 'package:lumi_pass/data/service/meta_service.dart';
 import 'package:lumi_pass/data/service/push_notification_manager.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -190,6 +191,9 @@ Future<void> _runNative() async {
   final appsFlyer = getIt<AppsFlyerService>();
   appsFlyer.onDeepLink = getIt<DeeplinkService>().handleAppsFlyerLink;
   await appsFlyer.init();
+
+  // Meta App Events. Not awaited — nothing downstream depends on it being up.
+  unawaited(getIt<MetaService>().init());
 
   initLangIfNeeded('uz');
   SystemChrome.setSystemUIOverlayStyle(

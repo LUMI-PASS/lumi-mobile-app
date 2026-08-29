@@ -88,6 +88,7 @@ dependencies:
   cupertino_native_glmv: ^0.1.5
   appsflyer_sdk: ^6.18.1
   app_tracking_transparency: ^2.0.7
+  facebook_app_events: ^0.30.5
 
 
 dev_dependencies:

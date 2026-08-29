@@ -53,6 +53,16 @@
 			<string>su67r6k2v3.skadnetwork</string>
 		</dict>
 	</array>
+	<!-- ── Meta App Events ──────────────────────────────────────────────────
+	     Fed from the gitignored Flutter/Secrets.xcconfig; empty until an app
+	     is registered in Meta for Developers, at which point MetaService.init
+	     starts working (it no-ops on an empty App ID). -->
+	<key>FacebookAppID</key>
+	<string>$(META_APP_ID)</string>
+	<key>FacebookClientToken</key>
+	<string>$(META_CLIENT_TOKEN)</string>
+	<key>FacebookDisplayName</key>
+	<string>Lumi</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to take photos for your child's profile.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
