@@ -321,12 +321,12 @@ class CourseLevel {
   /// The most expensive tier's price. Only set when [hasMultiplePriceTiers].
   final num? priceMax;
 
-  /// True on a flat course priced by more than one age tier — [coursePrice]
-  /// should then read "from X", and the age-tier picker should show.
+  /// True when this flat course or named group has more than one age tier —
+  /// [coursePrice] should then read "from X", and the picker should show.
   final bool hasMultiplePriceTiers;
 
-  /// The age brackets a FLAT course can be bought at, cheapest first. Empty
-  /// for a level (a level has its own single price, not tiers).
+  /// The age brackets this flat course or named group can be bought at,
+  /// cheapest first. Empty for legacy groups that still use one flat price.
   final List<CourseAgeTier> ageTiers;
 
   /// Cohort size. null = unlimited.
@@ -476,7 +476,7 @@ class CoursesApi {
   /// server fall back to the cheapest level with seats left.
   ///
   /// [ageFrom]/[ageTo] pick which age tier to buy the WHOLE course at, for a
-  /// flat course priced by more than one tier (`CourseLevel.ageTiers`).
+  /// flat course or named group priced by age (`CourseLevel.ageTiers`).
   /// Omitting them buys the cheapest tier — same fallback [subcourseId] gets
   /// when omitted on a levelled course. Ignored for a trial purchase.
   ///
@@ -486,9 +486,8 @@ class CoursesApi {
   /// alongside, carrying the first bracket, so a server that doesn't read the
   /// list yet charges one place rather than rejecting the order.
   ///
-  /// NOTE: summing the brackets is a server-side change that has not landed —
-  /// until it does, a multi-bracket order is charged for its first bracket
-  /// only. See `resolveAgeTierPrice` in the backend's `courses.service.ts`.
+  /// The backend sums every selected bracket and consumes one cohort seat per
+  /// entry. The singular pair stays alongside the list for older servers.
   ///
   /// [trialDates] picks which trial sessions to buy — they are sold one at a
   /// time, and by date rather than position because the offered set rolls
@@ -509,9 +508,11 @@ class CoursesApi {
     List<CourseAgeTier>? ageTiers,
     String? startsAt,
     List<String>? trialDates,
+
     /// How many places to buy, one per child. Full enrolments only — a trial
     /// is one child trying one lesson.
     int? quantity,
+
     /// Validated and capped server-side; the client never computes a discount.
     String? promocode,
     String? lang,
@@ -520,6 +521,7 @@ class CoursesApi {
     String? cardNumber,
     String? expireDate,
     String? savedCardId,
+
     /// Ask the server to apply the wallet balance. It decides the amount — see
     /// [CheckoutResult.walletAmount].
     bool useWallet = false,

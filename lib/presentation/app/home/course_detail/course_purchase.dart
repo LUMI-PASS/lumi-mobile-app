@@ -30,6 +30,14 @@ class CoursePurchaseResult {
   bool get needsReload => outcome == CoursePurchaseOutcome.completed;
 }
 
+/// A full course needs an explicit picker whenever it offers alternatives.
+/// This applies equally to a flat course and to a named group.
+bool courseNeedsAgeTierChoice({
+  required bool isTrial,
+  required List<CourseAgeTier> ageTiers,
+}) =>
+    !isTrial && ageTiers.length > 1;
+
 /// Pull a machine-readable `error_code` out of whatever the API returned.
 ///
 /// The backend answers course failures with `{message, error_code}`, sometimes
@@ -75,8 +83,8 @@ bool get _isSignedIn => getIt<Storage>().tokens.call()?.access != null;
 /// so a purchase is for the dates they chose, not for the whole set.
 ///
 /// [ageFrom]/[ageTo] pick which age tier to buy the WHOLE course at, for a
-/// flat course priced by more than one tier. Omitting them buys the
-/// cheapest tier. Ignored for a trial purchase.
+/// flat course or named group priced by age. Omitting them buys the cheapest
+/// tier. Ignored for a trial purchase.
 ///
 /// [startsAt] (YYYY-MM-DD) is when a full enrolment is considered to start —
 /// purely descriptive today, see `CoursesApi.checkout`. No screen sets this
