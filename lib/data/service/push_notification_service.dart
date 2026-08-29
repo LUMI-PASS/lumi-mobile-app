@@ -121,6 +121,17 @@ class PushNotificationService {
 
   Future<void> _sendToBackend(String token, {String? locale}) async {
     try {
+      // The app's OWN language, not the phone's, and read here rather than
+      // asked of every caller — all three of them (login, sign-up, warm start)
+      // called `registerCurrentDevice()` bare, so this field went up null and
+      // the backend had no record of ANY user's language. That is what makes a
+      // language-targeted campaign possible at all: without it every device
+      // falls into `getUserLocale`'s 'uz' default.
+      //
+      // An explicit argument still wins, for a caller registering on behalf of
+      // a language the storage hasn't been switched to yet.
+      final resolvedLocale = locale ?? _storage.localeCode();
+
       String? appVersion;
       try {
         final info = await PackageInfo.fromPlatform();
@@ -133,12 +144,13 @@ class PushNotificationService {
               ? 'ios'
               : 'android';
 
-      _log('registering with backend — platform:$platform version:$appVersion locale:$locale');
+      _log('registering with backend — platform:$platform version:$appVersion locale:$resolvedLocale');
       await _dio.post('notifications/devices', data: {
         'token': token,
         'platform': platform,
         if (appVersion != null) 'app_version': appVersion,
-        if (locale != null && locale.isNotEmpty) 'locale': locale,
+        if (resolvedLocale != null && resolvedLocale.isNotEmpty)
+          'locale': resolvedLocale,
       });
       await _storage.deviceToken.set(token);
       _log('device registered successfully');

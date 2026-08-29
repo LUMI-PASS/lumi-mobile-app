@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,8 @@ import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/auth/language_option_tile.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/data/service/push_notification_service.dart';
+import 'package:lumi_pass/di/injection.dart';
 
 class _Lang {
   const _Lang(this.code, this.label, this.locale, this.flag);
@@ -48,6 +52,14 @@ class _ChangeLanguagePageState extends State<ChangeLanguagePage> {
     if (lang.locale != context.locale) {
       setCurrentLang(lang.code);
       context.setLocale(lang.locale);
+      // Re-register the device so the backend learns the NEW language. Without
+      // this the token keeps whatever language was current when it was first
+      // registered, and a language-targeted push would reach this device in the
+      // language the user just switched away from. Fire-and-forget: a failed
+      // re-register must not hold up the screen closing.
+      unawaited(getIt<PushNotificationService>().registerCurrentDevice(
+        locale: lang.code,
+      ));
     }
     context.router.maybePop(true);
   }
