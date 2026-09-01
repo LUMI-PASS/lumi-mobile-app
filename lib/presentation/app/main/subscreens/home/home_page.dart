@@ -221,6 +221,10 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           onViewAll: () => context.router.push(
             SearchDiscoveryRoute(),
           ),
+          // Names what the tap lands on, the same way the courses row below
+          // does. Its own key rather than the generic `view_all`, which the
+          // schedule screen also uses and which must stay put.
+          viewAllLabel: 'view_all_activities'.tr(),
         ),
         10.verticalSpace,
         NotificationListener<ScrollNotification>(
@@ -245,6 +249,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                     key: ValueKey(popular[index].id ?? index),
                     homClass: popular[index],
                     margin: EdgeInsets.only(left: 8.w),
+                    // A browsing shelf, not a comparison — see
+                    // [HomeCourseCard.showDistance].
+                    showDistance: false,
                     onViewAsReels: () =>
                         _openShorts(context, popular, index),
                   ),
@@ -323,6 +330,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               width: cardW,
               imageHeight: cardImgH,
               margin: EdgeInsets.only(left: 8.w),
+              // Same shelf treatment as the activities row above it.
+              showDistance: false,
               onViewAsReels: () => _openShorts(context, list, index),
             ),
           ),

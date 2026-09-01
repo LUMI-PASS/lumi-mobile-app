@@ -51,6 +51,25 @@ class ClassFullModel {
   /// page swaps its CTA and lesson list rather than offering ticket booking.
   final bool isCourse;
 
+  /// The trial ladder each group of this course is CONFIGURED with, keyed by
+  /// sub-course id — `null` for the course's own ladder, which is what a course
+  /// entered without sub-courses carries. Empty for anything that isn't a
+  /// course.
+  ///
+  /// This endpoint and `/api/courses/:id` carry the same trials in two forms.
+  /// There, they come back DATED: the server pairs each configured rung with
+  /// the next session off the class's schedule. Here, they come back as the
+  /// centre actually entered them — how many rungs, what each costs, which are
+  /// compulsory — with no dates at all, because dates are not something anyone
+  /// configures.
+  ///
+  /// That difference is why this field exists. A course whose schedule hasn't
+  /// been entered yet dates to nothing, so the dated form is empty and the
+  /// server says `not_configured` — while the trials themselves are real, and
+  /// the feed card is already advertising "first lesson free" off this very
+  /// configuration. This is what lets the detail page show them anyway.
+  final Map<String?, List<CourseTrialEntry>> courseTrials;
+
   ClassFullModel({
     required this.id,
     required this.imageUrl,
@@ -83,7 +102,19 @@ class ClassFullModel {
     required this.category,
     required this.isParentControlRequired,
     this.isCourse = false,
+    this.courseTrials = const {},
   });
+
+  /// The configured trial ladder for one group of this course, or the course's
+  /// own when it isn't sold as groups. Falls back to the course-level ladder so
+  /// a sub-course that inherits its parent's trials still reports them.
+  ///
+  /// Empty when nothing is configured — the honest answer, and the caller then
+  /// renders no trial section at all.
+  List<CourseTrialEntry> trialsForGroup(String? subcourseId) =>
+      courseTrials[subcourseId] ??
+      courseTrials[null] ??
+      const <CourseTrialEntry>[];
 
   /// Whether this class can be booked at all. Two independent switches take it
   /// off sale — the centre hiding it ([isVisible]) and moderation not having
@@ -105,6 +136,40 @@ class ClassFullModel {
 
   static Map<String, dynamic> _asMap(dynamic v) =>
       v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
+
+  /// One `trial_lessons` array, in ladder order. The rungs are numbered by the
+  /// centre and taken in that order, so they are sorted by that number rather
+  /// than by the order they happen to arrive in.
+  static List<CourseTrialEntry> _trialEntries(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => CourseTrialEntry.fromJson(Map<String, dynamic>.from(e)))
+        .toList()
+      ..sort((a, b) => a.lessonNo.compareTo(b.lessonNo));
+  }
+
+  /// The `course` block's trial ladders, by sub-course id. See [courseTrials].
+  static Map<String?, List<CourseTrialEntry>> _courseTrials(dynamic raw) {
+    if (raw is! Map) return const {};
+    final course = Map<String, dynamic>.from(raw);
+    final out = <String?, List<CourseTrialEntry>>{};
+    // The course's own ladder, under the null key — a course entered without
+    // sub-courses has only this one.
+    final flat = _trialEntries(course['trial_lessons']);
+    if (flat.isNotEmpty) out[null] = flat;
+    final subcourses = course['subcourses'];
+    if (subcourses is! List) return out;
+    for (final entry in subcourses) {
+      if (entry is! Map) continue;
+      final sub = Map<String, dynamic>.from(entry);
+      final id = sub['_id']?.toString() ?? sub['id']?.toString();
+      if (id == null || id.isEmpty) continue;
+      final trials = _trialEntries(sub['trial_lessons']);
+      if (trials.isNotEmpty) out[id] = trials;
+    }
+    return out;
+  }
 
   factory ClassFullModel.fromJson(Map<String, dynamic> json) {
     final summaryRaw = (json['prices_summary'] as List?) ?? const [];
@@ -202,8 +267,45 @@ class ClassFullModel {
       isParentControlRequired:
           json['is_parent_control_required'] == true,
       isCourse: json['is_course'] == true,
+      courseTrials: _courseTrials(json['course']),
     );
   }
+}
+
+// ─── CourseTrialEntry ────────────────────────────────────────────────────────
+
+/// One rung of a course's trial ladder, as the centre configured it: which
+/// lesson it is, what it costs, and whether it must be taken before the whole
+/// course can be bought.
+///
+/// Deliberately DATELESS. Which sessions the trials fall on is not configured
+/// anywhere — the server works it out by walking the class's schedule from
+/// today, so the dates roll forward and belong to `/api/courses/:id`. This type
+/// is only ever the answer to "what does the trial consist of".
+class CourseTrialEntry {
+  const CourseTrialEntry({
+    required this.lessonNo,
+    required this.price,
+    required this.isMandatory,
+  });
+
+  /// Which rung, 1-based. Trials are taken in order.
+  final int lessonNo;
+
+  /// What this one costs. 0 is a genuinely free lesson, not a missing price — a
+  /// free first lesson is the usual shape of the offer.
+  final num price;
+
+  /// This lesson must be bought, and must have taken place, before the course
+  /// itself can be bought.
+  final bool isMandatory;
+
+  factory CourseTrialEntry.fromJson(Map<String, dynamic> json) =>
+      CourseTrialEntry(
+        lessonNo: (json['lesson_no'] as num?)?.toInt() ?? 0,
+        price: (json['price'] as num?) ?? 0,
+        isMandatory: json['is_mandatory'] == true,
+      );
 }
 
 // ─── AgeTier ─────────────────────────────────────────────────────────────────

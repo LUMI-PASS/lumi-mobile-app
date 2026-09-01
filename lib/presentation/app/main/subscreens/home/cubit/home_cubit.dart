@@ -105,11 +105,18 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     if (!prompt && !await _location.isGranted) {
       _lat ??= kTashkentCentre.lat;
       _lng ??= kTashkentCentre.lng;
+      currentUserLocation.value ??= kTashkentCentre;
       return;
     }
     final here = await _location.resolve(prompt: prompt);
     _lat = here.lat;
     _lng = here.lng;
+    // Home is the only screen that resolves the location, but it is not the
+    // only one that needs it: every activity card in the app measures its
+    // distance line from here. Published rather than passed down, because the
+    // cards are rendered from four different screens and three different
+    // cubits — see [currentUserLocation].
+    currentUserLocation.value = here;
     // A precise fix is the end of it. A fallback isn't: the user may still be
     // sitting on an unanswered permission sheet.
     if (here.isPrecise) _locationResolved = true;

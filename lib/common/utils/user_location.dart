@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// Where the user is, for ordering the catalog "nearest first".
@@ -19,6 +21,23 @@ class UserLocation {
   /// False when this is the Tashkent fallback rather than the device's own
   /// position — the caller may want to say so, or to ask again later.
   final bool isPrecise;
+
+  /// Great-circle distance in METRES from here to ([lat], [lng]), or null when
+  /// that pair isn't a usable coordinate — see [isUsableCoords].
+  ///
+  /// Plain haversine, no roads and no ellipsoid. Over one city that is accurate
+  /// to a few metres, and a card saying "1.2 km" is telling the user roughly
+  /// how far away the centre is, not routing them there.
+  double? metersTo(double? toLat, double? toLng) {
+    if (!isUsableCoords(toLat, toLng)) return null;
+    const earthRadiusMetres = 6371000.0;
+    double rad(double deg) => deg * math.pi / 180.0;
+    final dLat = rad(toLat! - lat);
+    final dLng = rad(toLng! - lng);
+    final h = math.pow(math.sin(dLat / 2), 2) +
+        math.pow(math.sin(dLng / 2), 2) * math.cos(rad(lat)) * math.cos(rad(toLat));
+    return 2 * earthRadiusMetres * math.asin(math.sqrt(h.toDouble()));
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -42,6 +61,31 @@ class UserLocation {
 /// no ordering at all: a user who refuses the permission still gets a list that
 /// starts downtown instead of in whatever order Mongo returned.
 const kTashkentCentre = UserLocation(41.3111, 69.2797, isPrecise: false);
+
+/// Where the app currently believes the user is — published by whoever last
+/// resolved it (today the home feed, on launch) and read by anything that has
+/// to MEASURE from it, chiefly the distance line on activity cards.
+///
+/// Null until the first resolve finishes. It may also hold [kTashkentCentre],
+/// which is fine for ordering a list but is not where the user is: anything
+/// printing a number must check [UserLocation.isPrecise] first, or it will
+/// quote a distance from a square downtown as if it were measured.
+final ValueNotifier<UserLocation?> currentUserLocation =
+    ValueNotifier<UserLocation?>(null);
+
+/// Whether a lat/lng pair is real enough to measure against.
+///
+/// Mirrors the backend's `isCoords`: centres have shipped `location: null` and
+/// half-set pairs, and 0,0 — the Gulf of Guinea — is what an unset pair looks
+/// like once it has been coerced to a number. Measuring to any of those would
+/// print a confident, wrong number on the card.
+bool isUsableCoords(double? lat, double? lng) {
+  if (lat == null || lng == null) return false;
+  if (!lat.isFinite || !lng.isFinite) return false;
+  if (lat.abs() > 90 || lng.abs() > 180) return false;
+  if (lat == 0 && lng == 0) return false;
+  return true;
+}
 
 /// Resolves the user's location for the home feed, asking for the permission
 /// at most once ever.

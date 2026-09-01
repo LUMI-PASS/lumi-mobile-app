@@ -16,6 +16,8 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
+import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
@@ -36,6 +38,7 @@ class HomeCourseCard extends StatelessWidget {
     this.margin,
     this.imageHeight,
     this.onViewAsReels,
+    this.showDistance = true,
   });
 
   final HomClass? homClass;
@@ -43,6 +46,16 @@ class HomeCourseCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final double? imageHeight;
   final VoidCallback? onViewAsReels;
+
+  /// Whether the card carries its "1.2 km from you" line.
+  ///
+  /// Off for the horizontal rows on home. Those cards are a browsing shelf —
+  /// they answer "what is there", and the row is already ordered for the user;
+  /// a distance on each one is a number to compare against nothing, since only
+  /// three cards are on screen at a time. It earns its place where the user is
+  /// CHOOSING between everything at once: the "Near you" list, the see-all
+  /// grid, search results and a centre's own class list.
+  final bool showDistance;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +79,11 @@ class HomeCourseCard extends StatelessWidget {
               onViewAsReels: onViewAsReels,
             ),
             14.verticalSpace,
-            _ClassInfo(hc: hc, crossAxis: CrossAxisAlignment.start),
+            _ClassInfo(
+              hc: hc,
+              crossAxis: CrossAxisAlignment.start,
+              showDistance: showDistance,
+            ),
           ],
         ),
       ),
@@ -301,6 +318,7 @@ class _ClassInfo extends StatelessWidget {
     required this.hc,
     required this.crossAxis,
     this.branchInline = false,
+    this.showDistance = true,
   });
 
   final HomClass? hc;
@@ -315,6 +333,9 @@ class _ClassInfo extends StatelessWidget {
   /// street address on one line would leave a couple of characters of each.
   final bool branchInline;
 
+  /// See [HomeCourseCard.showDistance].
+  final bool showDistance;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -322,55 +343,155 @@ class _ClassInfo extends StatelessWidget {
     final address = hc?.branch?.address;
     final hasProvider = provider != null && provider.isNotEmpty;
     final hasAddress = address != null && address.isNotEmpty;
+    final lat = hc?.branch?.latitude;
+    final lng = hc?.branch?.longitude;
 
-    final addressText = hasAddress
-        ? Text(
-            address,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.regular12.copyWith(color: c.textSecondary),
-          )
-        : null;
+    // Every card in the app runs through here, so the distance line lands on
+    // all of them at once: the home rows, the "Near you" list, the see-all
+    // grid, search results and the branch page. Watched rather than read: the
+    // fix arrives after the first cards are already on screen (home asks for
+    // the permission only once the feed has rendered), and without this they
+    // would sit there distance-less until something else rebuilt them.
+    return ValueListenableBuilder<UserLocation?>(
+      valueListenable: currentUserLocation,
+      builder: (context, _, __) {
+        // Laid out around, not merely appended: the row has to know whether to
+        // spend a gap on the distance — and how much width the address is left
+        // with — before it can place either. Null when there is nothing honest
+        // to show; see [DistanceLabel].
+        final hasDistance =
+            showDistance && DistanceLabel.labelFor(lat, lng) != null;
 
-    return Column(
-      crossAxisAlignment: crossAxis,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (hasProvider && !branchInline) ...[
-          HomePillTag(label: provider, gradient: AppGradients.green),
-          6.verticalSpace,
-        ],
-        Text(
-          hc?.title ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppText.semibold16.copyWith(color: c.textPrimary),
-        ),
-        if (branchInline && (hasProvider || hasAddress)) ...[
-          6.verticalSpace,
-          Row(
-            children: [
-              if (hasProvider)
-                // Flexible, not fixed: a long centre name gives way to the
-                // address rather than pushing it off the card entirely — the
-                // pill ellipsizes its own label (see [HomePillTag]).
-                Flexible(
-                  child: HomePillTag(
-                    label: provider,
-                    gradient: AppGradients.green,
-                  ),
-                ),
-              if (hasProvider && hasAddress) 6.horizontalSpace,
-              if (addressText != null) Expanded(child: addressText),
+        final addressText = hasAddress
+            ? Text(
+                address,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.regular12.copyWith(color: c.textSecondary),
+              )
+            : null;
+
+        final distance =
+            hasDistance ? DistanceLabel(latitude: lat, longitude: lng) : null;
+
+        // WHERE the distance sits differs by card, because the two cards have
+        // different amounts of room.
+        //
+        // The full-width "Near you" card puts it on the PRICE row. Its centre
+        // pill and street address already fill that line, and a distance
+        // crowded onto the end of them read as a third fragment of the same
+        // sentence. On the price row it is the only other thing there, so it
+        // reads as its own fact — and price and distance are the two figures
+        // someone actually scans a card for, which makes them worth landing on
+        // one line.
+        //
+        // The 168pt compact card keeps it on the address line: its price line
+        // is the narrowest thing on the card and can already run to two lines
+        // (a struck original over a couponed figure), so a distance beside it
+        // would be squeezed against a moving target.
+        final Widget? whereDistance = branchInline ? null : distance;
+        final Widget? priceDistance = branchInline ? distance : null;
+
+        final hasWhere = addressText != null || whereDistance != null;
+
+        // Address and distance answer the same question — *where is this* — so
+        // on the compact card they share one line, with the distance pinned to
+        // the right edge. The address gives way when the two don't fit: how far
+        // away a centre is decides whether the card is worth reading at all,
+        // while the street name only confirms it.
+        //
+        // Whatever sits to the LEFT of the distance is the row's only flex
+        // child, so it absorbs every spare pixel and the distance lands hard
+        // against the edge. A [Spacer] stands in when there is no address at
+        // all, or the distance would sit wherever the text left it.
+        final Widget? whereLine = !hasWhere
+            ? null
+            : Row(
+                children: [
+                  if (addressText != null)
+                    Expanded(child: addressText)
+                  else
+                    const Spacer(),
+                  if (whereDistance != null) ...[
+                    6.horizontalSpace,
+                    whereDistance,
+                  ],
+                ],
+              );
+
+        // The price, with the distance pinned to the card's right edge beside
+        // it. Centred rather than baseline-aligned: the price block is one
+        // line most of the time but two when a coupon struck a figure out, or
+        // when a course prints its per-lesson breakdown — and neither of those
+        // second lines is the one the distance should pair with, so it sits
+        // against the block as a whole.
+        final Widget priceLine = priceDistance == null
+            ? _PriceText(hc: hc)
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: _PriceText(hc: hc)),
+                  6.horizontalSpace,
+                  priceDistance,
+                ],
+              );
+
+        return Column(
+          crossAxisAlignment: crossAxis,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hasProvider && !branchInline) ...[
+              HomePillTag(label: provider, gradient: AppGradients.green),
+              6.verticalSpace,
             ],
-          ),
-        ] else if (addressText != null) ...[
-          6.verticalSpace,
-          addressText,
-        ],
-        6.verticalSpace,
-        _PriceText(hc: hc),
-      ],
+            Text(
+              hc?.title ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.semibold16.copyWith(color: c.textPrimary),
+            ),
+            if (branchInline && (hasProvider || hasWhere)) ...[
+              6.verticalSpace,
+              // Measured, because the pill must take what its label needs and
+              // NOT a fixed share.
+              //
+              // As two flex siblings the pill and the address split the row
+              // evenly, so the address was cut off halfway across the card
+              // however short the centre name was — half the width sat unused
+              // between them. The pill is now an ordinary child sized to its
+              // own text, which leaves the address as the only flex child and
+              // hands it the entire remainder.
+              LayoutBuilder(
+                builder: (context, constraints) => Row(
+                  children: [
+                    if (hasProvider)
+                      ConstrainedBox(
+                        // The cap only matters for a centre name long enough
+                        // to crowd the address out; under it the pill is at its
+                        // natural width. [HomePillTag] ellipsizes its own label
+                        // once bounded, so this can never overflow the row.
+                        constraints: BoxConstraints(
+                          maxWidth: constraints.maxWidth * 0.45,
+                        ),
+                        child: HomePillTag(
+                          label: provider,
+                          gradient: AppGradients.green,
+                        ),
+                      ),
+                    if (hasProvider && addressText != null) 6.horizontalSpace,
+                    if (addressText != null) Expanded(child: addressText),
+                  ],
+                ),
+              ),
+            ] else if (whereLine != null) ...[
+              6.verticalSpace,
+              whereLine,
+            ],
+            6.verticalSpace,
+            priceLine,
+          ],
+        );
+      },
     );
   }
 }

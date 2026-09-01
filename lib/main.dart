@@ -64,7 +64,7 @@ DeepLink _nativeDeepLink(PlatformDeepLink link) {
   if (uri.scheme == 'lumi' ||
       (uri.host == 'mobile-api.lumipass.uz' &&
           uri.path.contains('/share/class/'))) {
-    return DeepLink.single(EmptyRouterRoute());
+    return DeepLink.single(const EmptyRouterRoute());
   }
   return link;
 }

@@ -10,6 +10,8 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
+import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -548,15 +550,51 @@ class SearchBranchCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppText.semibold16.copyWith(color: c.textPrimary),
             ),
-            if ((branch.address ?? '').isNotEmpty) ...[
-              6.verticalSpace,
-              Text(
-                branch.address!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.regular12.copyWith(color: c.textSecondary),
-              ),
-            ],
+            // Address and distance share one line, exactly as they do on the
+            // activity card next to it in the same grid — the distance keeps
+            // its width and the street name gives way. See [DistanceLabel].
+            ValueListenableBuilder<UserLocation?>(
+              valueListenable: currentUserLocation,
+              builder: (context, _, __) {
+                final hasAddress = (branch.address ?? '').isNotEmpty;
+                final hasDistance = DistanceLabel.labelFor(
+                      branch.latitude,
+                      branch.longitude,
+                    ) !=
+                    null;
+                if (!hasAddress && !hasDistance) return const SizedBox.shrink();
+                return Padding(
+                  padding: EdgeInsets.only(top: 6.h),
+                  child: Row(
+                    children: [
+                      // The address is the row's only flex child, so it eats
+                      // the spare width and the distance sits against the
+                      // card's right edge. The [Spacer] does that job for a
+                      // centre with no address on file.
+                      if (hasAddress)
+                        Expanded(
+                          child: Text(
+                            branch.address!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.regular12
+                                .copyWith(color: c.textSecondary),
+                          ),
+                        )
+                      else
+                        const Spacer(),
+                      if (hasDistance) ...[
+                        6.horizontalSpace,
+                        DistanceLabel(
+                          latitude: branch.latitude,
+                          longitude: branch.longitude,
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
