@@ -115,6 +115,18 @@ class _BookingPageState extends State<BookingPage> {
   // legacy flat mode: _flatCounts[rangeIdx] = count
   late final List<int> _flatCounts;
 
+  /// How many children go in each course/group age bracket, keyed by
+  /// [_courseAgeTierKey]. Lives here rather than on the detail page, because
+  /// picking how MANY of something belongs beside the other quantities on
+  /// this screen, not on the page that only names WHICH product.
+  ///
+  /// A map rather than a list of counts parallel to [_courseAgeTiers] because
+  /// more than one child may now share a bracket — this replaces
+  /// [BookingPage.ageTiers]'s one-entry-per-child list, which could not
+  /// express that and is kept only as a fallback for any caller that still
+  /// populates it directly.
+  late Map<String, int> _courseAgeTierQuantities;
+
   late final List<_AvailableDate> _availableDates;
   _AvailableDate? _selectedDate;
   ScheduleSlotInfo? _selectedSlot;
@@ -134,6 +146,7 @@ class _BookingPageState extends State<BookingPage> {
   // Missing input is flagged by shaking the control itself, so each one the pay
   // CTA can block on is addressable.
   final _ticketShake = GlobalKey<ShakerState>();
+  final _courseAgeTierShake = GlobalKey<ShakerState>();
   final _dateShake = GlobalKey<ShakerState>();
   final _timeShake = GlobalKey<ShakerState>();
   final _paymentShake = GlobalKey<ShakerState>();
@@ -241,7 +254,7 @@ class _BookingPageState extends State<BookingPage> {
   /// order free is simply that there is nothing left to charge.
   bool get _isFree =>
       !_hasCouponPlan &&
-      (_isCourse || _totalTickets > 0) &&
+      (_hasSomethingToBuy || _totalTickets > 0) &&
       _payableTotal == 0;
 
   /// Nothing left for a gateway to charge — either the order was already free,
@@ -251,7 +264,15 @@ class _BookingPageState extends State<BookingPage> {
   /// checkout_url, and the success screen shows without a webview. There is
   /// deliberately no second free-order branch.
   bool get _skipsGateway =>
-      _isFree || ((_isCourse || _totalTickets > 0) && _gatewayTotal == 0);
+      _isFree ||
+      ((_hasSomethingToBuy || _totalTickets > 0) && _gatewayTotal == 0);
+
+  /// A course/group priced by age has nothing to buy — and so no free-order
+  /// path to offer — until at least one bracket is picked. Every other course
+  /// shape (flat, or a single-price group) always has exactly one thing to
+  /// buy, same as before this bracket picker existed.
+  bool get _hasSomethingToBuy =>
+      _isCourse && (_courseAgeTiers.isEmpty || _totalCourseAgeTierQuantity > 0);
 
   /// Validate the entered code against the current subtotal and show a preview
   /// of the new total. The discount is re-checked server-side at checkout.
@@ -675,6 +696,53 @@ class _BookingPageState extends State<BookingPage> {
 
   bool get _hasAgeTiers => widget.clazz.ageTiers.isNotEmpty;
 
+  /// The brackets a course/group being bought (not a trial) is priced at.
+  /// Empty on a group sold at a single price and on a trial — there is then
+  /// nothing to pick and no stepper section to show.
+  List<CourseAgeTier> get _courseAgeTiers => _isCourse && !_isTrial
+      ? (widget.level?.ageTiers ?? const <CourseAgeTier>[])
+      : const <CourseAgeTier>[];
+
+  /// Identity of a bracket, for [_courseAgeTierQuantities]. An open-ended
+  /// tier has no upper bound, so its key ends empty rather than in a made-up
+  /// age — matches the shape the server keys ranges by.
+  static String _courseAgeTierKey(CourseAgeTier t) =>
+      '${t.ageFrom}-${t.ageTo ?? ''}';
+
+  int _courseAgeTierQuantity(CourseAgeTier t) =>
+      _courseAgeTierQuantities[_courseAgeTierKey(t)] ?? 0;
+
+  int get _totalCourseAgeTierQuantity =>
+      _courseAgeTierQuantities.values.fold(0, (a, b) => a + b);
+
+  /// [tier]'s quantity, ready for the checkout call — one entry per DISTINCT
+  /// bracket with a place in it, each carrying how many children buy at it.
+  List<CourseAgeTierCount> get _courseAgeTierCounts => [
+        for (final t in _courseAgeTiers)
+          if (_courseAgeTierQuantity(t) > 0)
+            CourseAgeTierCount(tier: t, quantity: _courseAgeTierQuantity(t)),
+      ];
+
+  /// Add or remove one child at [tier]. Every bracket may freely drop to 0 —
+  /// [_validateForPayment] is what stops Pay while every bracket is empty, the
+  /// same way an empty ticket order is stopped, rather than this stepper
+  /// silently keeping one place selected no matter what. Growing still refuses
+  /// past the per-order cap the server itself enforces (`MAX_COURSE_QUANTITY`),
+  /// so a tap that could only ever 400 never gets that far.
+  void _bumpCourseAgeTier(CourseAgeTier tier, int delta) {
+    const maxTotalQuantity = 10;
+    setState(() {
+      final key = _courseAgeTierKey(tier);
+      final next = (_courseAgeTierQuantities[key] ?? 0) + delta;
+      if (delta > 0 && _totalCourseAgeTierQuantity >= maxTotalQuantity) return;
+      if (next <= 0) {
+        _courseAgeTierQuantities.remove(key);
+      } else {
+        _courseAgeTierQuantities[key] = next;
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -687,6 +755,15 @@ class _BookingPageState extends State<BookingPage> {
       _flatCounts = List<int>.filled(widget.clazz.pricesSummary.length, 0);
       _tierCounts = const [];
     }
+    // Exactly one bracket is really "priced by age" in name only — there is
+    // nothing to choose between, so it starts at 1, same as a single-price
+    // group needs no picking either. Two or more brackets is a genuine choice,
+    // so every one of them opens at 0 and [_validateForPayment] blocks Pay
+    // until the buyer actually picks who it's for.
+    final courseTiers = widget.level?.ageTiers ?? const <CourseAgeTier>[];
+    _courseAgeTierQuantities = _isCourse && !_isTrial && courseTiers.length == 1
+        ? {_courseAgeTierKey(courseTiers.first): 1}
+        : {};
     // Render the next [_kLookaheadDays] days locally so the carousel is
     // immediately interactive. Slot data is fetched lazily — only when the
     // user taps a date — via the per-date `/slots?date=` endpoint.
@@ -998,10 +1075,19 @@ class _BookingPageState extends State<BookingPage> {
             .firstOrNull;
         return lesson?.price ?? 0;
       }
-      // Several brackets picked is several children being enrolled, so the
-      // course price is charged once per bracket. One bracket still goes
-      // through here — its own price is the right figure, not the group's
-      // headline "from" one.
+      // Several brackets (or several children in one bracket) picked is
+      // several children being enrolled, so the course price is charged once
+      // per place. One place still goes through here — its own price is the
+      // right figure, not the group's headline "from" one.
+      final courseTiers = _courseAgeTiers;
+      if (courseTiers.isNotEmpty) {
+        return courseTiers.fold<num>(
+          0,
+          (sum, t) => sum + t.price * _courseAgeTierQuantity(t),
+        );
+      }
+      // Fallback for a caller that still populates the older, one-place-per-
+      // entry list directly instead of going through the stepper above.
       final tiers = widget.ageTiers;
       if (tiers.isNotEmpty) {
         return tiers.fold<num>(0, (sum, t) => sum + t.price);
@@ -1202,6 +1288,13 @@ class _BookingPageState extends State<BookingPage> {
     // auto-selects the nearest one, so this only fires if that was cleared.
     if (_isCourse) {
       if (widget.clazz.id == null) return false;
+      // A group/course priced by age opens with every bracket at 0 — nothing
+      // is charged until the buyer actually picks who it's for.
+      if (_courseAgeTiers.isNotEmpty && _totalCourseAgeTierQuantity == 0) {
+        _flag(_courseAgeTierShake);
+        setState(() => _error = 'course_select_age'.tr());
+        return false;
+      }
       if (_selectedDate == null && _availableDates.isNotEmpty) {
         _flag(_dateShake);
         setState(() => _error = 'book_pick_date'.tr());
@@ -1290,12 +1383,27 @@ class _BookingPageState extends State<BookingPage> {
           activityId: id,
           option: widget.courseOption ?? CoursePurchaseOption.full,
           subcourseId: widget.level?.id,
-          // Which brackets are being enrolled, one place per child. The first
-          // is repeated in age_from/age_to for a server that doesn't read the
-          // list — see CoursesApi.checkout.
-          ageTiers: _isTrial || widget.ageTiers.isEmpty ? null : widget.ageTiers,
-          ageFrom: _isTrial ? null : widget.ageTiers.firstOrNull?.ageFrom,
-          ageTo: _isTrial ? null : widget.ageTiers.firstOrNull?.ageTo,
+          // Which brackets are being enrolled, and how many children at each.
+          // The first is repeated in age_from/age_to for a server that reads
+          // neither list — see CoursesApi.checkout.
+          ageTierCounts: _isTrial || _courseAgeTierCounts.isEmpty
+              ? null
+              : _courseAgeTierCounts,
+          // Only reached when the stepper above has nothing picked — a caller
+          // that still populates the older, one-place-per-entry list directly.
+          ageTiers: _isTrial ||
+                  _courseAgeTierCounts.isNotEmpty ||
+                  widget.ageTiers.isEmpty
+              ? null
+              : widget.ageTiers,
+          ageFrom: _isTrial
+              ? null
+              : (_courseAgeTierCounts.firstOrNull?.tier.ageFrom ??
+                  widget.ageTiers.firstOrNull?.ageFrom),
+          ageTo: _isTrial
+              ? null
+              : (_courseAgeTierCounts.firstOrNull?.tier.ageTo ??
+                  widget.ageTiers.firstOrNull?.ageTo),
           // Trials are sold one at a time, by date: the day picked in the
           // calendar above IS the lesson being bought.
           trialDates:
@@ -1680,6 +1788,18 @@ class _BookingPageState extends State<BookingPage> {
                             _courseSection(c),
                             20.kh,
                           ],
+                          // Which bracket(s), and how many children at each —
+                          // only shown on a full purchase of a group/course
+                          // actually priced by age. A trial is one lesson for
+                          // one child (its own row is in _ticketSection below)
+                          // and a single-price group has nothing to pick.
+                          if (_courseAgeTiers.isNotEmpty) ...[
+                            Shaker(
+                              key: _courseAgeTierShake,
+                              child: _courseAgeTiersSection(c),
+                            ),
+                            20.kh,
+                          ],
                           // Buying the whole course: no ticket rows and no
                           // "Prices" list. A course is one package at one
                           // price — the pill above already names it and what
@@ -1812,6 +1932,46 @@ class _BookingPageState extends State<BookingPage> {
         child: Text(title,
             style: AppText.semibold14.copyWith(color: c.textSecondary)),
       );
+
+  /// "Choose age" — one pill row per bracket the picked group/course sells at,
+  /// each with its own +/- stepper. Formerly a checkbox list on the course
+  /// detail page (pick a bracket, at most one child each); moved here so it
+  /// sits beside every other quantity on the page, and upgraded from a tick to
+  /// a counter so more than one child can share a bracket — two siblings both
+  /// "6-10", say, which a tick list could never express.
+  Widget _courseAgeTiersSection(AppColorScheme c) {
+    final tiers = _courseAgeTiers;
+    final rows = <Widget>[];
+    for (var i = 0; i < tiers.length; i++) {
+      if (rows.isNotEmpty) rows.add(8.kh);
+      final tier = tiers[i];
+      rows.add(_TariffRow(
+        icon: tier.ageFrom >= 6 || tier.ageTo == null
+            ? Assets.icons.detail.iconsaxAiUsers
+            : Assets.icons.detail.babyGirl,
+        label: '${tier.rangeLabel} ${'age_years_suffix'.tr()}',
+        durationLabel: null,
+        price: tier.price,
+        count: _courseAgeTierQuantity(tier),
+        onMinus: () => _bumpCourseAgeTier(tier, -1),
+        onPlus: () => _bumpCourseAgeTier(tier, 1),
+      ));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(c, 'course_choose_age_title'.tr()),
+        Padding(
+          padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
+          child: Text(
+            'course_choose_age_sub'.tr(),
+            style: AppText.regular12.copyWith(color: c.textSecondary),
+          ),
+        ),
+        ...rows,
+      ],
+    );
+  }
 
   // "Цены на билеты" — one frosted pill row per tariff, each with a stepper.
   Widget _ticketSection(AppColorScheme c) {
@@ -2348,6 +2508,25 @@ class _BookingPageState extends State<BookingPage> {
             activityId: widget.clazz.id!,
             option: widget.courseOption ?? CoursePurchaseOption.full,
             subcourseId: widget.level?.id,
+            // Same age selection as the paid path — a fully-discounted order
+            // still has to name which bracket(s) it enrolled, or the server
+            // falls back to the cheapest one regardless of what was picked.
+            ageTierCounts: _isTrial || _courseAgeTierCounts.isEmpty
+                ? null
+                : _courseAgeTierCounts,
+            ageTiers: _isTrial ||
+                    _courseAgeTierCounts.isNotEmpty ||
+                    widget.ageTiers.isEmpty
+                ? null
+                : widget.ageTiers,
+            ageFrom: _isTrial
+                ? null
+                : (_courseAgeTierCounts.firstOrNull?.tier.ageFrom ??
+                    widget.ageTiers.firstOrNull?.ageFrom),
+            ageTo: _isTrial
+                ? null
+                : (_courseAgeTierCounts.firstOrNull?.tier.ageTo ??
+                    widget.ageTiers.firstOrNull?.ageTo),
             trialDates: _isTrial && _selectedDate != null
                 ? [_selectedDate!.isoKey]
                 : null,

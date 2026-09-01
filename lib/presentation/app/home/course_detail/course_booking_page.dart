@@ -99,12 +99,9 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
   /// promocode re-prices it with no stale figure underneath.
   bool _useWallet = false;
 
-  /// Which age bracket to enrol at, for a FLAT course priced by more than one
-  /// tier (`widget.level.id == null` — a level has its own single price, not
-  /// tiers, so this stays null there). Defaults to the first tier, which the
-  /// server already sends cheapest-first — the same one checkout would
-  /// default to if none were named, so the price shown never disagrees with
-  /// what an untouched picker would charge.
+  /// Which age bracket to enrol at for a flat course or named group priced by
+  /// more than one tier. Defaults to the first tier, which the server sends
+  /// cheapest-first — the same one checkout defaults to if none is named.
   CourseAgeTier? _selectedTier;
 
   /// Buying one trial lesson rather than the course.
@@ -150,15 +147,17 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
 
   /// Age tiers price the WHOLE course; a trial lesson carries its own price,
   /// so there is nothing to pick.
-  bool get _hasAgeTierChoice =>
-      !_isTrial &&
-      widget.level.id == null &&
-      widget.level.ageTiers.length > 1;
+  bool get _hasAgeTierChoice => courseNeedsAgeTierChoice(
+        isTrial: _isTrial,
+        ageTiers: widget.level.ageTiers,
+      );
 
   /// The price actually being charged: the trial lesson's own price, else the
   /// picked tier once there is a choice to make, else the level's own default.
   num get _price =>
-      widget.trialLesson?.price ?? _selectedTier?.price ?? widget.level.coursePrice;
+      widget.trialLesson?.price ??
+      _selectedTier?.price ??
+      widget.level.coursePrice;
 
   bool get _isFree => _payable <= 0;
 
@@ -349,9 +348,8 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     try {
       return await getIt<CoursesApi>().checkout(
         activityId: widget.activityId,
-        option: _isTrial
-            ? CoursePurchaseOption.trial
-            : CoursePurchaseOption.full,
+        option:
+            _isTrial ? CoursePurchaseOption.trial : CoursePurchaseOption.full,
         subcourseId: widget.level.id,
         quantity: _canPickQuantity ? _quantity : null,
         promocode: _appliedPromo != null ? _promoCtrl.text.trim() : null,
@@ -826,8 +824,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                 style: AppText.regular14.copyWith(color: c.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'promo_hint'.tr(),
-                  hintStyle:
-                      AppText.regular14.copyWith(color: c.textMuted),
+                  hintStyle: AppText.regular14.copyWith(color: c.textMuted),
                   filled: true,
                   fillColor: c.surface,
                   contentPadding:
@@ -882,11 +879,9 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
     );
   }
 
-  // "Yoshni tanlang" — single-select age-tier picker. Only shown for a FLAT
-  // course priced by more than one tier (`_hasAgeTierChoice`); a level has
-  // its own single price, so this never renders alongside a level purchase.
-  // Unlike a normal activity's ticket rows (+/- quantity per tier), this is
-  // pick-exactly-one, the same shape as choosing a level.
+  // "Yoshni tanlang" — single-select age-tier picker for either a flat course
+  // or a named group. Unlike a normal activity's ticket rows (+/- quantity per
+  // tier), this route buys exactly one place.
   Widget _ageTierSection(AppColorScheme c) {
     final tiers = widget.level.ageTiers;
     return Column(
@@ -1198,8 +1193,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                           AppText.regular14.copyWith(color: c.textSecondary)),
                 ),
                 Text('- ${_promoDiscount.toRawUzsPrice()}',
-                    style:
-                        AppText.semibold14.copyWith(color: AppColors.green)),
+                    style: AppText.semibold14.copyWith(color: AppColors.green)),
               ],
             ),
           ],
@@ -1210,8 +1204,7 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
                 child: Text('book_grand_total'.tr(),
                     style: AppText.bold18.copyWith(color: c.textSecondary)),
               ),
-              Text(
-                  _isFree ? 'price_free'.tr() : _payable.toRawUzsPrice(),
+              Text(_isFree ? 'price_free'.tr() : _payable.toRawUzsPrice(),
                   style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),

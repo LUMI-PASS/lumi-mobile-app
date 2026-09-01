@@ -70,6 +70,21 @@ class PaycomCheckoutPage extends StatefulWidget {
 
 class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
     with WidgetsBindingObserver {
+  /// Orders that have already reached [_finishSuccess], across every instance
+  /// of this page for the life of the app.
+  ///
+  /// [_navigated] alone only protects ONE instance: if this page is ever
+  /// mounted twice for the same order (observed in practice — the app
+  /// resuming from the external payment app can double-fire the lifecycle
+  /// callback, and each affected instance starts life with its own
+  /// `_navigated = false`), both independently poll the SAME now-paid order,
+  /// both pass their own guard, and both push their own success screen —
+  /// which is what produced a "Duplicate GlobalKey" crash and a doubled
+  /// af_purchase/payment_succeeded analytics pair for one real purchase.
+  /// Keying by order id rather than instance makes a second success run
+  /// impossible regardless of how a second instance came to exist.
+  static final Set<String> _finishedOrderIds = <String>{};
+
   bool _launching = false;
   bool _launched = false;
   bool _navigated = false;
@@ -146,8 +161,10 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
   }
 
   Future<void> _finishSuccess() async {
-    if (_navigated) return;
+    final orderId = widget.result.orderId;
+    if (_navigated || _finishedOrderIds.contains(orderId)) return;
     _navigated = true;
+    if (orderId.isNotEmpty) _finishedOrderIds.add(orderId);
     _pollTimer?.cancel();
     getIt<AnalyticsService>()
         .logEvent(AnalyticsEvent.paymentSucceeded, params: _funnelParams);

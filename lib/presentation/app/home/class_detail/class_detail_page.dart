@@ -124,11 +124,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return groups.first;
   }
 
-  /// The age brackets the picked group is sold at. Empty on a group with one
-  /// price — there is then nothing to list and no card to show.
-  List<CourseAgeTier> get _groupAgeTiers =>
-      _selectedLevel?.ageTiers ?? const <CourseAgeTier>[];
-
   /// The trial ladder to show for [level] — dated where the server could date
   /// it, the centre's raw configuration where it could not.
   ///
@@ -667,11 +662,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         clazz: full,
         level: level,
         courseOption: CoursePurchaseOption.full,
-        // No brackets carried over: the age card is a price list now, not a
-        // picker, so nothing on this page names one. Checkout therefore sends
-        // no bracket either, and the server charges the cheapest — which is
-        // exactly the figure the group panel quotes as "from X", so the page
-        // and the charge still agree.
+        // Age-bracket picking (and how many children per bracket) now happens
+        // on the payment page itself — see [BookingPage] — using [level]'s own
+        // ageTiers, so there is nothing to carry over from here any more.
       ),
     );
     if (purchased == true && mounted) await _loadCourse(id);
@@ -795,13 +788,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         if (_courseGroups.isNotEmpty) ...[
                           6.verticalSpace,
                           _courseLevelsCard(c, _courseGroups),
-                        ],
-                        // Directly under the groups, because it prices the one
-                        // that is picked — a group priced by a single figure
-                        // has no brackets and shows nothing here.
-                        if (_groupAgeTiers.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _courseAgeTiersCard(c, _groupAgeTiers),
                         ],
                         // A course is priced per level/lesson, never by age
                         // tier — the underlying activity still carries a
@@ -1305,46 +1291,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       ),
     );
   }
-
-  // ─── Course age brackets ────────────────────────────────────────────────────
-
-  /// "Choose age" — the brackets the picked group is sold at, MULTI select.
-  ///
-  /// One tick is one child: a parent enrolling two children of different ages
-  /// ticks both brackets and the card sums them, which is the figure the sticky
-  /// CTA and the purchase sheet then carry. That is why these are checkboxes
-  /// and the group above is a radio — the group is which product, this is how
-  /// many of it and at which prices.
-  ///
-  /// On the page rather than in the purchase sheet, for the same reason the
-  /// group panels are: the price a parent decides on is the one their children
-  /// actually add up to, and a sheet that has to be opened to see it hides the
-  /// decision behind the commitment.
-  Widget _courseAgeTiersCard(AppColorScheme c, List<CourseAgeTier> tiers) =>
-      _pricesCard(c, _courseAgeRows(tiers));
-
-  /// A course's age brackets as [_PriceRowData], so they render through the
-  /// very same [_PriceRow] an activity's prices do.
-  ///
-  /// No duration: an activity bracket can be priced by how long the child
-  /// stays, and needs the duration to tell two rows of the same age apart. A
-  /// course is sold as a course, so a bracket is one price and the row carries
-  /// none.
-  List<_PriceRowData> _courseAgeRows(List<CourseAgeTier> tiers) =>
-      tiers.map((t) {
-        // Same reading an activity row gets: a bracket that starts at school
-        // age, or has no upper bound, is not a toddler class.
-        final adults = t.ageFrom >= 6 || t.ageTo == null;
-        return (
-          range: '${t.rangeLabel} ${'age_years_suffix'.tr()}',
-          subtitle: adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr(),
-          duration: null,
-          price: t.price,
-          icon: adults
-              ? Assets.icons.home.profile2user
-              : Assets.icons.home.babyGirl,
-        );
-      }).toList();
 
   // ─── Description card ───────────────────────────────────────────────────────
   Widget _descriptionCard(AppColorScheme c, String title, String description) {
@@ -2228,12 +2174,7 @@ class _TrialLessonRow extends StatelessWidget {
   }
 }
 
-/// One age bracket of a course, ticked or not: "3-5 years" and what a place at
-/// that bracket costs.
-///
-/// A square box rather than [_RadioDot]'s circle — the group above is a
-/// one-of-many radio and this is a many-of-many checkbox, and the shape is what
-/// says so before anything is tapped.
+
 class _RadioDot extends StatelessWidget {
   const _RadioDot({
     required this.selected,

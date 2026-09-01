@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import 'package:lumi_pass/common/utils/app_locale.dart';
 
 @injectable
 class WalletApi {
@@ -10,7 +9,7 @@ class WalletApi {
 
   /// Balance snapshot for the signed-in user.
   Future<Response> getWallet() {
-    return _dio.get('wallet', queryParameters: {'lang': currentLang});
+    return _dio.get('wallet');
   }
 
   /// Paginated ledger, newest first. [kind] filters to one entry type; an
@@ -20,13 +19,12 @@ class WalletApi {
       'page': page,
       'limit': limit,
       if (kind != null && kind.isNotEmpty) 'kind': kind,
-      'lang': currentLang,
     });
   }
 
   /// Public cashback rates. No auth required.
   Future<Response> getCashbackConfig() {
-    return _dio.get('cashback/config', queryParameters: {'lang': currentLang});
+    return _dio.get('cashback/config');
   }
 
   /// What one specific purchase would earn on [activityId].
@@ -45,7 +43,6 @@ class WalletApi {
       'activity_id': activityId,
       if (purchase != null) 'purchase': purchase,
       if (amount != null) 'amount': amount.round(),
-      'lang': currentLang,
     });
   }
 }

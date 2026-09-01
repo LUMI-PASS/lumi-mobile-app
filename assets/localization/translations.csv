@@ -981,6 +981,7 @@ course_trial_bought,Пробные уроки куплены,Sinov darslari soti
 course_full_title,Весь курс,Butun kurs,Whole course
 course_choose_age_title,Выберите возраст,Yoshni tanlang,Choose age
 course_choose_age_sub,Отметьте возраст каждого ребёнка — цена сложится,Har bir bolaning yoshini belgilang — narx qo‘shiladi,Tick each child’s age — the prices add up
+course_select_age,Укажите возраст хотя бы одного ребёнка,Kamida bitta bolaning yoshini belgilang,Pick at least one child's age
 course_age_total,Итого за {count} детей,{count} bola uchun jami,Total for {count} children
 course_run_dates,С {from} по {to},{from} — {to},{from} — {to}
 course_lessons_count,{count} уроков,{count} ta dars,{count} lessons
