@@ -9,6 +9,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/adaptive_card.dart';
 import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
+import 'package:lumi_pass/data/api_model/subscription/subscription_status.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// The purchased-coupon history body — shimmer, empty state and cards.
@@ -60,12 +61,6 @@ class _HistoryCard extends StatelessWidget {
 
   final SubscriptionRecord record;
 
-  String _statusLabel() {
-    if (record.isActive) return 'sub_status_active'.tr();
-    if (record.isCanceled) return 'sub_status_canceled'.tr();
-    return 'sub_status_expired'.tr();
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -107,7 +102,7 @@ class _HistoryCard extends StatelessWidget {
                 ),
               ),
               8.kw,
-              _StatusPill(label: _statusLabel()),
+              _StatusPill(status: r.subscriptionStatus),
             ],
           ),
           16.kh,
@@ -175,17 +170,48 @@ class _DiscountTile extends StatelessWidget {
   }
 }
 
+/// The coupon's state, said and coloured.
+///
+/// Green for a coupon that can still be spent, grey for every state that has
+/// finished — the one distinction that changes what the user can do with it. A
+/// history list is mostly dead coupons, so the live one has to be findable
+/// without reading each pill.
+///
+/// Fixed ink on a solid status fill, theme-invariant by design: the pill reads
+/// the same in light and dark, like the brand/status chips elsewhere.
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label});
+  const _StatusPill({required this.status});
 
-  final String label;
+  final SubscriptionStatus status;
+
+  /// Exhaustive, no `default`: a status added to the enum later must fail to
+  /// compile here rather than quietly painting itself as finished.
+  (String, Color) get _style => switch (status) {
+        SubscriptionStatus.active => (
+            'sub_status_active'.tr(),
+            AppColors.green,
+          ),
+        SubscriptionStatus.canceled => (
+            'sub_status_canceled'.tr(),
+            AppColors.chipGrey,
+          ),
+        // An unmodelled state is not claimed to be live. Saying "expired" of a
+        // coupon that has merely gone unrecognised is the safe way round: it
+        // sends the user to look, rather than promising a discount checkout
+        // would then refuse.
+        SubscriptionStatus.expired ||
+        SubscriptionStatus.unknown =>
+          ('sub_status_expired'.tr(), AppColors.chipGrey),
+      };
 
   @override
   Widget build(BuildContext context) {
+    final (label, fill) = _style;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: AppColors.chipGrey,
+        color: fill,
         borderRadius: BorderRadius.circular(48.r),
       ),
       child: Text(

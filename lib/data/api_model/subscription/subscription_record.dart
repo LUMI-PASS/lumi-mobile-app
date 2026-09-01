@@ -1,3 +1,5 @@
+import 'package:lumi_pass/data/api_model/subscription/subscription_status.dart';
+
 /// A single entry in the user's coupon/subscription purchase history.
 /// Returned by [GET /api/transaction/subscriptions].
 class SubscriptionRecord {
@@ -23,9 +25,15 @@ class SubscriptionRecord {
     required this.amount,
   });
 
-  bool get isActive   => status == 'active';
-  bool get isExpired  => status == 'expired';
-  bool get isCanceled => status == 'canceled' || status == 'cancelled';
+  /// [status] resolved to the modelled vocabulary — unknown states degrade to
+  /// [SubscriptionStatus.unknown] rather than throwing. The raw string stays on
+  /// the model for (de)serialization.
+  SubscriptionStatus get subscriptionStatus =>
+      SubscriptionStatus.fromKey(status);
+
+  bool get isActive => subscriptionStatus == SubscriptionStatus.active;
+  bool get isExpired => subscriptionStatus == SubscriptionStatus.expired;
+  bool get isCanceled => subscriptionStatus == SubscriptionStatus.canceled;
 
   /// Remaining activities clamped so it never goes below zero.
   int get remaining =>
