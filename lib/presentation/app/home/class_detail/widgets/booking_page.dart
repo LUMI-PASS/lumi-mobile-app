@@ -3,6 +3,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/utils/cashback.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/course_period.dart';
+import 'package:lumi_pass/common/utils/course_timetable.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -719,6 +720,42 @@ class _BookingPageState extends State<BookingPage> {
   /// Buying one trial lesson rather than a whole course / a class ticket.
   bool get _isTrial => widget.courseOption == CoursePurchaseOption.trial;
 
+  /// Why this course purchase is refused, or null when nothing refuses it.
+  ///
+  /// The server decides — the same rules checkout enforces — so the page can
+  /// never offer something the API would then reject. The detail page used to
+  /// swallow this in a snackbar and stay put, which read as a dead button; it
+  /// now sends the buyer here regardless and this screen does the explaining.
+  ///
+  /// A refusal with no reason attached is still a refusal:
+  /// [CourseBlockedReason.unknown] renders the generic message, rather than a
+  /// null reason falling through to a purchase the server would bounce.
+  CourseBlockedReason? get _courseBlocked {
+    final level = widget.level;
+    if (!_isCourse || level == null) return null;
+    if (_isTrial) {
+      if (level.canBuyTrial) return null;
+      return level.trialBlockedReason ?? CourseBlockedReason.unknown;
+    }
+    if (level.canBuyFull) return null;
+    return level.blockedReason ?? CourseBlockedReason.unknown;
+  }
+
+  /// That refusal, worded for the buyer — null when nothing refuses it.
+  ///
+  /// [CourseBlockedReason.notConfigured] gets its own sentence rather than the
+  /// enum's terse one-liner ("Not available to buy yet"). That reason is not a
+  /// refusal of the buyer at all: the centre simply hasn't entered the course's
+  /// lesson days yet. "No schedule" is a fact a parent can understand and wait
+  /// on, where a bare "unavailable" just reads as broken.
+  String? get _blockedNotice {
+    final reason = _courseBlocked;
+    if (reason == null) return null;
+    return reason == CourseBlockedReason.notConfigured
+        ? 'course_blocked_no_schedule_long'.tr()
+        : reason.messageKey.tr();
+  }
+
   /// Fetch the cashback rate for what's being bought here.
   ///
   /// `purchase` has to match what checkout will send, because it selects which
@@ -1156,6 +1193,10 @@ class _BookingPageState extends State<BookingPage> {
   /// still missing — when the user can't pay yet.
   bool _validateForPayment() {
     if (_error != null) setState(() => _error = null);
+    // The server has already said no — checkout would only bounce it back. The
+    // reason is on screen throughout (see [_blockedNotice]), so this refuses
+    // quietly rather than replacing it with a second, vaguer message.
+    if (_courseBlocked != null) return false;
     // A course has no tickets or slots to validate, but it does have a day: the
     // trial lesson being bought, or the month's start date. The calendar
     // auto-selects the nearest one, so this only fires if that was cleared.
@@ -1692,9 +1733,14 @@ class _BookingPageState extends State<BookingPage> {
                           ],
                           20.kh,
                           _breakdownSection(c),
-                          if (_error != null) ...[
+                          // The server's refusal outranks a transient error
+                          // and is NOT clearable: picking a date or a slot
+                          // wipes `_error`, and a reason that belongs to the
+                          // whole course has to survive that. Same slot, same
+                          // styling as every other message on this page.
+                          if ((_blockedNotice ?? _error) != null) ...[
                             12.kh,
-                            Text(_error!,
+                            Text((_blockedNotice ?? _error)!,
                                 style: AppText.regular12
                                     .copyWith(color: AppColors.error)),
                           ],
@@ -1981,33 +2027,20 @@ class _BookingPageState extends State<BookingPage> {
         ? ''
         : '${day(periodStart)} – ${day(courseMonthEnd(periodStart))}';
 
-    final start = lessons.first.startTime?.trim() ?? '';
-    final end = lessons.first.endTime?.trim() ?? '';
-    final time = start.isEmpty ? '' : (end.isEmpty ? start : '$start – $end');
-
-    // Which weekdays it runs on, in week order rather than the order the dates
-    // happen to arrive in — "Mon, Tue, Thu" is how a parent holds a timetable,
-    // and it is the one fact the range and the clock don't tell them.
-    final weekdayNums = lessons
-        .map((l) => DateTime.tryParse(l.date)?.weekday)
-        .whereType<int>()
-        .toSet()
-        .toList()
-      ..sort();
-    final weekdays =
-        weekdayNums.map((w) => 'weekday_short_$w'.tr()).join(', ');
-    final caption =
-        [weekdays, time].where((s) => s.isNotEmpty).join('  ·  ');
+    // Which days it runs and at what time — the one fact the date range above
+    // doesn't tell them. The clock used to be read off the FIRST lesson and
+    // printed against every weekday, so a group meeting at 14:00 on Monday and
+    // 16:00 on Wednesday advertised 14:00 for both. Days are grouped by their
+    // own time instead, and only a day that actually differs gets split out.
+    final caption = courseTimetableSummary(lessons);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(
-          c,
-          'course_month_schedule'.tr(
-            namedArgs: {'count': '${lessons.length}'},
-          ),
-        ),
+        // No lesson count in the title. What is sold is the month, and the
+        // number of days that happen to fall in it varies with the start date
+        // — a count beside the heading read as the size of the package.
+        _sectionHeader(c, 'course_month_schedule'.tr()),
         PillCard(
           leading: PillIconBadge(
             child: Assets.icons.detail.icCalendar.svg(
@@ -2858,7 +2891,10 @@ class _TariffRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priceText = price > 0 ? price.toRawUzsPrice() : '—';
+    // A zero price is a REAL price here — a free trial lesson is the whole
+    // offer — so it says "free" rather than the "—" that reads as a price the
+    // screen failed to load.
+    final priceText = price > 0 ? price.toRawUzsPrice() : 'price_free'.tr();
     final discounted = discountedPrice;
 
     return PillCard(
@@ -2904,7 +2940,11 @@ class _TariffRow extends StatelessWidget {
               ),
               if (discounted != null)
                 Text(
-                  discounted > 0 ? discounted.toRawUzsPrice() : '—',
+                  // Same as above: a coupon that takes the row to nothing has
+                  // made it free, not unpriced.
+                  discounted > 0
+                      ? discounted.toRawUzsPrice()
+                      : 'price_free'.tr(),
                   style: AppText.semibold12.copyWith(color: AppColors.tagGreen),
                 ),
             ],

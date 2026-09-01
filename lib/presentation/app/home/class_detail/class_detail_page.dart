@@ -16,11 +16,13 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
-import 'package:lumi_pass/common/utils/course_period.dart';
+import 'package:lumi_pass/common/utils/course_timetable.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
+import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
@@ -76,11 +78,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// course's own weekday pattern, so the screen never re-derives them.
   CourseDetail? _course;
 
-  /// The trial lesson picked in the list above, on a course sold flat. Drives
-  /// the sticky bottom CTA: nothing picked, nothing to book. Reset whenever the
-  /// course reloads, since a purchase moves the ladder on.
-  CourseLesson? _pickedTrial;
-
   /// Which group the parent picked, on a course sold as several.
   ///
   /// Single select, and never empty: a course always runs as some group, so the
@@ -94,15 +91,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// Null only in the window before the course detail arrives; [_selectedLevel]
   /// falls back to the first group so nothing downstream has to handle that.
   String? _selectedLevelId;
-
-  /// The age brackets being enrolled, on a group priced by age.
-  ///
-  /// MULTI select — one bracket per child, so a parent signing up a 4-year-old
-  /// and a 7-year-old picks both and pays the sum. Keyed by bracket rather than
-  /// by index so a reload that reorders the tiers can't silently move the pick
-  /// onto a different price. Never empty once tiers exist: the last one cannot
-  /// be unticked, because a course bought for nobody has no price.
-  Set<String> _selectedTierKeys = <String>{};
 
   /// The groups this course is sold as, always at least one.
   ///
@@ -137,36 +125,44 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   /// The age brackets the picked group is sold at. Empty on a group with one
-  /// price — there is then nothing to choose and no picker to show.
+  /// price — there is then nothing to list and no card to show.
   List<CourseAgeTier> get _groupAgeTiers =>
       _selectedLevel?.ageTiers ?? const <CourseAgeTier>[];
 
-  /// Identity of a bracket, for [_selectedTierKeys]. An open-ended tier has no
-  /// upper bound, so its key ends empty rather than in a made-up age.
-  static String _tierKey(CourseAgeTier t) => '${t.ageFrom}-${t.ageTo ?? ''}';
-
-  /// The ticked brackets, in the order the server sent them.
-  List<CourseAgeTier> get _selectedAgeTiers => _groupAgeTiers
-      .where((t) => _selectedTierKeys.contains(_tierKey(t)))
-      .toList();
-
-  /// What the picked group costs as configured: the ticked brackets summed —
-  /// one place per bracket — or the group's own single price when it isn't
-  /// sold by age.
-  num get _courseTotal {
-    final picked = _selectedAgeTiers;
-    if (picked.isEmpty) return _selectedLevel?.coursePrice ?? 0;
-    return picked.fold<num>(0, (sum, t) => sum + t.price);
+  /// The trial ladder to show for [level] — dated where the server could date
+  /// it, the centre's raw configuration where it could not.
+  ///
+  /// The two endpoints carry the same trials in two forms: `/courses/:id` dates
+  /// them against the class schedule, `/classes/:id` echoes the configuration.
+  /// A course whose schedule hasn't been entered dates to nothing, so the first
+  /// comes back empty — but the trials are configured, the feed card is already
+  /// selling "first lesson free" off them, and a parent looking at the course
+  /// should see what the trial consists of. So the configuration stands in.
+  ///
+  /// The dated form always wins where it exists: it is the one checkout is
+  /// written against.
+  List<CourseLesson> _trialLadder(CourseLevel level) {
+    if (level.trialLessons.isNotEmpty) return level.trialLessons;
+    return [
+      for (final entry
+          in _full?.trialsForGroup(level.id) ?? const <CourseTrialEntry>[])
+        CourseLesson(
+          lessonNo: entry.lessonNo,
+          // Undated on purpose — there is no schedule to date it against. The
+          // row prints no date anyway (see [_TrialLessonRow]); what the empty
+          // date changes is that no single rung can be singled out, so the
+          // section offers the ladder as a whole instead.
+          date: '',
+          isTrial: true,
+          price: entry.price,
+          isMandatory: entry.isMandatory,
+        ),
+    ];
   }
 
-  /// Tick the first bracket of [level], dropping any pick belonging to the
-  /// group before it. A course priced by age has no meaningful "nothing
-  /// picked" state — the price on screen has to be a price of something — so
-  /// the cheapest bracket stands in until the parent says otherwise.
-  void _seedAgeTiers(CourseLevel? level) {
-    final tiers = level?.ageTiers ?? const <CourseAgeTier>[];
-    _selectedTierKeys = tiers.isEmpty ? <String>{} : {_tierKey(tiers.first)};
-  }
+  /// Whether [level]'s ladder carries real dates. False on the configuration
+  /// fallback, which is readable and tappable but has no session to name yet.
+  bool _trialDatesKnown(CourseLevel level) => level.trialLessons.isNotEmpty;
 
   /// A course is sold as a package, not per session. Known from the list model
   /// before the detail lands, so the CTA never flashes the ticket wording.
@@ -319,6 +315,26 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   Future<void> _loadFull() async {
     final id = widget.classModel.id;
     if (id == null) return;
+    // Two calls, because they answer two different questions: `/classes/:id` is
+    // the content (gallery, description, branch), `/courses/:id` is the
+    // commerce (dated lessons, what this user may buy and at what price).
+    // Neither payload carries the other's.
+    //
+    // Fired TOGETHER when the feed already told us this is a course, rather
+    // than chaining the second behind the first — they don't depend on each
+    // other, and chaining them made the page wait out both round-trips end to
+    // end. A course opened from somewhere that didn't say so falls back to
+    // the chained call below, once `/classes/:id` has answered.
+    final knownCourse = widget.classModel.isCourse == true;
+    if (knownCourse) {
+      // One frame late, not synchronously: this runs from initState, and
+      // `_loadCourse` reads `context.locale` — an inherited lookup that is
+      // illegal there. The frame costs nothing next to the round-trip, and
+      // `/classes/:id` below is already in flight by then, which is the point.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_loadCourse(id));
+      });
+    }
     try {
       final full = await getIt<OrdersApi>().getClassFull(id);
       if (!mounted) return;
@@ -326,7 +342,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         _full = full;
         _galleryImages = _resolveGallery(full);
       });
-      if (full.isCourse) unawaited(_loadCourse(id));
+      if (full.isCourse && !knownCourse) unawaited(_loadCourse(id));
     } catch (_) {
       // Keep whatever gallery/list image we already have.
     }
@@ -341,20 +357,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       if (!mounted) return;
       setState(() {
         _course = detail;
-        // A reload usually follows a purchase, which moves the ladder on — the
-        // old pick may now be bought or gone, so the CTA disarms rather than
-        // pointing at a lesson that is no longer for sale. Same for the picked
-        // subcourse: it may have just been enrolled in, or sold out.
-        _pickedTrial = null;
         // Re-seeded rather than cleared: the page always names a group. The
         // server's default is the cheapest one with seats left, which is the
         // same group it would have charged for had nothing been picked.
         final groups = detail.hasLevels ? detail.levels : [detail.flat];
         final fallback = groups.isEmpty ? null : groups.first;
         _selectedLevelId = detail.defaultLevelId ?? fallback?.id;
-        _seedAgeTiers(
-          groups.where((l) => l.id == _selectedLevelId).firstOrNull ?? fallback,
-        );
       });
     } catch (_) {
       // Leave _course null — the CTA reports "not ready yet" if tapped.
@@ -585,29 +593,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     await _openCourseBooking(level);
   }
 
-  /// Whether the sticky CTA should also sell a TRIAL lesson.
-  ///
-  /// True only for a ONE-group course that still has a rung left on its trial
-  /// ladder. With several groups the trial is bought from the panel that names
-  /// the group — a page-level trial button could not say which one it meant —
-  /// and once the ladder is used up the whole course is the only thing left to
-  /// sell, the same order the card pricing follows.
-  bool get _sellsTrialLessons {
-    if (!_isCourse || _courseGroups.length != 1) return false;
-    final level = _courseGroups.first;
-    return level.canBuyTrial &&
-        level.trialLessons.any((lesson) => lesson.isAvailable);
-  }
-
-  /// Book the picked trial lesson of the one group this course runs as. The
-  /// sticky CTA's half of [_openTrialBooking] — a multi-group course buys its
-  /// trial from the panel that names the group instead.
-  Future<void> _onBookTrialTapped() async {
-    final level = _selectedLevel;
-    if (level == null || _pickedTrial == null) return;
-    await _openTrialBooking(level);
-  }
-
   /// Buy ONE trial lesson of [level]: opens the same review-and-pay screen the
   /// whole course uses, so a trial is paid for exactly like anything else —
   /// with the calendar, the promocode field and the payment-method picker.
@@ -619,16 +604,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   Future<void> _openTrialBooking(CourseLevel level) async {
     final id = _full?.id ?? widget.classModel.id;
     if (id == null) return;
-    if (!level.canBuyTrial) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(level.trialBlockedReason == null
-              ? 'course_blocked_unavailable'.tr()
-              : _blockedMessage(level, level.trialBlockedReason!)),
-        ),
-      );
-      return;
-    }
+    // Deliberately NOT stopped here when the server says no. A tap that only
+    // flashes a snackbar and leaves the parent on the same screen reads as a
+    // broken button — they tapped Book and nothing happened. The booking page
+    // takes the refusal instead and gives it a whole screen: what is wrong,
+    // and what would have to change. See `_courseBlocked` there.
 
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.bookButtonTapped,
@@ -658,20 +638,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   /// Buy the whole course / a subcourse. A trial lesson goes through
-  /// [_onBookTrialTapped] (flat course) or [_buyCourse] (a level's own panel).
+  /// [_openTrialBooking], reached from the group panel's own trial button.
   Future<void> _openCourseBooking(CourseLevel level) async {
     final id = _full?.id ?? widget.classModel.id;
     if (id == null) return;
-    if (!level.canBuyFull) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(level.blockedReason == null
-              ? 'course_blocked_unavailable'.tr()
-              : _blockedMessage(level, level.blockedReason!)),
-        ),
-      );
-      return;
-    }
+    // Not stopped here either — see [_openTrialBooking]. The booking page
+    // explains the refusal in full rather than this screen swallowing it.
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.bookButtonTapped,
       params: {
@@ -684,7 +656,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     getIt<InterestReporter>().bookTapped(id);
     final full = _full;
     if (full == null) return;
-    // Same page as a class ticket — see [_onBookTrialTapped].
+    // Same page as a class ticket — see [_openTrialBooking].
     //
     // No explicit <bool> on the push: BookingRoute is generated as
     // PageRouteInfo<BookingRouteArgs> (no return-type param), so the router
@@ -695,12 +667,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         clazz: full,
         level: level,
         courseOption: CoursePurchaseOption.full,
-        // The brackets ticked on this page ARE the order: one place per child,
-        // priced per bracket. Carried over so the sheet's total is the figure
-        // the page just showed, rather than the group's single price.
-        ageTiers: level.id == _selectedLevel?.id
-            ? _selectedAgeTiers
-            : const <CourseAgeTier>[],
+        // No brackets carried over: the age card is a price list now, not a
+        // picker, so nothing on this page names one. Checkout therefore sends
+        // no bracket either, and the server charges the cheapest — which is
+        // exactly the figure the group panel quotes as "from X", so the page
+        // and the charge still agree.
       ),
     );
     if (purchased == true && mounted) await _loadCourse(id);
@@ -874,13 +845,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
                 // Runway under the last card so the sticky CTA never covers it.
                 // Every variant of this page now carries that bar, including a
-                // course sold as subcourses, so the tall spacing is unconditional
-                // — taller still while the trial variant stacks a second button
-                // under the first.
+                // course sold as subcourses, so the spacing is unconditional —
+                // and one button tall, since the trial lives in the group
+                // panels rather than stacked up here.
                 SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: (_sellsTrialLessons ? 146.h : 90.h) + safeBottom,
-                  ),
+                  child: SizedBox(height: 90.h + safeBottom),
                 ),
               ],
             ),
@@ -951,49 +920,28 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 // course), never as a dated ticket — so it gets its own
                 // wording and buys the default level directly instead of
                 // opening the per-session booking flow.
+                //
+                // Trials are NOT sold from here. Each group panel carries its
+                // own "book the trial lesson" button under its own ladder —
+                // stacking one up here put a trial button on top of the
+                // whole-course button with nothing on it saying whose trial it
+                // was.
                 child: !_isBookable
                     ? _ComingSoonButton(c: c)
-                    : _sellsTrialLessons
-                        // A course still offering trial lessons sells one of
-                        // those first — that is what the list above is for.
-                        // Inert until a lesson is picked, so the button can
-                        // never book an unnamed one. The whole course stays
-                        // one tap away underneath.
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              GradientButton(
-                                text: 'course_book_trial_cta'.tr(),
-                                onPressed: _pickedTrial == null
-                                    ? null
-                                    : _onBookTrialTapped,
-                              ),
-                              8.verticalSpace,
-                              // Green, not a faint text link. Where the trial
-                              // is free the trial button is the cheap-looking
-                              // option and this is the one that earns — a
-                              // greyed-out link next to it reads as an
-                              // afterthought rather than the real offer.
-                              _GreenButton(
-                                text: 'course_buy_full'.tr(),
-                                onPressed: _onBuyCourseTapped,
-                              ),
-                            ],
-                          )
-                        : GradientButton(
-                            // A group is always picked, so the only thing
-                            // left to wait on is the course detail landing —
-                            // and the button says so rather than offering to
-                            // buy something it can't name yet.
-                            text: !_isCourse
-                                ? 'buy_tickets'.tr()
-                                : ctaEnabled
-                                    ? 'course_buy_cta'.tr()
-                                    : 'cta_loading'.tr(),
-                            enabled: ctaEnabled,
-                            onPressed:
-                                _isCourse ? _onBuyCourseTapped : _openBooking,
-                          ),
+                    : GradientButton(
+                        // A group is always picked, so the only thing left to
+                        // wait on is the course detail landing — and the button
+                        // says so rather than offering to buy something it
+                        // can't name yet.
+                        text: !_isCourse
+                            ? 'buy_tickets'.tr()
+                            : ctaEnabled
+                                ? 'course_buy_cta'.tr()
+                                : 'cta_loading'.tr(),
+                        enabled: ctaEnabled,
+                        onPressed:
+                            _isCourse ? _onBuyCourseTapped : _openBooking,
+                      ),
               ),
             ),
           ],
@@ -1133,10 +1081,33 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('detail_location'.tr(),
-                            style: AppText.regular12
-                                .copyWith(color: c.textSecondary)),
-                        4.verticalSpace,
+                        // How far away it is — and nothing else. The grey
+                        // "Location" label that used to head this line told a
+                        // parent what the pin icon and the centre's name
+                        // underneath already say; the distance is the one fact
+                        // here they can't get anywhere else on the card.
+                        //
+                        // Measured off [_venueLat]/[_venueLng], so it works
+                        // from the list payload's flat coordinates before
+                        // `/classes/:id` has landed and from the detail's
+                        // nested ones after. No distance is no line at all —
+                        // the name then sits alone, rather than under a gap.
+                        ValueListenableBuilder<UserLocation?>(
+                          valueListenable: currentUserLocation,
+                          builder: (context, _, __) {
+                            if (DistanceLabel.labelFor(_venueLat, _venueLng) ==
+                                null) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 4.h),
+                              child: DistanceLabel(
+                                latitude: _venueLat,
+                                longitude: _venueLng,
+                              ),
+                            );
+                          },
+                        ),
                         Text(
                           branchTitle,
                           maxLines: 1,
@@ -1300,7 +1271,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
               child: _CourseLevelPanel(
                 level: level,
-                weekdays: _courseWeekdays(_courseCalendar(level)),
+                timetable: courseTimetableSummary(_courseCalendar(level)),
                 trialCouponPct: _trialCouponPct,
                 // The lone group is always the one being bought, so it reads as
                 // picked without a radio to tap.
@@ -1317,22 +1288,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     : () => setState(() {
                           if (level.id == _selectedLevelId) return;
                           _selectedLevelId = level.id;
-                          // The brackets belong to the group, so a new group
-                          // means a new set of prices — carrying the old ticks
-                          // across would price the sale off the wrong one.
-                          _seedAgeTiers(level);
                         }),
-                // With several groups the trial is bought from the panel — it
-                // is the only place that says WHICH group's trial. With one,
-                // the sticky CTA below does it, so the section only reports the
-                // choice up.
-                onBuyTrial: single ? null : () => _openTrialBooking(level),
-                onTrialSelectionChanged: single
-                    ? (lesson) {
-                        if (_pickedTrial?.date == lesson?.date) return;
-                        setState(() => _pickedTrial = lesson);
-                      }
-                    : null,
+                // The trial is ALWAYS bought from the panel, one group or
+                // several: the button sits under the ladder it belongs to, so
+                // it can only ever mean that group's trial. The sticky CTA
+                // below sells the whole course and nothing else.
+                // Dated where the server could date it, configured-only where
+                // it could not — see [_trialLadder].
+                trialLessons: _trialLadder(level),
+                trialDatesKnown: _trialDatesKnown(level),
+                onBuyTrial: () => _openTrialBooking(level),
               ),
             );
           }),
@@ -1355,76 +1320,31 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// group panels are: the price a parent decides on is the one their children
   /// actually add up to, and a sheet that has to be opened to see it hides the
   /// decision behind the commitment.
-  Widget _courseAgeTiersCard(AppColorScheme c, List<CourseAgeTier> tiers) {
-    final picked = _selectedAgeTiers;
-    return DetailCard(
-      c: c,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DetailCardHeader(
-            c: c,
-            icon: Assets.icons.home.profile2user,
-            iconGradient: AppGradients.brand,
-            title: 'course_choose_age_title'.tr(),
-          ),
-          8.verticalSpace,
-          Text(
-            'course_choose_age_sub'.tr(),
-            style: AppText.regular12.copyWith(color: c.textSecondary),
-          ),
-          14.verticalSpace,
-          ...List.generate(tiers.length, (i) {
-            final tier = tiers[i];
-            final key = _tierKey(tier);
-            final selected = _selectedTierKeys.contains(key);
-            return Padding(
-              padding:
-                  EdgeInsets.only(bottom: i == tiers.length - 1 ? 0 : 8.h),
-              child: _AgeTierRow(
-                tier: tier,
-                selected: selected,
-                // Unticking the last bracket is refused rather than hidden:
-                // the row stays tappable so the tap has an obvious effect
-                // everywhere else, and the one case that would leave the sale
-                // priced at nothing simply doesn't take.
-                onTap: () => setState(() {
-                  if (!selected) {
-                    _selectedTierKeys = {..._selectedTierKeys, key};
-                  } else if (_selectedTierKeys.length > 1) {
-                    _selectedTierKeys = {..._selectedTierKeys}..remove(key);
-                  }
-                }),
-              ),
-            );
-          }),
-          // Only worth a line once there is arithmetic to show. With one
-          // bracket ticked the total is the row's own price, and repeating it
-          // underneath reads as a second charge.
-          if (picked.length > 1) ...[
-            12.verticalSpace,
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'course_age_total'
-                        .tr(namedArgs: {'count': '${picked.length}'}),
-                    style:
-                        AppText.semibold14.copyWith(color: c.textPrimary),
-                  ),
-                ),
-                Text(
-                  _courseTotal.toRawUzsPrice(),
-                  style: AppText.bold16
-                      .copyWith(color: AppColors.brandPurple),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+  Widget _courseAgeTiersCard(AppColorScheme c, List<CourseAgeTier> tiers) =>
+      _pricesCard(c, _courseAgeRows(tiers));
+
+  /// A course's age brackets as [_PriceRowData], so they render through the
+  /// very same [_PriceRow] an activity's prices do.
+  ///
+  /// No duration: an activity bracket can be priced by how long the child
+  /// stays, and needs the duration to tell two rows of the same age apart. A
+  /// course is sold as a course, so a bracket is one price and the row carries
+  /// none.
+  List<_PriceRowData> _courseAgeRows(List<CourseAgeTier> tiers) =>
+      tiers.map((t) {
+        // Same reading an activity row gets: a bracket that starts at school
+        // age, or has no upper bound, is not a toddler class.
+        final adults = t.ageFrom >= 6 || t.ageTo == null;
+        return (
+          range: '${t.rangeLabel} ${'age_years_suffix'.tr()}',
+          subtitle: adults ? 'price_tier_all'.tr() : 'price_tier_children'.tr(),
+          duration: null,
+          price: t.price,
+          icon: adults
+              ? Assets.icons.home.profile2user
+              : Assets.icons.home.babyGirl,
+        );
+      }).toList();
 
   // ─── Description card ───────────────────────────────────────────────────────
   Widget _descriptionCard(AppColorScheme c, String title, String description) {
@@ -1682,29 +1602,28 @@ class _PriceRow extends StatelessWidget {
               ],
             ),
           ),
-          _priceChip(),
+          _priceText(),
         ],
       ),
     );
   }
 
-  Widget _priceChip() {
-    Container chip(Widget child) => Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-          decoration: BoxDecoration(
-            color: detailChipFill(c),
-            borderRadius: BorderRadius.circular(40.r),
-          ),
-          child: child,
-        );
+  /// The price, as plain text.
+  ///
+  /// Deliberately NOT a filled chip. The white pill it used to sit in was a
+  /// second surface stacked on the row's own fill — on a light theme, white on
+  /// grey inside a white card — which framed the price as a separate object
+  /// rather than the end of the line it belongs to. Nothing needs a container
+  /// to be findable at the right edge of its own row.
+  Widget _priceText() {
     if (couponPct <= 0 || row.price <= 0) {
-      return chip(Text(
+      return Text(
         row.price <= 0 ? 'price_free'.tr() : row.price.toRawUzsPrice(),
-        style: AppText.semibold12.copyWith(color: c.textPrimary),
-      ));
+        style: AppText.semibold14.copyWith(color: c.textPrimary),
+      );
     }
     final discounted = (row.price * (100 - couponPct) / 100).round();
-    return chip(Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1713,12 +1632,13 @@ class _PriceRow extends StatelessWidget {
           style: AppText.regular12.copyWith(
             color: c.textMuted,
             decoration: TextDecoration.lineThrough,
+            decorationColor: c.textMuted,
           ),
         ),
         Text(discounted.toRawUzsPrice(),
-            style: AppText.semibold12.copyWith(color: AppColors.green)),
+            style: AppText.semibold14.copyWith(color: AppColors.green)),
       ],
-    ));
+    );
   }
 }
 
@@ -1842,48 +1762,6 @@ List<CourseLesson> _courseCalendar(CourseLevel level) {
   return lessons;
 }
 
-/// "Tue, Thu, Sat" — which days the course runs, above the dated list.
-/// Weekdays are read off the lessons themselves so the summary can never
-/// disagree with the rows below it.
-///
-/// Days only: the lesson count used to be tacked on here, but the dated list
-/// underneath already is the count, and the caller has the trial count to
-/// state — three numbers on one line said less than one.
-String _courseWeekdays(List<CourseLesson> lessons) {
-  if (lessons.isEmpty) return '';
-  // In WEEK order, not the order the dates happen to arrive in. The lessons are
-  // sorted by date, so a course whose first lesson falls on a Wednesday read
-  // "Wed, Fri, Mon" — a timetable nobody holds in their head that way.
-  // DateTime.weekday is Mon=1…Sun=7, so sorting the numbers is the week order.
-  final weekdayNums = lessons
-      .map((l) => DateTime.tryParse(l.date)?.weekday)
-      .whereType<int>()
-      .toSet()
-      .toList()
-    ..sort();
-  return weekdayNums.map((w) => 'weekday_short_$w'.tr()).join(', ');
-}
-
-/// When a course runs: its first lesson, and one calendar month later.
-///
-/// The end is a MONTH from the start, not the last lesson's date — a course is
-/// sold as a month of lessons, so 11 Jan reads as "to 11 Feb" whether the
-/// timetable's last entry falls on the 8th or the 14th. See [courseMonthEnd],
-/// which the purchase sheet words its own month from.
-///
-/// Null when the group has no dated lessons — there is then no start to count
-/// from, and the panel simply doesn't show a range.
-({DateTime start, DateTime end})? _courseRun(CourseLevel level) {
-  final lessons = _courseCalendar(level);
-  if (lessons.isEmpty) return null;
-  final start = DateTime.tryParse(lessons.first.date);
-  if (start == null) return null;
-  return (start: start, end: courseMonthEnd(start));
-}
-
-/// "11 yan" — a date as the rest of this page words them.
-String _shortDate(DateTime d) => '${d.day} ${'month_short_${d.month}'.tr()}';
-
 /// Why a purchase is refused, in words for the parent.
 ///
 /// Mostly the reason's own message, but "wait for your first trial lesson" is
@@ -1932,37 +1810,45 @@ String _blockedMessage(CourseLevel level, CourseBlockedReason reason) {
 /// but cannot be picked: the ladder reads as a whole, and a gap in it would
 /// look like a missing lesson rather than a used one.
 ///
-/// Selection is reported up via [onSelectionChanged] so the page's sticky
-/// bottom CTA can enable itself — the one-group case, where that CTA is
-/// unambiguous. Where it is not — a course running as several groups, whose
-/// sticky CTA could not say whose trial it meant — [onBuy] renders an inline
-/// button on the panel instead.
+/// Picking a rung reveals [onBuy] directly under the ladder, inside the group
+/// panel. The trial is never sold from the page's sticky bottom CTA: a button
+/// up there could not say whose trial it meant, and it sat on top of the
+/// whole-course button competing with it.
 class _CourseTrialSection extends StatefulWidget {
   const _CourseTrialSection({
     required this.level,
+    required this.lessons,
+    required this.datesKnown,
     required this.couponPct,
-    this.onBuy,
-    this.onSelectionChanged,
+    required this.onBuy,
     this.onFrosted = false,
   });
 
   final CourseLevel level;
+
+  /// The rungs to draw. Normally [CourseLevel.trialLessons]; the centre's raw
+  /// configuration when the class has no schedule to date them against — see
+  /// `_trialLadder`.
+  final List<CourseLesson> lessons;
+
+  /// False on that configuration-only ladder. The rows still say what each
+  /// lesson is and what it costs, but no single rung can be picked: they all
+  /// carry the same empty date, and there is no session yet to buy. The whole
+  /// ladder is offered with one button instead, and the refusal is explained
+  /// on the booking screen.
+  final bool datesKnown;
 
   /// The buyer's coupon on one trial lesson, capped to this course. A trial is
   /// bought one lesson at a time — the shape a coupon plan is sold against — so
   /// unlike the enrolment price beside it, this ladder prices the discount.
   final num couponPct;
 
-  /// Open the booking screen for the picked lesson. Null when the sticky bottom
-  /// CTA drives it instead.
+  /// Open the booking screen for the picked lesson.
   ///
   /// Takes no date: the booking screen offers the group's own trial dates and
   /// the purchase is written against the day picked THERE, so handing one over
   /// here would only be overwritten.
-  final VoidCallback? onBuy;
-
-  /// Reports the picked lesson (or null) so a bottom CTA can follow it.
-  final ValueChanged<CourseLesson?>? onSelectionChanged;
+  final VoidCallback onBuy;
 
   /// True when the section is nested in a [FrostedCard]. This only selects the
   /// branded header treatment; content colours remain theme-aware.
@@ -1973,17 +1859,28 @@ class _CourseTrialSection extends StatefulWidget {
 }
 
 class _CourseTrialSectionState extends State<_CourseTrialSection> {
-  /// The picked lesson's DATE, not its index: the offered set rolls forward as
-  /// dates pass, so an index would silently point at a different day tomorrow.
+  /// The picked rung's identity — see [_keyOf].
   ///
-  /// Starts unset — nothing is preselected, because the bottom CTA reads as
-  /// "book the trial lesson" and must not be armed before a parent has said
-  /// which one.
-  String? _pickedDate;
+  /// Starts unset — nothing is preselected, because the button reads as "book
+  /// the trial lesson" and must not appear before a parent has said which one.
+  String? _pickedKey;
+
+  /// Whether the ladder is unrolled. Shut to start — see [_header].
+  bool _expanded = false;
+
+  /// How a rung is identified for selection.
+  ///
+  /// A DATED ladder keys on the date, not the position: the offered set rolls
+  /// forward as days pass, so a position would silently point at a different
+  /// session tomorrow. An undated ladder has no date to key on — every row
+  /// would answer to the same empty string — so it keys on the rung number,
+  /// which is stable there precisely because nothing is rolling forward yet.
+  String _keyOf(CourseLesson lesson) =>
+      widget.datesKnown ? lesson.date : 'rung-${lesson.lessonNo}';
 
   CourseLesson? get _picked {
-    for (final lesson in widget.level.trialLessons) {
-      if (lesson.date == _pickedDate) return lesson;
+    for (final lesson in widget.lessons) {
+      if (_keyOf(lesson) == _pickedKey) return lesson;
     }
     return null;
   }
@@ -1997,9 +1894,9 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
   /// so the screen and the charge can never name different lessons.
   ///
   /// Null once nothing is left to take.
-  String? get _nextRungDate {
-    for (final lesson in widget.level.trialLessons) {
-      if (lesson.isAvailable) return lesson.date;
+  String? get _nextRungKey {
+    for (final lesson in widget.lessons) {
+      if (lesson.isAvailable) return _keyOf(lesson);
     }
     return null;
   }
@@ -2008,75 +1905,153 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
   void didUpdateWidget(_CourseTrialSection old) {
     super.didUpdateWidget(old);
     // After a purchase the lesson just bought stops being available; a stale
-    // pick would arm the CTA for something no longer on sale.
-    if (_pickedDate != null && _picked?.isAvailable != true) {
-      _pickedDate = null;
-      _notify(null);
+    // pick would offer to book something no longer on sale.
+    if (_pickedKey != null && _picked?.isAvailable != true) {
+      _pickedKey = null;
     }
   }
 
-  /// Reported after the frame, never during build — the parent rebuilds its
-  /// bottom CTA in response, and setState during build throws.
-  void _notify(CourseLesson? lesson) {
-    final report = widget.onSelectionChanged;
-    if (report == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) report(lesson);
-    });
-  }
-
   void _pick(CourseLesson lesson) {
+    final key = _keyOf(lesson);
     setState(() {
       // Tapping the picked row clears it, so a parent can back out of the
       // choice without leaving the screen.
-      _pickedDate = _pickedDate == lesson.date ? null : lesson.date;
+      _pickedKey = _pickedKey == key ? null : key;
     });
-    _notify(_picked);
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final level = widget.level;
+    final dated = widget.datesKnown;
     final blocked = !level.canBuyTrial ? level.trialBlockedReason : null;
-    final lessons = level.trialLessons;
+    final lessons = widget.lessons;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'course_trial_title'.tr(namedArgs: {'count': '${lessons.length}'}),
-          style: AppText.semibold14.copyWith(color: c.textPrimary),
-        ),
-        6.verticalSpace,
-        Text(
-          blocked == null
-              ? 'course_trial_pick_lesson_hint'.tr()
-              : _blockedMessage(level, blocked),
-          style: AppText.regular12.copyWith(color: c.textMuted),
-        ),
-        12.verticalSpace,
-        for (var i = 0; i < lessons.length; i++) ...[
-          if (i > 0) 8.verticalSpace,
-          _TrialLessonRow(
-            lesson: lessons[i],
-            selected: lessons[i].date == _pickedDate,
-            couponPct: widget.couponPct,
-            onFrosted: widget.onFrosted,
-            // Locked until the rungs below it are done — see [_nextRungDate].
-            locked: lessons[i].isAvailable && lessons[i].date != _nextRungDate,
-            // A blocked section is still worth READING — it says which lessons
-            // exist and what they cost — so the rows render, just inert.
-            onTap: blocked == null && lessons[i].date == _nextRungDate
-                ? () => _pick(lessons[i])
-                : null,
+    final picked = _picked;
+    // The refusal still gets said with the ladder shut — it is the reason the
+    // rows underneath would be dead, and a parent must not have to open them
+    // to find that out. The ordinary "pick a lesson" invitation is gone: the
+    // rows are radio buttons, they say so themselves.
+    final blockedNote =
+        dated && blocked != null ? _blockedMessage(level, blocked) : null;
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      alignment: Alignment.topCenter,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _header(c, lessons.length, picked),
+          if (blockedNote != null) ...[
+            6.verticalSpace,
+            Text(
+              blockedNote,
+              style: AppText.regular12.copyWith(color: c.textMuted),
+            ),
+          ],
+          if (_expanded) ...[
+            12.verticalSpace,
+            for (var i = 0; i < lessons.length; i++) ...[
+              if (i > 0) 8.verticalSpace,
+              _row(lessons[i], dated: dated, blocked: blocked),
+            ],
+          ],
+          // Same gate either way: pick a rung, then the button appears. What
+          // differs on an undated ladder is only that `blocked` is ignored —
+          // the refusal there belongs to the course, and the booking screen is
+          // where it gets explained rather than here.
+          //
+          // Outside the collapsible part on purpose: a pick survives the ladder
+          // being folded away, and the button that acts on it has to survive
+          // with it, or the choice would be stranded behind a chevron.
+          if (picked != null && (!dated || blocked == null)) ...[
+            12.verticalSpace,
+            _buyButton(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// The ladder's title, doubling as the collapse control.
+  ///
+  /// Folded shut by default. A group panel already carries a name, a schedule,
+  /// a price and a description; unrolling three or four dated rungs under every
+  /// one of them turned the choice a parent came to make into a scroll. The
+  /// count in the title says what is behind the chevron, and once a rung is
+  /// picked the header names it — so the fold never hides the answer.
+  Widget _header(AppColorScheme c, int count, CourseLesson? picked) {
+    return GestureDetector(
+      onTap: () => setState(() => _expanded = !_expanded),
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'course_trial_title'.tr(namedArgs: {'count': '$count'}),
+                  style: AppText.semibold14.copyWith(color: c.textPrimary),
+                ),
+                if (picked != null && !_expanded) ...[
+                  4.verticalSpace,
+                  Text(
+                    'course_trial_lesson_no'
+                        .tr(namedArgs: {'n': '${picked.lessonNo}'}),
+                    style: AppText.regular12.copyWith(
+                      color: widget.onFrosted
+                          ? AppColors.brandPurple
+                          : c.primary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          8.horizontalSpace,
+          AnimatedRotation(
+            turns: _expanded ? 0.5 : 0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: Assets.icons.arrowDown.svg(
+              width: 20.w,
+              height: 20.w,
+              colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn),
+            ),
           ),
         ],
-        if (widget.onBuy != null && blocked == null && _picked != null) ...[
-          12.verticalSpace,
-          _buyButton(),
-        ],
-      ],
+      ),
+    );
+  }
+
+  /// One rung of the ladder.
+  ///
+  /// A trial is taken in order — you cannot sit the third lesson before the
+  /// first — so exactly ONE rung is ever selectable and the rest carry a
+  /// padlock. That holds whether or not the ladder has dates: the ordering is
+  /// a property of the trial itself, not of the calendar.
+  ///
+  /// What an undated ladder changes is only [blocked]: the refusal there
+  /// belongs to the whole course, and the booking screen states it, so it does
+  /// not deaden the one rung that is next in line.
+  Widget _row(
+    CourseLesson lesson, {
+    required bool dated,
+    required CourseBlockedReason? blocked,
+  }) {
+    final key = _keyOf(lesson);
+    final isNext = key == _nextRungKey;
+    return _TrialLessonRow(
+      lesson: lesson,
+      selected: key == _pickedKey,
+      couponPct: widget.couponPct,
+      onFrosted: widget.onFrosted,
+      // Locked until the rungs below it are done — see [_nextRungKey].
+      locked: lesson.isAvailable && !isNext,
+      onTap: isNext && (!dated || blocked == null) ? () => _pick(lesson) : null,
     );
   }
 
@@ -2259,88 +2234,6 @@ class _TrialLessonRow extends StatelessWidget {
 /// A square box rather than [_RadioDot]'s circle — the group above is a
 /// one-of-many radio and this is a many-of-many checkbox, and the shape is what
 /// says so before anything is tapped.
-class _AgeTierRow extends StatelessWidget {
-  const _AgeTierRow({
-    required this.tier,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final CourseAgeTier tier;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    const accent = AppColors.brandPurple;
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.08) : c.surface,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: selected ? accent : c.border,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            _CheckBox(selected: selected, accent: accent, border: c.border),
-            10.horizontalSpace,
-            Expanded(
-              child: Text(
-                '${tier.rangeLabel} ${'age_years_suffix'.tr()}',
-                style: AppText.semibold14.copyWith(color: c.textPrimary),
-              ),
-            ),
-            8.horizontalSpace,
-            // No coupon treatment here: a bracket prices the WHOLE course, and
-            // that is the one purchase a coupon plan never discounts. The trial
-            // ladder above is where a coupon holder sees a struck price.
-            Text(
-              tier.price.toRawUzsPrice(),
-              style: AppText.semibold14.copyWith(color: c.textPrimary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Square tick box — the multi-select counterpart of [_RadioDot].
-class _CheckBox extends StatelessWidget {
-  const _CheckBox({
-    required this.selected,
-    required this.accent,
-    required this.border,
-  });
-
-  final bool selected;
-  final Color accent;
-  final Color border;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 20.w,
-      height: 20.w,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6.r),
-        border: Border.all(color: selected ? accent : border, width: 2),
-        color: selected ? accent : Colors.transparent,
-      ),
-      child:
-          selected ? Icon(Icons.check, size: 13.sp, color: Colors.white) : null,
-    );
-  }
-}
-
 class _RadioDot extends StatelessWidget {
   const _RadioDot({
     required this.selected,
@@ -2364,47 +2257,6 @@ class _RadioDot extends StatelessWidget {
       ),
       child:
           selected ? Icon(Icons.check, size: 13.sp, color: Colors.white) : null,
-    );
-  }
-}
-
-/// Full-width green action button — the whole-course buy next to a trial CTA.
-///
-/// Green rather than the brand gradient so the two buttons in the bottom bar
-/// are told apart at a glance: the gradient one takes the next trial lesson,
-/// this one commits to the course.
-class _GreenButton extends StatelessWidget {
-  const _GreenButton({required this.text, required this.onPressed});
-
-  final String text;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: GestureDetector(
-        onTap: onPressed,
-        behavior: HitTestBehavior.opaque,
-        child: Opacity(
-          opacity: onPressed == null ? 0.5 : 1,
-          child: Container(
-            // Same 44 as [GradientButton], the trial CTA directly above it:
-            // both radii exceed half the button's height, so each renders as a
-            // full pill and the two read as one pair rather than two styles.
-            padding: EdgeInsets.symmetric(vertical: 14.h),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: AppGradients.green,
-              borderRadius: BorderRadius.circular(44.r),
-            ),
-            child: Text(
-              text,
-              style: AppText.semibold14.copyWith(color: Colors.white),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -2601,17 +2453,32 @@ class _TrialDateChip extends StatelessWidget {
 class _CourseLevelPanel extends StatelessWidget {
   const _CourseLevelPanel({
     required this.level,
-    required this.weekdays,
+    required this.timetable,
     required this.selected,
     required this.onSelect,
     required this.onBuyTrial,
     required this.trialCouponPct,
-    this.onTrialSelectionChanged,
+    required this.trialLessons,
+    required this.trialDatesKnown,
     this.selectable = true,
   });
 
   final CourseLevel level;
-  final String weekdays;
+  /// "Mon, Wed 14:00 – 15:00" — the days this group runs on and the clock they
+  /// run at, split per set of days where they don't share one. Read off the
+  /// lessons themselves, so the line can never disagree with the ladder below
+  /// it. See `courseTimetableSummary`.
+  final String timetable;
+
+  /// This group's trial ladder — the server's dated one where it exists, the
+  /// centre's raw configuration where the class has no schedule to date it
+  /// against. Passed in rather than read off [level] because only the page can
+  /// see the second source. See `_trialLadder`.
+  final List<CourseLesson> trialLessons;
+
+  /// False on the configuration-only ladder: it says what the trials are and
+  /// what they cost, but not when they run.
+  final bool trialDatesKnown;
 
   /// The coupon on ONE trial lesson, already capped to this course. Passed
   /// down to the ladder rows — the group's own course price is NOT discounted
@@ -2630,13 +2497,10 @@ class _CourseLevelPanel extends StatelessWidget {
   /// there is nothing to choose.
   final VoidCallback? onSelect;
 
-  /// Buy a trial lesson of this group, on the shared booking screen. Null when
-  /// the page's sticky CTA drives it instead — see [onTrialSelectionChanged].
-  final VoidCallback? onBuyTrial;
-
-  /// Reports the picked trial lesson up so the sticky CTA can follow it. Set
-  /// only when this is the lone group.
-  final ValueChanged<CourseLesson?>? onTrialSelectionChanged;
+  /// Buy a trial lesson of this group, on the shared booking screen. Always
+  /// set: the trial is sold from the panel that names the group, never from
+  /// the page's sticky CTA.
+  final VoidCallback onBuyTrial;
 
   @override
   Widget build(BuildContext context) {
@@ -2651,8 +2515,7 @@ class _CourseLevelPanel extends StatelessWidget {
     final name = (level.name ?? '').trim().isNotEmpty
         ? level.name!.trim()
         : 'course_group_default_name'.tr();
-    final summary = _summary(level, weekdays);
-    final run = _courseRun(level);
+    final summary = _summary(timetable);
     // The panel stays pickable even when the group can't be bought right
     // now: the reason is surfaced when the CTA is tapped, which reads better
     // than an inert row a parent has to guess about. Sold out is still worth
@@ -2714,41 +2577,24 @@ class _CourseLevelPanel extends StatelessWidget {
                                 .copyWith(color: colors.textSecondary),
                           ),
                         ],
-                        // When the course actually runs. Stated on every
-                        // panel, not just the picked one: it is one of the two
-                        // facts a parent picks a group ON, so hiding it until
-                        // after the pick would be asking them to choose blind.
-                        if (run != null) ...[
-                          4.verticalSpace,
-                          Text(
-                            'course_run_dates'.tr(namedArgs: {
-                              'from': _shortDate(run.start),
-                              'to': _shortDate(run.end),
-                            }),
-                            style: AppText.regular12
-                                .copyWith(color: colors.textSecondary),
-                          ),
-                        ],
-                        if (enrolled ||
-                            hasTrial ||
-                            level.seatsLeft != null) ...[
+                        // What the parent already has here, or the one thing
+                        // that would stop them. The seat COUNT is gone: a
+                        // running tally is a pressure line, not a fact anyone
+                        // decides on, and it moved under them between opening
+                        // the page and paying. Being full still gets said —
+                        // that one changes whether they can book at all.
+                        if (enrolled || hasTrial || level.isFull) ...[
                           4.verticalSpace,
                           Text(
                             enrolled
                                 ? 'course_level_enrolled'.tr()
                                 : hasTrial
                                     ? 'course_level_trial'.tr()
-                                    : level.isFull
-                                        ? 'course_full_no_seats'.tr()
-                                        : 'course_seats_left'.tr(namedArgs: {
-                                            'count': '${level.seatsLeft}',
-                                          }),
+                                    : 'course_full_no_seats'.tr(),
                             style: AppText.regular12.copyWith(
                               color: enrolled || hasTrial
                                   ? AppColors.green
-                                  : level.isFull
-                                      ? AppColors.error
-                                      : colors.textMuted,
+                                  : AppColors.error,
                             ),
                           ),
                         ],
@@ -2783,13 +2629,14 @@ class _CourseLevelPanel extends StatelessWidget {
               // four choices into a screen of scrolling, and the parent has to
               // pick one before any of it matters anyway. A lone group counts
               // as picked, so it opens straight away.
-              if (selected && level.trialLessons.isNotEmpty) ...[
+              if (selected && trialLessons.isNotEmpty) ...[
                 12.verticalSpace,
                 _CourseTrialSection(
                   level: level,
+                  lessons: trialLessons,
+                  datesKnown: trialDatesKnown,
                   couponPct: trialCouponPct,
                   onBuy: onBuyTrial,
-                  onSelectionChanged: onTrialSelectionChanged,
                   onFrosted: true,
                 ),
               ],
@@ -2810,12 +2657,15 @@ class _CourseLevelPanel extends StatelessWidget {
   /// Stated whether the group is open or closed. It duplicates the trial
   /// section's own title by a couple of lines when open, which is cheaper than
   /// a summary that rewrites itself every time the panel is tapped.
-  String _summary(CourseLevel level, String weekdays) {
-    final trials = level.trialLessons.isEmpty
+  /// Counts the ladder actually on screen, not the server's dated one: a course
+  /// still waiting on its schedule has trials to announce, and the line that
+  /// announces them has to agree with the rows underneath it.
+  String _summary(String timetable) {
+    final trials = trialLessons.isEmpty
         ? ''
         : 'course_trial_count'
-            .tr(namedArgs: {'count': '${level.trialLessons.length}'});
-    return [weekdays, trials].where((s) => s.isNotEmpty).join(' · ');
+            .tr(namedArgs: {'count': '${trialLessons.length}'});
+    return [timetable, trials].where((s) => s.isNotEmpty).join(' · ');
   }
 }
 
