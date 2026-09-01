@@ -95,15 +95,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// falls back to the first group so nothing downstream has to handle that.
   String? _selectedLevelId;
 
-  /// The age brackets being enrolled, on a group priced by age.
-  ///
-  /// MULTI select — one bracket per child, so a parent signing up a 4-year-old
-  /// and a 7-year-old picks both and pays the sum. Keyed by bracket rather than
-  /// by index so a reload that reorders the tiers can't silently move the pick
-  /// onto a different price. Never empty once tiers exist: the last one cannot
-  /// be unticked, because a course bought for nobody has no price.
-  Set<String> _selectedTierKeys = <String>{};
-
   /// The groups this course is sold as, always at least one.
   ///
   /// A course the centre entered without subcourses is still a course that runs
@@ -136,37 +127,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return groups.first;
   }
 
-  /// The age brackets the picked group is sold at. Empty on a group with one
-  /// price — there is then nothing to choose and no picker to show.
-  List<CourseAgeTier> get _groupAgeTiers =>
-      _selectedLevel?.ageTiers ?? const <CourseAgeTier>[];
-
-  /// Identity of a bracket, for [_selectedTierKeys]. An open-ended tier has no
-  /// upper bound, so its key ends empty rather than in a made-up age.
-  static String _tierKey(CourseAgeTier t) => '${t.ageFrom}-${t.ageTo ?? ''}';
-
-  /// The ticked brackets, in the order the server sent them.
-  List<CourseAgeTier> get _selectedAgeTiers => _groupAgeTiers
-      .where((t) => _selectedTierKeys.contains(_tierKey(t)))
-      .toList();
-
-  /// What the picked group costs as configured: the ticked brackets summed —
-  /// one place per bracket — or the group's own single price when it isn't
-  /// sold by age.
-  num get _courseTotal {
-    final picked = _selectedAgeTiers;
-    if (picked.isEmpty) return _selectedLevel?.coursePrice ?? 0;
-    return picked.fold<num>(0, (sum, t) => sum + t.price);
-  }
-
-  /// Tick the first bracket of [level], dropping any pick belonging to the
-  /// group before it. A course priced by age has no meaningful "nothing
-  /// picked" state — the price on screen has to be a price of something — so
-  /// the cheapest bracket stands in until the parent says otherwise.
-  void _seedAgeTiers(CourseLevel? level) {
-    final tiers = level?.ageTiers ?? const <CourseAgeTier>[];
-    _selectedTierKeys = tiers.isEmpty ? <String>{} : {_tierKey(tiers.first)};
-  }
 
   /// A course is sold as a package, not per session. Known from the list model
   /// before the detail lands, so the CTA never flashes the ticket wording.
@@ -352,9 +312,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         final groups = detail.hasLevels ? detail.levels : [detail.flat];
         final fallback = groups.isEmpty ? null : groups.first;
         _selectedLevelId = detail.defaultLevelId ?? fallback?.id;
-        _seedAgeTiers(
-          groups.where((l) => l.id == _selectedLevelId).firstOrNull ?? fallback,
-        );
       });
     } catch (_) {
       // Leave _course null — the CTA reports "not ready yet" if tapped.
@@ -695,12 +652,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         clazz: full,
         level: level,
         courseOption: CoursePurchaseOption.full,
-        // The brackets ticked on this page ARE the order: one place per child,
-        // priced per bracket. Carried over so the sheet's total is the figure
-        // the page just showed, rather than the group's single price.
-        ageTiers: level.id == _selectedLevel?.id
-            ? _selectedAgeTiers
-            : const <CourseAgeTier>[],
+        // Age-bracket picking (and how many children per bracket) now happens
+        // on the payment page itself — see [BookingPage] — using [level]'s own
+        // ageTiers, so there is nothing to carry over from here any more.
       ),
     );
     if (purchased == true && mounted) await _loadCourse(id);
@@ -824,13 +778,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         if (_courseGroups.isNotEmpty) ...[
                           6.verticalSpace,
                           _courseLevelsCard(c, _courseGroups),
-                        ],
-                        // Directly under the groups, because it prices the one
-                        // that is picked — a group priced by a single figure
-                        // has no brackets and shows nothing here.
-                        if (_groupAgeTiers.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _courseAgeTiersCard(c, _groupAgeTiers),
                         ],
                         // A course is priced per level/lesson, never by age
                         // tier — the underlying activity still carries a
@@ -1317,10 +1264,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     : () => setState(() {
                           if (level.id == _selectedLevelId) return;
                           _selectedLevelId = level.id;
-                          // The brackets belong to the group, so a new group
-                          // means a new set of prices — carrying the old ticks
-                          // across would price the sale off the wrong one.
-                          _seedAgeTiers(level);
                         }),
                 // With several groups the trial is bought from the panel — it
                 // is the only place that says WHICH group's trial. With one,
@@ -1336,91 +1279,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             );
           }),
-        ],
-      ),
-    );
-  }
-
-  // ─── Course age brackets ────────────────────────────────────────────────────
-
-  /// "Choose age" — the brackets the picked group is sold at, MULTI select.
-  ///
-  /// One tick is one child: a parent enrolling two children of different ages
-  /// ticks both brackets and the card sums them, which is the figure the sticky
-  /// CTA and the purchase sheet then carry. That is why these are checkboxes
-  /// and the group above is a radio — the group is which product, this is how
-  /// many of it and at which prices.
-  ///
-  /// On the page rather than in the purchase sheet, for the same reason the
-  /// group panels are: the price a parent decides on is the one their children
-  /// actually add up to, and a sheet that has to be opened to see it hides the
-  /// decision behind the commitment.
-  Widget _courseAgeTiersCard(AppColorScheme c, List<CourseAgeTier> tiers) {
-    final picked = _selectedAgeTiers;
-    return DetailCard(
-      c: c,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DetailCardHeader(
-            c: c,
-            icon: Assets.icons.home.profile2user,
-            iconGradient: AppGradients.brand,
-            title: 'course_choose_age_title'.tr(),
-          ),
-          8.verticalSpace,
-          Text(
-            'course_choose_age_sub'.tr(),
-            style: AppText.regular12.copyWith(color: c.textSecondary),
-          ),
-          14.verticalSpace,
-          ...List.generate(tiers.length, (i) {
-            final tier = tiers[i];
-            final key = _tierKey(tier);
-            final selected = _selectedTierKeys.contains(key);
-            return Padding(
-              padding:
-                  EdgeInsets.only(bottom: i == tiers.length - 1 ? 0 : 8.h),
-              child: _AgeTierRow(
-                tier: tier,
-                selected: selected,
-                // Unticking the last bracket is refused rather than hidden:
-                // the row stays tappable so the tap has an obvious effect
-                // everywhere else, and the one case that would leave the sale
-                // priced at nothing simply doesn't take.
-                onTap: () => setState(() {
-                  if (!selected) {
-                    _selectedTierKeys = {..._selectedTierKeys, key};
-                  } else if (_selectedTierKeys.length > 1) {
-                    _selectedTierKeys = {..._selectedTierKeys}..remove(key);
-                  }
-                }),
-              ),
-            );
-          }),
-          // Only worth a line once there is arithmetic to show. With one
-          // bracket ticked the total is the row's own price, and repeating it
-          // underneath reads as a second charge.
-          if (picked.length > 1) ...[
-            12.verticalSpace,
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'course_age_total'
-                        .tr(namedArgs: {'count': '${picked.length}'}),
-                    style:
-                        AppText.semibold14.copyWith(color: c.textPrimary),
-                  ),
-                ),
-                Text(
-                  _courseTotal.toRawUzsPrice(),
-                  style: AppText.bold16
-                      .copyWith(color: AppColors.brandPurple),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -2253,93 +2111,6 @@ class _TrialLessonRow extends StatelessWidget {
   }
 }
 
-/// One age bracket of a course, ticked or not: "3-5 years" and what a place at
-/// that bracket costs.
-///
-/// A square box rather than [_RadioDot]'s circle — the group above is a
-/// one-of-many radio and this is a many-of-many checkbox, and the shape is what
-/// says so before anything is tapped.
-class _AgeTierRow extends StatelessWidget {
-  const _AgeTierRow({
-    required this.tier,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final CourseAgeTier tier;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    const accent = AppColors.brandPurple;
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.08) : c.surface,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: selected ? accent : c.border,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            _CheckBox(selected: selected, accent: accent, border: c.border),
-            10.horizontalSpace,
-            Expanded(
-              child: Text(
-                '${tier.rangeLabel} ${'age_years_suffix'.tr()}',
-                style: AppText.semibold14.copyWith(color: c.textPrimary),
-              ),
-            ),
-            8.horizontalSpace,
-            // No coupon treatment here: a bracket prices the WHOLE course, and
-            // that is the one purchase a coupon plan never discounts. The trial
-            // ladder above is where a coupon holder sees a struck price.
-            Text(
-              tier.price.toRawUzsPrice(),
-              style: AppText.semibold14.copyWith(color: c.textPrimary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Square tick box — the multi-select counterpart of [_RadioDot].
-class _CheckBox extends StatelessWidget {
-  const _CheckBox({
-    required this.selected,
-    required this.accent,
-    required this.border,
-  });
-
-  final bool selected;
-  final Color accent;
-  final Color border;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 20.w,
-      height: 20.w,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6.r),
-        border: Border.all(color: selected ? accent : border, width: 2),
-        color: selected ? accent : Colors.transparent,
-      ),
-      child:
-          selected ? Icon(Icons.check, size: 13.sp, color: Colors.white) : null,
-    );
-  }
-}
 
 class _RadioDot extends StatelessWidget {
   const _RadioDot({

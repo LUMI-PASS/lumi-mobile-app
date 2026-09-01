@@ -235,6 +235,20 @@ class CourseAgeTier {
       );
 }
 
+/// How many children to enrol at ONE [CourseAgeTier] bracket — the additive
+/// alternative to naming the same bracket several times in [CourseAgeTier]
+/// checkout, which the server rejects. Lets two siblings share a bracket
+/// (e.g. two 7-year-olds both in "6-10"), which the older one-bracket-per-tier
+/// selection could never express.
+class CourseAgeTierCount {
+  const CourseAgeTierCount({required this.tier, required this.quantity});
+
+  final CourseAgeTier tier;
+
+  /// At least 1 — a zero-quantity bracket simply shouldn't be in the list.
+  final int quantity;
+}
+
 /// One purchasable thing: a LEVEL of a course ("Beginner"), or — when [id] is
 /// null — a course that isn't sold as levels.
 ///
@@ -506,6 +520,11 @@ class CoursesApi {
     int? ageFrom,
     int? ageTo,
     List<CourseAgeTier>? ageTiers,
+
+    /// One or more children per bracket — sent INSTEAD of [ageTiers] when
+    /// present, never alongside it. Prefer this whenever any bracket needs
+    /// more than one place; [ageTiers] cannot repeat a bracket.
+    List<CourseAgeTierCount>? ageTierCounts,
     String? startsAt,
     List<String>? trialDates,
 
@@ -538,6 +557,17 @@ class CoursesApi {
           ageTo != null)
         'age_to': ageTo,
       if (option == CoursePurchaseOption.full &&
+          ageTierCounts != null &&
+          ageTierCounts.isNotEmpty)
+        'age_tier_counts': [
+          for (final c in ageTierCounts)
+            {
+              'age_from': c.tier.ageFrom,
+              if (c.tier.ageTo != null) 'age_to': c.tier.ageTo,
+              'quantity': c.quantity,
+            },
+        ]
+      else if (option == CoursePurchaseOption.full &&
           ageTiers != null &&
           ageTiers.isNotEmpty)
         'age_tiers': [
