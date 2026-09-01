@@ -20,6 +20,7 @@ import 'package:lumi_pass/data/interceptor/connectivity_interceptor.dart'
     as _i359;
 import 'package:lumi_pass/data/interceptor/interest_source_interceptor.dart'
     as _i707;
+import 'package:lumi_pass/data/interceptor/lang_interceptor.dart' as _i400;
 import 'package:lumi_pass/data/service/analytics_service.dart' as _i594;
 import 'package:lumi_pass/data/service/appsflyer_service.dart' as _i260;
 import 'package:lumi_pass/data/service/interest_reporter.dart' as _i606;
@@ -84,6 +85,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     final appModule = _$AppModule();
     final networkModule = _$NetworkModule();
+    gh.factory<_i400.LangInterceptor>(() => _i400.LangInterceptor());
     gh.factory<_i707.InterestSourceInterceptor>(
         () => _i707.InterestSourceInterceptor());
     gh.lazySingleton<_i974.Logger>(() => appModule.logger);
@@ -102,33 +104,44 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i948.AuthInterceptor>(),
           gh<_i359.ConnectivityInterceptor>(),
           gh<_i707.InterestSourceInterceptor>(),
+          gh<_i400.LangInterceptor>(),
         ));
-    gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
-    gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
-    gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
-    gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
-    gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
-    gh.factory<_i376.NotificationsApi>(
-        () => _i376.NotificationsApi(gh<_i361.Dio>()));
-    gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
-    gh.factory<_i256.ScheduleCubit>(
-        () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
     gh.lazySingleton<_i260.AppsFlyerService>(
         () => _i260.AppsFlyerService(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
-    gh.factory<_i526.HomeRepository>(() => _i162.HomeRepositoryImpl(
-          gh<_i433.HomeApi>(),
-          gh<_i279.Storage>(),
-        ));
     gh.lazySingleton<_i361.PushNotificationService>(
         () => _i361.PushNotificationService(
               gh<_i361.Dio>(),
               gh<_i279.Storage>(),
             ));
+    gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
+    gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
+    gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
+    gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
+    gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
+    gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
+    gh.factory<_i376.NotificationsApi>(
+        () => _i376.NotificationsApi(gh<_i361.Dio>()));
+    gh.factory<_i256.ScheduleCubit>(
+        () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
+    gh.lazySingleton<_i594.AnalyticsService>(() => _i594.AnalyticsService(
+          gh<_i279.Storage>(),
+          gh<_i260.AppsFlyerService>(),
+        ));
+    gh.factory<_i526.HomeRepository>(() => _i162.HomeRepositoryImpl(
+          gh<_i433.HomeApi>(),
+          gh<_i279.Storage>(),
+        ));
     gh.lazySingleton<_i606.InterestReporter>(() => _i606.InterestReporter(
           gh<_i1041.InterestsApi>(),
           gh<_i279.Storage>(),
+        ));
+    gh.factory<_i652.AuthRepository>(() => _i98.AuthRepositoryImpl(
+          gh<_i79.AuthApi>(),
+          gh<_i279.Storage>(),
+          gh<_i361.PushNotificationService>(),
+          gh<_i594.AnalyticsService>(),
         ));
     gh.factory<_i24.AttendanceCubit>(
         () => _i24.AttendanceCubit(gh<_i526.HomeRepository>()));
@@ -140,29 +153,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i999.SearchCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i890.WalletRepository>(
         () => _i728.WalletRepositoryImpl(gh<_i605.WalletApi>()));
-    gh.factory<_i571.MyCardsCubit>(
-        () => _i571.MyCardsCubit(gh<_i748.OrdersApi>()));
-    gh.factory<_i822.WalletCubit>(
-        () => _i822.WalletCubit(gh<_i890.WalletRepository>()));
-    gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
-          gh<_i279.Storage>(),
-          gh<_i526.HomeRepository>(),
-          gh<_i890.WalletRepository>(),
-        ));
-    gh.lazySingleton<_i594.AnalyticsService>(() => _i594.AnalyticsService(
-          gh<_i279.Storage>(),
-          gh<_i260.AppsFlyerService>(),
-        ));
-    gh.factory<_i386.HomeCubit>(() => _i386.HomeCubit(
-          gh<_i526.HomeRepository>(),
-          gh<_i279.Storage>(),
-        ));
-    gh.factory<_i652.AuthRepository>(() => _i98.AuthRepositoryImpl(
-          gh<_i79.AuthApi>(),
-          gh<_i279.Storage>(),
-          gh<_i361.PushNotificationService>(),
-          gh<_i594.AnalyticsService>(),
-        ));
     gh.factory<_i749.VerifyCubit>(() => _i749.VerifyCubit(
           gh<_i652.AuthRepository>(),
           gh<_i279.Storage>(),
@@ -175,9 +165,22 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i567.RegisterCubit(gh<_i652.AuthRepository>()));
     gh.factory<_i296.LoginCubit>(
         () => _i296.LoginCubit(gh<_i652.AuthRepository>()));
+    gh.factory<_i571.MyCardsCubit>(
+        () => _i571.MyCardsCubit(gh<_i748.OrdersApi>()));
+    gh.factory<_i822.WalletCubit>(
+        () => _i822.WalletCubit(gh<_i890.WalletRepository>()));
+    gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
+          gh<_i279.Storage>(),
+          gh<_i526.HomeRepository>(),
+          gh<_i890.WalletRepository>(),
+        ));
     gh.lazySingleton<_i915.AppCubit>(() => _i915.AppCubit(
           gh<_i652.AuthRepository>(),
           gh<_i361.PushNotificationService>(),
+          gh<_i279.Storage>(),
+        ));
+    gh.factory<_i386.HomeCubit>(() => _i386.HomeCubit(
+          gh<_i526.HomeRepository>(),
           gh<_i279.Storage>(),
         ));
     return this;

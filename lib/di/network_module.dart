@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/data/interceptor/auth_interceptor.dart';
 import 'package:lumi_pass/data/interceptor/connectivity_interceptor.dart';
 import 'package:lumi_pass/data/interceptor/interest_source_interceptor.dart';
+import 'package:lumi_pass/data/interceptor/lang_interceptor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -15,6 +16,7 @@ abstract class NetworkModule {
     AuthInterceptor authInterceptor,
     ConnectivityInterceptor connectivityInterceptor,
     InterestSourceInterceptor interestSourceInterceptor,
+    LangInterceptor langInterceptor,
   ) {
     final dio = Dio();
 
@@ -35,6 +37,7 @@ abstract class NetworkModule {
     // After auth, so a request retried with a refreshed token still carries the
     // screen it was made from — the backend records interest off these GETs.
     dio.interceptors.add(interestSourceInterceptor);
+    dio.interceptors.add(langInterceptor);
 
     dio.interceptors.add(
       PrettyDioLogger(

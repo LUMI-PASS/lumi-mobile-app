@@ -2,7 +2,6 @@ import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.
 
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
@@ -37,33 +36,29 @@ class HomeApi {
       // courses out of that row itself, and a plain card was the only way to
       // show one at all. See the API's `popular_courses`.
       'popular_courses': 1,
-      'lang': currentLang,
     });
   }
 
   Future<Response> getSchedule() {
-    return _dio.get('schedules/parent/', queryParameters: {'lang': currentLang});
+    return _dio.get('schedules/parent/');
   }
 
   Future<Response> getProfileData() {
-    return _dio.get('users/parents/profile/', queryParameters: {'lang': currentLang});
+    return _dio.get('users/parents/profile/');
   }
 
   Future<Response> addChild(ChildModel childModel, String parentId) {
     return _dio.post('users/parents/profile/children',
-        queryParameters: {'lang': currentLang},
         data: _childWritePayload(childModel));
   }
 
   Future<Response> updateChild(ChildModel childModel, String parentId) {
     return _dio.patch('users/parents/profile/children/${childModel.id}',
-        queryParameters: {'lang': currentLang},
         data: _childWritePayload(childModel));
   }
 
   Future<Response> deleteChild(String childId) {
-    return _dio.delete('users/parents/profile/children/$childId',
-        queryParameters: {'lang': currentLang});
+    return _dio.delete('users/parents/profile/children/$childId');
   }
 
   /// Backend only needs first_name + dob; everything else is stripped.
@@ -75,11 +70,11 @@ class HomeApi {
   }
 
   Future<Response> updateChildData() {
-    return _dio.get('users/parents/profile/', queryParameters: {'lang': currentLang});
+    return _dio.get('users/parents/profile/');
   }
 
   Future<Response> getChildren() {
-    return _dio.get('users/children/', queryParameters: {'lang': currentLang});
+    return _dio.get('users/children/');
   }
 
   Future<Response> getPremiumPlans({int page = 1, int limit = 12}) {
@@ -90,7 +85,7 @@ class HomeApi {
   }
 
   Future<Response> getCategories() {
-    return _dio.get('categories/', queryParameters: {'lang': currentLang});
+    return _dio.get('categories/');
   }
 
   Future<Response> getClassCategories(
@@ -98,7 +93,6 @@ class HomeApi {
     return _dio.get(
         'schedules/class/$classId/check-availability',
         queryParameters: {
-          'lang': currentLang,
           'child_id': childId,
           'from_date': fromDate,
           'to_date': toDate,
@@ -107,7 +101,7 @@ class HomeApi {
 
   Future<Response> updateProfileData(HomForUser user) {
     return _dio.patch("users/parents/profile",
-        queryParameters: {'profile_id': user.id, 'lang': currentLang},
+        queryParameters: {'profile_id': user.id},
         data: user.toJson()..remove("id"));
   }
 
@@ -116,23 +110,19 @@ class HomeApi {
       'file': await MultipartFile.fromFile(photo.path,
           filename: photo.path.split('/').last),
     });
-    return _dio.post('assets/files/child-photo/$childId',
-        queryParameters: {'lang': currentLang}, data: formData);
+    return _dio.post('assets/files/child-photo/$childId', data: formData);
   }
 
   Future<Response> getChildDetails(String childId) {
-    return _dio.get('users/parents/profile/children/$childId',
-        queryParameters: {'lang': currentLang});
+    return _dio.get('users/parents/profile/children/$childId');
   }
 
   Future<Response> getChildAttendanceHistory(String childId) {
-    return _dio.get('attendance/history/child/$childId',
-        queryParameters: {'lang': currentLang});
+    return _dio.get('attendance/history/child/$childId');
   }
 
   Future<Response> cancelBooking(String bookingId, String reason) {
     return _dio.patch('bookings/$bookingId/cancel',
-        queryParameters: {'lang': currentLang},
         data: {'reason': reason});
   }
 
@@ -149,7 +139,6 @@ class HomeApi {
       queryParameters: {
         'page': page,
         'limit': limit,
-        'lang': currentLang,
       },
     );
   }
@@ -174,7 +163,6 @@ class HomeApi {
     return _dio.get('discovery/explore', queryParameters: {
       'page': page,
       'limit': limit,
-      'lang': currentLang,
       if (search != null && search.isNotEmpty) 'search': search,
       if (categoryId != null) 'category_id': categoryId,
       if (fromDate != null) 'from_date': fromDate,
@@ -214,7 +202,6 @@ class HomeApi {
     return _dio.get('discovery/classes', queryParameters: {
       'page': page,
       'limit': limit,
-      'lang': currentLang,
       if (search != null && search.isNotEmpty) 'search': search,
       if (categoryId != null) 'category_id': categoryId,
       if (fromDate != null) 'from_date': fromDate,
@@ -243,7 +230,6 @@ class HomeApi {
     return _dio.get('discovery/shorts', queryParameters: {
       'page': page,
       'limit': limit,
-      'lang': currentLang,
     });
   }
 
@@ -258,7 +244,6 @@ class HomeApi {
     return _dio.get('discovery/courses', queryParameters: {
       'page': page,
       'limit': limit,
-      'lang': currentLang,
       if (search != null && search.isNotEmpty) 'search': search,
     });
   }
@@ -275,7 +260,6 @@ class HomeApi {
     return _dio.get('discovery/branches', queryParameters: {
       'page': page,
       'limit': limit,
-      'lang': currentLang,
       if (search != null && search.isNotEmpty) 'search': search,
       if (categoryId != null) 'category_id': categoryId,
       if (sortBy != null) 'sort_by': sortBy,
