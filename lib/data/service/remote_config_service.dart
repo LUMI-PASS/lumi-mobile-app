@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RemoteConfigService {
   RemoteConfigService._();
@@ -56,6 +57,38 @@ class RemoteConfigService {
 
   bool get hasSupportTelegram => supportTelegramUrl.isNotEmpty;
   bool get hasSupportPhone => supportPhone.isNotEmpty;
+
+  // ─── Yandex MapKit key ─────────────────────────────────────────────────────
+  // MapKit is handed its key natively — `MainApplication.onCreate` on Android,
+  // `didFinishLaunchingWithOptions` on iOS — and both run before Dart does, so
+  // no Remote Config value can reach MapKit in time for the launch it was
+  // fetched on. What [init] does instead is cache the resolved key in
+  // shared_preferences, where the native bootstrap reads it on the *next* cold
+  // start. The MapKit locale already works this way for the same reason; see
+  // docs/YANDEX_MAP_MIGRATION.md §6.3.
+  //
+  // So: rotating the key in the console takes effect one cold start later, but
+  // without an app release.
+  //
+  // A non-empty console value beats the build-time key (`yandexMapkitKey` in
+  // key.properties, `YANDEX_MAPKIT_KEY` in Secrets.xcconfig) — that is the
+  // point of holding it here. Blank the value in the console to hand control
+  // back to the build.
+
+  /// The key compiled into the app, used until Remote Config has been read at
+  /// least once. It is bound to `uz.lumi.mobileapp` and the registered iOS
+  /// bundle id in the Yandex dashboard, so it is a client identifier rather
+  /// than a secret — it has to ship in the binary either way.
+  static const _defaultYandexMapKitKey = '17bb5f1b-73ed-4764-a574-6fb23e4079b3';
+
+  /// The shared_preferences key the native side reads (namespaced `flutter.`
+  /// there — `flutter.yandex_mapkit_key`).
+  static const _yandexMapKitKeyPref = 'yandex_mapkit_key';
+
+  /// Empty when the console blanks the value, which is how the build-time key
+  /// is put back in charge.
+  String get yandexMapKitKey =>
+      _string('yandex_mapkit_key', _defaultYandexMapKitKey);
 
   // ─── App update gate ───────────────────────────────────────────────────────
   // Two version floors decide, per installed build, whether the user is shown
@@ -124,6 +157,7 @@ class RemoteConfigService {
         'update_description': '',
         'store_link_android': _defaultStoreLinkAndroid,
         'store_link_ios': _defaultStoreLinkIos,
+        'yandex_mapkit_key': _defaultYandexMapKitKey,
       });
 
       await _remoteConfig?.setConfigSettings(RemoteConfigSettings(
@@ -135,5 +169,25 @@ class RemoteConfigService {
     } catch (_) {}
 
     _initialized = true;
+
+    // Only once Remote Config actually came up: with no `_remoteConfig` every
+    // read returns the compiled-in fallback, and writing that to the cache
+    // would overwrite a perfectly good build-time key with a guess.
+    if (_remoteConfig != null) await _cacheYandexMapKitKey();
+  }
+
+  /// Leaves the MapKit key where the native bootstrap can find it on the next
+  /// cold start. Clearing it on an empty console value is what lets the
+  /// build-time key take back over.
+  Future<void> _cacheYandexMapKitKey() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = yandexMapKitKey;
+      if (key.isEmpty) {
+        await prefs.remove(_yandexMapKitKeyPref);
+      } else if (prefs.getString(_yandexMapKitKeyPref) != key) {
+        await prefs.setString(_yandexMapKitKeyPref, key);
+      }
+    } catch (_) {}
   }
 }

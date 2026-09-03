@@ -313,8 +313,49 @@ is low-severity, but a plaintext key in git is still a finding in any audit.
 - **CI** — both values become pipeline secrets that write those two files before
   the build step. Not yet wired; do it when the key exists.
 
-Trade-off: a fresh clone builds but has no working map until the developer drops
-the keys in. Documented in `README.md`.
+Since §3.4 a key also ships compiled in, so a fresh clone gets a working map
+without either file. Both remain the way to build against a *different* key than
+production's.
+
+### 3.4 Rotating the key without a release — Firebase Remote Config
+
+The key is also a Remote Config parameter, `yandex_mapkit_key`, so a rotation in
+the Yandex dashboard doesn't need an App Store round trip.
+
+It cannot be read the obvious way. MapKit is keyed from `Application.onCreate`
+(Android) and `didFinishLaunchingWithOptions` (iOS), both of which run before the
+Dart entrypoint — and `yandex_mapkit` exposes no Dart-side `setApiKey`, so
+there's no later hook to use. The value therefore travels one launch behind, the
+same way the locale does in §6.3:
+
+1. `RemoteConfigService.init()` resolves `yandex_mapkit_key` and writes it to
+   `shared_preferences` as `yandex_mapkit_key`;
+2. on the **next** cold start, `MainApplication.mapKitApiKey()` /
+   `AppDelegate.mapKitApiKey()` read it back (namespaced `flutter.…`) and hand
+   it to MapKit before the first map exists.
+
+Resolution order on both platforms, first non-empty wins:
+
+| # | Source | Set where |
+|---|---|---|
+| 1 | Remote Config, cached last launch | Firebase console → `yandex_mapkit_key` |
+| 2 | Build-time key | `key.properties` / `Secrets.xcconfig` |
+| 3 | Compiled-in default | `MainApplication.DEFAULT_KEY` / `AppDelegate.defaultMapKitKey` |
+
+Remote Config outranking the build is deliberate — a release that carries its own
+key would otherwise never see a rotation. **Blank the console value** to clear
+the cache and give the build-time key its job back.
+
+Consequences worth knowing before you rotate:
+
+- A console change reaches users on their **second** launch after it, not the
+  first. Keep the old key alive in the Yandex dashboard until the new one has
+  had time to spread.
+- `minimumFetchInterval` is 5 minutes (`RemoteConfigService.init`), so the fetch
+  side is not the bottleneck; the cold start is.
+- A device that has never reached Firebase (offline first run, Play-services-less
+  Android) stays on the build-time or compiled-in key indefinitely, which is why
+  a working default still ships.
 
 ---
 

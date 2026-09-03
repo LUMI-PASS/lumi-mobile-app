@@ -180,8 +180,14 @@ cp ios/Flutter/Secrets.example.xcconfig ios/Flutter/Secrets.xcconfig
 
 The Yandex MapKit key comes from the Yandex Developer Dashboard
 (**API Interfaces → MapKit Mobile SDK**) and is bound to the app identifiers —
-`uz.lumi.mobileapp` on Android, `uz.lumipass.mobile` on iOS. See
-[docs/YANDEX_MAP_MIGRATION.md](docs/YANDEX_MAP_MIGRATION.md).
+`uz.lumi.mobileapp` on Android, `uz.lumipass.mobile` on iOS.
+
+For the map you don't have to fill anything in: a working key ships compiled
+into `MainApplication.kt` / `AppDelegate.swift`, and released builds pick up
+whatever `yandex_mapkit_key` holds in Firebase Remote Config from their next
+cold start. Set `yandexMapkitKey` / `YANDEX_MAPKIT_KEY` only to build against a
+different key than production's. See
+[docs/YANDEX_MAP_MIGRATION.md](docs/YANDEX_MAP_MIGRATION.md) §3.3–3.4.
 
 ### Platform minimums
 

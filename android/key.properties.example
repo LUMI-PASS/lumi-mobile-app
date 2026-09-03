@@ -15,6 +15,12 @@ keyPassword=
 
 # Yandex MapKit key, from the Yandex Developer Dashboard
 # (API Interfaces -> MapKit Mobile SDK). Bound to the applicationId
-# uz.lumi.mobileapp. Leave empty to build without a working map.
+# uz.lumi.mobileapp.
+#
+# Optional: leaving it empty falls back to the key compiled into
+# MainApplication.kt (DEFAULT_KEY). Either way, once Firebase Remote Config has
+# been read the console's `yandex_mapkit_key` wins from the next cold start on
+# — set this only to build against a different key than production's.
+#
 # The iOS counterpart is YANDEX_MAPKIT_KEY in ios/Flutter/Secrets.xcconfig.
-w
+yandexMapkitKey=
