@@ -360,6 +360,9 @@ class HomBranch with _$HomBranch {
     bool? hasPhoto,
     String? image,
     List<String>? images,
+    /// The centre's own "how to find us" clip, played from the branch page
+    /// beside the map strip. A plain link — the player resolves the provider.
+    String? videoUrl,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,

@@ -389,6 +389,7 @@ _$HomBranchImpl _$$HomBranchImplFromJson(Map<String, dynamic> json) =>
       image: json['image'] as String?,
       images:
           (json['images'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      videoUrl: json['video_url'] as String?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
@@ -410,6 +411,7 @@ Map<String, dynamic> _$$HomBranchImplToJson(_$HomBranchImpl instance) =>
       'has_photo': instance.hasPhoto,
       'image': instance.image,
       'images': instance.images,
+      'video_url': instance.videoUrl,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
       'deleted_at': instance.deletedAt,

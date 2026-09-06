@@ -4207,6 +4207,10 @@ mixin _$HomBranch {
   bool? get hasPhoto => throw _privateConstructorUsedError;
   String? get image => throw _privateConstructorUsedError;
   List<String>? get images => throw _privateConstructorUsedError;
+
+  /// The centre's own "how to find us" clip, played from the branch page
+  /// beside the map strip. A plain link — the player resolves the provider.
+  String? get videoUrl => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -4237,6 +4241,7 @@ abstract class $HomBranchCopyWith<$Res> {
       bool? hasPhoto,
       String? image,
       List<String>? images,
+      String? videoUrl,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -4269,6 +4274,7 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? images = freezed,
+    Object? videoUrl = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -4330,6 +4336,10 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
           ? _value.images
           : images // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -4369,6 +4379,7 @@ abstract class _$$HomBranchImplCopyWith<$Res>
       bool? hasPhoto,
       String? image,
       List<String>? images,
+      String? videoUrl,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -4399,6 +4410,7 @@ class __$$HomBranchImplCopyWithImpl<$Res>
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? images = freezed,
+    Object? videoUrl = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -4460,6 +4472,10 @@ class __$$HomBranchImplCopyWithImpl<$Res>
           ? _value._images
           : images // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -4495,6 +4511,7 @@ class _$HomBranchImpl implements _HomBranch {
       this.hasPhoto,
       this.image,
       final List<String>? images,
+      this.videoUrl,
       this.createdAt,
       this.updatedAt,
       this.deletedAt})
@@ -4539,6 +4556,10 @@ class _$HomBranchImpl implements _HomBranch {
     return EqualUnmodifiableListView(value);
   }
 
+  /// The centre's own "how to find us" clip, played from the branch page
+  /// beside the map strip. A plain link — the player resolves the provider.
+  @override
+  final String? videoUrl;
   @override
   final String? createdAt;
   @override
@@ -4548,7 +4569,7 @@ class _$HomBranchImpl implements _HomBranch {
 
   @override
   String toString() {
-    return 'HomBranch(id: $id, title: $title, address: $address, landmark: $landmark, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, description: $description, distance: $distance, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, images: $images, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomBranch(id: $id, title: $title, address: $address, landmark: $landmark, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, description: $description, distance: $distance, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, images: $images, videoUrl: $videoUrl, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -4579,6 +4600,8 @@ class _$HomBranchImpl implements _HomBranch {
                 other.hasPhoto == hasPhoto) &&
             (identical(other.image, image) || other.image == image) &&
             const DeepCollectionEquality().equals(other._images, _images) &&
+            (identical(other.videoUrl, videoUrl) ||
+                other.videoUrl == videoUrl) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -4605,6 +4628,7 @@ class _$HomBranchImpl implements _HomBranch {
       hasPhoto,
       image,
       const DeepCollectionEquality().hash(_images),
+      videoUrl,
       createdAt,
       updatedAt,
       deletedAt);
@@ -4639,6 +4663,7 @@ abstract class _HomBranch implements HomBranch {
       final bool? hasPhoto,
       final String? image,
       final List<String>? images,
+      final String? videoUrl,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomBranchImpl;
@@ -4674,6 +4699,11 @@ abstract class _HomBranch implements HomBranch {
   String? get image;
   @override
   List<String>? get images;
+  @override
+
+  /// The centre's own "how to find us" clip, played from the branch page
+  /// beside the map strip. A plain link — the player resolves the provider.
+  String? get videoUrl;
   @override
   String? get createdAt;
   @override

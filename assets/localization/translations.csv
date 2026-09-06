@@ -324,6 +324,7 @@ branch_view_on_maps,Посмотреть на карте,Xaritada ko’rish,View
 branch_build_route,Построить маршрут,Yo’nalish qurish,Build route
 route_open_failed,Не удалось открыть карты,Xaritalarni ochib bo‘lmadi,Could not open maps
 branch_about,О центре,Markaz haqida,About
+branch_route_video,Как добраться,Qanday borish,How to get there
 branch_no_classes,Занятий пока нет,Mashg’ulotlar hali yo’q ,No classes yet
 branch_load_more_classes,Загрузить ещё,Ko’proq yuklash,Load more
 share_app,Поделиться приложением,Ilovani ulashing,Share app

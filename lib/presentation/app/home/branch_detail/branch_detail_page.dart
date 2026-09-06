@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,6 +18,7 @@ import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/location_preview_map.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
+import 'package:lumi_pass/common/widget/route_video_tile.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
@@ -29,6 +31,10 @@ import 'package:shimmer/shimmer.dart';
 
 /// Hero carousel height — also the distance the top scrim fades in over.
 const double _kHeroHeight = 300;
+
+/// Height of the map strip and the arrival-clip tile standing next to it. They
+/// share one row, so they share one number.
+const double _kStripHeight = 140;
 
 @RoutePage()
 class BranchDetailPage extends StatefulWidget {
@@ -108,6 +114,13 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
 
   bool get _hasMap =>
       widget.branch.latitude != null && widget.branch.longitude != null;
+
+  /// MapKit has no web implementation, so [LocationPreviewMap] draws nothing
+  /// there — the strip's row must not reserve its half either.
+  bool get _showsMapStrip => _hasMap && !kIsWeb;
+
+  /// The centre's arrival clip, shown beside the map strip.
+  bool get _hasRouteVideo => RouteVideoTile.canPlay(widget.branch.videoUrl);
 
   /// Fade the top scrim in over the second half of the hero, so it is fully on
   /// by the time the first card slides under the back control. Doubles as the
@@ -447,14 +460,32 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
           ),
           // The address in words, then the address on a map — a street name a
           // parent doesn't recognise tells them nothing about whether the
-          // centre is near them.
-          if (_hasMap) ...[
+          // centre is near them. The centre's own arrival clip rides alongside
+          // it: the map gets them to the building, the clip gets them in.
+          if (_showsMapStrip || _hasRouteVideo) ...[
             12.verticalSpace,
-            LocationPreviewMap(
-              lat: widget.branch.latitude!,
-              lng: widget.branch.longitude!,
-              title: widget.branch.title,
-              subtitle: address.isEmpty ? null : address,
+            SizedBox(
+              height: _kStripHeight.h,
+              child: Row(
+                children: [
+                  if (_showsMapStrip)
+                    Expanded(
+                      child: LocationPreviewMap(
+                        lat: widget.branch.latitude!,
+                        lng: widget.branch.longitude!,
+                        title: widget.branch.title,
+                        subtitle: address.isEmpty ? null : address,
+                        height: _kStripHeight.h,
+                      ),
+                    ),
+                  if (_showsMapStrip && _hasRouteVideo) 8.horizontalSpace,
+                  if (_hasRouteVideo)
+                    RouteVideoTile(
+                      url: widget.branch.videoUrl,
+                      height: _kStripHeight.h,
+                    ),
+                ],
+              ),
             ),
           ],
         ],
