@@ -25,6 +25,7 @@ import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/location_preview_map.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
@@ -802,6 +803,17 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                           6.verticalSpace,
                           _descriptionCard(c, title, description),
                         ],
+                        // Where it is, under the write-up rather than in
+                        // the main card. Up there the strip sat between the
+                        // centre's name and the duration/age/gender tiles —
+                        // the three facts a parent scans first — and pushed
+                        // them below the fold. Down here it reads as the last
+                        // question ("and where do we go?"), asked once the
+                        // course itself has been decided.
+                        if (_venueLat != null && _venueLng != null) ...[
+                          6.verticalSpace,
+                          _locationCard(c, branchTitle),
+                        ],
                         if (notes.isNotEmpty) ...[
                           6.verticalSpace,
                           _bulletCard(
@@ -1293,6 +1305,44 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       child: ExpandableDescription(
         title: title,
         text: description,
+      ),
+    );
+  }
+
+  // ─── Location card ──────────────────────────────────────────────────────────
+  /// The venue on a map, plotted from whichever pair of coordinates has
+  /// arrived — the list payload's flat ones, then the ones `/classes/:id`
+  /// nests under `branch_id`. The address line under it is the one the route
+  /// sheet would open, spelled out for a parent reading rather than tapping.
+  Widget _locationCard(AppColorScheme c, String branchTitle) {
+    final address = _venueAddress;
+
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DetailCardHeader(
+            c: c,
+            icon: Assets.icons.detail.icLocation,
+            iconGradient: AppGradients.brand,
+            title: 'detail_location'.tr(),
+          ),
+          12.verticalSpace,
+          LocationPreviewMap(
+            lat: _venueLat!,
+            lng: _venueLng!,
+            title: branchTitle,
+            subtitle: address,
+          ),
+          if (address != null && address.trim().isNotEmpty) ...[
+            10.verticalSpace,
+            Text(
+              address.trim(),
+              style: AppText.regular13.copyWith(color: c.textSecondary),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -1937,9 +1987,8 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
                     'course_trial_lesson_no'
                         .tr(namedArgs: {'n': '${picked.lessonNo}'}),
                     style: AppText.regular12.copyWith(
-                      color: widget.onFrosted
-                          ? AppColors.brandPurple
-                          : c.primary,
+                      color:
+                          widget.onFrosted ? AppColors.brandPurple : c.primary,
                     ),
                   ),
                 ],
@@ -2162,7 +2211,6 @@ class _TrialLessonRow extends StatelessWidget {
     );
   }
 }
-
 
 class _RadioDot extends StatelessWidget {
   const _RadioDot({
@@ -2394,6 +2442,7 @@ class _CourseLevelPanel extends StatelessWidget {
   });
 
   final CourseLevel level;
+
   /// "Mon, Wed 14:00 – 15:00" — the days this group runs on and the clock they
   /// run at, split per set of days where they don't share one. Read off the
   /// lessons themselves, so the line can never disagree with the ladder below
@@ -2464,7 +2513,8 @@ class _CourseLevelPanel extends StatelessWidget {
             // Only a real choice is highlighted. A lone group is "selected" so
             // the CTA can sell it, but painting it picked would imply the
             // parent chose it over something else.
-            color: selectable && selected ? accent.withValues(alpha: 0.08) : null,
+            color:
+                selectable && selected ? accent.withValues(alpha: 0.08) : null,
             border: Border.all(
               color: selectable && selected ? accent : Colors.transparent,
               width: 1.5,

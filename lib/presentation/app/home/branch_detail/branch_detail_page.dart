@@ -15,6 +15,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/location_preview_map.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -406,16 +407,17 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
               style: AppText.heading20.copyWith(color: c.textPrimary)),
           if (description.isNotEmpty) ...[
             16.verticalSpace,
-            DetailCardHeader(
-              c: c,
-              icon: Assets.icons.detail.iconsaxQuestionMark,
-              iconGradient: AppGradients.brand,
-              title: 'branch_about'.tr(),
-            ),
-            16.verticalSpace,
             // A centre's write-up runs long; it opens from the chevron rather
-            // than pushing the address and the map off the first screen.
+            // than pushing the address and the map off the first screen. The
+            // chevron rides the section header, so the control sits top right
+            // exactly as it does on class detail.
             ExpandableDescription(
+              header: DetailCardHeader(
+                c: c,
+                icon: Assets.icons.detail.iconsaxQuestionMark,
+                iconGradient: AppGradients.brand,
+                title: 'branch_about'.tr(),
+              ),
               text: description,
               textAlign: TextAlign.justify,
             ),
@@ -443,6 +445,18 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                   )
                 : null,
           ),
+          // The address in words, then the address on a map — a street name a
+          // parent doesn't recognise tells them nothing about whether the
+          // centre is near them.
+          if (_hasMap) ...[
+            12.verticalSpace,
+            LocationPreviewMap(
+              lat: widget.branch.latitude!,
+              lng: widget.branch.longitude!,
+              title: widget.branch.title,
+              subtitle: address.isEmpty ? null : address,
+            ),
+          ],
         ],
       ),
     );

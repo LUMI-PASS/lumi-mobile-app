@@ -14,10 +14,16 @@ import 'package:lumi_pass/common/widget/control_chip.dart';
 /// This is the one control that replaces both: the text is stated once, and
 /// the reader opens it if they want the rest.
 ///
-/// The chevron sits at BOTH ends — next to [title] at the top, and under the
-/// text at the bottom. A long description pushes its own header off-screen
-/// once open, so a collapse control that only lives up there can't be reached
-/// without scrolling back up.
+/// There is exactly ONE control, and it is always in the same place: the
+/// chevron at the top right, on the [title] / [header] line. It is the same
+/// accordion marker as the trial-lessons dropdown on class detail — same
+/// glyph, same 20pt size, same `textMuted` tint — because it does the same
+/// thing. Earlier this widget also drew a second chevron under the text; two
+/// controls for one action read as two different actions, and the lower one
+/// stretched edge to edge into something that looked like a page button.
+///
+/// Without a title or header the row holds the chevron alone, right-aligned
+/// above the text.
 ///
 /// Copy short enough to fit inside [collapsedLines] renders as plain text with
 /// no chevron at all — there is nothing to open.
@@ -26,6 +32,7 @@ class ExpandableDescription extends StatefulWidget {
     super.key,
     required this.text,
     this.title,
+    this.header,
     this.titleStyle,
     this.textStyle,
     this.textAlign,
@@ -35,9 +42,14 @@ class ExpandableDescription extends StatefulWidget {
 
   final String text;
 
-  /// Optional header line the top chevron sits beside. Without one the card
-  /// above is already the heading, so only the bottom chevron is drawn.
+  /// Optional header line the chevron sits beside.
   final String? title;
+
+  /// Header widget the chevron sits beside — for a section that already has a
+  /// built header (a `DetailCardHeader` badge + title). Takes the place of
+  /// [title]; giving both draws only this.
+  final Widget? header;
+
   final TextStyle? titleStyle;
   final TextStyle? textStyle;
   final TextAlign? textAlign;
@@ -45,9 +57,9 @@ class ExpandableDescription extends StatefulWidget {
   /// How much of the text is shown while collapsed.
   final int collapsedLines;
 
-  /// A bare chevron instead of the [ControlChip] pill — for descriptions
-  /// nested inside another card (a course group panel), where the pill would
-  /// read as a second, competing control.
+  /// A smaller, dimmer chevron — for descriptions nested inside another card
+  /// (a course group panel), where the full-size marker would compete with
+  /// that card's own controls.
   final bool compact;
 
   @override
@@ -79,10 +91,7 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
       child: Assets.icons.arrowDown.svg(
         width: widget.compact ? 16.w : 20.w,
         height: widget.compact ? 16.w : 20.w,
-        colorFilter: ColorFilter.mode(
-          widget.compact ? c.textSecondary : c.textPrimary,
-          BlendMode.srcIn,
-        ),
+        colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn),
       ),
     );
     if (widget.compact) {
@@ -96,7 +105,9 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
     final c = context.colors;
     final textStyle =
         widget.textStyle ?? AppText.regular14.copyWith(color: c.textPrimary);
+    final header = widget.header;
     final title = widget.title;
+    final hasHeading = header != null || title != null;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -120,18 +131,22 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (title != null) ...[
+              if (hasHeading || canExpand) ...[
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: canExpand ? _toggle : null,
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          title,
-                          style: widget.titleStyle ??
-                              AppText.semibold16.copyWith(color: c.textPrimary),
-                        ),
+                        child: header ??
+                            (title == null
+                                ? const SizedBox.shrink()
+                                : Text(
+                                    title,
+                                    style: widget.titleStyle ??
+                                        AppText.semibold16
+                                            .copyWith(color: c.textPrimary),
+                                  )),
                       ),
                       if (canExpand) ...[
                         12.horizontalSpace,
@@ -140,7 +155,7 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
                     ],
                   ),
                 ),
-                6.verticalSpace,
+                SizedBox(height: hasHeading ? 12.h : 4.h),
               ],
               // The text itself opens the dropdown too — a truncated paragraph
               // is the thing a reader taps.
@@ -149,18 +164,6 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
                 onTap: canExpand ? _toggle : null,
                 child: SizedBox(width: double.infinity, child: body),
               ),
-              if (canExpand)
-                Align(
-                  alignment: Alignment.center,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _toggle,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 4.h),
-                      child: _chevron(c),
-                    ),
-                  ),
-                ),
             ],
           ),
         );
