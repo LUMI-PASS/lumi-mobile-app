@@ -23,6 +23,7 @@ import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
+import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
@@ -776,7 +777,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
                     child: Column(
                       children: [
-                        _mainCard(c, title, description, branchTitle),
+                        _mainCard(c, title, branchTitle),
                         // Every course is shown as its groups — one card, one
                         // shape, whether the centre split it into several or
                         // entered it as a single group. Each panel carries the
@@ -1022,23 +1023,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       );
 
   // ─── Main info card ────────────────────────────────────────────────────────
-  Widget _mainCard(
-      AppColorScheme c, String title, String description, String branchTitle) {
+  Widget _mainCard(AppColorScheme c, String title, String branchTitle) {
     return DetailCard(
       c: c,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
-          if (description.isNotEmpty) ...[
-            6.verticalSpace,
-            Text(
-              description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.regular14.copyWith(color: c.textPrimary),
-            ),
-          ],
+          // No description here. It used to be repeated in this card as two
+          // ellipsised lines and again in full in the card below; it is now
+          // stated once, in [_descriptionCard], as a dropdown.
           20.verticalSpace,
           // Location row.
           if (branchTitle.isNotEmpty)
@@ -1296,14 +1290,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   Widget _descriptionCard(AppColorScheme c, String title, String description) {
     return DetailCard(
       c: c,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppText.semibold16.copyWith(color: c.textPrimary)),
-          6.verticalSpace,
-          Text(description,
-              style: AppText.regular14.copyWith(color: c.textPrimary)),
-        ],
+      child: ExpandableDescription(
+        title: title,
+        text: description,
       ),
     );
   }
@@ -2559,9 +2548,11 @@ class _CourseLevelPanel extends StatelessWidget {
               ),
               if ((level.description ?? '').trim().isNotEmpty) ...[
                 10.verticalSpace,
-                Text(
-                  level.description!.trim(),
-                  style:
+                ExpandableDescription(
+                  text: level.description!.trim(),
+                  collapsedLines: 2,
+                  compact: true,
+                  textStyle:
                       AppText.regular13.copyWith(color: colors.textSecondary),
                 ),
               ],

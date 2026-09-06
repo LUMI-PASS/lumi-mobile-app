@@ -1101,6 +1101,7 @@ card_continue,Продолжить,Davom etish,Continue
 card_resend_code,Отправить код снова,Kodni qayta yuborish,Resend code
 distance_m,{} м,{} m,{} m
 distance_km,{} км,{} km,{} km
+sms_code_button,Получить SMS-код,SMS kod olish,Get SMS code
 telegram_login_button,Войти через Telegram,Telegram orqali kirish,Sign in with Telegram
 telegram_login_title,Вход через Telegram,Telegram orqali kirish,Sign in with Telegram
 telegram_login_step2,Бот пришлёт код — введите его ниже,Bot kod yuboradi — uni quyida kiriting,The bot sends you a code — enter it below

@@ -13,6 +13,7 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
+import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
@@ -412,10 +413,11 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
               title: 'branch_about'.tr(),
             ),
             16.verticalSpace,
-            Text(
-              description,
+            // A centre's write-up runs long; it opens from the chevron rather
+            // than pushing the address and the map off the first screen.
+            ExpandableDescription(
+              text: description,
               textAlign: TextAlign.justify,
-              style: AppText.regular14.copyWith(color: c.textPrimary),
             ),
           ],
           20.verticalSpace,

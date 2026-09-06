@@ -670,7 +670,9 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
             ),
             Expanded(
               child: Text(
-                'course_buy_cta'.tr(),
+                // Buying one trial lesson is a ticket, not the course — see
+                // the same split on the class booking page's header.
+                _isTrial ? 'cta_buy_ticket'.tr() : 'course_buy_cta'.tr(),
                 textAlign: TextAlign.center,
                 style: AppText.medium16.copyWith(color: c.textPrimary),
               ),
@@ -972,21 +974,41 @@ class _CourseBookingPageState extends State<CourseBookingPage> {
       ],
     );
     final padding = EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w);
-    return SizedBox(
-      width: 48.w,
-      child: selected
-          ? FrostedCard(
-              onTap: onTap,
-              padding: padding,
-              borderRadius: BorderRadius.circular(56.r),
-              child: content,
-            )
-          : GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onTap,
-              child: Padding(padding: padding, child: content),
-            ),
-    );
+    final radius = BorderRadius.circular(56.r);
+    // Today is ringed, exactly as in the class booking strip and the
+    // date-range picker, so "now" is findable in a run of dates.
+    final isToday = _isoDate(date) == _isoDate(DateTime.now());
+    final todayBorder = isToday
+        ? Border.all(color: context.colors.primary, width: 1.5)
+        : null;
+
+    Widget chip;
+    if (selected) {
+      chip = FrostedCard(
+        onTap: onTap,
+        padding: padding,
+        borderRadius: radius,
+        child: content,
+      );
+      if (isToday) {
+        chip = Container(
+          decoration: BoxDecoration(border: todayBorder, borderRadius: radius),
+          child: chip,
+        );
+      }
+    } else {
+      chip = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(border: todayBorder, borderRadius: radius),
+          child: content,
+        ),
+      );
+    }
+
+    return SizedBox(width: 48.w, child: chip);
   }
 
   /// When the trial lesson runs — the date strip, then the window inside it.

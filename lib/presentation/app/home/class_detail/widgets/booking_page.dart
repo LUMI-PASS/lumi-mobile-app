@@ -1851,19 +1851,26 @@ class _BookingPageState extends State<BookingPage> {
                               onChanged: _onWalletToggled,
                             ),
                           ],
-                          20.kh,
-                          _breakdownSection(c),
+                          // Above the price-breakdown card, not under it. A
+                          // course with no schedule cannot be bought at all,
+                          // and at the foot of the page that reason sat below
+                          // the total and under the Pay button's fold — read
+                          // only by whoever scrolled past everything it
+                          // invalidates.
+                          //
                           // The server's refusal outranks a transient error
                           // and is NOT clearable: picking a date or a slot
                           // wipes `_error`, and a reason that belongs to the
                           // whole course has to survive that. Same slot, same
                           // styling as every other message on this page.
                           if ((_blockedNotice ?? _error) != null) ...[
-                            12.kh,
+                            20.kh,
                             Text((_blockedNotice ?? _error)!,
                                 style: AppText.regular12
                                     .copyWith(color: AppColors.error)),
                           ],
+                          20.kh,
+                          _breakdownSection(c),
                         ],
                       ),
                     ),
@@ -1895,7 +1902,14 @@ class _BookingPageState extends State<BookingPage> {
             ),
             Expanded(
               child: Text(
-                _isCourse ? 'course_buy_cta'.tr() : 'buy_tickets'.tr(),
+                // A trial is ONE lesson bought off a ladder, not the course —
+                // titling its checkout "buy the course" told the buyer they
+                // were about to pay for something they aren't.
+                _isTrial
+                    ? 'cta_buy_ticket'.tr()
+                    : _isCourse
+                        ? 'course_buy_cta'.tr()
+                        : 'buy_tickets'.tr(),
                 textAlign: TextAlign.center,
                 style: AppText.medium16.copyWith(color: c.textPrimary),
               ),
@@ -2985,6 +2999,11 @@ class _DateChip extends StatelessWidget {
     // Both the selected frosted pill and the bare canvas use theme colours.
     final dayColor = c.textPrimary;
     final mutedColor = c.textSecondary;
+    // TODAY is ringed rather than filled — the same marking the date-range
+    // picker uses — so the strip says where "now" is without competing with
+    // the selected pill. A strip that opens on the 14th gave no clue whether
+    // that was today or simply the first day the class runs.
+    final isToday = _isoDateStatic(d) == _isoDateStatic(DateTime.now());
 
     final content = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -3003,32 +3022,47 @@ class _DateChip extends StatelessWidget {
 
     final padding = EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w);
 
+    final radius = BorderRadius.circular(56.r);
+    final todayBorder =
+        isToday ? Border.all(color: c.primary, width: 1.5) : null;
+
+    Widget chip;
+    if (isSelected) {
+      chip = FrostedCard(
+        onTap: onTap,
+        padding: padding,
+        borderRadius: radius,
+        child: content,
+      );
+      // The frosted pill paints its own border, so today's ring goes around
+      // the outside of it instead of replacing it.
+      if (isToday) {
+        chip = Container(
+          decoration: BoxDecoration(border: todayBorder, borderRadius: radius),
+          child: chip,
+        );
+      }
+    } else {
+      chip = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: isInRange
+                ? AppColors.brandPurple.withValues(alpha: 0.10)
+                : null,
+            border: todayBorder,
+            borderRadius: radius,
+          ),
+          child: content,
+        ),
+      );
+    }
+
     return Opacity(
       opacity: isUnavailable ? 0.4 : 1,
-      child: SizedBox(
-        width: width.w,
-        child: isSelected
-            ? FrostedCard(
-                onTap: onTap,
-                padding: padding,
-                borderRadius: BorderRadius.circular(56.r),
-                child: content,
-              )
-            : GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onTap,
-                child: isInRange
-                    ? Container(
-                        padding: padding,
-                        decoration: BoxDecoration(
-                          color: AppColors.brandPurple.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(56.r),
-                        ),
-                        child: content,
-                      )
-                    : Padding(padding: padding, child: content),
-              ),
-      ),
+      child: SizedBox(width: width.w, child: chip),
     );
   }
 }

@@ -20,6 +20,7 @@ import 'package:lumi_pass/common/utils/strip_html.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
+import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
@@ -561,10 +562,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
           ],
           if (description != null) ...[
             6.verticalSpace,
-            Text(
-              description,
+            ExpandableDescription(
+              text: description,
               textAlign: TextAlign.justify,
-              style: AppText.regular14.copyWith(color: c.textPrimary),
             ),
           ],
           if (branch != null && branch.isNotEmpty) ...[
