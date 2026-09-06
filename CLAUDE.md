@@ -110,16 +110,20 @@ RUNNING:
 DO NOT RUN APP IN ORDER TO TEST/VIEW IT
 
 BACKEND-DEPLOY:
-Since the backend merge (2026-07-11) all production traffic is served by the merged-backend container. The GitHub auto-deploy webhook was never updated — it still rebuilds the old mobile-backend / adminka-backend / partner-backend containers, which Caddy no longer routes any traffic to.
-So a push to main produces a green webhook delivery, a successful Docker build, and zero change in production. This has silently bitten several deploys.
-Every production deploy is manual:
-ssh root@82.118.227.32
-cd /opt/lumi/repos/mobile && git pull origin main
-cd /opt/lumi && docker compose up -d --build --no-deps merged-backend
+Since 2026-09-06 the backend is deployed by Coolify. To deploy: `git push origin main` in lumi-mobile-backend. A webhook triggers Coolify, which builds that commit and swaps the container only if the build succeeds. Takes ~5 min. Watch it at https://coolify.lumipass.uz.
+
+DO NOT deploy over SSH. The old manual path (`docker compose up -d --build --no-deps merged-backend` in /opt/lumi) is now DANGEROUS, not merely obsolete: that container still exists, stopped, purely as a rollback path, and starting it puts a SECOND poller on the live Telegram bot token, which knocks the production bots offline. It also no longer receives any traffic — Caddy routes every hostname to the Coolify container.
+
+Verify a deploy with:
+curl -o /dev/null -w "%{http_code}\n" https://mobile-api.lumipass.uz/api/categories   # 200
+curl https://mobile-api.lumipass.uz/health/ready                                        # {"status":"ok","database":"connected"}
+There is no /api/activities route, so a 404 there proves nothing.
+
+Full detail and rollback steps: COOLIFY-MIGRATION.md and the Deployment model section of AGENTS.md, both in the workspace root.
 
 TEMPORARY — OTP IS RETURNED IN THE API RESPONSE (added 2026-08-15, NOT yet reverted):
 `POST /api/auth/send-otp` returns the OTP code in the response body as `debug_otp` (backend commit 272dafd, `sendOtp` in `src/api/auth/auth.service.ts`). It is unconditional — there is no env flag — so anyone who can reach the API and knows a phone number can obtain that account's code and log in as them. This was added deliberately and knowingly, because Eskiz SMS delivery is broken and logins were otherwise impossible; it is a stopgap, not a design decision.
 Do NOT remove it as drive-by cleanup — it is what currently makes login work. Remove it only once SMS actually delivers again, which needs BOTH of these fixed:
 1. Outbound connectivity from the prod box to notify.eskiz.uz. The send fails with undici's opaque `fetch failed` (no HTTP response at all — DNS/TCP/TLS), and `SmsService` logs only `error.message`, which for a fetch TypeError is always that same useless string. The real reason is in `error.cause`, which the code discards.
 2. `SMS_FROM` in the prod `.env`. It is still `4546`, Eskiz's test nickname, which only works with the literal template "This is test from Eskiz". The bilingual OTP template will be rejected even after connectivity returns; it needs the approved branded sender (e.g. LUMIPASS).
-To revert when the time comes: `grep -n debug_otp src/api/auth/auth.service.ts`, delete the field and its TEMPORARY comment, then redeploy manually per BACKEND-DEPLOY above.
+To revert when the time comes: `grep -n debug_otp src/api/auth/auth.service.ts`, delete the field and its TEMPORARY comment, then push to main (see BACKEND-DEPLOY above).
