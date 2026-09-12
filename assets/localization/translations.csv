@@ -1184,3 +1184,7 @@ shop_cart_browse,Перейти к товарам,Mahsulotlarga o‘tish,Browse 
 shop_cart_items,{} шт. в корзине,Savatchada {} ta,{} items in the cart
 shop_cart_max,"Максимум {}",Ko‘pi bilan {},Max {}
 shop_checkout_cta,Оформить заказ,Buyurtma berish,Checkout
+shop_cart_title_n,"{} шт. в корзине",Savatchada {} ta tovar,{} items in the cart
+shop_cart_summary,Ваш заказ,Buyurtmangiz,Your order
+shop_cart_discounts,Скидки,Chegirmalar,Discounts
+shop_price_each,{} / шт.,{} / dona,{} each

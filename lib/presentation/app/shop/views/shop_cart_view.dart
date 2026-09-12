@@ -16,6 +16,8 @@ import 'package:lumi_pass/common/utils/multi_lang.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_cart.dart';
 import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_price.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_quantity_stepper.dart';
 
 /// "Savatcha" — the basket, and the shop's second tab.
 ///
@@ -76,11 +78,16 @@ class ShopCartView extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: ListView.separated(
-            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
-            itemCount: cart.lines.length,
-            separatorBuilder: (_, __) => 12.kh,
-            itemBuilder: (_, index) => _CartLineTile(line: cart.lines[index]),
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+            children: [
+              for (final line in cart.lines) ...[
+                _CartLineTile(line: line),
+                12.kh,
+              ],
+              8.kh,
+              _OrderSummary(cart: cart),
+            ],
           ),
         ),
         _CheckoutBar(cart: cart),
@@ -110,100 +117,144 @@ class _CartLineTile extends StatelessWidget {
     return FrostedCard(
       borderRadius: BorderRadius.circular(16.r),
       padding: EdgeInsets.all(12.w),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: () => context.router.push(
-              ShopProductRoute(productId: product.id, preloaded: product),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
-              child: SizedBox(
-                width: 64.w,
-                height: 64.w,
-                child: image == null
-                    ? Container(color: c.surface)
-                    : CachedNetworkImage(
-                        imageUrl: image,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => Container(color: c.surface),
-                      ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: () => context.router.push(
+                  ShopProductRoute(productId: product.id, preloaded: product),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: SizedBox(
+                    width: 72.w,
+                    height: 72.w,
+                    child: image == null
+                        ? Container(color: c.surface)
+                        : CachedNetworkImage(
+                            imageUrl: image,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) =>
+                                Container(color: c.surface),
+                          ),
+                  ),
+                ),
               ),
-            ),
-          ),
-          12.kw,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              12.kw,
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        multiLang(product.name),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style:
-                            AppText.semibold14.copyWith(color: c.textPrimary),
-                      ),
+                    // The line total, not the unit price: this is what this
+                    // row contributes to the bill, and the per-unit figure is
+                    // spelled out underneath for anyone doing the arithmetic.
+                    ShopPrice(
+                      price: line.lineTotal,
+                      oldPrice: line.lineSubtotal,
                     ),
-                    GestureDetector(
-                      onTap: () => cubit.remove(product.id),
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 8.w),
-                        child: Icon(
-                          Icons.close,
-                          size: 18.w,
-                          color: c.textSecondary,
-                        ),
-                      ),
+                    4.kh,
+                    Text(
+                      multiLang(product.name),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.regular14.copyWith(color: c.textPrimary),
                     ),
                   ],
                 ),
-                4.kh,
-                Text(
-                  line.lineTotal.toRawUzsPrice(),
-                  style: AppText.semibold14.copyWith(color: c.textPrimary),
+              ),
+            ],
+          ),
+          12.kh,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'shop_price_each'.tr(args: [product.price.toRawUzsPrice()]),
+                  style: AppText.regular13.copyWith(color: c.textSecondary),
                 ),
-                8.kh,
-                Row(
-                  children: [
-                    _StepButton(
-                      icon: Icons.remove,
-                      // At one, the next step down is removal — and that is
-                      // what the ✕ is for, so this simply stops.
-                      enabled: line.count > 1,
-                      onTap: () =>
-                          cubit.setCount(product, line.count - 1),
-                    ),
-                    SizedBox(
-                      width: 40.w,
-                      child: Text(
-                        '${line.count}',
-                        textAlign: TextAlign.center,
-                        style: AppText.semibold14
-                            .copyWith(color: c.textPrimary),
-                      ),
-                    ),
-                    _StepButton(
-                      icon: Icons.add,
-                      enabled: line.count < ceiling,
-                      onTap: () =>
-                          cubit.setCount(product, line.count + 1),
-                    ),
-                    const Spacer(),
-                    if (line.count >= ceiling)
-                      Text(
-                        'shop_cart_max'.tr(args: ['$ceiling']),
-                        style: AppText.regular12
-                            .copyWith(color: AppColors.warning),
-                      ),
-                  ],
-                ),
-              ],
+              ),
+              ShopQuantityStepper(
+                count: line.count,
+                // Down from one empties the line. It is the only way out of
+                // the basket now that the ✕ is gone, and it is the one every
+                // shop in the region uses.
+                onDecrease: () => cubit.setCount(product, line.count - 1),
+                onIncrease: line.count < ceiling
+                    ? () => cubit.setCount(product, line.count + 1)
+                    : null,
+              ),
+            ],
+          ),
+          if (line.count >= ceiling) ...[
+            6.kh,
+            Text(
+              'shop_cart_max'.tr(args: ['$ceiling']),
+              style: AppText.regular12.copyWith(color: AppColors.warning),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// "Buyurtmangiz" — the bill, itemised.
+///
+/// Worth its own card because the number in the bottom bar is the only one a
+/// buyer is asked to accept, and a total that appears without its parts is a
+/// total nobody checks.
+class _OrderSummary extends StatelessWidget {
+  const _OrderSummary({required this.cart});
+
+  final ShopCart cart;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    return FrostedCard(
+      borderRadius: BorderRadius.circular(16.r),
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'shop_cart_summary'.tr(),
+            style: AppText.bold18.copyWith(color: c.textPrimary),
+          ),
+          16.kh,
+          _SummaryRow(
+            label: 'shop_n_items'.tr(args: ['${cart.count}']),
+            value: cart.subtotal.toRawUzsPrice(),
+          ),
+          if (cart.hasDiscount) ...[
+            12.kh,
+            _SummaryRow(
+              label: 'shop_cart_discounts'.tr(),
+              value: '- ${cart.discount.toRawUzsPrice()}',
+              valueColor: AppColors.brandPink,
+            ),
+          ],
+          16.kh,
+          Divider(height: 1, color: c.divider),
+          16.kh,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'shop_total'.tr(),
+                  style:
+                      AppText.semibold16.copyWith(color: AppColors.brandPurple),
+                ),
+              ),
+              Text(
+                cart.total.toRawUzsPrice(),
+                style: AppText.bold16.copyWith(color: AppColors.brandPurple),
+              ),
+            ],
           ),
         ],
       ),
@@ -211,35 +262,34 @@ class _CartLineTile extends StatelessWidget {
   }
 }
 
-class _StepButton extends StatelessWidget {
-  const _StepButton({
-    required this.icon,
-    required this.enabled,
-    required this.onTap,
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
   });
 
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
+  final String label;
+  final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 30.w,
-        height: 30.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: c.border),
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: AppText.regular14.copyWith(color: c.textPrimary),
+          ),
         ),
-        child: Icon(
-          icon,
-          size: 16.w,
-          color: enabled ? c.textPrimary : c.disabled,
+        Text(
+          value,
+          style: AppText.medium14.copyWith(color: valueColor ?? c.textPrimary),
         ),
-      ),
+      ],
     );
   }
 }
@@ -262,39 +312,42 @@ class _CheckoutBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         minimum: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Row(
+            // The total repeated beside the button, not only in the summary
+            // above it: at the moment of committing, the amount should be
+            // under the thumb that is committing to it.
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: Text(
-                    'shop_cart_items'.tr(args: ['${cart.count}']),
-                    style: AppText.regular13.copyWith(color: c.textSecondary),
-                  ),
-                ),
                 Text(
                   cart.total.toRawUzsPrice(),
-                  style: AppText.semibold18.copyWith(color: c.textPrimary),
+                  style: AppText.bold18.copyWith(color: AppColors.brandPurple),
+                ),
+                Text(
+                  'shop_n_items'.tr(args: ['${cart.count}']),
+                  style: AppText.regular12.copyWith(color: c.textSecondary),
                 ),
               ],
             ),
-            12.kh,
-            SizedBox(
-              width: double.infinity,
-              height: 52.h,
-              child: ElevatedButton(
-                onPressed: () =>
-                    context.router.push(const ShopCheckoutRoute()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.brandPurple,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+            16.kw,
+            Expanded(
+              child: SizedBox(
+                height: 52.h,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      context.router.push(const ShopCheckoutRoute()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.brandPurple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                   ),
-                ),
-                child: Text(
-                  'shop_checkout_cta'.tr(),
-                  style: AppText.semibold16.copyWith(color: Colors.white),
+                  child: Text(
+                    'shop_checkout_cta'.tr(),
+                    style: AppText.semibold16.copyWith(color: Colors.white),
+                  ),
                 ),
               ),
             ),

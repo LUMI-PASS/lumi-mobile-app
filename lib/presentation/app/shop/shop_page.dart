@@ -58,7 +58,7 @@ class _ShopPageState extends State<ShopPage> {
 
           return Scaffold(
             backgroundColor: c.scaffoldBg,
-            appBar: BaseAppBar(title: _titleFor(_tab)),
+            appBar: BaseAppBar(title: _titleFor(_tab, cartCount)),
             body: IndexedStack(
               index: _tab,
               children: [
@@ -78,7 +78,12 @@ class _ShopPageState extends State<ShopPage> {
     );
   }
 
-  String _titleFor(int tab) => switch (tab) {
+  /// The basket's title counts what is in it — "3 ta tovar savatda" — because
+  /// a screen that already shows the things does not need to be labelled
+  /// "Cart", and the count is the one fact worth putting in a header.
+  String _titleFor(int tab, int cartCount) => switch (tab) {
+        1 when cartCount > 0 =>
+          'shop_cart_title_n'.tr(args: ['$cartCount']),
         1 => 'shop_tab_cart'.tr(),
         2 => 'shop_my_orders'.tr(),
         _ => 'shop_title'.tr(),

@@ -35,9 +35,9 @@ class ShopProductsView
   ///
   /// Measured rather than expressed as a `childAspectRatio`, because a ratio
   /// scales the WHOLE tile with its width: the block under the image is a
-  /// fixed stack — two lines of name, a price row, the Add button — and a
-  /// ratio makes it grow on a wide phone and clip on a narrow one. That is
-  /// what overflowed when the Add button was added.
+  /// fixed stack — a price, its struck-through original, two lines of name and
+  /// the Add button — and a ratio makes it grow on a wide phone and clip on a
+  /// narrow one. That is what overflowed when the Add button was added.
   ///
   /// It follows the OS text-size setting too, so turning up the font moves the
   /// tile down instead of clipping the button off the bottom of it.
@@ -50,13 +50,16 @@ class ShopProductsView
     final available = MediaQuery.sizeOf(context).width - 32.w - 12.w;
     final image = available / 2; // The card's image is square.
 
+    // The old-price line is reserved on every card, discounted or not, so the
+    // Add buttons line up across a row. See ShopPrice.reserveOldPriceLine.
+    final price = scaler.scale(16) * lineHeight;
+    final oldPrice = scaler.scale(13) * lineHeight;
     final name = scaler.scale(14) * lineHeight * nameLines;
-    final price = scaler.scale(14) * lineHeight;
 
-    // image + gap + name + gap + price + gap + Add button. The extra pixel
-    // absorbs the rounding a fractional device pixel ratio introduces —
-    // cheaper than a one-pixel overflow stripe.
-    return image + 8.h + name + 4.h + price + 8.h + 36.h + 1;
+    // image + gap + price + old price + gap + name + gap + Add button. The
+    // extra pixel absorbs the rounding a fractional device pixel ratio
+    // introduces — cheaper than a one-pixel overflow stripe.
+    return image + 8.h + price + oldPrice + 4.h + name + 8.h + 36.h + 1;
   }
 
   @override
@@ -137,6 +140,9 @@ class ShopProductsView
                               .countOf(product.id),
                           onAdd: () =>
                               context.read<CartCubit>().add(product),
+                          onSetCount: (next) => context
+                              .read<CartCubit>()
+                              .setCount(product, next),
                         );
                       },
                       childCount: state.products.length,

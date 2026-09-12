@@ -17,6 +17,8 @@ import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/shop/shop_repository.dart';
 import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_price.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_quantity_stepper.dart';
 
 /// One product, and the decision to buy it.
 ///
@@ -184,24 +186,10 @@ class _ShopProductPageState extends State<ShopProductPage> {
                   style: AppText.semibold18.copyWith(color: c.textPrimary),
                 ),
                 8.kh,
-                Row(
-                  children: [
-                    Text(
-                      product.price.toRawUzsPrice(),
-                      style:
-                          AppText.semibold18.copyWith(color: c.textPrimary),
-                    ),
-                    if (product.hasDiscount) ...[
-                      8.kw,
-                      Text(
-                        product.oldPrice!.toGrouped(),
-                        style: AppText.regular14.copyWith(
-                          color: c.textSecondary,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                    ],
-                  ],
+                ShopPrice(
+                  price: product.price,
+                  oldPrice: product.oldPrice,
+                  large: true,
                 ),
                 8.kh,
                 // The one place the coin mark belongs on a price: it is not a
@@ -239,10 +227,27 @@ class _ShopProductPageState extends State<ShopProductPage> {
                 ],
                 20.kh,
                 if (product.inStock)
-                  _QuantityStepper(
-                    count: _count,
-                    max: _maxCount,
-                    onChanged: (next) => setState(() => _count = next),
+                  Row(
+                    children: [
+                      Text(
+                        'shop_quantity'.tr(),
+                        style: AppText.semibold14
+                            .copyWith(color: c.textPrimary),
+                      ),
+                      const Spacer(),
+                      ShopQuantityStepper(
+                        count: _count,
+                        // One is the floor here, unlike in the basket: this
+                        // screen has nothing to remove, it is deciding how
+                        // many to add.
+                        onDecrease: _count > 1
+                            ? () => setState(() => _count -= 1)
+                            : null,
+                        onIncrease: _count < _maxCount
+                            ? () => setState(() => _count += 1)
+                            : null,
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -284,84 +289,6 @@ class _ShopProductPageState extends State<ShopProductPage> {
                     .tr(args: [(product.price * _count).toRawUzsPrice()]),
             style: AppText.semibold16.copyWith(color: Colors.white),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuantityStepper extends StatelessWidget {
-  const _QuantityStepper({
-    required this.count,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final int count;
-  final int max;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-
-    return Row(
-      children: [
-        Text(
-          'shop_quantity'.tr(),
-          style: AppText.semibold14.copyWith(color: c.textPrimary),
-        ),
-        const Spacer(),
-        _StepButton(
-          icon: Icons.remove,
-          enabled: count > 1,
-          onTap: () => onChanged(count - 1),
-        ),
-        SizedBox(
-          width: 48.w,
-          child: Text(
-            '$count',
-            textAlign: TextAlign.center,
-            style: AppText.semibold16.copyWith(color: c.textPrimary),
-          ),
-        ),
-        _StepButton(
-          icon: Icons.add,
-          enabled: count < max,
-          onTap: () => onChanged(count + 1),
-        ),
-      ],
-    );
-  }
-}
-
-class _StepButton extends StatelessWidget {
-  const _StepButton({
-    required this.icon,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 36.w,
-        height: 36.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: c.border),
-        ),
-        child: Icon(
-          icon,
-          size: 18.w,
-          color: enabled ? c.textPrimary : c.disabled,
         ),
       ),
     );

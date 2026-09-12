@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -11,8 +10,13 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/multi_lang.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_price.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_quantity_stepper.dart';
 
 /// One product in the shop grid.
+///
+/// Price first, then the name: a shopper scanning a grid is comparing prices,
+/// and the name is what they read once one of them has stopped them.
 ///
 /// A sold-out product is shown, dimmed, rather than hidden: "we have this and
 /// it's gone" is information a buyer wants, and hiding it makes a restock look
@@ -23,19 +27,31 @@ class ShopProductCard extends StatelessWidget {
     required this.product,
     required this.onTap,
     this.onAdd,
+    this.onSetCount,
     this.inCart = 0,
   });
 
   final ShopProduct product;
   final VoidCallback onTap;
 
-  /// Adds one to the basket. Omit it and the card is just a link — which is
-  /// what the "you might also like" strips want.
+  /// Puts the first one in the basket. Omit it and the card is just a link —
+  /// which is what the "you might also like" strips want.
   final VoidCallback? onAdd;
 
-  /// How many of this product the basket already holds, so the button can say
-  /// so instead of pretending each tap is the first.
+  /// Changes the count once it is in the basket. Zero removes the line, which
+  /// is what the minus does when it is showing 1.
+  final ValueChanged<int>? onSetCount;
+
+  /// How many of this product the basket already holds. Above zero the button
+  /// becomes the counter, so the card never asks "add?" about something that
+  /// is already in there.
   final int inCart;
+
+  /// Never offer more than the shop can deliver: the lower of the per-order
+  /// limit and what is left on the shelf.
+  int get _ceiling => product.maxPerOrder < product.available
+      ? product.maxPerOrder
+      : product.available;
 
   @override
   Widget build(BuildContext context) {
@@ -80,28 +96,8 @@ class ShopProductCard extends StatelessWidget {
                       ),
                       child: Text(
                         'shop_sold_out'.tr(),
-                        style: AppText.semibold12
-                            .copyWith(color: Colors.white),
-                      ),
-                    ),
-                  )
-                else if (product.hasDiscount)
-                  Positioned(
-                    top: 8.h,
-                    left: 8.w,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 3.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Text(
-                        '-${(100 - (product.price / product.oldPrice!) * 100).round()}%',
-                        style: AppText.semibold12
-                            .copyWith(color: Colors.white),
+                        style:
+                            AppText.semibold12.copyWith(color: Colors.white),
                       ),
                     ),
                   ),
@@ -109,41 +105,37 @@ class ShopProductCard extends StatelessWidget {
             ),
           ),
           8.kh,
+          // The discount lives on the price now, not as a corner badge on the
+          // photo: "−67%" over an image says a number is important without
+          // saying which number, and the buyer has to look twice to pair them.
+          ShopPrice(
+            price: product.price,
+            oldPrice: product.oldPrice,
+            reserveOldPriceLine: true,
+          ),
+          4.kh,
           Text(
             multiLang(product.name),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.semibold14.copyWith(color: c.textPrimary),
-          ),
-          4.kh,
-          // Prices are in so'm, never coin-marked — the coin mark belongs to
-          // wallet-side numbers only, and a price tag carrying it would read as
-          // a second currency. The checkout screen is where coins come in.
-          Row(
-            children: [
-              Text(
-                product.price.toRawUzsPrice(),
-                style: AppText.semibold14.copyWith(color: c.textPrimary),
-              ),
-              if (product.hasDiscount) ...[
-                6.kw,
-                Text(
-                  product.oldPrice!.toGrouped(),
-                  style: AppText.regular12.copyWith(
-                    color: c.textSecondary,
-                    decoration: TextDecoration.lineThrough,
-                  ),
-                ),
-              ],
-            ],
+            style: AppText.regular14.copyWith(color: c.textPrimary),
           ),
           if (onAdd != null) ...[
             8.kh,
-            _AddButton(
-              enabled: !soldOut,
-              inCart: inCart,
-              onTap: onAdd!,
-            ),
+            if (soldOut)
+              _AddButton(enabled: false, onTap: () {})
+            else if (inCart > 0 && onSetCount != null)
+              ShopQuantityStepper(
+                count: inCart,
+                expanded: true,
+                // At one, down is removal — the basket line goes away rather
+                // than sitting there at zero.
+                onDecrease: () => onSetCount!(inCart - 1),
+                onIncrease:
+                    inCart < _ceiling ? () => onSetCount!(inCart + 1) : null,
+              )
+            else
+              _AddButton(enabled: true, onTap: onAdd!),
           ],
         ],
       ),
@@ -151,26 +143,17 @@ class ShopProductCard extends StatelessWidget {
   }
 }
 
-/// "Qo'shish" — the add-to-basket button under a card.
-///
-/// Once the product is in the basket it shows the count rather than staying a
-/// generic Add, so a second tap is an obvious increment rather than a question
-/// about whether the first one worked.
+/// "Qo'shish" — the first tap only. Every tap after it is on the stepper that
+/// has taken this button's place, which is why there is no count in here.
 class _AddButton extends StatelessWidget {
-  const _AddButton({
-    required this.enabled,
-    required this.inCart,
-    required this.onTap,
-  });
+  const _AddButton({required this.enabled, required this.onTap});
 
   final bool enabled;
-  final int inCart;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final added = inCart > 0;
 
     return GestureDetector(
       onTap: enabled ? onTap : null,
@@ -178,42 +161,31 @@ class _AddButton extends StatelessWidget {
         height: 36.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: !enabled
-              ? c.disabled
-              : added
-                  ? AppColors.brandPurple
-                  : AppColors.brandPurple.withValues(alpha: 0.12),
+          color: enabled
+              ? AppColors.brandPurple
+              : c.control,
           borderRadius: BorderRadius.circular(10.r),
         ),
-        // Once it is in the basket the button becomes the count on a filled
-        // pill. No tick and no second cart glyph: a purple pill reading "2" is
-        // already unambiguous, and it keeps the card free of a Material icon
-        // that would sit oddly beside the Iconsax-weight set everywhere else.
-        child: added
-            ? Text(
-                '$inCart',
-                style: AppText.semibold12.copyWith(color: Colors.white),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Assets.icons.shop.cart.svg(
-                    width: 15.w,
-                    height: 15.w,
-                    colorFilter: ColorFilter.mode(
-                      enabled ? AppColors.brandPurple : c.textMuted,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                  6.kw,
-                  Text(
-                    'shop_add_to_cart'.tr(),
-                    style: AppText.semibold12.copyWith(
-                      color: enabled ? AppColors.brandPurple : c.textMuted,
-                    ),
-                  ),
-                ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Assets.icons.shop.cart.svg(
+              width: 15.w,
+              height: 15.w,
+              colorFilter: ColorFilter.mode(
+                enabled ? Colors.white : c.textMuted,
+                BlendMode.srcIn,
               ),
+            ),
+            6.kw,
+            Text(
+              'shop_add_to_cart'.tr(),
+              style: AppText.semibold12.copyWith(
+                color: enabled ? Colors.white : c.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

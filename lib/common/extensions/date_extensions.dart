@@ -38,7 +38,11 @@ extension PriceStringFormatter on String {
   }
 }
 
-String _uzsCurrencyLabel() {
+/// The currency word for the active locale — `so'm` / `сум` / `sum`.
+///
+/// Public because a price is not always one string: the shop draws the figure
+/// and the unit at different sizes, so it needs the two halves separately.
+String uzsCurrencyLabel() {
   switch (currentLang) {
     case 'ru':
       return 'сум';
@@ -51,11 +55,11 @@ String _uzsCurrencyLabel() {
 
 extension PriceNumFormatter on num {
   /// Coin amount → `"50 000 so'm"` style string.
-  String toUzsPrice() => "${toString().toFormattedPrice()} ${_uzsCurrencyLabel()}";
+  String toUzsPrice() => "${toString().toFormattedPrice()} ${uzsCurrencyLabel()}";
 
   /// Raw UZS amount (already in soums) → `"250 000 so'm"`.
   /// Use this for prices that are NOT stored in coins/tiyin.
-  String toRawUzsPrice() => "${toGrouped()} ${_uzsCurrencyLabel()}";
+  String toRawUzsPrice() => "${toGrouped()} ${uzsCurrencyLabel()}";
 
   /// Just the digits, space-grouped: `250000` → `"250 000"`.
   ///

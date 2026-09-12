@@ -15,6 +15,11 @@ class ShopCartLine {
 
   num get lineTotal => product.price * count;
 
+  /// What this line would have cost at the pre-discount price. Equal to
+  /// [lineTotal] when the product is not discounted, so the summary can
+  /// subtract the two without asking whether there is a discount at all.
+  num get lineSubtotal => (product.oldPrice ?? product.price) * count;
+
   ShopCartLine copyWith({int? count}) =>
       ShopCartLine(product: product, count: count ?? this.count);
 
@@ -47,6 +52,17 @@ class ShopCart {
   int get count => lines.fold(0, (sum, line) => sum + line.count);
 
   num get total => lines.fold<num>(0, (sum, line) => sum + line.lineTotal);
+
+  /// The basket before its discounts — the "N tovar" line of the summary.
+  num get subtotal =>
+      lines.fold<num>(0, (sum, line) => sum + line.lineSubtotal);
+
+  /// What the old prices claim the buyer is saving. Shown as a line of its own
+  /// because a total that is simply lower than the sum of its parts reads like
+  /// an arithmetic error.
+  num get discount => subtotal - total;
+
+  bool get hasDiscount => discount > 0;
 
   int countOf(String productId) =>
       lines
