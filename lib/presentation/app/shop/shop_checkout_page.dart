@@ -13,6 +13,7 @@ import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/card_input_formatters.dart';
 import 'package:lumi_pass/common/utils/multi_lang.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
+import 'package:lumi_pass/common/widget/app_text_field.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
@@ -433,40 +434,38 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
           ),
 
           12.kh,
-          TextField(
+          AppTextField(
             controller: _name,
+            label: 'shop_contact_name'.tr(),
             textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'shop_contact_name'.tr(),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-            ),
+            textInputAction: TextInputAction.next,
           ),
           12.kh,
-          TextField(
+          AppTextField(
             controller: _phone,
+            label: 'shop_contact_phone'.tr(),
             keyboardType: TextInputType.phone,
+            textInputAction: TextInputAction.next,
+            showClearButton: true,
             onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'shop_contact_phone'.tr(),
-              helperText: 'shop_contact_phone_hint'.tr(),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
+          ),
+          6.kh,
+          // The hint sits under the field rather than in Material's helperText
+          // slot, which this field does not have — and which would have been
+          // styled as an error anyway.
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            child: Text(
+              'shop_contact_phone_hint'.tr(),
+              style: AppText.regular12.copyWith(color: c.textSecondary),
             ),
           ),
           12.kh,
-          TextField(
+          AppTextField(
             controller: _comment,
-            maxLines: 2,
+            label: 'shop_courier_note'.tr(),
+            maxLines: 3,
             minLines: 1,
-            decoration: InputDecoration(
-              labelText: 'shop_courier_note'.tr(),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-            ),
           ),
 
           20.kh,

@@ -9,6 +9,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/common/widget/app_text_field.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
@@ -183,18 +184,12 @@ class _ShopDeliveryPointPageState extends State<ShopDeliveryPointPage> {
                         .copyWith(color: c.textSecondary),
                   ),
                   12.kh,
-                  TextField(
+                  AppTextField(
                     controller: _address,
-                    maxLines: 2,
+                    placeholder: 'shop_address_placeholder'.tr(),
+                    maxLines: 3,
                     minLines: 1,
-                    textCapitalization: TextCapitalization.sentences,
                     onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: 'shop_address_placeholder'.tr(),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
                   ),
                   16.kh,
                   SizedBox(

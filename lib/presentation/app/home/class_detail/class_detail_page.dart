@@ -167,7 +167,17 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   /// 0 → hero fully visible, 1 → content scrolled under the top controls and
   /// the frosted scrim is fully on.
-  double _topScrim = 0;
+  ///
+  /// A notifier rather than a field, because it moves on every scroll frame:
+  /// as page state it dragged the whole tree — hero, every card, and the
+  /// native map view inside the location card — through a rebuild per frame,
+  /// which is what made the page stutter under the finger. Only the scrim
+  /// listens now.
+  final ValueNotifier<double> _topScrim = ValueNotifier<double>(0);
+
+  /// The status bar icons flip once, when the scrim takes over the background
+  /// under them, so that one stays ordinary page state.
+  bool _scrimTookOver = false;
 
   /// Whether this class is on sale right now.
   ///
@@ -281,6 +291,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     _slideTimer?.cancel();
     _pageController.dispose();
     _scrollController.dispose();
+    _topScrim.dispose();
     super.dispose();
   }
 
@@ -291,8 +302,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     final end = _kHeroHeight.h * 0.85;
     final t =
         ((_scrollController.offset - start) / (end - start)).clamp(0.0, 1.0);
-    if ((t - _topScrim).abs() > 0.01 || t == 0 || t == 1) {
-      if (t != _topScrim) setState(() => _topScrim = t);
+    _topScrim.value = t;
+
+    final tookOver = t > 0.5;
+    if (tookOver != _scrimTookOver) {
+      setState(() => _scrimTookOver = tookOver);
     }
   }
 
@@ -758,7 +772,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
     // Over the hero the status bar sits on a photo (light icons); once the
     // scrim takes over on a light background the icons have to flip to dark.
-    final darkIcons = !c.isDark && _topScrim > 0.5;
+    final darkIcons = !c.isDark && _scrimTookOver;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -859,11 +873,17 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               left: 0,
               right: 0,
               child: IgnorePointer(
-                child: Opacity(
-                  opacity: _topScrim,
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _topScrim,
+                  // The scrim itself is passed through as `child`, so the
+                  // per-frame rebuild is one `Opacity` and nothing else.
                   child: DetailTopScrim(
                     color: c.scaffoldBg,
                     height: safeTop + 56.h,
+                  ),
+                  builder: (_, opacity, child) => Opacity(
+                    opacity: opacity,
+                    child: child,
                   ),
                 ),
               ),
