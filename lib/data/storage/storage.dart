@@ -33,6 +33,12 @@ class Storage {
 
   BaseStorage<String> get deviceToken => BaseStorage(_box, 'device_token');
 
+  /// A random id generated once per install and never sent anywhere but our
+  /// own API. NOT an identity — it exists so two taps a second apart can be
+  /// recognised as one, and so an unauthenticated write has something to
+  /// bound. Cleared with the app's data, like everything else in this box.
+  BaseStorage<String?> get installId => BaseStorage(_box, 'install_id');
+
   BaseStorage<String?> get currencyCode => BaseStorage(_box, 'currencyCode');
 
   BaseStorage<String?> get localeCode => BaseStorage(_box, 'localeCode');

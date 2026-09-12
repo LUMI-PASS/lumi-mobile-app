@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/common/env/app_env.dart';
 import 'package:lumi_pass/common/env/appsflyer_env.dart';
+import 'package:lumi_pass/common/router/deep_link_routes.dart';
 import 'package:lumi_pass/data/service/analytics_event.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 
@@ -276,11 +277,17 @@ class AppsFlyerService {
 
     if (value != null && value.contains('://')) return Uri.tryParse(value);
 
-    if (value == 'class' || value == 'activity') {
+    // A bare destination key plus its id in a sub-param. Checked against the
+    // registry rather than a hardcoded pair, so a OneLink campaign pointing at
+    // any registered screen — `branch`, `plans`, `category` — works without
+    // touching this file.
+    if (value != null && DeepLinkRoutes.lookup(value) != null) {
       final id = link.getStringValue('deep_link_sub1') ??
           link.getStringValue('class_id') ??
           link.afSub1;
-      if (id != null && id.isNotEmpty) return Uri.parse('lumi://class/$id');
+      return Uri.parse(
+        id == null || id.isEmpty ? 'lumi://$value' : 'lumi://$value/$id',
+      );
     }
 
     // Last resort: the raw link that was clicked. Carries the /share/class/

@@ -9,8 +9,12 @@ import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/router/app_link_opener.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/service/interest_source.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// "Скидочные купоны" call-to-action — the frosted promo card that opens the
@@ -128,7 +132,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
     final pages = <Widget>[
       HomeCouponBanner(onTap: widget.onCouponTap),
       ...widget.banners.map((banner) {
-        return ClipRRect(
+        final image = ClipRRect(
           borderRadius: BorderRadius.circular(12.r),
           child: CachedNetworkImage(
             width: double.infinity,
@@ -137,6 +141,20 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
             placeholder: (_, __) => _placeholder(c),
             errorWidget: (_, __, ___) => _placeholder(c),
           ),
+        );
+
+        // A banner with no link configured stays exactly as it was: a picture.
+        // Wrapping it in a tap target that does nothing would be worse than
+        // not having one.
+        if (!banner.hasLink) return image;
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => openBanner(
+            banner,
+            placement: BannerPlacement.homeCarousel,
+          ),
+          child: image,
         );
       }),
     ];
@@ -185,6 +203,17 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
         highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
         child: Container(color: c.surface),
       );
+}
+
+/// Records the tap, then opens the banner's link.
+///
+/// The two run in PARALLEL, never in sequence: [BannerClickReporter.report]
+/// returns immediately, so a slow or failed network call can neither delay
+/// opening the link nor stop it. Tracking is the side effect; navigating is
+/// the job.
+void openBanner(HomBanner banner, {required String placement}) {
+  getIt<BannerClickReporter>().report(banner.id, placement: placement);
+  AppLinkOpener.open(banner.link!, source: InterestSource.banner);
 }
 
 /// Full-width advertisement/promo card (Figma home `Реклама`). Reuses a real

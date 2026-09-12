@@ -108,16 +108,19 @@ exports be joined against the backend.
 
 `AppsFlyerService` registers a Unified Deep Linking (UDL) callback and hands
 the resolved target to `DeeplinkService.handleAppsFlyerLink`, which routes it
-through the same code path as `lumi://class/<id>` and the `/share/class/<id>`
-App Link. Deferred deep links (clicked before install, replayed on first
-launch) come through the same callback with `is_deferred: true` and are treated
-as a cold start.
+through the same registry as every other link shape — see `DEEPLINKS.md` for
+the destination list. Deferred deep links (clicked before install, replayed on
+first launch) come through the same callback with `is_deferred: true` and are
+treated as a cold start.
 
 Two OneLink shapes are understood:
 
 * `deep_link_value` holding a whole URI — `lumi://class/<id>` or a
   `https://mobile-api.lumipass.uz/share/class/<id>` share link;
-* `deep_link_value: class` with the id in `deep_link_sub1` (or `class_id`).
+* `deep_link_value` naming any registered destination, with the id in
+  `deep_link_sub1` (or `class_id`) — `deep_link_value: branch` works exactly
+  like `deep_link_value: class`, because the value is checked against the
+  registry rather than a hardcoded pair.
 
 ### Registering the OneLink domain
 

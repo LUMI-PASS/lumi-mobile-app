@@ -126,6 +126,17 @@ class HomeApi {
         data: {'reason': reason});
   }
 
+  /// One branch, already mapped to the shape `HomBranch` parses.
+  ///
+  /// `GET branches/:id` returns the RAW Mongo document — `_id` instead of `id`,
+  /// `address` as a multi-language object, coordinates nested under
+  /// `location` — none of which `HomBranch.fromJson` can read. The `/mobile`
+  /// variant runs the same mapper the discovery feed uses, so a branch opened
+  /// from a deep link is identical to one tapped on the home screen.
+  Future<Response> getBranch(String branchId) {
+    return _dio.get('branches/$branchId/mobile');
+  }
+
   /// Dedicated endpoint for the branch-detail screen — pulls only the classes
   /// for one branch instead of routing through the full /discovery/explore
   /// (which also fetches categories, banners, and unrelated branch data).

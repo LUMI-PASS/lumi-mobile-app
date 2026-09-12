@@ -20,6 +20,7 @@ import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
+import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_banners.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
@@ -138,14 +139,22 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               ),
             if (state.nearClassesList.isNotEmpty)
               ..._buildNearYou(context, state),
-            // "Реклама" ad card — reuses a real banner image.
-            if ((state.homeModel?.data?.banners ?? []).isNotEmpty)
+            // "Реклама" ad card — the last banner, shown full width.
+            //
+            // It used to send every tap to the plans screen regardless of what
+            // the banner was advertising. It now opens the banner's own link,
+            // and is hidden entirely when that banner has none, rather than
+            // showing an ad that lies about where it goes.
+            if (_adBanner(state) != null)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.only(top: 8.h),
                   child: HomeAdCard(
-                    imageUrl: _bannerSrc(state.homeModel!.data!.banners!.last),
-                    onTap: () => context.router.push(const PlansRoute()),
+                    imageUrl: _bannerSrc(_adBanner(state)!),
+                    onTap: () => openBanner(
+                      _adBanner(state)!,
+                      placement: BannerPlacement.homeAd,
+                    ),
                   ),
                 ),
               ),
@@ -338,6 +347,16 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         ),
       ],
     );
+  }
+
+  /// The banner used for the full-width "Реклама" slot: the last one the feed
+  /// sent, and only if it has somewhere to go. Returns null otherwise, which
+  /// collapses the slot — an ad card that opens nothing is worse than no card.
+  HomBanner? _adBanner(HomeBuildable state) {
+    final banners = state.homeModel?.data?.banners ?? [];
+    if (banners.isEmpty) return null;
+    final last = banners.last;
+    return last.hasLink ? last : null;
   }
 
   String _bannerSrc(HomBanner banner) {

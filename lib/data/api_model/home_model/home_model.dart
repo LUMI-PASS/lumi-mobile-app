@@ -64,14 +64,29 @@ class HomBanner with _$HomBanner {
   const factory HomBanner({
     String? id,
     String? title,
+    String? description,
     String? url,
     String? image,
+
+    /// Where the banner goes when tapped, as configured in the adminka.
+    ///
+    /// `lumi://…` and our own `https://…/share/…` links open a screen in the
+    /// app; any other `http(s)` URL opens the browser; null or empty means the
+    /// banner is not tappable. Resolved by `AppLinkOpener`.
+    String? link,
     String? createdAt,
     String? updatedAt,
   }) = _HomBanner;
 
   factory HomBanner.fromJson(Map<String, dynamic> json) =>
       _$HomBannerFromJson(json);
+}
+
+extension HomBannerX on HomBanner {
+  /// Whether this banner should be tappable at all. The backend sends `null`
+  /// for a banner with no destination configured, and an empty string is the
+  /// same thing arriving from an older record.
+  bool get hasLink => (link ?? '').trim().isNotEmpty;
 }
 
 @freezed

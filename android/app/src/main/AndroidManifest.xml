@@ -29,14 +29,28 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Custom URL scheme: lumi://class/:id -->
+            <!-- Custom URL scheme: lumi://<destination>/<id>, e.g.
+                 lumi://class/:id, lumi://branch/:id, lumi://plans.
+                 NO android:host — the host IS the destination key, and the set
+                 of them lives in lib/common/router/deep_link_routes.dart.
+                 Pinning a host here (it used to say host="class") means every
+                 new destination needs a store release before its links open at
+                 all; claiming the whole scheme means the registry alone
+                 decides, and an unknown key is ignored in-app rather than
+                 falling through to the browser. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="lumi" android:host="class"/>
+                <data android:scheme="lumi"/>
             </intent-filter>
-            <!-- App Links: opens /share/class/* directly in the app. -->
+            <!-- App Links: opens /share/* directly in the app.
+                 Same reasoning as the scheme filter — the prefix was
+                 /share/class/, so a /share/branch/:id link opened the browser.
+                 Widened to /share/ so every destination the backend can serve a
+                 share page for resolves in-app. The paths list in the AASA file
+                 (ShareController.appleAppSiteAssociation) is the iOS half of
+                 this and must stay in step. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -44,7 +58,7 @@
                 <data
                     android:scheme="https"
                     android:host="mobile-api.lumipass.uz"
-                    android:pathPrefix="/share/class/"/>
+                    android:pathPrefix="/share/"/>
             </intent-filter>
             <!-- AppsFlyer OneLink. BOTH hosts are claimed: campaigns use the
                  branded domain, but AppsFlyer also serves every link from the

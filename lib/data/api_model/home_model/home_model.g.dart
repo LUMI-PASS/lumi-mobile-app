@@ -95,8 +95,10 @@ _$HomBannerImpl _$$HomBannerImplFromJson(Map<String, dynamic> json) =>
     _$HomBannerImpl(
       id: json['id'] as String?,
       title: json['title'] as String?,
+      description: json['description'] as String?,
       url: json['url'] as String?,
       image: json['image'] as String?,
+      link: json['link'] as String?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );
@@ -105,8 +107,10 @@ Map<String, dynamic> _$$HomBannerImplToJson(_$HomBannerImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'title': instance.title,
+      'description': instance.description,
       'url': instance.url,
       'image': instance.image,
+      'link': instance.link,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
     };

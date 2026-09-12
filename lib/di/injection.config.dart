@@ -33,6 +33,8 @@ import 'package:lumi_pass/domain/impl/home_repository_impl.dart' as _i162;
 import 'package:lumi_pass/domain/impl/wallet_repository_impl.dart' as _i728;
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart' as _i79;
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart' as _i652;
+import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart'
+    as _i812;
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart' as _i298;
 import 'package:lumi_pass/domain/repo/home/home_api.dart' as _i433;
 import 'package:lumi_pass/domain/repo/home/home_repository.dart' as _i526;
@@ -115,6 +117,10 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i361.Dio>(),
               gh<_i279.Storage>(),
             ));
+    gh.lazySingleton<_i812.BannerClickReporter>(() => _i812.BannerClickReporter(
+          gh<_i361.Dio>(),
+          gh<_i279.Storage>(),
+        ));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
     gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
