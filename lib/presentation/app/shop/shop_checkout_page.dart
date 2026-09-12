@@ -441,18 +441,47 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
                               .copyWith(color: c.textPrimary),
                         ),
                         4.kh,
-                        Text(
-                          '${line.product.price.toRawUzsPrice()} × ${line.count}',
-                          style: AppText.regular12
-                              .copyWith(color: c.textSecondary),
-                        ),
+                        // The unit follows what is being paid. Quoting so'm
+                        // per item while the button charges coins is the one
+                        // mistake this screen cannot make: the buyer would be
+                        // agreeing to a number the itemisation contradicts.
+                        if (_withCoins)
+                          Row(
+                            children: [
+                              CoinAmount(
+                                amount: line.product.coinPrice,
+                                style: AppText.regular12,
+                                color: c.textSecondary,
+                                iconSize: 12,
+                              ),
+                              Text(
+                                ' × ${line.count}',
+                                style: AppText.regular12
+                                    .copyWith(color: c.textSecondary),
+                              ),
+                            ],
+                          )
+                        else
+                          Text(
+                            '${line.product.price.toRawUzsPrice()} × ${line.count}',
+                            style: AppText.regular12
+                                .copyWith(color: c.textSecondary),
+                          ),
                       ],
                     ),
                   ),
-                  Text(
-                    line.lineTotal.toRawUzsPrice(),
-                    style: AppText.semibold14.copyWith(color: c.textPrimary),
-                  ),
+                  if (_withCoins)
+                    CoinAmount(
+                      amount: line.lineCoinTotal,
+                      style: AppText.semibold14,
+                      color: c.textPrimary,
+                      iconSize: 14,
+                    )
+                  else
+                    Text(
+                      line.lineTotal.toRawUzsPrice(),
+                      style: AppText.semibold14.copyWith(color: c.textPrimary),
+                    ),
                 ],
               ),
             ),
