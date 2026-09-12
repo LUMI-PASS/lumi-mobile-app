@@ -36,7 +36,11 @@ class DeliveryPointResult {
   final String address;
 }
 
-@RoutePage()
+// The type argument is not decoration: without it auto_route builds this page
+// as a Route<void> and the DeliveryPointResult handed to maybePop is dropped on
+// the floor, so the checkout saw null and kept saying "pick on the map". Same
+// convention as connection_error_page.dart.
+@RoutePage<DeliveryPointResult>()
 class ShopDeliveryPointPage extends StatefulWidget {
   const ShopDeliveryPointPage({
     super.key,

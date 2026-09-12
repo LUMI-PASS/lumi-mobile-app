@@ -318,7 +318,7 @@ abstract class _$AppRouter extends RootStackRouter {
     ShopDeliveryPointRoute.name: (routeData) {
       final args = routeData.argsAs<ShopDeliveryPointRouteArgs>(
           orElse: () => const ShopDeliveryPointRouteArgs());
-      return AutoRoutePage<dynamic>(
+      return AutoRoutePage<DeliveryPointResult>(
         routeData: routeData,
         child: ShopDeliveryPointPage(
           key: args.key,
@@ -352,7 +352,7 @@ abstract class _$AppRouter extends RootStackRouter {
     },
     ShopProductRoute.name: (routeData) {
       final args = routeData.argsAs<ShopProductRouteArgs>();
-      return AutoRoutePage<dynamic>(
+      return AutoRoutePage<bool>(
         routeData: routeData,
         child: ShopProductPage(
           key: args.key,

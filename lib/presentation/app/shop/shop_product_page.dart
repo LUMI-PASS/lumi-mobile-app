@@ -31,7 +31,10 @@ import 'package:lumi_pass/presentation/app/shop/widgets/shop_quantity_stepper.da
 /// Same reason as the checkout: this is a pushed route, so the shop shell's
 /// `BlocProvider<CartCubit>` is not an ancestor here. The value is the getIt
 /// singleton, so the buy bar and the shell read one basket.
-@RoutePage()
+// Pops `true` when the buyer asks for the basket — see the buy bar. Typed for
+// the same reason as ShopDeliveryPointPage: an untyped route silently discards
+// whatever maybePop is given.
+@RoutePage<bool>()
 class ShopProductPage extends StatelessWidget {
   const ShopProductPage({
     super.key,
