@@ -30,6 +30,7 @@ import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
 import 'package:lumi_pass/domain/impl/auth_repository_impl.dart' as _i98;
 import 'package:lumi_pass/domain/impl/home_repository_impl.dart' as _i162;
+import 'package:lumi_pass/domain/impl/shop_repository_impl.dart' as _i66;
 import 'package:lumi_pass/domain/impl/wallet_repository_impl.dart' as _i728;
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart' as _i79;
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart' as _i652;
@@ -42,6 +43,8 @@ import 'package:lumi_pass/domain/repo/interests/interests_api.dart' as _i1041;
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart'
     as _i376;
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart' as _i748;
+import 'package:lumi_pass/domain/repo/shop/shop_api.dart' as _i323;
+import 'package:lumi_pass/domain/repo/shop/shop_repository.dart' as _i1070;
 import 'package:lumi_pass/domain/repo/wallet/wallet_api.dart' as _i605;
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart' as _i890;
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart' as _i915;
@@ -63,6 +66,7 @@ import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_
     as _i133;
 import 'package:lumi_pass/presentation/app/profile/wallet/cubit/wallet_cubit.dart'
     as _i822;
+import 'package:lumi_pass/presentation/app/shop/cubit/shop_cubit.dart' as _i189;
 import 'package:lumi_pass/presentation/auth/login/bloc/login_cubit.dart'
     as _i296;
 import 'package:lumi_pass/presentation/auth/register/cubit/register_cubit.dart'
@@ -129,6 +133,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
+    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
     gh.lazySingleton<_i594.AnalyticsService>(() => _i594.AnalyticsService(
@@ -173,6 +178,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i296.LoginCubit(gh<_i652.AuthRepository>()));
     gh.factory<_i571.MyCardsCubit>(
         () => _i571.MyCardsCubit(gh<_i748.OrdersApi>()));
+    gh.factory<_i1070.ShopRepository>(
+        () => _i66.ShopRepositoryImpl(gh<_i323.ShopApi>()));
     gh.factory<_i822.WalletCubit>(
         () => _i822.WalletCubit(gh<_i890.WalletRepository>()));
     gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
@@ -188,6 +195,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i386.HomeCubit>(() => _i386.HomeCubit(
           gh<_i526.HomeRepository>(),
           gh<_i279.Storage>(),
+        ));
+    gh.factory<_i189.ShopCubit>(() => _i189.ShopCubit(
+          gh<_i1070.ShopRepository>(),
+          gh<_i890.WalletRepository>(),
         ));
     return this;
   }

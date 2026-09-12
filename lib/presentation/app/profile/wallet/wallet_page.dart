@@ -7,6 +7,7 @@ import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -61,6 +62,17 @@ class WalletPage
             padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
             children: [
               _Hero(wallet: wallet, c: c),
+              // Somewhere to spend it. A balance screen that only reports a
+              // number leaves the obvious question — "spend it on what?" —
+              // unanswered, and merch is the one answer that needs no class to
+              // be free on a particular evening. Hidden when there is nothing
+              // to spend: an offer that can only disappoint is worse than none.
+              if (wallet.available > 0) ...[
+                12.kh,
+                _SpendOnMerch(
+                  onTap: () => context.router.push(const ShopRoute()),
+                ),
+              ],
               24.kh,
               if (state.isLoading)
                 const _HistoryShimmer()
@@ -80,6 +92,53 @@ class WalletPage
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Spend your coins" — the way from the balance into the shop.
+class _SpendOnMerch extends StatelessWidget {
+  const _SpendOnMerch({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: FrostedCard(
+        borderRadius: BorderRadius.circular(16.r),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        child: Row(
+          children: [
+            Icon(
+              Icons.shopping_bag_outlined,
+              size: 22.w,
+              color: AppColors.brandPurple,
+            ),
+            12.kw,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'wallet_spend_title'.tr(),
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
+                  ),
+                  2.kh,
+                  Text(
+                    'wallet_spend_body'.tr(),
+                    style: AppText.regular12.copyWith(color: c.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: c.textSecondary, size: 20.w),
+          ],
         ),
       ),
     );

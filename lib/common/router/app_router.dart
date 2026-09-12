@@ -6,6 +6,9 @@ import 'package:lumi_pass/common/router/initial_guard.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+// ShopCheckoutRoute carries a ShopProduct — the generated part file names the
+// type but, being a part, imports nothing of its own.
+import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
 import 'package:lumi_pass/presentation/app/connection_error/connection_error_page.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
@@ -30,6 +33,12 @@ import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.da
 import 'package:lumi_pass/presentation/app/profile/children/child_detail_page.dart';
 import 'package:lumi_pass/presentation/app/profile/language/change_language_page.dart';
 import 'package:lumi_pass/presentation/app/profile/profile_detail/profile_detail_page.dart';
+import 'package:lumi_pass/presentation/app/shop/shop_checkout_page.dart';
+import 'package:lumi_pass/presentation/app/shop/shop_delivery_point_page.dart';
+import 'package:lumi_pass/presentation/app/shop/shop_order_page.dart';
+import 'package:lumi_pass/presentation/app/shop/shop_orders_page.dart';
+import 'package:lumi_pass/presentation/app/shop/shop_page.dart';
+import 'package:lumi_pass/presentation/app/shop/shop_product_page.dart';
 import 'package:lumi_pass/presentation/auth/login/login_page.dart';
 import 'package:lumi_pass/presentation/auth/register/register_page.dart';
 import 'package:lumi_pass/presentation/auth/telegram/telegram_login_page.dart';
@@ -137,6 +146,12 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: MyCardsRoute.page),
     AutoRoute(page: ClassesGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
+    AutoRoute(page: ShopRoute.page),
+    AutoRoute(page: ShopProductRoute.page),
+    AutoRoute(page: ShopCheckoutRoute.page),
+    AutoRoute(page: ShopDeliveryPointRoute.page),
+    AutoRoute(page: ShopOrdersRoute.page),
+    AutoRoute(page: ShopOrderRoute.page),
     AutoRoute(page: NotificationsRoute.page),
     AutoRoute(page: ConnectionErrorRoute.page),
   ];

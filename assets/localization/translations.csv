@@ -1120,3 +1120,56 @@ order_kind_course,Курс,Kurs,Course
 order_kind_activity,Занятие,Mashg‘ulot,Activity
 ticket_price_label,Цена,Narx,Price
 ticket_price_per_seat,Цена за место,Bir joy uchun narx,Price per seat
+shop_title,Lumi Shop,Lumi Shop,Lumi Shop
+shop_balance_label,Ваш баланс,Balansingiz,Your balance
+shop_my_orders,Мои заказы,Buyurtmalarim,My orders
+shop_sold_out,Нет в наличии,Tugagan,Sold out
+shop_only_n_left,"Осталось всего {} шт.",Atigi {} ta qoldi,Only {} left
+shop_quantity,Количество,Miqdori,Quantity
+shop_buy_for,Купить за {},{} ga sotib olish,Buy for {}
+shop_pay_with_coins_hint,"Можно оплатить Lumi-коинами: 1 коин = 1 сум",Lumi tangalar bilan to‘lash mumkin: 1 tanga = 1 so‘m,Payable with Lumi coins — 1 coin = 1 so‘m
+shop_empty_title,Пока пусто,Hozircha bo‘sh,Nothing here yet
+shop_empty_body,Скоро здесь появится мерч Lumi.,Tez orada Lumi merchi paydo bo‘ladi.,Lumi merch is on its way.
+shop_error_title,Не удалось загрузить,Yuklab bo‘lmadi,Could not load
+shop_error_body,Проверьте соединение и попробуйте снова.,Aloqani tekshirib qayta urining.,Check your connection and try again.
+shop_checkout_title,Оформление,Rasmiylashtirish,Checkout
+shop_delivery_title,Доставка,Yetkazib berish,Delivery
+shop_delivery_promise,"Мы позвоним вам и доставим заказ в течение 3 дней.",Siz bilan bog‘lanamiz va 3 kun ichida yetkazib beramiz.,We will call you and deliver within 3 days.
+shop_delivery_point,Точка доставки,Yetkazish manzili,Delivery point
+shop_pick_on_map,Выбрать на карте,Xaritada tanlash,Pick on the map
+shop_address_label,Адрес,Manzil,Address
+shop_address_hint,"Точка на карте показывает дом, а курьеру нужен ещё подъезд и квартира.",Xaritadagi nuqta uyni ko‘rsatadi — kuryerga podyezd va xonadon ham kerak.,The pin shows the building — the courier also needs the entrance and flat.
+shop_address_placeholder,"Чиланзар 12, дом 4, кв 21","Chilonzor 12, 4-uy, 21-xonadon","Chilonzor 12, block 4, flat 21"
+shop_save_address,Сохранить адрес,Manzilni saqlash,Save address
+shop_contact_name,Имя получателя,Qabul qiluvchining ismi,Recipient name
+shop_contact_phone,Телефон для связи,Bog‘lanish uchun telefon,Contact phone
+shop_contact_phone_hint,По этому номеру мы позвоним по поводу доставки.,Yetkazib berish bo‘yicha shu raqamga qo‘ng‘iroq qilamiz.,We will call this number about the delivery.
+shop_courier_note,Комментарий для курьера,Kuryer uchun izoh,Note for the courier
+shop_payment_title,Оплата,To‘lov,Payment
+shop_choose_payment,Выбрать способ оплаты,To‘lov usulini tanlash,Choose a payment method
+shop_total,Итого,Jami,Total
+shop_paid_with_coins,Оплачено коинами,Tangalar bilan to‘landi,Paid with coins
+shop_left_to_pay,К оплате,To‘lash kerak,Left to pay
+shop_pay,Оплатить {},{} to‘lash,Pay {}
+shop_pay_with_coins,Оплатить коинами,Tangalar bilan to‘lash,Pay with coins
+shop_paid_title,Заказ принят,Buyurtma qabul qilindi,Order accepted
+shop_paid_body,"Мы позвоним вам в течение 24 часов и доставим заказ за 3 дня.",24 soat ichida siz bilan bog‘lanamiz va 3 kun ichida yetkazamiz.,We will call you within 24 hours and deliver within 3 days.
+shop_orders_empty,У вас пока нет заказов,Sizda hali buyurtma yo‘q,You have no orders yet
+shop_n_items,{} шт.,{} ta,{} items
+shop_items_title,Товары,Mahsulotlar,Items
+shop_history_title,История,Tarix,History
+shop_deliver_by,Доставим до {},{} gacha yetkazamiz,Delivery by {}
+shop_cancel_order,Отменить заказ,Buyurtmani bekor qilish,Cancel order
+shop_cancel_title,Отменить заказ?,Buyurtma bekor qilinsinmi?,Cancel this order?
+shop_cancel_body,"Коины вернутся на баланс, а оплата картой будет возвращена.","Tangalar balansga qaytadi, karta to‘lovi esa qaytariladi.",Your coins come back and any card payment is refunded.
+shop_cancel_failed,Не удалось отменить заказ,Buyurtmani bekor qilib bo‘lmadi,Could not cancel the order
+shop_cancel_call_us,"Заказ уже в доставке — позвоните нам, чтобы отменить.",Buyurtma yetkazilmoqda — bekor qilish uchun qo‘ng‘iroq qiling.,This order is already being delivered — call us to cancel it.
+shop_status_new,Принят,Qabul qilindi,Accepted
+shop_status_confirmed,Подтверждён,Tasdiqlandi,Confirmed
+shop_status_delivering,В пути,Yo‘lda,On the way
+shop_status_delivered,Доставлен,Yetkazildi,Delivered
+shop_status_canceled,Отменён,Bekor qilindi,Canceled
+wallet_spend_title,Потратить коины,Tangalarni sarflash,Spend your coins
+wallet_spend_body,"Мерч Lumi: кружки, сумки, ручки","Lumi merchi: krujka, sumka, ruchka","Lumi merch — cups, bags, pens"
+yes,Да,Ha,Yes
+no,Нет,Yo‘q,No

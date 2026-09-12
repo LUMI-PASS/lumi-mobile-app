@@ -455,6 +455,15 @@ class ProfilePage
                         onTap: () => context.router.push(const MyCardsRoute()),
                       ),
                       8.kh,
+                      // Lumi Shop. A Material glyph rather than an Iconsax
+                      // asset because there is no shop icon in the Figma set
+                      // yet — the row supports that fallback by design.
+                      _MenuRow(
+                        icon: Icons.shopping_bag_outlined,
+                        label: 'shop_title'.tr(),
+                        onTap: () => context.router.push(const ShopRoute()),
+                      ),
+                      8.kh,
                     ],
                     const _ThemeToggleRow(),
                     8.kh,

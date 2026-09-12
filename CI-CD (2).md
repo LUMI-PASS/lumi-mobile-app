@@ -81,12 +81,13 @@ tokens never expire — collapsing them to one secret locks out every staff user
 
 ### Frontends
 
-Netlify, not this server:
+Coolify apps on the same server:
 
-| Frontend | Netlify site | Custom domain | Repo |
+| Frontend | Coolify app | Custom domain | Repo |
 |---|---|---|---|
-| Adminka panel | `adminka-frontend` | `adminka.lumipass.uz` | `LUMI-PASS/lumi-adminka-frontend` |
-| Partner panel | `b2b-adminka` | `partner.lumipass.uz` | `LUMI-PASS/lumi-b2b-frontend` |
+| Adminka panel | `adminka` | `adminka.lumipass.uz` | `LUMI-PASS/lumi-adminka-frontend` |
+| Partner panel | `b2b` | `partner.lumipass.uz` | `LUMI-PASS/lumi-b2b-frontend` |
+| Parent web app | `web-app` | `app.lumipass.uz` | `LUMI-PASS/lumi-web-app` |
 
 ---
 
@@ -175,18 +176,21 @@ container-create time only.
 
 ### Frontends
 
-Netlify's GitHub App is installed on the `LUMI-PASS` org. Push to `main` →
-`npm ci && npm run build` (Node 20) → publish `dist/`. This path still works normally.
+Same as the backend: push to `main` → a GitHub webhook tells Coolify → nixpacks
+runs `npm ci && npm run build` (Node 20) → `dist/` is published. The container is
+swapped only on a successful build.
 
-Env vars live in the **Netlify dashboard**, not `netlify.toml`:
+Env vars are set per app in Coolify, not committed:
 
-| Site | Dashboard env vars |
+| App | Env vars |
 |---|---|
-| `adminka-frontend` | `VITE_BASE_URL=https://api.adminka.lumipass.uz`, `VITE_MOBILE_BASE_URL=https://mobile-api.lumipass.uz`, `VITE_MOBILE_ADMIN_KEY=…` |
-| `b2b-adminka` | `VITE_BASE_URL=https://api.partner.lumipass.uz` |
+| `adminka` | `VITE_BASE_URL=https://mobile-api.lumipass.uz`, `VITE_MOBILE_BASE_URL=https://mobile-api.lumipass.uz`, `VITE_MOBILE_ADMIN_KEY=…` |
+| `b2b` | `VITE_BASE_URL=https://mobile-api.lumipass.uz` |
+| `web-app` | `VITE_API_BASE_URL`, `VITE_ASSETS_BASE_URL` |
 
-When you rotate `ADMIN_API_KEY` on the backend you must also update
-`VITE_MOBILE_ADMIN_KEY` on `adminka-frontend`, then "Clear cache and deploy site".
+A Vite variable is baked in at BUILD time, so editing one changes nothing until
+the app is rebuilt. Rotating `ADMIN_API_KEY` on the backend therefore means
+updating `VITE_MOBILE_ADMIN_KEY` on `adminka` **and** redeploying it.
 
 ### The webhook, for reference
 
@@ -291,7 +295,7 @@ only** — see `monitoring/README.md` and `docker-compose.local.yml`.
     └── grafana/                    # chowned 472
 
 /root/
-├── .lumi-tokens                    # GITHUB_PAT / CLOUDFLARE_TOKEN / NETLIFY_TOKEN, chmod 600
+├── .lumi-tokens                    # GITHUB_PAT / CLOUDFLARE_TOKEN, chmod 600
 ├── .git-credentials                # GitHub PAT for git pull inside the webhook container
 ├── firebase-sa.json                # Firebase service account (chmod 600)
 ├── lumi-monitoring-creds.txt       # Grafana + Prometheus passwords
@@ -412,8 +416,9 @@ Order matters:
    all sessions for whichever tree's secret you changed.
 3. **Webhook secrets** — edit `webhook/hooks.yaml`, `dc restart webhook`, then update each
    GitHub repo's webhook secret to match.
-4. **Admin API key** — edit `.env`, force-recreate, then update `VITE_MOBILE_ADMIN_KEY` in
-   the Netlify dashboard for `adminka-frontend` and trigger a redeploy.
+4. **Admin API key** — set it on the backend app in Coolify and redeploy, then update
+   `VITE_MOBILE_ADMIN_KEY` on the `adminka` app and redeploy that too (Vite bakes it in
+   at build time).
 5. **GitHub PAT** — new token at github.com → Settings → Developer settings → PATs
    (scopes `repo` + `admin:repo_hook`), then update `/root/.git-credentials`.
 
