@@ -455,12 +455,18 @@ class ProfilePage
                         onTap: () => context.router.push(const MyCardsRoute()),
                       ),
                       8.kh,
-                      _MenuRow(
-                        iconAsset: _ProfileIcons.shop,
-                        label: 'shop_title'.tr(),
-                        onTap: () => context.router.push(ShopRoute()),
-                      ),
-                      8.kh,
+                      // Behind a Remote Config flag that ships OFF: the
+                      // storefront has real stock and a delivery team behind
+                      // it, so it should open when someone decides it opens
+                      // rather than when a build lands on a device.
+                      if (RemoteConfigService.instance.isShopEnabled) ...[
+                        _MenuRow(
+                          iconAsset: _ProfileIcons.shop,
+                          label: 'shop_title'.tr(),
+                          onTap: () => context.router.push(ShopRoute()),
+                        ),
+                        8.kh,
+                      ],
                     ],
                     const _ThemeToggleRow(),
                     8.kh,

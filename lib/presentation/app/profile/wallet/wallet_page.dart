@@ -8,6 +8,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -67,7 +68,8 @@ class WalletPage
               // unanswered, and merch is the one answer that needs no class to
               // be free on a particular evening. Hidden when there is nothing
               // to spend: an offer that can only disappoint is worse than none.
-              if (wallet.available > 0) ...[
+              if (wallet.available > 0 &&
+                  RemoteConfigService.instance.isShopEnabled) ...[
                 12.kh,
                 _SpendOnMerch(
                   onTap: () => context.router.push(ShopRoute()),

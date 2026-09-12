@@ -4,6 +4,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_api.dart';
 
@@ -227,9 +228,13 @@ abstract final class DeepLinkRoutes {
     ),
 
     // ── Shop ───────────────────────────────────────────────────────────────
+    // All three answer null while `shop_enabled` is off in Remote Config.
+    // A banner or a push can outlive the campaign it belongs to, and a link
+    // that opens a storefront nobody is stocking or delivering from is worse
+    // than one that quietly does nothing.
     'shop': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
-      build: (_) => ShopRoute(),
+      build: (_) => _shopOpen ? ShopRoute() : null,
     ),
     // `lumi://shop-product/<id>` — the product screen fetches the product
     // itself, so unlike a branch link there is nothing to load here first.
@@ -240,7 +245,7 @@ abstract final class DeepLinkRoutes {
     'shop-orders': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
       // The orders list is the shop's third tab, not a screen of its own.
-      build: (_) => ShopRoute(initialTab: 2),
+      build: (_) => _shopOpen ? ShopRoute(initialTab: 2) : null,
     ),
 
     // ── Account ────────────────────────────────────────────────────────────
@@ -299,8 +304,16 @@ abstract final class DeepLinkRoutes {
     }
   }
 
+  /// Whether the merch shop is open at all — see
+  /// `RemoteConfigService.isShopEnabled`. False until someone switches it on.
+  static bool get _shopOpen => RemoteConfigService.instance.isShopEnabled;
+
   /// `lumi://shop-product/<id>` — one merch product.
   static PageRouteInfo? _buildShopProduct(Map<String, String> params) {
+    if (!_shopOpen) {
+      dlog('build shop product: ABORT, the shop is switched off');
+      return null;
+    }
     final id = params['id'];
     if (id == null || id.isEmpty) {
       dlog('build shop product: ABORT, no id in $params');
