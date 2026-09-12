@@ -10,7 +10,12 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart';
+import 'package:lumi_pass/common/base/base_builder.dart';
+import 'package:lumi_pass/presentation/app/shop/cubit/shop_cubit.dart';
+import 'package:lumi_pass/presentation/app/shop/cubit/shop_state.dart';
 import 'package:lumi_pass/presentation/app/shop/views/shop_cart_view.dart';
 import 'package:lumi_pass/presentation/app/shop/views/shop_orders_view.dart';
 import 'package:lumi_pass/presentation/app/shop/views/shop_products_view.dart';
@@ -50,15 +55,28 @@ class _ShopPageState extends State<ShopPage> {
   Widget build(BuildContext context) {
     final c = context.colors;
 
-    return BlocProvider<CartCubit>.value(
-      value: getIt<CartCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<CartCubit>.value(value: getIt<CartCubit>()),
+        // Owned by the shell, not by the catalog tab, because the app bar
+        // draws the balance from it and the app bar sits above the tab. Loaded
+        // here for the same reason — the balance has to arrive whichever tab
+        // the shop opened on.
+        BlocProvider<ShopCubit>(create: (_) => getIt<ShopCubit>()..load()),
+      ],
       child: Builder(
         builder: (context) {
           final cartCount = context.watch<CartCubit>().state.count;
 
           return Scaffold(
             backgroundColor: c.scaffoldBg,
-            appBar: BaseAppBar(title: _titleFor(_tab, cartCount)),
+            appBar: BaseAppBar(
+              title: _titleFor(_tab, cartCount),
+              // Only over the catalog: the balance answers "what can I
+              // afford?", which is a question the basket and the orders list
+              // have already stopped asking.
+              actions: _tab == 0 ? const [_CoinBalanceChip()] : null,
+            ),
             body: IndexedStack(
               index: _tab,
               children: [
@@ -216,6 +234,56 @@ class _NavItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The buyer's coin balance, in the corner of the shop's app bar.
+///
+/// It used to be a card above the grid. In the app bar it survives the scroll,
+/// which is the whole point of it: "what can I afford?" is a question that
+/// comes up at the tenth product, not the first.
+///
+/// Nothing is drawn for a guest, or before the balance lands — "0 coins" and
+/// "we don't know yet" are different claims, and only one of them is a reason
+/// to stop shopping.
+class _CoinBalanceChip extends StatelessWidget {
+  const _CoinBalanceChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    return BaseBuilder<ShopCubit, ShopBuildable, ShopListenable>(
+      properties: (state) => [state.wallet],
+      builder: (context, state) {
+        final wallet = state.wallet;
+        if (wallet == null) return const SizedBox.shrink();
+
+        return Padding(
+          padding: EdgeInsets.only(right: 16.w),
+          child: Center(
+            child: GestureDetector(
+              // Straight to the wallet — the balance is also where somebody
+              // goes when it is not big enough yet.
+              onTap: () => context.router.push(const WalletRoute()),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+                decoration: BoxDecoration(
+                  color: c.control,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: CoinAmount(
+                  amount: wallet.available,
+                  style: AppText.semibold14,
+                  color: c.textPrimary,
+                  iconSize: 16,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

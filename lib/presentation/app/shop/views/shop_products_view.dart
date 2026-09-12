@@ -3,14 +3,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/base/base_page.dart';
+import 'package:lumi_pass/common/base/base_builder.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/widget/coin_amount.dart';
-import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart';
 import 'package:lumi_pass/presentation/app/shop/cubit/shop_cubit.dart';
 import 'package:lumi_pass/presentation/app/shop/cubit/shop_state.dart';
@@ -18,18 +16,13 @@ import 'package:lumi_pass/presentation/app/shop/widgets/shop_product_card.dart';
 
 /// "Mahsulotlar" — the catalog, and the first tab of the shop.
 ///
-/// The balance sits above the grid rather than waiting until checkout because
-/// it is the reason to be on this screen at all: a grid of cups is a catalog,
-/// but a grid of cups above "you have 84 000 coins" is an offer.
-class ShopProductsView
-    extends BasePage<ShopCubit, ShopBuildable, ShopListenable> {
+/// Not a BasePage, deliberately: a BasePage creates its OWN copy of the cubit,
+/// and the shop shell needs the same one to draw the balance in the app bar.
+/// So the shell owns the provider and this is the BaseBuilder half of what a
+/// BasePage would have given us. There is no listener to lose — this screen
+/// never had one.
+class ShopProductsView extends StatelessWidget {
   const ShopProductsView({super.key});
-
-  @override
-  void init(BuildContext context) {
-    context.read<ShopCubit>().load();
-    super.init(context);
-  }
 
   /// How tall one product tile has to be.
   ///
@@ -63,7 +56,13 @@ class ShopProductsView
   }
 
   @override
-  Widget builder(BuildContext context, ShopBuildable state) {
+  Widget build(BuildContext context) {
+    return BaseBuilder<ShopCubit, ShopBuildable, ShopListenable>(
+      builder: _grid,
+    );
+  }
+
+  Widget _grid(BuildContext context, ShopBuildable state) {
     final cubit = context.read<ShopCubit>();
 
     return RefreshIndicator(
@@ -82,14 +81,6 @@ class ShopProductsView
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              if (state.wallet != null)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-                    child: _BalanceHeader(available: state.wallet!.available),
-                  ),
-                ),
-
               if (state.isLoading)
                 const SliverFillRemaining(
                   hasScrollBody: false,
@@ -159,45 +150,6 @@ class ShopProductsView
                 ),
             ],
           ),
-      ),
-    );
-  }
-}
-
-/// "You have N coins" — the reason the grid below is an offer, not a catalog.
-class _BalanceHeader extends StatelessWidget {
-  const _BalanceHeader({required this.available});
-
-  final num available;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-
-    return FrostedCard(
-      borderRadius: BorderRadius.circular(16.r),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-      // ONE coin mark, not two. A leading coin icon next to a CoinAmount —
-      // which carries the mark itself — reads as decoration and makes the row
-      // look like it is quoting two different things. The amount keeps the
-      // mark, since that is the rule everywhere else in the app.
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'shop_balance_label'.tr(),
-            style: AppText.regular12.copyWith(color: c.textSecondary),
-          ),
-          2.kh,
-          // One coin is one so'm — so this number is also exactly how much
-          // merch it buys. No conversion is shown because there is none.
-          CoinAmount(
-            amount: available,
-            style: AppText.semibold18,
-            color: c.textPrimary,
-            iconSize: 20,
-          ),
-        ],
       ),
     );
   }
