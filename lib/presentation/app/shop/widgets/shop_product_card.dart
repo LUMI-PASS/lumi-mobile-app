@@ -47,11 +47,9 @@ class ShopProductCard extends StatelessWidget {
   /// is already in there.
   final int inCart;
 
-  /// Never offer more than the shop can deliver: the lower of the per-order
-  /// limit and what is left on the shelf.
-  int get _ceiling => product.maxPerOrder < product.available
-      ? product.maxPerOrder
-      : product.available;
+  /// Stock is the only ceiling — nothing caps how many of one thing may be
+  /// bought any more, on either side.
+  int get _ceiling => product.available;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +58,12 @@ class ShopProductCard extends StatelessWidget {
     final image = sanitizeImageUrl(product.image);
 
     return GestureDetector(
+      // Opaque, not the default `deferToChild`: without it only the pixels the
+      // children actually paint take the tap, so the photo opened the product
+      // and the gaps between price, name and button did nothing. The add
+      // button and the stepper still win — a deeper detector takes the gesture
+      // before this one sees it.
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,6 +115,7 @@ class ShopProductCard extends StatelessWidget {
           ShopPrice(
             price: product.price,
             oldPrice: product.oldPrice,
+            coinPrice: product.coinPrice,
             reserveOldPriceLine: true,
           ),
           4.kh,

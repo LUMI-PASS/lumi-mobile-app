@@ -13,6 +13,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/multi_lang.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_cart.dart';
 import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart';
@@ -44,13 +45,12 @@ class ShopCartView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Assets.icons.shop.cart.svg(
-                width: 48.w,
-                height: 48.w,
-                colorFilter:
-                    ColorFilter.mode(c.textPlaceholder, BlendMode.srcIn),
+              Assets.images.mascot.mascotCategories.image(
+                width: 140.w,
+                height: 140.w,
+                fit: BoxFit.contain,
               ),
-              16.kh,
+              12.kh,
               Text(
                 'shop_cart_empty_title'.tr(),
                 textAlign: TextAlign.center,
@@ -66,6 +66,7 @@ class ShopCartView extends StatelessWidget {
                 16.kh,
                 TextButton(
                   onPressed: onBrowse,
+                  style: TextButton.styleFrom(foregroundColor: c.primary),
                   child: Text('shop_cart_browse'.tr()),
                 ),
               ],
@@ -108,11 +109,8 @@ class _CartLineTile extends StatelessWidget {
     final product = line.product;
     final image = sanitizeImageUrl(product.image);
 
-    // Never offer more than the shop can actually deliver: the lower of the
-    // per-order limit and what is left on the shelf.
-    final ceiling = product.maxPerOrder < product.available
-        ? product.maxPerOrder
-        : product.available;
+    // Stock is the only ceiling; per-order limits are gone.
+    final ceiling = product.available;
 
     return FrostedCard(
       borderRadius: BorderRadius.circular(16.r),
@@ -154,6 +152,11 @@ class _CartLineTile extends StatelessWidget {
                     ShopPrice(
                       price: line.lineTotal,
                       oldPrice: line.lineSubtotal,
+                      coinPrice: line.lineCoinTotal,
+                      // Full "110 000 so'm" struck through on the line below,
+                      // so the row states two prices rather than a price and
+                      // a loose number.
+                      oldPriceWithUnit: true,
                     ),
                     4.kh,
                     Text(
@@ -188,13 +191,6 @@ class _CartLineTile extends StatelessWidget {
               ),
             ],
           ),
-          if (line.count >= ceiling) ...[
-            6.kh,
-            Text(
-              'shop_cart_max'.tr(args: ['$ceiling']),
-              style: AppText.regular12.copyWith(color: AppColors.warning),
-            ),
-          ],
         ],
       ),
     );
@@ -256,6 +252,28 @@ class _OrderSummary extends StatelessWidget {
               ),
             ],
           ),
+          // Both bills, because the buyer has not chosen yet and the two are
+          // alternatives rather than parts of one sum. The word for it is
+          // "or", which is why this row is labelled and not just appended.
+          if (cart.coinTotal > 0) ...[
+            10.kh,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'shop_or_with_coins'.tr(),
+                    style: AppText.regular14.copyWith(color: c.textSecondary),
+                  ),
+                ),
+                CoinAmount(
+                  amount: cart.coinTotal,
+                  style: AppText.semibold16,
+                  color: c.textPrimary,
+                  iconSize: 18,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -304,9 +322,10 @@ class _CheckoutBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
 
-    return Container(
+    // Only the hairline, no fill: the page background runs under the bar, and
+    // an opaque tray here would cut the page in half right above the nav.
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: c.bottomBar,
         border: Border(top: BorderSide(color: c.divider)),
       ),
       child: SafeArea(
@@ -325,10 +344,18 @@ class _CheckoutBar extends StatelessWidget {
                   cart.total.toRawUzsPrice(),
                   style: AppText.bold18.copyWith(color: AppColors.brandPurple),
                 ),
-                Text(
-                  'shop_n_items'.tr(args: ['${cart.count}']),
-                  style: AppText.regular12.copyWith(color: c.textSecondary),
-                ),
+                if (cart.coinTotal > 0)
+                  CoinAmount(
+                    amount: cart.coinTotal,
+                    style: AppText.regular12,
+                    color: c.textSecondary,
+                    iconSize: 12,
+                  )
+                else
+                  Text(
+                    'shop_n_items'.tr(args: ['${cart.count}']),
+                    style: AppText.regular12.copyWith(color: c.textSecondary),
+                  ),
               ],
             ),
             16.kw,

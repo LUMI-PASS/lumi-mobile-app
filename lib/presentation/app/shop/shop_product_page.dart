@@ -26,8 +26,13 @@ import 'package:lumi_pass/presentation/app/shop/widgets/shop_quantity_stepper.da
 /// for that would be more plumbing than screen. The product usually arrives
 /// [preloaded] from the grid, so the fetch is a refresh of the stock figure
 /// rather than a load — what was on the card a minute ago may already be gone.
+/// Re-provides the basket, then hands off to [_ProductView].
+///
+/// Same reason as the checkout: this is a pushed route, so the shop shell's
+/// `BlocProvider<CartCubit>` is not an ancestor here. The value is the getIt
+/// singleton, so the buy bar and the shell read one basket.
 @RoutePage()
-class ShopProductPage extends StatefulWidget {
+class ShopProductPage extends StatelessWidget {
   const ShopProductPage({
     super.key,
     required this.productId,
@@ -41,10 +46,25 @@ class ShopProductPage extends StatefulWidget {
   final ShopProduct? preloaded;
 
   @override
-  State<ShopProductPage> createState() => _ShopProductPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider<CartCubit>.value(
+      value: getIt<CartCubit>(),
+      child: _ProductView(productId: productId, preloaded: preloaded),
+    );
+  }
 }
 
-class _ShopProductPageState extends State<ShopProductPage> {
+class _ProductView extends StatefulWidget {
+  const _ProductView({required this.productId, this.preloaded});
+
+  final String productId;
+  final ShopProduct? preloaded;
+
+  @override
+  State<_ProductView> createState() => _ShopProductPageState();
+}
+
+class _ShopProductPageState extends State<_ProductView> {
   late ShopProduct? _product = widget.preloaded;
   bool _loading = false;
   bool _failed = false;
@@ -79,15 +99,11 @@ class _ShopProductPageState extends State<ShopProductPage> {
     }
   }
 
-  /// The ceiling on the stepper: never more than is left, never more than the
-  /// per-order limit.
+  /// The ceiling on the stepper: what is left on the shelf, and nothing else.
+  /// Per-order limits are gone — stock is the only real constraint.
   int get _maxCount {
-    final product = _product;
-    if (product == null) return 1;
-    final limit = product.maxPerOrder < product.available
-        ? product.maxPerOrder
-        : product.available;
-    return limit < 1 ? 1 : limit;
+    final available = _product?.available ?? 1;
+    return available < 1 ? 1 : available;
   }
 
   @override
@@ -188,6 +204,7 @@ class _ShopProductPageState extends State<ShopProductPage> {
                 ShopPrice(
                   price: product.price,
                   oldPrice: product.oldPrice,
+                  coinPrice: product.coinPrice,
                   large: true,
                 ),
                 if (product.inStock && product.available <= 3) ...[
@@ -371,11 +388,6 @@ class _DetailsCard extends StatelessWidget {
           value: 'shop_n_items'.tr(args: ['${product.soldCount}']),
           tint: null,
         ),
-      (
-        label: 'shop_max_per_order'.tr(),
-        value: 'shop_n_items'.tr(args: ['${product.maxPerOrder}']),
-        tint: null,
-      ),
       (
         label: 'shop_delivery_title'.tr(),
         value: 'shop_delivery_days'.tr(),

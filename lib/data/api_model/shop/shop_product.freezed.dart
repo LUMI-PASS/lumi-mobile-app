@@ -25,6 +25,14 @@ mixin _$ShopProduct {
   Map<String, dynamic>? get description => throw _privateConstructorUsedError;
   List<String> get images => throw _privateConstructorUsedError;
   num get price => throw _privateConstructorUsedError;
+
+  /// What it costs in coins. NOT derived from [price] — see the class
+  /// comment. Products created before the split were backfilled to their
+  /// so'm price on the server, so this is never absent in practice.
+  num get coinPrice => throw _privateConstructorUsedError;
+
+  /// The struck-through "was" price, in so'm. There is no coin equivalent:
+  /// a discount is a money story.
   num? get oldPrice => throw _privateConstructorUsedError;
   String get currency => throw _privateConstructorUsedError;
 
@@ -55,6 +63,7 @@ abstract class $ShopProductCopyWith<$Res> {
       Map<String, dynamic>? description,
       List<String> images,
       num price,
+      num coinPrice,
       num? oldPrice,
       String currency,
       int available,
@@ -82,6 +91,7 @@ class _$ShopProductCopyWithImpl<$Res, $Val extends ShopProduct>
     Object? description = freezed,
     Object? images = null,
     Object? price = null,
+    Object? coinPrice = null,
     Object? oldPrice = freezed,
     Object? currency = null,
     Object? available = null,
@@ -110,6 +120,10 @@ class _$ShopProductCopyWithImpl<$Res, $Val extends ShopProduct>
       price: null == price
           ? _value.price
           : price // ignore: cast_nullable_to_non_nullable
+              as num,
+      coinPrice: null == coinPrice
+          ? _value.coinPrice
+          : coinPrice // ignore: cast_nullable_to_non_nullable
               as num,
       oldPrice: freezed == oldPrice
           ? _value.oldPrice
@@ -157,6 +171,7 @@ abstract class _$$ShopProductImplCopyWith<$Res>
       Map<String, dynamic>? description,
       List<String> images,
       num price,
+      num coinPrice,
       num? oldPrice,
       String currency,
       int available,
@@ -182,6 +197,7 @@ class __$$ShopProductImplCopyWithImpl<$Res>
     Object? description = freezed,
     Object? images = null,
     Object? price = null,
+    Object? coinPrice = null,
     Object? oldPrice = freezed,
     Object? currency = null,
     Object? available = null,
@@ -210,6 +226,10 @@ class __$$ShopProductImplCopyWithImpl<$Res>
       price: null == price
           ? _value.price
           : price // ignore: cast_nullable_to_non_nullable
+              as num,
+      coinPrice: null == coinPrice
+          ? _value.coinPrice
+          : coinPrice // ignore: cast_nullable_to_non_nullable
               as num,
       oldPrice: freezed == oldPrice
           ? _value.oldPrice
@@ -253,6 +273,7 @@ class _$ShopProductImpl extends _ShopProduct {
       final Map<String, dynamic>? description = null,
       final List<String> images = const [],
       this.price = 0,
+      this.coinPrice = 0,
       this.oldPrice,
       this.currency = 'UZS',
       this.available = 0,
@@ -304,6 +325,16 @@ class _$ShopProductImpl extends _ShopProduct {
   @override
   @JsonKey()
   final num price;
+
+  /// What it costs in coins. NOT derived from [price] — see the class
+  /// comment. Products created before the split were backfilled to their
+  /// so'm price on the server, so this is never absent in practice.
+  @override
+  @JsonKey()
+  final num coinPrice;
+
+  /// The struck-through "was" price, in so'm. There is no coin equivalent:
+  /// a discount is a money story.
   @override
   final num? oldPrice;
   @override
@@ -336,7 +367,7 @@ class _$ShopProductImpl extends _ShopProduct {
 
   @override
   String toString() {
-    return 'ShopProduct(id: $id, name: $name, description: $description, images: $images, price: $price, oldPrice: $oldPrice, currency: $currency, available: $available, inStock: $inStock, maxPerOrder: $maxPerOrder, soldCount: $soldCount, tags: $tags)';
+    return 'ShopProduct(id: $id, name: $name, description: $description, images: $images, price: $price, coinPrice: $coinPrice, oldPrice: $oldPrice, currency: $currency, available: $available, inStock: $inStock, maxPerOrder: $maxPerOrder, soldCount: $soldCount, tags: $tags)';
   }
 
   @override
@@ -350,6 +381,8 @@ class _$ShopProductImpl extends _ShopProduct {
                 .equals(other._description, _description) &&
             const DeepCollectionEquality().equals(other._images, _images) &&
             (identical(other.price, price) || other.price == price) &&
+            (identical(other.coinPrice, coinPrice) ||
+                other.coinPrice == coinPrice) &&
             (identical(other.oldPrice, oldPrice) ||
                 other.oldPrice == oldPrice) &&
             (identical(other.currency, currency) ||
@@ -373,6 +406,7 @@ class _$ShopProductImpl extends _ShopProduct {
       const DeepCollectionEquality().hash(_description),
       const DeepCollectionEquality().hash(_images),
       price,
+      coinPrice,
       oldPrice,
       currency,
       available,
@@ -402,6 +436,7 @@ abstract class _ShopProduct extends ShopProduct {
       final Map<String, dynamic>? description,
       final List<String> images,
       final num price,
+      final num coinPrice,
       final num? oldPrice,
       final String currency,
       final int available,
@@ -425,6 +460,15 @@ abstract class _ShopProduct extends ShopProduct {
   @override
   num get price;
   @override
+
+  /// What it costs in coins. NOT derived from [price] — see the class
+  /// comment. Products created before the split were backfilled to their
+  /// so'm price on the server, so this is never absent in practice.
+  num get coinPrice;
+  @override
+
+  /// The struck-through "was" price, in so'm. There is no coin equivalent:
+  /// a discount is a money story.
   num? get oldPrice;
   @override
   String get currency;

@@ -11,16 +11,19 @@ import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
 ShopProduct product({
   String id = 'p1',
   num price = 10000,
+  num coinPrice = 6000,
   int available = 10,
-  int maxPerOrder = 3,
 }) =>
     ShopProduct(
       id: id,
       name: const {'en': 'Cup'},
       price: price,
+      // Never a round fraction of `price` in these fixtures: the two prices
+      // are unrelated by design, and a test that passes because 6000 happens
+      // to be 0.6 × 10000 is not testing anything.
+      coinPrice: coinPrice,
       available: available,
       inStock: available > 0,
-      maxPerOrder: maxPerOrder,
     );
 
 void main() {
@@ -42,20 +45,12 @@ void main() {
       expect(cart.count, 2);
     });
 
-    test('never exceeds the per-order limit', () {
-      var cart = ShopCart.empty;
-      for (var i = 0; i < 10; i++) {
-        cart = cart.add(product(maxPerOrder: 3));
-      }
-
-      expect(cart.count, 3);
-    });
-
     test('never exceeds what is left on the shelf', () {
-      // Two left, a limit of five: two is the answer.
+      // Stock is the only ceiling now — there is no per-order limit on either
+      // side any more. Two left means two, however many times it is added.
       var cart = ShopCart.empty;
-      for (var i = 0; i < 5; i++) {
-        cart = cart.add(product(available: 2, maxPerOrder: 5));
+      for (var i = 0; i < 9; i++) {
+        cart = cart.add(product(available: 2));
       }
 
       expect(cart.count, 2);
@@ -128,6 +123,31 @@ void main() {
       expect(items, hasLength(1));
       expect(items.first.productId, 'a');
       expect(items.first.count, 2);
+    });
+  });
+
+  group('two prices', () {
+    test('totals the money and the coin bills independently', () {
+      final cart = ShopCart.empty
+          .setCount(product(price: 10000, coinPrice: 6000), 2)
+          .setCount(product(id: 'p2', price: 25000, coinPrice: 18000), 1);
+
+      // 2 × 10 000 + 25 000 in money, 2 × 6 000 + 18 000 in coins. Neither is
+      // derivable from the other, which is the whole point of the split.
+      expect(cart.total, 45000);
+      expect(cart.coinTotal, 30000);
+    });
+
+    test('a line knows both of its totals', () {
+      final cart = ShopCart.empty.setCount(product(coinPrice: 6000), 3);
+
+      expect(cart.lines.single.lineTotal, 30000);
+      expect(cart.lines.single.lineCoinTotal, 18000);
+    });
+
+    test('an empty basket costs nothing in either unit', () {
+      expect(ShopCart.empty.total, 0);
+      expect(ShopCart.empty.coinTotal, 0);
     });
   });
 }

@@ -1195,3 +1195,7 @@ shop_availability,Наличие,Mavjudligi,Availability
 shop_sold_label,Куплено,Sotib olingan,Bought
 shop_max_per_order,Максимум в заказе,Bitta buyurtmaga,Max per order
 shop_delivery_days,3 дня,3 kun,3 days
+shop_pay_with_money,Оплатить деньгами,Pul bilan to‘lash,Pay with money
+shop_coins_short,"Не хватает {} коинов",{} tanga yetmaydi,{} coins short
+shop_coin_price_label,Цена в коинах,Tangadagi narxi,Coin price
+shop_or_with_coins,Или коинами,Yoki tangalar bilan,Or with coins

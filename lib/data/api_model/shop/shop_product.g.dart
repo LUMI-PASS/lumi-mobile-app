@@ -16,6 +16,7 @@ _$ShopProductImpl _$$ShopProductImplFromJson(Map<String, dynamic> json) =>
               .toList() ??
           const [],
       price: json['price'] as num? ?? 0,
+      coinPrice: json['coin_price'] as num? ?? 0,
       oldPrice: json['old_price'] as num?,
       currency: json['currency'] as String? ?? 'UZS',
       available: (json['available'] as num?)?.toInt() ?? 0,
@@ -34,6 +35,7 @@ Map<String, dynamic> _$$ShopProductImplToJson(_$ShopProductImpl instance) =>
       'description': instance.description,
       'images': instance.images,
       'price': instance.price,
+      'coin_price': instance.coinPrice,
       'old_price': instance.oldPrice,
       'currency': instance.currency,
       'available': instance.available,

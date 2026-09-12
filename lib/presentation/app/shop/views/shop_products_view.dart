@@ -53,11 +53,23 @@ class ShopProductsView extends StatelessWidget {
     final price = scaler.scale(16) * lineHeight;
     final oldPrice = scaler.scale(13) * lineHeight;
     final name = scaler.scale(14) * lineHeight * nameLines;
+    // The coin-price pill: its text plus 3 of padding top and bottom.
+    final coinPill = scaler.scale(12) * lineHeight + 6.h;
 
-    // image + gap + price + old price + gap + name + gap + Add button. The
-    // extra pixel absorbs the rounding a fractional device pixel ratio
-    // introduces — cheaper than a one-pixel overflow stripe.
-    return image + 8.h + price + oldPrice + 4.h + name + 8.h + 36.h + 1;
+    // image + gap + price + old price + gap + coin pill + gap + name + gap +
+    // Add button. The extra pixel absorbs the rounding a fractional device
+    // pixel ratio introduces — cheaper than a one-pixel overflow stripe.
+    return image +
+        8.h +
+        price +
+        oldPrice +
+        4.h +
+        coinPill +
+        4.h +
+        name +
+        8.h +
+        36.h +
+        1;
   }
 
   @override
@@ -195,6 +207,9 @@ class _Message extends StatelessWidget {
             16.kh,
             TextButton(
               onPressed: onRetry,
+              style: TextButton.styleFrom(
+                foregroundColor: context.colors.primary,
+              ),
               child: Text('retry'.tr()),
             ),
           ],

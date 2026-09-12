@@ -18,7 +18,6 @@ import 'package:lumi_pass/common/widget/app_text_field.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
-import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_cart.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
@@ -44,21 +43,44 @@ import 'package:lumi_pass/presentation/app/shop/shop_delivery_point_page.dart';
 /// The one thing merch does that a booking cannot: coins may cover the WHOLE
 /// order. There is no partner share to protect, so a fully-coin purchase never
 /// opens a gateway at all and comes back already paid.
+/// Re-provides the basket, then hands off to [_CheckoutView].
+///
+/// The cubit is a getIt singleton, so this is the same basket the shop shell
+/// shows — but a PUSHED route is a sibling of [ShopPage] in the navigator, not
+/// a descendant of it, so the shell's `BlocProvider` is not an ancestor here
+/// and `context.read<CartCubit>()` threw. Providing `.value` puts it back in
+/// scope without forking the basket in two.
 @RoutePage()
-class ShopCheckoutPage extends StatefulWidget {
+class ShopCheckoutPage extends StatelessWidget {
   const ShopCheckoutPage({super.key});
 
   @override
-  State<ShopCheckoutPage> createState() => _ShopCheckoutPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider<CartCubit>.value(
+      value: getIt<CartCubit>(),
+      child: const _CheckoutView(),
+    );
+  }
 }
 
-class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
+class _CheckoutView extends StatefulWidget {
+  const _CheckoutView();
+
+  @override
+  State<_CheckoutView> createState() => _ShopCheckoutPageState();
+}
+
+class _ShopCheckoutPageState extends State<_CheckoutView> {
   final _phone = TextEditingController();
   final _name = TextEditingController();
   final _comment = TextEditingController();
 
   WalletBalance? _wallet;
-  bool _useWallet = false;
+
+  /// Which of the basket's two prices is being paid. Not a toggle over a
+  /// single price: coins and money are separate prices with no rate between
+  /// them, so this picks one of two bills rather than splitting one.
+  bool _withCoins = false;
   PaymentSelection? _payment;
 
   double? _lat;
@@ -72,36 +94,32 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
   ShopCart get _cart => context.read<CartCubit>().state;
 
   /// A preview only. The server re-prices the basket when it creates the
-  /// order, and `payable_amount` off that response is what is actually charged
-  /// — which is why this is never sent anywhere.
+  /// order, and the response is what is actually charged — which is why
+  /// neither of these is ever sent anywhere.
   num get _total => _cart.total;
 
-  /// What the wallet would cover of this order, locally.
-  ///
-  /// An estimate for the toggle to render, nothing more — the server decides
-  /// the real figure at checkout and the response is what gets shown
-  /// afterwards. Unlike a booking there is no redemption cap to model here:
-  /// coins may cover all of it.
-  num get _walletApplied {
-    if (!_useWallet) return 0;
-    final available = _wallet?.available ?? 0;
-    return available < _total ? available : _total;
-  }
+  /// The same basket, priced in coins. Unrelated to [_total].
+  num get _coinTotal => _cart.coinTotal;
 
-  num get _payable {
-    final rest = _total - _walletApplied;
-    return rest < 0 ? 0 : rest;
-  }
+  num get _available => _wallet?.available ?? 0;
 
-  /// Coins cover everything — no gateway, and no rail to choose.
-  bool get _fullyCoinFunded => _payable <= 0;
+  /// Whether the wallet covers the WHOLE coin bill. There is no rate, so a
+  /// wallet that falls short cannot be topped up with money on this order —
+  /// it is coins or it is money.
+  bool get _coinsAffordable =>
+      _coinTotal > 0 && _available >= _coinTotal && !(_wallet?.isFrozen ?? false);
+
+  /// Paying with coins opens no gateway at all, so there is no rail to pick.
+  bool get _fullyCoinFunded => _withCoins;
 
   bool get _canPay =>
       !_submitting &&
       _lat != null &&
       _address.trim().length >= 5 &&
       _phone.text.trim().length >= 7 &&
-      (_fullyCoinFunded || _payment == null || _payment!.isPayable);
+      (_withCoins
+          ? _coinsAffordable
+          : _payment == null || _payment!.isPayable);
 
   @override
   void initState() {
@@ -183,7 +201,7 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
       contactName: _name.text.trim(),
       contactPhone: _phone.text.trim(),
       comment: _comment.text.trim(),
-      useWallet: _useWallet,
+      payWith: _withCoins ? 'coins' : 'money',
       paymentProvider: provider,
       cardNumber: cardNumber,
       expireDate: expireDate,
@@ -473,13 +491,15 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
           _SectionTitle('shop_payment_title'.tr()),
           12.kh,
 
-          if (_wallet != null)
-            UseBalanceRow(
-              wallet: _wallet!,
-              enabled: !_submitting,
-              applied: _walletApplied,
-              onChanged: (on) => setState(() => _useWallet = on),
-            ),
+          _PayWithSwitch(
+            withCoins: _withCoins,
+            moneyTotal: _total,
+            coinTotal: _coinTotal,
+            available: _available,
+            coinsAffordable: _coinsAffordable,
+            enabled: !_submitting,
+            onChanged: (coins) => setState(() => _withCoins = coins),
+          ),
 
           // A rail only has to be chosen when there is something left to
           // charge. Asking a buyer whose coins already cover the order to pick
@@ -516,37 +536,31 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
           ],
 
           20.kh,
-          _TotalRow(
-            label: 'shop_total'.tr(),
-            value: _total.toRawUzsPrice(),
-            strong: true,
-          ),
-          if (_walletApplied > 0) ...[
-            8.kh,
+          // One total, in the unit actually being charged. Showing both here
+          // would be the one place a buyer might try to add them together.
+          if (_withCoins)
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    'shop_paid_with_coins'.tr(),
-                    style: AppText.regular13
-                        .copyWith(color: c.textSecondary),
+                    'shop_total'.tr(),
+                    style: AppText.semibold16.copyWith(color: c.textPrimary),
                   ),
                 ),
                 CoinAmount(
-                  amount: _walletApplied,
-                  prefix: '−',
-                  style: AppText.semibold14,
-                  color: AppColors.green,
+                  amount: _coinTotal,
+                  style: AppText.bold18,
+                  color: AppColors.brandPurple,
+                  iconSize: 20,
                 ),
               ],
-            ),
-            8.kh,
+            )
+          else
             _TotalRow(
-              label: 'shop_left_to_pay'.tr(),
-              value: _payable.toRawUzsPrice(),
+              label: 'shop_total'.tr(),
+              value: _total.toRawUzsPrice(),
               strong: true,
             ),
-          ],
 
           if (_error != null) ...[
             16.kh,
@@ -580,9 +594,11 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
                     ),
                   )
                 : Text(
-                    _fullyCoinFunded
-                        ? 'shop_pay_with_coins'.tr()
-                        : 'shop_pay'.tr(args: [_payable.toRawUzsPrice()]),
+                    // The button says the amount in the unit being charged —
+                    // coins have no so'm figure to quote.
+                    _withCoins
+                        ? 'shop_pay'.tr(args: [_coinTotal.toGrouped()])
+                        : 'shop_pay'.tr(args: [_total.toRawUzsPrice()]),
                     style: AppText.semibold16
                         .copyWith(color: Colors.white),
                   ),
@@ -635,6 +651,148 @@ class _TotalRow extends StatelessWidget {
               .copyWith(color: c.textPrimary),
         ),
       ],
+    );
+  }
+}
+
+/// Coins or money — two prices for the same basket, one of which will be paid.
+///
+/// Two cards rather than a switch, because a switch implies a single bill with
+/// something subtracted from it, and that is exactly the mental model this
+/// screen must NOT create. Each card carries its own total in its own unit, so
+/// the choice reads as "this bill or that bill".
+///
+/// The coin card goes dead when the wallet cannot cover the whole coin price.
+/// There is no rate between the two prices, so a short wallet cannot be topped
+/// up with money here — the card says how short it is instead of offering a
+/// part-payment that does not exist.
+class _PayWithSwitch extends StatelessWidget {
+  const _PayWithSwitch({
+    required this.withCoins,
+    required this.moneyTotal,
+    required this.coinTotal,
+    required this.available,
+    required this.coinsAffordable,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final bool withCoins;
+  final num moneyTotal;
+  final num coinTotal;
+  final num available;
+  final bool coinsAffordable;
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    return Column(
+      children: [
+        _Option(
+          selected: !withCoins,
+          enabled: enabled,
+          onTap: () => onChanged(false),
+          title: 'shop_pay_with_money'.tr(),
+          trailing: Text(
+            moneyTotal.toRawUzsPrice(),
+            style: AppText.semibold14.copyWith(color: c.textPrimary),
+          ),
+        ),
+        10.kh,
+        _Option(
+          selected: withCoins,
+          enabled: enabled && coinsAffordable,
+          onTap: () => onChanged(true),
+          title: 'shop_pay_with_coins'.tr(),
+          subtitle: coinsAffordable
+              ? null
+              : 'shop_coins_short'.tr(args: [
+                  (coinTotal - available).clamp(0, coinTotal).toGrouped(),
+                ]),
+          trailing: CoinAmount(
+            amount: coinTotal,
+            style: AppText.semibold14,
+            color: coinsAffordable ? c.textPrimary : c.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Option extends StatelessWidget {
+  const _Option({
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+    required this.title,
+    required this.trailing,
+    this.subtitle,
+  });
+
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+  final String title;
+  final Widget trailing;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.55,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: selected ? AppColors.brandPurple : c.border,
+              width: selected ? 1.6 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                size: 20.w,
+                color: selected ? AppColors.brandPurple : c.textPlaceholder,
+              ),
+              10.kw,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppText.medium14.copyWith(color: c.textPrimary),
+                    ),
+                    if (subtitle != null) ...[
+                      2.kh,
+                      Text(
+                        subtitle!,
+                        style: AppText.regular12
+                            .copyWith(color: AppColors.warning),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              8.kw,
+              trailing,
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

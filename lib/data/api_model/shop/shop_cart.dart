@@ -15,6 +15,10 @@ class ShopCartLine {
 
   num get lineTotal => product.price * count;
 
+  /// The same line, priced in coins. Unrelated to [lineTotal] — see
+  /// [ShopProduct.coinPrice].
+  num get lineCoinTotal => product.coinPrice * count;
+
   /// What this line would have cost at the pre-discount price. Equal to
   /// [lineTotal] when the product is not discounted, so the summary can
   /// subtract the two without asking whether there is a discount at all.
@@ -53,6 +57,13 @@ class ShopCart {
 
   num get total => lines.fold<num>(0, (sum, line) => sum + line.lineTotal);
 
+  /// What the whole basket costs in coins.
+  ///
+  /// Never compare this with [total] or derive one from the other: they are
+  /// two prices for the same goods, not two views of one price.
+  num get coinTotal =>
+      lines.fold<num>(0, (sum, line) => sum + line.lineCoinTotal);
+
   /// The basket before its discounts — the "N tovar" line of the summary.
   num get subtotal =>
       lines.fold<num>(0, (sum, line) => sum + line.lineSubtotal);
@@ -71,15 +82,12 @@ class ShopCart {
 
   bool contains(String productId) => countOf(productId) > 0;
 
-  /// Adds [count] of [product], clamped to what may actually be bought.
+  /// Adds [count] of [product], clamped to what is actually on the shelf.
   ///
-  /// The ceiling is the lower of the per-order limit and what is left on the
-  /// shelf: offering a basket the checkout would refuse is worse than refusing
-  /// it here, where the buyer can still see why.
+  /// Stock is the only ceiling. There used to be a per-order limit as well;
+  /// nothing enforces one any more, on either side.
   ShopCart add(ShopProduct product, {int count = 1}) {
-    final ceiling = product.maxPerOrder < product.available
-        ? product.maxPerOrder
-        : product.available;
+    final ceiling = product.available;
     if (ceiling <= 0) return this;
 
     final existing = countOf(product.id);

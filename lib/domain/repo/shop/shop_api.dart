@@ -26,10 +26,11 @@ class ShopApi {
 
   /// Creates the order and routes it to a payment rail.
   ///
-  /// [useWallet] pays with Lumi coins. Unlike a booking, coins may cover the
-  /// WHOLE order — there is no partner share to protect — in which case the
-  /// response comes back already `paid` with no `checkout_url` and no gateway
-  /// is opened at all.
+  /// [payWith] decides which of the product's two prices is charged, and an
+  /// order is paid entirely one way. `'coins'` charges the coin prices to the
+  /// wallet and comes back already `paid`, with no `checkout_url` and no
+  /// gateway opened at all; `'money'` charges the so'm prices to a rail. There
+  /// is no rate between the two, so there is no part-coin order to ask for.
   Future<Response> checkout({
     required List<({String productId, int count})> items,
     required double lat,
@@ -38,8 +39,7 @@ class ShopApi {
     String? contactName,
     String? contactPhone,
     String? comment,
-    bool useWallet = false,
-    num? walletAmount,
+    String payWith = 'money',
     String? paymentProvider,
     String? cardNumber,
     String? expireDate,
@@ -60,8 +60,7 @@ class ShopApi {
           'contact_phone': contactPhone,
         if (comment != null && comment.isNotEmpty) 'comment': comment,
       },
-      if (useWallet) 'use_wallet': true,
-      if (walletAmount != null) 'wallet_amount': walletAmount.round(),
+      'pay_with': payWith,
       if (paymentProvider != null) 'payment_provider': paymentProvider,
       if (cardNumber != null) 'card_number': cardNumber,
       if (expireDate != null) 'expire_date': expireDate,
