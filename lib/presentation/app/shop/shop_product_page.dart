@@ -12,6 +12,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/multi_lang.dart';
+import 'package:lumi_pass/common/widget/aurora_background.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -48,7 +49,6 @@ class _ShopProductPageState extends State<ShopProductPage> {
   late ShopProduct? _product = widget.preloaded;
   bool _loading = false;
   bool _failed = false;
-  int _count = 1;
   int _imageIndex = 0;
 
   @override
@@ -68,9 +68,6 @@ class _ShopProductPageState extends State<ShopProductPage> {
       setState(() {
         _product = fresh;
         _loading = false;
-        // The buyer may have been sitting on this screen while stock moved.
-        // Clamp rather than letting checkout refuse an impossible quantity.
-        _count = _count.clamp(1, fresh.available > 0 ? fresh.available : 1);
       });
     } catch (_) {
       if (!mounted) return;
@@ -99,32 +96,35 @@ class _ShopProductPageState extends State<ShopProductPage> {
     final c = context.colors;
     final product = _product;
 
-    return Scaffold(
-      backgroundColor: c.scaffoldBg,
-      appBar: BaseAppBar(title: 'shop_title'.tr()),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _failed || product == null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'shop_error_title'.tr(),
-                        style: AppText.semibold16
-                            .copyWith(color: c.textPrimary),
-                      ),
-                      12.kh,
-                      TextButton(
-                        onPressed: _load,
-                        child: Text('retry'.tr()),
-                      ),
-                    ],
-                  ),
-                )
-              : _content(context, product),
-      bottomNavigationBar:
-          product == null ? null : _buyBar(context, product),
+    return AuroraBackground(
+      child: Scaffold(
+        // The aurora behind it is the page background.
+        backgroundColor: Colors.transparent,
+        appBar: BaseAppBar(title: 'shop_title'.tr()),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _failed || product == null
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'shop_error_title'.tr(),
+                          style: AppText.semibold16
+                              .copyWith(color: c.textPrimary),
+                        ),
+                        12.kh,
+                        TextButton(
+                          onPressed: _load,
+                          child: Text('retry'.tr()),
+                        ),
+                      ],
+                    ),
+                  )
+                : _content(context, product),
+        bottomNavigationBar:
+            product == null ? null : _buyBar(context, product),
+      ),
     );
   }
 
@@ -225,30 +225,6 @@ class _ShopProductPageState extends State<ShopProductPage> {
                         AppText.regular14.copyWith(color: c.textSecondary),
                   ),
                 ],
-                20.kh,
-                if (product.inStock)
-                  Row(
-                    children: [
-                      Text(
-                        'shop_quantity'.tr(),
-                        style: AppText.semibold14
-                            .copyWith(color: c.textPrimary),
-                      ),
-                      const Spacer(),
-                      ShopQuantityStepper(
-                        count: _count,
-                        // One is the floor here, unlike in the basket: this
-                        // screen has nothing to remove, it is deciding how
-                        // many to add.
-                        onDecrease: _count > 1
-                            ? () => setState(() => _count -= 1)
-                            : null,
-                        onIncrease: _count < _maxCount
-                            ? () => setState(() => _count += 1)
-                            : null,
-                      ),
-                    ],
-                  ),
               ],
             ),
           ),
@@ -257,40 +233,107 @@ class _ShopProductPageState extends State<ShopProductPage> {
     );
   }
 
+  /// The buy bar reads the BASKET, not a counter of its own.
+  ///
+  /// It used to keep a private `_count` that always started at 1. Open a
+  /// product already sitting in the basket twice over and this screen said
+  /// "1", while the button underneath it — which adds to what is already
+  /// there — would have made it three. The label and the effect disagreed,
+  /// and the basket was right both times. So there is no second number here
+  /// any more: what this screen shows is what the basket holds.
   Widget _buyBar(BuildContext context, ShopProduct product) {
     final c = context.colors;
-    final soldOut = !product.inStock;
 
-    return SafeArea(
-      minimum: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-      child: SizedBox(
-        height: 52.h,
-        child: ElevatedButton(
-          onPressed: soldOut
-              ? null
-              : () {
-                  context.read<CartCubit>().add(product, count: _count);
-                  // Straight back to where they were browsing. Jumping them to
-                  // the basket would interrupt a shopping trip that is very
-                  // often not over — the badge already says it worked.
-                  context.router.maybePop();
-                },
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                soldOut ? c.disabled : AppColors.brandPurple,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14.r),
+    if (!product.inStock) {
+      return _bar(
+        child: SizedBox(
+          height: 52.h,
+          child: ElevatedButton(
+            onPressed: null,
+            style: ElevatedButton.styleFrom(
+              disabledBackgroundColor: c.disabled,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+            child: Text(
+              'shop_sold_out'.tr(),
+              style: AppText.semibold16.copyWith(color: Colors.white),
             ),
           ),
-          child: Text(
-            soldOut
-                ? 'shop_sold_out'.tr()
-                : 'shop_add_for'
-                    .tr(args: [(product.price * _count).toRawUzsPrice()]),
-            style: AppText.semibold16.copyWith(color: Colors.white),
+        ),
+      );
+    }
+
+    final count = context.watch<CartCubit>().state.countOf(product.id);
+
+    if (count == 0) {
+      return _bar(
+        child: SizedBox(
+          height: 52.h,
+          child: ElevatedButton(
+            onPressed: () => context.read<CartCubit>().add(product),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.brandPurple,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+            child: Text(
+              'shop_add_for'.tr(args: [product.price.toRawUzsPrice()]),
+              style: AppText.semibold16.copyWith(color: Colors.white),
+            ),
           ),
         ),
+      );
+    }
+
+    final cart = context.read<CartCubit>();
+
+    return _bar(
+      child: Row(
+        children: [
+          ShopQuantityStepper(
+            count: count,
+            // Down from one takes it out of the basket, exactly as it does on
+            // the card and in the basket itself. The bar then flips back to
+            // offering to add it.
+            onDecrease: () => cart.setCount(product, count - 1),
+            onIncrease:
+                count < _maxCount ? () => cart.setCount(product, count + 1) : null,
+          ),
+          12.kw,
+          Expanded(
+            child: SizedBox(
+              height: 52.h,
+              child: ElevatedButton(
+                // Popping with `true` is how the shell learns to switch to the
+                // basket tab — this screen is pushed over it and does not own
+                // which tab is showing.
+                onPressed: () => context.router.maybePop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brandPurple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                ),
+                child: Text(
+                  'shop_go_to_cart'
+                      .tr(args: [(product.price * count).toRawUzsPrice()]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.semibold16.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _bar({required Widget child}) => SafeArea(
+        minimum: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+        child: child,
+      );
 }

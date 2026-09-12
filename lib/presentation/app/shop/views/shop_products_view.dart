@@ -22,7 +22,12 @@ import 'package:lumi_pass/presentation/app/shop/widgets/shop_product_card.dart';
 /// BasePage would have given us. There is no listener to lose — this screen
 /// never had one.
 class ShopProductsView extends StatelessWidget {
-  const ShopProductsView({super.key});
+  const ShopProductsView({super.key, this.onOpenCart});
+
+  /// Switches the shell to the basket tab. The shell owns which tab is
+  /// showing, so it passes this down rather than this screen guessing — the
+  /// same arrangement the basket's "browse products" link uses.
+  final VoidCallback? onOpenCart;
 
   /// How tall one product tile has to be.
   ///
@@ -64,6 +69,11 @@ class ShopProductsView extends StatelessWidget {
 
   Widget _grid(BuildContext context, ShopBuildable state) {
     final cubit = context.read<ShopCubit>();
+    // Watched HERE and not inside the sliver's item builder. That builder runs
+    // lazily during layout, and a watch from there subscribes this element
+    // from the wrong phase — it happens to work today, but the dependency
+    // belongs to the build that reads it. One snapshot, read by every card.
+    final cart = context.watch<CartCubit>().state;
 
     return RefreshIndicator(
         color: AppColors.brandPurple,
@@ -119,16 +129,16 @@ class ShopProductsView extends StatelessWidget {
                         final product = state.products[index];
                         return ShopProductCard(
                           product: product,
-                          onTap: () => context.router.push(
-                            ShopProductRoute(
-                              productId: product.id,
-                              preloaded: product,
-                            ),
-                          ),
-                          inCart: context
-                              .watch<CartCubit>()
-                              .state
-                              .countOf(product.id),
+                          onTap: () async {
+                            final toCart = await context.router.push(
+                              ShopProductRoute(
+                                productId: product.id,
+                                preloaded: product,
+                              ),
+                            );
+                            if (toCart == true) onOpenCart?.call();
+                          },
+                          inCart: cart.countOf(product.id),
                           onAdd: () =>
                               context.read<CartCubit>().add(product),
                           onSetCount: (next) => context

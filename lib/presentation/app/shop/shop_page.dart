@@ -8,6 +8,7 @@ import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/aurora_background.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
@@ -53,8 +54,6 @@ class _ShopPageState extends State<ShopPage> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
-
     return MultiBlocProvider(
       providers: [
         BlocProvider<CartCubit>.value(value: getIt<CartCubit>()),
@@ -68,27 +67,35 @@ class _ShopPageState extends State<ShopPage> {
         builder: (context) {
           final cartCount = context.watch<CartCubit>().state.count;
 
-          return Scaffold(
-            backgroundColor: c.scaffoldBg,
-            appBar: BaseAppBar(
-              title: _titleFor(_tab, cartCount),
-              // Only over the catalog: the balance answers "what can I
-              // afford?", which is a question the basket and the orders list
-              // have already stopped asking.
-              actions: _tab == 0 ? const [_CoinBalanceChip()] : null,
-            ),
-            body: IndexedStack(
-              index: _tab,
-              children: [
-                const ShopProductsView(),
-                ShopCartView(onBrowse: () => setState(() => _tab = 0)),
-                ShopOrdersView(justPaid: widget.justPaid),
-              ],
-            ),
-            bottomNavigationBar: _ShopNavBar(
-              index: _tab,
-              cartCount: cartCount,
-              onChanged: (next) => setState(() => _tab = next),
+          return AuroraBackground(
+            child: Scaffold(
+              // The aurora behind it is the page background.
+              backgroundColor: Colors.transparent,
+              appBar: BaseAppBar(
+                title: _titleFor(_tab, cartCount),
+                // Back only on the catalog. The basket and the orders list are
+                // tabs of this same screen, not pushes onto it — a back arrow
+                // there would offer to leave the shop, which is not what the
+                // arrow above a basket reads as.
+                leading: _tab == 0 ? null : const SizedBox.shrink(),
+                // Only over the catalog: the balance answers "what can I
+                // afford?", which is a question the basket and the orders list
+                // have already stopped asking.
+                actions: _tab == 0 ? const [_CoinBalanceChip()] : null,
+              ),
+              body: IndexedStack(
+                index: _tab,
+                children: [
+                  ShopProductsView(onOpenCart: () => setState(() => _tab = 1)),
+                  ShopCartView(onBrowse: () => setState(() => _tab = 0)),
+                  ShopOrdersView(justPaid: widget.justPaid),
+                ],
+              ),
+              bottomNavigationBar: _ShopNavBar(
+                index: _tab,
+                cartCount: cartCount,
+                onChanged: (next) => setState(() => _tab = next),
+              ),
             ),
           );
         },
@@ -121,42 +128,37 @@ class _ShopNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: c.bottomBar,
-        border: Border(top: BorderSide(color: c.divider)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 60.h,
-          child: Row(
-            children: [
-              _NavItem(
-                icon: Assets.icons.shop.products,
-                label: 'shop_tab_products'.tr(),
-                selected: index == 0,
-                onTap: () => onChanged(0),
-              ),
-              _NavItem(
-                icon: Assets.icons.shop.cart,
-                label: 'shop_tab_cart'.tr(),
-                selected: index == 1,
-                // Units rather than lines: two cups and a pen reads as 3,
-                // which is what the buyer put in.
-                badge: cartCount,
-                onTap: () => onChanged(1),
-              ),
-              _NavItem(
-                icon: Assets.icons.shop.orders,
-                label: 'shop_tab_orders'.tr(),
-                selected: index == 2,
-                onTap: () => onChanged(2),
-              ),
-            ],
-          ),
+    // No fill and no top hairline: the aurora wash runs straight through the
+    // nav, so the bar reads as part of the page rather than a tray glued to
+    // the bottom of it.
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: 60.h,
+        child: Row(
+          children: [
+            _NavItem(
+              icon: Assets.icons.shop.products,
+              label: 'shop_tab_products'.tr(),
+              selected: index == 0,
+              onTap: () => onChanged(0),
+            ),
+            _NavItem(
+              icon: Assets.icons.shop.cart,
+              label: 'shop_tab_cart'.tr(),
+              selected: index == 1,
+              // Units rather than lines: two cups and a pen reads as 3,
+              // which is what the buyer put in.
+              badge: cartCount,
+              onTap: () => onChanged(1),
+            ),
+            _NavItem(
+              icon: Assets.icons.shop.orders,
+              label: 'shop_tab_orders'.tr(),
+              selected: index == 2,
+              onTap: () => onChanged(2),
+            ),
+          ],
         ),
       ),
     );

@@ -1188,3 +1188,4 @@ shop_cart_title_n,"{} шт. в корзине",Savatchada {} ta tovar,{} items i
 shop_cart_summary,Ваш заказ,Buyurtmangiz,Your order
 shop_cart_discounts,Скидки,Chegirmalar,Discounts
 shop_price_each,{} / шт.,{} / dona,{} each
+shop_go_to_cart,В корзину · {},Savatchaga · {},To cart · {}

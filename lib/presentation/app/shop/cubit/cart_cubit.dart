@@ -48,7 +48,12 @@ class CartCubit extends Cubit<ShopCart> {
     for (final entry in wanted.entries) {
       try {
         final product = await _shop.getProduct(entry.key);
-        cart = cart.setCount(product, entry.value);
+        // add(), not setCount(): it clamps to what may actually be bought
+        // today. A basket stored when three were on the shelf must not come
+        // back asking for three when one is left — setCount would have
+        // restored it verbatim and the checkout would have refused the whole
+        // order. A line whose product is now unbuyable drops out here.
+        cart = cart.add(product, count: entry.value);
       } catch (_) {
         // Gone, hidden, or unreachable. Skip the line rather than fail the
         // whole basket over one of them.
