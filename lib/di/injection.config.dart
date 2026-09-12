@@ -66,6 +66,7 @@ import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_
     as _i133;
 import 'package:lumi_pass/presentation/app/profile/wallet/cubit/wallet_cubit.dart'
     as _i822;
+import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart' as _i82;
 import 'package:lumi_pass/presentation/app/shop/cubit/shop_cubit.dart' as _i189;
 import 'package:lumi_pass/presentation/auth/login/bloc/login_cubit.dart'
     as _i296;
@@ -199,6 +200,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i189.ShopCubit>(() => _i189.ShopCubit(
           gh<_i1070.ShopRepository>(),
           gh<_i890.WalletRepository>(),
+        ));
+    gh.lazySingleton<_i82.CartCubit>(() => _i82.CartCubit(
+          gh<_i279.Storage>(),
+          gh<_i1070.ShopRepository>(),
         ));
     return this;
   }

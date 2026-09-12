@@ -2,12 +2,12 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
@@ -16,6 +16,7 @@ import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/shop/shop_repository.dart';
+import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart';
 
 /// One product, and the decision to buy it.
 ///
@@ -262,13 +263,12 @@ class _ShopProductPageState extends State<ShopProductPage> {
         child: ElevatedButton(
           onPressed: soldOut
               ? null
-              : () async {
-                  final changed = await context.router.push(
-                    ShopCheckoutRoute(product: product, count: _count),
-                  );
-                  // Stock moved if anything was bought — and the buyer is
-                  // looking at a page that says otherwise.
-                  if (changed == true && mounted) _load();
+              : () {
+                  context.read<CartCubit>().add(product, count: _count);
+                  // Straight back to where they were browsing. Jumping them to
+                  // the basket would interrupt a shopping trip that is very
+                  // often not over — the badge already says it worked.
+                  context.router.maybePop();
                 },
           style: ElevatedButton.styleFrom(
             backgroundColor:
@@ -280,7 +280,7 @@ class _ShopProductPageState extends State<ShopProductPage> {
           child: Text(
             soldOut
                 ? 'shop_sold_out'.tr()
-                : 'shop_buy_for'
+                : 'shop_add_for'
                     .tr(args: [(product.price * _count).toRawUzsPrice()]),
             style: AppText.semibold16.copyWith(color: Colors.white),
           ),

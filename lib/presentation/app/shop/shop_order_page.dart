@@ -14,7 +14,7 @@ import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_order.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/shop/shop_repository.dart';
-import 'package:lumi_pass/presentation/app/shop/shop_orders_page.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_status_chip.dart';
 
 /// One merch order: what was bought, where it is going, and where it has got
 /// to.

@@ -70,7 +70,7 @@ class WalletPage
               if (wallet.available > 0) ...[
                 12.kh,
                 _SpendOnMerch(
-                  onTap: () => context.router.push(const ShopRoute()),
+                  onTap: () => context.router.push(ShopRoute()),
                 ),
               ],
               24.kh,

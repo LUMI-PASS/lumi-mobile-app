@@ -310,14 +310,9 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     ShopCheckoutRoute.name: (routeData) {
-      final args = routeData.argsAs<ShopCheckoutRouteArgs>();
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: ShopCheckoutPage(
-          key: args.key,
-          product: args.product,
-          count: args.count,
-        ),
+        child: const ShopCheckoutPage(),
       );
     },
     ShopDeliveryPointRoute.name: (routeData) {
@@ -343,21 +338,16 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
-    ShopOrdersRoute.name: (routeData) {
-      final args = routeData.argsAs<ShopOrdersRouteArgs>(
-          orElse: () => const ShopOrdersRouteArgs());
+    ShopRoute.name: (routeData) {
+      final args =
+          routeData.argsAs<ShopRouteArgs>(orElse: () => const ShopRouteArgs());
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: ShopOrdersPage(
+        child: ShopPage(
           key: args.key,
+          initialTab: args.initialTab,
           justPaid: args.justPaid,
         ),
-      );
-    },
-    ShopRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const ShopPage(),
       );
     },
     ShopProductRoute.name: (routeData) {
@@ -1412,45 +1402,16 @@ class SearchRoute extends PageRouteInfo<void> {
 
 /// generated route for
 /// [ShopCheckoutPage]
-class ShopCheckoutRoute extends PageRouteInfo<ShopCheckoutRouteArgs> {
-  ShopCheckoutRoute({
-    Key? key,
-    required ShopProduct product,
-    required int count,
-    List<PageRouteInfo>? children,
-  }) : super(
+class ShopCheckoutRoute extends PageRouteInfo<void> {
+  const ShopCheckoutRoute({List<PageRouteInfo>? children})
+      : super(
           ShopCheckoutRoute.name,
-          args: ShopCheckoutRouteArgs(
-            key: key,
-            product: product,
-            count: count,
-          ),
           initialChildren: children,
         );
 
   static const String name = 'ShopCheckoutRoute';
 
-  static const PageInfo<ShopCheckoutRouteArgs> page =
-      PageInfo<ShopCheckoutRouteArgs>(name);
-}
-
-class ShopCheckoutRouteArgs {
-  const ShopCheckoutRouteArgs({
-    this.key,
-    required this.product,
-    required this.count,
-  });
-
-  final Key? key;
-
-  final ShopProduct product;
-
-  final int count;
-
-  @override
-  String toString() {
-    return 'ShopCheckoutRouteArgs{key: $key, product: $product, count: $count}';
-  }
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for
@@ -1540,55 +1501,45 @@ class ShopOrderRouteArgs {
 }
 
 /// generated route for
-/// [ShopOrdersPage]
-class ShopOrdersRoute extends PageRouteInfo<ShopOrdersRouteArgs> {
-  ShopOrdersRoute({
+/// [ShopPage]
+class ShopRoute extends PageRouteInfo<ShopRouteArgs> {
+  ShopRoute({
     Key? key,
+    int initialTab = 0,
     bool justPaid = false,
     List<PageRouteInfo>? children,
   }) : super(
-          ShopOrdersRoute.name,
-          args: ShopOrdersRouteArgs(
+          ShopRoute.name,
+          args: ShopRouteArgs(
             key: key,
+            initialTab: initialTab,
             justPaid: justPaid,
           ),
           initialChildren: children,
         );
 
-  static const String name = 'ShopOrdersRoute';
+  static const String name = 'ShopRoute';
 
-  static const PageInfo<ShopOrdersRouteArgs> page =
-      PageInfo<ShopOrdersRouteArgs>(name);
+  static const PageInfo<ShopRouteArgs> page = PageInfo<ShopRouteArgs>(name);
 }
 
-class ShopOrdersRouteArgs {
-  const ShopOrdersRouteArgs({
+class ShopRouteArgs {
+  const ShopRouteArgs({
     this.key,
+    this.initialTab = 0,
     this.justPaid = false,
   });
 
   final Key? key;
 
+  final int initialTab;
+
   final bool justPaid;
 
   @override
   String toString() {
-    return 'ShopOrdersRouteArgs{key: $key, justPaid: $justPaid}';
+    return 'ShopRouteArgs{key: $key, initialTab: $initialTab, justPaid: $justPaid}';
   }
-}
-
-/// generated route for
-/// [ShopPage]
-class ShopRoute extends PageRouteInfo<void> {
-  const ShopRoute({List<PageRouteInfo>? children})
-      : super(
-          ShopRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'ShopRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

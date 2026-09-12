@@ -11,29 +11,28 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/multi_lang.dart';
-import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_order.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/shop/shop_repository.dart';
+import 'package:lumi_pass/presentation/app/shop/widgets/shop_status_chip.dart';
 
-/// The buyer's merch purchases, newest first.
+/// "Buyurtmalarim" — the buyer's merch purchases, newest first.
 ///
-/// Arrived at from the shop, and also landed on straight after paying — which
-/// is what [justPaid] is for: the newest order gets a "we'll call you" banner
-/// so a successful purchase ends on an explanation of what happens next rather
-/// than on a list.
-@RoutePage()
-class ShopOrdersPage extends StatefulWidget {
-  const ShopOrdersPage({super.key, this.justPaid = false});
+/// A view rather than a page: it is the shop shell's third tab. [justPaid] is
+/// set when the buyer lands here straight from paying, and puts a "we'll call
+/// you" banner above the list — a purchase should end on an explanation of
+/// what happens next, not on a list.
+class ShopOrdersView extends StatefulWidget {
+  const ShopOrdersView({super.key, this.justPaid = false});
 
   final bool justPaid;
 
   @override
-  State<ShopOrdersPage> createState() => _ShopOrdersPageState();
+  State<ShopOrdersView> createState() => _ShopOrdersViewState();
 }
 
-class _ShopOrdersPageState extends State<ShopOrdersPage> {
+class _ShopOrdersViewState extends State<ShopOrdersView> {
   List<ShopOrder> _orders = const [];
   bool _loading = true;
 
@@ -62,10 +61,7 @@ class _ShopOrdersPageState extends State<ShopOrdersPage> {
   Widget build(BuildContext context) {
     final c = context.colors;
 
-    return Scaffold(
-      backgroundColor: c.scaffoldBg,
-      appBar: BaseAppBar(title: 'shop_my_orders'.tr()),
-      body: RefreshIndicator(
+    return RefreshIndicator(
         color: AppColors.brandPurple,
         onRefresh: _load,
         child: _loading
@@ -123,7 +119,6 @@ class _ShopOrdersPageState extends State<ShopOrdersPage> {
                     ],
                 ],
               ),
-      ),
     );
   }
 }
@@ -195,37 +190,6 @@ class _OrderCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// The status pill, shared by the list and the detail screen so the two can
-/// never label the same order differently.
-class ShopStatusChip extends StatelessWidget {
-  const ShopStatusChip({super.key, required this.status});
-
-  final ShopOrderStatus status;
-
-  Color get _color => switch (status) {
-        ShopOrderStatus.isNew => AppColors.link,
-        ShopOrderStatus.confirmed => AppColors.brandPurple,
-        ShopOrderStatus.delivering => AppColors.warning,
-        ShopOrderStatus.delivered => AppColors.green,
-        ShopOrderStatus.canceled => AppColors.error,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-      decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6.r),
-      ),
-      child: Text(
-        status.labelKey.tr(),
-        style: AppText.semibold12.copyWith(color: _color),
       ),
     );
   }

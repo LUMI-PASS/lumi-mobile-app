@@ -36,7 +36,6 @@ import 'package:lumi_pass/presentation/app/profile/profile_detail/profile_detail
 import 'package:lumi_pass/presentation/app/shop/shop_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/shop/shop_delivery_point_page.dart';
 import 'package:lumi_pass/presentation/app/shop/shop_order_page.dart';
-import 'package:lumi_pass/presentation/app/shop/shop_orders_page.dart';
 import 'package:lumi_pass/presentation/app/shop/shop_page.dart';
 import 'package:lumi_pass/presentation/app/shop/shop_product_page.dart';
 import 'package:lumi_pass/presentation/auth/login/login_page.dart';
@@ -150,7 +149,6 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: ShopProductRoute.page),
     AutoRoute(page: ShopCheckoutRoute.page),
     AutoRoute(page: ShopDeliveryPointRoute.page),
-    AutoRoute(page: ShopOrdersRoute.page),
     AutoRoute(page: ShopOrderRoute.page),
     AutoRoute(page: NotificationsRoute.page),
     AutoRoute(page: ConnectionErrorRoute.page),

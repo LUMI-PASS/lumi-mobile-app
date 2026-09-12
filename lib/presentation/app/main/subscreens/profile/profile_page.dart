@@ -461,7 +461,7 @@ class ProfilePage
                       _MenuRow(
                         icon: Icons.shopping_bag_outlined,
                         label: 'shop_title'.tr(),
-                        onTap: () => context.router.push(const ShopRoute()),
+                        onTap: () => context.router.push(ShopRoute()),
                       ),
                       8.kh,
                     ],

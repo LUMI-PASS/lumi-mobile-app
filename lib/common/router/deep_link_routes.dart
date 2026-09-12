@@ -229,7 +229,7 @@ abstract final class DeepLinkRoutes {
     // ── Shop ───────────────────────────────────────────────────────────────
     'shop': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
-      build: (_) => const ShopRoute(),
+      build: (_) => ShopRoute(),
     ),
     // `lumi://shop-product/<id>` — the product screen fetches the product
     // itself, so unlike a branch link there is nothing to load here first.
@@ -239,7 +239,8 @@ abstract final class DeepLinkRoutes {
     ),
     'shop-orders': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
-      build: (_) => ShopOrdersRoute(),
+      // The orders list is the shop's third tab, not a screen of its own.
+      build: (_) => ShopRoute(initialTab: 2),
     ),
 
     // ── Account ────────────────────────────────────────────────────────────

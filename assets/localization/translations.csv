@@ -1173,3 +1173,14 @@ wallet_spend_title,Потратить коины,Tangalarni sarflash,Spend your 
 wallet_spend_body,"Мерч Lumi: кружки, сумки, ручки","Lumi merchi: krujka, sumka, ruchka","Lumi merch — cups, bags, pens"
 yes,Да,Ha,Yes
 no,Нет,Yo‘q,No
+shop_tab_products,Товары,Mahsulotlar,Products
+shop_tab_cart,Корзина,Savatcha,Cart
+shop_tab_orders,Заказы,Buyurtmalarim,My orders
+shop_add_to_cart,В корзину,Qo‘shish,Add
+shop_add_for,Добавить за {},{} ga qo‘shish,Add for {}
+shop_cart_empty_title,Корзина пуста,Savatcha bo‘sh,Your cart is empty
+shop_cart_empty_body,Добавьте что-нибудь из мерча Lumi.,Lumi merchidan biror narsa qo‘shing.,Add something from the Lumi merch.
+shop_cart_browse,Перейти к товарам,Mahsulotlarga o‘tish,Browse products
+shop_cart_items,{} шт. в корзине,Savatchada {} ta,{} items in the cart
+shop_cart_max,"Максимум {}",Ko‘pi bilan {},Max {}
+shop_checkout_cta,Оформить заказ,Buyurtma berish,Checkout

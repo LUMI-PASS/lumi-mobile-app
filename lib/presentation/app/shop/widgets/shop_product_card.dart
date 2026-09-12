@@ -21,10 +21,20 @@ class ShopProductCard extends StatelessWidget {
     super.key,
     required this.product,
     required this.onTap,
+    this.onAdd,
+    this.inCart = 0,
   });
 
   final ShopProduct product;
   final VoidCallback onTap;
+
+  /// Adds one to the basket. Omit it and the card is just a link — which is
+  /// what the "you might also like" strips want.
+  final VoidCallback? onAdd;
+
+  /// How many of this product the basket already holds, so the button can say
+  /// so instead of pretending each tap is the first.
+  final int inCart;
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +136,71 @@ class ShopProductCard extends StatelessWidget {
               ],
             ],
           ),
+          if (onAdd != null) ...[
+            8.kh,
+            _AddButton(
+              enabled: !soldOut,
+              inCart: inCart,
+              onTap: onAdd!,
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// "Qo'shish" — the add-to-basket button under a card.
+///
+/// Once the product is in the basket it shows the count rather than staying a
+/// generic Add, so a second tap is an obvious increment rather than a question
+/// about whether the first one worked.
+class _AddButton extends StatelessWidget {
+  const _AddButton({
+    required this.enabled,
+    required this.inCart,
+    required this.onTap,
+  });
+
+  final bool enabled;
+  final int inCart;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final added = inCart > 0;
+
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        height: 36.h,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: !enabled
+              ? c.disabled
+              : added
+                  ? AppColors.brandPurple
+                  : AppColors.brandPurple.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              added ? Icons.check : Icons.add_shopping_cart_outlined,
+              size: 16.w,
+              color: added ? Colors.white : AppColors.brandPurple,
+            ),
+            6.kw,
+            Text(
+              added ? '$inCart' : 'shop_add_to_cart'.tr(),
+              style: AppText.semibold12.copyWith(
+                color: added ? Colors.white : AppColors.brandPurple,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

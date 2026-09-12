@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
@@ -19,7 +20,7 @@ import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
-import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
+import 'package:lumi_pass/data/api_model/shop/shop_cart.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -28,6 +29,7 @@ import 'package:lumi_pass/domain/repo/shop/shop_repository.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
+import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart';
 import 'package:lumi_pass/presentation/app/shop/shop_delivery_point_page.dart';
 
 /// Buying merch: where it goes, how it is paid for, and then the same payment
@@ -44,14 +46,7 @@ import 'package:lumi_pass/presentation/app/shop/shop_delivery_point_page.dart';
 /// opens a gateway at all and comes back already paid.
 @RoutePage()
 class ShopCheckoutPage extends StatefulWidget {
-  const ShopCheckoutPage({
-    super.key,
-    required this.product,
-    required this.count,
-  });
-
-  final ShopProduct product;
-  final int count;
+  const ShopCheckoutPage({super.key});
 
   @override
   State<ShopCheckoutPage> createState() => _ShopCheckoutPageState();
@@ -73,7 +68,13 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
   bool _submitting = false;
   String? _error;
 
-  num get _total => widget.product.price * widget.count;
+  /// The basket, read once per build from the shared cubit.
+  ShopCart get _cart => context.read<CartCubit>().state;
+
+  /// A preview only. The server re-prices the basket when it creates the
+  /// order, and `payable_amount` off that response is what is actually charged
+  /// — which is why this is never sent anywhere.
+  num get _total => _cart.total;
 
   /// What the wallet would cover of this order, locally.
   ///
@@ -175,7 +176,7 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
     String? savedCardId,
   }) {
     return getIt<ShopRepository>().checkout(
-      items: [(productId: widget.product.id, count: widget.count)],
+      items: _cart.toCheckoutItems(),
       lat: _lat!,
       lng: _lng!,
       address: _address.trim(),
@@ -191,11 +192,12 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
     );
   }
 
-  /// The order is paid. Leave the checkout behind and land on the order.
+  /// The order is paid. Empty the basket — it has become an order — and land
+  /// on the orders tab, which explains what happens next.
   void _completePaid(CheckoutResult result) {
     if (!mounted) return;
-    // `true` tells the product screen its stock figure is now stale.
-    context.router.replace(ShopOrdersRoute(justPaid: true));
+    context.read<CartCubit>().clear();
+    context.router.replace(ShopRoute(initialTab: 2, justPaid: true));
   }
 
   Future<void> _pay() async {
@@ -327,9 +329,6 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final product = widget.product;
-    final image = sanitizeImageUrl(product.image);
-
     return Scaffold(
       backgroundColor: c.scaffoldBg,
       appBar: BaseAppBar(title: 'shop_checkout_title'.tr()),
@@ -337,55 +336,57 @@ class _ShopCheckoutPageState extends State<ShopCheckoutPage> {
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
         children: [
           // ── What is being bought ──────────────────────────────────────────
-          FrostedCard(
-            borderRadius: BorderRadius.circular(16.r),
-            padding: EdgeInsets.all(12.w),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10.r),
-                  child: SizedBox(
-                    width: 56.w,
-                    height: 56.w,
-                    child: image == null
-                        ? Container(color: c.surface)
-                        : CachedNetworkImage(
-                            imageUrl: image,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) =>
-                                Container(color: c.surface),
-                          ),
+          for (final line in _cart.lines) ...[
+            FrostedCard(
+              borderRadius: BorderRadius.circular(16.r),
+              padding: EdgeInsets.all(12.w),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: SizedBox(
+                      width: 56.w,
+                      height: 56.w,
+                      child: sanitizeImageUrl(line.product.image) == null
+                          ? Container(color: c.surface)
+                          : CachedNetworkImage(
+                              imageUrl: sanitizeImageUrl(line.product.image)!,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) =>
+                                  Container(color: c.surface),
+                            ),
+                    ),
                   ),
-                ),
-                12.kw,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        multiLang(product.name),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.semibold14
-                            .copyWith(color: c.textPrimary),
-                      ),
-                      4.kh,
-                      Text(
-                        '${product.price.toRawUzsPrice()} × ${widget.count}',
-                        style: AppText.regular12
-                            .copyWith(color: c.textSecondary),
-                      ),
-                    ],
+                  12.kw,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          multiLang(line.product.name),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.semibold14
+                              .copyWith(color: c.textPrimary),
+                        ),
+                        4.kh,
+                        Text(
+                          '${line.product.price.toRawUzsPrice()} × ${line.count}',
+                          style: AppText.regular12
+                              .copyWith(color: c.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  _total.toRawUzsPrice(),
-                  style:
-                      AppText.semibold14.copyWith(color: c.textPrimary),
-                ),
-              ],
+                  Text(
+                    line.lineTotal.toRawUzsPrice(),
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
+                  ),
+                ],
+              ),
             ),
-          ),
+            12.kh,
+          ],
 
           20.kh,
           _SectionTitle('shop_delivery_title'.tr()),

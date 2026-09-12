@@ -63,6 +63,14 @@ class Storage {
   BaseStorage<List> get pendingInterestEvents =>
       BaseStorage(_box, 'pending_interest_events');
 
+  /// The shop basket, as a list of `{product_id, count}` maps.
+  ///
+  /// Local and not server-side: a basket is a scratchpad, and the server has
+  /// no idea one exists — `POST /api/shop/checkout` takes the whole thing in
+  /// one call. Persisting it here means closing the app does not empty it,
+  /// which is the behaviour every store has trained people to expect.
+  BaseStorage<List> get shopCart => BaseStorage(_box, 'shop_cart');
+
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
   /// Path of the parent's avatar on this device. The backend has no endpoint
