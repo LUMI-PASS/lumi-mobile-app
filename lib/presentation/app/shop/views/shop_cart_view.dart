@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -41,10 +42,11 @@ class ShopCartView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.shopping_cart_outlined,
-                size: 48.w,
-                color: c.textPlaceholder,
+              Assets.icons.shop.cart.svg(
+                width: 48.w,
+                height: 48.w,
+                colorFilter:
+                    ColorFilter.mode(c.textPlaceholder, BlendMode.srcIn),
               ),
               16.kh,
               Text(

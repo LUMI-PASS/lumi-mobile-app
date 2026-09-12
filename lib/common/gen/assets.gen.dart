@@ -217,6 +217,8 @@ class $AssetsIconsGen {
   SvgGenImage get searchUnselected =>
       const SvgGenImage('assets/icons/search_unselected.svg');
 
+  $AssetsIconsShopGen get shop => const $AssetsIconsShopGen();
+
   /// File path: assets/icons/sucess.svg
   SvgGenImage get sucess => const SvgGenImage('assets/icons/sucess.svg');
 
@@ -812,6 +814,26 @@ class $AssetsIconsProfileGen {
 
   /// List of all assets
   List<SvgGenImage> get values => [icDelete, icEdit, icUser];
+}
+
+class $AssetsIconsShopGen {
+  const $AssetsIconsShopGen();
+
+  /// File path: assets/icons/shop/bag.svg
+  SvgGenImage get bag => const SvgGenImage('assets/icons/shop/bag.svg');
+
+  /// File path: assets/icons/shop/cart.svg
+  SvgGenImage get cart => const SvgGenImage('assets/icons/shop/cart.svg');
+
+  /// File path: assets/icons/shop/orders.svg
+  SvgGenImage get orders => const SvgGenImage('assets/icons/shop/orders.svg');
+
+  /// File path: assets/icons/shop/products.svg
+  SvgGenImage get products =>
+      const SvgGenImage('assets/icons/shop/products.svg');
+
+  /// List of all assets
+  List<SvgGenImage> get values => [bag, cart, orders, products];
 }
 
 class $AssetsImagesBannerGen {

@@ -58,6 +58,24 @@ class RemoteConfigService {
   bool get hasSupportTelegram => supportTelegramUrl.isNotEmpty;
   bool get hasSupportPhone => supportPhone.isNotEmpty;
 
+  // ─── Lumi Shop ─────────────────────────────────────────────────────────────
+
+  /// Whether the merch shop is offered at all.
+  ///
+  /// **Ships OFF.** The shop is a storefront with real stock behind it and a
+  /// delivery team answering the phone; it should open when someone decides it
+  /// opens, not the moment a build reaches a device. Flipping
+  /// `shop_enabled` to true in the Firebase console turns it on everywhere
+  /// without a release — and back off just as fast if the catalog empties or
+  /// deliveries have to pause.
+  ///
+  /// This hides the ENTRY POINTS (the profile row, the wallet's "spend your
+  /// coins" card, the deep links). It is not a security control: the API stays
+  /// reachable and an order already placed is unaffected, which is the correct
+  /// behaviour — switching the shop off must not strand a delivery someone has
+  /// already paid for.
+  bool get isShopEnabled => _bool('shop_enabled', false);
+
   // ─── Yandex MapKit key ─────────────────────────────────────────────────────
   // MapKit is handed its key natively — `MainApplication.onCreate` on Android,
   // `didFinishLaunchingWithOptions` on iOS — and both run before Dart does, so
@@ -139,6 +157,14 @@ class RemoteConfigService {
     return _remoteConfig!.getString(key).trim();
   }
 
+  /// Remote flag. [fallback] covers Remote Config never initializing — no
+  /// network on a cold start, or Firebase unavailable — and for a feature
+  /// switch that fallback must be the SAFE answer, not the convenient one.
+  bool _bool(String key, bool fallback) {
+    if (!_initialized || _remoteConfig == null) return fallback;
+    return _remoteConfig!.getBool(key);
+  }
+
   Future<void> init() async {
     if (_initialized) return;
 
@@ -158,6 +184,9 @@ class RemoteConfigService {
         'store_link_android': _defaultStoreLinkAndroid,
         'store_link_ios': _defaultStoreLinkIos,
         'yandex_mapkit_key': _defaultYandexMapKitKey,
+        // Registered so the value is defined before the first fetch lands;
+        // without it `getBool` answers false anyway, but only by accident.
+        'shop_enabled': false,
       });
 
       await _remoteConfig?.setConfigSettings(RemoteConfigSettings(

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
@@ -111,13 +112,13 @@ class _ShopNavBar extends StatelessWidget {
           child: Row(
             children: [
               _NavItem(
-                icon: Icons.grid_view_rounded,
+                icon: Assets.icons.shop.products,
                 label: 'shop_tab_products'.tr(),
                 selected: index == 0,
                 onTap: () => onChanged(0),
               ),
               _NavItem(
-                icon: Icons.shopping_cart_outlined,
+                icon: Assets.icons.shop.cart,
                 label: 'shop_tab_cart'.tr(),
                 selected: index == 1,
                 // Units rather than lines: two cups and a pen reads as 3,
@@ -126,7 +127,7 @@ class _ShopNavBar extends StatelessWidget {
                 onTap: () => onChanged(1),
               ),
               _NavItem(
-                icon: Icons.receipt_long_outlined,
+                icon: Assets.icons.shop.orders,
                 label: 'shop_tab_orders'.tr(),
                 selected: index == 2,
                 onTap: () => onChanged(2),
@@ -148,7 +149,7 @@ class _NavItem extends StatelessWidget {
     this.badge = 0,
   });
 
-  final IconData icon;
+  final SvgGenImage icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -169,7 +170,15 @@ class _NavItem extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(icon, size: 22.w, color: tint),
+                // Tinted rather than swapped for a filled variant: the main
+                // nav ships paired assets per tab, this one has a single glyph
+                // per tab and leans on colour alone. See the note in the
+                // commit — six files for three tabs was not worth it here.
+                icon.svg(
+                  width: 22.w,
+                  height: 22.w,
+                  colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
+                ),
                 if (badge > 0)
                   Positioned(
                     right: -8.w,

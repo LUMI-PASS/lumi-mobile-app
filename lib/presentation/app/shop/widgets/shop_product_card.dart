@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
@@ -184,23 +185,35 @@ class _AddButton extends StatelessWidget {
                   : AppColors.brandPurple.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10.r),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              added ? Icons.check : Icons.add_shopping_cart_outlined,
-              size: 16.w,
-              color: added ? Colors.white : AppColors.brandPurple,
-            ),
-            6.kw,
-            Text(
-              added ? '$inCart' : 'shop_add_to_cart'.tr(),
-              style: AppText.semibold12.copyWith(
-                color: added ? Colors.white : AppColors.brandPurple,
+        // Once it is in the basket the button becomes the count on a filled
+        // pill. No tick and no second cart glyph: a purple pill reading "2" is
+        // already unambiguous, and it keeps the card free of a Material icon
+        // that would sit oddly beside the Iconsax-weight set everywhere else.
+        child: added
+            ? Text(
+                '$inCart',
+                style: AppText.semibold12.copyWith(color: Colors.white),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Assets.icons.shop.cart.svg(
+                    width: 15.w,
+                    height: 15.w,
+                    colorFilter: ColorFilter.mode(
+                      enabled ? AppColors.brandPurple : c.textMuted,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  6.kw,
+                  Text(
+                    'shop_add_to_cart'.tr(),
+                    style: AppText.semibold12.copyWith(
+                      color: enabled ? AppColors.brandPurple : c.textMuted,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

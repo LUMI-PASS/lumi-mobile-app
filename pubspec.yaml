@@ -123,6 +123,7 @@ flutter:
     - assets/icons/
     - assets/icons/auth/
     - assets/icons/home/
+    - assets/icons/shop/
     - assets/icons/main/
     - assets/icons/detail/
     - assets/icons/background/

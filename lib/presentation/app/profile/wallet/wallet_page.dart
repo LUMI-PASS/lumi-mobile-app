@@ -115,10 +115,13 @@ class _SpendOnMerch extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         child: Row(
           children: [
-            Icon(
-              Icons.shopping_bag_outlined,
-              size: 22.w,
-              color: AppColors.brandPurple,
+            Assets.icons.shop.bag.svg(
+              width: 22.w,
+              height: 22.w,
+              colorFilter: const ColorFilter.mode(
+                AppColors.brandPurple,
+                BlendMode.srcIn,
+              ),
             ),
             12.kw,
             Expanded(

@@ -455,11 +455,8 @@ class ProfilePage
                         onTap: () => context.router.push(const MyCardsRoute()),
                       ),
                       8.kh,
-                      // Lumi Shop. A Material glyph rather than an Iconsax
-                      // asset because there is no shop icon in the Figma set
-                      // yet — the row supports that fallback by design.
                       _MenuRow(
-                        icon: Icons.shopping_bag_outlined,
+                        iconAsset: _ProfileIcons.shop,
                         label: 'shop_title'.tr(),
                         onTap: () => context.router.push(ShopRoute()),
                       ),
@@ -854,6 +851,7 @@ class _DashedCirclePainter extends CustomPainter {
 /// Figma (node 96-1829) Iconsax glyphs used by the profile settings rows.
 class _ProfileIcons {
   static final bookings = Assets.icons.detail.iconsaxAiCalendar;
+  static final shop = Assets.icons.shop.bag;
   static final cards = Assets.icons.icCard;
   static final language = Assets.icons.detail.iconsaxLanguageCircle;
   static final faq = Assets.icons.detail.iconsaxQuestionMark;
