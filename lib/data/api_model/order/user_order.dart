@@ -1,4 +1,6 @@
 import 'package:lumi_pass/common/utils/app_locale.dart';
+import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart'
+    show ScheduleSlot;
 import 'package:lumi_pass/data/api_model/order/course_purchase.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 
@@ -58,6 +60,15 @@ class UserOrder {
   /// METHOD rather than a discount — the order still cost [totalAmount].
   final num walletAmount;
 
+  /// Where it was booked — the activity's branch title. Null when the payload
+  /// didn't populate one, which is every order fetched from a server older
+  /// than the branch populate on the list endpoint.
+  final String? branchName;
+
+  /// The activity's recurring weekly schedule, carried only so a booking that
+  /// recorded no time of its own can still show one. See [displayTimeRange].
+  final List<ScheduleSlot> activitySchedule;
+
   bool get isCourseOrder => coursePurchase.isCourse;
   bool get isWholeCourse => coursePurchase == CoursePurchase.full;
   bool get isTrialLesson => coursePurchase == CoursePurchase.trial;
@@ -104,6 +115,68 @@ class UserOrder {
     return start != null && end != null && start != end;
   }
 
+  /// `DateTime.weekday` (1 = Monday) indexed onto the wire's day names. The
+  /// backend has been written both ways — the console writes `monday`, older
+  /// seeds wrote `mon` — so the match is on the first three letters.
+  static const _weekdayKeys = [
+    'mon',
+    'tue',
+    'wed',
+    'thu',
+    'fri',
+    'sat',
+    'sun',
+  ];
+
+  /// The time the buyer actually picked, from the first ticket that carries
+  /// one. Null when no ticket recorded a time.
+  String? get _bookedTimeRange {
+    for (final t in ticketSummaries) {
+      final s = t.startTime ?? '';
+      if (s.isEmpty) continue;
+      final e = t.endTime ?? '';
+      return e.isEmpty ? s : '$s - $e';
+    }
+    return null;
+  }
+
+  /// The activity's own scheduled time for the weekday this booking falls on,
+  /// falling back to its first entry — a schedule that names one time for the
+  /// week answers correctly either way, and a date we cannot parse should not
+  /// cost the row entirely.
+  String? get _scheduledTimeRange {
+    if (activitySchedule.isEmpty) return null;
+    ScheduleSlot? match;
+    final iso = startDate;
+    if (iso != null && iso.isNotEmpty) {
+      try {
+        final key = _weekdayKeys[DateTime.parse(iso).weekday - 1];
+        for (final slot in activitySchedule) {
+          final day = slot.day.trim().toLowerCase();
+          if (day.length >= 3 && day.substring(0, 3) == key) {
+            match = slot;
+            break;
+          }
+        }
+      } catch (_) {
+        // Unparseable date — fall through to the first entry.
+      }
+    }
+    final slot = match ?? activitySchedule.first;
+    if (slot.startTime.isEmpty) return null;
+    return slot.endTime.isEmpty
+        ? slot.startTime
+        : '${slot.startTime} - ${slot.endTime}';
+  }
+
+  /// The clock to put on this booking.
+  ///
+  /// What the buyer picked wins. A course enrolment picks nothing — and
+  /// neither does a class booked off its recurring schedule — so rather than
+  /// show a date with no time beside it, the activity's own timetable answers.
+  /// Null only when neither knows, and the row is then left out.
+  String? get displayTimeRange => _bookedTimeRange ?? _scheduledTimeRange;
+
   /// Whether the seats on this order name an age bracket someone chose.
   ///
   /// A course order carries none (its items are empty, and its bookings are
@@ -136,6 +209,8 @@ class UserOrder {
     this.subcourseName,
     this.startsAt,
     this.walletAmount = 0,
+    this.branchName,
+    this.activitySchedule = const [],
   });
 
   /// True when a coupon or promocode discount was applied to this order.
@@ -224,6 +299,11 @@ class UserOrder {
       activityName: _readLocalized(activityMap?['name']),
       activityImage: sanitizeImageUrl(activityMap?['image']?.toString()),
       activityPrice: activityMap?['price'] as num?,
+      branchName: _readBranchTitle(activityMap?['branch_id']),
+      activitySchedule: ((activityMap?['schedule'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((e) => ScheduleSlot.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
       items: itemsRaw
           .whereType<Map>()
           .map((e) => OrderLineItem.fromJson(Map<String, dynamic>.from(e)))
@@ -237,6 +317,14 @@ class UserOrder {
       updatedAt: json['updated_at']?.toString(),
     );
   }
+}
+
+/// The branch title out of a populated `branch_id`. An unpopulated one is a
+/// bare id string, which names nothing — treat it as absent.
+String? _readBranchTitle(dynamic branch) {
+  if (branch is! Map) return null;
+  final title = branch['title']?.toString();
+  return (title == null || title.isEmpty) ? null : title;
 }
 
 /// Slim per-ticket payload included on the orders list endpoint so the card

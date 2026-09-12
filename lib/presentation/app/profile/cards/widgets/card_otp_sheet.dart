@@ -193,6 +193,9 @@ class _CardOtpSheetState extends State<_CardOtpSheet> {
               focusNode: _otpFocus,
               autofocus: true,
               keyboardType: TextInputType.number,
+              // Lets iOS offer the bank's code on the QuickType bar; the bank
+              // SMS is not ours to reformat, so this is all we can do here.
+              autofillHints: const [AutofillHints.oneTimeCode],
               separatorBuilder: (_) => 8.kw,
               defaultPinTheme: base,
               focusedPinTheme: base.copyWith(

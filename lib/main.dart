@@ -17,6 +17,7 @@ import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/service/interest_source.dart';
 import 'package:lumi_pass/data/service/app_update_service.dart';
 import 'package:lumi_pass/data/service/appsflyer_service.dart';
+import 'package:lumi_pass/data/service/meta_service.dart';
 import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/data/service/push_notification_manager.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
@@ -190,6 +191,11 @@ Future<void> _runNative() async {
   final appsFlyer = getIt<AppsFlyerService>();
   appsFlyer.onDeepLink = getIt<DeeplinkService>().handleAppsFlyerLink;
   await appsFlyer.init();
+
+  // Same reasoning as AppsFlyer: up before AppCubit fires its first event, and
+  // only a method-channel hop. Meta has no deep-link role — it just needs to
+  // see the activation and the events. Web is skipped inside init().
+  await getIt<MetaService>().init();
 
   initLangIfNeeded('uz');
   SystemChrome.setSystemUIOverlayStyle(

@@ -118,16 +118,16 @@ class BookingCard extends StatelessWidget {
     }
   }
 
-  /// "22 апр 09:00 - 10:00" — first ticket's session date + time window.
+  /// "22 апр 09:00 - 10:00" — first ticket's session date + the time to show.
+  ///
+  /// The time is whatever [UserOrder.displayTimeRange] resolves to: the slot
+  /// the buyer picked, or the activity's own schedule when they picked none.
   String _sessionDateTime() {
     if (order.ticketSummaries.isEmpty) return '';
-    final t = order.ticketSummaries.first;
-    final date = _dateOnly(t.ticketDate);
-    final s = t.startTime, e = t.endTime;
-    if (s != null && s.isNotEmpty && e != null && e.isNotEmpty) {
-      return date.isNotEmpty ? '$date $s - $e' : '$s - $e';
-    }
-    return date;
+    final date = _dateOnly(order.ticketSummaries.first.ticketDate);
+    final time = order.displayTimeRange ?? '';
+    if (time.isEmpty) return date;
+    return date.isEmpty ? time : '$date $time';
   }
 
   /// "3-6 лет" — first item's age range.
@@ -240,6 +240,18 @@ class BookingCard extends StatelessWidget {
                 value: _dateOnly(order.endDate),
               ),
               12.kh,
+              // A span states two dates but no clock, and the sessions inside
+              // it still happen at one — so the time gets its own row here
+              // rather than being dropped, which is what a course enrolment
+              // used to show.
+              if ((order.displayTimeRange ?? '').isNotEmpty) ...[
+                _InfoRow(
+                  icon: Assets.icons.time,
+                  label: 'order_time'.tr(),
+                  value: order.displayTimeRange!,
+                ),
+                12.kh,
+              ],
             ] else if (_sessionDateTime().isNotEmpty) ...[
               _InfoRow(
                 icon: Assets.icons.detail.icCalendar,
@@ -248,9 +260,26 @@ class BookingCard extends StatelessWidget {
               ),
               12.kh,
             ],
+            // Where it is. Absent on an order the server returned without a
+            // populated branch, and the row is then left out rather than
+            // printed empty.
+            if ((order.branchName ?? '').isNotEmpty) ...[
+              _InfoRow(
+                icon: Assets.icons.detail.icLocation,
+                label: 'ticket_venue'.tr(),
+                value: order.branchName!,
+              ),
+              12.kh,
+            ],
             _InfoRow(
+              icon: Assets.icons.detail.iconsaxReceipt,
               label: 'order_sum'.tr(),
-              value: order.totalAmount.toRawUzsPrice(),
+              // A coupon or a wallet balance that covered the whole order
+              // leaves nothing to charge, and "0 so'm" reads like a bug beside
+              // a real booking. Name it for what it is.
+              value: order.totalAmount <= 0
+                  ? 'price_free'.tr()
+                  : order.totalAmount.toRawUzsPrice(),
             ),
             if (order.isPending) ...[
               14.kh,

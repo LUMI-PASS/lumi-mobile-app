@@ -4,6 +4,7 @@ filter_active,Активные,Faol,Active
 filter_completed,Завершённые,Yakunlangan,Completed
 booking_date,Бронь создана,Bron yaratildi,Booking created
 order_date,Дата,Sana,Date
+order_time,Время,Vaqt,Time
 order_sum,Сумма,Summa,Amount
 status_completed,Завершена,Yakunlangan,Completed
 status_canceled,Отменено вами,Bekor qilingan,Canceled

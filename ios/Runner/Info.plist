@@ -52,7 +52,36 @@
 			<key>SKAdNetworkIdentifier</key>
 			<string>su67r6k2v3.skadnetwork</string>
 		</dict>
+		<!-- Meta. Both ids are theirs and both are required — Meta signs
+		     postbacks with either one depending on the placement. -->
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>v9wttpbfk9.skadnetwork</string>
+		</dict>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>n38lu8286q.skadnetwork</string>
+		</dict>
 	</array>
+	<!-- Meta (Facebook) SDK. The native SDK reads these at process start,
+	     before any Dart runs; `MetaEnv` mirrors the first two so the Dart
+	     layer can tell whether it is configured. Keep them in step —
+	     see docs/META.md. -->
+	<key>FacebookAppID</key>
+	<string>1433809481948376</string>
+	<key>FacebookClientToken</key>
+	<string>8a66838afbeed59eef2fd54b76e57b1d</string>
+	<key>FacebookDisplayName</key>
+	<string>LumiPass</string>
+	<!-- Logs install/activation and in-app purchase events without us calling
+	     anything. MetaService.activateApp() is a no-op belt-and-braces on top. -->
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<true/>
+	<!-- Lets the SDK attach the IDFA. On iOS 17+ it is still gated behind the
+	     ATT verdict AppsFlyerService prompts for; without ATT this is inert
+	     rather than a violation. -->
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to take photos for your child's profile.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -98,6 +127,11 @@
 		<string>yandexmaps</string>
 		<string>yandexnavi</string>
 		<string>comgooglemaps</string>
+		<!-- Facebook SDK. iOS answers canOpenURL: for a scheme only if it is
+		     declared here; without these the SDK logs a warning on every
+		     launch and cannot hand off to the Facebook app. -->
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

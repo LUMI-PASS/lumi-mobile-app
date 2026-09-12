@@ -126,6 +126,8 @@ class VerifyPage
                   OtpCodeField(
                     controller: _codeController,
                     hasError: hasError,
+                    // Our own login SMS, so the Android SMS listener applies.
+                    smsAutofill: true,
                     onChanged: (text) {
                       if (text.length == 4) {
                         context

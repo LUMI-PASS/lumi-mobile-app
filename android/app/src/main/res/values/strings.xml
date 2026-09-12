@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Meta (Facebook) SDK credentials, referenced from AndroidManifest.xml.
+         They have to be string resources rather than literals in the manifest:
+         `android:value="1433809481948376"` is parsed as an integer and
+         overflows, which the SDK reports as an invalid app id at runtime.
+
+         The same values live in ios/Runner/Info.plist and are mirrored in
+         lib/common/env/meta_env.dart — keep all three in step. See
+         docs/META.md. -->
+    <string name="facebook_app_id">1433809481948376</string>
+    <string name="facebook_client_token">8a66838afbeed59eef2fd54b76e57b1d</string>
+</resources>

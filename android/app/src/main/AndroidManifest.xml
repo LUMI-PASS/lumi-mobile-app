@@ -78,6 +78,29 @@
                 <data android:scheme="http" android:host="lumipass.onelink.me"/>
             </intent-filter>
         </activity>
+        <!-- Meta (Facebook) SDK. Read by the SDK's own ContentProvider at
+             process start, before any Dart runs; lib/common/env/meta_env.dart
+             mirrors the ids so the Dart layer can tell whether it is
+             configured. Values are string resources because a bare numeric
+             android:value is parsed as an int and overflows — see
+             res/values/strings.xml and docs/META.md.
+             The AD_ID permission the advertiser id needs is already merged in
+             by the AppsFlyer plugin's manifest. -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
+        <!-- Logs install/activation and in-app purchases without us calling
+             anything. MetaService.activateApp() is belt-and-braces on top. -->
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+            android:value="true" />
+        <meta-data
+            android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+            android:value="true" />
+
         <!-- Default FCM notification channel for Android 8+ -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
