@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:math' show Random;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -55,10 +55,11 @@ class BannerClickReporter {
           if (locale != null) 'locale': locale,
         },
       );
+      dlog('click: recorded for banner $id');
     } catch (e) {
       // Includes the throttle's 429. A dropped click is a rounding error in a
       // report; a crashed tap is a broken app.
-      log('[BannerClick] $id not recorded: $e');
+      dlog('click: NOT recorded for banner $id: $e');
     }
   }
 

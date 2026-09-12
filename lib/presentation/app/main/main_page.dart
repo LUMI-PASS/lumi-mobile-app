@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/coupon_promo_dialog.dart';
@@ -34,6 +35,15 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    // The tabs exist now, so a deep link finally has a home screen to land on
+    // top of. Anything held during the cold start (see DeeplinkService) is
+    // replayed here — this is the one chokepoint every route into the app
+    // passes through, whether the user came via onboarding, login, or straight
+    // in with a token.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getIt<DeeplinkService>().markAppReady();
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // A new user is no longer stopped at the door for their name and child —
       // the banner above the nav asks for those, whenever they feel like it. The

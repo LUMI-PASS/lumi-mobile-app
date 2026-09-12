@@ -1,5 +1,4 @@
-import 'dart:developer';
-
+import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:lumi_pass/common/router/deep_link_routes.dart';
 import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -33,16 +32,21 @@ abstract final class AppLinkOpener {
   /// is `banner`, not `deeplink`.
   static Future<void> open(String link, {String? source}) async {
     final trimmed = link.trim();
-    if (trimmed.isEmpty) return;
+    dlog('=== OPEN FROM APP: "$trimmed" (source=${source ?? "none"})');
+    if (trimmed.isEmpty) {
+      dlog('opener: empty link, nothing to do');
+      return;
+    }
 
     final uri = Uri.tryParse(trimmed);
     if (uri == null) {
-      log('[AppLinkOpener] unparseable link -> $trimmed');
+      dlog('opener: STOP — unparseable link');
       return;
     }
 
     // 1. Ours, and it names a screen we know.
     if (DeepLinkRoutes.resolve(uri) != null) {
+      dlog('opener: handled in-app');
       await getIt<DeeplinkService>().openFromApp(uri, source: source);
       return;
     }
@@ -51,18 +55,20 @@ abstract final class AppLinkOpener {
     //    on one of our own hosts that is a real web page (a landing page, a
     //    blog post) rather than a deep link.
     if (uri.scheme == 'http' || uri.scheme == 'https') {
+      dlog('opener: not ours, opening the browser');
       try {
         final launched =
             await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (!launched) log('[AppLinkOpener] browser refused -> $uri');
+        if (!launched) dlog('opener: browser refused the URL');
       } catch (e) {
-        log('[AppLinkOpener] launch error: $e');
+        dlog('opener: launch error: $e');
       }
       return;
     }
 
     // 3. A `lumi://` link naming a screen this build does not have — a banner
     //    written against a newer release. Nothing to do but say so.
-    log('[AppLinkOpener] nothing handles -> $uri');
+    dlog('opener: STOP — nothing in this build handles "$trimmed". '
+        'A banner written against a newer release looks exactly like this.');
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_api.dart';
@@ -120,6 +120,9 @@ abstract final class DeepLinkRoutes {
   /// link. Everything after the key is treated as the `id`, so a link keeps
   /// working whether the id rides in the path or in a query parameter.
   static DeepLinkTarget? resolve(Uri uri) {
+    dlog('resolve: scheme=${uri.scheme} host=${uri.host} '
+        'path=${uri.path} query=${uri.queryParameters}');
+
     final segments = [
       for (final s in uri.pathSegments)
         if (s.trim().isNotEmpty) s.trim(),
@@ -132,29 +135,43 @@ abstract final class DeepLinkRoutes {
       // lumi://class/<id> — host is the key, the path carries the id.
       key = uri.host.isNotEmpty ? uri.host : (segments.isEmpty ? null : segments.first);
       rest = uri.host.isNotEmpty ? segments : segments.skip(1).toList();
+      dlog('  scheme link -> key="$key" rest=$rest');
     } else {
-      if (!appHosts.contains(uri.host)) return null;
+      if (!appHosts.contains(uri.host)) {
+        dlog('  REJECT: "${uri.host}" is not one of our hosts, '
+            'this belongs to the browser');
+        return null;
+      }
       // https://<our-host>/share/<key>/<id>, and the bare /<key>/<id> a
       // hand-written link is just as likely to use.
       final i = segments.indexOf(sharePrefix);
       final after = i == -1 ? segments : segments.skip(i + 1).toList();
-      if (after.isEmpty) return null;
+      if (after.isEmpty) {
+        dlog('  REJECT: our host but no destination in the path');
+        return null;
+      }
       key = after.first;
       rest = after.skip(1).toList();
+      dlog('  app link -> key="$key" rest=$rest');
     }
 
-    if (key == null || key.isEmpty) return null;
+    if (key == null || key.isEmpty) {
+      dlog('  REJECT: no destination key in the link');
+      return null;
+    }
     key = key.toLowerCase();
     if (!_registry.containsKey(key)) {
-      log('[Deeplink] no route registered for "$key" ($uri)');
+      dlog('  REJECT: "$key" is not registered. Known: ${keys.join(", ")}');
       return null;
     }
 
-    return DeepLinkTarget(key, {
+    final target = DeepLinkTarget(key, {
       ...uri.queryParameters,
       // The path wins over `?id=`: it is the form our own share links emit.
       if (rest.isNotEmpty) 'id': rest.first,
     });
+    dlog('  OK -> $target');
+    return target;
   }
 
   static final Map<String, DeepLinkRoute> _registry = {
@@ -209,6 +226,22 @@ abstract final class DeepLinkRoutes {
       build: (_) => const PaymentHistoryRoute(),
     ),
 
+    // ── Shop ───────────────────────────────────────────────────────────────
+    'shop': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (_) => const ShopRoute(),
+    ),
+    // `lumi://shop-product/<id>` — the product screen fetches the product
+    // itself, so unlike a branch link there is nothing to load here first.
+    'shop-product': const DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: _buildShopProduct,
+    ),
+    'shop-orders': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (_) => ShopOrdersRoute(),
+    ),
+
     // ── Account ────────────────────────────────────────────────────────────
     'my-bookings': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
@@ -230,9 +263,10 @@ abstract final class DeepLinkRoutes {
   static PageRouteInfo? _buildClass(Map<String, String> params) {
     final id = params['id'];
     if (id == null || id.isEmpty) {
-      log('[Deeplink] class link is missing its id');
+      dlog('build class: ABORT, no id in $params');
       return null;
     }
+    dlog('build class: pushing ClassDetailRoute(id=$id)');
     return ClassDetailRoute(classModel: HomClass(id: id));
   }
 
@@ -244,21 +278,34 @@ abstract final class DeepLinkRoutes {
   static Future<PageRouteInfo?> _buildBranch(Map<String, String> params) async {
     final id = params['id'];
     if (id == null || id.isEmpty) {
-      log('[Deeplink] branch link is missing its id');
+      dlog('build branch: ABORT, no id in $params');
       return null;
     }
     try {
+      dlog('build branch: fetching branches/$id/mobile …');
       final res = await getIt<HomeApi>().getBranch(id);
       final json = (res.data as Map)['data'];
       if (json is! Map<String, dynamic>) {
-        log('[Deeplink] branch $id came back without a document');
+        dlog('build branch: ABORT, $id came back without a document');
         return null;
       }
-      return BranchDetailRoute(branch: HomBranch.fromJson(json));
+      final branch = HomBranch.fromJson(json);
+      dlog('build branch: got "${branch.title}", pushing BranchDetailRoute');
+      return BranchDetailRoute(branch: branch);
     } catch (e) {
-      log('[Deeplink] branch $id could not be loaded: $e');
+      dlog('build branch: ABORT, $id could not be loaded: $e');
       return null;
     }
+  }
+
+  /// `lumi://shop-product/<id>` — one merch product.
+  static PageRouteInfo? _buildShopProduct(Map<String, String> params) {
+    final id = params['id'];
+    if (id == null || id.isEmpty) {
+      dlog('build shop product: ABORT, no id in $params');
+      return null;
+    }
+    return ShopProductRoute(productId: id);
   }
 
   /// `lumi://category/<id>?title=Танцы` — opens discovery filtered to it.
@@ -266,9 +313,10 @@ abstract final class DeepLinkRoutes {
   static PageRouteInfo? _buildCategory(Map<String, String> params) {
     final id = params['id'];
     if (id == null || id.isEmpty) {
-      log('[Deeplink] category link is missing its id');
+      dlog('build category: ABORT, no id in $params');
       return null;
     }
+    dlog('build category: pushing SearchDiscoveryRoute(category=$id)');
     return SearchDiscoveryRoute(
       initialCategory: HomCategory(id: id, title: params['title']),
     );

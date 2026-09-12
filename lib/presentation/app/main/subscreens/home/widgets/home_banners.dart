@@ -10,6 +10,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_link_opener.dart';
+import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/interest_source.dart';
@@ -212,6 +213,8 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
 /// opening the link nor stop it. Tracking is the side effect; navigating is
 /// the job.
 void openBanner(HomBanner banner, {required String placement}) {
+  dlog('=== BANNER TAP: id=${banner.id} placement=$placement '
+      'link="${banner.link}"');
   getIt<BannerClickReporter>().report(banner.id, placement: placement);
   AppLinkOpener.open(banner.link!, source: InterestSource.banner);
 }
