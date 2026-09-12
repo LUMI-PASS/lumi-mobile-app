@@ -31,6 +31,7 @@ class PaycomCheckoutPage extends StatefulWidget {
     this.provider,
     this.cashbackEarned = 0,
     this.walletApplied = 0,
+    this.popOnSuccess = false,
   });
 
   final CheckoutResult result;
@@ -48,6 +49,14 @@ class PaycomCheckoutPage extends StatefulWidget {
 
   /// Selected payment rail: 'payme' | 'click' | 'uzum' | 'paylov' | null.
   final String? provider;
+
+  /// Pop `true` on a confirmed payment instead of pushing the booking success
+  /// screen.
+  ///
+  /// For callers whose order is not a booking — merch, for one, which has its
+  /// own orders tab and no tickets to show. Off by default so the booking and
+  /// subscription flows keep the screens they already had.
+  final bool popOnSuccess;
 
   /// Human display name for the gateway the buyer is being sent to.
   String get providerName {
@@ -194,6 +203,13 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
       return;
     }
     if (!mounted) return;
+    // Merch and anything else that is not a booking: hand the verdict back and
+    // let the caller decide where to land. Pushing BookingCompletePage here
+    // would show a merch buyer a ticket confirmation.
+    if (widget.popOnSuccess) {
+      Navigator.of(context).pop(true);
+      return;
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => BookingCompletePage(

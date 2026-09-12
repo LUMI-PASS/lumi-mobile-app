@@ -1199,3 +1199,4 @@ shop_pay_with_money,Оплатить деньгами,Pul bilan to‘lash,Pay wi
 shop_coins_short,"Не хватает {} коинов",{} tanga yetmaydi,{} coins short
 shop_coin_price_label,Цена в коинах,Tangadagi narxi,Coin price
 shop_or_with_coins,Или коинами,Yoki tangalar bilan,Or with coins
+shop_not_paid_yet,"Оплата не прошла. Заказ не оформлен — попробуйте снова.",To‘lov amalga oshmadi. Buyurtma rasmiylashtirilmadi — qayta urinib ko‘ring.,Payment did not go through. The order was not placed — please try again.

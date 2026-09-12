@@ -376,16 +376,37 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
         );
         if (paid == true && mounted) _completePaid(result);
       } else if (result.checkoutUrl.isNotEmpty) {
-        await Navigator.of(context).push(
+        // The gateway page polls the SERVER and pops true once the order is
+        // genuinely paid. Coming back any other way — the back button, a
+        // cancelled payment, a closed gateway — is not a payment, and the old
+        // code here called _completePaid regardless: the buyer landed on
+        // "Order accepted" with an empty basket having paid nothing.
+        final popped = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
             builder: (_) => PaycomCheckoutPage(
               result: result,
               provider: payment.rail.providerKey,
               walletApplied: result.walletAmount,
+              popOnSuccess: true,
             ),
           ),
         );
-        if (mounted) _completePaid(result);
+        if (!mounted) return;
+        if (popped == true) {
+          _completePaid(result);
+          return;
+        }
+        // Not confirmed on that screen. Ask the server once more before
+        // deciding: the poll can be missed if the app was backgrounded at the
+        // wrong moment, and the order is the only authority on this.
+        if (await _isOrderPaid(result.orderId)) {
+          if (mounted) _completePaid(result);
+          return;
+        }
+        // Genuinely unpaid. The basket is left exactly as it was so the buyer
+        // can try again — the order itself stays PENDING and its stock
+        // reservation is released by the server's sweep.
+        setState(() => _error = 'shop_not_paid_yet'.tr());
       } else {
         setState(() => _error = 'pay_generic_error'.tr());
       }
@@ -395,6 +416,22 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
         _submitting = false;
         _error = PaymentError.fromDio(e) ?? 'pay_generic_error'.tr();
       });
+    }
+  }
+
+  /// Asks the server whether an order actually got paid.
+  ///
+  /// The only authority on the question. A webview that closed, a redirect
+  /// that came back, a sheet that was dismissed — none of them know.
+  Future<bool> _isOrderPaid(String orderId) async {
+    if (orderId.isEmpty) return false;
+    try {
+      final detail = await getIt<OrdersApi>().getOrderDetail(orderId);
+      return detail.order.isPaid;
+    } catch (_) {
+      // Unreachable: treat as unpaid. Claiming success on a failed lookup is
+      // how an unpaid order gets celebrated.
+      return false;
     }
   }
 
