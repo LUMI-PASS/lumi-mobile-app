@@ -13,6 +13,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/card_input_formatters.dart';
 import 'package:lumi_pass/common/utils/multi_lang.dart';
+import 'package:lumi_pass/common/utils/last_payment_method.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/app_text_field.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
@@ -177,6 +178,21 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
   void initState() {
     super.initState();
     _prefill();
+    _restorePaymentMethod();
+  }
+
+  /// Pre-selects whatever the buyer paid with last time, anywhere in the app —
+  /// the same behaviour, and the same stored keys, as the booking screens.
+  ///
+  /// Only the rail is remembered, not the coins/money choice. Coins are the
+  /// one option that can be unavailable when the screen opens (a balance that
+  /// no longer covers the basket), and restoring the buyer onto a dead option
+  /// is worse than asking. Activities have no coin option, so this matches
+  /// them exactly.
+  Future<void> _restorePaymentMethod() async {
+    final restored = await restoreLastPaymentMethod();
+    if (restored == null || !mounted) return;
+    setState(() => _payment = restored);
   }
 
   @override
@@ -236,6 +252,9 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
     );
     if (selection != null && mounted) {
       setState(() => _payment = selection);
+      // Remembered on choice, not on payment: a buyer who picked Click and
+      // then abandoned the basket still meant Click.
+      rememberPaymentMethod(selection);
     }
   }
 
