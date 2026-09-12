@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -680,10 +681,13 @@ class _SuccessCard extends StatelessWidget {
 
 // ─── Payment method row ─────────────────────────────────────────────────────
 
-/// The rail picker row, shown once a coupon validates — the same [PillCard]
-/// shape and [showPaymentChooser] sheet the order checkout uses (Payme,
-/// Click, Uzum, card), so the buyer picks how they mean to pay before they
-/// ever reach checkout.
+/// The rail picker row, shown once a coupon validates.
+///
+/// Deliberately identical to the booking screen's payment row — same section
+/// header, same [PillCard], same glyphs, same title fallbacks — because it is
+/// the same decision about the same rails, and two different-looking versions
+/// of one choice teach the buyer that they are two different choices. Any
+/// change here belongs in `_paymentMethodRow` in `booking_page.dart` too.
 class _PaymentMethodSection extends StatelessWidget {
   const _PaymentMethodSection({required this.payment, required this.onTap});
 
@@ -692,33 +696,52 @@ class _PaymentMethodSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PillCard(
-      onTap: onTap,
-      leading: PillIconBadge(child: _leading(payment)),
-      child: PillCaption(
-        // The card rail carries no wordmark — the card itself is its name, as
-        // in the booking row. Reading brandName for it left the pill blank
-        // after picking a card.
-        title: payment == null
-            ? 'coupon_pick_payment'.tr()
-            : payment!.rail == PaymentRail.card
-                ? (payment!.card?.label ?? 'pay_with_card'.tr())
-                : payment!.rail.brandName,
-        subtitle: 'coupon_pay_method_label'.tr(),
-        captionFirst: true,
-        titleColor: payment == null ? context.colors.textSecondary : null,
-      ),
-      trailing: PillActionChip(
-        label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
-        onTap: onTap,
-      ),
+    final c = context.colors;
+    final card = payment?.card;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // The header the booking screen puts above its row. Without it the
+        // pill sat straight under the success card with nothing naming it.
+        Padding(
+          padding: EdgeInsets.only(left: 8.w, bottom: 14.h),
+          child: Text(
+            'book_payment_method'.tr(),
+            style: AppText.semibold14.copyWith(color: c.textSecondary),
+          ),
+        ),
+        PillCard(
+          onTap: onTap,
+          leading: PillIconBadge(child: _leading(context, payment)),
+          child: PillCaption(
+            // The card rail carries no wordmark — the card itself is its
+            // name. Reading brandName for it left the pill blank.
+            title: payment == null
+                ? 'coupon_pick_payment'.tr()
+                : (card?.label ?? payment!.rail.brandName),
+            subtitle: 'coupon_pay_method_label'.tr(),
+            captionFirst: true,
+            titleColor: payment == null ? c.textSecondary : null,
+          ),
+          trailing: PillActionChip(
+            label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
+            onTap: onTap,
+          ),
+        ),
+      ],
     );
   }
 
-  /// Rail brand mark, or a neutral card glyph while nothing is picked yet
-  /// (same square marks the booking row uses — the pill badge is too narrow
-  /// for the full wordmarks).
-  Widget _leading(PaymentSelection? p) {
+  /// The chosen card's brand artwork, the rail's brand mark, or a neutral card
+  /// icon when nothing is picked — the booking row's chain exactly. The badge
+  /// is too narrow for the full wordmarks, so these are the square marks; the
+  /// chooser sheet still shows the wordmarks.
+  Widget _leading(BuildContext context, PaymentSelection? p) {
+    final card = p?.card;
+    if (card != null) {
+      return CardArtwork(brand: card.brand, width: 30, height: 20);
+    }
     switch (p?.rail) {
       case PaymentRail.payme:
         return Assets.images.pay.paymeLogo.image(width: 22.w, height: 22.w);
@@ -728,7 +751,16 @@ class _PaymentMethodSection extends StatelessWidget {
         return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
       case PaymentRail.card:
       case null:
-        return Icon(CupertinoIcons.creditcard, size: 20.sp);
+        // The app's own SVG, not a Cupertino glyph: this row sits beside
+        // Iconsax-weight artwork everywhere else.
+        return Assets.icons.icCard.svg(
+          width: 20.w,
+          height: 20.w,
+          colorFilter: ColorFilter.mode(
+            context.colors.textPrimary,
+            BlendMode.srcIn,
+          ),
+        );
     }
   }
 }

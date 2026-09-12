@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
@@ -141,14 +142,24 @@ class _ShopDeliveryPointPageState extends State<ShopDeliveryPointPage> {
                   onMapCreated: _onMapCreated,
                   onCameraPositionChanged: _onCameraChanged,
                 ),
-                // The fixed marker. Nudged up by half its height so its POINT
-                // sits on the centre of the map rather than its middle.
+                // The fixed marker, nudged up so its POINT sits on the centre
+                // of the map rather than its middle.
+                //
+                // The offset is derived from the glyph, not tuned by eye: in
+                // map_pin.svg the tip is at y=14.6 of a 16 box, so it sits
+                // 0.4125 × size below the icon's centre (14.6/16 − 0.5). At
+                // size 40 that is 16.5. Recompute it if the size changes or
+                // the glyph is redrawn — the previous value was calibrated for
+                // Material's location_on, whose tip sits elsewhere.
                 Padding(
-                  padding: EdgeInsets.only(bottom: 36.h),
-                  child: Icon(
-                    Icons.location_on,
-                    size: 40.w,
-                    color: AppColors.brandPurple,
+                  padding: EdgeInsets.only(bottom: 16.5.w),
+                  child: Assets.icons.shop.mapPin.svg(
+                    width: 40.w,
+                    height: 40.w,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.brandPurple,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
                 Positioned(

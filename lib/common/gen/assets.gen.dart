@@ -825,6 +825,9 @@ class $AssetsIconsShopGen {
   /// File path: assets/icons/shop/cart.svg
   SvgGenImage get cart => const SvgGenImage('assets/icons/shop/cart.svg');
 
+  /// File path: assets/icons/shop/map_pin.svg
+  SvgGenImage get mapPin => const SvgGenImage('assets/icons/shop/map_pin.svg');
+
   /// File path: assets/icons/shop/orders.svg
   SvgGenImage get orders => const SvgGenImage('assets/icons/shop/orders.svg');
 
@@ -833,7 +836,7 @@ class $AssetsIconsShopGen {
       const SvgGenImage('assets/icons/shop/products.svg');
 
   /// List of all assets
-  List<SvgGenImage> get values => [bag, cart, orders, products];
+  List<SvgGenImage> get values => [bag, cart, mapPin, orders, products];
 }
 
 class $AssetsImagesBannerGen {

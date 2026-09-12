@@ -16,7 +16,10 @@ import 'package:lumi_pass/common/utils/multi_lang.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/app_text_field.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
+import 'package:lumi_pass/common/widget/pill_card.dart';
+import 'package:lumi_pass/common/widget/shaker.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_cart.dart';
@@ -90,6 +93,14 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
   bool _submitting = false;
   String? _error;
 
+  // What the Pay button shakes when the form is not finished. Same mechanism
+  // as the booking screen: the CTA stays live and points at what is missing,
+  // rather than going grey and leaving the buyer to work out which field it
+  // is waiting on.
+  final _pointShake = GlobalKey<ShakerState>();
+  final _phoneShake = GlobalKey<ShakerState>();
+  final _paymentShake = GlobalKey<ShakerState>();
+
   /// The basket, read once per build from the shared cubit.
   ShopCart get _cart => context.read<CartCubit>().state;
 
@@ -109,17 +120,57 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
   bool get _coinsAffordable =>
       _coinTotal > 0 && _available >= _coinTotal && !(_wallet?.isFrozen ?? false);
 
-  /// Paying with coins opens no gateway at all, so there is no rail to pick.
-  bool get _fullyCoinFunded => _withCoins;
+  /// Scrolls the control into view and shakes it — the "you still owe me
+  /// this" signal, delivered where the buyer has to act rather than as a line
+  /// of red text elsewhere on the page.
+  Future<void> _flag(GlobalKey<ShakerState> key) async {
+    final ctx = key.currentContext;
+    if (ctx != null) {
+      await Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+    key.currentState?.shake();
+  }
 
-  bool get _canPay =>
-      !_submitting &&
-      _lat != null &&
-      _address.trim().length >= 5 &&
-      _phone.text.trim().length >= 7 &&
-      (_withCoins
-          ? _coinsAffordable
-          : _payment == null || _payment!.isPayable);
+  /// Checks the form before charging. Returns false — and shakes whatever is
+  /// still missing — when the order cannot be placed yet.
+  ///
+  /// Each branch says what is missing as well as shaking the control. A shake
+  /// alone reads as "the button is broken": the buyer taps Pay, no request
+  /// goes out, and nothing on screen explains why.
+  bool _validateForPayment() {
+    if (_error != null) setState(() => _error = null);
+
+    if (_lat == null || _address.trim().length < 5) {
+      _flag(_pointShake);
+      setState(() => _error = 'shop_pick_on_map'.tr());
+      return false;
+    }
+    if (_phone.text.trim().length < 7) {
+      _flag(_phoneShake);
+      setState(() => _error = 'shop_contact_phone'.tr());
+      return false;
+    }
+    // Coins were chosen but the wallet has since fallen short — the card is
+    // already dead, so this only fires if the balance moved under them.
+    if (_withCoins && !_coinsAffordable) {
+      _flag(_paymentShake);
+      setState(() => _error = 'shop_coins_short'.tr(args: [
+            (_coinTotal - _available).clamp(0, _coinTotal).toGrouped(),
+          ]));
+      return false;
+    }
+    if (!_withCoins && _payment != null && !_payment!.isPayable) {
+      _flag(_paymentShake);
+      setState(() => _error = 'shop_choose_payment'.tr());
+      return false;
+    }
+    return true;
+  }
 
   @override
   void initState() {
@@ -219,9 +270,11 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
   }
 
   Future<void> _pay() async {
+    if (!_validateForPayment()) return;
+
     // Coins cover it all: no rail to pick and no gateway to open. The server
     // marks the order paid on the spot and mints the delivery order.
-    if (_fullyCoinFunded) {
+    if (_withCoins) {
       await _payWithCoinsOnly();
       return;
     }
@@ -415,7 +468,9 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
           ),
           12.kh,
 
-          GestureDetector(
+          Shaker(
+            key: _pointShake,
+            child: GestureDetector(
             onTap: _pickPoint,
             child: FrostedCard(
               borderRadius: BorderRadius.circular(16.r),
@@ -423,12 +478,18 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
                   EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 20.w,
-                    color: _address.isEmpty
-                        ? c.textSecondary
-                        : AppColors.brandPurple,
+                  // Lumi's own pin: the mark's ring and centre sitting inside
+                  // the pin body. The mark's rays are left off deliberately —
+                  // at 20px they close up into a smudge.
+                  Assets.icons.shop.mapPin.svg(
+                    width: 20.w,
+                    height: 20.w,
+                    colorFilter: ColorFilter.mode(
+                      _address.isEmpty
+                          ? c.textSecondary
+                          : AppColors.brandPurple,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   10.kw,
                   Expanded(
@@ -450,6 +511,7 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
                 ],
               ),
             ),
+            ),
           ),
 
           12.kh,
@@ -460,13 +522,16 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
             textInputAction: TextInputAction.next,
           ),
           12.kh,
-          AppTextField(
-            controller: _phone,
-            label: 'shop_contact_phone'.tr(),
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.next,
-            showClearButton: true,
-            onChanged: (_) => setState(() {}),
+          Shaker(
+            key: _phoneShake,
+            child: AppTextField(
+              controller: _phone,
+              label: 'shop_contact_phone'.tr(),
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              showClearButton: true,
+              onChanged: (_) => setState(() {}),
+            ),
           ),
           6.kh,
           // The hint sits under the field rather than in Material's helperText
@@ -491,76 +556,47 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
           _SectionTitle('shop_payment_title'.tr()),
           12.kh,
 
-          _PayWithSwitch(
-            withCoins: _withCoins,
-            moneyTotal: _total,
-            coinTotal: _coinTotal,
-            available: _available,
-            coinsAffordable: _coinsAffordable,
-            enabled: !_submitting,
-            onChanged: (coins) => setState(() => _withCoins = coins),
-          ),
-
-          // A rail only has to be chosen when there is something left to
-          // charge. Asking a buyer whose coins already cover the order to pick
-          // a bank is asking a question with no consequence.
-          if (!_fullyCoinFunded) ...[
-            12.kh,
-            GestureDetector(
-              onTap: _submitting ? null : _openChooser,
-              child: FrostedCard(
-                borderRadius: BorderRadius.circular(16.r),
-                padding:
-                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _payment == null
-                            ? 'shop_choose_payment'.tr()
-                            : (_payment!.card?.label ??
-                                _payment!.rail.brandName),
-                        style: AppText.medium14.copyWith(
-                          color: _payment == null
-                              ? c.textSecondary
-                              : c.textPrimary,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.chevron_right,
-                        color: c.textSecondary, size: 20.w),
-                  ],
-                ),
-              ),
-            ),
-          ],
-
-          20.kh,
-          // One total, in the unit actually being charged. Showing both here
-          // would be the one place a buyer might try to add them together.
-          if (_withCoins)
-            Row(
+          // Coins are the only payment method worth NAMING here. "Pay with
+          // money" was a card of its own until it became clear it asked the
+          // same question twice: anybody paying with money goes on to pick a
+          // rail, and picking a rail already says money. So the rail row IS
+          // the money option, and choosing either one unchooses the other.
+          // One Shaker over BOTH options, because "you have not said how you
+          // are paying" is one unanswered question — shaking only the coin
+          // card would point at the wrong control for somebody who meant to
+          // pay by card.
+          Shaker(
+            key: _paymentShake,
+            child: Column(
               children: [
-                Expanded(
-                  child: Text(
-                    'shop_total'.tr(),
-                    style: AppText.semibold16.copyWith(color: c.textPrimary),
+                if (_coinTotal > 0) ...[
+                  _CoinOption(
+                    selected: _withCoins,
+                    coinTotal: _coinTotal,
+                    available: _available,
+                    affordable: _coinsAffordable,
+                    enabled: !_submitting,
+                    onTap: () => setState(() {
+                      _withCoins = true;
+                      // A rail left selected underneath would sit there
+                      // looking chosen while coins are what gets charged.
+                      _payment = null;
+                    }),
                   ),
-                ),
-                CoinAmount(
-                  amount: _coinTotal,
-                  style: AppText.bold18,
-                  color: AppColors.brandPurple,
-                  iconSize: 20,
+                  10.kh,
+                ],
+                _PaymentRailRow(
+                  payment: _withCoins ? null : _payment,
+                  selected: !_withCoins,
+                  enabled: !_submitting,
+                  onTap: () async {
+                    setState(() => _withCoins = false);
+                    await _openChooser();
+                  },
                 ),
               ],
-            )
-          else
-            _TotalRow(
-              label: 'shop_total'.tr(),
-              value: _total.toRawUzsPrice(),
-              strong: true,
             ),
+          ),
 
           if (_error != null) ...[
             16.kh,
@@ -576,7 +612,7 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
         child: SizedBox(
           height: 52.h,
           child: ElevatedButton(
-            onPressed: _canPay ? _pay : null,
+            onPressed: _submitting ? null : _pay,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brandPurple,
               disabledBackgroundColor: context.colors.disabled,
@@ -622,132 +658,43 @@ class _SectionTitle extends StatelessWidget {
       );
 }
 
-class _TotalRow extends StatelessWidget {
-  const _TotalRow({
-    required this.label,
-    required this.value,
-    this.strong = false,
-  });
-
-  final String label;
-  final String value;
-  final bool strong;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: (strong ? AppText.semibold14 : AppText.regular13)
-                .copyWith(color: strong ? c.textPrimary : c.textSecondary),
-          ),
-        ),
-        Text(
-          value,
-          style: (strong ? AppText.semibold16 : AppText.regular13)
-              .copyWith(color: c.textPrimary),
-        ),
-      ],
-    );
-  }
-}
-
-/// Coins or money — two prices for the same basket, one of which will be paid.
+/// "Pay with coins" — the one payment method that needs naming on this screen.
 ///
-/// Two cards rather than a switch, because a switch implies a single bill with
-/// something subtracted from it, and that is exactly the mental model this
-/// screen must NOT create. Each card carries its own total in its own unit, so
-/// the choice reads as "this bill or that bill".
+/// Its own card rather than one half of a pair, because the money half was
+/// asking the same question twice: anybody paying with money then picks a
+/// rail, and picking a rail already means money. So this is the only thing
+/// here that has to be chosen deliberately.
 ///
-/// The coin card goes dead when the wallet cannot cover the whole coin price.
-/// There is no rate between the two prices, so a short wallet cannot be topped
-/// up with money here — the card says how short it is instead of offering a
+/// It goes dead when the wallet cannot cover the WHOLE coin price. There is no
+/// rate between coins and so'm, so a short wallet cannot be topped up with
+/// money on this order — the card says how short it is rather than offering a
 /// part-payment that does not exist.
-class _PayWithSwitch extends StatelessWidget {
-  const _PayWithSwitch({
-    required this.withCoins,
-    required this.moneyTotal,
+class _CoinOption extends StatelessWidget {
+  const _CoinOption({
+    required this.selected,
     required this.coinTotal,
     required this.available,
-    required this.coinsAffordable,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final bool withCoins;
-  final num moneyTotal;
-  final num coinTotal;
-  final num available;
-  final bool coinsAffordable;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-
-    return Column(
-      children: [
-        _Option(
-          selected: !withCoins,
-          enabled: enabled,
-          onTap: () => onChanged(false),
-          title: 'shop_pay_with_money'.tr(),
-          trailing: Text(
-            moneyTotal.toRawUzsPrice(),
-            style: AppText.semibold14.copyWith(color: c.textPrimary),
-          ),
-        ),
-        10.kh,
-        _Option(
-          selected: withCoins,
-          enabled: enabled && coinsAffordable,
-          onTap: () => onChanged(true),
-          title: 'shop_pay_with_coins'.tr(),
-          subtitle: coinsAffordable
-              ? null
-              : 'shop_coins_short'.tr(args: [
-                  (coinTotal - available).clamp(0, coinTotal).toGrouped(),
-                ]),
-          trailing: CoinAmount(
-            amount: coinTotal,
-            style: AppText.semibold14,
-            color: coinsAffordable ? c.textPrimary : c.textMuted,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Option extends StatelessWidget {
-  const _Option({
-    required this.selected,
+    required this.affordable,
     required this.enabled,
     required this.onTap,
-    required this.title,
-    required this.trailing,
-    this.subtitle,
   });
 
   final bool selected;
+  final num coinTotal;
+  final num available;
+  final bool affordable;
   final bool enabled;
   final VoidCallback onTap;
-  final String title;
-  final Widget trailing;
-  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final usable = enabled && affordable;
 
     return GestureDetector(
-      onTap: enabled ? onTap : null,
+      onTap: usable ? onTap : null,
       child: Opacity(
-        opacity: enabled ? 1 : 0.55,
+        opacity: usable ? 1 : 0.55,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
           decoration: BoxDecoration(
@@ -773,26 +720,97 @@ class _Option extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      'shop_pay_with_coins'.tr(),
                       style: AppText.medium14.copyWith(color: c.textPrimary),
                     ),
-                    if (subtitle != null) ...[
+                    if (!affordable) ...[
                       2.kh,
                       Text(
-                        subtitle!,
-                        style: AppText.regular12
-                            .copyWith(color: AppColors.warning),
+                        'shop_coins_short'.tr(args: [
+                          (coinTotal - available).clamp(0, coinTotal).toGrouped(),
+                        ]),
+                        style:
+                            AppText.regular12.copyWith(color: AppColors.warning),
                       ),
                     ],
                   ],
                 ),
               ),
               8.kw,
-              trailing,
+              CoinAmount(
+                amount: coinTotal,
+                style: AppText.semibold14,
+                color: affordable ? c.textPrimary : c.textMuted,
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+}
+
+/// The rail picker — and, by being picked, the choice to pay with money.
+///
+/// Deliberately the same [PillCard] the booking and coupon screens use: it is
+/// the same decision about the same rails, and three different-looking
+/// versions of one choice teach the buyer they are three different things.
+class _PaymentRailRow extends StatelessWidget {
+  const _PaymentRailRow({
+    required this.payment,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final PaymentSelection? payment;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final card = payment?.card;
+
+    return PillCard(
+      onTap: enabled ? onTap : null,
+      leading: PillIconBadge(child: _leading(context, payment)),
+      trailing: PillActionChip(
+        label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
+        onTap: enabled ? onTap : null,
+      ),
+      child: PillCaption(
+        title: payment == null
+            ? 'shop_choose_payment'.tr()
+            : (card?.label ?? payment!.rail.brandName),
+        subtitle: 'coupon_pay_method_label'.tr(),
+        captionFirst: true,
+        titleColor: payment == null ? c.textSecondary : null,
+      ),
+    );
+  }
+
+  Widget _leading(BuildContext context, PaymentSelection? p) {
+    final card = p?.card;
+    if (card != null) {
+      return CardArtwork(brand: card.brand, width: 30, height: 20);
+    }
+    switch (p?.rail) {
+      case PaymentRail.payme:
+        return Assets.images.pay.paymeLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.click:
+        return Assets.images.pay.clickLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.uzum:
+        return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
+      case PaymentRail.card:
+      case null:
+        return Assets.icons.icCard.svg(
+          width: 20.w,
+          height: 20.w,
+          colorFilter:
+              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
+        );
+    }
   }
 }
