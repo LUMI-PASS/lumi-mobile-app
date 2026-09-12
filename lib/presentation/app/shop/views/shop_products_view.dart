@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -30,6 +29,34 @@ class ShopProductsView
   void init(BuildContext context) {
     context.read<ShopCubit>().load();
     super.init(context);
+  }
+
+  /// How tall one product tile has to be.
+  ///
+  /// Measured rather than expressed as a `childAspectRatio`, because a ratio
+  /// scales the WHOLE tile with its width: the block under the image is a
+  /// fixed stack — two lines of name, a price row, the Add button — and a
+  /// ratio makes it grow on a wide phone and clip on a narrow one. That is
+  /// what overflowed when the Add button was added.
+  ///
+  /// It follows the OS text-size setting too, so turning up the font moves the
+  /// tile down instead of clipping the button off the bottom of it.
+  double _tileExtent(BuildContext context) {
+    const nameLines = 2;
+    const lineHeight = 1.4; // AppText's default, see AppText._s.
+
+    final scaler = MediaQuery.textScalerOf(context);
+    // The grid's own padding (16 each side) and the gap between the columns.
+    final available = MediaQuery.sizeOf(context).width - 32.w - 12.w;
+    final image = available / 2; // The card's image is square.
+
+    final name = scaler.scale(14) * lineHeight * nameLines;
+    final price = scaler.scale(14) * lineHeight;
+
+    // image + gap + name + gap + price + gap + Add button. The extra pixel
+    // absorbs the rounding a fractional device pixel ratio introduces —
+    // cheaper than a one-pixel overflow stripe.
+    return image + 8.h + name + 4.h + price + 8.h + 36.h + 1;
   }
 
   @override
@@ -91,8 +118,7 @@ class ShopProductsView
                       crossAxisCount: 2,
                       crossAxisSpacing: 12.w,
                       mainAxisSpacing: 16.h,
-                      // Square image plus two lines of text underneath.
-                      childAspectRatio: 0.68,
+                      mainAxisExtent: _tileExtent(context),
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (_, index) {
@@ -145,29 +171,25 @@ class _BalanceHeader extends StatelessWidget {
     return FrostedCard(
       borderRadius: BorderRadius.circular(16.r),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-      child: Row(
+      // ONE coin mark, not two. A leading coin icon next to a CoinAmount —
+      // which carries the mark itself — reads as decoration and makes the row
+      // look like it is quoting two different things. The amount keeps the
+      // mark, since that is the rule everywhere else in the app.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Assets.icons.coinLumi.image(width: 28.w, height: 28.w),
-          12.kw,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'shop_balance_label'.tr(),
-                  style: AppText.regular12.copyWith(color: c.textSecondary),
-                ),
-                2.kh,
-                // One coin is one so'm — so this number is also exactly how
-                // much merch it buys. No conversion is shown because there
-                // is none.
-                CoinAmount(
-                  amount: available,
-                  style: AppText.semibold18,
-                  color: c.textPrimary,
-                ),
-              ],
-            ),
+          Text(
+            'shop_balance_label'.tr(),
+            style: AppText.regular12.copyWith(color: c.textSecondary),
+          ),
+          2.kh,
+          // One coin is one so'm — so this number is also exactly how much
+          // merch it buys. No conversion is shown because there is none.
+          CoinAmount(
+            amount: available,
+            style: AppText.semibold18,
+            color: c.textPrimary,
+            iconSize: 20,
           ),
         ],
       ),
