@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -95,13 +96,24 @@ class _ShopOrdersViewState extends State<ShopOrdersView> {
                   ],
                   if (_orders.isEmpty)
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 64.h),
+                      padding: EdgeInsets.symmetric(vertical: 48.h),
                       child: Center(
-                        child: Text(
-                          'shop_orders_empty'.tr(),
-                          textAlign: TextAlign.center,
-                          style: AppText.regular14
-                              .copyWith(color: c.textSecondary),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Assets.images.mascot.mascotCalendar.image(
+                              width: 140.w,
+                              height: 140.w,
+                              fit: BoxFit.contain,
+                            ),
+                            12.kh,
+                            Text(
+                              'shop_orders_empty'.tr(),
+                              textAlign: TextAlign.center,
+                              style: AppText.regular14
+                                  .copyWith(color: c.textSecondary),
+                            ),
+                          ],
                         ),
                       ),
                     )

@@ -50,9 +50,13 @@ dependencies:
   focus_detector: ^2.0.1
   pretty_dio_logger: ^1.4.0
   flutter_screenutil: ^5.9.3
-  # The app's only in-app map (the branches map). Replaced flutter_map +
-  # latlong2 + CartoDB raster tiles; see docs/YANDEX_MAP_MIGRATION.md.
+  # The full-screen branches map and the shop's delivery-point picker — the
+  # only two screens that render a map. See docs/YANDEX_MAP_MIGRATION.md.
   # Sets the platform floor: Android API 26, iOS 15.
+  #
+  # Deliberately NOT used by the detail screens' location strip: MapKit renders
+  # through a platform view, which is unaffordable inside a scroll view. That
+  # strip is an illustration — see lib/common/widget/location_preview_map.dart.
   yandex_mapkit: ^4.3.0
   url_launcher: ^6.3.1
   map_launcher: ^3.5.0
@@ -88,8 +92,6 @@ dependencies:
   cupertino_native_glmv: ^0.1.5
   appsflyer_sdk: ^6.18.1
   app_tracking_transparency: ^2.0.7
-
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

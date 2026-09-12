@@ -61,7 +61,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<String> _galleryImages = [];
   final PageController _pageController = PageController();
   final ScrollController _scrollController = ScrollController();
-  int _currentImageIndex = 0;
+
+  /// Kept out of page state because the carousel advances every five seconds,
+  /// and rebuilding the whole detail page for one dot is wasteful.
+  final ValueNotifier<int> _currentImageIndex = ValueNotifier<int>(0);
   ClassFullModel? _full;
   Timer? _slideTimer;
 
@@ -169,8 +172,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// the frosted scrim is fully on.
   ///
   /// A notifier rather than a field, because it moves on every scroll frame:
-  /// as page state it dragged the whole tree — hero, every card, and the
-  /// native map view inside the location card — through a rebuild per frame,
+  /// as page state it dragged the whole tree — hero and every card — through a
+  /// rebuild per frame,
   /// which is what made the page stutter under the finger. Only the scrim
   /// listens now.
   final ValueNotifier<double> _topScrim = ValueNotifier<double>(0);
@@ -197,11 +200,23 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// carries flat `latitude`/`longitude`; the detail's `branch_id` nests them
   /// under `location` — prefer whichever has arrived, list model first so the
   /// button is live before `/classes/:id` lands.
-  double? get _venueLat =>
-      widget.classModel.branch?.latitude ?? _full?.branch?.lat;
+  ///
+  /// Both are read through [isUsableCoords]: a branch row whose location was
+  /// never filled in comes back as `0, 0` rather than as nothing, and a map
+  /// centred on the Gulf of Guinea is a worse answer than no map card at all.
+  double? get _venueLat => _venue?.$1;
 
-  double? get _venueLng =>
-      widget.classModel.branch?.longitude ?? _full?.branch?.lng;
+  double? get _venueLng => _venue?.$2;
+
+  (double, double)? get _venue {
+    final listLat = widget.classModel.branch?.latitude;
+    final listLng = widget.classModel.branch?.longitude;
+    if (isUsableCoords(listLat, listLng)) return (listLat!, listLng!);
+    final fullLat = _full?.branch?.lat;
+    final fullLng = _full?.branch?.lng;
+    if (isUsableCoords(fullLat, fullLng)) return (fullLat!, fullLng!);
+    return null;
+  }
 
   /// Street address for the sheet's subject line, if the payload carries one.
   /// The list model has it already localized; the detail's is a per-language
@@ -291,6 +306,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     _slideTimer?.cancel();
     _pageController.dispose();
     _scrollController.dispose();
+    _currentImageIndex.dispose();
     _topScrim.dispose();
     super.dispose();
   }
@@ -314,7 +330,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     _slideTimer?.cancel();
     _slideTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted || _galleryImages.length <= 1) return;
-      final next = (_currentImageIndex + 1) % _galleryImages.length;
+      final next = (_currentImageIndex.value + 1) % _galleryImages.length;
       _pageController.animateToPage(
         next,
         duration: const Duration(milliseconds: 600),
@@ -770,6 +786,64 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     final requiredItems =
         full == null ? const <String>[] : _bullets(full.requiredItems);
 
+    // Stable keys matter while the two detail requests are landing. A course
+    // card or description can be inserted above the location card; without a
+    // child-index callback SliverList would recycle the element at that index
+    // and rebuild the wrong card into it.
+    final contentChildren = <Widget>[
+      KeyedSubtree(
+        key: const ValueKey<String>('class-detail-main'),
+        child: _mainCard(c, title, branchTitle),
+      ),
+      if (_courseGroups.isNotEmpty)
+        _detailSection(
+          'class-detail-course-levels',
+          _courseLevelsCard(c, _courseGroups),
+        ),
+      if (!_isCourse && priceRows.isNotEmpty)
+        _detailSection(
+          'class-detail-prices',
+          _pricesCard(c, priceRows),
+        ),
+      if (description.isNotEmpty)
+        _detailSection(
+          'class-detail-description',
+          _descriptionCard(c, title, description),
+        ),
+      if (_venueLat != null && _venueLng != null)
+        _detailSection(
+          'class-detail-location',
+          _locationCard(c, branchTitle),
+        ),
+      if (notes.isNotEmpty)
+        _detailSection(
+          'class-detail-notes',
+          _bulletCard(
+            c,
+            icon: Assets.icons.detail.iconsaxQuestionMark,
+            iconGradient: AppGradients.brand,
+            title: 'detail_notes'.tr(),
+            items: notes,
+          ),
+        ),
+      if (requiredItems.isNotEmpty)
+        _detailSection(
+          'class-detail-required-items',
+          _bulletCard(
+            c,
+            icon: Assets.icons.detail.iconsaxReceipt,
+            iconGradient: AppGradients.green,
+            title: 'detail_bring'.tr(),
+            items: requiredItems,
+          ),
+        ),
+      if (languages.isNotEmpty)
+        _detailSection(
+          'class-detail-languages',
+          _languageCard(c, languages),
+        ),
+    ];
+
     // Over the hero the status bar sits on a photo (light icons); once the
     // scrim takes over on a light background the icons have to flip to dark.
     final darkIcons = !c.isDark && _scrimTookOver;
@@ -787,72 +861,24 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               controller: _scrollController,
               slivers: [
                 SliverToBoxAdapter(child: _hero(c, safeTop)),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
-                    child: Column(
-                      children: [
-                        _mainCard(c, title, branchTitle),
-                        // Every course is shown as its groups — one card, one
-                        // shape, whether the centre split it into several or
-                        // entered it as a single group. Each panel carries the
-                        // whole picture: which days it runs, what it costs,
-                        // seats, and the dated trial lessons with their own
-                        // prices. These are the facts a parent decides on, so
-                        // they belong on the page rather than behind the buy
-                        // button.
-                        if (_courseGroups.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _courseLevelsCard(c, _courseGroups),
-                        ],
-                        // A course is priced per level/lesson, never by age
-                        // tier — the underlying activity still carries a
-                        // placeholder price-summary row, which would render a
-                        // meaningless "0–99 years: free" card here.
-                        if (!_isCourse && priceRows.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _pricesCard(c, priceRows),
-                        ],
-                        if (description.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _descriptionCard(c, title, description),
-                        ],
-                        // Where it is, under the write-up rather than in
-                        // the main card. Up there the strip sat between the
-                        // centre's name and the duration/age/gender tiles —
-                        // the three facts a parent scans first — and pushed
-                        // them below the fold. Down here it reads as the last
-                        // question ("and where do we go?"), asked once the
-                        // course itself has been decided.
-                        if (_venueLat != null && _venueLng != null) ...[
-                          6.verticalSpace,
-                          _locationCard(c, branchTitle),
-                        ],
-                        if (notes.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _bulletCard(
-                            c,
-                            icon: Assets.icons.detail.iconsaxQuestionMark,
-                            iconGradient: AppGradients.brand,
-                            title: 'detail_notes'.tr(),
-                            items: notes,
-                          ),
-                        ],
-                        if (requiredItems.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _bulletCard(
-                            c,
-                            icon: Assets.icons.detail.iconsaxReceipt,
-                            iconGradient: AppGradients.green,
-                            title: 'detail_bring'.tr(),
-                            items: requiredItems,
-                          ),
-                        ],
-                        if (languages.isNotEmpty) ...[
-                          6.verticalSpace,
-                          _languageCard(c, languages),
-                        ],
-                      ],
+                // These used to be one large Column in a SliverToBoxAdapter.
+                // That eagerly mounted every child, including everything well
+                // below the fold, while the opening network calls and hero
+                // transition were competing for the same frame budget. A
+                // sliver delegate mounts cards only as they approach the
+                // viewport.
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, index) => contentChildren[index],
+                      childCount: contentChildren.length,
+                      findChildIndexCallback: (key) {
+                        final index = contentChildren.indexWhere(
+                          (child) => child.key == key,
+                        );
+                        return index < 0 ? null : index;
+                      },
                     ),
                   ),
                 ),
@@ -981,7 +1007,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             PageView.builder(
               controller: _pageController,
               itemCount: _galleryImages.length,
-              onPageChanged: (i) => setState(() => _currentImageIndex = i),
+              onPageChanged: (i) => _currentImageIndex.value = i,
               itemBuilder: (_, i) => CachedNetworkImage(
                 imageUrl: _galleryImages[i],
                 fit: BoxFit.cover,
@@ -1020,25 +1046,28 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               left: 0,
               right: 0,
               child: Center(
-                child: FrostedCard(
-                  hasBorder: false,
-                  boxShadow: AppShadows.control,
-                  borderRadius: BorderRadius.circular(32.r),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(_galleryImages.length, (i) {
-                      final active = i == _currentImageIndex;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        margin: EdgeInsets.symmetric(horizontal: 3.w),
-                        width: 8.w,
-                        height: 8.w,
-                        decoration: BoxDecoration(
-                          color: active ? c.textPrimary : c.textSecondary,
-                          shape: BoxShape.circle,
-                        ),
-                      );
-                    }),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _currentImageIndex,
+                  builder: (_, currentImageIndex, __) => FrostedCard(
+                    hasBorder: false,
+                    boxShadow: AppShadows.control,
+                    borderRadius: BorderRadius.circular(32.r),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(_galleryImages.length, (i) {
+                        final active = i == currentImageIndex;
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          margin: EdgeInsets.symmetric(horizontal: 3.w),
+                          width: 8.w,
+                          height: 8.w,
+                          decoration: BoxDecoration(
+                            color: active ? c.textPrimary : c.textSecondary,
+                            shape: BoxShape.circle,
+                          ),
+                        );
+                      }),
+                    ),
                   ),
                 ),
               ),
@@ -1336,6 +1365,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// sheet would open, spelled out for a parent reading rather than tapping.
   Widget _locationCard(AppColorScheme c, String branchTitle) {
     final address = _venueAddress;
+    final venue = _venue!;
 
     return DetailCard(
       c: c,
@@ -1350,8 +1380,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           ),
           12.verticalSpace,
           LocationPreviewMap(
-            lat: _venueLat!,
-            lng: _venueLng!,
+            lat: venue.$1,
+            lng: venue.$2,
             title: branchTitle,
             subtitle: address,
           ),
@@ -1366,6 +1396,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       ),
     );
   }
+
+  Widget _detailSection(String key, Widget child) => Padding(
+        key: ValueKey<String>(key),
+        padding: EdgeInsets.only(top: 6.h),
+        child: child,
+      );
 
   // ─── Bulleted section card (important notes / what to bring) ────────────────
   Widget _bulletCard(

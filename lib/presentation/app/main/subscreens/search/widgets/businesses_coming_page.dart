@@ -7,7 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
-import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
@@ -170,24 +169,12 @@ class _ComingSoonCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 72.w,
-            height: 72.w,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppGradients.brand,
-            ),
-            child: Assets.icons.time.svg(
-              width: 32.w,
-              height: 32.w,
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
-              ),
-            ),
+          Assets.images.mascot.mascotPartners.image(
+            width: 120.w,
+            height: 120.w,
+            fit: BoxFit.contain,
           ),
-          20.verticalSpace,
+          16.verticalSpace,
           Text(
             'coming_soon'.tr(),
             textAlign: TextAlign.center,

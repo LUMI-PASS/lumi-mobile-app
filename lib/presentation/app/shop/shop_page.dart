@@ -8,7 +8,6 @@ import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/widget/aurora_background.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
@@ -54,6 +53,8 @@ class _ShopPageState extends State<ShopPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<CartCubit>.value(value: getIt<CartCubit>()),
@@ -66,36 +67,38 @@ class _ShopPageState extends State<ShopPage> {
       child: Builder(
         builder: (context) {
           final cartCount = context.watch<CartCubit>().state.count;
+          // The catalog and basket use the clean white shop canvas. Orders
+          // keeps the regular page background because it is a history screen.
+          // `surface` is white in light mode and retains readable contrast in
+          // dark mode.
+          final background = _tab < 2 ? c.surface : c.scaffoldBg;
 
-          return AuroraBackground(
-            child: Scaffold(
-              // The aurora behind it is the page background.
-              backgroundColor: Colors.transparent,
-              appBar: BaseAppBar(
-                title: _titleFor(_tab, cartCount),
-                // Back only on the catalog. The basket and the orders list are
-                // tabs of this same screen, not pushes onto it — a back arrow
-                // there would offer to leave the shop, which is not what the
-                // arrow above a basket reads as.
-                leading: _tab == 0 ? null : const SizedBox.shrink(),
-                // Only over the catalog: the balance answers "what can I
-                // afford?", which is a question the basket and the orders list
-                // have already stopped asking.
-                actions: _tab == 0 ? const [_CoinBalanceChip()] : null,
-              ),
-              body: IndexedStack(
-                index: _tab,
-                children: [
-                  ShopProductsView(onOpenCart: () => setState(() => _tab = 1)),
-                  ShopCartView(onBrowse: () => setState(() => _tab = 0)),
-                  ShopOrdersView(justPaid: widget.justPaid),
-                ],
-              ),
-              bottomNavigationBar: _ShopNavBar(
-                index: _tab,
-                cartCount: cartCount,
-                onChanged: (next) => setState(() => _tab = next),
-              ),
+          return Scaffold(
+            backgroundColor: background,
+            appBar: BaseAppBar(
+              title: _titleFor(_tab, cartCount),
+              // Back only on the catalog. The basket and the orders list are
+              // tabs of this same screen, not pushes onto it — a back arrow
+              // there would offer to leave the shop, which is not what the
+              // arrow above a basket reads as.
+              leading: _tab == 0 ? null : const SizedBox.shrink(),
+              // Only over the catalog: the balance answers "what can I
+              // afford?", which is a question the basket and the orders list
+              // have already stopped asking.
+              actions: _tab == 0 ? const [_CoinBalanceChip()] : null,
+            ),
+            body: IndexedStack(
+              index: _tab,
+              children: [
+                ShopProductsView(onOpenCart: () => setState(() => _tab = 1)),
+                ShopCartView(onBrowse: () => setState(() => _tab = 0)),
+                ShopOrdersView(justPaid: widget.justPaid),
+              ],
+            ),
+            bottomNavigationBar: _ShopNavBar(
+              index: _tab,
+              cartCount: cartCount,
+              onChanged: (next) => setState(() => _tab = next),
             ),
           );
         },
@@ -107,8 +110,7 @@ class _ShopPageState extends State<ShopPage> {
   /// a screen that already shows the things does not need to be labelled
   /// "Cart", and the count is the one fact worth putting in a header.
   String _titleFor(int tab, int cartCount) => switch (tab) {
-        1 when cartCount > 0 =>
-          'shop_cart_title_n'.tr(args: ['$cartCount']),
+        1 when cartCount > 0 => 'shop_cart_title_n'.tr(args: ['$cartCount']),
         1 => 'shop_tab_cart'.tr(),
         2 => 'shop_my_orders'.tr(),
         _ => 'shop_title'.tr(),
@@ -128,9 +130,9 @@ class _ShopNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // No fill and no top hairline: the aurora wash runs straight through the
-    // nav, so the bar reads as part of the page rather than a tray glued to
-    // the bottom of it.
+    // No fill and no top hairline: the nav sits on the page background, so
+    // the bar reads as part of the page rather than a tray glued to the
+    // bottom of it.
     return SafeArea(
       top: false,
       child: SizedBox(
@@ -221,8 +223,7 @@ class _NavItem extends StatelessWidget {
                       child: Text(
                         '$badge',
                         textAlign: TextAlign.center,
-                        style: AppText.bold10
-                            .copyWith(color: Colors.white),
+                        style: AppText.bold10.copyWith(color: Colors.white),
                       ),
                     ),
                   ),

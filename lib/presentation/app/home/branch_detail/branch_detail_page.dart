@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -13,6 +12,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
@@ -123,12 +123,16 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
     return (single != null && single.trim().isNotEmpty) ? [single] : const [];
   }
 
+  /// Read through [isUsableCoords] rather than a null check: a branch row
+  /// whose location was never filled in comes back as `0, 0`, and a map
+  /// centred on the Gulf of Guinea is a worse answer than no map at all.
   bool get _hasMap =>
-      widget.branch.latitude != null && widget.branch.longitude != null;
+      isUsableCoords(widget.branch.latitude, widget.branch.longitude);
 
-  /// MapKit has no web implementation, so [LocationPreviewMap] draws nothing
-  /// there — the strip's row must not reserve its half either.
-  bool get _showsMapStrip => _hasMap && !kIsWeb;
+  /// [LocationPreviewMap] is a plain illustration now, so it renders on every
+  /// platform the app builds for — including web, where MapKit drew nothing
+  /// and this getter had to suppress the strip's half of the row.
+  bool get _showsMapStrip => _hasMap;
 
   /// The centre's arrival clip, shown beside the map strip.
   bool get _hasRouteVideo => RouteVideoTile.canPlay(widget.branch.videoUrl);

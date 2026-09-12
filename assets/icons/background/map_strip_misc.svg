@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 358 140" fill="none">
+  <!--
+    Stylised "map" backdrop for the venue strip on the detail screens.
+
+    Deliberately not a real map: no geography, no place names, no provider
+    branding — a road grid, a few muted park/water blocks, and a route running
+    in to a pin.
+
+    Theme handling: the roads are `currentColor`, so the strip tints them with
+    one role and they follow light/dark with the card they sit in. Everything
+    else — route, pin, parks, water — is a brand static, which `AppColorScheme`
+    treats as theme-invariant by design, so this needs no second file.
+
+    The strip must therefore pass the tint as `SvgTheme(currentColor:)`. A
+    `colorFilter` would repaint the whole picture and flatten the colours away.
+
+    The pin stands at the centre of the viewBox (179, 70). `BoxFit.cover` crops
+    symmetrically, so it stays centred in the strip at any width.
+  -->
+
+  <!-- Parks and water. Muted, so they read on a light ground and a dark one
+       alike. The bottom-right corner stays empty: the route button floats
+       there. -->
+  <rect x="-8" y="-8" width="86" height="52" rx="10" fill="#2CBE88" opacity="0.30"/>
+  <rect x="222" y="-8" width="144" height="50" rx="10" fill="#3E9BE8" opacity="0.26"/>
+  <rect x="-8" y="120" width="86" height="40" rx="10" fill="#F6B53D" opacity="0.28"/>
+  <rect x="86" y="-8" width="118" height="50" rx="10" fill="#2CBE88" opacity="0.16"/>
+
+  <!-- Road grid: two wide streets, three side streets, one diagonal. -->
+  <g stroke="currentColor" stroke-linecap="round">
+    <path d="M-10 28 H 368" stroke-width="13"/>
+    <path d="M-10 112 H 368" stroke-width="13"/>
+    <path d="M74 -10 V 150" stroke-width="13"/>
+    <path d="M268 -10 V 150" stroke-width="11"/>
+    <path d="M214 -10 V 30" stroke-width="7"/>
+    <path d="M214 110 V 150" stroke-width="7"/>
+    <path d="M268 68 H 368" stroke-width="7"/>
+    <path d="M302 -10 L 368 56" stroke-width="9"/>
+  </g>
+
+  <!-- The route in, ending at the pin's tip. -->
+  <path d="M36 124 V 112 H 74 V 88 H 179" stroke="#A752C7" stroke-width="7"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="36" cy="124" r="7" fill="#A752C7"/>
+
+  <!-- The venue. -->
+  <ellipse cx="179" cy="88" rx="11" ry="4" fill="#A752C7" opacity="0.25"/>
+  <path d="M179 44c9.4 0 17 7.6 17 17 0 11.8-17 27-17 27s-17-15.2-17-27c0-9.4 7.6-17 17-17z"
+        fill="#A752C7"/>
+  <circle cx="179" cy="61" r="6.5" fill="#FFFFFF"/>
+</svg>

@@ -9,6 +9,7 @@ import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/map_marker_bitmap.dart';
@@ -17,6 +18,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/category_picker_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
@@ -24,7 +26,7 @@ import 'package:yandex_mapkit/yandex_mapkit.dart';
 /// `На карте`).
 ///
 /// Each centre is a labelled pill; tapping one raises its card at the bottom.
-/// The category chips along the bottom re-query, which is why this screen
+/// The category dropdown under the header re-queries, which is why this screen
 /// carries its own [SearchCubit] rather than a frozen list.
 @RoutePage()
 class BranchesMapPage
@@ -519,20 +521,24 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
     _syncMarkers();
   }
 
-  void _selectCategory(int index) {
-    final category = widget.categories[index];
+  /// Opens the categories list as a bottom sheet and applies what comes back.
+  Future<void> _pickCategory() async {
     final cubit = context.read<SearchCubit>();
-    // Tapping the active chip clears the filter.
-    final isActive = widget.selectedCategory?.id == category.id;
-    cubit.selectCategory(isActive ? null : category);
+    final result = await CategoryPickerSheet.show(
+      context,
+      categories: widget.categories,
+      selected: widget.selectedCategory,
+    );
+    // Null = dismissed without choosing; leave the current filter alone.
+    if (result == null || !mounted) return;
+    if (result.category?.id == widget.selectedCategory?.id) return;
+    cubit.selectCategory(result.category);
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final selected = _selected;
-    final activeIndex = widget.categories
-        .indexWhere((cat) => cat.id == widget.selectedCategory?.id);
 
     return Scaffold(
       backgroundColor: c.scaffoldBg,
@@ -545,6 +551,17 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
               title: 'map_title'.tr(),
               onBack: () => context.router.maybePop(),
             ),
+            // Filtering lives at the TOP of the screen: the map is what the
+            // user is reading, and a strip of controls over its bottom edge
+            // covered the very pins the camera had just fitted to.
+            if (widget.categories.isNotEmpty) ...[
+              12.verticalSpace,
+              _CategoryDropdown(
+                label: widget.selectedCategory?.title ?? 'categories'.tr(),
+                isActive: widget.selectedCategory != null,
+                onTap: _pickCategory,
+              ),
+            ],
             12.verticalSpace,
             Expanded(
               child: Stack(
@@ -593,7 +610,7 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                   Positioned(
                     right: 20.w,
                     bottom: MediaQuery.of(context).padding.bottom +
-                        (selected != null ? 110.h : 84.h),
+                        (selected != null ? 110.h : 24.h),
                     child: Column(
                       children: [
                         _MapButton(
@@ -614,20 +631,6 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
                       ],
                     ),
                   ),
-                  // Category chips float over the bottom of the map.
-                  if (widget.categories.isNotEmpty && selected == null)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: MediaQuery.of(context).padding.bottom + 16.h,
-                      child: SearchChips(
-                        labels: [
-                          for (final cat in widget.categories) cat.title ?? '',
-                        ],
-                        activeIndex: activeIndex,
-                        onSelect: _selectCategory,
-                      ),
-                    ),
                   if (selected != null)
                     Positioned(
                       left: 8.w,
@@ -639,6 +642,77 @@ class _BranchesMapViewState extends State<_BranchesMapView> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The map's category filter — a dropdown pill stating the active category.
+///
+/// A dropdown rather than the old chip strip: the categories list is long, and
+/// a horizontally scrolling strip hid most of it behind a swipe the user had no
+/// reason to suspect. Category is the map's only filter, so this is a single
+/// pill hugging its label, not a row of controls. The list itself lives in
+/// [CategoryPickerSheet].
+class _CategoryDropdown extends StatelessWidget {
+  const _CategoryDropdown({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final fg = isActive ? Colors.white : c.textPrimary;
+
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: ConstrainedBox(
+            // Long category titles ellipsize rather than run the pill off the
+            // screen. No `alignment` on the container below — an aligned
+            // Container expands to its max constraint, which would hold the
+            // pill at this width even for a one-word category.
+            constraints: BoxConstraints(maxWidth: 260.w),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                gradient: isActive ? AppGradients.indigo : null,
+                color: isActive ? null : c.control,
+                borderRadius: BorderRadius.circular(48.r),
+                border: isActive ? null : Border.all(color: c.controlBorder),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.medium13.copyWith(color: fg),
+                    ),
+                  ),
+                  6.horizontalSpace,
+                  Assets.icons.arrowDown.svg(
+                    width: 16.w,
+                    height: 16.w,
+                    colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

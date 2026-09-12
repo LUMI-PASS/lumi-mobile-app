@@ -29,6 +29,19 @@ abstract final class AppColors {
   /// Neutral status pill (white label on grey). Theme-invariant by design.
   static const chipGrey = Color(0xFF4B4B55);
 
+  // Aurora — the shop's mesh-gradient page wash. A base plus four corner
+  // glows leaning into the brand purple/pink.
+  static const auroraBaseLight = Color(0xFFFBF9FD);
+  static const auroraBaseDark = Color(0xFF15141A);
+  static const auroraOrchidLight = Color(0xFFE9D3F5);
+  static const auroraOrchidDark = Color(0xFF3B2150);
+  static const auroraBlushLight = Color(0xFFFBD9E4);
+  static const auroraBlushDark = Color(0xFF4A2138);
+  static const auroraLilacLight = Color(0xFFDEDAFA);
+  static const auroraLilacDark = Color(0xFF262150);
+  static const auroraMauveLight = Color(0xFFF2DCF2);
+  static const auroraMauveDark = Color(0xFF34204A);
+
   // light
   static const lightScaffold = Color(0xFFF9F9FA);
   static const lightCanvas = Color(0xFFEFEEF5);

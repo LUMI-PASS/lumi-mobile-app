@@ -27,6 +27,11 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.success,
     required this.badgeBorder,
     required this.link,
+    required this.auroraBase,
+    required this.auroraOrchid,
+    required this.auroraBlush,
+    required this.auroraLilac,
+    required this.auroraMauve,
   });
 
   /// Which table this is. Drives [isDark] and [overlayStyle].
@@ -110,6 +115,23 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   /// Inline text actions that aren't buttons — "Добавить фото".
   final Color link;
 
+  // ── Aurora ────────────────────────────────────────────────────────────────
+  /// The flat ground the four aurora glows are painted on. See
+  /// `AuroraBackground` — the shop's page wash.
+  final Color auroraBase;
+
+  /// Top-left glow.
+  final Color auroraOrchid;
+
+  /// Top-right glow.
+  final Color auroraBlush;
+
+  /// Bottom-left glow.
+  final Color auroraLilac;
+
+  /// Bottom-right glow.
+  final Color auroraMauve;
+
   static const light = AppColorScheme(
     brightness: Brightness.light,
     primary: AppColors.brandPurple,
@@ -134,6 +156,11 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     success: AppColors.green,
     badgeBorder: AppColors.white,
     link: AppColors.lightPurple,
+    auroraBase: AppColors.auroraBaseLight,
+    auroraOrchid: AppColors.auroraOrchidLight,
+    auroraBlush: AppColors.auroraBlushLight,
+    auroraLilac: AppColors.auroraLilacLight,
+    auroraMauve: AppColors.auroraMauveLight,
   );
 
   static const dark = AppColorScheme(
@@ -160,6 +187,11 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     success: AppColors.green,
     badgeBorder: AppColors.ink,
     link: AppColors.lightPurple,
+    auroraBase: AppColors.auroraBaseDark,
+    auroraOrchid: AppColors.auroraOrchidDark,
+    auroraBlush: AppColors.auroraBlushDark,
+    auroraLilac: AppColors.auroraLilacDark,
+    auroraMauve: AppColors.auroraMauveDark,
   );
 
   bool get isDark => brightness == Brightness.dark;
@@ -199,6 +231,11 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? success,
     Color? badgeBorder,
     Color? link,
+    Color? auroraBase,
+    Color? auroraOrchid,
+    Color? auroraBlush,
+    Color? auroraLilac,
+    Color? auroraMauve,
   }) {
     return AppColorScheme(
       brightness: brightness ?? this.brightness,
@@ -224,6 +261,11 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       success: success ?? this.success,
       badgeBorder: badgeBorder ?? this.badgeBorder,
       link: link ?? this.link,
+      auroraBase: auroraBase ?? this.auroraBase,
+      auroraOrchid: auroraOrchid ?? this.auroraOrchid,
+      auroraBlush: auroraBlush ?? this.auroraBlush,
+      auroraLilac: auroraLilac ?? this.auroraLilac,
+      auroraMauve: auroraMauve ?? this.auroraMauve,
     );
   }
 
@@ -254,6 +296,11 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       success: Color.lerp(success, other.success, t)!,
       badgeBorder: Color.lerp(badgeBorder, other.badgeBorder, t)!,
       link: Color.lerp(link, other.link, t)!,
+      auroraBase: Color.lerp(auroraBase, other.auroraBase, t)!,
+      auroraOrchid: Color.lerp(auroraOrchid, other.auroraOrchid, t)!,
+      auroraBlush: Color.lerp(auroraBlush, other.auroraBlush, t)!,
+      auroraLilac: Color.lerp(auroraLilac, other.auroraLilac, t)!,
+      auroraMauve: Color.lerp(auroraMauve, other.auroraMauve, t)!,
     );
   }
 }

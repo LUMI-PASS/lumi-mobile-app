@@ -469,6 +469,10 @@ class $AssetsIconsBackgroundGen {
   SvgGenImage get congratsMisc =>
       const SvgGenImage('assets/icons/background/congrats_misc.svg');
 
+  /// File path: assets/icons/background/map_strip_misc.svg
+  SvgGenImage get mapStripMisc =>
+      const SvgGenImage('assets/icons/background/map_strip_misc.svg');
+
   /// File path: assets/icons/background/misc2.svg
   SvgGenImage get misc2 =>
       const SvgGenImage('assets/icons/background/misc2.svg');
@@ -504,6 +508,7 @@ class $AssetsIconsBackgroundGen {
   /// List of all assets
   List<SvgGenImage> get values => [
         congratsMisc,
+        mapStripMisc,
         misc2,
         misc3,
         otpMisc,

@@ -43,7 +43,11 @@ abstract class NetworkModule {
       PrettyDioLogger(
         requestHeader: kDebugMode,
         requestBody: kDebugMode,
-        responseBody: kDebugMode,
+        // Some detail responses contain hundreds of expanded course lessons.
+        // Pretty-printing those maps is synchronous and can block Flutter's
+        // UI isolate for multiple frames on a phone. Status, URL and timing
+        // remain logged; error responses still include their body.
+        responseBody: false,
         responseHeader: kDebugMode,
         error: kDebugMode,
         compact: true,
