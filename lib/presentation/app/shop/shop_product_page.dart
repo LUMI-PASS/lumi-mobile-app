@@ -7,13 +7,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
-import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/multi_lang.dart';
-import 'package:lumi_pass/common/widget/aurora_background.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/shop/shop_repository.dart';
@@ -96,35 +95,35 @@ class _ShopProductPageState extends State<ShopProductPage> {
     final c = context.colors;
     final product = _product;
 
-    return AuroraBackground(
-      child: Scaffold(
-        // The aurora behind it is the page background.
-        backgroundColor: Colors.transparent,
-        appBar: BaseAppBar(title: 'shop_title'.tr()),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _failed || product == null
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'shop_error_title'.tr(),
-                          style: AppText.semibold16
-                              .copyWith(color: c.textPrimary),
+    return Scaffold(
+      backgroundColor: c.scaffoldBg,
+      appBar: BaseAppBar(title: 'shop_title'.tr()),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _failed || product == null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'shop_error_title'.tr(),
+                        style: AppText.semibold16
+                            .copyWith(color: c.textPrimary),
+                      ),
+                      12.kh,
+                      TextButton(
+                        onPressed: _load,
+                        style: TextButton.styleFrom(
+                          foregroundColor: context.colors.primary,
                         ),
-                        12.kh,
-                        TextButton(
-                          onPressed: _load,
-                          child: Text('retry'.tr()),
-                        ),
-                      ],
-                    ),
-                  )
-                : _content(context, product),
-        bottomNavigationBar:
-            product == null ? null : _buyBar(context, product),
-      ),
+                        child: Text('retry'.tr()),
+                      ),
+                    ],
+                  ),
+                )
+              : _content(context, product),
+      bottomNavigationBar:
+          product == null ? null : _buyBar(context, product),
     );
   }
 
@@ -191,40 +190,45 @@ class _ShopProductPageState extends State<ShopProductPage> {
                   oldPrice: product.oldPrice,
                   large: true,
                 ),
-                8.kh,
-                // The one place the coin mark belongs on a price: it is not a
-                // second price, it is the same number said again — which is
-                // exactly the point being made.
-                Row(
-                  children: [
-                    Assets.icons.coinLumi.image(width: 16.w, height: 16.w),
-                    6.kw,
-                    Expanded(
-                      child: Text(
-                        'shop_pay_with_coins_hint'.tr(),
-                        style: AppText.regular12
-                            .copyWith(color: c.textSecondary),
-                      ),
-                    ),
-                  ],
-                ),
                 if (product.inStock && product.available <= 3) ...[
-                  12.kh,
+                  10.kh,
                   Text(
-                    'shop_only_n_left'
-                        .tr(args: ['${product.available}']),
-                    style: AppText.medium13
-                        .copyWith(color: AppColors.warning),
+                    'shop_only_n_left'.tr(args: ['${product.available}']),
+                    style: AppText.medium13.copyWith(color: AppColors.warning),
+                  ),
+                ],
+                if (product.tags.isNotEmpty) ...[
+                  12.kh,
+                  Wrap(
+                    spacing: 6.w,
+                    runSpacing: 6.h,
+                    children: [
+                      for (final tag in product.tags) _Tag(label: tag),
+                    ],
                   ),
                 ],
                 if (description.isNotEmpty) ...[
-                  20.kh,
+                  24.kh,
+                  Text(
+                    'shop_about_title'.tr(),
+                    style: AppText.semibold16.copyWith(color: c.textPrimary),
+                  ),
+                  8.kh,
                   Text(
                     description,
-                    style:
-                        AppText.regular14.copyWith(color: c.textSecondary),
+                    style: AppText.regular14.copyWith(
+                      color: c.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
                 ],
+                24.kh,
+                Text(
+                  'shop_details_title'.tr(),
+                  style: AppText.semibold16.copyWith(color: c.textPrimary),
+                ),
+                10.kh,
+                _DetailsCard(product: product),
               ],
             ),
           ),
@@ -336,4 +340,104 @@ class _ShopProductPageState extends State<ShopProductPage> {
         minimum: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
         child: child,
       );
+}
+
+/// Everything the shop actually knows about a product, said plainly.
+///
+/// Only real fields — availability, how many have gone, the per-order
+/// ceiling, and the delivery promise the backend makes when it stamps
+/// `promised_by` on the order. Nothing is invented to fill the card out: a
+/// row with no answer is simply not drawn.
+class _DetailsCard extends StatelessWidget {
+  const _DetailsCard({required this.product});
+
+  final ShopProduct product;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    final rows = <({String label, String value, Color? tint})>[
+      (
+        label: 'shop_availability'.tr(),
+        value: product.inStock
+            ? 'shop_n_items'.tr(args: ['${product.available}'])
+            : 'shop_sold_out'.tr(),
+        tint: product.inStock ? null : AppColors.error,
+      ),
+      if (product.soldCount > 0)
+        (
+          label: 'shop_sold_label'.tr(),
+          value: 'shop_n_items'.tr(args: ['${product.soldCount}']),
+          tint: null,
+        ),
+      (
+        label: 'shop_max_per_order'.tr(),
+        value: 'shop_n_items'.tr(args: ['${product.maxPerOrder}']),
+        tint: null,
+      ),
+      (
+        label: 'shop_delivery_title'.tr(),
+        value: 'shop_delivery_days'.tr(),
+        tint: null,
+      ),
+    ];
+
+    return FrostedCard(
+      borderRadius: BorderRadius.circular(16.r),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) Divider(height: 1, color: c.divider),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      rows[i].label,
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary),
+                    ),
+                  ),
+                  8.kw,
+                  Text(
+                    rows[i].value,
+                    style: AppText.medium14
+                        .copyWith(color: rows[i].tint ?? c.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A product tag, as the adminka typed it. Not translated — these are free
+/// text on the product, not a closed vocabulary the app could map.
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Text(
+        label,
+        style: AppText.medium12.copyWith(color: c.textSecondary),
+      ),
+    );
+  }
 }

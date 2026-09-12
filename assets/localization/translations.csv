@@ -1189,3 +1189,9 @@ shop_cart_summary,Ваш заказ,Buyurtmangiz,Your order
 shop_cart_discounts,Скидки,Chegirmalar,Discounts
 shop_price_each,{} / шт.,{} / dona,{} each
 shop_go_to_cart,В корзину · {},Savatchaga · {},To cart · {}
+shop_about_title,Описание,Tavsif,Description
+shop_details_title,Характеристики,Maʼlumot,Details
+shop_availability,Наличие,Mavjudligi,Availability
+shop_sold_label,Куплено,Sotib olingan,Bought
+shop_max_per_order,Максимум в заказе,Bitta buyurtmaga,Max per order
+shop_delivery_days,3 дня,3 kun,3 days
