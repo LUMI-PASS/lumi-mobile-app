@@ -145,18 +145,9 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
   bool _validateForPayment() {
     if (_error != null) setState(() => _error = null);
 
-    if (_lat == null || _address.trim().length < 5) {
-      _flag(_pointShake);
-      setState(() => _error = 'shop_pick_on_map'.tr());
-      return false;
-    }
-    if (_phone.text.trim().length < 7) {
-      _flag(_phoneShake);
-      setState(() => _error = 'shop_contact_phone'.tr());
-      return false;
-    }
-    // Coins were chosen but the wallet has since fallen short — the card is
-    // already dead, so this only fires if the balance moved under them.
+    // Checked in the order the screen presents them, so the shake lands on
+    // the topmost thing still missing rather than on whichever rule happened
+    // to be written first. Payment sits above delivery now.
     if (_withCoins && !_coinsAffordable) {
       _flag(_paymentShake);
       setState(() => _error = 'shop_coins_short'.tr(args: [
@@ -167,6 +158,16 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
     if (!_withCoins && _payment != null && !_payment!.isPayable) {
       _flag(_paymentShake);
       setState(() => _error = 'shop_choose_payment'.tr());
+      return false;
+    }
+    if (_lat == null || _address.trim().length < 5) {
+      _flag(_pointShake);
+      setState(() => _error = 'shop_pick_on_map'.tr());
+      return false;
+    }
+    if (_phone.text.trim().length < 7) {
+      _flag(_phoneShake);
+      setState(() => _error = 'shop_contact_phone'.tr());
       return false;
     }
     return true;
@@ -489,6 +490,52 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
           ],
 
           20.kh,
+          _SectionTitle('shop_payment_title'.tr()),
+          12.kh,
+
+          // Coins are the only payment method worth NAMING here. "Pay with
+          // money" was a card of its own until it became clear it asked the
+          // same question twice: anybody paying with money goes on to pick a
+          // rail, and picking a rail already says money. So the rail row IS
+          // the money option, and choosing either one unchooses the other.
+          // One Shaker over BOTH options, because "you have not said how you
+          // are paying" is one unanswered question — shaking only the coin
+          // card would point at the wrong control for somebody who meant to
+          // pay by card.
+          Shaker(
+            key: _paymentShake,
+            child: Column(
+              children: [
+                if (_coinTotal > 0) ...[
+                  _CoinOption(
+                    selected: _withCoins,
+                    coinTotal: _coinTotal,
+                    available: _available,
+                    affordable: _coinsAffordable,
+                    enabled: !_submitting,
+                    onTap: () => setState(() {
+                      _withCoins = true;
+                      // A rail left selected underneath would sit there
+                      // looking chosen while coins are what gets charged.
+                      _payment = null;
+                    }),
+                  ),
+                  10.kh,
+                ],
+                _PaymentRailRow(
+                  payment: _withCoins ? null : _payment,
+                  selected: !_withCoins,
+                  enabled: !_submitting,
+                  onTap: () async {
+                    setState(() => _withCoins = false);
+                    await _openChooser();
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          20.kh,
           _SectionTitle('shop_delivery_title'.tr()),
           8.kh,
           Text(
@@ -579,52 +626,6 @@ class _ShopCheckoutPageState extends State<_CheckoutView> {
             label: 'shop_courier_note'.tr(),
             maxLines: 3,
             minLines: 1,
-          ),
-
-          20.kh,
-          _SectionTitle('shop_payment_title'.tr()),
-          12.kh,
-
-          // Coins are the only payment method worth NAMING here. "Pay with
-          // money" was a card of its own until it became clear it asked the
-          // same question twice: anybody paying with money goes on to pick a
-          // rail, and picking a rail already says money. So the rail row IS
-          // the money option, and choosing either one unchooses the other.
-          // One Shaker over BOTH options, because "you have not said how you
-          // are paying" is one unanswered question — shaking only the coin
-          // card would point at the wrong control for somebody who meant to
-          // pay by card.
-          Shaker(
-            key: _paymentShake,
-            child: Column(
-              children: [
-                if (_coinTotal > 0) ...[
-                  _CoinOption(
-                    selected: _withCoins,
-                    coinTotal: _coinTotal,
-                    available: _available,
-                    affordable: _coinsAffordable,
-                    enabled: !_submitting,
-                    onTap: () => setState(() {
-                      _withCoins = true;
-                      // A rail left selected underneath would sit there
-                      // looking chosen while coins are what gets charged.
-                      _payment = null;
-                    }),
-                  ),
-                  10.kh,
-                ],
-                _PaymentRailRow(
-                  payment: _withCoins ? null : _payment,
-                  selected: !_withCoins,
-                  enabled: !_submitting,
-                  onTap: () async {
-                    setState(() => _withCoins = false);
-                    await _openChooser();
-                  },
-                ),
-              ],
-            ),
           ),
 
           if (_error != null) ...[
