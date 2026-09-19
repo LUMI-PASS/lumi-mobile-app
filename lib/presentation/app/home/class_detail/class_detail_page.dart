@@ -249,10 +249,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   bool get _hasVenueVideo => RouteVideoTile.canPlay(_venueVideoUrl);
 
-  /// The centre's own phone numbers. Already trimmed of blanks by
+  /// The centre's own phone numbers — the branch administrators a parent
+  /// calls to ask about their booking. Already trimmed of blanks by
   /// [BranchSummary.fromJson].
-  List<String> get _venuePhones =>
-      _full?.branch?.supportPhones ?? const <String>[];
+  ///
+  /// Buyers only, unlike the clip above: these are for questions about a
+  /// booking that exists. Published on a browse page they would route every
+  /// pre-sales question past Lumi, to a centre with no record of the caller.
+  List<String> get _venuePhones => _full?.viewerPurchased == true
+      ? (_full?.branch?.supportPhones ?? const <String>[])
+      : const <String>[];
 
   /// Dials a number. `tel:` wants it unpunctuated — the console stores it the
   /// way a human reads it, so the digits are pulled back out here.
@@ -404,6 +410,29 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       if (full.isCourse && !knownCourse) unawaited(_loadCourse(id));
     } catch (_) {
       // Keep whatever gallery/list image we already have.
+    }
+  }
+
+  /// Re-reads `/classes/:id` after a purchase completes on this page.
+  ///
+  /// `viewer_purchased` gates the centre's phone numbers, and it was answered
+  /// before this parent bought — so without this, the numbers the purchase
+  /// just earned them stay hidden until they leave the page and come back.
+  /// Deliberately narrower than [_loadFull]: the course payload is reloaded by
+  /// its own caller, and firing it twice would re-seed the picked group
+  /// underneath them.
+  Future<void> _refreshAfterPurchase() async {
+    final id = widget.classModel.id;
+    if (id == null) return;
+    try {
+      final full = await getIt<OrdersApi>().getClassFull(id);
+      if (!mounted) return;
+      setState(() {
+        _full = full;
+        _galleryImages = _resolveGallery(full);
+      });
+    } catch (_) {
+      // Non-fatal — the numbers stay hidden until the page is reopened.
     }
   }
 
@@ -598,7 +627,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
   }
 
-  void _openBooking() {
+  Future<void> _openBooking() async {
     final full = _full;
     if (full == null || (full.pricesSummary.isEmpty && full.ageTiers.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -618,7 +647,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     // away from here, no request is ever made and nothing records that they
     // nearly booked. Queued and sent in the background — see [InterestReporter].
     if (full.id != null) getIt<InterestReporter>().bookTapped(full.id!);
-    context.router.push(BookingRoute(clazz: full));
+    final purchased = await context.router.push(BookingRoute(clazz: full));
+    if (purchased == true && mounted) await _refreshAfterPurchase();
   }
 
   /// What the sticky bottom CTA buys.
@@ -693,7 +723,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         courseOption: CoursePurchaseOption.trial,
       ),
     );
-    if (purchased == true && mounted) await _loadCourse(id);
+    if (purchased == true && mounted) {
+      await _loadCourse(id);
+      if (mounted) await _refreshAfterPurchase();
+    }
   }
 
   /// Buy the whole course / a subcourse. A trial lesson goes through
@@ -731,7 +764,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         // ageTiers, so there is nothing to carry over from here any more.
       ),
     );
-    if (purchased == true && mounted) await _loadCourse(id);
+    if (purchased == true && mounted) {
+      await _loadCourse(id);
+      if (mounted) await _refreshAfterPurchase();
+    }
   }
 
   /// Price rows for display: ONE PER (age tier x duration), which is the same
@@ -1464,7 +1500,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               style: AppText.regular13.copyWith(color: c.textSecondary),
             ),
           ],
-          // The centre's own lines, under the address they belong to.
+          // The centre's own lines, under the address they belong to — only
+          // once this parent has bought; see [_venuePhones].
           if (phones.isNotEmpty) ...[
             14.verticalSpace,
             Text(

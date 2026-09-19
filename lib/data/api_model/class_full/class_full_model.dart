@@ -50,10 +50,10 @@ class ClassFullModel {
   /// `viewer_purchased`). False for a signed-out viewer, and on older payloads
   /// which carry no such field.
   ///
-  /// NOT currently read by any screen: the venue's arrival clip and phone
-  /// numbers were once gated on it and are now shown to everyone. Parsed
-  /// because the endpoint sends it, and because re-gating them is a one-line
-  /// change here rather than a backend deploy.
+  /// What the venue card gates the centre's PHONE NUMBERS on — they answer
+  /// questions about a booking that exists, so they are for buyers. The
+  /// arrival clip beside the map is NOT gated: whether you can find the place
+  /// is a question asked before paying.
   final bool viewerPurchased;
 
   /// A COURSE is its own kind of thing, not a category — it keeps a normal
@@ -492,7 +492,8 @@ class BranchSummary {
   /// The centre's OWN phone numbers, as typed in the console (punctuation and
   /// all — the clients strip it for `tel:`).
   ///
-  /// Shown on branch detail and under the map on activity detail.
+  /// Shown on branch detail, and under the map on activity detail once this
+  /// viewer has bought — see [ClassFullModel.viewerPurchased].
   final List<String> supportPhones;
 
   BranchSummary({
