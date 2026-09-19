@@ -1711,6 +1711,9 @@ class _BookingPageState extends State<BookingPage> {
           MaterialPageRoute(
             builder: (_) => BookingCompletePage(
               status: BookingResultStatus.paid,
+              // The sheet popped just above, so the activity is on top again
+              // and one pop lands back on it.
+              canReturnToActivity: true,
               result: result,
               lines: lines,
               cashbackEarned: result.cashbackEstimate > 0

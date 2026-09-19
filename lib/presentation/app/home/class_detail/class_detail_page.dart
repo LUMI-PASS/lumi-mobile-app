@@ -68,6 +68,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   final PageController _pageController = PageController();
   final ScrollController _scrollController = ScrollController();
 
+  /// Anchors the venue card so a fresh buyer can be scrolled straight to the
+  /// centre's phone numbers — see [_scrollToVenueCard].
+  final GlobalKey _venueCardKey = GlobalKey();
+
   /// Kept out of page state because the carousel advances every five seconds,
   /// and rebuilding the whole detail page for one dot is wasteful.
   final ValueNotifier<int> _currentImageIndex = ValueNotifier<int>(0);
@@ -434,6 +438,35 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     } catch (_) {
       // Non-fatal — the numbers stay hidden until the page is reopened.
     }
+    if (mounted && _venuePhones.isNotEmpty) _scrollToVenueCard();
+  }
+
+  /// Bring the venue card into view after a purchase, so the numbers the order
+  /// just unlocked are the first thing seen on returning from the success
+  /// screen — rather than something to be hunted for further down the page.
+  ///
+  /// Runs while the success screen is still on top: this page stays laid out
+  /// underneath, so by the time it is popped back to, it is already in
+  /// position. That is also why there is no animation — animating a scroll
+  /// nobody can see only risks being interrupted.
+  ///
+  /// Best-effort. The content is a lazy [SliverList], so the card may not be
+  /// built yet; `ensureVisible` needs a laid-out context and there is no
+  /// reliable offset to fall back to. Doing nothing simply leaves the parent
+  /// to scroll down themselves, which is where they were anyway.
+  void _scrollToVenueCard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _venueCardKey.currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: Duration.zero,
+        // A little off the top edge, so the card reads as a section that was
+        // scrolled to rather than one jammed under the app bar.
+        alignment: 0.1,
+      );
+    });
   }
 
   /// Course lessons + package prices. Failure is non-fatal: the page still
@@ -884,7 +917,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       if (_venue != null || _hasVenueVideo || _venuePhones.isNotEmpty)
         _detailSection(
           'class-detail-location',
-          _locationCard(c, branchTitle),
+          KeyedSubtree(key: _venueCardKey, child: _locationCard(c, branchTitle)),
         ),
       if (notes.isNotEmpty)
         _detailSection(
