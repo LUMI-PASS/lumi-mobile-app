@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/router/app_link_opener.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
@@ -12,6 +13,7 @@ import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/data/api_model/notification_model/notification_model.dart';
 import 'package:lumi_pass/data/api_model/notification_model/notification_type.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/data/service/interest_source.dart';
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
 
 /// Amber accent for the "pending"/"suggestion" notification glyphs. Screen-only
@@ -84,6 +86,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
             .toList();
       });
       _api.markRead(n.id).catchError((_) {});
+    }
+    // A notification that names its own destination goes there. The course
+    // reminder is the first of these: its point is to land on the course, and
+    // "My bookings" is one screen short of where renewing happens.
+    final link = n.deepLink;
+    if (link != null) {
+      AppLinkOpener.open(link, source: InterestSource.notification);
+      return;
     }
     if (n.notificationType.isBooking) {
       context.router.push(const MyBookingsRoute());
@@ -364,6 +374,7 @@ class _NotificationCard extends StatelessWidget {
       case NotificationType.bookingTimeSuggestion:
         return Assets.icons.notification.idea;
       case NotificationType.bookingRequestPending:
+      case NotificationType.courseEnding:
         return Assets.icons.notification.clock;
       case NotificationType.unknown:
         return Assets.icons.notification.bell;
@@ -384,6 +395,7 @@ class _NotificationCard extends StatelessWidget {
         return AppColors.error;
       case NotificationType.bookingTimeSuggestion:
       case NotificationType.bookingRequestPending:
+      case NotificationType.courseEnding:
         return _kPendingAmber;
       case NotificationType.unknown:
         return c.textSecondary;

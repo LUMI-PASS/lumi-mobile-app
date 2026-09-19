@@ -110,11 +110,24 @@ class DetailTopScrim extends StatelessWidget {
   final Color color;
   final double height;
 
-  /// Stacked blur passes. Each covers a shorter slice of the top, so the passes
-  /// accumulate towards the status bar and taper to nothing at the bottom edge
-  /// — a progressive blur rather than a hard-cut blurred rectangle.
-  static const int _passes = 6;
-  static const double _sigma = 1.6;
+  /// Stacked blur passes: `(fraction of the height covered, blur sigma)`. Each
+  /// covers a shorter slice of the top, so the passes accumulate towards the
+  /// status bar and taper off at the bottom edge — a progressive blur rather
+  /// than a hard-cut blurred rectangle.
+  ///
+  /// TWO passes, not six. Every [BackdropFilter] makes the compositor read the
+  /// whole scene behind it back into an offscreen texture, blur it, and paint
+  /// it again — and stacked in one [Stack] each pass blurs the output of the
+  /// one before it, so six of them is six chained read-back passes on every
+  /// single frame. That measured ~18ms of raster per frame on an idle detail
+  /// screen and ~92ms with the hero shimmering, i.e. the scroll could not keep
+  /// up with the finger.
+  ///
+  /// Blurs compose in quadrature, so the six 1.6 passes came to an effective
+  /// sigma of `1.6 x sqrt(6)` = 3.9 at the top. These two land on 3.9 as well
+  /// (`sqrt(1.9^2 + 3.4^2)`) at a third of the cost; the falloff between top
+  /// and bottom is coarser, which the gradient below covers.
+  static const List<(double, double)> _passes = [(1.0, 1.9), (0.5, 3.4)];
 
   @override
   Widget build(BuildContext context) {
@@ -124,15 +137,15 @@ class DetailTopScrim extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          for (var i = 0; i < _passes; i++)
+          for (final (extent, sigma) in _passes)
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              height: height * (_passes - i) / _passes,
+              height: height * extent,
               child: ClipRect(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
+                  filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
                   child: const SizedBox.expand(),
                 ),
               ),

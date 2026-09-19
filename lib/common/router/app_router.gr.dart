@@ -54,6 +54,7 @@ abstract class _$AppRouter extends RootStackRouter {
           lines: args.lines,
           cashbackEarned: args.cashbackEarned,
           walletApplied: args.walletApplied,
+          canReturnToActivity: args.canReturnToActivity,
         ),
       );
     },
@@ -525,6 +526,7 @@ class BookingCompleteRoute extends PageRouteInfo<BookingCompleteRouteArgs> {
     List<OrderLine> lines = const [],
     num cashbackEarned = 0,
     num walletApplied = 0,
+    bool canReturnToActivity = false,
     List<PageRouteInfo>? children,
   }) : super(
           BookingCompleteRoute.name,
@@ -535,6 +537,7 @@ class BookingCompleteRoute extends PageRouteInfo<BookingCompleteRouteArgs> {
             lines: lines,
             cashbackEarned: cashbackEarned,
             walletApplied: walletApplied,
+            canReturnToActivity: canReturnToActivity,
           ),
           initialChildren: children,
         );
@@ -553,6 +556,7 @@ class BookingCompleteRouteArgs {
     this.lines = const [],
     this.cashbackEarned = 0,
     this.walletApplied = 0,
+    this.canReturnToActivity = false,
   });
 
   final Key? key;
@@ -567,9 +571,11 @@ class BookingCompleteRouteArgs {
 
   final num walletApplied;
 
+  final bool canReturnToActivity;
+
   @override
   String toString() {
-    return 'BookingCompleteRouteArgs{key: $key, status: $status, result: $result, lines: $lines, cashbackEarned: $cashbackEarned, walletApplied: $walletApplied}';
+    return 'BookingCompleteRouteArgs{key: $key, status: $status, result: $result, lines: $lines, cashbackEarned: $cashbackEarned, walletApplied: $walletApplied, canReturnToActivity: $canReturnToActivity}';
   }
 }
 

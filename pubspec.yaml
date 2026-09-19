@@ -3,7 +3,7 @@ description: "Lumi project"
 
 publish_to: 'none'
 
-version: 2.0.8+25
+version: 2.0.8+26
 
 environment:
   sdk: ^3.5.4
@@ -133,6 +133,10 @@ flutter:
     - assets/icons/notification/
     - assets/icons/profile/
     - assets/icons/coupons/
+    # Flutter's asset globs are per-directory and NOT recursive: listing
+    # assets/icons/ does not bundle assets/icons/shop/. Without this line every
+    # shop glyph resolves to nothing and renders as an empty circle.
+    - assets/icons/shop/
     - assets/images/
     - assets/images/banner/
     - assets/images/mascot/

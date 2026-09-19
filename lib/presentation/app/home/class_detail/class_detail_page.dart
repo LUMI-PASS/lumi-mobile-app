@@ -35,6 +35,7 @@ import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/interest_reporter.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/home/course_detail/intake_waitlist_sheet.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
@@ -177,6 +178,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// A course is sold as a package, not per session. Known from the list model
   /// before the detail lands, so the CTA never flashes the ticket wording.
   bool get _isCourse => _full?.isCourse ?? widget.classModel.isCourse ?? false;
+
+  /// An INTAKE is a course that is still recruiting: no schedule, so nothing
+  /// is on sale and the CTA offers a waitlist instead of a purchase.
+  ///
+  /// Decided by `type` alone. A course that merely has no dates is a
+  /// misconfigured course, not an intake, and keeps its existing behaviour.
+  /// Known only once the course detail lands — until then the page shows the
+  /// ordinary course CTA, which `_ctaEnabled` already gates on the same load.
+  bool get _isIntake => _course?.isIntake ?? false;
+
+  /// Set once this user holds a place for the group on screen. Read only as a
+  /// yes/no — the app cannot take a place back, so the id itself is never used
+  /// for anything now.
+  String? get _waitlistEntryId =>
+      _course?.intake?.entryIdFor(_defaultBuyLevel()?.id);
 
   /// 0 → hero fully visible, 1 → content scrolled under the top controls and
   /// the frosted scrim is fully on.
@@ -703,6 +719,24 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return detail.levels.isNotEmpty ? detail.levels.first : detail.flat;
   }
 
+  /// Put a child down for an INTAKE. Not a purchase — no order, no money, no
+  /// seat — so it deliberately does not go anywhere near the booking flow.
+  Future<void> _onJoinWaitlistTapped() async {
+    final id = _full?.id ?? widget.classModel.id;
+    if (id == null) return;
+    final level = _defaultBuyLevel();
+    final joined = await IntakeWaitlistSheet.show(
+      context,
+      activityId: id,
+      subcourseId: level?.id,
+      groupName: level?.name,
+      courseTitle: widget.classModel.title,
+    );
+    // Reload rather than patching state by hand: the joined flag lives on the
+    // course detail, per group, and that is the one thing the CTA reads.
+    if (joined && mounted) await _loadCourse(id);
+  }
+
   /// Sticky bottom CTA — the one place a course is bought from this page.
   Future<void> _onBuyCourseTapped() async {
     final level = _defaultBuyLevel();
@@ -1075,7 +1109,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 // stacking one up here put a trial button on top of the
                 // whole-course button with nothing on it saying whose trial it
                 // was.
-                child: !_isBookable
+                child: _isIntake
+                    // A recruiting course: one button, and no price anywhere
+                    // near it. Once they are on the list it becomes a plain
+                    // statement — there is no way off it from here, by design.
+                    // A parent who changed their mind says so when the centre
+                    // rings, which it will.
+                    ? (_waitlistEntryId != null
+                        ? _ComingSoonButton(c: c, label: 'intake_joined'.tr())
+                        : GradientButton(
+                            text: 'intake_join_cta'.tr(),
+                            onPressed: _onJoinWaitlistTapped,
+                          ))
+                    : !_isBookable
                     ? _ComingSoonButton(c: c)
                     : GradientButton(
                         // A group is always picked, so the only thing left to
@@ -1116,11 +1162,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 imageUrl: _galleryImages[i],
                 fit: BoxFit.cover,
                 placeholder: (_, __) => _imgShimmer(c),
-                errorWidget: (_, __, ___) => _imgShimmer(c),
+                // A URL that will not load is not "still loading" — shimmering
+                // at it forever both lies and costs a frame every vsync.
+                errorWidget: (_, __, ___) => _heroBlank(c),
               ),
             )
+          // Shimmer ONLY while `/classes/:id` is still in flight. A class the
+          // centre never gave an image to has nothing left to wait for, and a
+          // shimmer there never stops: it drives an animation frame every
+          // vsync for as long as the page is open, and every one of those
+          // frames re-rasters the blurred top scrim over it. That is what made
+          // this screen stutter with nothing happening on it.
+          else if (_full == null)
+            _imgShimmer(c)
           else
-            _imgShimmer(c),
+            _heroBlank(c),
           // Top scrim — a soft dark fade so the light controls stay legible
           // over bright / near-white hero images.
           Positioned(
@@ -1181,6 +1237,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
+  /// Still, silent stand-in for a hero image that is never coming — see the
+  /// shimmer's call site in [_hero].
+  Widget _heroBlank(AppColorScheme c) => ColoredBox(color: c.control);
+
   Widget _imgShimmer(AppColorScheme c) => Shimmer.fromColors(
         baseColor: c.surface,
         highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
@@ -1195,6 +1255,23 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
+          // Says why there are no dates and no buy button, at the top of the
+          // page rather than only down at the CTA.
+          if (_isIntake) ...[
+            6.verticalSpace,
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: AppColors.brandPurple.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(40.r),
+              ),
+              child: Text(
+                'intake_badge'.tr(),
+                style: AppText.semibold12
+                    .copyWith(color: AppColors.brandPurple),
+              ),
+            ),
+          ],
           // No description here. It used to be repeated in this card as two
           // ellipsised lines and again in full in the card below; it is now
           // stated once, in [_descriptionCard], as a dropdown.
@@ -1440,7 +1517,15 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 // below sells the whole course and nothing else.
                 // Dated where the server could date it, configured-only where
                 // it could not — see [_trialLadder].
-                trialLessons: _trialLadder(level),
+                //
+                // An INTAKE gets no ladder at all. The trial section is a
+                // purchase widget: rows to pick, a price, a buy button and a
+                // line explaining why all three are dead. None of that belongs
+                // on a group that is still filling up — the one thing to do
+                // here is join the waitlist, and everything else on the card
+                // is competing with it. Dropping the ladder also drops the
+                // "· N trials" from the summary line, which counts it.
+                trialLessons: _isIntake ? const [] : _trialLadder(level),
                 trialDatesKnown: _trialDatesKnown(level),
                 onBuyTrial: () => _openTrialBooking(level),
               ),
@@ -2923,9 +3008,13 @@ class _CourseLevelPanel extends StatelessWidget {
 /// catalogue. Deliberately not a disabled [GradientButton]: a greyed-out
 /// gradient reads as "temporarily broken", where this reads as "not yet".
 class _ComingSoonButton extends StatelessWidget {
-  const _ComingSoonButton({required this.c});
+  const _ComingSoonButton({required this.c, this.label});
 
   final AppColorScheme c;
+
+  /// Overrides the default "booking opens soon" wording. Used by the intake
+  /// CTA, which is the same inert shape saying something different.
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -2944,7 +3033,7 @@ class _ComingSoonButton extends StatelessWidget {
         // Says what is unavailable, not just "soon" — the buyer is standing on
         // a class page with a price on it and needs to know booking is what's
         // off, and that it's temporary.
-        'booking_available_soon'.tr(),
+        label ?? 'booking_available_soon'.tr(),
         textAlign: TextAlign.center,
         style: AppText.semibold16.copyWith(color: c.textSecondary),
       ),

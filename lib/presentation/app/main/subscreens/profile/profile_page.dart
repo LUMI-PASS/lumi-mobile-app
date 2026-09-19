@@ -22,6 +22,7 @@ import 'package:lumi_pass/common/styles/theme_mode_notifier.dart';
 import 'package:lumi_pass/common/utils/avatar_notifier.dart';
 import 'package:lumi_pass/common/utils/photo_urls.dart';
 import 'package:lumi_pass/common/widget/theme_transition_overlay.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/user_avatar.dart';
 import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
@@ -31,7 +32,6 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_state.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/profile/widgets/wallet_section.dart';
 
 import '../../../../../common/router/app_router.dart';
 
@@ -368,16 +368,37 @@ class ProfilePage
               // rides along there — on screen immediately, without costing the
               // list a row of its own. Decorative only, hence no tap target.
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: Text(
-                      'profile_title'.tr(),
-                      style: AppText.heading20.copyWith(color: c.textPrimary),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'profile_title'.tr(),
+                          style:
+                              AppText.heading20.copyWith(color: c.textPrimary),
+                        ),
+                        // The name the screen already knows, said once at the
+                        // top. Dropped for a guest, who has no name to greet.
+                        if (!showGuest) ...[
+                          2.kh,
+                          Text(
+                            'profile_greeting'.tr(args: [displayName]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.regular13
+                                .copyWith(color: c.textSecondary),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
+                  8.kw,
                   Assets.images.mascot.mascotHello.image(
-                    width: 40.w,
-                    height: 40.w,
+                    width: 48.w,
+                    height: 48.w,
                     fit: BoxFit.contain,
                     excludeFromSemantics: true,
                   ),
@@ -421,53 +442,82 @@ class ProfilePage
                         onAdd: () => _openChildDetails(context, cubit, null),
                       ),
                     ],
-                    // Wallet follows the children section. Hidden for guests
-                    // (no account, no wallet) and while the balance is unknown
-                    // — see ProfileBuildable.wallet.
-                    if (!showGuest && state.wallet != null) ...[
-                      20.kh,
-                      _SectionLabel('wallet_title'.tr()),
+                    // Services first — what the screen is FOR: the bookings
+                    // and the shop. The wallet and the cards pay for those, so
+                    // they follow as their own pair rather than leading.
+                    //
+                    // Guests have none of this: no account, no wallet, nothing
+                    // to save a card against.
+                    if (!showGuest) ...[
+                      16.kh,
+                      _SectionLabel('services_title'.tr()),
                       12.kh,
-                      WalletSection(
-                        wallet: state.wallet!,
-                        debugError: state.walletError,
-                        // The ledger screen exists now, so the card is
-                        // tappable and grows its chevron.
-                        onTap: () => context.router.push(const WalletRoute()),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _QuickTile(
+                              iconAsset: _ProfileIcons.bookings,
+                              label: 'my_bookings'.tr(),
+                              subtitle: 'all_my_bookings'.tr(),
+                              onTap: () =>
+                                  context.router.push(const MyBookingsRoute()),
+                            ),
+                          ),
+                          // Behind a Remote Config flag that ships OFF: the
+                          // storefront has real stock and a delivery team
+                          // behind it, so it opens when someone decides it
+                          // opens rather than when a build lands on a device.
+                          // Without it the bookings tile takes the full width
+                          // rather than sitting beside a gap.
+                          if (RemoteConfigService.instance.isShopEnabled) ...[
+                            12.kw,
+                            Expanded(
+                              child: _QuickTile(
+                                iconAsset: _ProfileIcons.shop,
+                                label: 'shop_title'.tr(),
+                                subtitle: 'shop_tile_subtitle'.tr(),
+                                onTap: () => context.router.push(ShopRoute()),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      12.kh,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _QuickTile(
+                              iconAsset: _ProfileIcons.wallet,
+                              label: 'wallet_title'.tr(),
+                              // Null while the balance is still unknown — the
+                              // tile then names itself rather than showing a
+                              // zero it has no reason to believe.
+                              value: state.wallet == null
+                                  ? null
+                                  : CoinAmount(
+                                      amount: state.wallet!.available,
+                                      style: AppText.semibold16,
+                                    ),
+                              onTap: () =>
+                                  context.router.push(const WalletRoute()),
+                            ),
+                          ),
+                          12.kw,
+                          Expanded(
+                            child: _QuickTile(
+                              iconAsset: _ProfileIcons.cards,
+                              label: 'my_cards'.tr(),
+                              subtitle: 'payment_methods'.tr(),
+                              onTap: () =>
+                                  context.router.push(const MyCardsRoute()),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                     20.kh,
                     _SectionLabel('settings_title'.tr()),
                     12.kh,
-                    if (!showGuest) ...[
-                      _MenuRow(
-                        iconAsset: _ProfileIcons.bookings,
-                        label: 'my_bookings'.tr(),
-                        onTap: () =>
-                            context.router.push(const MyBookingsRoute()),
-                      ),
-                      8.kh,
-                      // Guests have nothing to save a card against — the whole
-                      // flow needs a user to attach it to.
-                      _MenuRow(
-                        iconAsset: _ProfileIcons.cards,
-                        label: 'my_cards'.tr(),
-                        onTap: () => context.router.push(const MyCardsRoute()),
-                      ),
-                      8.kh,
-                      // Behind a Remote Config flag that ships OFF: the
-                      // storefront has real stock and a delivery team behind
-                      // it, so it should open when someone decides it opens
-                      // rather than when a build lands on a device.
-                      if (RemoteConfigService.instance.isShopEnabled) ...[
-                        _MenuRow(
-                          iconAsset: _ProfileIcons.shop,
-                          label: 'shop_title'.tr(),
-                          onTap: () => context.router.push(ShopRoute()),
-                        ),
-                        8.kh,
-                      ],
-                    ],
                     const _ThemeToggleRow(),
                     8.kh,
                     _MenuRow(
@@ -479,11 +529,21 @@ class ProfilePage
                     ),
                     8.kh,
                     _MenuRow(
+                      iconAsset: _ProfileIcons.share,
+                      label: 'share_app'.tr(),
+                      subtitle: 'share_app_subtitle'.tr(),
+                      onTap: () => _shareApp(context),
+                    ),
+                    20.kh,
+                    _SectionLabel('help_title'.tr()),
+                    12.kh,
+                    _MenuRow(
                       iconAsset: _ProfileIcons.faq,
                       label: 'faq'.tr(),
+                      subtitle: 'faq_subtitle'.tr(),
                       onTap: () => context.router.push(const FaqRoute()),
                     ),
-                    // Hidden outright when the console has blanked both
+                    // Dropped outright when the console has blanked both
                     // contacts — a support row that opens an empty sheet is
                     // worse than no row.
                     if (RemoteConfigService.instance.hasSupportTelegram ||
@@ -492,15 +552,10 @@ class ProfilePage
                       _MenuRow(
                         iconAsset: _ProfileIcons.support,
                         label: 'contact_support'.tr(),
+                        subtitle: 'contact_support_subtitle'.tr(),
                         onTap: () => _showSupportSheet(context),
                       ),
                     ],
-                    8.kh,
-                    _MenuRow(
-                      iconAsset: _ProfileIcons.share,
-                      label: 'share_app'.tr(),
-                      onTap: () => _shareApp(context),
-                    ),
                     if (!showGuest) ...[
                       8.kh,
                       _MenuRow(
@@ -857,7 +912,12 @@ class _DashedCirclePainter extends CustomPainter {
 /// Figma (node 96-1829) Iconsax glyphs used by the profile settings rows.
 class _ProfileIcons {
   static final bookings = Assets.icons.detail.iconsaxAiCalendar;
-  static final shop = Assets.icons.shop.bag;
+  // Drawn for these tiles rather than reused from the shop tree: the shop's
+  // own bag is a 16px glyph that goes soft at 20, and the wallet had no icon
+  // at all — it was borrowing a Material one, the only non-house mark on the
+  // screen.
+  static final shop = Assets.icons.profile.shopBag;
+  static final wallet = Assets.icons.profile.wallet;
   static final cards = Assets.icons.icCard;
   static final language = Assets.icons.detail.iconsaxLanguageCircle;
   static final faq = Assets.icons.detail.iconsaxQuestionMark;
@@ -948,6 +1008,7 @@ class _MenuRow extends StatelessWidget {
     this.iconAsset,
     required this.label,
     this.trailingValue,
+    this.subtitle,
     this.trailing,
     this.danger = false,
     this.onTap,
@@ -960,6 +1021,11 @@ class _MenuRow extends StatelessWidget {
   final SvgGenImage? iconAsset;
   final String label;
   final String? trailingValue;
+
+  /// Muted second line under the label — the row's current state ("UZ",
+  /// "Ko'zlaringiz uchun qulay"). Absent on a row that has none, which then
+  /// renders exactly as it always did.
+  final String? subtitle;
   final Widget? trailing;
   final bool danger;
   final VoidCallback? onTap;
@@ -1012,13 +1078,28 @@ class _MenuRow extends StatelessWidget {
             ),
             12.kw,
             Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.semibold14.copyWith(
-                  color: danger ? AppColors.error : c.textPrimary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold14.copyWith(
+                      color: danger ? AppColors.error : c.textPrimary,
+                    ),
+                  ),
+                  if (subtitle != null && subtitle!.isNotEmpty) ...[
+                    2.kh,
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.regular12.copyWith(color: c.textMuted),
+                    ),
+                  ],
+                ],
               ),
             ),
             if (trailing != null)
@@ -1089,6 +1170,7 @@ class _ThemeToggleRowState extends State<_ThemeToggleRow> {
         return _MenuRow(
           icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
           label: 'dark_mode'.tr(),
+          subtitle: 'dark_mode_subtitle'.tr(),
           onTap: () => _toggle(isDark),
           trailing: Switch.adaptive(
             key: _switchKey,
@@ -1453,6 +1535,110 @@ class _DevEnvToggleTileState extends State<_DevEnvToggleTile> {
                 ),
         ],
       ),
+    );
+  }
+}
+
+/// A square-ish shortcut: glyph tile, then what it is with its current state
+/// under it. Two of these sit side by side, so everything inside is allowed to
+/// wrap to one line only — a tile that grows taller than its neighbour breaks
+/// the pair.
+class _QuickTile extends StatelessWidget {
+  const _QuickTile({
+    this.icon,
+    this.iconAsset,
+    required this.label,
+    this.subtitle,
+    this.value,
+    this.onTap,
+  }) : assert(icon != null || iconAsset != null);
+
+  final IconData? icon;
+  final SvgGenImage? iconAsset;
+  final String label;
+
+  /// The muted line under the label. Ignored when [value] is given.
+  final String? subtitle;
+
+  /// A rendered value in place of [subtitle] — a balance, a count. Null while
+  /// it is still loading, and the tile then shows only its name rather than a
+  /// zero it does not know to be true.
+  final Widget? value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(8.w),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(40.r),
+        ),
+        child: Row(
+          children: [
+            _GradientGlyph(icon: icon, iconAsset: iconAsset),
+            10.kw,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        AppText.semibold14.copyWith(color: c.textPrimary),
+                  ),
+                  2.kh,
+                  if (value != null)
+                    value!
+                  else if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.regular12.copyWith(color: c.textMuted),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The circular, brand-gradient glyph [_MenuRow] uses, on its own so the
+/// shortcut tiles carry exactly the same mark rather than a lookalike.
+class _GradientGlyph extends StatelessWidget {
+  const _GradientGlyph({this.icon, this.iconAsset});
+
+  final IconData? icon;
+  final SvgGenImage? iconAsset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40.w,
+      height: 40.w,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.brandPurple.withValues(alpha: 0.12),
+      ),
+      child: iconAsset == null
+          ? Icon(icon, size: 20.sp, color: AppColors.brandPurple)
+          : ShaderMask(
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (rect) => AppGradients.brand.createShader(rect),
+              child: iconAsset!.svg(width: 20.sp, height: 20.sp),
+            ),
     );
   }
 }

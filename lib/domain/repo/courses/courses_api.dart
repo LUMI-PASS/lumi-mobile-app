@@ -38,6 +38,11 @@ enum CoursePurchaseOption {
 /// Why the server refuses a purchase. The server decides — the app only
 /// explains, so a button can never offer something checkout will reject.
 enum CourseBlockedReason {
+  /// The course is an INTAKE: still recruiting, no schedule yet, so nothing is
+  /// on sale. Not a fault — the screen offers a waitlist instead of buttons,
+  /// which is why it is kept apart from [notConfigured].
+  intake('intake'),
+
   /// The admin hasn't finished setting this course up (no price, no dates).
   notConfigured('not_configured'),
 
@@ -84,6 +89,8 @@ enum CourseBlockedReason {
   /// Translation key for the message shown under a disabled buy button.
   String get messageKey {
     switch (this) {
+      case CourseBlockedReason.intake:
+        return 'course_blocked_intake';
       case CourseBlockedReason.notConfigured:
         return 'course_blocked_not_configured';
       case CourseBlockedReason.ended:
@@ -432,6 +439,69 @@ class CourseLevel {
 ///
 /// [flat] is always present: for a levelled course the server mirrors the level
 /// a level-less client would buy into it, so nothing here can be null.
+/// One group of an intake, and whether this user already signed up for it.
+class CourseIntakeGroup {
+  const CourseIntakeGroup({
+    this.subcourseId,
+    this.name,
+    this.waitlistJoined = false,
+    this.waitlistEntryId,
+  });
+
+  final String? subcourseId;
+  final String? name;
+  final bool waitlistJoined;
+  final String? waitlistEntryId;
+
+  factory CourseIntakeGroup.fromJson(Map<String, dynamic> j) =>
+      CourseIntakeGroup(
+        subcourseId: j['subcourse_id'] as String?,
+        name: j['name'] as String?,
+        waitlistJoined: j['waitlist_joined'] as bool? ?? false,
+        waitlistEntryId: j['waitlist_entry_id'] as String?,
+      );
+}
+
+/// A course that is RECRUITING: no schedule yet, so nothing is on sale. The
+/// screen shows a "Набор" badge and one button — join the waitlist — in place
+/// of the trial/buy pair. Joining costs nothing and holds no seat.
+class CourseIntake {
+  const CourseIntake({
+    this.isOpen = true,
+    this.waitlistJoined = false,
+    this.waitlistEntryId,
+    this.groups = const [],
+  });
+
+  final bool isOpen;
+
+  /// True when this user already holds a place in any group.
+  final bool waitlistJoined;
+  final String? waitlistEntryId;
+  final List<CourseIntakeGroup> groups;
+
+  factory CourseIntake.fromJson(Map<String, dynamic> j) => CourseIntake(
+        isOpen: j['is_open'] as bool? ?? true,
+        waitlistJoined: j['waitlist_joined'] as bool? ?? false,
+        waitlistEntryId: j['waitlist_entry_id'] as String?,
+        groups: ((j['groups'] as List?) ?? [])
+            .map((e) =>
+                CourseIntakeGroup.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+      );
+
+  /// This user's live entry for [subcourseId] — or for the course as a whole
+  /// when the intake has no groups.
+  String? entryIdFor(String? subcourseId) {
+    for (final group in groups) {
+      if (group.subcourseId == subcourseId) {
+        return group.waitlistJoined ? group.waitlistEntryId : null;
+      }
+    }
+    return groups.isEmpty && waitlistJoined ? waitlistEntryId : null;
+  }
+}
+
 class CourseDetail {
   const CourseDetail({
     required this.activityId,
@@ -439,6 +509,8 @@ class CourseDetail {
     required this.levels,
     required this.flat,
     this.defaultLevelId,
+    this.type,
+    this.intake,
   });
 
   final String activityId;
@@ -448,6 +520,17 @@ class CourseDetail {
 
   /// The level a client that cannot choose one would buy.
   final String? defaultLevelId;
+
+  /// `activity` | `course` | `intake`. Absent on an older server — read as a
+  /// course, which is what every course was before intakes existed.
+  final String? type;
+
+  /// Present only on an intake; null on a normal course.
+  final CourseIntake? intake;
+
+  /// The ONLY test for an intake. A course that merely has no schedule is a
+  /// misconfigured course, not an intake.
+  bool get isIntake => type == 'intake';
 
   factory CourseDetail.fromJson(Map<String, dynamic> j) {
     final levels = ((j['subcourses'] as List?) ?? [])
@@ -462,6 +545,10 @@ class CourseDetail {
       levels: levels,
       flat: CourseLevel.fromJson(j),
       defaultLevelId: j['default_subcourse_id'] as String?,
+      type: j['type'] as String?,
+      intake: j['intake'] is Map
+          ? CourseIntake.fromJson(Map<String, dynamic>.from(j['intake'] as Map))
+          : null,
     );
   }
 }
@@ -600,6 +687,34 @@ class CoursesApi {
     };
     final res = await _dio.post('courses/$activityId/checkout', data: body);
     return CheckoutResult.fromJson(_unwrap(res.data));
+  }
+
+  /// Put a child down for an INTAKE.
+  ///
+  /// NOT a purchase: no order is created, no money moves and no seat is held.
+  /// All it records is that this child is interested, so the centre can call.
+  /// [subcourseId] is required when the intake is split into groups.
+  ///
+  /// There is no way off the list from the app: a parent who changes their
+  /// mind says so when the centre rings. The server can still withdraw an
+  /// entry — nothing here asks it to.
+  Future<String> joinWaitlist({
+    required String activityId,
+    String? subcourseId,
+    String? childId,
+    String? phone,
+    String? note,
+  }) async {
+    final res = await _dio.post(
+      'courses/$activityId/waitlist',
+      data: {
+        if (subcourseId != null) 'subcourse_id': subcourseId,
+        if (childId != null) 'child_id': childId,
+        if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
+    return _unwrap(res.data)['entry_id'] as String? ?? '';
   }
 
   Map<String, dynamic> _unwrap(dynamic raw) => raw is Map && raw['data'] is Map

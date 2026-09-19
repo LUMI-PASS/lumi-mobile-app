@@ -355,7 +355,10 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                 imageUrl: images[i],
                 fit: BoxFit.cover,
                 placeholder: (_, __) => _imgShimmer(c),
-                errorWidget: (_, __, ___) => _imgShimmer(c),
+                // A URL that failed is not "still loading" — shimmering at it
+                // never stops, and an endless shimmer drives an animation
+                // frame every vsync under the blurred top scrim.
+                errorWidget: (_, __, ___) => ColoredBox(color: c.control),
               ),
             )
           else
