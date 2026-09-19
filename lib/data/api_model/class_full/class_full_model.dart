@@ -45,6 +45,17 @@ class ClassFullModel {
   final CategorySummary? category;
   final bool isParentControlRequired;
 
+  /// Whether THIS viewer has already paid for this activity — a ticket, a
+  /// course trial or a whole enrolment all count (see the backend's
+  /// `viewer_purchased`). False for a signed-out viewer, and on older payloads
+  /// which carry no such field.
+  ///
+  /// NOT currently read by any screen: the venue's arrival clip and phone
+  /// numbers were once gated on it and are now shown to everyone. Parsed
+  /// because the endpoint sends it, and because re-gating them is a one-line
+  /// change here rather than a backend deploy.
+  final bool viewerPurchased;
+
   /// A COURSE is its own kind of thing, not a category — it keeps a normal
   /// category and is additionally flagged here. It is sold as a package (the
   /// trial lessons, or the whole course) rather than per session, so the detail
@@ -101,6 +112,7 @@ class ClassFullModel {
     required this.branch,
     required this.category,
     required this.isParentControlRequired,
+    this.viewerPurchased = false,
     this.isCourse = false,
     this.courseTrials = const {},
   });
@@ -266,6 +278,7 @@ class ClassFullModel {
           : null,
       isParentControlRequired:
           json['is_parent_control_required'] == true,
+      viewerPurchased: json['viewer_purchased'] == true,
       isCourse: json['is_course'] == true,
       courseTrials: _courseTrials(json['course']),
     );
@@ -471,6 +484,17 @@ class BranchSummary {
   final double? lat;
   final double? lng;
 
+  /// The centre's "how to find us" clip — a YouTube link in practice, though
+  /// any playable link is accepted (see [RouteVideoTile]). Configured on the
+  /// branch, so every activity at this venue carries the same one.
+  final String? videoUrl;
+
+  /// The centre's OWN phone numbers, as typed in the console (punctuation and
+  /// all — the clients strip it for `tel:`).
+  ///
+  /// Shown on branch detail and under the map on activity detail.
+  final List<String> supportPhones;
+
   BranchSummary({
     required this.id,
     required this.title,
@@ -478,10 +502,13 @@ class BranchSummary {
     required this.address,
     required this.lat,
     required this.lng,
+    this.videoUrl,
+    this.supportPhones = const <String>[],
   });
 
   factory BranchSummary.fromJson(Map<String, dynamic> json) {
     final loc = json['location'];
+    final phones = json['support_phones'];
     return BranchSummary(
       id: json['_id']?.toString() ?? json['id']?.toString(),
       title: json['title']?.toString(),
@@ -495,6 +522,15 @@ class BranchSummary {
       lng: loc is Map && loc['lng'] is num
           ? (loc['lng'] as num).toDouble()
           : null,
+      videoUrl: json['video_url']?.toString(),
+      // Blank rows are dropped here rather than at the call site: a number a
+      // parent can tap has to be one that can actually be dialled.
+      supportPhones: phones is List
+          ? phones
+              .map((e) => e?.toString().trim() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList(growable: false)
+          : const <String>[],
     );
   }
 }

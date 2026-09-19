@@ -27,6 +27,7 @@ import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/location_preview_map.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
+import 'package:lumi_pass/common/widget/route_video_tile.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -41,6 +42,7 @@ import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:shimmer/shimmer.dart';
 
 @RoutePage()
@@ -55,6 +57,10 @@ class ClassDetailPage extends StatefulWidget {
 
 /// Hero carousel height — also the distance the top scrim fades in over.
 const double _kHeroHeight = 300;
+
+/// The venue strip on the location card — the map, and the arrival clip beside
+/// it. Same height as branch detail's, so the two pages read as one place.
+const double _kVenueStripHeight = 140;
 
 class _ClassDetailPageState extends State<ClassDetailPage> {
   bool _isFavorite = false;
@@ -231,6 +237,32 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       if (value is String && value.trim().isNotEmpty) return value.trim();
     }
     return null;
+  }
+
+  // ─── Venue contact ────────────────────────────────────────────────────────
+  /// The centre's "how to get here" clip, from the branch.
+  ///
+  /// Shown to everyone, not only to buyers: the clip answers "can I actually
+  /// get there" — which door off the courtyard, which floor — and that is a
+  /// question a parent asks BEFORE paying, not after.
+  String? get _venueVideoUrl => _full?.branch?.videoUrl;
+
+  bool get _hasVenueVideo => RouteVideoTile.canPlay(_venueVideoUrl);
+
+  /// The centre's own phone numbers. Already trimmed of blanks by
+  /// [BranchSummary.fromJson].
+  List<String> get _venuePhones =>
+      _full?.branch?.supportPhones ?? const <String>[];
+
+  /// Dials a number. `tel:` wants it unpunctuated — the console stores it the
+  /// way a human reads it, so the digits are pulled back out here.
+  ///
+  /// Silent on failure by design: a device with no dialler (a tablet) is not
+  /// an error worth a snackbar over a row that simply does nothing.
+  Future<void> _callVenue(String phone) async {
+    final digits = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (digits.isEmpty) return;
+    await launchUrl(Uri.parse('tel:$digits'));
   }
 
   // ─── Coupon discount helpers ──────────────────────────────────────────────
@@ -810,7 +842,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           'class-detail-description',
           _descriptionCard(c, title, description),
         ),
-      if (_venueLat != null && _venueLng != null)
+      // The card carries the map, and — after a purchase — the centre's own
+      // arrival clip and phone numbers. A venue with no usable coordinates
+      // still gets the card once it has those to show.
+      if (_venue != null || _hasVenueVideo || _venuePhones.isNotEmpty)
         _detailSection(
           'class-detail-location',
           _locationCard(c, branchTitle),
@@ -1365,7 +1400,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// sheet would open, spelled out for a parent reading rather than tapping.
   Widget _locationCard(AppColorScheme c, String branchTitle) {
     final address = _venueAddress;
-    final venue = _venue!;
+    final venue = _venue;
+    final hasVideo = _hasVenueVideo;
+    final phones = _venuePhones;
 
     return DetailCard(
       c: c,
@@ -1378,19 +1415,74 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             iconGradient: AppGradients.brand,
             title: 'detail_location'.tr(),
           ),
-          12.verticalSpace,
-          LocationPreviewMap(
-            lat: venue.$1,
-            lng: venue.$2,
-            title: branchTitle,
-            subtitle: address,
-          ),
+          // The map, and beside it the centre's arrival clip — the map gets a
+          // parent to the building, the clip gets them in (which door off the
+          // courtyard, which floor). Both in the same glance, because someone
+          // standing outside needs the second one and will not scroll for it.
+          if (venue != null || hasVideo) ...[
+            12.verticalSpace,
+            SizedBox(
+              height: _kVenueStripHeight.h,
+              child: Row(
+                children: [
+                  if (venue != null)
+                    Expanded(
+                      child: LocationPreviewMap(
+                        lat: venue.$1,
+                        lng: venue.$2,
+                        title: branchTitle,
+                        subtitle: address,
+                        height: _kVenueStripHeight.h,
+                      ),
+                    ),
+                  if (venue != null && hasVideo) 8.horizontalSpace,
+                  if (hasVideo)
+                    // Expanded when it stands alone: with no map beside it, a
+                    // 104px tile in an empty row reads as a broken image.
+                    // (A tight width from Expanded overrides the tile's own
+                    // default; an infinite one inside a Row would assert.)
+                    if (venue == null)
+                      Expanded(
+                        child: RouteVideoTile(
+                          url: _venueVideoUrl,
+                          height: _kVenueStripHeight.h,
+                        ),
+                      )
+                    else
+                      RouteVideoTile(
+                        url: _venueVideoUrl,
+                        height: _kVenueStripHeight.h,
+                      ),
+                ],
+              ),
+            ),
+          ],
           if (address != null && address.trim().isNotEmpty) ...[
             10.verticalSpace,
             Text(
               address.trim(),
               style: AppText.regular13.copyWith(color: c.textSecondary),
             ),
+          ],
+          // The centre's own lines, under the address they belong to.
+          if (phones.isNotEmpty) ...[
+            14.verticalSpace,
+            Text(
+              'detail_venue_contact'.tr(),
+              style: AppText.medium13.copyWith(color: c.textSecondary),
+            ),
+            8.verticalSpace,
+            ...List.generate(phones.length, (i) {
+              return Padding(
+                padding:
+                    EdgeInsets.only(bottom: i == phones.length - 1 ? 0 : 8.h),
+                child: _VenuePhoneRow(
+                  c: c,
+                  phone: phones[i],
+                  onTap: () => _callVenue(phones[i]),
+                ),
+              );
+            }),
           ],
         ],
       ),
@@ -1684,6 +1776,56 @@ class _PriceRow extends StatelessWidget {
 }
 
 /// One line of an important-notes / what-to-bring list.
+/// One of the centre's own phone numbers, as a tappable row.
+///
+/// The number is drawn exactly as the console stored it, punctuation included:
+/// that is the form a parent recognises and can read back aloud. Only the
+/// `tel:` handoff strips it.
+class _VenuePhoneRow extends StatelessWidget {
+  const _VenuePhoneRow({
+    required this.c,
+    required this.phone,
+    required this.onTap,
+  });
+
+  final AppColorScheme c;
+  final String phone;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: c.control,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.call_rounded, size: 18.w, color: AppColors.brandPurple),
+            10.horizontalSpace,
+            Expanded(
+              child: Text(
+                phone,
+                style: AppText.medium14.copyWith(color: c.textPrimary),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20.w,
+              color: c.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _BulletRow extends StatelessWidget {
   const _BulletRow({required this.c, required this.text});
   final AppColorScheme c;
