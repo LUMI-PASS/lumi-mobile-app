@@ -32,7 +32,23 @@ class SearchBuildable with _$SearchBuildable {
     @Default(1) int classesTotalPages,
     @Default(1) int branchesTotalPages,
     @Default([]) List<HomCategory> categories,
-    HomCategory? selectedCategory,
+
+    /// Activities the user last opened from this screen, newest first.
+    /// Persisted — see `RecentSearchStore`.
+    @Default([]) List<HomClass> recentClasses,
+
+    /// True while the screen is showing [recentClasses] instead of results.
+    ///
+    /// The state search opens in when it was reached from Home's search field:
+    /// the user asked to type, not to be handed a page of everything. Anything
+    /// that names what they want — a character typed, a category, a filter, a
+    /// tab — turns this off and runs the real query.
+    @Default(false) bool showRecents,
+
+    /// The category filter — multi-select: an empty list means "all
+    /// categories". Kept as the resolved objects (not bare ids) so chips and
+    /// the picker sheet have a title to show without a second lookup.
+    @Default([]) List<HomCategory> selectedCategories,
     FilterResult? filter,
     @Default(null) double? lat,
     @Default(null) double? lng,

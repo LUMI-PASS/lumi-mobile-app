@@ -133,6 +133,7 @@ flutter:
     - assets/icons/notification/
     - assets/icons/profile/
     - assets/icons/coupons/
+    - assets/icons/shop/
     - assets/images/
     - assets/images/banner/
     - assets/images/mascot/

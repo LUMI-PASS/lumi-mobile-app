@@ -85,9 +85,9 @@ abstract final class DeepLinkRoutes {
 
   // Visual tab order — must match `routes` in main_page.dart's AutoTabsScaffold.
   static const int _tabHome = 0;
-  static const int _tabShorts = 1;
-  static const int _tabCalendar = 2;
-  static const int _tabSearch = 3;
+  static const int _tabMap = 1;
+  static const int _tabShorts = 2;
+  static const int _tabCalendar = 3;
   static const int _tabProfile = 4;
 
   /// Hosts whose `https://` links belong to us and must open IN the app rather
@@ -182,8 +182,13 @@ abstract final class DeepLinkRoutes {
         const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabShorts),
     'calendar':
         const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabCalendar),
-    'search':
-        const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabSearch),
+    // `search` used to be the Учреждения tab, which is off the bar for now.
+    // The link still has to land somewhere sensible, and what anyone following
+    // it wants is the search screen — the same one `discovery` opens.
+    'search': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (_) => SearchDiscoveryRoute(autofocusSearch: true),
+    ),
     'profile':
         const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabProfile),
 
@@ -200,10 +205,9 @@ abstract final class DeepLinkRoutes {
       mode: DeepLinkNavMode.root,
       build: (_) => SearchDiscoveryRoute(autofocusSearch: true),
     ),
-    'map': DeepLinkRoute(
-      mode: DeepLinkNavMode.root,
-      build: (_) => BranchesMapRoute(),
-    ),
+    // The map has its own tab now, so the link switches to it rather than
+    // pushing a second copy on top of whatever the user was looking at.
+    'map': const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabMap),
 
     // ── Money ──────────────────────────────────────────────────────────────
     'plans': DeepLinkRoute(

@@ -59,13 +59,18 @@ class CustomBottomBar extends StatelessWidget {
   /// Figma `Primary/Grey` — unselected icon/label in dark mode.
   static const Color _figmaGrey = Color(0xFFA5A6BB);
 
-  // Tab icon + localization key, per tab (Figma order:
-  // Главный · Видео · Броны · Учреждения · Профиль).
+  // Tab icon + localization key, per tab:
+  // Главный · Карта · Видео · Броны · Профиль.
+  //
+  // `Учреждения` (tab_explore) is not here: the centres section is still a
+  // coming-soon card, and the map — which shows those same centres, and is
+  // something you can actually use — took its place. Keep this list in step
+  // with `routes` in `MainPage.build`.
   static final List<(SvgGenImage, String)> _tabs = [
     (Assets.icons.home.home, 'tab_home'),
+    (Assets.icons.home.map, 'tab_map'),
     (Assets.icons.home.video, 'tab_shorts'),
     (Assets.icons.home.calendar, 'tab_bookings'),
-    (Assets.icons.home.building, 'tab_explore'),
     (Assets.icons.home.profile, 'tab_profile'),
   ];
 
@@ -73,6 +78,15 @@ class CustomBottomBar extends StatelessWidget {
   /// system's own lives down there (iOS home indicator included — it floats
   /// over the glass rather than covering it).
   static const double _floatGap = 20;
+
+  /// The pill's own height.
+  ///
+  /// A tab that draws UNDER the bar does not need to know this: `MainPage`'s
+  /// `AutoTabsScaffold` runs with `extendBody: true`, and Flutter's Scaffold
+  /// then reports the whole bar's height (this, its float gap, and the
+  /// profile banner when that is up) as `MediaQuery.padding.bottom` inside
+  /// the tab. Read it there — see `BranchesMapView`.
+  static const double _barHeight = 50;
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +138,7 @@ class CustomBottomBar extends StatelessWidget {
       borderWidth: 1,
       borderRadius: 56,
       blurSigma: 24,
-      height: 50,
+      height: _barHeight,
       horizontalPadding: 16,
       // The package's gap below the bar is `MediaQuery.padding.bottom +
       // bottomPadding`, which on a home-indicator iPhone floats the bar ~46pt

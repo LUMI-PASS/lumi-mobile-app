@@ -26,6 +26,7 @@ import 'package:lumi_pass/data/service/appsflyer_service.dart' as _i260;
 import 'package:lumi_pass/data/service/interest_reporter.dart' as _i606;
 import 'package:lumi_pass/data/service/meta_service.dart' as _i295;
 import 'package:lumi_pass/data/service/push_notification_service.dart' as _i361;
+import 'package:lumi_pass/data/service/recent_search_store.dart' as _i789;
 import 'package:lumi_pass/data/storage/storage.dart' as _i279;
 import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
@@ -118,6 +119,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i260.AppsFlyerService(gh<_i279.Storage>()));
     gh.lazySingleton<_i295.MetaService>(
         () => _i295.MetaService(gh<_i279.Storage>()));
+    gh.lazySingleton<_i789.RecentSearchStore>(
+        () => _i789.RecentSearchStore(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
     gh.lazySingleton<_i361.PushNotificationService>(
@@ -165,8 +168,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i133.ProfileDetailCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i239.ChildrenCubit>(
         () => _i239.ChildrenCubit(gh<_i526.HomeRepository>()));
-    gh.factory<_i999.SearchCubit>(
-        () => _i999.SearchCubit(gh<_i526.HomeRepository>()));
     gh.factory<_i890.WalletRepository>(
         () => _i728.WalletRepositoryImpl(gh<_i605.WalletApi>()));
     gh.factory<_i749.VerifyCubit>(() => _i749.VerifyCubit(
@@ -187,6 +188,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i66.ShopRepositoryImpl(gh<_i323.ShopApi>()));
     gh.factory<_i822.WalletCubit>(
         () => _i822.WalletCubit(gh<_i890.WalletRepository>()));
+    gh.factory<_i999.SearchCubit>(() => _i999.SearchCubit(
+          gh<_i526.HomeRepository>(),
+          gh<_i789.RecentSearchStore>(),
+        ));
     gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
           gh<_i279.Storage>(),
           gh<_i526.HomeRepository>(),

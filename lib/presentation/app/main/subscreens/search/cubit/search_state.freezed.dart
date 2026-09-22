@@ -29,7 +29,24 @@ mixin _$SearchBuildable {
   int get classesTotalPages => throw _privateConstructorUsedError;
   int get branchesTotalPages => throw _privateConstructorUsedError;
   List<HomCategory> get categories => throw _privateConstructorUsedError;
-  HomCategory? get selectedCategory => throw _privateConstructorUsedError;
+
+  /// Activities the user last opened from this screen, newest first.
+  /// Persisted — see `RecentSearchStore`.
+  List<HomClass> get recentClasses => throw _privateConstructorUsedError;
+
+  /// True while the screen is showing [recentClasses] instead of results.
+  ///
+  /// The state search opens in when it was reached from Home's search field:
+  /// the user asked to type, not to be handed a page of everything. Anything
+  /// that names what they want — a character typed, a category, a filter, a
+  /// tab — turns this off and runs the real query.
+  bool get showRecents => throw _privateConstructorUsedError;
+
+  /// The category filter — multi-select: an empty list means "all
+  /// categories". Kept as the resolved objects (not bare ids) so chips and
+  /// the picker sheet have a title to show without a second lookup.
+  List<HomCategory> get selectedCategories =>
+      throw _privateConstructorUsedError;
   FilterResult? get filter => throw _privateConstructorUsedError;
   double? get lat => throw _privateConstructorUsedError;
   double? get lng => throw _privateConstructorUsedError;
@@ -59,12 +76,12 @@ abstract class $SearchBuildableCopyWith<$Res> {
       int classesTotalPages,
       int branchesTotalPages,
       List<HomCategory> categories,
-      HomCategory? selectedCategory,
+      List<HomClass> recentClasses,
+      bool showRecents,
+      List<HomCategory> selectedCategories,
       FilterResult? filter,
       double? lat,
       double? lng});
-
-  $HomCategoryCopyWith<$Res>? get selectedCategory;
 }
 
 /// @nodoc
@@ -93,7 +110,9 @@ class _$SearchBuildableCopyWithImpl<$Res, $Val extends SearchBuildable>
     Object? classesTotalPages = null,
     Object? branchesTotalPages = null,
     Object? categories = null,
-    Object? selectedCategory = freezed,
+    Object? recentClasses = null,
+    Object? showRecents = null,
+    Object? selectedCategories = null,
     Object? filter = freezed,
     Object? lat = freezed,
     Object? lng = freezed,
@@ -151,10 +170,18 @@ class _$SearchBuildableCopyWithImpl<$Res, $Val extends SearchBuildable>
           ? _value.categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>,
-      selectedCategory: freezed == selectedCategory
-          ? _value.selectedCategory
-          : selectedCategory // ignore: cast_nullable_to_non_nullable
-              as HomCategory?,
+      recentClasses: null == recentClasses
+          ? _value.recentClasses
+          : recentClasses // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      showRecents: null == showRecents
+          ? _value.showRecents
+          : showRecents // ignore: cast_nullable_to_non_nullable
+              as bool,
+      selectedCategories: null == selectedCategories
+          ? _value.selectedCategories
+          : selectedCategories // ignore: cast_nullable_to_non_nullable
+              as List<HomCategory>,
       filter: freezed == filter
           ? _value.filter
           : filter // ignore: cast_nullable_to_non_nullable
@@ -168,18 +195,6 @@ class _$SearchBuildableCopyWithImpl<$Res, $Val extends SearchBuildable>
           : lng // ignore: cast_nullable_to_non_nullable
               as double?,
     ) as $Val);
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $HomCategoryCopyWith<$Res>? get selectedCategory {
-    if (_value.selectedCategory == null) {
-      return null;
-    }
-
-    return $HomCategoryCopyWith<$Res>(_value.selectedCategory!, (value) {
-      return _then(_value.copyWith(selectedCategory: value) as $Val);
-    });
   }
 }
 
@@ -205,13 +220,12 @@ abstract class _$$SearchBuildableImplCopyWith<$Res>
       int classesTotalPages,
       int branchesTotalPages,
       List<HomCategory> categories,
-      HomCategory? selectedCategory,
+      List<HomClass> recentClasses,
+      bool showRecents,
+      List<HomCategory> selectedCategories,
       FilterResult? filter,
       double? lat,
       double? lng});
-
-  @override
-  $HomCategoryCopyWith<$Res>? get selectedCategory;
 }
 
 /// @nodoc
@@ -238,7 +252,9 @@ class __$$SearchBuildableImplCopyWithImpl<$Res>
     Object? classesTotalPages = null,
     Object? branchesTotalPages = null,
     Object? categories = null,
-    Object? selectedCategory = freezed,
+    Object? recentClasses = null,
+    Object? showRecents = null,
+    Object? selectedCategories = null,
     Object? filter = freezed,
     Object? lat = freezed,
     Object? lng = freezed,
@@ -296,10 +312,18 @@ class __$$SearchBuildableImplCopyWithImpl<$Res>
           ? _value._categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>,
-      selectedCategory: freezed == selectedCategory
-          ? _value.selectedCategory
-          : selectedCategory // ignore: cast_nullable_to_non_nullable
-              as HomCategory?,
+      recentClasses: null == recentClasses
+          ? _value._recentClasses
+          : recentClasses // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      showRecents: null == showRecents
+          ? _value.showRecents
+          : showRecents // ignore: cast_nullable_to_non_nullable
+              as bool,
+      selectedCategories: null == selectedCategories
+          ? _value._selectedCategories
+          : selectedCategories // ignore: cast_nullable_to_non_nullable
+              as List<HomCategory>,
       filter: freezed == filter
           ? _value.filter
           : filter // ignore: cast_nullable_to_non_nullable
@@ -333,13 +357,17 @@ class _$SearchBuildableImpl implements _SearchBuildable {
       this.classesTotalPages = 1,
       this.branchesTotalPages = 1,
       final List<HomCategory> categories = const [],
-      this.selectedCategory,
+      final List<HomClass> recentClasses = const [],
+      this.showRecents = false,
+      final List<HomCategory> selectedCategories = const [],
       this.filter,
       this.lat = null,
       this.lng = null})
       : _classes = classes,
         _branches = branches,
-        _categories = categories;
+        _categories = categories,
+        _recentClasses = recentClasses,
+        _selectedCategories = selectedCategories;
 
   @override
   @JsonKey()
@@ -398,8 +426,47 @@ class _$SearchBuildableImpl implements _SearchBuildable {
     return EqualUnmodifiableListView(_categories);
   }
 
+  /// Activities the user last opened from this screen, newest first.
+  /// Persisted — see `RecentSearchStore`.
+  final List<HomClass> _recentClasses;
+
+  /// Activities the user last opened from this screen, newest first.
+  /// Persisted — see `RecentSearchStore`.
   @override
-  final HomCategory? selectedCategory;
+  @JsonKey()
+  List<HomClass> get recentClasses {
+    if (_recentClasses is EqualUnmodifiableListView) return _recentClasses;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_recentClasses);
+  }
+
+  /// True while the screen is showing [recentClasses] instead of results.
+  ///
+  /// The state search opens in when it was reached from Home's search field:
+  /// the user asked to type, not to be handed a page of everything. Anything
+  /// that names what they want — a character typed, a category, a filter, a
+  /// tab — turns this off and runs the real query.
+  @override
+  @JsonKey()
+  final bool showRecents;
+
+  /// The category filter — multi-select: an empty list means "all
+  /// categories". Kept as the resolved objects (not bare ids) so chips and
+  /// the picker sheet have a title to show without a second lookup.
+  final List<HomCategory> _selectedCategories;
+
+  /// The category filter — multi-select: an empty list means "all
+  /// categories". Kept as the resolved objects (not bare ids) so chips and
+  /// the picker sheet have a title to show without a second lookup.
+  @override
+  @JsonKey()
+  List<HomCategory> get selectedCategories {
+    if (_selectedCategories is EqualUnmodifiableListView)
+      return _selectedCategories;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_selectedCategories);
+  }
+
   @override
   final FilterResult? filter;
   @override
@@ -411,7 +478,7 @@ class _$SearchBuildableImpl implements _SearchBuildable {
 
   @override
   String toString() {
-    return 'SearchBuildable(isLoading: $isLoading, isLoadingMore: $isLoadingMore, classesLoaded: $classesLoaded, branchesLoaded: $branchesLoaded, activeTab: $activeTab, searchTerm: $searchTerm, classes: $classes, branches: $branches, classesPage: $classesPage, branchesPage: $branchesPage, classesTotalPages: $classesTotalPages, branchesTotalPages: $branchesTotalPages, categories: $categories, selectedCategory: $selectedCategory, filter: $filter, lat: $lat, lng: $lng)';
+    return 'SearchBuildable(isLoading: $isLoading, isLoadingMore: $isLoadingMore, classesLoaded: $classesLoaded, branchesLoaded: $branchesLoaded, activeTab: $activeTab, searchTerm: $searchTerm, classes: $classes, branches: $branches, classesPage: $classesPage, branchesPage: $branchesPage, classesTotalPages: $classesTotalPages, branchesTotalPages: $branchesTotalPages, categories: $categories, recentClasses: $recentClasses, showRecents: $showRecents, selectedCategories: $selectedCategories, filter: $filter, lat: $lat, lng: $lng)';
   }
 
   @override
@@ -443,33 +510,40 @@ class _$SearchBuildableImpl implements _SearchBuildable {
                 other.branchesTotalPages == branchesTotalPages) &&
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
-            (identical(other.selectedCategory, selectedCategory) ||
-                other.selectedCategory == selectedCategory) &&
+            const DeepCollectionEquality()
+                .equals(other._recentClasses, _recentClasses) &&
+            (identical(other.showRecents, showRecents) ||
+                other.showRecents == showRecents) &&
+            const DeepCollectionEquality()
+                .equals(other._selectedCategories, _selectedCategories) &&
             (identical(other.filter, filter) || other.filter == filter) &&
             (identical(other.lat, lat) || other.lat == lat) &&
             (identical(other.lng, lng) || other.lng == lng));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isLoading,
-      isLoadingMore,
-      classesLoaded,
-      branchesLoaded,
-      activeTab,
-      searchTerm,
-      const DeepCollectionEquality().hash(_classes),
-      const DeepCollectionEquality().hash(_branches),
-      classesPage,
-      branchesPage,
-      classesTotalPages,
-      branchesTotalPages,
-      const DeepCollectionEquality().hash(_categories),
-      selectedCategory,
-      filter,
-      lat,
-      lng);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        isLoading,
+        isLoadingMore,
+        classesLoaded,
+        branchesLoaded,
+        activeTab,
+        searchTerm,
+        const DeepCollectionEquality().hash(_classes),
+        const DeepCollectionEquality().hash(_branches),
+        classesPage,
+        branchesPage,
+        classesTotalPages,
+        branchesTotalPages,
+        const DeepCollectionEquality().hash(_categories),
+        const DeepCollectionEquality().hash(_recentClasses),
+        showRecents,
+        const DeepCollectionEquality().hash(_selectedCategories),
+        filter,
+        lat,
+        lng
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -494,7 +568,9 @@ abstract class _SearchBuildable implements SearchBuildable {
       final int classesTotalPages,
       final int branchesTotalPages,
       final List<HomCategory> categories,
-      final HomCategory? selectedCategory,
+      final List<HomClass> recentClasses,
+      final bool showRecents,
+      final List<HomCategory> selectedCategories,
       final FilterResult? filter,
       final double? lat,
       final double? lng}) = _$SearchBuildableImpl;
@@ -526,7 +602,25 @@ abstract class _SearchBuildable implements SearchBuildable {
   @override
   List<HomCategory> get categories;
   @override
-  HomCategory? get selectedCategory;
+
+  /// Activities the user last opened from this screen, newest first.
+  /// Persisted — see `RecentSearchStore`.
+  List<HomClass> get recentClasses;
+  @override
+
+  /// True while the screen is showing [recentClasses] instead of results.
+  ///
+  /// The state search opens in when it was reached from Home's search field:
+  /// the user asked to type, not to be handed a page of everything. Anything
+  /// that names what they want — a character typed, a category, a filter, a
+  /// tab — turns this off and runs the real query.
+  bool get showRecents;
+  @override
+
+  /// The category filter — multi-select: an empty list means "all
+  /// categories". Kept as the resolved objects (not bare ids) so chips and
+  /// the picker sheet have a title to show without a second lookup.
+  List<HomCategory> get selectedCategories;
   @override
   FilterResult? get filter;
   @override

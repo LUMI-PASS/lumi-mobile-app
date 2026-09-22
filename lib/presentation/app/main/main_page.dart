@@ -89,11 +89,16 @@ class _MainPageState extends State<MainPage> {
     // Subscribe to locale changes so the bottom nav labels update immediately.
     context.locale;
 
+    // Order — Home · Map · Video · Bookings · Profile. The map is second
+    // because it is the other way to read the same catalog the home feed
+    // lists, so it belongs next to it. `Muassasalar` (the centres tab,
+    // `SearchPage`) is off the bar for now — the section is still a
+    // coming-soon card, and the centres it would have shown are on the map.
     final routes = <PageRouteInfo>[
       const HomeRoute(),
+      const MapRoute(),
       const ShortsRoute(),
       const CalendarRoute(),
-      const SearchRoute(),
       ProfileRoute(),
     ];
 

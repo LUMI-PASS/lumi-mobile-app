@@ -71,6 +71,15 @@ class Storage {
   /// which is the behaviour every store has trained people to expect.
   BaseStorage<List> get shopCart => BaseStorage(_box, 'shop_cart');
 
+  /// Activities the user last opened from the search screen, newest first, as
+  /// their raw `HomClass` JSON.
+  ///
+  /// Persisted so the search screen has something of the user's own to open on
+  /// instead of firing an unfiltered catalog query nobody asked for — see
+  /// [RecentSearchStore].
+  BaseStorage<List> get recentSearchClasses =>
+      BaseStorage(_box, 'recent_search_classes');
+
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
   /// Path of the parent's avatar on this device. The backend has no endpoint

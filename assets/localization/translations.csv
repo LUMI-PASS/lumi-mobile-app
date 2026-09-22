@@ -46,6 +46,7 @@ youtube,YouTube,YouTube,YouTube
 volume_unit,м³,m³,m³
 session_expired,"Учетная запись пользователя удалена, пожалуйста, войдите снова!",Foydalanuvchi akkounti o'chirilgan qayta login qiling!,"User account has been deleted, please log in again!"
 tab_home,Главная,Bosh sahifa,Home
+tab_map,Карта,Xarita,Map
 tab_shorts,Видео,Videolar,Shorts
 tab_bookings,Брони,Bronlar,Bookings
 tab_explore,Учреждения,Muassasalar,Institutions
@@ -842,6 +843,7 @@ detail_gender,Пол,Jinsi,Gender
 price_tier_children,Дети в возрасте,Yoshdagi bolalar,Children
 price_tier_all,Дети и взрослые,Bolalar va kattalar,Children & adults
 search_hint,Искать...,Qidirish...,Search...
+search_title,Поиск,Qidiruv,Search
 all_count,Все • {},Barchasi • {},All • {}
 all_label,Все,Barchasi,All
 view_on_map_subtitle,Просмотрите расположение на карте,Joylashuvni xaritada ko'ring,See the location on the map
@@ -959,6 +961,11 @@ filter_for_boys,Для мальчиков,O'g'il bolalar uchun,For boys
 filter_for_girls,Для девочек,Qiz bolalar uchun,For girls
 search_tab_classes,Занятия,Mashg'ulotlar,Activities
 search_tab_centers,Центры,Markazlar,Centres
+recent_searches,Недавние поиски,Oxirgi qidiruvlar,Recent searches
+recent_clear,Очистить,Tozalash,Clear
+map_search_hint,Поиск центров,Markazlarni qidirish,Search centres
+map_centres_count,Центров: {},Markazlar: {},Centres: {}
+map_no_centres,Ничего не найдено,Hech narsa topilmadi,Nothing found
 map_title,На карте,Xaritada,On the map
 filter_child,Ребёнок,Bola,Child
 all_activities,Все занятия,Hamma mashg'ulotlar,All activities

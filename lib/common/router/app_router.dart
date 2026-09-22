@@ -22,13 +22,16 @@ import 'package:lumi_pass/presentation/app/home/see_all/classes_grid_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/map/map_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/branches_map_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discovery_page.dart';
+// SearchPage (Учреждения) is off the bottom nav for now, but it is still a
+// @RoutePage, so the generated part file names it and needs this import.
+import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 // SearchDiscoveryRoute takes an ActivityKind — the generated part file names
 // the type but, being a part, imports nothing of its own.
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
 import 'package:lumi_pass/presentation/app/profile/children/child_detail_page.dart';
 import 'package:lumi_pass/presentation/app/profile/language/change_language_page.dart';
@@ -112,10 +115,13 @@ class AppRouter extends _$AppRouter {
       page: MainRoute.page,
       children: [
         AutoRoute(page: HomeRoute.page),
+        AutoRoute(page: MapRoute.page),
         AutoRoute(page: ShortsRoute.page),
-        AutoRoute(page: SearchRoute.page),
         AutoRoute(page: CalendarRoute.page),
         AutoRoute(page: ProfileRoute.page),
+        // `SearchRoute` (Учреждения) is deliberately absent: the tab is hidden
+        // until the centres section is real. The page and its cubit stay put
+        // so putting it back is a one-line change here and in `MainPage`.
       ],
     ),
 

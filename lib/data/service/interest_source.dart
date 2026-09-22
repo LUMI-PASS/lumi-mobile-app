@@ -40,6 +40,7 @@ const _sourceByRoute = <String, String>{
   'SearchRoute': InterestSource.search,
   'SearchDiscoveryRoute': InterestSource.search,
   'BranchesMapRoute': InterestSource.map,
+  'MapRoute': InterestSource.map,
   'BranchDetailRoute': InterestSource.branch,
   'ShortsRoute': InterestSource.shorts,
   'CalendarRoute': InterestSource.calendar,

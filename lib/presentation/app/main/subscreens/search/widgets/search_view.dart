@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
@@ -83,9 +84,15 @@ class _SearchViewState extends State<SearchView> {
   /// The type filter deliberately does NOT rename it. It is a filter over this
   /// list like age or price, and none of those rename the screen either — the
   /// filter badge is what says one is on.
-  String get _title => widget.state.activeTab == kSearchTabBranches
-      ? 'search_tab_centers'.tr()
-      : 'all_activities'.tr();
+  ///
+  /// On the recents screen it names THAT — the screen is not showing "all
+  /// activities", it is showing the handful the user looked at last.
+  String get _title {
+    if (widget.state.showRecents) return 'search_title'.tr();
+    return widget.state.activeTab == kSearchTabBranches
+        ? 'search_tab_centers'.tr()
+        : 'all_activities'.tr();
+  }
 
   Future<void> _openFilter() async {
     final cubit = context.read<SearchCubit>();
@@ -101,7 +108,7 @@ class _SearchViewState extends State<SearchView> {
       BranchesMapRoute(
         branches: widget.state.branches,
         categories: widget.state.categories,
-        selectedCategory: widget.state.selectedCategory,
+        selectedCategories: widget.state.selectedCategories,
       ),
     );
   }
@@ -111,15 +118,21 @@ class _SearchViewState extends State<SearchView> {
     final c = context.colors;
     final cubit = context.read<SearchCubit>();
     final state = widget.state;
-    final isClasses = state.activeTab != kSearchTabBranches;
-    final items = isClasses ? state.classes : state.branches;
 
-    // The active category filter, shown as a removable chip. A category with no
-    // resolved title would render as a bare × — skip it rather than show that.
-    final selectedCategory = state.selectedCategory;
-    final category = (selectedCategory?.title ?? '').isEmpty
-        ? null
-        : selectedCategory;
+    // Opened from Home's search field with nothing typed yet: the screen shows
+    // what this user last looked for, not a page of the whole catalog.
+    final showRecents = state.showRecents;
+    final isClasses = state.activeTab != kSearchTabBranches;
+    final items = showRecents
+        ? state.recentClasses
+        : (isClasses ? state.classes : state.branches);
+
+    // The active category filters, shown as removable chips — one per pick,
+    // multi-select. A category with no resolved title would render as a bare
+    // × — skip it rather than show that.
+    final selectedCategories = state.selectedCategories
+        .where((c) => (c.title ?? '').isNotEmpty)
+        .toList();
 
     // Two columns with a 16pt page margin and an 8pt gutter (Figma).
     final columnWidth = (1.sw - 32.w - 8.w) / 2;
@@ -141,31 +154,51 @@ class _SearchViewState extends State<SearchView> {
               filterCount: cubit.activeFilterCount,
               autofocus: widget.autofocusSearch,
             ),
-            16.verticalSpace,
-            SearchChips(
-              // Two chips, and one of them is always lit. Courses used to be a
-              // third: they now share the first list with activities, and
-              // narrowing to them is a filter (see `ActivityKind`) rather than
-              // a place. Display order matches the tab indices, so no remap.
-              labels: [
-                'search_tab_classes'.tr(),
-                'search_tab_centers'.tr(),
-              ],
-              activeIndex: state.activeTab,
-              onSelect: cubit.setTab,
-            ),
-            if (category != null) ...[
+            // The recents screen carries none of the result furniture: there
+            // are no tabs to switch, no total to count and no map to plot —
+            // those all describe a search that has not been made yet.
+            if (showRecents) ...[
+              24.verticalSpace,
+              _RecentHeader(onClear: cubit.clearRecents),
+              14.verticalSpace,
+            ] else ...[
               16.verticalSpace,
-              SearchCategoryChip(
-                label: category.title ?? '',
-                onRemove: () => cubit.selectCategory(null),
+              SearchChips(
+                // Two chips, and one of them is always lit. Courses used to be
+                // a third: they now share the first list with activities, and
+                // narrowing to them is a filter (see `ActivityKind`) rather
+                // than a place. Display order matches the tab indices, so no
+                // remap.
+                labels: [
+                  'search_tab_classes'.tr(),
+                  'search_tab_centers'.tr(),
+                ],
+                activeIndex: state.activeTab,
+                onSelect: cubit.setTab,
               ),
+              if (selectedCategories.isNotEmpty) ...[
+                16.verticalSpace,
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Wrap(
+                    spacing: 8.w,
+                    runSpacing: 8.h,
+                    children: [
+                      for (final cat in selectedCategories)
+                        SearchCategoryChip(
+                          label: cat.title ?? '',
+                          onRemove: () => cubit.toggleCategory(cat),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+              16.verticalSpace,
+              SearchMapCard(onTap: _openMap),
+              24.verticalSpace,
+              SearchCountRow(count: cubit.resultCount),
+              14.verticalSpace,
             ],
-            16.verticalSpace,
-            SearchMapCard(onTap: _openMap),
-            24.verticalSpace,
-            SearchCountRow(count: cubit.resultCount),
-            14.verticalSpace,
             Expanded(
               child: Builder(
                 builder: (context) {
@@ -173,8 +206,10 @@ class _SearchViewState extends State<SearchView> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 8.w,
                     mainAxisSpacing: 14.h,
-                    mainAxisExtent:
-                        (isClasses ? _classCardExtent : _branchCardExtent).h,
+                    mainAxisExtent: (isClasses || showRecents
+                            ? _classCardExtent
+                            : _branchCardExtent)
+                        .h,
                   );
                   final padding = EdgeInsets.fromLTRB(
                     16.w,
@@ -183,6 +218,30 @@ class _SearchViewState extends State<SearchView> {
                     MediaQuery.of(context).padding.bottom + 24.h,
                   );
 
+                  if (showRecents) {
+                    return GridView.builder(
+                      controller: _scrollController,
+                      padding: padding,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      gridDelegate: grid,
+                      itemCount: state.recentClasses.length,
+                      itemBuilder: (context, index) {
+                        final model = state.recentClasses[index];
+                        return HomeCourseCard(
+                          key: ValueKey(model.id ?? index),
+                          homClass: model,
+                          width: double.infinity,
+                          margin: EdgeInsets.zero,
+                          // Re-opening one moves it back to the front, so the
+                          // list stays ordered by what the user actually keeps
+                          // coming back to.
+                          onOpen: () => cubit.rememberRecent(model),
+                        );
+                      },
+                    );
+                  }
                   if (state.isLoading) {
                     return GridView.builder(
                       padding: padding,
@@ -212,6 +271,10 @@ class _SearchViewState extends State<SearchView> {
                             homClass: model,
                             width: double.infinity,
                             margin: EdgeInsets.zero,
+                            // What the user opens from a search IS the search,
+                            // as far as this screen is concerned — it is what
+                            // greets them next time (see [showRecents]).
+                            onOpen: () => cubit.rememberRecent(model),
                           );
                         }
                         final branch = state.branches[index];
@@ -257,6 +320,42 @@ class _CardSkeleton extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(12.r),
+      ),
+    );
+  }
+}
+
+/// "Recent searches" + the control that empties them.
+class _RecentHeader extends StatelessWidget {
+  const _RecentHeader({required this.onClear});
+
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'recent_searches'.tr(),
+              style: AppText.semibold16.copyWith(color: c.textPrimary),
+            ),
+          ),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onClear,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+              child: Text(
+                'recent_clear'.tr(),
+                style: AppText.medium13.copyWith(color: c.textSecondary),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -697,6 +697,9 @@ class $AssetsIconsHomeGen {
   /// File path: assets/icons/home/home.svg
   SvgGenImage get home => const SvgGenImage('assets/icons/home/home.svg');
 
+  /// File path: assets/icons/home/map.svg
+  SvgGenImage get map => const SvgGenImage('assets/icons/home/map.svg');
+
   /// File path: assets/icons/home/money.svg
   SvgGenImage get money => const SvgGenImage('assets/icons/home/money.svg');
 
@@ -739,6 +742,7 @@ class $AssetsIconsHomeGen {
         flash,
         heart,
         home,
+        map,
         money,
         notification,
         profile,

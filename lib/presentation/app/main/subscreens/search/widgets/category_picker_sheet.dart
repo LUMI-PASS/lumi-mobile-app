@@ -6,41 +6,44 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
 /// What the user picked in [CategoryPickerSheet].
 ///
-/// A wrapper rather than a bare `HomCategory?`, because "all categories" and
-/// "dismissed the sheet" are different answers and both would otherwise be
-/// `null`: the sheet returns `null` on dismissal and a result carrying a `null`
-/// [category] when the filter was cleared.
+/// A wrapper rather than a bare `List<HomCategory>`, because "cleared to all
+/// categories" and "dismissed the sheet" are different answers and both would
+/// otherwise be an empty list: the sheet returns `null` on dismissal and a
+/// result carrying an empty [categories] when the filter was cleared.
 class CategoryPickerResult {
-  const CategoryPickerResult(this.category);
+  const CategoryPickerResult(this.categories);
 
-  /// Null = no category filter ("all categories").
-  final HomCategory? category;
+  /// Empty = no category filter ("all categories").
+  final List<HomCategory> categories;
 }
 
 /// The categories list as a bottom sheet — what the map screen's "category"
 /// dropdown opens.
 ///
-/// Single-select with an explicit "all categories" row at the top, so clearing
-/// the filter is a choice in the list rather than a second tap on the active
-/// chip (which is how the old bottom chip strip cleared, and was invisible).
-class CategoryPickerSheet extends StatelessWidget {
+/// Multi-select with an explicit "all categories" row at the top that clears
+/// every tick, so clearing the filter is a choice in the list rather than a
+/// second tap on the active chip. Each row toggles on its own — like the
+/// district chips in [FilterBottomSheet] — and the picks only take effect on
+/// Apply, so a parent can tick several before the sheet narrows anything.
+class CategoryPickerSheet extends StatefulWidget {
   const CategoryPickerSheet({
     super.key,
     required this.categories,
-    this.selected,
+    this.selected = const [],
   });
 
   final List<HomCategory> categories;
-  final HomCategory? selected;
+  final List<HomCategory> selected;
 
   static Future<CategoryPickerResult?> show(
     BuildContext context, {
     required List<HomCategory> categories,
-    HomCategory? selected,
+    List<HomCategory> selected = const [],
   }) {
     return showModalBottomSheet<CategoryPickerResult>(
       context: context,
@@ -57,6 +60,16 @@ class CategoryPickerSheet extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  State<CategoryPickerSheet> createState() => _CategoryPickerSheetState();
+}
+
+class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
+  late Set<String> _selectedIds = {
+    for (final c in widget.selected)
+      if (c.id != null) c.id!,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -86,29 +99,50 @@ class CategoryPickerSheet extends StatelessWidget {
           12.kh,
           Flexible(
             child: ListView.separated(
-              padding: EdgeInsets.fromLTRB(
-                14.w,
-                0,
-                14.w,
-                16.h + MediaQuery.of(context).padding.bottom,
-              ),
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 16.h),
               physics: const BouncingScrollPhysics(),
-              itemCount: categories.length + 1,
+              itemCount: widget.categories.length + 1,
               separatorBuilder: (_, __) => 8.kh,
               itemBuilder: (context, i) {
-                // Row 0 is "all categories" — the cleared filter.
-                final category = i == 0 ? null : categories[i - 1];
+                // Row 0 is "all categories" — clears every tick.
+                if (i == 0) {
+                  return _CategoryRow(
+                    label: 'all_categories'.tr(),
+                    selected: _selectedIds.isEmpty,
+                    onTap: () => setState(() => _selectedIds = {}),
+                  );
+                }
+                final category = widget.categories[i - 1];
+                final id = category.id;
                 return _CategoryRow(
-                  label: category == null
-                      ? 'all_categories'.tr()
-                      : category.title ?? '',
-                  selected: category == null
-                      ? selected == null
-                      : category.id == selected?.id,
-                  onTap: () => Navigator.of(context)
-                      .pop(CategoryPickerResult(category)),
+                  label: category.title ?? '',
+                  selected: id != null && _selectedIds.contains(id),
+                  onTap: () {
+                    if (id == null) return;
+                    setState(() {
+                      if (!_selectedIds.remove(id)) _selectedIds.add(id);
+                    });
+                  },
                 );
               },
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              14.w,
+              4.h,
+              14.w,
+              16.h + MediaQuery.of(context).padding.bottom,
+            ),
+            child: _SheetButton(
+              label: 'apply_button'.tr(),
+              gradient: AppGradients.brand,
+              onTap: () => Navigator.of(context).pop(
+                CategoryPickerResult([
+                  for (final cat in widget.categories)
+                    if (_selectedIds.contains(cat.id)) cat,
+                ]),
+              ),
             ),
           ),
         ],
@@ -157,6 +191,43 @@ class _CategoryRow extends StatelessWidget {
             if (selected)
               Icon(Icons.check_rounded, size: 20.sp, color: Colors.white),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Same button the filter sheet's Apply uses (kept local — that one is
+/// library-private to `filter_bottom_sheet.dart`).
+class _SheetButton extends StatelessWidget {
+  const _SheetButton({
+    required this.label,
+    required this.onTap,
+    this.gradient,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final Gradient? gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Bouncing(
+      onTap: onTap,
+      child: Container(
+        height: 50.h,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: gradient == null ? c.control : null,
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(44.r),
+        ),
+        child: Text(
+          label,
+          style: AppText.medium16.copyWith(
+            color: gradient == null ? c.textPrimary : AppColors.onBrand,
+          ),
         ),
       ),
     );

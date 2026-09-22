@@ -38,6 +38,7 @@ class HomeCourseCard extends StatelessWidget {
     this.margin,
     this.imageHeight,
     this.onViewAsReels,
+    this.onOpen,
     this.showDistance = true,
   });
 
@@ -46,6 +47,12 @@ class HomeCourseCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final double? imageHeight;
   final VoidCallback? onViewAsReels;
+
+  /// Fired just before the card opens the activity, for a screen that needs to
+  /// record the tap — search remembers what was opened from it, so it can show
+  /// those activities again next time (see `RecentSearchStore`). The card
+  /// still does the navigating either way.
+  final VoidCallback? onOpen;
 
   /// Whether the card carries its "1.2 km from you" line.
   ///
@@ -62,8 +69,10 @@ class HomeCourseCard extends StatelessWidget {
     final hc = homClass;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => context.router
-          .push(ClassDetailRoute(classModel: hc ?? const HomClass())),
+      onTap: () {
+        onOpen?.call();
+        context.router.push(ClassDetailRoute(classModel: hc ?? const HomClass()));
+      },
       child: Container(
         width: width ?? 168.w,
         margin: margin ?? EdgeInsets.only(left: 16.w),

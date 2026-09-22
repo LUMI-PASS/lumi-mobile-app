@@ -196,7 +196,7 @@ class HomeApi {
     int page = 1,
     int limit = 10,
     String? search,
-    String? categoryId,
+    List<String>? categoryIds,
     String? fromDate,
     String? toDate,
     int? age,
@@ -214,7 +214,9 @@ class HomeApi {
       'page': page,
       'limit': limit,
       if (search != null && search.isNotEmpty) 'search': search,
-      if (categoryId != null) 'category_id': categoryId,
+      // Comma-separated so the multi-select survives a plain query string.
+      if (categoryIds != null && categoryIds.isNotEmpty)
+        'category_id': categoryIds.join(','),
       if (fromDate != null) 'from_date': fromDate,
       if (toDate != null) 'to_date': toDate,
       if (age != null) 'age': age,
@@ -263,7 +265,7 @@ class HomeApi {
     int page = 1,
     int limit = 10,
     String? search,
-    String? categoryId,
+    List<String>? categoryIds,
     String? sortBy,
     double? lat,
     double? lng,
@@ -272,7 +274,8 @@ class HomeApi {
       'page': page,
       'limit': limit,
       if (search != null && search.isNotEmpty) 'search': search,
-      if (categoryId != null) 'category_id': categoryId,
+      if (categoryIds != null && categoryIds.isNotEmpty)
+        'category_id': categoryIds.join(','),
       if (sortBy != null) 'sort_by': sortBy,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,

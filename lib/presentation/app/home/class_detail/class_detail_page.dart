@@ -178,9 +178,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// listens now.
   final ValueNotifier<double> _topScrim = ValueNotifier<double>(0);
 
-  /// The status bar icons flip once, when the scrim takes over the background
-  /// under them, so that one stays ordinary page state.
-  bool _scrimTookOver = false;
+  /// Whether the scrim has taken over the background under the status bar,
+  /// which is when its icons have to flip to dark on a light theme.
+  ///
+  /// A notifier rather than plain state: as `setState` this rebuilt the ENTIRE
+  /// page — every card, and on the class screen the price rows and the
+  /// HTML-cleaned description with them — in the middle of a drag, for a
+  /// change that only two `Brightness` values care about. See [build].
+  final ValueNotifier<bool> _scrimTookOver = ValueNotifier<bool>(false);
 
   /// Whether this class is on sale right now.
   ///
@@ -308,6 +313,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     _scrollController.dispose();
     _currentImageIndex.dispose();
     _topScrim.dispose();
+    _scrimTookOver.dispose();
     super.dispose();
   }
 
@@ -320,10 +326,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         ((_scrollController.offset - start) / (end - start)).clamp(0.0, 1.0);
     _topScrim.value = t;
 
-    final tookOver = t > 0.5;
-    if (tookOver != _scrimTookOver) {
-      setState(() => _scrimTookOver = tookOver);
-    }
+    _scrimTookOver.value = t > 0.5;
   }
 
   void _startAutoSlide() {
@@ -846,14 +849,23 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
     // Over the hero the status bar sits on a photo (light icons); once the
     // scrim takes over on a light background the icons have to flip to dark.
-    final darkIcons = !c.isDark && _scrimTookOver;
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: darkIcons ? Brightness.dark : Brightness.light,
-        statusBarBrightness: darkIcons ? Brightness.light : Brightness.dark,
-      ),
+    // The page itself is handed through as `child`, so crossing that threshold
+    // rebuilds the overlay style and nothing else — see [_scrimTookOver].
+    return ValueListenableBuilder<bool>(
+      valueListenable: _scrimTookOver,
+      builder: (_, tookOver, child) {
+        final darkIcons = !c.isDark && tookOver;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                darkIcons ? Brightness.dark : Brightness.light,
+            statusBarBrightness:
+                darkIcons ? Brightness.light : Brightness.dark,
+          ),
+          child: child!,
+        );
+      },
       child: Scaffold(
         body: Stack(
           children: [
@@ -899,17 +911,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               left: 0,
               right: 0,
               child: IgnorePointer(
+                // No `Opacity` here: the scrim fades itself, because a
+                // BackdropFilter inside an opacity layer blurs that layer
+                // instead of the screen — and pays for a saveLayer every
+                // frame to do it. See [DetailTopScrim].
                 child: ValueListenableBuilder<double>(
                   valueListenable: _topScrim,
-                  // The scrim itself is passed through as `child`, so the
-                  // per-frame rebuild is one `Opacity` and nothing else.
-                  child: DetailTopScrim(
+                  builder: (_, t, __) => DetailTopScrim(
                     color: c.scaffoldBg,
                     height: safeTop + 56.h,
-                  ),
-                  builder: (_, opacity, child) => Opacity(
-                    opacity: opacity,
-                    child: child,
+                    t: t,
                   ),
                 ),
               ),
@@ -1984,7 +1995,7 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _header(c, lessons.length, picked),
+          _header(c, picked),
           if (blockedNote != null) ...[
             6.verticalSpace,
             Text(
@@ -2016,14 +2027,18 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
     );
   }
 
-  /// The ladder's title, doubling as the collapse control.
+  /// The ladder's collapse control.
   ///
   /// Folded shut by default. A group panel already carries a name, a schedule,
   /// a price and a description; unrolling three or four dated rungs under every
-  /// one of them turned the choice a parent came to make into a scroll. The
-  /// count in the title says what is behind the chevron, and once a rung is
-  /// picked the header names it — so the fold never hides the answer.
-  Widget _header(AppColorScheme c, int count, CourseLesson? picked) {
+  /// one of them turned the choice a parent came to make into a scroll.
+  ///
+  /// It carries no title of its own. The panel's summary line above already
+  /// says how many trials the group has ("Du, Chor, Ju · 3 sinov"), so a
+  /// heading here only said the same thing a couple of lines lower. What is
+  /// left is the chevron, plus the picked rung once there is one — so the fold
+  /// still never hides the answer.
+  Widget _header(AppColorScheme c, CourseLesson? picked) {
     return GestureDetector(
       onTap: () => setState(() => _expanded = !_expanded),
       behavior: HitTestBehavior.opaque,
@@ -2033,12 +2048,7 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'course_trial_title'.tr(namedArgs: {'count': '$count'}),
-                  style: AppText.semibold14.copyWith(color: c.textPrimary),
-                ),
                 if (picked != null && !_expanded) ...[
-                  4.verticalSpace,
                   Text(
                     'course_trial_lesson_no'
                         .tr(namedArgs: {'n': '${picked.lessonNo}'}),
@@ -2692,9 +2702,9 @@ class _CourseLevelPanel extends StatelessWidget {
   /// carrying days AND lessons AND trials read as a spec sheet rather than a
   /// summary.
   ///
-  /// Stated whether the group is open or closed. It duplicates the trial
-  /// section's own title by a couple of lines when open, which is cheaper than
-  /// a summary that rewrites itself every time the panel is tapped.
+  /// Stated whether the group is open or closed, and it is now the ONLY place
+  /// the trial count is said — the ladder below dropped its own heading rather
+  /// than repeat this line a couple of lines lower (see [_header]).
   /// Counts the ladder actually on screen, not the server's dated one: a course
   /// still waiting on its schedule has trials to announce, and the line that
   /// announces them has to agree with the rows underneath it.

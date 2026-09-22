@@ -69,7 +69,8 @@ abstract class HomeRepository {
     int page = 1,
     int limit = 10,
     String? search,
-    String? categoryId,
+    /// Multi-select: an activity matches if its category is any of these.
+    List<String>? categoryIds,
     String? fromDate,
     String? toDate,
     int? age,
@@ -103,7 +104,8 @@ abstract class HomeRepository {
     int page = 1,
     int limit = 10,
     String? search,
-    String? categoryId,
+    /// Multi-select: a centre matches if it runs an activity in any of these.
+    List<String>? categoryIds,
     String? sortBy,
     double? lat,
     double? lng,

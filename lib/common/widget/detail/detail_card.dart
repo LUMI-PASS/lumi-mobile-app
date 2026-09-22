@@ -100,52 +100,95 @@ class DetailControlButton extends StatelessWidget {
 /// Soft haze pinned to the top of the screen: the content scrolling underneath
 /// is progressively blurred and washed into [color], so the floating controls
 /// stay legible without a hard header bar.
+///
+/// **This widget is rebuilt on every scroll frame**, so it is built to be cheap
+/// and it fades ITSELF via [t] — never wrap it in an [Opacity].
+///
+/// Two things were making these screens stutter while scrolling, both of them
+/// here:
+///
+///   • it used to stack SIX overlapping [BackdropFilter]s to fake a
+///     progressive blur. Each one is a `saveLayer` plus a read-back of what is
+///     behind it, and they overlap — so the top strip of the screen was being
+///     blurred six times per frame, on top of the frosted hero controls that
+///     sit in the same strip;
+///   • the caller faded it with an [Opacity] driven by the scroll offset.
+///     Opacity forces the whole subtree into an offscreen layer every frame,
+///     and a `BackdropFilter` inside one samples THAT layer rather than the
+///     screen — so the passes were also paying for a blur that could not read
+///     the content it was meant to be hazing.
+///
+/// Now: one blur pass over the whole strip, a second over the top half so the
+/// haze still accumulates towards the status bar, and the fade folded into the
+/// blur sigma and the gradient's own alpha — no offscreen layer at all. Fully
+/// faded out, it draws nothing.
 class DetailTopScrim extends StatelessWidget {
   const DetailTopScrim({
     super.key,
     required this.color,
     required this.height,
+    this.t = 1,
   });
 
   final Color color;
   final double height;
 
-  /// Stacked blur passes. Each covers a shorter slice of the top, so the passes
-  /// accumulate towards the status bar and taper to nothing at the bottom edge
-  /// — a progressive blur rather than a hard-cut blurred rectangle.
-  static const int _passes = 6;
-  static const double _sigma = 1.6;
+  /// How far the scrim has faded in, 0…1. Drive it straight from the scroll
+  /// progress; it scales both the blur and the wash.
+  final double t;
+
+  /// Blur strength at full fade-in. Applied twice over the top half, which is
+  /// what gives the haze its taper.
+  static const double _sigma = 2.2;
+
+  /// Below this the scrim is invisible anyway, and skipping the whole subtree
+  /// keeps an un-scrolled hero completely free of blur work.
+  static const double _floor = 0.01;
 
   @override
   Widget build(BuildContext context) {
+    final progress = t.clamp(0.0, 1.0);
+    if (progress <= _floor) {
+      return SizedBox(height: height, width: double.infinity);
+    }
+
+    final sigma = _sigma * progress;
+
     return SizedBox(
       height: height,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          for (var i = 0; i < _passes; i++)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: height * (_passes - i) / _passes,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
-                  child: const SizedBox.expand(),
-                ),
+          ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+              child: const SizedBox.expand(),
+            ),
+          ),
+          // The second pass only covers the top half, so the haze thickens
+          // towards the status bar and tapers out at the bottom edge.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: height / 2,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                child: const SizedBox.expand(),
               ),
             ),
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  color.withOpacity(0.92),
-                  color.withOpacity(0.60),
-                  color.withOpacity(0),
+                  color.withValues(alpha: 0.92 * progress),
+                  color.withValues(alpha: 0.60 * progress),
+                  color.withValues(alpha: 0),
                 ],
                 stops: const [0, 0.55, 1],
               ),

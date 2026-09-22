@@ -35,15 +35,23 @@ class SearchDiscoveryPage
   /// Opens with the keyboard already up. Home's header search field comes in
   /// this way — the tap was the user asking to type. Category taps and
   /// "see all" don't, since those arrive with the list they wanted.
+  ///
+  /// It is also what marks this as a SEARCH rather than a browse, so the screen
+  /// opens on the user's recent activities instead of paying for an unfiltered
+  /// page of the catalog nobody asked for — see [SearchCubit.init]'s
+  /// `recentsOnly`. A category tap or a "see all" arrives with something to
+  /// show, so those load results as before.
   final bool autofocusSearch;
 
   @override
   void init(BuildContext context) {
+    final filter =
+        initialKind == ActivityKind.any ? null : FilterResult(kind: initialKind);
     context.read<SearchCubit>().init(
-          category: initialCategory,
-          filter: initialKind == ActivityKind.any
-              ? null
-              : FilterResult(kind: initialKind),
+          categories: initialCategory == null ? const [] : [initialCategory!],
+          filter: filter,
+          recentsOnly:
+              autofocusSearch && initialCategory == null && filter == null,
         );
     super.init(context);
   }

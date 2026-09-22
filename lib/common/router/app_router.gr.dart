@@ -100,7 +100,7 @@ abstract class _$AppRouter extends RootStackRouter {
           key: args.key,
           branches: args.branches,
           categories: args.categories,
-          selectedCategory: args.selectedCategory,
+          selectedCategories: args.selectedCategories,
         ),
       );
     },
@@ -222,6 +222,12 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const MainPage(),
+      );
+    },
+    MapRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const MapPage(),
       );
     },
     MyBookingsRoute.name: (routeData) {
@@ -714,7 +720,7 @@ class BranchesMapRoute extends PageRouteInfo<BranchesMapRouteArgs> {
     Key? key,
     List<HomBranch> branches = const [],
     List<HomCategory> categories = const [],
-    HomCategory? selectedCategory,
+    List<HomCategory> selectedCategories = const [],
     List<PageRouteInfo>? children,
   }) : super(
           BranchesMapRoute.name,
@@ -722,7 +728,7 @@ class BranchesMapRoute extends PageRouteInfo<BranchesMapRouteArgs> {
             key: key,
             branches: branches,
             categories: categories,
-            selectedCategory: selectedCategory,
+            selectedCategories: selectedCategories,
           ),
           initialChildren: children,
         );
@@ -738,7 +744,7 @@ class BranchesMapRouteArgs {
     this.key,
     this.branches = const [],
     this.categories = const [],
-    this.selectedCategory,
+    this.selectedCategories = const [],
   });
 
   final Key? key;
@@ -747,11 +753,11 @@ class BranchesMapRouteArgs {
 
   final List<HomCategory> categories;
 
-  final HomCategory? selectedCategory;
+  final List<HomCategory> selectedCategories;
 
   @override
   String toString() {
-    return 'BranchesMapRouteArgs{key: $key, branches: $branches, categories: $categories, selectedCategory: $selectedCategory}';
+    return 'BranchesMapRouteArgs{key: $key, branches: $branches, categories: $categories, selectedCategories: $selectedCategories}';
   }
 }
 
@@ -1130,6 +1136,20 @@ class MainRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'MainRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [MapPage]
+class MapRoute extends PageRouteInfo<void> {
+  const MapRoute({List<PageRouteInfo>? children})
+      : super(
+          MapRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'MapRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }

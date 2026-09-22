@@ -377,35 +377,31 @@ class SearchCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onRemove,
-          child: Container(
-            padding: EdgeInsets.fromLTRB(12.w, 6.h, 8.w, 6.h),
-            decoration: BoxDecoration(
-              gradient: AppGradients.indigo,
-              borderRadius: BorderRadius.circular(40.r),
+    // No outer padding/alignment here — the caller lays several of these out
+    // in a `Wrap` (multi-select) and owns the page margin itself.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onRemove,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(12.w, 6.h, 8.w, 6.h),
+        decoration: BoxDecoration(
+          gradient: AppGradients.indigo,
+          borderRadius: BorderRadius.circular(40.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.semibold12.copyWith(color: Colors.white),
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.semibold12.copyWith(color: Colors.white),
-                  ),
-                ),
-                6.horizontalSpace,
-                Icon(Icons.close_rounded, size: 14.sp, color: Colors.white),
-              ],
-            ),
-          ),
+            6.horizontalSpace,
+            Icon(Icons.close_rounded, size: 14.sp, color: Colors.white),
+          ],
         ),
       ),
     );

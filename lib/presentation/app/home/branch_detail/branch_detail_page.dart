@@ -62,9 +62,14 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
   /// listens now.
   final ValueNotifier<double> _topScrim = ValueNotifier<double>(0);
 
-  /// The status bar icons flip once, when the scrim takes over the background
-  /// under them, so that one stays ordinary page state.
-  bool _scrimTookOver = false;
+  /// Whether the scrim has taken over the background under the status bar,
+  /// which is when its icons have to flip to dark on a light theme.
+  ///
+  /// A notifier rather than plain state: as `setState` this rebuilt the ENTIRE
+  /// page — every card, and on the class screen the price rows and the
+  /// HTML-cleaned description with them — in the middle of a drag, for a
+  /// change that only two `Brightness` values care about. See [build].
+  final ValueNotifier<bool> _scrimTookOver = ValueNotifier<bool>(false);
 
   /// Branch gallery — `images` when the backend sends a list, otherwise the
   /// single `image`. Derived from `widget.branch`, which never changes, so it
@@ -112,6 +117,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
     _pageController.dispose();
     _scrollController.dispose();
     _topScrim.dispose();
+    _scrimTookOver.dispose();
     super.dispose();
   }
 
@@ -147,10 +153,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
         ((_scrollController.offset - start) / (end - start)).clamp(0.0, 1.0);
     _topScrim.value = t;
 
-    final tookOver = t > 0.5;
-    if (tookOver != _scrimTookOver) {
-      setState(() => _scrimTookOver = tookOver);
-    }
+    _scrimTookOver.value = t > 0.5;
 
     // Paginate once the list is genuinely near its end. `maxScrollExtent > 0`
     // keeps a bouncing overscroll on a short page from tripping the trigger.
@@ -262,14 +265,23 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
 
     // Over the hero the status bar sits on a photo (light icons); once the
     // scrim takes over on a light background the icons have to flip to dark.
-    final darkIcons = !c.isDark && _scrimTookOver;
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: darkIcons ? Brightness.dark : Brightness.light,
-        statusBarBrightness: darkIcons ? Brightness.light : Brightness.dark,
-      ),
+    // The page itself is handed through as `child`, so crossing that threshold
+    // rebuilds the overlay style and nothing else — see [_scrimTookOver].
+    return ValueListenableBuilder<bool>(
+      valueListenable: _scrimTookOver,
+      builder: (_, tookOver, child) {
+        final darkIcons = !c.isDark && tookOver;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                darkIcons ? Brightness.dark : Brightness.light,
+            statusBarBrightness:
+                darkIcons ? Brightness.light : Brightness.dark,
+          ),
+          child: child!,
+        );
+      },
       child: Scaffold(
         body: Stack(
           children: [
@@ -307,17 +319,16 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
               left: 0,
               right: 0,
               child: IgnorePointer(
+                // No `Opacity` here: the scrim fades itself, because a
+                // BackdropFilter inside an opacity layer blurs that layer
+                // instead of the screen — and pays for a saveLayer every
+                // frame to do it. See [DetailTopScrim].
                 child: ValueListenableBuilder<double>(
                   valueListenable: _topScrim,
-                  // The scrim itself is passed through as `child`, so the
-                  // per-frame rebuild is one `Opacity` and nothing else.
-                  child: DetailTopScrim(
+                  builder: (_, t, __) => DetailTopScrim(
                     color: c.scaffoldBg,
                     height: safeTop + 56.h,
-                  ),
-                  builder: (_, opacity, child) => Opacity(
-                    opacity: opacity,
-                    child: child,
+                    t: t,
                   ),
                 ),
               ),
