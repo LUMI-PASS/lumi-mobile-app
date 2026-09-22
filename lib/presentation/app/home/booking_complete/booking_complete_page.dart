@@ -48,6 +48,7 @@ class BookingCompletePage extends StatefulWidget {
     this.lines = const [],
     this.cashbackEarned = 0,
     this.walletApplied = 0,
+    this.canReturnToActivity = false,
   });
 
   final BookingResultStatus status;
@@ -73,6 +74,15 @@ class BookingCompletePage extends StatefulWidget {
   /// still what the order COST — this says how much of it came off the balance
   /// rather than the card.
   final num walletApplied;
+
+  /// Whether the activity this was bought from is still underneath in the
+  /// navigator, so "back to activity" can simply pop to it.
+  ///
+  /// Only the caller knows: the booking sheet closes itself before pushing
+  /// this page, leaving the activity on top, while the external-gateway path
+  /// arrives by `pushReplacement` onto a stack of its own. Wrong here and the
+  /// primary CTA would pop to a checkout page the parent already left.
+  final bool canReturnToActivity;
 
   @override
   State<BookingCompletePage> createState() => _BookingCompletePageState();
@@ -327,14 +337,44 @@ class _BookingCompletePageState extends State<BookingCompletePage>
         ],
       );
 
-  /// "Главный" CTA pinned above the home indicator on an opaque bar.
+  /// Back to the page they bought from, keeping the whole stack — the ticket
+  /// is theirs now, and what they usually want next is the venue: how to get
+  /// there and who to call about the booking.
+  void _backToActivity() => Navigator.of(context).maybePop();
+
+  /// The CTA bar pinned above the home indicator on an opaque bar.
+  ///
+  /// When the activity is still underneath ([BookingCompletePage.canReturnToActivity])
+  /// it becomes the primary action and "Главный" drops to a quiet second line:
+  /// dumping a parent on the home tab loses the thing they just paid for, and
+  /// the centre's phone numbers — which only unlock once an order is paid —
+  /// live on the page this pops back to.
   Widget _bottomBar(AppColorScheme c) => Container(
         width: double.infinity,
         color: c.scaffoldBg,
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
         child: SafeArea(
           top: false,
-          child: GradientButton(text: 'nav_main'.tr(), onPressed: _goHome),
+          child: widget.canReturnToActivity
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GradientButton(
+                      text: 'order_back_to_activity'.tr(),
+                      onPressed: _backToActivity,
+                    ),
+                    4.verticalSpace,
+                    TextButton(
+                      onPressed: _goHome,
+                      child: Text(
+                        'nav_main'.tr(),
+                        style:
+                            AppText.medium14.copyWith(color: c.textSecondary),
+                      ),
+                    ),
+                  ],
+                )
+              : GradientButton(text: 'nav_main'.tr(), onPressed: _goHome),
         ),
       );
 }

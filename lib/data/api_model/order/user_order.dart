@@ -177,6 +177,87 @@ class UserOrder {
   /// Null only when neither knows, and the row is then left out.
   String? get displayTimeRange => _bookedTimeRange ?? _scheduledTimeRange;
 
+  /// Today as `YYYY-MM-DD`, the shape every ticket date arrives in — string
+  /// comparison is then the same thing as date comparison, with no parsing.
+  static String get _todayKey {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}'
+        '-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  /// The lessons this order actually bought — dated, and not called off.
+  Iterable<OrderTicketSummary> get _lessons => ticketSummaries.where((t) {
+        final d = t.ticketDate;
+        if (d == null || d.isEmpty) return false;
+        return t.status.toLowerCase() != 'canceled';
+      });
+
+  /// How many lessons this order bought. Every seat on a course enrolment is
+  /// one dated lesson, so the lesson count IS the ticket count.
+  int get totalLessons => _lessons.length;
+
+  /// Lessons already behind the buyer: attended, or simply dated before today.
+  ///
+  /// A lesson nobody marked attendance on still happened — counting only
+  /// `attended` would stall the progress of any course whose partner does not
+  /// take the register, which is most of them.
+  int get lessonsDone {
+    final today = _todayKey;
+    return _lessons.where((t) {
+      if (t.attendanceStatus == 'attended') return true;
+      return t.ticketDate!.compareTo(today) < 0;
+    }).length;
+  }
+
+  /// Whether "lesson 8 of 24" is a true and useful thing to say about this
+  /// order.
+  ///
+  /// Only a live, whole-course enrolment running to more than one lesson has
+  /// progress to report. A trial is a single visit — "1 / 1" under a full bar
+  /// reads as a finished course — and a cancelled order has no progress at
+  /// all, however many of its dates have since passed.
+  bool get hasLessonProgress =>
+      isWholeCourse && !isCanceled && totalLessons > 1;
+
+  /// The soonest lesson still to come — today counts, it has not happened yet.
+  /// Null once the course has run out of dated lessons.
+  OrderTicketSummary? get nextLesson {
+    final today = _todayKey;
+    OrderTicketSummary? soonest;
+    for (final t in ticketSummaries) {
+      final d = t.ticketDate;
+      if (d == null || d.isEmpty || d.compareTo(today) < 0) continue;
+      final best = soonest?.ticketDate;
+      if (best == null || d.compareTo(best) < 0) soonest = t;
+    }
+    return soonest;
+  }
+
+  /// Whole days from today until the last lesson. Negative once it is past,
+  /// null when nothing is dated.
+  int? get daysUntilEnd {
+    final end = endDate;
+    if (end == null || end.isEmpty) return null;
+    try {
+      final last = DateTime.parse(end);
+      final now = DateTime.now();
+      return DateTime(last.year, last.month, last.day)
+          .difference(DateTime(now.year, now.month, now.day))
+          .inDays;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// True when a paid course enrolment is within [days] of its last lesson —
+  /// the window in which the buyer has to decide whether to carry on, and the
+  /// only moment a renewal prompt is worth showing.
+  bool endsWithin(int days) {
+    if (!isWholeCourse || !isPaid || isCanceled) return false;
+    final left = daysUntilEnd;
+    return left != null && left >= 0 && left <= days;
+  }
+
   /// Whether the seats on this order name an age bracket someone chose.
   ///
   /// A course order carries none (its items are empty, and its bookings are

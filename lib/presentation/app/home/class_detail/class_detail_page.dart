@@ -27,6 +27,7 @@ import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/location_preview_map.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
+import 'package:lumi_pass/common/widget/route_video_tile.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -34,6 +35,7 @@ import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/interest_reporter.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/home/course_detail/intake_waitlist_sheet.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
@@ -41,6 +43,7 @@ import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:shimmer/shimmer.dart';
 
 @RoutePage()
@@ -56,11 +59,19 @@ class ClassDetailPage extends StatefulWidget {
 /// Hero carousel height — also the distance the top scrim fades in over.
 const double _kHeroHeight = 300;
 
+/// The venue strip on the location card — the map, and the arrival clip beside
+/// it. Same height as branch detail's, so the two pages read as one place.
+const double _kVenueStripHeight = 140;
+
 class _ClassDetailPageState extends State<ClassDetailPage> {
   bool _isFavorite = false;
   List<String> _galleryImages = [];
   final PageController _pageController = PageController();
   final ScrollController _scrollController = ScrollController();
+
+  /// Anchors the venue card so a fresh buyer can be scrolled straight to the
+  /// centre's phone numbers — see [_scrollToVenueCard].
+  final GlobalKey _venueCardKey = GlobalKey();
 
   /// Kept out of page state because the carousel advances every five seconds,
   /// and rebuilding the whole detail page for one dot is wasteful.
@@ -168,6 +179,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// before the detail lands, so the CTA never flashes the ticket wording.
   bool get _isCourse => _full?.isCourse ?? widget.classModel.isCourse ?? false;
 
+  /// An INTAKE is a course that is still recruiting: no schedule, so nothing
+  /// is on sale and the CTA offers a waitlist instead of a purchase.
+  ///
+  /// Decided by `type` alone. A course that merely has no dates is a
+  /// misconfigured course, not an intake, and keeps its existing behaviour.
+  /// Known only once the course detail lands — until then the page shows the
+  /// ordinary course CTA, which `_ctaEnabled` already gates on the same load.
+  bool get _isIntake => _course?.isIntake ?? false;
+
+  /// Set once this user holds a place for the group on screen. Read only as a
+  /// yes/no — the app cannot take a place back, so the id itself is never used
+  /// for anything now.
+  String? get _waitlistEntryId =>
+      _course?.intake?.entryIdFor(_defaultBuyLevel()?.id);
+
   /// 0 → hero fully visible, 1 → content scrolled under the top controls and
   /// the frosted scrim is fully on.
   ///
@@ -236,6 +262,38 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       if (value is String && value.trim().isNotEmpty) return value.trim();
     }
     return null;
+  }
+
+  // ─── Venue contact ────────────────────────────────────────────────────────
+  /// The centre's "how to get here" clip, from the branch.
+  ///
+  /// Shown to everyone, not only to buyers: the clip answers "can I actually
+  /// get there" — which door off the courtyard, which floor — and that is a
+  /// question a parent asks BEFORE paying, not after.
+  String? get _venueVideoUrl => _full?.branch?.videoUrl;
+
+  bool get _hasVenueVideo => RouteVideoTile.canPlay(_venueVideoUrl);
+
+  /// The centre's own phone numbers — the branch administrators a parent
+  /// calls to ask about their booking. Already trimmed of blanks by
+  /// [BranchSummary.fromJson].
+  ///
+  /// Buyers only, unlike the clip above: these are for questions about a
+  /// booking that exists. Published on a browse page they would route every
+  /// pre-sales question past Lumi, to a centre with no record of the caller.
+  List<String> get _venuePhones => _full?.viewerPurchased == true
+      ? (_full?.branch?.supportPhones ?? const <String>[])
+      : const <String>[];
+
+  /// Dials a number. `tel:` wants it unpunctuated — the console stores it the
+  /// way a human reads it, so the digits are pulled back out here.
+  ///
+  /// Silent on failure by design: a device with no dialler (a tablet) is not
+  /// an error worth a snackbar over a row that simply does nothing.
+  Future<void> _callVenue(String phone) async {
+    final digits = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (digits.isEmpty) return;
+    await launchUrl(Uri.parse('tel:$digits'));
   }
 
   // ─── Coupon discount helpers ──────────────────────────────────────────────
@@ -376,6 +434,58 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     } catch (_) {
       // Keep whatever gallery/list image we already have.
     }
+  }
+
+  /// Re-reads `/classes/:id` after a purchase completes on this page.
+  ///
+  /// `viewer_purchased` gates the centre's phone numbers, and it was answered
+  /// before this parent bought — so without this, the numbers the purchase
+  /// just earned them stay hidden until they leave the page and come back.
+  /// Deliberately narrower than [_loadFull]: the course payload is reloaded by
+  /// its own caller, and firing it twice would re-seed the picked group
+  /// underneath them.
+  Future<void> _refreshAfterPurchase() async {
+    final id = widget.classModel.id;
+    if (id == null) return;
+    try {
+      final full = await getIt<OrdersApi>().getClassFull(id);
+      if (!mounted) return;
+      setState(() {
+        _full = full;
+        _galleryImages = _resolveGallery(full);
+      });
+    } catch (_) {
+      // Non-fatal — the numbers stay hidden until the page is reopened.
+    }
+    if (mounted && _venuePhones.isNotEmpty) _scrollToVenueCard();
+  }
+
+  /// Bring the venue card into view after a purchase, so the numbers the order
+  /// just unlocked are the first thing seen on returning from the success
+  /// screen — rather than something to be hunted for further down the page.
+  ///
+  /// Runs while the success screen is still on top: this page stays laid out
+  /// underneath, so by the time it is popped back to, it is already in
+  /// position. That is also why there is no animation — animating a scroll
+  /// nobody can see only risks being interrupted.
+  ///
+  /// Best-effort. The content is a lazy [SliverList], so the card may not be
+  /// built yet; `ensureVisible` needs a laid-out context and there is no
+  /// reliable offset to fall back to. Doing nothing simply leaves the parent
+  /// to scroll down themselves, which is where they were anyway.
+  void _scrollToVenueCard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _venueCardKey.currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: Duration.zero,
+        // A little off the top edge, so the card reads as a section that was
+        // scrolled to rather than one jammed under the app bar.
+        alignment: 0.1,
+      );
+    });
   }
 
   /// Course lessons + package prices. Failure is non-fatal: the page still
@@ -569,7 +679,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
   }
 
-  void _openBooking() {
+  Future<void> _openBooking() async {
     final full = _full;
     if (full == null || (full.pricesSummary.isEmpty && full.ageTiers.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -589,7 +699,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     // away from here, no request is ever made and nothing records that they
     // nearly booked. Queued and sent in the background — see [InterestReporter].
     if (full.id != null) getIt<InterestReporter>().bookTapped(full.id!);
-    context.router.push(BookingRoute(clazz: full));
+    final purchased = await context.router.push(BookingRoute(clazz: full));
+    if (purchased == true && mounted) await _refreshAfterPurchase();
   }
 
   /// What the sticky bottom CTA buys.
@@ -609,6 +720,24 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       if (l.id == id) return l;
     }
     return detail.levels.isNotEmpty ? detail.levels.first : detail.flat;
+  }
+
+  /// Put a child down for an INTAKE. Not a purchase — no order, no money, no
+  /// seat — so it deliberately does not go anywhere near the booking flow.
+  Future<void> _onJoinWaitlistTapped() async {
+    final id = _full?.id ?? widget.classModel.id;
+    if (id == null) return;
+    final level = _defaultBuyLevel();
+    final joined = await IntakeWaitlistSheet.show(
+      context,
+      activityId: id,
+      subcourseId: level?.id,
+      groupName: level?.name,
+      courseTitle: widget.classModel.title,
+    );
+    // Reload rather than patching state by hand: the joined flag lives on the
+    // course detail, per group, and that is the one thing the CTA reads.
+    if (joined && mounted) await _loadCourse(id);
   }
 
   /// Sticky bottom CTA — the one place a course is bought from this page.
@@ -664,7 +793,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         courseOption: CoursePurchaseOption.trial,
       ),
     );
-    if (purchased == true && mounted) await _loadCourse(id);
+    if (purchased == true && mounted) {
+      await _loadCourse(id);
+      if (mounted) await _refreshAfterPurchase();
+    }
   }
 
   /// Buy the whole course / a subcourse. A trial lesson goes through
@@ -702,7 +834,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         // ageTiers, so there is nothing to carry over from here any more.
       ),
     );
-    if (purchased == true && mounted) await _loadCourse(id);
+    if (purchased == true && mounted) {
+      await _loadCourse(id);
+      if (mounted) await _refreshAfterPurchase();
+    }
   }
 
   /// Price rows for display: ONE PER (age tier x duration), which is the same
@@ -813,10 +948,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           'class-detail-description',
           _descriptionCard(c, title, description),
         ),
-      if (_venueLat != null && _venueLng != null)
+      // The card carries the map, and — after a purchase — the centre's own
+      // arrival clip and phone numbers. A venue with no usable coordinates
+      // still gets the card once it has those to show.
+      if (_venue != null || _hasVenueVideo || _venuePhones.isNotEmpty)
         _detailSection(
           'class-detail-location',
-          _locationCard(c, branchTitle),
+          KeyedSubtree(key: _venueCardKey, child: _locationCard(c, branchTitle)),
         ),
       if (notes.isNotEmpty)
         _detailSection(
@@ -982,7 +1120,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 // stacking one up here put a trial button on top of the
                 // whole-course button with nothing on it saying whose trial it
                 // was.
-                child: !_isBookable
+                child: _isIntake
+                    // A recruiting course: one button, and no price anywhere
+                    // near it. Once they are on the list it becomes a plain
+                    // statement — there is no way off it from here, by design.
+                    // A parent who changed their mind says so when the centre
+                    // rings, which it will.
+                    ? (_waitlistEntryId != null
+                        ? _ComingSoonButton(c: c, label: 'intake_joined'.tr())
+                        : GradientButton(
+                            text: 'intake_join_cta'.tr(),
+                            onPressed: _onJoinWaitlistTapped,
+                          ))
+                    : !_isBookable
                     ? _ComingSoonButton(c: c)
                     : GradientButton(
                         // A group is always picked, so the only thing left to
@@ -1023,11 +1173,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 imageUrl: _galleryImages[i],
                 fit: BoxFit.cover,
                 placeholder: (_, __) => _imgShimmer(c),
-                errorWidget: (_, __, ___) => _imgShimmer(c),
+                // A URL that will not load is not "still loading" — shimmering
+                // at it forever both lies and costs a frame every vsync.
+                errorWidget: (_, __, ___) => _heroBlank(c),
               ),
             )
+          // Shimmer ONLY while `/classes/:id` is still in flight. A class the
+          // centre never gave an image to has nothing left to wait for, and a
+          // shimmer there never stops: it drives an animation frame every
+          // vsync for as long as the page is open, and every one of those
+          // frames re-rasters the blurred top scrim over it. That is what made
+          // this screen stutter with nothing happening on it.
+          else if (_full == null)
+            _imgShimmer(c)
           else
-            _imgShimmer(c),
+            _heroBlank(c),
           // Top scrim — a soft dark fade so the light controls stay legible
           // over bright / near-white hero images.
           Positioned(
@@ -1088,6 +1248,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
+  /// Still, silent stand-in for a hero image that is never coming — see the
+  /// shimmer's call site in [_hero].
+  Widget _heroBlank(AppColorScheme c) => ColoredBox(color: c.control);
+
   Widget _imgShimmer(AppColorScheme c) => Shimmer.fromColors(
         baseColor: c.surface,
         highlightColor: c.isDark ? const Color(0xFF2E2E35) : Colors.white,
@@ -1102,6 +1266,23 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
+          // Says why there are no dates and no buy button, at the top of the
+          // page rather than only down at the CTA.
+          if (_isIntake) ...[
+            6.verticalSpace,
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: AppColors.brandPurple.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(40.r),
+              ),
+              child: Text(
+                'intake_badge'.tr(),
+                style: AppText.semibold12
+                    .copyWith(color: AppColors.brandPurple),
+              ),
+            ),
+          ],
           // No description here. It used to be repeated in this card as two
           // ellipsised lines and again in full in the card below; it is now
           // stated once, in [_descriptionCard], as a dropdown.
@@ -1347,7 +1528,15 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 // below sells the whole course and nothing else.
                 // Dated where the server could date it, configured-only where
                 // it could not — see [_trialLadder].
-                trialLessons: _trialLadder(level),
+                //
+                // An INTAKE gets no ladder at all. The trial section is a
+                // purchase widget: rows to pick, a price, a buy button and a
+                // line explaining why all three are dead. None of that belongs
+                // on a group that is still filling up — the one thing to do
+                // here is join the waitlist, and everything else on the card
+                // is competing with it. Dropping the ladder also drops the
+                // "· N trials" from the summary line, which counts it.
+                trialLessons: _isIntake ? const [] : _trialLadder(level),
                 trialDatesKnown: _trialDatesKnown(level),
                 onBuyTrial: () => _openTrialBooking(level),
               ),
@@ -1376,7 +1565,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// sheet would open, spelled out for a parent reading rather than tapping.
   Widget _locationCard(AppColorScheme c, String branchTitle) {
     final address = _venueAddress;
-    final venue = _venue!;
+    final venue = _venue;
+    final hasVideo = _hasVenueVideo;
+    final phones = _venuePhones;
 
     return DetailCard(
       c: c,
@@ -1389,19 +1580,75 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             iconGradient: AppGradients.brand,
             title: 'detail_location'.tr(),
           ),
-          12.verticalSpace,
-          LocationPreviewMap(
-            lat: venue.$1,
-            lng: venue.$2,
-            title: branchTitle,
-            subtitle: address,
-          ),
+          // The map, and beside it the centre's arrival clip — the map gets a
+          // parent to the building, the clip gets them in (which door off the
+          // courtyard, which floor). Both in the same glance, because someone
+          // standing outside needs the second one and will not scroll for it.
+          if (venue != null || hasVideo) ...[
+            12.verticalSpace,
+            SizedBox(
+              height: _kVenueStripHeight.h,
+              child: Row(
+                children: [
+                  if (venue != null)
+                    Expanded(
+                      child: LocationPreviewMap(
+                        lat: venue.$1,
+                        lng: venue.$2,
+                        title: branchTitle,
+                        subtitle: address,
+                        height: _kVenueStripHeight.h,
+                      ),
+                    ),
+                  if (venue != null && hasVideo) 8.horizontalSpace,
+                  if (hasVideo)
+                    // Expanded when it stands alone: with no map beside it, a
+                    // 104px tile in an empty row reads as a broken image.
+                    // (A tight width from Expanded overrides the tile's own
+                    // default; an infinite one inside a Row would assert.)
+                    if (venue == null)
+                      Expanded(
+                        child: RouteVideoTile(
+                          url: _venueVideoUrl,
+                          height: _kVenueStripHeight.h,
+                        ),
+                      )
+                    else
+                      RouteVideoTile(
+                        url: _venueVideoUrl,
+                        height: _kVenueStripHeight.h,
+                      ),
+                ],
+              ),
+            ),
+          ],
           if (address != null && address.trim().isNotEmpty) ...[
             10.verticalSpace,
             Text(
               address.trim(),
               style: AppText.regular13.copyWith(color: c.textSecondary),
             ),
+          ],
+          // The centre's own lines, under the address they belong to — only
+          // once this parent has bought; see [_venuePhones].
+          if (phones.isNotEmpty) ...[
+            14.verticalSpace,
+            Text(
+              'detail_venue_contact'.tr(),
+              style: AppText.medium13.copyWith(color: c.textSecondary),
+            ),
+            8.verticalSpace,
+            ...List.generate(phones.length, (i) {
+              return Padding(
+                padding:
+                    EdgeInsets.only(bottom: i == phones.length - 1 ? 0 : 8.h),
+                child: _VenuePhoneRow(
+                  c: c,
+                  phone: phones[i],
+                  onTap: () => _callVenue(phones[i]),
+                ),
+              );
+            }),
           ],
         ],
       ),
@@ -1695,6 +1942,56 @@ class _PriceRow extends StatelessWidget {
 }
 
 /// One line of an important-notes / what-to-bring list.
+/// One of the centre's own phone numbers, as a tappable row.
+///
+/// The number is drawn exactly as the console stored it, punctuation included:
+/// that is the form a parent recognises and can read back aloud. Only the
+/// `tel:` handoff strips it.
+class _VenuePhoneRow extends StatelessWidget {
+  const _VenuePhoneRow({
+    required this.c,
+    required this.phone,
+    required this.onTap,
+  });
+
+  final AppColorScheme c;
+  final String phone;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: c.control,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.call_rounded, size: 18.w, color: AppColors.brandPurple),
+            10.horizontalSpace,
+            Expanded(
+              child: Text(
+                phone,
+                style: AppText.medium14.copyWith(color: c.textPrimary),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20.w,
+              color: c.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _BulletRow extends StatelessWidget {
   const _BulletRow({required this.c, required this.text});
   final AppColorScheme c;
@@ -2721,9 +3018,13 @@ class _CourseLevelPanel extends StatelessWidget {
 /// catalogue. Deliberately not a disabled [GradientButton]: a greyed-out
 /// gradient reads as "temporarily broken", where this reads as "not yet".
 class _ComingSoonButton extends StatelessWidget {
-  const _ComingSoonButton({required this.c});
+  const _ComingSoonButton({required this.c, this.label});
 
   final AppColorScheme c;
+
+  /// Overrides the default "booking opens soon" wording. Used by the intake
+  /// CTA, which is the same inert shape saying something different.
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -2742,7 +3043,7 @@ class _ComingSoonButton extends StatelessWidget {
         // Says what is unavailable, not just "soon" — the buyer is standing on
         // a class page with a price on it and needs to know booking is what's
         // off, and that it's temporary.
-        'booking_available_soon'.tr(),
+        label ?? 'booking_available_soon'.tr(),
         textAlign: TextAlign.center,
         style: AppText.semibold16.copyWith(color: c.textSecondary),
       ),

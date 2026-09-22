@@ -1,5 +1,5 @@
 import 'package:cupertino_native_glmv/cupertino_native_glmv.dart';
-import 'package:dynamic_glass_glmv/dynamic_glass_glmv.dart';
+import 'package:dynamic_glass_glmv/dynamic_glass_glmv.dart' show PlatformInfo;
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
+import 'package:lumi_pass/presentation/app/main/widgets/liquid_pill_nav_bar.dart';
 
 /// Glass bottom navigation with two renderers, both fed the **same Figma tab
 /// SVGs** ([_tabs]):
@@ -17,7 +18,9 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 ///     with its refraction and scroll-edge behaviour, not a Flutter imitation.
 ///     It is a controlled widget (`currentIndex` + `onTap`), so it drives
 ///     `AutoTabsScaffold`'s router exactly like the pill does.
-///   • **Everything else → [GlassPillNavBar]**, the frosted Flutter pill.
+///   • **Everything else → [LiquidPillNavBar]**, the frosted Flutter pill,
+///     whose highlight is moved by two springs rather than a curve — the
+///     closest a Flutter bar gets to the way the native one behaves.
 ///
 /// We drive [CNTabBar] **directly** rather than going through
 /// `dynamic_glass_glmv`'s [AdaptiveBottomNavigationBar], for one reason: that
@@ -36,11 +39,17 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 /// component:
 ///   • light 103:5934 — bar `rgba(255,255,255,0.6)`, pill `#E5E7EA`
 ///   • dark  103:4120 — bar `rgba(0,0,0,0.6)`,       pill `rgba(63,63,63,0.5)`
-/// Tab bar radius 56, pill fully rounded, 2px bar padding, 16px icons, 10px
-/// SF-Rounded labels, 4px icon→label gap. The **selected** icon is painted with
+/// Tab bar radius 56, pill fully rounded, 2px bar padding, 10px SF-Rounded
+/// labels. Icons and bar height follow **Apple's tab-bar metric** rather than
+/// the Figma frame — 25pt glyphs in a 60pt bar, the same `assetSize: 25` the
+/// native iOS 26 bar below is given — because at the Figma 16pt the glyphs
+/// read as undersized next to their own labels on a real device.
+/// The **selected** icon is painted with
 /// the brand pink→purple gradient ([AppGradients.brand]); the selected label
 /// uses the primary text colour; everything unselected is the Figma grey
-/// (`#A5A6BB` dark / `#343539` light).
+/// (`#A5A6BB` dark / `#343539` light). Selection now crossfades on the blob's
+/// coverage of the slot instead of on a bool, so the glyph lights up *with*
+/// the liquid rather than a beat behind it.
 class CustomBottomBar extends StatelessWidget {
   const CustomBottomBar({
     super.key,
@@ -79,15 +88,6 @@ class CustomBottomBar extends StatelessWidget {
   /// over the glass rather than covering it).
   static const double _floatGap = 20;
 
-  /// The pill's own height.
-  ///
-  /// A tab that draws UNDER the bar does not need to know this: `MainPage`'s
-  /// `AutoTabsScaffold` runs with `extendBody: true`, and Flutter's Scaffold
-  /// then reports the whole bar's height (this, its float gap, and the
-  /// profile banner when that is up) as `MediaQuery.padding.bottom` inside
-  /// the tab. Read it there — see `BranchesMapView`.
-  static const double _barHeight = 50;
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -95,102 +95,6 @@ class CustomBottomBar extends StatelessWidget {
     final selectedColor = c.textPrimary;
     // Unselected icon + label — Figma grey per theme.
     final unselectedColor = c.isDark ? _figmaGrey : _charcoalGray;
-
-    // Android's system navigation — the three-button bar, or the gesture
-    // handle — is drawn INSIDE our window on the versions that run us
-    // edge-to-edge (12+ on some OEM skins, always on 15+). Anything under it is
-    // genuinely covered, so the pill has to clear the inset before its own gap;
-    // stripping the inset and floating a flat 20 (right for iOS) buried the bar
-    // behind the nav bar. `viewPadding`, not `padding`: the latter collapses to
-    // zero while the keyboard is up, which would drop the bar mid-animation.
-    //
-    // Where the platform reports no inset (Android without edge-to-edge, web,
-    // desktop) this is the same flat gap as before.
-    final systemInset = MediaQuery.viewPaddingOf(context).bottom;
-    final bottomGap =
-        defaultTargetPlatform == TargetPlatform.android && systemInset > 0
-            ? systemInset + 8
-            : _floatGap;
-
-    final style = GlassPillNavBarStyle(
-      selectedItemColor: selectedColor,
-      unselectedItemColor: unselectedColor,
-      // Real glass: translucent bar so the 24px blur frosts the content behind
-      // it. Figma: rgba(0,0,0,0.6) dark · rgba(255,255,255,0.6) light.
-      backgroundColor: c.isDark
-          ? Colors.black.withValues(alpha: 0.55)
-          : Colors.white.withValues(alpha: 0.60),
-      // Glass rim: a faint gradient ring (bright top → dim bottom) that gives
-      // the pill a defined, floating edge. Without it the frosted white bar
-      // vanishes against plain-white pages (Profile). The package paints the
-      // ring OUTSIDE the blur and moves the drop shadow onto it, so the bar
-      // reads as glass on any backdrop — not just the colourful Home feed.
-      borderGradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: c.isDark
-            ? [
-                Colors.white.withValues(alpha: 0.16),
-                Colors.white.withValues(alpha: 0.04),
-              ]
-            : const [Colors.white, Color(0xFFE4E7EC)],
-      ),
-      borderWidth: 1,
-      borderRadius: 56,
-      blurSigma: 24,
-      height: _barHeight,
-      horizontalPadding: 16,
-      // The package's gap below the bar is `MediaQuery.padding.bottom +
-      // bottomPadding`, which on a home-indicator iPhone floats the bar ~46pt
-      // off the edge. We strip that inset below (`MediaQuery.removePadding`),
-      // so this value *is* the full gap — see [bottomGap].
-      bottomPadding: bottomGap,
-      // Pill fills its cell (bar has 2px padding → ~4px slack per slot).
-      pillHeightFactor: 0.9,
-      pillHorizontalInset: 4,
-      // Flat pill — Figma `#E5E7EA` light · `rgba(63,63,63,0.5)` dark.
-      pillColors: c.isDark
-          ? const [Color(0x803F3F3F), Color(0x803F3F3F)]
-          : const [Color(0xFFE5E7EA), Color(0xFFE5E7EA)],
-      pillBorderColor: Colors.transparent,
-      pillBorderWidth: 0,
-      pillShineEnabled: false,
-      pillShadows: const [],
-      iconSize: 16,
-      selectedIconSize: 16,
-      labelGap: 4,
-      // A real drop shadow so the pill visibly floats over any content
-      // (this is what makes it read as glass on plain pages, like wisdom).
-      // Light also keeps the Figma ambient glow (0 0 32 rgba(159,159,159,.25)).
-      shadows: c.isDark
-          ? const [
-              BoxShadow(
-                color: Color(0x66000000),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-            ]
-          : const [
-              BoxShadow(
-                color: Color(0x1F000000),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-              BoxShadow(color: Color(0x409F9F9F), blurRadius: 32),
-            ],
-      animationDuration: const Duration(milliseconds: 200),
-      animationCurve: Curves.easeOutCubic,
-    );
-
-    // The package takes an asset-path String (see its `icon` doc); our own
-    // `iconBuilder` below renders it.
-    final items = [
-      for (final (icon, labelKey) in _tabs)
-        AdaptiveNavigationDestination(
-          icon: icon.path,
-          label: labelKey.tr(),
-        ),
-    ];
 
     // iOS 26: the system liquid-glass UITabBar, carrying our own tab SVGs.
     // `preserveColors` is left at its default (false) so UIKit templates each
@@ -216,33 +120,48 @@ class CustomBottomBar extends StatelessWidget {
       );
     }
 
+    // Android's system navigation — the three-button bar, or the gesture
+    // handle — is drawn INSIDE our window on the versions that run us
+    // edge-to-edge (12+ on some OEM skins, always on 15+). Anything under it is
+    // genuinely covered, so the pill has to clear the inset before its own gap;
+    // stripping the inset and floating a flat 20 (right for iOS) buried the bar
+    // behind the nav bar. `viewPadding`, not `padding`: the latter collapses to
+    // zero while the keyboard is up, which would drop the bar mid-animation.
+    //
+    // Where the platform reports no inset (Android without edge-to-edge, web,
+    // desktop) this is the same flat gap as before. [LiquidPillNavBar] adds no
+    // inset of its own, so this value *is* the full gap.
+    final systemInset = MediaQuery.viewPaddingOf(context).bottom;
+    final bottomGap =
+        defaultTargetPlatform == TargetPlatform.android && systemInset > 0
+            ? systemInset + 8
+            : _floatGap;
+
+    final items = [
+      for (final (icon, labelKey) in _tabs)
+        LiquidNavDestination(asset: icon.path, label: labelKey.tr()),
+    ];
+
+    // Crossfade grey → brand gradient on how far the blob has claimed the
+    // slot, so the glyph lights up with the liquid instead of switching once
+    // the route has already changed.
     Widget iconBuilder(
       BuildContext context,
-      AdaptiveNavigationDestination item,
-      bool selected,
-      Color color,
+      LiquidNavDestination item,
+      double progress,
       double size,
     ) =>
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, anim) =>
-              FadeTransition(opacity: anim, child: child),
-          child: KeyedSubtree(
-            key: ValueKey(selected),
-            child: _NavIcon(
-              asset: item.icon as String,
-              size: size,
-              selected: selected,
-              unselectedColor: color,
-            ),
-          ),
+        _NavIcon(
+          asset: item.asset,
+          size: size,
+          progress: progress,
+          unselectedColor: unselectedColor,
         );
 
     Widget labelBuilder(
       BuildContext context,
-      AdaptiveNavigationDestination item,
-      bool selected,
-      Color color,
+      LiquidNavDestination item,
+      double progress,
     ) =>
         Text(
           item.label,
@@ -251,57 +170,106 @@ class CustomBottomBar extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             height: 1.0,
-            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-            color: color,
+            fontWeight:
+                FontWeight.lerp(FontWeight.w400, FontWeight.w500, progress),
+            color: Color.lerp(unselectedColor, selectedColor, progress),
           ),
         );
 
-    // Every other platform: the frosted Flutter pill.
-    //
-    // `GlassPillNavBar` pads itself by `MediaQuery.padding.bottom +
-    // style.bottomPadding`. Dropping the inset makes `bottomPadding` the single
-    // source of truth for how far the pill floats off the screen edge — we fold
-    // the system inset into it ourselves above, per platform, since the package
-    // would otherwise add the keyboard-sensitive `padding` on top. The native
-    // bar lays out its own safe area in UIKit, so this concerns the pill alone.
-    return MediaQuery.removePadding(
-      context: context,
-      removeBottom: true,
-      child: IgnorePointer(
-        ignoring: hidden,
-        child: GlassPillNavBar(
-          items: items,
-          selectedIndex: selectedIndex,
-          onTap: onItemSelected,
-          selectedItemColor: selectedColor,
-          unselectedItemColor: unselectedColor,
-          style: style,
-          iconBuilder: iconBuilder,
-          labelBuilder: labelBuilder,
+    // Every other platform: the frosted Flutter pill, spring-driven.
+    return IgnorePointer(
+      ignoring: hidden,
+      child: LiquidPillNavBar(
+        items: items,
+        selectedIndex: selectedIndex,
+        onTap: onItemSelected,
+        iconBuilder: iconBuilder,
+        labelBuilder: labelBuilder,
+        // Apple's tab bar: 25pt glyph, 10pt label, ~49pt of content — 60
+        // here since our pill floats free of the safe area rather than
+        // sitting flush against it.
+        height: 60,
+        horizontalPadding: 16,
+        bottomPadding: bottomGap,
+        borderRadius: 56,
+        borderWidth: 1,
+        // Glass rim: a faint gradient ring (bright top → dim bottom) that gives
+        // the pill a defined, floating edge. Without it the frosted white bar
+        // vanishes against plain-white pages (Profile). The ring is painted
+        // OUTSIDE the blur and carries the drop shadow, so the bar reads as
+        // glass on any backdrop — not just the colourful Home feed.
+        borderGradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: c.isDark
+              ? [
+                  Colors.white.withValues(alpha: 0.16),
+                  Colors.white.withValues(alpha: 0.04),
+                ]
+              : const [Colors.white, Color(0xFFE4E7EC)],
         ),
+        // Real glass: translucent bar so the 24px blur frosts the content
+        // behind it. Figma: rgba(0,0,0,0.6) dark · rgba(255,255,255,0.6) light.
+        backgroundColor: c.isDark
+            ? Colors.black.withValues(alpha: 0.55)
+            : Colors.white.withValues(alpha: 0.60),
+        blurSigma: 24,
+        // A real drop shadow so the pill visibly floats over any content
+        // (this is what makes it read as glass on plain pages, like wisdom).
+        // Light also keeps the Figma ambient glow (0 0 32 rgba(159,159,159,.25)).
+        shadows: c.isDark
+            ? const [
+                BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
+                ),
+              ]
+            : const [
+                BoxShadow(
+                  color: Color(0x1F000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
+                ),
+                BoxShadow(color: Color(0x409F9F9F), blurRadius: 32),
+              ],
+        // Flat pill — Figma `#E5E7EA` light · `rgba(63,63,63,0.5)` dark.
+        pillColor: c.isDark ? const Color(0x803F3F3F) : const Color(0xFFE5E7EA),
+        // Pill fills its cell (bar has 2px padding → ~4px slack per slot).
+        pillHeightFactor: 0.9,
+        pillHorizontalInset: 4,
+        iconSize: 25,
+        labelGap: 3,
       ),
     );
   }
 }
 
-/// A tab icon: brand pink→purple gradient when [selected], flat
-/// [unselectedColor] otherwise.
+/// A tab icon: flat [unselectedColor] at rest, crossfading into the brand
+/// pink→purple gradient as [progress] goes 0 → 1.
 class _NavIcon extends StatelessWidget {
   const _NavIcon({
     required this.asset,
     required this.size,
-    required this.selected,
+    required this.progress,
     required this.unselectedColor,
   });
 
   final String asset;
   final double size;
-  final bool selected;
+  final double progress;
   final Color unselectedColor;
 
   @override
   Widget build(BuildContext context) {
-    if (!selected) {
+    final glyph = SvgPicture.asset(
+      asset,
+      width: size,
+      height: size,
+      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+    );
+
+    if (progress <= 0) {
       return SvgPicture.asset(
         asset,
         width: size,
@@ -309,15 +277,36 @@ class _NavIcon extends StatelessWidget {
         colorFilter: ColorFilter.mode(unselectedColor, BlendMode.srcIn),
       );
     }
-    // Flatten the glyph to white, then stamp the brand gradient over it.
-    return ShaderMask(
-      blendMode: BlendMode.srcIn,
-      shaderCallback: (bounds) => AppGradients.brand.createShader(bounds),
-      child: SvgPicture.asset(
-        asset,
-        width: size,
-        height: size,
-        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (progress < 1)
+            Opacity(
+              opacity: 1 - progress,
+              child: SvgPicture.asset(
+                asset,
+                width: size,
+                height: size,
+                colorFilter:
+                    ColorFilter.mode(unselectedColor, BlendMode.srcIn),
+              ),
+            ),
+          Opacity(
+            opacity: progress,
+            // Flatten the glyph to white, then stamp the brand gradient over
+            // it.
+            child: ShaderMask(
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (bounds) =>
+                  AppGradients.brand.createShader(bounds),
+              child: glyph,
+            ),
+          ),
+        ],
       ),
     );
   }

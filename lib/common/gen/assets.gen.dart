@@ -821,8 +821,16 @@ class $AssetsIconsProfileGen {
   SvgGenImage get icUser =>
       const SvgGenImage('assets/icons/profile/ic_user.svg');
 
+  /// File path: assets/icons/profile/shop_bag.svg
+  SvgGenImage get shopBag =>
+      const SvgGenImage('assets/icons/profile/shop_bag.svg');
+
+  /// File path: assets/icons/profile/wallet.svg
+  SvgGenImage get wallet =>
+      const SvgGenImage('assets/icons/profile/wallet.svg');
+
   /// List of all assets
-  List<SvgGenImage> get values => [icDelete, icEdit, icUser];
+  List<SvgGenImage> get values => [icDelete, icEdit, icUser, shopBag, wallet];
 }
 
 class $AssetsIconsShopGen {

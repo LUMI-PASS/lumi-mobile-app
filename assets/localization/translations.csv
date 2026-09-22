@@ -83,8 +83,8 @@ faq_q7,Можно ли использовать LUMI через Telegram?,Telegr
 faq_a7,"Да, приложение доступно как Telegram Mini App — без отдельной установки.","Ha, alohida o'rnatmasdan Telegram Mini App sifatida mavjud.","Yes, it is available as a Telegram Mini App without a separate installation."
 log_out,Выйти,Chiqish,Log Out
 log_out_subtitle,До скорой встречи,Tez orada ko'rishguncha,See you soon
-my_bookings,Мои брони,Mening bronlarim,My Bookings
-my_children,Мои дети,Mening farzandlarim,My Children
+my_bookings,Мои брони,Bronlarim,My Bookings
+my_children,Мои дети,Farzandlarim,My Children
 active_bookings,Активные,Faol,Active
 past_bookings,Прошедшие,O'tgan,Past
 no_bookings_yet,Бронирований пока нет,Hozircha buyurtmalar yo'q,No bookings yet
@@ -272,7 +272,7 @@ empty_value_dash,—,—,—
 opening_payment,Открываем оплату...,To‘lov ochilmoqda...,Opening payment...
 pay_now,Оплатить,To‘lash,Pay now
 plans_title,Тарифы,Tariflar,Plans
-my_bookings,Мои бронирования,Mening bronlarim,My bookings
+my_bookings,Мои бронирования,Bronlarim,My bookings
 no_bookings_yet,Бронирований пока нет,Hali bronlar yo‘q,No bookings yet
 active_bookings,Активные,Faol,Active
 past_bookings,Прошедшие,Tugagan,Past
@@ -836,7 +836,9 @@ no_internet_title,Ошибка подключения к интернету,Inte
 no_internet_desc,Проверьте подключение к интернету и попробуйте снова.,Internet aloqasini tekshiring va qayta urinib ko'ring.,Check your internet connection and try again.
 sale,Акция,Aksiya,Sale
 buy_tickets,Купить билеты,Chiptalarni sotib olish,Buy tickets
-detail_location,Расположение,Manzil,Location
+detail_location,Расположение,Manzilni ko'rish,Location
+detail_venue_contact,Контакты центра,Markaz kontaktlari,Contact the centre
+order_back_to_activity,Вернуться к занятию,Mashg‘ulotga qaytish,Back to the activity
 detail_duration,Длительность,Davomiyligi,Duration
 detail_age,Возраст,Yosh,Age
 detail_gender,Пол,Jinsi,Gender
@@ -1102,7 +1104,7 @@ wallet_kind_adjustment,Корректировка,Tuzatish,Adjustment
 wallet_kind_expired,Срок действия истёк,Amal qilish muddati tugadi,Expired
 wallet_kind_unknown,Операция,Amaliyot,Transaction
 wallet_source_trial,{} · пробное занятие,{} · sinov darsi,{} · trial lesson
-my_cards,Мои карты,Mening kartalarim,My cards
+my_cards,Мои карты,Kartalarim,My cards
 card_none_sub,"Добавьте карту, чтобы оплачивать быстрее","Tezroq to'lash uchun karta qo'shing","Add a card to pay faster"
 card_already_saved,Эта карта уже сохранена,Bu karta allaqachon saqlangan,This card is already saved
 card_verify_notice,"Чтобы проверить карту, с неё спишется 100 сум. Мы сразу отправляем запрос на возврат.","Kartani tekshirish uchun undan 100 so'm yechiladi. Biz darhol qaytarish so'rovini yuboramiz.","To verify the card, 100 soum is charged to it. We request a refund straight away."
@@ -1208,3 +1210,32 @@ shop_coins_short,"Не хватает {} коинов",{} tanga yetmaydi,{} coin
 shop_coin_price_label,Цена в коинах,Tangadagi narxi,Coin price
 shop_or_with_coins,Или коинами,Yoki tangalar bilan,Or with coins
 shop_not_paid_yet,"Оплата не прошла. Заказ не оформлен — попробуйте снова.",To‘lov amalga oshmadi. Buyurtma rasmiylashtirilmadi — qayta urinib ko‘ring.,Payment did not go through. The order was not placed — please try again.
+course_blocked_intake,Идёт набор — запись откроется позже,To‘plam ketmoqda — sotuv keyinroq ochiladi,Still recruiting — sales open later
+intake_badge,Идёт набор,To‘plam ketmoqda,Recruiting
+intake_join_cta,Записаться в лист ожидания,Kutish ro‘yxatiga yozilish,Join the waitlist
+intake_joined,Вы в листе ожидания,Siz kutish ro‘yxatidasiz,You're on the waitlist
+intake_join_title,Лист ожидания,Kutish ro‘yxati,Join the waitlist
+intake_join_hint,"Группа ещё не началась. Оставьте контакты — центр позвонит, когда появятся даты. Оплаты нет.","Guruh hali boshlanmagan. Ma’lumotlaringizni qoldiring — sanalar belgilanganda markaz qo‘ng‘iroq qiladi. To‘lov yo‘q.","The group hasn't started yet. Leave your details and the centre will call you when the dates are set. Nothing is charged."
+intake_join_child,Для кого?,Kim uchun?,Who is it for?
+intake_child_unnamed,Ребёнок,Bola,Child
+intake_joined_toast,Вы в списке — центр свяжется с вами,Siz ro‘yxatdasiz — markaz bog‘lanadi,You're on the list — the centre will call
+intake_join_failed,Не удалось записаться. Попробуйте ещё раз.,Yozilib bo‘lmadi. Qayta urinib ko‘ring.,Could not join the waitlist. Try again.
+profile_greeting,"Добро пожаловать, {}!","Xush kelibsiz, {}!","Welcome, {}!"
+services_title,Сервисы,Xizmatlar,Services
+help_title,Помощь,Yordam,Help
+payment_methods,Способы оплаты,To‘lov usullari,Payment methods
+all_my_bookings,Все мои брони,Barcha bronlarim,All my bookings
+shop_tile_subtitle,Подарки и товары,Sovg‘alar va mahsulotlar,Gifts and products
+dark_mode_subtitle,Удобно для глаз,Ko‘zlaringiz uchun qulay,Easier on the eyes
+contact_support_subtitle,Свяжитесь с нами,Biz bilan bog‘laning,Get in touch
+my_courses,Мои курсы,Mening kurslarim,My courses
+my_activity_bookings,Брони,Bronlar,Bookings
+no_courses_yet,Курсов пока нет,Hali kurslar yo‘q,No courses yet
+enrolled_courses_appear_here,"Здесь появятся курсы, на которые вы записались",Siz yozilgan kurslar shu yerda ko‘rinadi,Courses you enrol in will appear here
+course_lessons_progress,Уроки,Darslar,Lessons
+course_next_lesson,Следующий урок,Keyingi dars,Next lesson
+course_ends_on,Курс заканчивается,Kurs tugaydi,Course ends
+course_ends_in_days,Курс заканчивается через {} дн.,Kurs {} kundan keyin tugaydi,Course ends in {} days
+course_ends_tomorrow,Курс заканчивается завтра,Kurs ertaga tugaydi,Course ends tomorrow
+course_ends_today,Сегодня последний урок,Bugun oxirgi dars,Last lesson is today
+course_renew_cta,Продлить,Uzaytirish,Renew

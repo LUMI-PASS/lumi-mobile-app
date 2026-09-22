@@ -12,6 +12,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/pill_filter_chip.dart';
+import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -76,10 +77,12 @@ class _CalendarBodyState extends State<_CalendarBody> {
   _BookingFilter _filter = _BookingFilter.all;
 
   /// Paid or cancelled activity orders (subscriptions and unpaid drafts hidden).
-  List _visibleOrders() {
-    final base = widget.state.orders
-        .where((o) => o.isActivityOrder && (o.isPaid || o.isCanceled))
-        .toList();
+  /// Course enrolments and one-off class bookings share one list.
+  List<UserOrder> _bookable() => widget.state.orders
+      .where((o) => o.isActivityOrder && (o.isPaid || o.isCanceled))
+      .toList();
+
+  List<UserOrder> _applyFilter(List<UserOrder> base) {
     switch (_filter) {
       case _BookingFilter.all:
         return base;
@@ -95,10 +98,42 @@ class _CalendarBodyState extends State<_CalendarBody> {
     }
   }
 
+  /// The list, split under headings.
+  ///
+  /// "All" is the default and was one undifferentiated stream in which a class
+  /// finished last spring sat flush against one happening tomorrow. Splitting
+  /// it says which is which without costing the reader a second tap on the
+  /// chips. Under a chip that has already narrowed to one of the two, the
+  /// heading would only repeat the chip, so it is left off.
+  List<Widget> _groups(List<UserOrder> orders) {
+    if (_filter != _BookingFilter.all) {
+      return [for (final o in orders) BookingCard(order: o)];
+    }
+    final live = orders
+        .where((o) => o.effectiveDisplayStatus == 'active')
+        .toList();
+    final done = orders
+        .where((o) => o.effectiveDisplayStatus != 'active')
+        .toList();
+    return [
+      if (live.isNotEmpty) ...[
+        _SectionLabel('filter_active'.tr()),
+        for (final o in live) BookingCard(order: o),
+      ],
+      if (done.isNotEmpty) ...[
+        if (live.isNotEmpty) 8.kh,
+        _SectionLabel('filter_completed'.tr()),
+        for (final o in done) BookingCard(order: o),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final state = widget.state;
+    final filtered = _applyFilter(_bookable());
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -142,28 +177,45 @@ class _CalendarBodyState extends State<_CalendarBody> {
         Expanded(
           child: state.isLoading
               ? const _BookingsShimmer()
-              : Builder(builder: (context) {
-                  final filtered = _visibleOrders();
-                  if (filtered.isEmpty) return const _EmptyBookings();
-                  return RefreshIndicator(
-                    color: AppColors.brandPurple,
-                    onRefresh: widget.onRefresh,
-                    child: ListView.builder(
-                      padding: EdgeInsets.fromLTRB(
-                        16.w,
-                        4.h,
-                        16.w,
-                        20.h + 64.0 + MediaQuery.of(context).viewPadding.bottom,
+              : filtered.isEmpty
+                  ? const _EmptyBookings()
+                  : RefreshIndicator(
+                      color: AppColors.brandPurple,
+                      onRefresh: widget.onRefresh,
+                      child: ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          16.w,
+                          4.h,
+                          16.w,
+                          20.h +
+                              64.0 +
+                              MediaQuery.of(context).viewPadding.bottom,
+                        ),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: _groups(filtered),
                       ),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) =>
-                          BookingCard(order: filtered[index]),
                     ),
-                  );
-                }),
         ),
       ],
+    );
+  }
+}
+
+/// A heading over a run of cards — the same 18/bold muted label the profile
+/// screen groups its sections with, so the two tabs read as one system.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(left: 4.w, bottom: 10.h),
+      child: Text(
+        text,
+        style: AppText.bold18.copyWith(color: context.colors.textSecondary),
+      ),
     );
   }
 }

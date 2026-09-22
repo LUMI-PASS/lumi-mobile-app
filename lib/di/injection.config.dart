@@ -134,13 +134,13 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
+    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
     gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
     gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
     gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
-    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
     gh.lazySingleton<_i594.AnalyticsService>(() => _i594.AnalyticsService(

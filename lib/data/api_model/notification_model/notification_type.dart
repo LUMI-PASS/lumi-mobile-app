@@ -10,6 +10,11 @@ enum NotificationType {
   bookingRejected('booking_rejected'),
   bookingTimeSuggestion('booking_time_suggestion'),
   bookingRequestPending('booking_request_pending'),
+
+  /// A paid course enrolment is within days of its last lesson. Carries the
+  /// course in `data` so the tap opens it rather than the bookings list —
+  /// renewing happens on the course page, not on a list of past orders.
+  courseEnding('course_ending'),
   unknown('');
 
   const NotificationType(this.key);
