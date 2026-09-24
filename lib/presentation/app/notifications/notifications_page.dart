@@ -376,6 +376,8 @@ class _NotificationCard extends StatelessWidget {
       case NotificationType.bookingRequestPending:
       case NotificationType.courseEnding:
         return Assets.icons.notification.clock;
+      case NotificationType.referral:
+        return Assets.icons.detail.iconsaxTicketDiscount;
       case NotificationType.unknown:
         return Assets.icons.notification.bell;
     }
@@ -397,6 +399,8 @@ class _NotificationCard extends StatelessWidget {
       case NotificationType.bookingRequestPending:
       case NotificationType.courseEnding:
         return _kPendingAmber;
+      case NotificationType.referral:
+        return AppColors.brandPurple;
       case NotificationType.unknown:
         return c.textSecondary;
     }

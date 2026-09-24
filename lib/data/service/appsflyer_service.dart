@@ -7,7 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/common/env/app_env.dart';
 import 'package:lumi_pass/common/env/appsflyer_env.dart';
-import 'package:lumi_pass/common/router/deep_link_routes.dart';
+import 'package:lumi_pass/common/router/appsflyer_link.dart';
 import 'package:lumi_pass/data/service/analytics_event.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 
@@ -265,36 +265,10 @@ class AppsFlyerService {
   }
 
   /// Turns a OneLink click event into a URI the app's own deep-link router
-  /// understands.
-  ///
-  /// Handles the two shapes a OneLink can be configured with:
-  ///   * `deep_link_value` holding a whole URI — `lumi://class/<id>` or the
-  ///     `https://mobile-api.lumipass.uz/share/class/<id>` share link;
-  ///   * `deep_link_value: class` plus the id in `deep_link_sub1` / `class_id`,
-  ///     which is how the OneLink UI nudges you to model it.
-  Uri? _uriFromDeepLink(DeepLink link) {
-    final value = link.deepLinkValue ?? link.getStringValue('af_dp');
-
-    if (value != null && value.contains('://')) return Uri.tryParse(value);
-
-    // A bare destination key plus its id in a sub-param. Checked against the
-    // registry rather than a hardcoded pair, so a OneLink campaign pointing at
-    // any registered screen — `branch`, `plans`, `category` — works without
-    // touching this file.
-    if (value != null && DeepLinkRoutes.lookup(value) != null) {
-      final id = link.getStringValue('deep_link_sub1') ??
-          link.getStringValue('class_id') ??
-          link.afSub1;
-      return Uri.parse(
-        id == null || id.isEmpty ? 'lumi://$value' : 'lumi://$value/$id',
-      );
-    }
-
-    // Last resort: the raw link that was clicked. Carries the /share/class/
-    // path when the OneLink simply wraps our own share URL.
-    final raw = link.getStringValue('link');
-    return raw == null ? null : Uri.tryParse(raw);
-  }
+  /// understands — see [appsFlyerClickEventToUri], which holds the rules so
+  /// they can be unit-tested without the SDK.
+  Uri? _uriFromDeepLink(DeepLink link) =>
+      appsFlyerClickEventToUri(link.clickEvent);
 
   // ─── App Tracking Transparency (iOS) ───────────────────────────────────────
 

@@ -32,6 +32,10 @@ mixin _$ProfileBuildable {
   /// see ProfileCubit._loadWallet. Always null in release.
   String? get walletError => throw _privateConstructorUsedError;
 
+  /// `GET /referrals/me`. Null until it lands or when it failed — the invite
+  /// card and the "Have a referral code?" row then simply don't show.
+  ReferralMe? get referral => throw _privateConstructorUsedError;
+
   @JsonKey(ignore: true)
   $ProfileBuildableCopyWith<ProfileBuildable> get copyWith =>
       throw _privateConstructorUsedError;
@@ -49,7 +53,8 @@ abstract class $ProfileBuildableCopyWith<$Res> {
       List<ChildModel> children,
       ParentTrialSummary? trialSummary,
       WalletBalance? wallet,
-      String? walletError});
+      String? walletError,
+      ReferralMe? referral});
 
   $HomForUserCopyWith<$Res>? get user;
   $ParentTrialSummaryCopyWith<$Res>? get trialSummary;
@@ -75,6 +80,7 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
     Object? trialSummary = freezed,
     Object? wallet = freezed,
     Object? walletError = freezed,
+    Object? referral = freezed,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
@@ -101,6 +107,10 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
           ? _value.walletError
           : walletError // ignore: cast_nullable_to_non_nullable
               as String?,
+      referral: freezed == referral
+          ? _value.referral
+          : referral // ignore: cast_nullable_to_non_nullable
+              as ReferralMe?,
     ) as $Val);
   }
 
@@ -155,7 +165,8 @@ abstract class _$$ProfileBuildableImplCopyWith<$Res>
       List<ChildModel> children,
       ParentTrialSummary? trialSummary,
       WalletBalance? wallet,
-      String? walletError});
+      String? walletError,
+      ReferralMe? referral});
 
   @override
   $HomForUserCopyWith<$Res>? get user;
@@ -182,6 +193,7 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
     Object? trialSummary = freezed,
     Object? wallet = freezed,
     Object? walletError = freezed,
+    Object? referral = freezed,
   }) {
     return _then(_$ProfileBuildableImpl(
       isLoading: null == isLoading
@@ -208,6 +220,10 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
           ? _value.walletError
           : walletError // ignore: cast_nullable_to_non_nullable
               as String?,
+      referral: freezed == referral
+          ? _value.referral
+          : referral // ignore: cast_nullable_to_non_nullable
+              as ReferralMe?,
     ));
   }
 }
@@ -221,7 +237,8 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
       final List<ChildModel> children = const [],
       this.trialSummary,
       this.wallet,
-      this.walletError})
+      this.walletError,
+      this.referral})
       : _children = children;
 
   @override
@@ -254,9 +271,14 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
   @override
   final String? walletError;
 
+  /// `GET /referrals/me`. Null until it lands or when it failed — the invite
+  /// card and the "Have a referral code?" row then simply don't show.
+  @override
+  final ReferralMe? referral;
+
   @override
   String toString() {
-    return 'ProfileBuildable(isLoading: $isLoading, user: $user, children: $children, trialSummary: $trialSummary, wallet: $wallet, walletError: $walletError)';
+    return 'ProfileBuildable(isLoading: $isLoading, user: $user, children: $children, trialSummary: $trialSummary, wallet: $wallet, walletError: $walletError, referral: $referral)';
   }
 
   @override
@@ -272,7 +294,9 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
                 other.trialSummary == trialSummary) &&
             (identical(other.wallet, wallet) || other.wallet == wallet) &&
             (identical(other.walletError, walletError) ||
-                other.walletError == walletError));
+                other.walletError == walletError) &&
+            (identical(other.referral, referral) ||
+                other.referral == referral));
   }
 
   @override
@@ -283,7 +307,8 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
       const DeepCollectionEquality().hash(_children),
       trialSummary,
       wallet,
-      walletError);
+      walletError,
+      referral);
 
   @JsonKey(ignore: true)
   @override
@@ -300,7 +325,8 @@ abstract class _ProfileBuildable implements ProfileBuildable {
       final List<ChildModel> children,
       final ParentTrialSummary? trialSummary,
       final WalletBalance? wallet,
-      final String? walletError}) = _$ProfileBuildableImpl;
+      final String? walletError,
+      final ReferralMe? referral}) = _$ProfileBuildableImpl;
 
   @override
   bool get isLoading;
@@ -323,6 +349,11 @@ abstract class _ProfileBuildable implements ProfileBuildable {
   /// so the section still renders during development instead of vanishing —
   /// see ProfileCubit._loadWallet. Always null in release.
   String? get walletError;
+  @override
+
+  /// `GET /referrals/me`. Null until it lands or when it failed — the invite
+  /// card and the "Have a referral code?" row then simply don't show.
+  ReferralMe? get referral;
   @override
   @JsonKey(ignore: true)
   _$$ProfileBuildableImplCopyWith<_$ProfileBuildableImpl> get copyWith =>

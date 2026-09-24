@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:lumi_pass/common/utils/avatar_notifier.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
+import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
@@ -50,4 +53,11 @@ Future<void> applySignedInSession({
   // at cold start — when that happened before sign-in it found no session, so
   // without this the buyer's coupon prices wouldn't appear until the next launch.
   await getIt<AppCubit>().onSignedIn();
+
+  // An invite clicked before this sign-in (often before the install) is
+  // waiting on the device. Apply it now, silently — the server decides whether
+  // this account may still take one, and a refusal of a code the user never
+  // typed is not theirs to see (A15/A16). Not awaited: sign-in never waits on
+  // the referral programme.
+  unawaited(getIt<ReferralCoordinator>().applyPendingSilently());
 }

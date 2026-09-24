@@ -15,6 +15,11 @@ enum NotificationType {
   /// course in `data` so the tap opens it rather than the bookings list —
   /// renewing happens on the course page, not on a list of past orders.
   courseEnding('course_ending'),
+
+  /// Referral programme news — a reward issued, a voucher expiring or
+  /// revoked, an invitee's welcome voucher. Carries `deep_link:
+  /// lumi://referral`; a tap opens the referral screen.
+  referral('referral'),
   unknown('');
 
   const NotificationType(this.key);

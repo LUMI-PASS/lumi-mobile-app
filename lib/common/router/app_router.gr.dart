@@ -287,6 +287,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: ProfilePage(key: args.key),
       );
     },
+    ReferralRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const ReferralPage(),
+      );
+    },
     RegisterRoute.name: (routeData) {
       final args = routeData.argsAs<RegisterRouteArgs>();
       return AutoRoutePage<dynamic>(
@@ -1324,6 +1330,20 @@ class ProfileRouteArgs {
   String toString() {
     return 'ProfileRouteArgs{key: $key}';
   }
+}
+
+/// generated route for
+/// [ReferralPage]
+class ReferralRoute extends PageRouteInfo<void> {
+  const ReferralRoute({List<PageRouteInfo>? children})
+      : super(
+          ReferralRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'ReferralRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

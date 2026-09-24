@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,10 +8,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
+import 'package:lumi_pass/common/widget/display/display.dart';
+import 'package:lumi_pass/data/api_model/referral/referral_enums.dart';
+import 'package:lumi_pass/data/service/referral/pending_referral.dart';
+import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/domain/repo/referrals/referral_repository.dart';
+import 'package:lumi_pass/presentation/app/profile/referral/referral_actions.dart';
+import 'package:lumi_pass/presentation/app/profile/referral/widgets/referral_code_lookup.dart';
 import 'package:dio/dio.dart';
 
 Future<void> showOnboardingBottomsheet(BuildContext context) async {
@@ -41,25 +50,100 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
   final _storage = getIt<Storage>();
   final _repo = getIt<AuthRepository>();
 
+  // ─── Referral code (optional) ─────────────────────────────────────────────
+  final _referrals = getIt<ReferralCoordinator>();
+  late final TextEditingController _referralCode;
+  final _referralLookup = ReferralCodeLookup();
+
+  /// Whether this account may still take a code — null until
+  /// `GET /referrals/me` answers (or if it fails).
+  bool? _canApplyReferral;
+
+  /// A code goes to the server at most once per sheet.
+  bool _referralSubmitted = false;
+
   int _step = 0;
   bool _loading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefilled from an invite link that arrived before sign-in. Usually the
+    // silent apply after OTP has already used it (and cleared it), in which
+    // case the field starts empty — or hides, once `me` says so.
+    _referralCode =
+        TextEditingController(text: _referrals.pending?.code ?? '');
+    _openedWithPendingCode = _referralCode.text.isNotEmpty;
+    _referralLookup.onChanged(_referralCode.text);
+    _loadReferralEligibility();
+  }
+
+  Future<void> _loadReferralEligibility() async {
+    if (!_referrals.isSignedIn) return;
+    try {
+      final me = await getIt<ReferralRepository>().getMe();
+      if (!mounted) return;
+      setState(() => _canApplyReferral = me.enabled && me.canApply);
+    } catch (_) {
+      // Unknown: the field stays as it is (shown only if something is in it).
+    }
+  }
+
+  /// Shown while the server says a code can still be applied; before it has
+  /// answered, only when there is a pending invite code to show.
+  bool get _showReferralField => _canApplyReferral ?? _openedWithPendingCode;
+
+  /// Latched in [initState], so clearing the field does not make it vanish
+  /// under the user's thumb.
+  bool _openedWithPendingCode = false;
+
+  /// Sends the entered code, if any. Fire-and-forget: the sheet NEVER waits on
+  /// it or stays open because of it. The result arrives as a toast — "Invited
+  /// by X", or the localised reason for a code the user typed. A code left
+  /// untouched from an invite link is applied as `LINK`, whose refusals stay
+  /// silent (A15/A16).
+  void _submitReferral() {
+    if (_referralSubmitted || !_showReferralField) return;
+    final choice = PendingReferralPolicy.choose(
+      typed: _referralCode.text,
+      pending: _referrals.pending,
+    );
+    if (choice == null) return;
+    _referralSubmitted = true;
+    final display = getIt<Display>();
+    unawaited(() async {
+      final outcome =
+          await _referrals.applyFromForm(choice.code, source: choice.source);
+      if (outcome.isSuccess) {
+        display.success(referralInvitedByMessage(outcome.result?.referrerName));
+      } else if (choice.source == ReferralApplySource.manual) {
+        display.error(referralErrorMessage(outcome.error));
+      }
+    }());
+  }
 
   @override
   void dispose() {
     _parentName.dispose();
     _childName.dispose();
     _childAge.dispose();
+    _referralCode.dispose();
+    _referralLookup.dispose();
     super.dispose();
   }
 
   Future<void> _skip() async {
+    // Skipping the NAME is not declining the invite: a code in the field is
+    // still sent.
+    _submitReferral();
     await _storage.needsOnboarding.set(false);
     if (mounted) Navigator.of(context).pop();
   }
 
   void _nextStep() {
     if (!(_formKey0.currentState?.validate() ?? false)) return;
+    _submitReferral();
     FocusScope.of(context).unfocus();
     setState(() {
       _step = 1;
@@ -202,6 +286,19 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
             validator: (v) =>
                 (v == null || v.trim().isEmpty) ? 'required'.tr() : null,
           ),
+          if (_showReferralField) ...[
+            12.kh,
+            _CleanField(
+              controller: _referralCode,
+              label: 'referral_code_optional'.tr(),
+              icon: CupertinoIcons.gift,
+              primary: primary,
+              textCapitalization: TextCapitalization.characters,
+              inputFormatters: const [UpperCaseCodeFormatter()],
+              onChanged: _referralLookup.onChanged,
+            ),
+            ReferralLookupHint(lookup: _referralLookup),
+          ],
           if (_error != null) ...[10.kh, _ErrorRow(error: _error!)],
           24.kh,
           _PrimaryButton(
@@ -352,6 +449,8 @@ class _CleanField extends StatelessWidget {
     this.inputFormatters,
     this.validator,
     this.autofocus = false,
+    this.textCapitalization = TextCapitalization.none,
+    this.onChanged,
   });
 
   final TextEditingController controller;
@@ -362,12 +461,16 @@ class _CleanField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
   final bool autofocus;
+  final TextCapitalization textCapitalization;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      onChanged: onChanged,
       inputFormatters: inputFormatters,
       validator: validator,
       autofocus: autofocus,

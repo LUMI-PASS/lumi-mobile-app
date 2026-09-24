@@ -9,9 +9,11 @@ import 'package:lumi_pass/common/utils/avatar_notifier.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/domain/repo/referrals/referral_repository.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:injectable/injectable.dart';
@@ -20,11 +22,18 @@ import 'profile_state.dart';
 
 @injectable
 class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
-  ProfileCubit(this._storage, this._repo, this._walletRepo)
-      : super(const ProfileBuildable());
+  ProfileCubit(
+    this._storage,
+    this._repo,
+    this._walletRepo,
+    this._referralRepo,
+    this._referrals,
+  ) : super(const ProfileBuildable());
   final Storage _storage;
   final HomeRepository _repo;
   final WalletRepository _walletRepo;
+  final ReferralRepository _referralRepo;
+  final ReferralCoordinator _referrals;
 
   bool _showDeletedBanner = false;
   bool get showDeletedBanner => _showDeletedBanner;
@@ -64,9 +73,28 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
     }
   }
 
+  /// The invite card's data. Best-effort like the wallet: a failure keeps the
+  /// last good answer (or none), which hides the card instead of breaking the
+  /// profile. A code left pending by a network blip is retried first, so the
+  /// "Have a referral code?" row reflects it.
+  Future<void> _loadReferral() async {
+    if (!_referrals.isSignedIn) return;
+    try {
+      await _referrals.applyPendingSilently();
+      final me = await _referralRepo.getMe();
+      build((b) => b.copyWith(referral: me));
+    } catch (e) {
+      log.w('referral load failed: $e');
+    }
+  }
+
+  /// After the "Have a referral code?" sheet applied one.
+  Future<void> refreshReferral() => _loadReferral();
+
   Future<void> _load({required bool silent}) async {
     if (!silent) build((b) => b.copyWith(isLoading: true));
     unawaited(_loadWallet());
+    unawaited(_loadReferral());
     try {
       final results = await Future.wait([
         _repo.getProfileData(),

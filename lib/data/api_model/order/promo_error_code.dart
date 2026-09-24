@@ -24,6 +24,26 @@ enum PromoErrorCode {
   /// `ticket_limit`: how many tickets the code still covers.
   ticketLimit('promo_ticket_limit'),
 
+  // ── Referral vouchers ──────────────────────────────────────────────────────
+  // A voucher (`R-XXXXXX`) is spent through the same promocode field, so its
+  // refusals arrive on the same 400.
+
+  /// No voucher with that code belongs to this buyer.
+  voucherNotFound('voucher_not_found'),
+
+  /// Already spent on an earlier order.
+  voucherUsed('voucher_used'),
+
+  /// Held (or already paid) by an order from ANOTHER device/session. The
+  /// buyer's own abandoned checkout no longer blocks it — validate/checkout
+  /// take the voucher over and cancel that order server-side.
+  voucherUnavailable('voucher_unavailable'),
+
+  voucherExpired('voucher_expired'),
+
+  /// The order is below the voucher's minimum. Carries `min_order_amount`.
+  voucherMinOrder('voucher_min_order'),
+
   unknown('');
 
   const PromoErrorCode(this.key);
@@ -39,4 +59,21 @@ enum PromoErrorCode {
     }
     return unknown;
   }
+
+  /// The translations.csv key for this refusal. [maxOrder], [ticketLimit] and
+  /// [voucherMinOrder] take an argument (a cap, a count, a minimum) that the
+  /// caller fills in; [unknown] is the generic "invalid code".
+  String get messageKey => switch (this) {
+        PromoErrorCode.maxOrder => 'promo_max_order',
+        PromoErrorCode.notApplicable => 'promo_not_applicable',
+        PromoErrorCode.courseOnly => 'promo_course_only',
+        PromoErrorCode.alreadyUsed => 'promo_already_used',
+        PromoErrorCode.ticketLimit => 'promo_ticket_limit',
+        PromoErrorCode.voucherNotFound => 'promo_voucher_not_found',
+        PromoErrorCode.voucherUsed => 'promo_voucher_used',
+        PromoErrorCode.voucherUnavailable => 'promo_voucher_unavailable',
+        PromoErrorCode.voucherExpired => 'promo_voucher_expired',
+        PromoErrorCode.voucherMinOrder => 'promo_voucher_min_order',
+        PromoErrorCode.unknown => 'promo_invalid',
+      };
 }

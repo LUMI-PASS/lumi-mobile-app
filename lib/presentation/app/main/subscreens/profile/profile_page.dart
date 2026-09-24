@@ -32,6 +32,8 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_state.dart';
+import 'package:lumi_pass/presentation/app/profile/referral/widgets/referral_code_sheet.dart';
+import 'package:lumi_pass/presentation/app/profile/referral/widgets/referral_invite_card.dart';
 
 import '../../../../../common/router/app_router.dart';
 
@@ -353,6 +355,7 @@ class ProfilePage
     String displayName,
     HomForUser? user,
   ) {
+    final referral = state.referral;
     return Scaffold(
       backgroundColor: c.scaffoldBg,
       body: SafeArea(
@@ -514,6 +517,33 @@ class ProfilePage
                           ),
                         ],
                       ),
+                      // The referral programme: the invite card while it runs,
+                      // and the way to enter someone else's code while this
+                      // account may still take one. Both vanish with the
+                      // programme switch, and while `referrals/me` is unknown.
+                      if (referral != null && referral.canInvite) ...[
+                        12.kh,
+                        ReferralInviteCard(
+                          me: referral,
+                          onTap: () =>
+                              context.router.push(const ReferralRoute()),
+                        ),
+                      ],
+                      if (referral != null &&
+                          referral.enabled &&
+                          referral.canApply) ...[
+                        8.kh,
+                        _MenuRow(
+                          iconAsset: _ProfileIcons.referralCode,
+                          label: 'referral_have_code'.tr(),
+                          subtitle: 'referral_have_code_row_subtitle'.tr(),
+                          onTap: () async {
+                            if (await showReferralCodeSheet(context)) {
+                              await cubit.refreshReferral();
+                            }
+                          },
+                        ),
+                      ],
                     ],
                     20.kh,
                     _SectionLabel('settings_title'.tr()),
@@ -925,6 +955,7 @@ class _ProfileIcons {
   static final support = Assets.icons.call;
   static final telegram = Assets.icons.telegram;
   static final logout = Assets.icons.icLogout;
+  static final referralCode = Assets.icons.detail.iconsaxTicketDiscount;
 }
 
 /// One way to reach support inside [_showSupportSheet] — the brand glyph, what
