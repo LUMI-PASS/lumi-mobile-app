@@ -955,7 +955,11 @@ class _BookingPageState extends State<BookingPage> {
     final result = await getIt<PromoRepository>().eligibility(
       activityId: id,
       ticketDate: _selectedDate?.isoKey,
-      subtotal: _payableTotal,
+      // The RAW subtotal, not the post-discount total. The pass's per-visit
+      // ceiling is tested against exactly this figure at checkout, so sending
+      // anything else lets the preview say yes to a booking the sale then
+      // refuses.
+      subtotal: _total,
     );
     if (!mounted || request != _promoRequestId) return;
     setState(() {
