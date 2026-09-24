@@ -29,6 +29,13 @@ class AnalyticsEvent {
   static const bookingRequested = 'booking_requested';
   static const planPurchaseStarted = 'plan_purchase_started';
   static const subscriptionPurchaseStarted = 'subscription_purchase_started';
+
+  /// The "аксия" bundle: the buyer pressed Buy and a rail was picked.
+  /// `payment_succeeded` still fires on completion, carrying `product: aksiya`.
+  static const aksiyaPurchaseStarted = 'aksiya_purchase_started';
+
+  /// A booking was paid for with a pass visit rather than with money.
+  static const aksiyaPassRedeemed = 'aksiya_pass_redeemed';
   static const checkoutPageOpened = 'checkout_page_opened';
   static const paymeRedirect = 'payme_redirect';
   static const paymeOpenFailed = 'payme_open_failed';

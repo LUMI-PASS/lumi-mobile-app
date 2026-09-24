@@ -26,6 +26,17 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    AksiyaRoute.name: (routeData) {
+      final args = routeData.argsAs<AksiyaRouteArgs>(
+          orElse: () => const AksiyaRouteArgs());
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: AksiyaPage(
+          key: args.key,
+          slug: args.slug,
+        ),
+      );
+    },
     AttendanceDetailRoute.name: (routeData) {
       final args = routeData.argsAs<AttendanceDetailRouteArgs>();
       return AutoRoutePage<dynamic>(
@@ -467,6 +478,43 @@ class AddChildRouteArgs {
   @override
   String toString() {
     return 'AddChildRouteArgs{key: $key, childModel: $childModel, parentId: $parentId}';
+  }
+}
+
+/// generated route for
+/// [AksiyaPage]
+class AksiyaRoute extends PageRouteInfo<AksiyaRouteArgs> {
+  AksiyaRoute({
+    Key? key,
+    String? slug,
+    List<PageRouteInfo>? children,
+  }) : super(
+          AksiyaRoute.name,
+          args: AksiyaRouteArgs(
+            key: key,
+            slug: slug,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'AksiyaRoute';
+
+  static const PageInfo<AksiyaRouteArgs> page = PageInfo<AksiyaRouteArgs>(name);
+}
+
+class AksiyaRouteArgs {
+  const AksiyaRouteArgs({
+    this.key,
+    this.slug,
+  });
+
+  final Key? key;
+
+  final String? slug;
+
+  @override
+  String toString() {
+    return 'AksiyaRouteArgs{key: $key, slug: $slug}';
   }
 }
 

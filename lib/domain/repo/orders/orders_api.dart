@@ -143,6 +143,7 @@ class OrdersApi {
     String? expireDate,
     String? savedCardId,
     bool useWallet = false,
+    bool usePromoPass = false,
     bool test = false,
   }) async {
     final body = {
@@ -153,6 +154,11 @@ class OrdersApi {
       // sent — v1 redemption is all-or-nothing, and letting the client name a
       // figure only invites it to disagree with the one that lands.
       if (useWallet) 'use_wallet': true,
+      // Spend an "аксия" visit on this booking. Opt-in for the same reason the
+      // wallet is — it is the buyer's to spend — but stricter in one way: a
+      // pass that cannot cover this booking makes the checkout FAIL rather than
+      // silently charging the card, because the buyer asked to pay with it.
+      if (usePromoPass) 'use_promo_pass': true,
       if (lang != null) 'lang': lang,
       if (returnUrl != null) 'return_url': returnUrl,
       if (promoCode != null && promoCode.trim().isNotEmpty)

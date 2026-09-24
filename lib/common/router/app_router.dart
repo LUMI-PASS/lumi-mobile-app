@@ -34,6 +34,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/search_page.da
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_page.dart';
 import 'package:lumi_pass/presentation/app/profile/children/child_detail_page.dart';
+import 'package:lumi_pass/presentation/app/promo/aksiya_page.dart';
 import 'package:lumi_pass/presentation/app/profile/language/change_language_page.dart';
 import 'package:lumi_pass/presentation/app/profile/profile_detail/profile_detail_page.dart';
 import 'package:lumi_pass/presentation/app/shop/shop_checkout_page.dart';
@@ -151,6 +152,7 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: MyCardsRoute.page),
     AutoRoute(page: ClassesGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
+    AutoRoute(page: AksiyaRoute.page),
     AutoRoute(page: ShopRoute.page),
     AutoRoute(page: ShopProductRoute.page),
     AutoRoute(page: ShopCheckoutRoute.page),

@@ -99,6 +99,95 @@ class HomeCouponBanner extends StatelessWidget {
   }
 }
 
+/// The "аксия" call-to-action — the bundle promo that opens its own screen.
+///
+/// A sibling of [HomeCouponBanner] rather than a variant of it: they sell two
+/// different things (a standing discount vs a prepaid set of visits with a
+/// deadline) and the deadline is exactly what this card has to say out loud.
+class HomeAksiyaBanner extends StatelessWidget {
+  const HomeAksiyaBanner({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FrostedCard(
+      onTap: onTap,
+      padding: EdgeInsets.all(16.w),
+      borderWidth: 2,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: -40.h,
+            bottom: -40.h,
+            right: -60.w,
+            width: 240.w,
+            child: const DecoratedBox(
+              decoration: BoxDecoration(gradient: AppGradients.greenGlow),
+            ),
+          ),
+          Positioned(
+            top: -12.h,
+            bottom: -12.h,
+            right: -32.w,
+            child: SizedBox(
+              width: 170.w,
+              child: Assets.images.imageDiscount.image(fit: BoxFit.contain),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 207.w,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandPurple,
+                      borderRadius: BorderRadius.circular(40.r),
+                    ),
+                    child: Text(
+                      'aksiya_badge'.tr(),
+                      style:
+                          AppText.bold10.copyWith(color: AppColors.onBrand),
+                    ),
+                  ),
+                  6.verticalSpace,
+                  Text(
+                    'aksiya_banner_title'.tr(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bold18
+                        .copyWith(color: context.colors.textPrimary),
+                  ),
+                  4.verticalSpace,
+                  // Flexible: the longer locales must ellipsize, not overflow
+                  // the fixed-height carousel slide.
+                  Flexible(
+                    child: Text(
+                      'aksiya_banner_subtitle'.tr(),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      style: AppText.regular13
+                          .copyWith(color: context.colors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Promo banner carousel — the coupon card first, then the API `banners`
 /// (Figma teacher / promo card with dot indicators).
 class HomeBannerCarousel extends StatefulWidget {
@@ -106,12 +195,16 @@ class HomeBannerCarousel extends StatefulWidget {
     super.key,
     required this.banners,
     required this.onCouponTap,
+    required this.onAksiyaTap,
   });
 
   final List<HomBanner> banners;
 
   /// Tapping the leading coupon page opens the coupon plans screen.
   final VoidCallback onCouponTap;
+
+  /// Tapping the "аксия" page opens the bundle screen.
+  final VoidCallback onAksiyaTap;
 
   @override
   State<HomeBannerCarousel> createState() => _HomeBannerCarouselState();
@@ -131,6 +224,9 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final pages = <Widget>[
+      // The bundle leads: it is the offer with a deadline on it, and it is the
+      // one a first-time visitor is most likely to act on.
+      HomeAksiyaBanner(onTap: widget.onAksiyaTap),
       HomeCouponBanner(onTap: widget.onCouponTap),
       ...widget.banners.map((banner) {
         final image = ClipRRect(

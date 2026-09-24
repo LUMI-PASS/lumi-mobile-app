@@ -218,6 +218,12 @@ abstract final class DeepLinkRoutes {
       mode: DeepLinkNavMode.root,
       build: (_) => const CouponsRoute(),
     ),
+    // `lumi://aksiya` opens the best bundle on sale; `lumi://aksiya/<slug>`
+    // opens a named one, so a campaign can be advertised by its own link.
+    'aksiya': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (params) => AksiyaRoute(slug: params['id']),
+    ),
     'wallet': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
       build: (_) => const WalletRoute(),

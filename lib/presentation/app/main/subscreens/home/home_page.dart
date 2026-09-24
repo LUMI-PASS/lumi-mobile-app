@@ -120,6 +120,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               child: HomeBannerCarousel(
                 banners: state.homeModel?.data?.banners ?? [],
                 onCouponTap: () => context.router.push(const PlansRoute()),
+                onAksiyaTap: () => context.router.push(AksiyaRoute()),
               ),
             ),
             if (_categories(state).isNotEmpty)

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/utils/cashback.dart';
@@ -42,6 +43,9 @@ import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
+import 'package:lumi_pass/common/widget/use_promo_pass_row.dart';
+import 'package:lumi_pass/data/api_model/promo/promo_eligibility.dart';
+import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
@@ -179,6 +183,24 @@ class _BookingPageState extends State<BookingPage> {
   /// it is derived from the live total, so changing tickets or applying a
   /// promocode re-prices it without a stale figure surviving underneath.
   bool _useWallet = false;
+
+  // ─── Promo pass ("аксия") ─────────────────────────────────────────────────
+  /// The server's verdict on whether a pass can pay for the booking as it
+  /// currently stands. Re-asked whenever the date or the subtotal moves, since
+  /// both feed the answer.
+  PromoEligibility _promo = PromoEligibility.none;
+
+  /// Whether the buyer switched "Pay with my promo" on. Like the wallet, the
+  /// AMOUNT is not stored — it comes off [_promo], which is re-fetched
+  /// whenever the order changes underneath it.
+  bool _usePromoPass = false;
+
+  /// Guards against an out-of-order answer overwriting a newer one: only the
+  /// most recent request is allowed to land.
+  int _promoRequestId = 0;
+
+  /// Coalesces stepper taps — see [_schedulePromoRefresh].
+  Timer? _promoDebounce;
 
   // ─── Coupon discount ──────────────────────────────────────────────────────
   /// Whether the buyer owns an active coupon plan at all. Distinct from
@@ -386,6 +408,21 @@ class _BookingPageState extends State<BookingPage> {
       _appliedPromo = null;
       _promoError = null;
     }
+    // The subtotal just moved, and the pass has a per-visit ceiling tested
+    // against it. Debounced because this fires on every tap of a stepper and
+    // the answer only matters once the buyer has stopped tapping.
+    _schedulePromoRefresh();
+  }
+
+  /// Coalesces a burst of stepper taps into one eligibility request.
+  void _schedulePromoRefresh() {
+    _promoDebounce?.cancel();
+    _promoDebounce = Timer(
+      const Duration(milliseconds: 400),
+      () {
+        if (mounted) _refreshPromoEligibility();
+      },
+    );
   }
 
   Widget _buildPromoSection() {
@@ -779,6 +816,9 @@ class _BookingPageState extends State<BookingPage> {
     if (!_isCourse) _prefetchScheduleDays();
     _loadCashbackRate();
     _loadWallet();
+    // The pass is a payment method the buyer may already own — ask up front so
+    // the row is there on first paint rather than appearing a beat later.
+    _refreshPromoEligibility();
     // Auto-select so the user sees slots immediately on open: today for a
     // class, and for a course the nearest day it actually runs — today is
     // usually not one, and selecting it would open on a refusal.
@@ -791,6 +831,7 @@ class _BookingPageState extends State<BookingPage> {
   @override
   void dispose() {
     _promoCtrl.dispose();
+    _promoDebounce?.cancel();
     super.dispose();
   }
 
@@ -882,12 +923,79 @@ class _BookingPageState extends State<BookingPage> {
   /// success screen and the order actually carry.
   num get _walletApplied {
     if (!_useWallet) return 0;
+    // Against what is LEFT after the promo pass, exactly as the server clamps
+    // it. Quoting against the full total would hold balance for a part a
+    // prepaid visit has already paid.
+    final remaining = _payableTotal - _promoApplied;
+    if (remaining <= 0) return 0;
     return walletRedeemableFor(
       available: _wallet.available,
-      // Against the post-discount total, exactly as the server clamps it.
-      orderAmount: _payableTotal,
+      orderAmount: remaining,
       maxRedeemPercent: _maxRedeemPercent,
     );
+  }
+
+  /// Re-asks the server whether a pass can pay for the booking as it now
+  /// stands.
+  ///
+  /// Called whenever the DATE or the SUBTOTAL moves, because both feed the
+  /// answer: the date is tested against the pass's deadline, and the subtotal
+  /// against its per-visit ceiling. Answers can land out of order — a slow
+  /// reply for yesterday's selection must not overwrite a fast one for today's
+  /// — so each request carries a sequence number and only the newest is kept.
+  ///
+  /// Never throws: the repository resolves a failure (including the 401 a
+  /// signed-out browse gets) to [PromoEligibility.none], which simply hides the
+  /// row. A booking sheet must not break because an optional payment method
+  /// could not be looked up.
+  Future<void> _refreshPromoEligibility() async {
+    final id = widget.clazz.id;
+    if (id == null) return;
+    final request = ++_promoRequestId;
+    final result = await getIt<PromoRepository>().eligibility(
+      activityId: id,
+      ticketDate: _selectedDate?.isoKey,
+      subtotal: _payableTotal,
+    );
+    if (!mounted || request != _promoRequestId) return;
+    setState(() {
+      _promo = result;
+      // The pass stopped qualifying underneath a switch that was on — a date
+      // moved past the deadline, or the order grew past the ceiling. Turning
+      // it off here is what keeps the summary honest; leaving it on would show
+      // a covered total the checkout is about to refuse.
+      if (!result.eligible) _usePromoPass = false;
+    });
+  }
+
+  /// The promo-pass switch. A pass and a promocode are alternative ways to pay
+  /// the same money and the server refuses both together, so turning this on
+  /// drops any previewed promocode rather than letting the summary show a
+  /// combination checkout would reject.
+  void _onPromoPassToggled(bool v) {
+    if (v && !_isCourse && _totalTickets == 0) {
+      _flag(_ticketShake);
+      setState(() => _error = 'book_select_tickets'.tr());
+      return;
+    }
+    setState(() {
+      _usePromoPass = v;
+      if (v) {
+        _appliedPromo = null;
+        _promoCtrl.clear();
+        _promoError = null;
+      }
+      if (_error != null) _error = null;
+    });
+    if (v) {
+      getIt<AnalyticsService>().logEvent(
+        AnalyticsEvent.aksiyaPassRedeemed,
+        params: {
+          'activity_id': widget.clazz.id ?? '',
+          'covered': _promo.covered,
+        },
+      );
+    }
   }
 
   /// The wallet switch. Turning it on with nothing bought yet used to look
@@ -907,9 +1015,26 @@ class _BookingPageState extends State<BookingPage> {
     });
   }
 
-  /// What the card is actually charged, after the wallet.
+  /// How much an "аксия" visit would take off this order right now.
+  ///
+  /// A live preview only — checkout re-decides it, and its answer is what the
+  /// success screen and the order actually carry. Zero unless the buyer has
+  /// asked for it AND the server says the pass qualifies.
+  num get _promoApplied {
+    if (!_usePromoPass || !_promo.eligible) return 0;
+    final covered = _promo.covered;
+    return covered > _payableTotal ? _payableTotal : covered;
+  }
+
+  /// What the card is actually charged, after the pass and the wallet.
+  ///
+  /// The pass is subtracted FIRST because it is the less flexible of the two:
+  /// a visit is spent whole, while the wallet contributes whatever is left to
+  /// contribute. Subtracting the wallet first would hold balance against money
+  /// a prepaid visit was about to cover anyway. The server does it in this same
+  /// order — see the money ordering comment in `OrdersService.checkout`.
   num get _gatewayTotal {
-    final t = _payableTotal - _walletApplied;
+    final t = _payableTotal - _promoApplied - _walletApplied;
     return t < 0 ? 0 : t;
   }
 
@@ -982,6 +1107,10 @@ class _BookingPageState extends State<BookingPage> {
       _slotsLoaded = false;
       _error = null;
     });
+    // The pass's deadline is tested against the booking DATE, so a new date is
+    // a new question. Fired here rather than in the slot branches below —
+    // every path through this method has already changed the date by now.
+    _refreshPromoEligibility();
     final id = widget.clazz.id;
     if (id == null) return;
     // Buying a WHOLE course books no single session: the day picked here is a
@@ -1448,6 +1577,11 @@ class _BookingPageState extends State<BookingPage> {
         // payment method, not a competing discount. Only the intent is sent;
         // the server decides the amount and returns it on the result.
         useWallet: _useWallet,
+        // Same contract, with one difference: a pass the server refuses fails
+        // the checkout rather than silently falling back to the card. The
+        // buyer asked to pay with it, and charging them instead is not a
+        // graceful degradation.
+        usePromoPass: _usePromoPass,
       );
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutStarted,
@@ -1839,6 +1973,20 @@ class _BookingPageState extends State<BookingPage> {
                           if (!_hasCouponPlan) ...[
                             20.kh,
                             _promoSection(c),
+                          ],
+                          // Above the wallet, and outside the `!_hasCouponPlan`
+                          // guard for the same reason it is: an "аксия" visit is
+                          // a payment method the buyer already owns, not a
+                          // competing discount. It renders nothing when there is
+                          // no pass, so it costs an empty box at worst.
+                          if (_promo.shouldShowRow) ...[
+                            20.kh,
+                            UsePromoPassRow(
+                              eligibility: _promo,
+                              enabled: !_submitting,
+                              applied: _usePromoPass,
+                              onChanged: _onPromoPassToggled,
+                            ),
                           ],
                           // Deliberately OUTSIDE the `!_hasCouponPlan` guard
                           // above. That guard exists because a promocode and a
@@ -2349,6 +2497,40 @@ class _BookingPageState extends State<BookingPage> {
                   style: AppText.bold18.copyWith(color: c.textPrimary)),
             ],
           ),
+          // The "аксия" split, shown only when a visit is actually being
+          // spent. Like the wallet's below it, it hangs UNDER the grand total
+          // rather than reducing it: the order still costs the total — the
+          // centre is paid on that — this is simply how much of it a prepaid
+          // visit settles.
+          if (_promoApplied > 0) ...[
+            12.kh,
+            Row(
+              children: [
+                Expanded(
+                  child: Text('aksiya_applied'.tr(),
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
+                ),
+                Text('−${_promoApplied.toRawUzsPrice()}',
+                    style: AppText.semibold14
+                        .copyWith(color: AppColors.green)),
+              ],
+            ),
+            if (_walletApplied <= 0) ...[
+              8.kh,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('wallet_left_to_pay'.tr(),
+                        style: AppText.semibold14
+                            .copyWith(color: c.textPrimary)),
+                  ),
+                  Text(_gatewayTotal.toRawUzsPrice(),
+                      style: AppText.bold18.copyWith(color: c.textPrimary)),
+                ],
+              ),
+            ],
+          ],
           // The wallet split, shown only when it's actually being used. It
           // hangs BELOW the grand total rather than reducing it: the order
           // still costs the total, this is just how much of it is being
