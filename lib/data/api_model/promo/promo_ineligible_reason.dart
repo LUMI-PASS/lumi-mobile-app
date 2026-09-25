@@ -35,6 +35,13 @@ enum PromoIneligibleReason {
   /// A course enrolment. A visit slot buys one visit, not a whole term.
   course('course'),
 
+  /// More than one ticket on the booking. A packet is N visits and each visit
+  /// is ONE ticket — three bookings, three tickets, three different places.
+  tooManyTickets('too_many_tickets'),
+
+  /// A promocode was entered alongside the packet. They never stack.
+  withPromocode('with_promocode'),
+
   unknown('');
 
   const PromoIneligibleReason(this.key);
@@ -73,6 +80,10 @@ enum PromoIneligibleReason {
         return 'aksiya_why_too_expensive';
       case PromoIneligibleReason.course:
         return 'aksiya_why_course';
+      case PromoIneligibleReason.tooManyTickets:
+        return 'aksiya_why_too_many_tickets';
+      case PromoIneligibleReason.withPromocode:
+        return 'aksiya_why_with_promocode';
       case PromoIneligibleReason.unknown:
         return 'aksiya_why_generic';
     }
@@ -84,5 +95,22 @@ enum PromoIneligibleReason {
   /// stays visible and explains itself. Having no pass at all is not a refusal
   /// to explain — it is a reason to hide the row and show the offer instead.
   bool get isFixableHere =>
-      this == dateAfterExpiry || this == alreadyUsedHere;
+      this == dateAfterExpiry ||
+      this == alreadyUsedHere ||
+      // Take a ticket off, or remove the code — both are one tap away on the
+      // sheet that is showing the message.
+      this == tooManyTickets ||
+      this == withPromocode;
+
+  /// Resolves the `error_code` a refused checkout returns.
+  ///
+  /// The server namespaces them (`promo_pass_too_many_tickets`) so they cannot
+  /// collide with the bare promocode codes; this strips that prefix and reads
+  /// the rule. Anything unrecognised — including a code from a newer server —
+  /// lands on [unknown] and shows the generic line rather than a raw key.
+  static PromoIneligibleReason? fromErrorCode(String? code) {
+    const prefix = 'promo_pass_';
+    if (code == null || !code.startsWith(prefix)) return null;
+    return fromKey(code.substring(prefix.length));
+  }
 }

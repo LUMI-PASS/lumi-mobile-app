@@ -246,6 +246,38 @@ void main() {
       );
     });
 
+    test('a refusal the buyer can fix on the sheet keeps the row', () {
+      // Take a ticket off, or clear the code — both are one tap away on the
+      // screen that is showing the message, so it says so rather than hiding.
+      for (final key in ['too_many_tickets', 'with_promocode']) {
+        final e = PromoEligibility.fromJson({'eligible': false, 'reason': key});
+        expect(e.shouldShowRow, isTrue, reason: key);
+        expect(e.reason!.isFixableHere, isTrue, reason: key);
+      }
+    });
+
+    test('resolves the namespaced error_code a refused checkout returns', () {
+      // Keyed on the code, never the sentence: the message is an English
+      // fallback for older builds and logs, and rewording it must not break
+      // the localized path.
+      expect(
+        PromoIneligibleReason.fromErrorCode('promo_pass_too_many_tickets'),
+        PromoIneligibleReason.tooManyTickets,
+      );
+      expect(
+        PromoIneligibleReason.fromErrorCode('promo_pass_date_after_expiry'),
+        PromoIneligibleReason.dateAfterExpiry,
+      );
+      // A code from a newer server still lands on a real message.
+      expect(
+        PromoIneligibleReason.fromErrorCode('promo_pass_brand_new'),
+        PromoIneligibleReason.unknown,
+      );
+      // Not ours: a promocode error must fall through to its own handler.
+      expect(PromoIneligibleReason.fromErrorCode('max_order'), isNull);
+      expect(PromoIneligibleReason.fromErrorCode(null), isNull);
+    });
+
     test('an empty reason string is no reason at all', () {
       final e = PromoEligibility.fromJson({'eligible': true, 'reason': ''});
       expect(e.reason, isNull);

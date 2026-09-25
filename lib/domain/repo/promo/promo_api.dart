@@ -68,11 +68,17 @@ class PromoApi {
     required String activityId,
     String? ticketDate,
     num? subtotal,
+    int? seats,
+    bool isTrial = false,
   }) {
     return _dio.get('promo-passes/eligibility', queryParameters: {
       'activity_id': activityId,
       if (ticketDate != null && ticketDate.isNotEmpty) 'ticket_date': ticketDate,
       if (subtotal != null) 'subtotal': subtotal.round(),
+      // One visit buys ONE ticket, so the count decides the answer.
+      if (seats != null) 'seats': seats,
+      // A visit buys a course's TRIAL lesson, never its whole term.
+      if (isTrial) 'is_trial': true,
     });
   }
 }

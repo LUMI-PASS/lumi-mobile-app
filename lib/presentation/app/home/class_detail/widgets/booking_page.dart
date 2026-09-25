@@ -43,8 +43,11 @@ import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
+import 'package:lumi_pass/common/utils/promo_pass_coverage.dart';
+import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/common/widget/use_promo_pass_row.dart';
 import 'package:lumi_pass/data/api_model/promo/promo_eligibility.dart';
+import 'package:lumi_pass/data/api_model/promo/promo_ineligible_reason.dart';
 import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/paycom_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
@@ -334,6 +337,21 @@ class _BookingPageState extends State<BookingPage> {
         _promoLoading = false;
       });
     }
+  }
+
+  /// The localized message for a refused "pay with my packet" checkout, or null
+  /// when the failure was not about the packet.
+  ///
+  /// Keyed on `error_code`, never on the message text: the server's sentence is
+  /// an English fallback for older builds and logs, and matching on it would
+  /// break the moment somebody rewords it.
+  String? _promoPassErrorMessage(dynamic data) {
+    if (data is! Map) return null;
+    final code = data['error_code'];
+    final reason =
+        PromoIneligibleReason.fromErrorCode(code is String ? code : null);
+    if (reason == null) return null;
+    return reason.messageKey.tr();
   }
 
   /// Turns a backend promocode error into a localized, user-facing message.
@@ -960,6 +978,14 @@ class _BookingPageState extends State<BookingPage> {
       // anything else lets the preview say yes to a booking the sale then
       // refuses.
       subtotal: _total,
+      // One visit buys ONE ticket. Sent so the row can say so while the buyer
+      // is still holding the stepper, instead of after they press Pay.
+      // A trial is one lesson per child, so the places bought ARE the tickets.
+      // A course with no bracket picker buys exactly one.
+      seats: _isCourse
+          ? (_totalCourseAgeTierQuantity > 0 ? _totalCourseAgeTierQuantity : 1)
+          : _totalTickets,
+      isTrial: _isTrial,
     );
     if (!mounted || request != _promoRequestId) return;
     setState(() {
@@ -1029,6 +1055,31 @@ class _BookingPageState extends State<BookingPage> {
     final covered = _promo.covered;
     return covered > _payableTotal ? _payableTotal : covered;
   }
+
+  /// The packet is paying for this booking OUTRIGHT — nothing is left to charge.
+  ///
+  /// The gate on every payment control below. A buyer whose visit covers the
+  /// whole thing is not choosing a card, not entering a promocode and not
+  /// spending wallet balance, so none of those are offered: an affordance that
+  /// can only do nothing is worse than no affordance. The summary drops its
+  /// money lines for the same reason — there is no sum to break down.
+  /// The packet to show on ONE tariff row, or null.
+  ///
+  /// Only while the buyer has actually switched the packet on: before that they
+  /// are choosing between priced tickets and need the prices to choose with.
+  /// Once it is on, the row it will pay for stops quoting — and the ceiling is
+  /// re-tested per row, since a sheet lists several tiers at once.
+  PromoPassCoverage? _rowPromoPass(num price) {
+    if (!_usePromoPass || !_promo.eligible) return null;
+    final pass = readPromoPass(context);
+    if (pass == null) return null;
+    final ceiling = pass.maxActivityPrice;
+    if (ceiling != null && price > ceiling) return null;
+    return pass;
+  }
+
+  bool get _paidByPromoPass =>
+      _promoApplied > 0 && _promoApplied >= _payableTotal;
 
   /// What the card is actually charged, after the pass and the wallet.
   ///
@@ -1600,6 +1651,19 @@ class _BookingPageState extends State<BookingPage> {
       );
       return result;
     } on DioException catch (e) {
+      // A packet refusal arrives as a structured `error_code`, so it is shown in
+      // the buyer's own language rather than as the server's English fallback.
+      // Handled before the generic mapping below because that would print the
+      // raw sentence to a Russian- or Uzbek-speaking parent.
+      final promoMessage = _promoPassErrorMessage(e.response?.data);
+      if (promoMessage != null) {
+        // Turned off too: the switch is showing "covers 30 000" for a booking
+        // the server has just refused to cover, and leaving it on invites the
+        // same failure on the next tap.
+        if (mounted) setState(() => _usePromoPass = false);
+        _refreshPromoEligibility();
+        throw CheckoutFriendlyError(promoMessage);
+      }
       final raw = e.response?.data is Map
           ? (e.response?.data['message']?.toString() ??
               e.response?.statusMessage ??
@@ -1983,7 +2047,11 @@ class _BookingPageState extends State<BookingPage> {
                               child: _paymentMethodRow(c),
                             ),
                           ],
-                          if (!_hasCouponPlan) ...[
+                          // Hidden while the packet pays: the two never stack,
+                          // and the server refuses the combination outright. A
+                          // field whose only possible outcome is an error is not
+                          // an option, it is a trap.
+                          if (!_hasCouponPlan && !_paidByPromoPass) ...[
                             20.kh,
                             _promoSection(c),
                           ],
@@ -2006,7 +2074,10 @@ class _BookingPageState extends State<BookingPage> {
                           // coupon plan are alternative discounts that never
                           // stack — the wallet is neither, so it is offered to
                           // coupon holders too.
-                          if (_wallet.available > 0) ...[
+                          // …but not when the packet has already covered the
+                          // whole order. The wallet would contribute zero, and a
+                          // switch that moves no money reads as broken.
+                          if (_wallet.available > 0 && !_paidByPromoPass) ...[
                             20.kh,
                             UseBalanceRow(
                               wallet: _wallet,
@@ -2094,8 +2165,12 @@ class _BookingPageState extends State<BookingPage> {
       color: c.scaffoldBg,
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h + bottomInset),
       child: GradientButton(
-        text: _skipsGateway
-            ? 'book_free_cta'.tr()
+        text: _paidByPromoPass
+            // Not "book for free": it was paid for, days ago, and the buyer
+            // should recognise which purchase is covering this.
+            ? 'book_with_packet_cta'.tr()
+            : _skipsGateway
+                ? 'book_free_cta'.tr()
             // What the CARD is charged, after the wallet — the buyer is about
             // to authorise this number, not the order total.
             : 'book_pay_cta'.tr(args: [_gatewayTotal.toRawUzsPrice()]),
@@ -2130,6 +2205,7 @@ class _BookingPageState extends State<BookingPage> {
         label: '${tier.rangeLabel} ${'age_years_suffix'.tr()}',
         durationLabel: null,
         price: tier.price,
+        promoPass: _rowPromoPass(tier.price),
         count: _courseAgeTierQuantity(tier),
         onMinus: () => _bumpCourseAgeTier(tier, -1),
         onPlus: () => _bumpCourseAgeTier(tier, 1),
@@ -2178,6 +2254,7 @@ class _BookingPageState extends State<BookingPage> {
         durationLabel: durationLabel,
         price: price,
         discountedPrice: _hasCoupon ? _applyDiscount(price) : null,
+        promoPass: _rowPromoPass(price),
         count: count,
         onMinus: onMinus,
         onPlus: onPlus,
@@ -2446,6 +2523,66 @@ class _BookingPageState extends State<BookingPage> {
 
   // "Оплата" — the frosted price-breakdown card.
   Widget _breakdownSection(AppColorScheme c) {
+    // Paid by the packet: there is no sum, no discount and nothing owing, so the
+    // receipt-shaped card would be a table of zeroes. It says what is happening
+    // and what is left on the packet instead.
+    if (_paidByPromoPass) return _promoPaidSummary(c);
+    return _moneyBreakdown(c);
+  }
+
+  /// The summary a packet-paid booking gets: what it confirms, and what remains.
+  Widget _promoPaidSummary(AppColorScheme c) {
+    final left = _promo.pass?.activitiesLeft;
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: AppColors.green.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.green.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Assets.icons.sucess.svg(
+            width: 20.w,
+            height: 20.w,
+            colorFilter:
+                const ColorFilter.mode(AppColors.green, BlendMode.srcIn),
+          ),
+          12.kw,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'book_paid_by_packet'.tr(),
+                  style: AppText.semibold16.copyWith(color: c.textPrimary),
+                ),
+                6.kh,
+                Text(
+                  // One ticket per visit, said here rather than only in the
+                  // refusal — it is what the buyer is confirming.
+                  'book_paid_by_packet_body'.tr(),
+                  style: AppText.regular13.copyWith(color: c.textSecondary),
+                ),
+                if (left != null) ...[
+                  6.kh,
+                  Text(
+                    'book_packet_after'.tr(
+                      namedArgs: {'count': '${left > 0 ? left - 1 : 0}'},
+                    ),
+                    style: AppText.semibold12.copyWith(color: AppColors.green),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _moneyBreakdown(AppColorScheme c) {
     return FrostedCard(
       borderWidth: 2,
       borderRadius: BorderRadius.circular(12.r),
@@ -3279,7 +3416,14 @@ class _TariffRow extends StatelessWidget {
     required this.onPlus,
     this.discountedPrice,
     this.locked = false,
+    this.promoPass,
   });
+
+  /// Non-null while a packet pays for this booking — the row then shows the
+  /// included badge instead of a figure, matching the catalogue it was picked
+  /// from. Passing the price through unchanged would leave the one screen that
+  /// takes the money as the only place still quoting one.
+  final PromoPassCoverage? promoPass;
 
   final SvgGenImage icon;
   final String label;
@@ -3341,7 +3485,10 @@ class _TariffRow extends StatelessWidget {
                 Text('$durationLabel ·',
                     style: AppText.regular12
                         .copyWith(color: context.colors.textSecondary)),
-              Text(
+              if (promoPass != null && price > 0)
+                PromoIncludedLabel(pass: promoPass!)
+              else
+                Text(
                 priceText,
                 style: AppText.regular12.copyWith(
                   color: context.colors.textSecondary,
@@ -3349,7 +3496,7 @@ class _TariffRow extends StatelessWidget {
                       discounted != null ? TextDecoration.lineThrough : null,
                 ),
               ),
-              if (discounted != null)
+              if (promoPass == null && discounted != null)
                 Text(
                   // Same as above: a coupon that takes the row to nothing has
                   // made it free, not unpriced.

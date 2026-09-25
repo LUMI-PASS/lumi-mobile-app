@@ -96,12 +96,16 @@ class PromoRepositoryImpl extends PromoRepository {
     required String activityId,
     String? ticketDate,
     num? subtotal,
+    int? seats,
+    bool isTrial = false,
   }) async {
     try {
       final res = await _api.eligibility(
         activityId: activityId,
         ticketDate: ticketDate,
         subtotal: subtotal,
+        seats: seats,
+        isTrial: isTrial,
       );
       return PromoEligibility.fromJson(_unwrap(res.data));
     } catch (_) {

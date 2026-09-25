@@ -1302,3 +1302,9 @@ aksiya_packet_selected,Выбрано,Tanlangan,Selected
 aksiya_packet_section,Пакет,Paket,Packet
 aksiya_prices_hidden_title,Цены скрыты,Narxlar yashirilgan,Prices are hidden
 aksiya_prices_hidden_body,"Пока пакет активен, разовые занятия и пробные уроки показаны как включённые. Осталось посещений: {count}","Paket faol ekan, bir martalik mashg‘ulotlar va sinov darslari kiritilgan deb ko‘rsatiladi. Qolgan tashriflar: {count}","While the packet is live, one-time activities and trial lessons show as included. {count} visits left"
+aksiya_why_too_many_tickets,Акция покрывает один билет за посещение — оставьте один билет,Aksiya bir tashrifga bitta chipta qoplaydi — bitta chipta qoldiring,The promo covers one ticket per visit — leave one ticket
+aksiya_why_with_promocode,Акцию и промокод нельзя применить вместе,Aksiya va promokodni birga qo‘llash mumkin emas,A promo packet and a promocode cannot be used together
+book_paid_by_packet,Оплачено пакетом Lumi Start,Lumi Start paketi bilan to‘langan,Paid with your Lumi Start packet
+book_paid_by_packet_body,Платить на месте ничего не нужно. Одно посещение — один билет,Joyida hech narsa to‘lash kerak emas. Bitta tashrif — bitta chipta,Nothing to pay at the door. One visit is one ticket
+book_packet_after,После брони останется посещений: {count},Brondan keyin qoladi: {count} tashrif,{count} visits left after this
+book_with_packet_cta,Забронировать по пакету,Paket bilan band qilish,Book with my packet

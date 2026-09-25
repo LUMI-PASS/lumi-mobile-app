@@ -42,5 +42,7 @@ abstract class PromoRepository {
     required String activityId,
     String? ticketDate,
     num? subtotal,
+    int? seats,
+    bool isTrial = false,
   });
 }
