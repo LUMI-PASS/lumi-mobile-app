@@ -115,7 +115,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(child: 4.verticalSpace),
-            // Coupon promo rides as the first page of the banner carousel.
+            // Full-bleed promo carousel: the Lumi Start packet leads it, then
+            // the coupon card, then the API banners.
             SliverToBoxAdapter(
               child: HomeBannerCarousel(
                 banners: state.homeModel?.data?.banners ?? [],

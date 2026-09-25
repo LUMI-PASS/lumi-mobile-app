@@ -143,8 +143,11 @@ class HomeAksiyaBanner extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
+      // `ClipRect`, not `ClipRRect`: the slide now runs to both screen edges, and
+      // a corner radius with no margin to round against reads as a rendering
+      // fault rather than as a card. Clipping is still needed — the discs and
+      // the mascot deliberately overflow.
+      child: ClipRect(
         child: DecoratedBox(
           decoration: const BoxDecoration(gradient: AppGradients.brand),
           child: Stack(
@@ -175,7 +178,12 @@ class HomeAksiyaBanner extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 116.w, 12.h),
+                // 16 on the left is the app's own gutter, so the copy lines
+                // up with the section headings below it now that the slide runs
+                // to the screen edge. The right inset is the room the mascot
+                // stands in — reserved rather than overlapped, which is what
+                // keeps the text off the artwork at any width.
+                padding: EdgeInsets.fromLTRB(16.w, 12.h, 124.w, 12.h),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,17 +350,25 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
       // has loaded, so the carousel never holds a dot for a blank page.
       if (packet != null)
         HomeAksiyaBanner(campaign: packet, onTap: widget.onAksiyaTap),
-      HomeCouponBanner(onTap: widget.onCouponTap),
+      // Kept inset while its siblings are full-bleed, and deliberately: it is a
+      // BORDERED card, and a 2px white border running into the screen edge
+      // reads as a card that has been cut off rather than one that fills the
+      // width. Its own padding, so the change stops at the one page that needs
+      // it.
+      Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: HomeCouponBanner(onTap: widget.onCouponTap),
+      ),
       ...widget.banners.map((banner) {
-        final image = ClipRRect(
-          borderRadius: BorderRadius.circular(12.r),
-          child: CachedNetworkImage(
-            width: double.infinity,
-            fit: BoxFit.cover,
-            imageUrl: _resolveSrc(banner.url, banner.id),
-            placeholder: (_, __) => _placeholder(c),
-            errorWidget: (_, __, ___) => _placeholder(c),
-          ),
+        // No radius: these span the full width now, and `BoxFit.cover` already
+        // fills the slide. Rounding an edge that touches the screen border only
+        // exposes the background behind the corner.
+        final image = CachedNetworkImage(
+          width: double.infinity,
+          fit: BoxFit.cover,
+          imageUrl: _resolveSrc(banner.url, banner.id),
+          placeholder: (_, __) => _placeholder(c),
+          errorWidget: (_, __, ___) => _placeholder(c),
         );
 
         // A banner with no link configured stays exactly as it was: a picture.
@@ -371,9 +387,9 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
       }),
     ];
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Column(
+    // No horizontal padding: the slides run the full width of the screen. Pages
+    // that cannot take that (the bordered coupon card) pad themselves.
+    return Column(
         children: [
           CarouselSlider(
             options: CarouselOptions(
@@ -406,7 +422,6 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
             ),
           ],
         ],
-      ),
     );
   }
 
