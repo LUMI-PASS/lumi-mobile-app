@@ -143,11 +143,11 @@ class HomeAksiyaBanner extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      // `ClipRect`, not `ClipRRect`: the slide now runs to both screen edges, and
-      // a corner radius with no margin to round against reads as a rendering
-      // fault rather than as a card. Clipping is still needed — the discs and
-      // the mascot deliberately overflow.
-      child: ClipRect(
+      // Same radius as the coupon card beside it. The two are pages of ONE
+      // carousel, so anything that differs between them — a corner, an inset —
+      // reads as a jump when you swipe from one to the other.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.r),
         child: DecoratedBox(
           decoration: const BoxDecoration(gradient: AppGradients.brand),
           child: Stack(
@@ -373,25 +373,17 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
       // has loaded, so the carousel never holds a dot for a blank page.
       if (packet != null)
         HomeAksiyaBanner(campaign: packet, onTap: widget.onAksiyaTap),
-      // Kept inset while its siblings are full-bleed, and deliberately: it is a
-      // BORDERED card, and a 2px white border running into the screen edge
-      // reads as a card that has been cut off rather than one that fills the
-      // width. Its own padding, so the change stops at the one page that needs
-      // it.
-      Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: HomeCouponBanner(onTap: widget.onCouponTap),
-      ),
+      HomeCouponBanner(onTap: widget.onCouponTap),
       ...widget.banners.map((banner) {
-        // No radius: these span the full width now, and `BoxFit.cover` already
-        // fills the slide. Rounding an edge that touches the screen border only
-        // exposes the background behind the corner.
-        final image = CachedNetworkImage(
-          width: double.infinity,
-          fit: BoxFit.cover,
-          imageUrl: _resolveSrc(banner.url, banner.id),
-          placeholder: (_, __) => _placeholder(c),
-          errorWidget: (_, __, ___) => _placeholder(c),
+        final image = ClipRRect(
+          borderRadius: BorderRadius.circular(12.r),
+          child: CachedNetworkImage(
+            width: double.infinity,
+            fit: BoxFit.cover,
+            imageUrl: _resolveSrc(banner.url, banner.id),
+            placeholder: (_, __) => _placeholder(c),
+            errorWidget: (_, __, ___) => _placeholder(c),
+          ),
         );
 
         // A banner with no link configured stays exactly as it was: a picture.
@@ -410,41 +402,46 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
       }),
     ];
 
-    // No horizontal padding: the slides run the full width of the screen. Pages
-    // that cannot take that (the bordered coupon card) pad themselves.
-    return Column(
-      children: [
-        CarouselSlider(
-          options: CarouselOptions(
-            height: 144.h,
-            // The banners advance only when the user swipes them.
-            autoPlay: false,
-            viewportFraction: 1.0,
-            enlargeCenterPage: false,
-            onPageChanged: (index, _) => setState(() => _current = index),
+    // ONE inset for the whole carousel, so every page sits on the same gutter as
+    // the coupon card and as the content below it. Padding pages individually is
+    // exactly what lets them drift apart — there is nothing here for a page to
+    // disagree with.
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        children: [
+          CarouselSlider(
+            options: CarouselOptions(
+              height: 144.h,
+              // The banners advance only when the user swipes them.
+              autoPlay: false,
+              viewportFraction: 1.0,
+              enlargeCenterPage: false,
+              onPageChanged: (index, _) => setState(() => _current = index),
+            ),
+            items: pages,
           ),
-          items: pages,
-        ),
-        if (pages.length > 1) ...[
-          10.verticalSpace,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(pages.length, (i) {
-              final active = i == _current;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: EdgeInsets.symmetric(horizontal: 3.w),
-                width: active ? 20.w : 8.w,
-                height: 8.h,
-                decoration: BoxDecoration(
-                  color: active ? AppColors.brandPurple : c.surface,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              );
-            }),
-          ),
+          if (pages.length > 1) ...[
+            10.verticalSpace,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(pages.length, (i) {
+                final active = i == _current;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: EdgeInsets.symmetric(horizontal: 3.w),
+                  width: active ? 20.w : 8.w,
+                  height: 8.h,
+                  decoration: BoxDecoration(
+                    color: active ? AppColors.brandPurple : c.surface,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                );
+              }),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
