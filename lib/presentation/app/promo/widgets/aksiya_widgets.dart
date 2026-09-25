@@ -54,10 +54,12 @@ class AksiyaHero extends StatelessWidget {
                   ),
                   12.kw,
                   Expanded(
+                    // The numeral beside this IS the count, so the label must
+                    // not carry one too — it read "3  3 ta mashg'ulot". Its own
+                    // string rather than the banner's: there the line stands
+                    // alone and has to say the number itself.
                     child: Text(
-                      'aksiya_hero_visits'.tr(
-                        namedArgs: {'count': '${campaign.activitiesCount}'},
-                      ),
+                      'aksiya_hero_visits_suffix'.tr(),
                       style: AppText.semibold18
                           .copyWith(color: AppColors.onBrand, height: 1.2),
                     ),
@@ -458,17 +460,19 @@ class AksiyaHighlights extends StatelessWidget {
     final c = context.colors;
     final lines = <String>[
       ...campaign.highlights,
-      // Appended rather than left to the campaign copy: these two are the rules
-      // checkout enforces, so the buyer must have been told them even if
-      // marketing forgot to write them into `highlights`.
+      // Appended rather than left to the campaign copy: this is a rule checkout
+      // enforces, so the buyer must have been told it even if marketing forgot
+      // to write it into `highlights`.
+      //
+      // The per-visit ceiling is deliberately NOT listed beside it. It is a
+      // guard on the margin, not a feature — and quoting it turns a packet that
+      // reads as "three activities" into one that reads as "three cheap
+      // activities". A booking it refuses says so, in the buyer's language, at
+      // the moment it matters.
       if (campaign.distinctActivities)
         'aksiya_rule_distinct'.tr(
           namedArgs: {'count': '${campaign.activitiesCount}'},
         ),
-      if (campaign.maxActivityPrice != null)
-        'aksiya_rule_max_price'.tr(namedArgs: {
-          'price': campaign.maxActivityPrice!.toRawUzsPrice(),
-        }),
     ];
     if (lines.isEmpty) return const SizedBox.shrink();
 

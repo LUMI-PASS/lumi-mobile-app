@@ -1244,15 +1244,14 @@ aksiya_badge,ПАКЕТ,PAKET,PACKET
 aksiya_hero_visits,{count} занятия в разных местах,{count} ta mashg‘ulot — turli joylarda,{count} activities at different places
 aksiya_hero_deadline,{days} дней на использование,Foydalanishga {days} kun,{days} days to use them
 aksiya_how_it_works,Как это работает,Bu qanday ishlaydi,How it works
-aksiya_step1_title,Покупаете один раз,Bir marta sotib olasiz,Buy once
-aksiya_step1_body,Один платёж открывает {count} посещения,Bitta to‘lov {count} ta tashrifni ochadi,One payment unlocks {count} visits
-aksiya_step2_title,Бронируете вовремя,O‘z vaqtida band qilasiz,Book in time
-aksiya_step2_body,Отсчёт начинается сразу после оплаты: у вас {days} дней,Hisob to‘lovdan keyin boshlanadi: sizda {days} kun bor,The clock starts at payment — you have {days} days
-aksiya_step3_title,Приходите и занимаетесь,"Kelib, mashg‘ulot qilasiz",Turn up and enjoy
-aksiya_step3_body,На месте платить больше ничего не нужно,Joyida hech narsa to‘lash kerak emas,Nothing more to pay at the door
-aksiya_step3_body_distinct,Каждое из {count} посещений — в новом месте,{count} ta tashrifning har biri — yangi joyda,Each of the {count} visits is at a different place
-aksiya_rule_distinct,Посещения нужно использовать в {count} разных местах,Tashriflardan {count} ta turli joyda foydalanish kerak,The visits must be used at {count} different places
-aksiya_rule_max_price,Покрывает занятия стоимостью до {price},{price} gacha bo‘lgan mashg‘ulotlarni qoplaydi,Covers activities priced up to {price}
+aksiya_step1_title,Покупаете пакет,Paketni sotib olasiz,You buy the packet
+aksiya_step1_body,Один платёж — {count} посещения,Bitta to‘lov — {count} ta tashrif,One payment — {count} visits
+aksiya_step2_title,Бронируете занятие,Mashg‘ulotni band qilasiz,You book an activity
+aksiya_step2_body,После покупки у вас {days} дней,Sotib olgandan keyin {days} kun vaqtingiz bor,You have {days} days after buying
+aksiya_step3_title,Приходите на занятие,Mashg‘ulotga qatnashasiz,You attend the activity
+aksiya_step3_body,На месте ничего не доплачиваете,Joyida hech narsa to‘lamaysiz,You pay nothing at the door
+aksiya_step3_body_distinct,Каждое посещение — в новом месте,Har bir tashrif — boshqa joyda,Each visit at a different place
+aksiya_rule_distinct,Посещения нужно использовать в {count} разных местах,Tashriflar {count} ta turli joyda ishlatiladi,The visits are used at {count} different places
 aksiya_payment_section,Оплата,To‘lov,Payment
 aksiya_price_label,Цена пакета,Paket narxi,Packet price
 aksiya_buy_cta,Купить пакет,Paketni sotib olish,Buy the packet
@@ -1374,3 +1373,4 @@ voucher_reason_min_order,Для заказов от {},{} dan boshlab buyurtmala
 voucher_reason_not_applicable,Не действует для этого занятия,Bu mashg'ulot uchun amal qilmaydi,Not valid for this activity
 voucher_reason_coupon_plan,Не суммируется с купонным тарифом,Kupon tarifi bilan birga ishlamaydi,Can't be combined with a coupon plan
 voucher_reason_unknown,Сейчас недоступна,Hozir mavjud emas,Not available right now
+aksiya_hero_visits_suffix,занятия в разных местах,ta mashg‘ulot — turli joylarda,activities at different places
