@@ -1018,6 +1018,12 @@ class _BookingPageState extends State<BookingPage> {
       if (_error != null) _error = null;
     });
     if (v) {
+      // Re-ask on the way ON, not just when the date or the count moves.
+      // Otherwise a buyer holding two tickets sees "covers 60 000" until
+      // something else happens to re-trigger it, and finds out at Pay that one
+      // visit is one ticket. The answer depends on the seat count, so the
+      // moment of switching it on is a moment to ask.
+      _refreshPromoEligibility();
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.aksiyaPassRedeemed,
         params: {
