@@ -165,97 +165,120 @@ class HomeAksiyaBanner extends StatelessWidget {
                 top: -34.h,
                 child: _Disc(size: 78.w, opacity: 0.10),
               ),
-              // The mascot, not the coupon ticket — the two banners must not
-              // share their artwork. Bottom-aligned so it stands on the edge of
-              // the slide instead of floating in it.
-              Positioned(
-                right: 4.w,
-                bottom: 0,
-                top: 8.h,
-                child: Assets.images.mascot.mascotHello.image(
-                  fit: BoxFit.contain,
-                  alignment: Alignment.bottomRight,
-                ),
-              ),
-              Padding(
-                // 16 on the left is the app's own gutter, so the copy lines
-                // up with the section headings below it now that the slide runs
-                // to the screen edge. The right inset is the room the mascot
-                // stands in — reserved rather than overlapped, which is what
-                // keeps the text off the artwork at any width.
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 124.w, 12.h),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 8.w, vertical: 3.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.onBrand.withValues(alpha: 0.22),
-                        borderRadius: BorderRadius.circular(40.r),
-                      ),
-                      child: Text(
-                        campaign.badge?.isNotEmpty == true
-                            ? campaign.badge!
-                            : 'aksiya_badge'.tr(),
-                        maxLines: 1,
-                        style:
-                            AppText.bold10.copyWith(color: AppColors.onBrand),
+              // Copy and art as SIBLINGS in a Row, never as a `Positioned`
+              // over a padded block.
+              //
+              // The art used to be positioned against the right edge with only
+              // its height constrained, so `BoxFit.contain` sized its width from
+              // the asset's aspect ratio — about as wide as the slide is tall,
+              // which was wider than the inset reserved for it. The subtitle ran
+              // underneath the mascot and was unreadable. Reserving "enough"
+              // padding is a guess that has to be re-made every time the art,
+              // the height or the asset changes; a Row cannot overlap at all.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      // 16 on the left is the app's own gutter, so the copy
+                      // lines up with the section headings below it now that
+                      // the slide runs to the screen edge.
+                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 8.w, 12.h),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.w, vertical: 3.h),
+                            decoration: BoxDecoration(
+                              color: AppColors.onBrand.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(40.r),
+                            ),
+                            child: Text(
+                              campaign.badge?.isNotEmpty == true
+                                  ? campaign.badge!
+                                  : 'aksiya_badge'.tr(),
+                              maxLines: 1,
+                              style: AppText.bold10
+                                  .copyWith(color: AppColors.onBrand),
+                            ),
+                          ),
+                          6.verticalSpace,
+                          // The packet's NAME. One line, ellipsized — the reason the
+                          // copy disappeared last time was a title allowed to wrap.
+                          Text(
+                            campaign.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.bold18
+                                .copyWith(color: AppColors.onBrand),
+                          ),
+                          4.verticalSpace,
+                          Flexible(
+                            child: Text(
+                              held != null
+                                  // Already owns it: the slide stops selling and says
+                                  // what is left, which is the only thing they want
+                                  // from it.
+                                  ? 'promo_included_left'.tr(
+                                      namedArgs: {
+                                        'count': '${held.activitiesLeft}'
+                                      },
+                                    )
+                                  : 'aksiya_hero_visits'.tr(namedArgs: {
+                                      'count': '${campaign.activitiesCount}',
+                                    }),
+                              // One line. The badge, the title, this and the
+                              // price pill together come to within a point or
+                              // two of the slide's fixed 144dp, so a second
+                              // line here is what overflows it — and the full
+                              // width gives this sentence more than enough
+                              // room on one.
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppText.regular12.copyWith(
+                                color: AppColors.onBrand.withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ),
+                          if (held == null) ...[
+                            6.verticalSpace,
+                            // The price, as the one solid white element on the slide —
+                            // it is what the offer is, and the figure comes off the
+                            // campaign so it can never go stale against the server.
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: AppColors.onBrand,
+                                borderRadius: BorderRadius.circular(40.r),
+                              ),
+                              child: Text(
+                                campaign.price.toRawUzsPrice(),
+                                maxLines: 1,
+                                style: AppText.bold16
+                                    .copyWith(color: AppColors.brandPurple),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    6.verticalSpace,
-                    // The packet's NAME. One line, ellipsized — the reason the
-                    // copy disappeared last time was a title allowed to wrap.
-                    Text(
-                      campaign.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          AppText.bold18.copyWith(color: AppColors.onBrand),
-                    ),
-                    4.verticalSpace,
-                    Flexible(
-                      child: Text(
-                        held != null
-                            // Already owns it: the slide stops selling and says
-                            // what is left, which is the only thing they want
-                            // from it.
-                            ? 'promo_included_left'.tr(
-                                namedArgs: {'count': '${held.activitiesLeft}'},
-                              )
-                            : 'aksiya_hero_visits'.tr(namedArgs: {
-                                'count': '${campaign.activitiesCount}',
-                              }),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.regular12.copyWith(
-                          color: AppColors.onBrand.withValues(alpha: 0.9),
-                        ),
+                  ),
+                  // A fixed slot the mascot fills. Wide enough to read at a
+                  // glance, and bounded so it can never grow into the copy.
+                  SizedBox(
+                    width: 128.w,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 8.h),
+                      child: Assets.images.mascot.mascotHello.image(
+                        fit: BoxFit.contain,
+                        alignment: Alignment.bottomCenter,
                       ),
                     ),
-                    if (held == null) ...[
-                      6.verticalSpace,
-                      // The price, as the one solid white element on the slide —
-                      // it is what the offer is, and the figure comes off the
-                      // campaign so it can never go stale against the server.
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.onBrand,
-                          borderRadius: BorderRadius.circular(40.r),
-                        ),
-                        child: Text(
-                          campaign.price.toRawUzsPrice(),
-                          maxLines: 1,
-                          style: AppText.bold16
-                              .copyWith(color: AppColors.brandPurple),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -390,38 +413,38 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
     // No horizontal padding: the slides run the full width of the screen. Pages
     // that cannot take that (the bordered coupon card) pad themselves.
     return Column(
-        children: [
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 144.h,
-              // The banners advance only when the user swipes them.
-              autoPlay: false,
-              viewportFraction: 1.0,
-              enlargeCenterPage: false,
-              onPageChanged: (index, _) => setState(() => _current = index),
-            ),
-            items: pages,
+      children: [
+        CarouselSlider(
+          options: CarouselOptions(
+            height: 144.h,
+            // The banners advance only when the user swipes them.
+            autoPlay: false,
+            viewportFraction: 1.0,
+            enlargeCenterPage: false,
+            onPageChanged: (index, _) => setState(() => _current = index),
           ),
-          if (pages.length > 1) ...[
-            10.verticalSpace,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(pages.length, (i) {
-                final active = i == _current;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: EdgeInsets.symmetric(horizontal: 3.w),
-                  width: active ? 20.w : 8.w,
-                  height: 8.h,
-                  decoration: BoxDecoration(
-                    color: active ? AppColors.brandPurple : c.surface,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                );
-              }),
-            ),
-          ],
+          items: pages,
+        ),
+        if (pages.length > 1) ...[
+          10.verticalSpace,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(pages.length, (i) {
+              final active = i == _current;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: EdgeInsets.symmetric(horizontal: 3.w),
+                width: active ? 20.w : 8.w,
+                height: 8.h,
+                decoration: BoxDecoration(
+                  color: active ? AppColors.brandPurple : c.surface,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              );
+            }),
+          ),
         ],
+      ],
     );
   }
 
