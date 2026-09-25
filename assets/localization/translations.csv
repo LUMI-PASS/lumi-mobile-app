@@ -225,8 +225,8 @@ booking_cancel_action,Отменить,Bekor qilish,Cancel
 booking_cancelling,Отмена...,Bekor qilinmoqda...,Cancelling...
 booking_cancelled_label,Бронирование отменено,Bron bekor qilindi,Booking cancelled
 booking_cancel_failed,Не удалось отменить: {},Bekor qilinmadi: {},Could not cancel: {}
-booking_refund_auto,"Бронирование отменено. Деньги вернутся на карту в течение нескольких рабочих дней.","Bron bekor qilindi. Pul bir necha ish kuni ichida kartangizga qaytariladi.","Booking cancelled. The money returns to your card within a few working days."
-booking_refund_manual,"Бронирование отменено. Возврат оформит наша команда — мы свяжемся с вами.","Bron bekor qilindi. Pulni jamoamiz qaytaradi — siz bilan bog'lanamiz.","Booking cancelled. Our team will process the refund and contact you."
+booking_refund_auto,Бронирование отменено. Деньги вернутся на карту в течение нескольких рабочих дней.,Bron bekor qilindi. Pul bir necha ish kuni ichida kartangizga qaytariladi.,Booking cancelled. The money returns to your card within a few working days.
+booking_refund_manual,Бронирование отменено. Возврат оформит наша команда — мы свяжемся с вами.,Bron bekor qilindi. Pulni jamoamiz qaytaradi — siz bilan bog'lanamiz.,Booking cancelled. Our team will process the refund and contact you.
 booking_cancel_window_closed,Отмена возможна не позднее чем за {} ч. до начала.,Bekor qilish boshlanishidan kamida {} soat oldin mumkin.,Cancellation is only possible at least {} hours before the start.
 booking_could_not_load,Не удалось загрузить бронирование,Bronni yuklab bo‘lmadi,Could not load booking
 booking_retry,Повторить,Qayta urinish,Retry
@@ -734,7 +734,7 @@ cta_buy_ticket,Купить билет,Chipta sotib olish,Buy ticket
 video_watch,Смотреть видео,Video ko'rish,Watch video
 video_shorts_cta,Смотреть в Shorts,Shorts sifatida tomosha qiling,Watch as Shorts
 delete_account,Удалить аккаунт,Akkauntni o'chirish,Delete account
-delete_account_subtitle,"Это действие необратимо. Все ваши данные будут удалены навсегда.","Bu amalni qaytarib bo'lmaydi. Barcha ma'lumotlaringiz butunlay o'chiriladi.","This action is irreversible. All your data will be permanently deleted."
+delete_account_subtitle,Это действие необратимо. Все ваши данные будут удалены навсегда.,Bu amalni qaytarib bo'lmaydi. Barcha ma'lumotlaringiz butunlay o'chiriladi.,This action is irreversible. All your data will be permanently deleted.
 login_to_view_bookings,Войдите чтобы увидеть бронирования,Bronlashlaringizni ko'rish uchun tizimga kiring,Log in to view your bookings
 account_deleted_info,Аккаунт удалён. Вы вошли как гость.,Akkaunt o'chirildi. Siz mehmon sifatida kiryapsiz.,Account deleted. You're browsing as a guest.
 notifications_title,Уведомления,Bildirishnomalar,Notifications
@@ -785,8 +785,8 @@ coupon_plans_title,Купоны со скидками,Chegirmali kuponlar,Discou
 coupon_plans_subtitle,Купите купон и получайте скидку при бронировании занятий,Kupon sotib oling va mashg'ulotlarni bron qilishda chegirma oling,Buy a coupon and save on activity bookings
 get_coupon,Получить купон,Kupon olish,Get Coupon
 book_pending_title,Заявка отправлена!,Ariza yuborildi!,Booking Request Sent!
-book_pending_subtitle,"Центр рассмотрит вашу заявку и подтвердит бронирование. Вы получите уведомление, когда оно будет одобрено.","Markaz so'rovingizni ko'rib chiqadi va bronni tasdiqlaydi. Tasdiqlanganda bildirishnoma olasiz.","The centre will review your request and confirm the booking. You'll be notified once it's approved."
-book_pending_note,"После подтверждения вы получите уведомление для оплаты.","Tasdiqlangandan so'ng to'lov uchun bildirishnoma olasiz.","After approval, you'll receive a notification to complete payment."
+book_pending_subtitle,"Центр рассмотрит вашу заявку и подтвердит бронирование. Вы получите уведомление, когда оно будет одобрено.",Markaz so'rovingizni ko'rib chiqadi va bronni tasdiqlaydi. Tasdiqlanganda bildirishnoma olasiz.,The centre will review your request and confirm the booking. You'll be notified once it's approved.
+book_pending_note,После подтверждения вы получите уведомление для оплаты.,Tasdiqlangandan so'ng to'lov uchun bildirishnoma olasiz.,"After approval, you'll receive a notification to complete payment."
 book_pending_done,Понятно!,Tushunarli!,Got it!
 coupon_activated_title,Купон активирован!,Kupon faollashtirildi!,Coupon Activated!
 coupon_activated_badge,КУПОН АКТИВЕН,KUPON FAOL,COUPON ACTIVE
@@ -858,11 +858,11 @@ pay_tickets,Билеты,Chiptalar,Tickets
 pay_wait_booking,Ожидаем подтверждение оплаты. Бронь появится автоматически.,To'lov tasdiqlanishini kutyapmiz. Bron avtomatik paydo bo'ladi.,Waiting for payment confirmation. Your booking will appear automatically.
 pay_wait_subscription,Ожидаем подтверждение оплаты. Подписка активируется автоматически.,To'lov tasdiqlanishini kutyapmiz. Obuna avtomatik faollashadi.,Waiting for payment confirmation. Your subscription will activate automatically.
 order_paid_title,Оплата успешно выполнена,To'lov muvaffaqiyatli amalga oshirildi,Payment successful
-order_paid_desc,"Оплата за бронирование успешно произведена. Бронирование подтверждено, а безопасность платежа гарантирована","Bron uchun to'lov muvaffaqiyatli amalga oshirildi. Bron tasdiqlandi, to'lov xavfsizligi kafolatlanadi","Your booking payment went through. The booking is confirmed and the payment is secure"
+order_paid_desc,"Оплата за бронирование успешно произведена. Бронирование подтверждено, а безопасность платежа гарантирована","Bron uchun to'lov muvaffaqiyatli amalga oshirildi. Bron tasdiqlandi, to'lov xavfsizligi kafolatlanadi",Your booking payment went through. The booking is confirmed and the payment is secure
 order_pending_title,Ожидается оплата,To'lov kutilmoqda,Awaiting payment
 order_pending_desc,После подтверждения платежа бронирование будет автоматически оформлено и станет доступно в вашем личном кабинете,To'lov tasdiqlangach bron avtomatik rasmiylashtiriladi va shaxsiy kabinetingizda ko'rinadi,Once the payment is confirmed your booking is created automatically and appears in your account
 order_failed_title,Оплата не выполнена,To'lov amalga oshmadi,Payment failed
-order_failed_desc,"К сожалению, платеж не был завершён. Пожалуйста, проверьте данные и попробуйте снова.","Afsuski, to'lov yakunlanmadi. Iltimos, ma'lumotlarni tekshirib, qaytadan urinib ko'ring.","Unfortunately the payment wasn't completed. Please check your details and try again."
+order_failed_desc,"К сожалению, платеж не был завершён. Пожалуйста, проверьте данные и попробуйте снова.","Afsuski, to'lov yakunlanmadi. Iltimos, ma'lumotlarni tekshirib, qaytadan urinib ko'ring.",Unfortunately the payment wasn't completed. Please check your details and try again.
 nav_main,Главный,Bosh sahifa,Home
 pay_choose_type,Выберите тип оплаты,To'lov turini tanlang,Choose payment type
 pay_choose_card,Выберите карту,Kartani tanlang,Choose card
@@ -925,7 +925,7 @@ choose_from_gallery,Выбрать из галереи,Galereyadan tanlash,Choos
 photo_upload_failed,Не удалось загрузить фото,Rasmni yuklab bo'lmadi,Could not upload the photo
 delete,Удалить,O'chirish,Delete
 delete_child,Удалить ребёнка,Bolani o'chirish,Delete child
-delete_child_subtitle,"{} будет удалён из вашего профиля. Это действие необратимо.","{} profilingizdan o'chiriladi. Bu amalni qaytarib bo'lmaydi.","{} will be removed from your profile. This cannot be undone."
+delete_child_subtitle,{} будет удалён из вашего профиля. Это действие необратимо.,{} profilingizdan o'chiriladi. Bu amalni qaytarib bo'lmaydi.,{} will be removed from your profile. This cannot be undone.
 booking_cancel_warning,Внимание! После отмены бронирования это действие нельзя будет отменить.,Diqqat! Bron bekor qilingandan so‘ng bu amalni qaytarib bo‘lmaydi.,Warning! Once the booking is cancelled this cannot be undone.
 ticket_number,Билет №{},Chipta №{},Ticket #{}
 ticket_date_label,Дата:,Sana:,Date:
@@ -956,7 +956,7 @@ card_confirm_title,Подтверждение карты,Kartani tasdiqlash,Conf
 card_sms_hint,SMS-код,SMS kod,SMS code
 card_confirm_action,Подтвердить,Tasdiqlash,Confirm
 card_save_error,Не удалось сохранить карту,Kartani saqlab bo'lmadi,Card could not be saved
-card_save_unavailable,"Сохранение карт пока недоступно — оплатите картой при бронировании.","Kartani saqlash hozircha mavjud emas — bron qilishda karta bilan to'lang.","Saving cards isn't available yet — pay by card at checkout instead."
+card_save_unavailable,Сохранение карт пока недоступно — оплатите картой при бронировании.,Kartani saqlash hozircha mavjud emas — bron qilishda karta bilan to'lang.,Saving cards isn't available yet — pay by card at checkout instead.
 age_from,от,dan,from
 age_to,до,gacha,to
 filter_for_boys,Для мальчиков,O'g'il bolalar uchun,For boys
@@ -1032,13 +1032,13 @@ district_yakkasaroy,Яккасарай,Yakkasaroy,Yakkasaroy
 district_yangihayot,Янгихаёт,Yangihayot,Yangihayot
 district_yashnobod,Яшнабад,Yashnobod,Yashnobod
 district_yunusobod,Юнусабад,Yunusobod,Yunusobod
-pay_err_card_not_found,"Данные карты неверны. Проверьте номер и срок действия.","Karta ma'lumotlari noto'g'ri. Raqam va amal qilish muddatini tekshiring.","The card details are incorrect. Check the number and expiry date."
-pay_err_insufficient_funds,"Недостаточно средств на карте.","Kartada mablag' yetarli emas.","Insufficient funds on the card."
-pay_err_card_expired,"Срок действия карты истёк.","Karta amal qilish muddati tugagan.","The card has expired."
-pay_err_card_blocked,"Карта заблокирована. Обратитесь в банк.","Karta bloklangan. Bankka murojaat qiling.","The card is blocked. Please contact your bank."
-pay_err_otp_invalid,"Неверный код из SMS. Попробуйте ещё раз.","SMS kod noto'g'ri. Qayta urinib ko'ring.","Wrong SMS code. Please try again."
-pay_err_otp_expired,"Срок действия кода истёк. Запросите новый.","Kod muddati tugagan. Yangisini so'rang.","The code has expired. Request a new one."
-pay_err_limit_exceeded,"Превышен лимит по карте.","Karta limiti oshib ketdi.","The card limit has been exceeded."
+pay_err_card_not_found,Данные карты неверны. Проверьте номер и срок действия.,Karta ma'lumotlari noto'g'ri. Raqam va amal qilish muddatini tekshiring.,The card details are incorrect. Check the number and expiry date.
+pay_err_insufficient_funds,Недостаточно средств на карте.,Kartada mablag' yetarli emas.,Insufficient funds on the card.
+pay_err_card_expired,Срок действия карты истёк.,Karta amal qilish muddati tugagan.,The card has expired.
+pay_err_card_blocked,Карта заблокирована. Обратитесь в банк.,Karta bloklangan. Bankka murojaat qiling.,The card is blocked. Please contact your bank.
+pay_err_otp_invalid,Неверный код из SMS. Попробуйте ещё раз.,SMS kod noto'g'ri. Qayta urinib ko'ring.,Wrong SMS code. Please try again.
+pay_err_otp_expired,Срок действия кода истёк. Запросите новый.,Kod muddati tugagan. Yangisini so'rang.,The code has expired. Request a new one.
+pay_err_limit_exceeded,Превышен лимит по карте.,Karta limiti oshib ketdi.,The card limit has been exceeded.
 payment_method,Способ оплаты,To'lov usuli,Payment method
 course_levels_title,Группы,Guruhlar,Groups
 course_group_default_name,Группа 1,1-guruh,Group 1
@@ -1057,15 +1057,15 @@ course_trial_lesson_one,Пробный урок,Sinov darsi,Trial lesson
 course_month_schedule,Расписание на месяц,Bir oylik jadval,Monthly schedule
 course_no_lesson_that_day,В этот день занятий нет,Bu kuni dars yo‘q,No lesson on this day
 see_centre,Посмотреть центр,Markazni ko‘rish,See centre
-course_trial_required_note,"Обязательных пробных уроков: {count}. Записаться на курс можно только после них.","Majburiy sinov darslari: {count}. Kursga faqat ulardan keyin yozilish mumkin.","{count} trial lesson(s) are required — you can only enrol after them."
+course_trial_required_note,Обязательных пробных уроков: {count}. Записаться на курс можно только после них.,Majburiy sinov darslari: {count}. Kursga faqat ulardan keyin yozilish mumkin.,{count} trial lesson(s) are required — you can only enrol after them.
 course_trial_mandatory,Обязательный,Majburiy,Required
-course_blocked_trial_required,"Сначала купите обязательные пробные уроки.","Avval majburiy sinov darslarini sotib oling.","Buy the required trial lessons first."
-course_blocked_trial_pending,"Записаться на курс можно после обязательного пробного занятия.","Kursga majburiy sinov darsidan keyin yozilishingiz mumkin.","You can enrol after your required trial lesson."
-course_blocked_trial_pending_date,"Записаться на курс можно после обязательного занятия — {date}.","Kursga majburiy darsdan keyin yozilishingiz mumkin — {date}.","You can enrol after your required trial lesson on {date}."
-course_blocked_trial_in_progress,"Следующий пробный урок можно купить после того, как пройдёт текущий.","Keyingi sinov darsini joriy dars o'tgandan keyin sotib olishingiz mumkin.","You can book the next trial lesson after your current one has taken place."
-course_blocked_trial_in_progress_date,"Следующий пробный урок можно купить после {date}.","Keyingi sinov darsini {date} dan keyin sotib olishingiz mumkin.","You can book the next trial lesson after {date}."
-course_trial_pick_hint,"Выберите уроки, которые хотите посетить","Bormoqchi bo'lgan darslarni tanlang .","Pick the lessons you want to attend."
-course_trial_pick_date_hint,"Выберите дату пробного урока","Sinov darsi sanasini tanlang","Choose a date for your trial lesson"
+course_blocked_trial_required,Сначала купите обязательные пробные уроки.,Avval majburiy sinov darslarini sotib oling.,Buy the required trial lessons first.
+course_blocked_trial_pending,Записаться на курс можно после обязательного пробного занятия.,Kursga majburiy sinov darsidan keyin yozilishingiz mumkin.,You can enrol after your required trial lesson.
+course_blocked_trial_pending_date,Записаться на курс можно после обязательного занятия — {date}.,Kursga majburiy darsdan keyin yozilishingiz mumkin — {date}.,You can enrol after your required trial lesson on {date}.
+course_blocked_trial_in_progress,"Следующий пробный урок можно купить после того, как пройдёт текущий.",Keyingi sinov darsini joriy dars o'tgandan keyin sotib olishingiz mumkin.,You can book the next trial lesson after your current one has taken place.
+course_blocked_trial_in_progress_date,Следующий пробный урок можно купить после {date}.,Keyingi sinov darsini {date} dan keyin sotib olishingiz mumkin.,You can book the next trial lesson after {date}.
+course_trial_pick_hint,"Выберите уроки, которые хотите посетить",Bormoqchi bo'lgan darslarni tanlang .,Pick the lessons you want to attend.
+course_trial_pick_date_hint,Выберите дату пробного урока,Sinov darsi sanasini tanlang,Choose a date for your trial lesson
 course_trial_selected,Выбрано: {count},Tanlandi: {count},{count} selected
 course_trial_bought_one,Куплено,Sotib olingan,Bought
 course_trial_lesson_no,{n}-е пробное занятие,{n}-sinov dars,Trial lesson {n}
@@ -1105,9 +1105,9 @@ wallet_kind_expired,Срок действия истёк,Amal qilish muddati tug
 wallet_kind_unknown,Операция,Amaliyot,Transaction
 wallet_source_trial,{} · пробное занятие,{} · sinov darsi,{} · trial lesson
 my_cards,Мои карты,Kartalarim,My cards
-card_none_sub,"Добавьте карту, чтобы оплачивать быстрее","Tezroq to'lash uchun karta qo'shing","Add a card to pay faster"
+card_none_sub,"Добавьте карту, чтобы оплачивать быстрее",Tezroq to'lash uchun karta qo'shing,Add a card to pay faster
 card_already_saved,Эта карта уже сохранена,Bu karta allaqachon saqlangan,This card is already saved
-card_verify_notice,"Чтобы проверить карту, с неё спишется 100 сум. Мы сразу отправляем запрос на возврат.","Kartani tekshirish uchun undan 100 so'm yechiladi. Biz darhol qaytarish so'rovini yuboramiz.","To verify the card, 100 soum is charged to it. We request a refund straight away."
+card_verify_notice,"Чтобы проверить карту, с неё спишется 100 сум. Мы сразу отправляем запрос на возврат.",Kartani tekshirish uchun undan 100 so'm yechiladi. Biz darhol qaytarish so'rovini yuboramiz.,"To verify the card, 100 soum is charged to it. We request a refund straight away."
 card_continue,Продолжить,Davom etish,Continue
 card_resend_code,Отправить код снова,Kodni qayta yuborish,Resend code
 distance_m,{} м,{} m,{} m
@@ -1120,7 +1120,7 @@ telegram_login_open,Открыть Telegram,Telegramni ochish,Open Telegram
 telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
 telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
 update_force_title,Пора обновить приложение,Ilovani yangilash vaqti keldi,Time to update the app
-update_force_subtitle,"Мы добавили новые возможности и полностью обновили приложение. Установите свежую версию, чтобы пользоваться Lumi дальше.","Biz yangi imkoniyatlar qo‘shdik va ilovani to‘liq yangiladik. Lumi’dan foydalanishda davom etish uchun yangi versiyani o‘rnating.","We have added new features and rebuilt a lot under the hood. Install the latest version to keep using Lumi."
+update_force_subtitle,"Мы добавили новые возможности и полностью обновили приложение. Установите свежую версию, чтобы пользоваться Lumi дальше.",Biz yangi imkoniyatlar qo‘shdik va ilovani to‘liq yangiladik. Lumi’dan foydalanishda davom etish uchun yangi versiyani o‘rnating.,We have added new features and rebuilt a lot under the hood. Install the latest version to keep using Lumi.
 update_optional_title,Доступна новая версия,Yangi versiya mavjud,A new version is available
 update_optional_subtitle,Мы всё улучшили и починили. Обновитесь — станет удобнее.,Biz ilovani yaxshiladik va xatolarni tuzatdik. Yangilang — yanada qulay bo‘ladi.,We polished things up and fixed a few bugs. Update for a smoother ride.
 update_version_label,Версия {},{} versiyasi,Version {}
@@ -1134,17 +1134,17 @@ shop_title,Lumi Shop,Lumi Shop,Lumi Shop
 shop_balance_label,Ваш баланс,Balansingiz,Your balance
 shop_my_orders,Мои заказы,Buyurtmalarim,My orders
 shop_sold_out,Нет в наличии,Tugagan,Sold out
-shop_only_n_left,"Осталось всего {} шт.",Atigi {} ta qoldi,Only {} left
+shop_only_n_left,Осталось всего {} шт.,Atigi {} ta qoldi,Only {} left
 shop_quantity,Количество,Miqdori,Quantity
 shop_buy_for,Купить за {},{} ga sotib olish,Buy for {}
-shop_pay_with_coins_hint,"Можно оплатить Lumi-коинами: 1 коин = 1 сум",Lumi tangalar bilan to‘lash mumkin: 1 tanga = 1 so‘m,Payable with Lumi coins — 1 coin = 1 so‘m
+shop_pay_with_coins_hint,Можно оплатить Lumi-коинами: 1 коин = 1 сум,Lumi tangalar bilan to‘lash mumkin: 1 tanga = 1 so‘m,Payable with Lumi coins — 1 coin = 1 so‘m
 shop_empty_title,Пока пусто,Hozircha bo‘sh,Nothing here yet
 shop_empty_body,Скоро здесь появится мерч Lumi.,Tez orada Lumi merchi paydo bo‘ladi.,Lumi merch is on its way.
 shop_error_title,Не удалось загрузить,Yuklab bo‘lmadi,Could not load
 shop_error_body,Проверьте соединение и попробуйте снова.,Aloqani tekshirib qayta urining.,Check your connection and try again.
 shop_checkout_title,Оформление,Rasmiylashtirish,Checkout
 shop_delivery_title,Доставка,Yetkazib berish,Delivery
-shop_delivery_promise,"Мы позвоним вам и доставим заказ в течение 3 дней.",Siz bilan bog‘lanamiz va 3 kun ichida yetkazib beramiz.,We will call you and deliver within 3 days.
+shop_delivery_promise,Мы позвоним вам и доставим заказ в течение 3 дней.,Siz bilan bog‘lanamiz va 3 kun ichida yetkazib beramiz.,We will call you and deliver within 3 days.
 shop_delivery_point,Точка доставки,Yetkazish manzili,Delivery point
 shop_pick_on_map,Выбрать на карте,Xaritada tanlash,Pick on the map
 shop_address_label,Адрес,Manzil,Address
@@ -1163,7 +1163,7 @@ shop_left_to_pay,К оплате,To‘lash kerak,Left to pay
 shop_pay,Оплатить {},{} to‘lash,Pay {}
 shop_pay_with_coins,Оплатить коинами,Tangalar bilan to‘lash,Pay with coins
 shop_paid_title,Заказ принят,Buyurtma qabul qilindi,Order accepted
-shop_paid_body,"Мы позвоним вам в течение 24 часов и доставим заказ за 3 дня.",24 soat ichida siz bilan bog‘lanamiz va 3 kun ichida yetkazamiz.,We will call you within 24 hours and deliver within 3 days.
+shop_paid_body,Мы позвоним вам в течение 24 часов и доставим заказ за 3 дня.,24 soat ichida siz bilan bog‘lanamiz va 3 kun ichida yetkazamiz.,We will call you within 24 hours and deliver within 3 days.
 shop_orders_empty,У вас пока нет заказов,Sizda hali buyurtma yo‘q,You have no orders yet
 shop_n_items,{} шт.,{} ta,{} items
 shop_items_title,Товары,Mahsulotlar,Items
@@ -1192,9 +1192,9 @@ shop_cart_empty_title,Корзина пуста,Savatcha bo‘sh,Your cart is em
 shop_cart_empty_body,Добавьте что-нибудь из мерча Lumi.,Lumi merchidan biror narsa qo‘shing.,Add something from the Lumi merch.
 shop_cart_browse,Перейти к товарам,Mahsulotlarga o‘tish,Browse products
 shop_cart_items,{} шт. в корзине,Savatchada {} ta,{} items in the cart
-shop_cart_max,"Максимум {}",Ko‘pi bilan {},Max {}
+shop_cart_max,Максимум {},Ko‘pi bilan {},Max {}
 shop_checkout_cta,Оформить заказ,Buyurtma berish,Checkout
-shop_cart_title_n,"{} шт. в корзине",Savatchada {} ta tovar,{} items in the cart
+shop_cart_title_n,{} шт. в корзине,Savatchada {} ta tovar,{} items in the cart
 shop_cart_summary,Ваш заказ,Buyurtmangiz,Your order
 shop_cart_discounts,Скидки,Chegirmalar,Discounts
 shop_price_each,{} / шт.,{} / dona,{} each
@@ -1206,16 +1206,16 @@ shop_sold_label,Куплено,Sotib olingan,Bought
 shop_max_per_order,Максимум в заказе,Bitta buyurtmaga,Max per order
 shop_delivery_days,3 дня,3 kun,3 days
 shop_pay_with_money,Оплатить деньгами,Pul bilan to‘lash,Pay with money
-shop_coins_short,"Не хватает {} коинов",{} tanga yetmaydi,{} coins short
+shop_coins_short,Не хватает {} коинов,{} tanga yetmaydi,{} coins short
 shop_coin_price_label,Цена в коинах,Tangadagi narxi,Coin price
 shop_or_with_coins,Или коинами,Yoki tangalar bilan,Or with coins
-shop_not_paid_yet,"Оплата не прошла. Заказ не оформлен — попробуйте снова.",To‘lov amalga oshmadi. Buyurtma rasmiylashtirilmadi — qayta urinib ko‘ring.,Payment did not go through. The order was not placed — please try again.
+shop_not_paid_yet,Оплата не прошла. Заказ не оформлен — попробуйте снова.,To‘lov amalga oshmadi. Buyurtma rasmiylashtirilmadi — qayta urinib ko‘ring.,Payment did not go through. The order was not placed — please try again.
 course_blocked_intake,Идёт набор — запись откроется позже,To‘plam ketmoqda — sotuv keyinroq ochiladi,Still recruiting — sales open later
 intake_badge,Идёт набор,To‘plam ketmoqda,Recruiting
 intake_join_cta,Записаться в лист ожидания,Kutish ro‘yxatiga yozilish,Join the waitlist
 intake_joined,Вы в листе ожидания,Siz kutish ro‘yxatidasiz,You're on the waitlist
 intake_join_title,Лист ожидания,Kutish ro‘yxati,Join the waitlist
-intake_join_hint,"Группа ещё не началась. Оставьте контакты — центр позвонит, когда появятся даты. Оплаты нет.","Guruh hali boshlanmagan. Ma’lumotlaringizni qoldiring — sanalar belgilanganda markaz qo‘ng‘iroq qiladi. To‘lov yo‘q.","The group hasn't started yet. Leave your details and the centre will call you when the dates are set. Nothing is charged."
+intake_join_hint,"Группа ещё не началась. Оставьте контакты — центр позвонит, когда появятся даты. Оплаты нет.",Guruh hali boshlanmagan. Ma’lumotlaringizni qoldiring — sanalar belgilanganda markaz qo‘ng‘iroq qiladi. To‘lov yo‘q.,The group hasn't started yet. Leave your details and the centre will call you when the dates are set. Nothing is charged.
 intake_join_child,Для кого?,Kim uchun?,Who is it for?
 intake_child_unnamed,Ребёнок,Bola,Child
 intake_joined_toast,Вы в списке — центр свяжется с вами,Siz ro‘yxatdasiz — markaz bog‘lanadi,You're on the list — the centre will call
@@ -1244,7 +1244,6 @@ aksiya_badge,АКЦИЯ,AKSIYA,PROMO
 aksiya_banner_title,Акция для новичков,Yangi boshlovchilar uchun aksiya,Starter promo
 aksiya_banner_subtitle,Несколько занятий по одной цене — и несколько дней на всё,Bir necha mashg‘ulot — bitta narxda; hammasi uchun bir necha kun,A few activities for one price — and a few days to use them
 aksiya_hero_visits,{count} занятия в разных местах,{count} ta mashg‘ulot — turli joylarda,{count} activities at different places
-aksiya_hero_per_visit,Это {price} за одно посещение,Bitta tashrif — {price},That is {price} per visit
 aksiya_hero_deadline,{days} дней на использование,Foydalanishga {days} kun,{days} days to use them
 aksiya_how_it_works,Как это работает,Bu qanday ishlaydi,How it works
 aksiya_step1_title,Покупаете один раз,Bir marta sotib olasiz,Buy once

@@ -87,10 +87,6 @@ class PromoCampaign {
   /// When the OFFER stops being sold — unrelated to a pass's own days.
   final DateTime? endsAt;
 
-  /// What one visit works out at. Computed server-side so every client rounds
-  /// it the same way.
-  final num pricePerActivity;
-
   /// Live passes the signed-in buyer already holds from this campaign. Non-empty
   /// means the screen shows the pass rather than the Buy bar.
   final List<PromoPassSummary> activePasses;
@@ -120,7 +116,6 @@ class PromoCampaign {
     this.imageUrl,
     this.accentColor,
     this.endsAt,
-    this.pricePerActivity = 0,
     this.activePasses = const [],
     this.canPurchase = true,
   });
@@ -170,10 +165,6 @@ class PromoCampaign {
       imageUrl: text(json['image_url']),
       accentColor: text(json['accent_color']),
       endsAt: DateTime.tryParse('${json['ends_at'] ?? ''}'),
-      pricePerActivity: (json['price_per_activity'] as num?) ??
-          (count(json['activities_count']) > 0
-              ? ((json['price'] as num?) ?? 0) / count(json['activities_count'])
-              : ((json['price'] as num?) ?? 0)),
       activePasses: ((json['active_passes'] as List?) ?? const [])
           .whereType<Map>()
           .map((e) => PromoPassSummary.fromJson(Map<String, dynamic>.from(e)))

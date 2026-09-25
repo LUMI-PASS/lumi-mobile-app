@@ -30,7 +30,6 @@ void main() {
         'valid_days': 5,
         'coverage': 'full',
         'distinct_activities': true,
-        'price_per_activity': 33000,
         'active_passes': [],
         'can_purchase': true,
       });
@@ -40,7 +39,6 @@ void main() {
       expect(c.validDays, 5);
       expect(c.coverage, PromoCoverage.full);
       expect(c.coverage.isFull, isTrue);
-      expect(c.pricePerActivity, 33000);
       expect(c.saving, 51000);
       expect(c.highlights, hasLength(2));
       expect(c.heldPass, isNull);

@@ -92,15 +92,6 @@ class AksiyaHero extends StatelessWidget {
                   ],
                 ],
               ),
-              8.kh,
-              Text(
-                'aksiya_hero_per_visit'.tr(namedArgs: {
-                  'price': campaign.pricePerActivity.toRawUzsPrice(),
-                }),
-                style: AppText.regular13.copyWith(
-                  color: AppColors.onBrand.withValues(alpha: 0.85),
-                ),
-              ),
               16.kh,
               // The deadline is part of the offer, not a footnote — it is the
               // condition the buyer is agreeing to, so it sits in the hero.
