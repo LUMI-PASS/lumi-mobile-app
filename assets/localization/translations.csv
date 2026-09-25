@@ -1241,8 +1241,6 @@ course_ends_today,Сегодня последний урок,Bugun oxirgi dars,L
 course_renew_cta,Продлить,Uzaytirish,Renew
 aksiya_title,Пакет,Paket,Packet
 aksiya_badge,ПАКЕТ,PAKET,PACKET
-aksiya_banner_title,Пакет для новичков,Yangi boshlovchilar uchun paket,Starter packet
-aksiya_banner_subtitle,Несколько занятий по одной цене — и несколько дней на всё,Bir necha mashg‘ulot — bitta narxda; hammasi uchun bir necha kun,A few activities for one price — and a few days to use them
 aksiya_hero_visits,{count} занятия в разных местах,{count} ta mashg‘ulot — turli joylarda,{count} activities at different places
 aksiya_hero_deadline,{days} дней на использование,Foydalanishga {days} kun,{days} days to use them
 aksiya_how_it_works,Как это работает,Bu qanday ishlaydi,How it works
@@ -1297,7 +1295,6 @@ promo_included_in,Входит в {packet},{packet} ichida,Included in {packet}
 promo_included_left,Осталось посещений: {count},Qolgan tashriflar: {count},{count} visits left
 aksiya_packet_visits,{count} занятия,{count} ta mashg‘ulot,{count} activities
 aksiya_packet_days,{days} дней,{days} kun,{days} days
-aksiya_packet_selected,Выбрано,Tanlangan,Selected
 aksiya_packet_section,Пакет,Paket,Packet
 aksiya_prices_hidden_title,Цены скрыты,Narxlar yashirilgan,Prices are hidden
 aksiya_prices_hidden_body,"Пока пакет активен, разовые занятия и пробные уроки показаны как включённые. Осталось посещений: {count}","Paket faol ekan, bir martalik mashg‘ulotlar va sinov darslari kiritilgan deb ko‘rsatiladi. Qolgan tashriflar: {count}","While the packet is live, one-time activities and trial lessons show as included. {count} visits left"

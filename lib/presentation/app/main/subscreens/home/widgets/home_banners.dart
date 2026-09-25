@@ -14,6 +14,9 @@ import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/interest_source.dart';
+import 'package:lumi_pass/common/extensions/date_extensions.dart';
+import 'package:lumi_pass/data/api_model/promo/promo_campaign.dart';
+import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart';
 import 'package:shimmer/shimmer.dart';
@@ -99,90 +102,176 @@ class HomeCouponBanner extends StatelessWidget {
   }
 }
 
-/// The "аксия" call-to-action — the bundle promo that opens its own screen.
+/// The **Lumi Start** call-to-action — the packet promo, on the home carousel.
 ///
-/// A sibling of [HomeCouponBanner] rather than a variant of it: they sell two
-/// different things (a standing discount vs a prepaid set of visits with a
-/// deadline) and the deadline is exactly what this card has to say out loud.
+/// Deliberately nothing like [HomeCouponBanner] beside it. That one is a frosted
+/// white card with a ticket; two pale cards with a picture on the right and copy
+/// on the left read as the same offer twice, and the reader swipes past both. So
+/// this is a saturated purple slide with white type, its own mascot art and the
+/// price as a pill — different at a glance, before a single word is read.
+///
+/// **Its layout cannot clip.** The first version stacked a badge, a two-line
+/// title and a subtitle in a `Column` inside a slide fixed at 144dp; the title
+/// wrapping was enough to push the subtitle to zero height, and the copy simply
+/// vanished. Everything here is either a single ellipsized line or in a
+/// `Flexible`, and the art is a fixed-width sibling rather than a `Positioned`
+/// that the text has to dodge.
+///
+/// Loads the campaign itself. The price and the counts are server-driven — the
+/// whole point of not hardcoding 99 000 — and the home feed does not carry
+/// promo campaigns, so one small public GET is the honest way to get them. It
+/// also lets the slide REMOVE itself when nothing is on sale, instead of
+/// advertising a screen with an empty state on it.
 class HomeAksiyaBanner extends StatelessWidget {
-  const HomeAksiyaBanner({super.key, required this.onTap});
+  const HomeAksiyaBanner({
+    super.key,
+    required this.campaign,
+    required this.onTap,
+  });
+
+  /// The packet on sale. The carousel loads it and only builds this slide when
+  /// there is one, so there is no absent case to render — an empty widget would
+  /// still hold a slot and a dot in the carousel, which is a blank page the
+  /// reader can swipe to.
+  final PromoCampaign campaign;
 
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return FrostedCard(
+    final held = campaign.heldPass;
+    return GestureDetector(
       onTap: onTap,
-      padding: EdgeInsets.all(16.w),
-      borderWidth: 2,
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            top: -40.h,
-            bottom: -40.h,
-            right: -60.w,
-            width: 240.w,
-            child: const DecoratedBox(
-              decoration: BoxDecoration(gradient: AppGradients.greenGlow),
-            ),
-          ),
-          Positioned(
-            top: -12.h,
-            bottom: -12.h,
-            right: -32.w,
-            child: SizedBox(
-              width: 170.w,
-              child: Assets.images.imageDiscount.image(fit: BoxFit.contain),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SizedBox(
-              width: 207.w,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandPurple,
-                      borderRadius: BorderRadius.circular(40.r),
-                    ),
-                    child: Text(
-                      'aksiya_badge'.tr(),
-                      style:
-                          AppText.bold10.copyWith(color: AppColors.onBrand),
-                    ),
-                  ),
-                  6.verticalSpace,
-                  Text(
-                    'aksiya_banner_title'.tr(),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.bold18
-                        .copyWith(color: context.colors.textPrimary),
-                  ),
-                  4.verticalSpace,
-                  // Flexible: the longer locales must ellipsize, not overflow
-                  // the fixed-height carousel slide.
-                  Flexible(
-                    child: Text(
-                      'aksiya_banner_subtitle'.tr(),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                      style: AppText.regular13
-                          .copyWith(color: context.colors.textSecondary),
-                    ),
-                  ),
-                ],
+      behavior: HitTestBehavior.opaque,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.r),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(gradient: AppGradients.brand),
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              // Two soft discs, bottom-right, under everything. Cheap depth that
+              // needs no asset and cannot mis-scale on a narrow phone.
+              Positioned(
+                right: -30.w,
+                bottom: -40.h,
+                child: _Disc(size: 130.w, opacity: 0.14),
               ),
-            ),
+              Positioned(
+                right: 46.w,
+                top: -34.h,
+                child: _Disc(size: 78.w, opacity: 0.10),
+              ),
+              // The mascot, not the coupon ticket — the two banners must not
+              // share their artwork. Bottom-aligned so it stands on the edge of
+              // the slide instead of floating in it.
+              Positioned(
+                right: 4.w,
+                bottom: 0,
+                top: 8.h,
+                child: Assets.images.mascot.mascotHello.image(
+                  fit: BoxFit.contain,
+                  alignment: Alignment.bottomRight,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 12.h, 116.w, 12.h),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 8.w, vertical: 3.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.onBrand.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(40.r),
+                      ),
+                      child: Text(
+                        campaign.badge?.isNotEmpty == true
+                            ? campaign.badge!
+                            : 'aksiya_badge'.tr(),
+                        maxLines: 1,
+                        style:
+                            AppText.bold10.copyWith(color: AppColors.onBrand),
+                      ),
+                    ),
+                    6.verticalSpace,
+                    // The packet's NAME. One line, ellipsized — the reason the
+                    // copy disappeared last time was a title allowed to wrap.
+                    Text(
+                      campaign.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          AppText.bold18.copyWith(color: AppColors.onBrand),
+                    ),
+                    4.verticalSpace,
+                    Flexible(
+                      child: Text(
+                        held != null
+                            // Already owns it: the slide stops selling and says
+                            // what is left, which is the only thing they want
+                            // from it.
+                            ? 'promo_included_left'.tr(
+                                namedArgs: {'count': '${held.activitiesLeft}'},
+                              )
+                            : 'aksiya_hero_visits'.tr(namedArgs: {
+                                'count': '${campaign.activitiesCount}',
+                              }),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.regular12.copyWith(
+                          color: AppColors.onBrand.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                    if (held == null) ...[
+                      6.verticalSpace,
+                      // The price, as the one solid white element on the slide —
+                      // it is what the offer is, and the figure comes off the
+                      // campaign so it can never go stale against the server.
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.onBrand,
+                          borderRadius: BorderRadius.circular(40.r),
+                        ),
+                        child: Text(
+                          campaign.price.toRawUzsPrice(),
+                          maxLines: 1,
+                          style: AppText.bold16
+                              .copyWith(color: AppColors.brandPurple),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A translucent white circle. Decoration only.
+class _Disc extends StatelessWidget {
+  const _Disc({required this.size, required this.opacity});
+
+  final double size;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.onBrand.withValues(alpha: opacity),
       ),
     );
   }
@@ -213,6 +302,29 @@ class HomeBannerCarousel extends StatefulWidget {
 class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   int _current = 0;
 
+  /// The packet slide's content, or null while it loads and when nothing is on
+  /// sale. Held HERE rather than in the slide because it decides whether the
+  /// slide exists at all, and that is the carousel's business: a page that
+  /// renders nothing still takes a swipe and a dot.
+  PromoCampaign? _packet;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPacket();
+  }
+
+  Future<void> _loadPacket() async {
+    try {
+      final all = await getIt<PromoRepository>().getCampaigns();
+      if (!mounted) return;
+      setState(() => _packet = all.isEmpty ? null : all.first);
+    } catch (_) {
+      // Leave it out. Advertising a screen we could not read is worse than one
+      // slide fewer, and the carousel has real banners either side of it.
+    }
+  }
+
   String _resolveSrc(String? url, String? id) {
     final raw = (url ?? '').replaceAll(RegExp(r'\s+'), '').trim();
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
@@ -223,10 +335,13 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final packet = _packet;
     final pages = <Widget>[
-      // The bundle leads: it is the offer with a deadline on it, and it is the
-      // one a first-time visitor is most likely to act on.
-      HomeAksiyaBanner(onTap: widget.onAksiyaTap),
+      // The packet leads: it is the offer with a deadline on it, and the one a
+      // first-time visitor is most likely to act on. Absent entirely until it
+      // has loaded, so the carousel never holds a dot for a blank page.
+      if (packet != null)
+        HomeAksiyaBanner(campaign: packet, onTap: widget.onAksiyaTap),
       HomeCouponBanner(onTap: widget.onCouponTap),
       ...widget.banners.map((banner) {
         final image = ClipRRect(
