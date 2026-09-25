@@ -43,9 +43,17 @@ no-op on that build.
 | `category` | discovery filtered to a category | yes |
 | `discovery` | discovery search, keyboard up | no |
 | `map` | venues map | no |
+| `packet` | the Lumi Start packet screen | optional — a campaign **slug**, e.g. `lumi://packet/lumi-start` |
 | `plans` `coupons` `wallet` `cards` `payment-history` | the money screens | no |
 | `my-bookings` `notifications` `faq` | account screens | no |
 | `referral` | the referral programme screen | no |
+
+## `aksiya` is a retired alias for `packet`
+
+The packet screen shipped first under `aksiya`, and that key still resolves in
+the app — a registry key is a contract with the adminka, and dropping it would
+break any banner already pointed at it. It is deliberately left out of the
+backend picker so nobody chooses it for something new; write `packet`.
 
 ## Referral invites are not destinations
 
