@@ -1683,6 +1683,12 @@ class _BookingPageState extends State<BookingPage> {
     if (usedCoupon) {
       getIt<AppCubit>().syncSubscription();
     }
+    // And the packet, for the same reason on a bigger surface: a visit just went
+    // off it, and the THIRD one brings every hidden price in the catalogue back.
+    // Re-pulled rather than decremented locally — the server owns the count.
+    if (_usePromoPass) {
+      getIt<AppCubit>().syncPromoPass();
+    }
     if (requiresSlot && mounted) {
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingRequested,
@@ -1864,6 +1870,9 @@ class _BookingPageState extends State<BookingPage> {
       }
       if (usedCoupon) {
         getIt<AppCubit>().syncSubscription();
+      }
+      if (_usePromoPass) {
+        getIt<AppCubit>().syncPromoPass();
       }
     });
   }

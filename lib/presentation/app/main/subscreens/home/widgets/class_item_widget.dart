@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:shimmer/shimmer.dart';
@@ -444,6 +445,9 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     if (effectivePrice < 100) {
       return Text('price_free'.tr(), style: priceStyle);
     }
+    // Routed through the same funnel as a discount, so the packet is applied
+    // once rather than at each of the three return paths below.
+
     if (showFrom) {
       return _applyPlanDiscount(
         originalWidget: Text(
@@ -468,6 +472,24 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     required int discountPct,
     bool showFrom = false,
   }) {
+    // A "Lumi Start" packet outranks every discount below: there is nothing to
+    // discount when the visit is already paid for. The figure is REPLACED, not
+    // struck through — quoting a buyer a price they will not be charged is the
+    // one thing a covered card must not do.
+    //
+    // Cards carry no category ids, so a category-scoped campaign fails the
+    // scope test here and keeps its prices; that is the safe direction, and the
+    // detail screen (which has them) is where the label appears instead.
+    final pass = watchPromoPass(context);
+    if (pass != null &&
+        pass.covers(
+          activityId: widget.homClass?.id,
+          price: originalPrice,
+          isWholeCourse: widget.homClass?.showsWholeCoursePrice ?? false,
+        )) {
+      return PromoIncludedLabel(pass: pass);
+    }
+
     final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     // Capped at this class's partner share — see effectiveCouponPercent.
     final planPct = effectiveCouponPercent(

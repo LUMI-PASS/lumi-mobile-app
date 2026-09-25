@@ -1293,3 +1293,12 @@ aksiya_why_out_of_scope,Это занятие не участвует в акц�
 aksiya_why_too_expensive,"Это занятие дороже, чем покрывает акция",Bu mashg‘ulot aksiya qoplaydiganidan qimmat,This activity costs more than the promo covers
 aksiya_why_course,"Акция действует на разовые занятия, а не на курсы","Aksiya kurslarga emas, bir martalik mashg‘ulotlarga amal qiladi","The promo covers single visits, not courses"
 aksiya_why_generic,Акцию нельзя применить к этому бронированию,Aksiyani bu bandga qo‘llab bo‘lmaydi,The promo cannot be used for this booking
+promo_included_in,Входит в {packet},{packet} ichida,Included in {packet}
+promo_included_left,Осталось посещений: {count},Qolgan tashriflar: {count},{count} visits left
+aksiya_packet_visits,{count} занятия,{count} ta mashg‘ulot,{count} activities
+aksiya_packet_days,{days} дней,{days} kun,{days} days
+aksiya_packet_saving,Выгода {amount},Foyda {amount},Save {amount}
+aksiya_packet_selected,Выбрано,Tanlangan,Selected
+aksiya_packet_section,Пакет,Paket,Packet
+aksiya_prices_hidden_title,Цены скрыты,Narxlar yashirilgan,Prices are hidden
+aksiya_prices_hidden_body,"Пока пакет активен, разовые занятия и пробные уроки показаны как включённые. Осталось посещений: {count}","Paket faol ekan, bir martalik mashg‘ulotlar va sinov darslari kiritilgan deb ko‘rsatiladi. Qolgan tashriflar: {count}","While the packet is live, one-time activities and trial lessons show as included. {count} visits left"

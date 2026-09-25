@@ -155,6 +155,203 @@ class _HeroDeadlineChip extends StatelessWidget {
   }
 }
 
+/// The **Lumi Start** packet, as a thing you pick and buy.
+///
+/// Its own shape rather than the coupon card's: a coupon is a percentage that
+/// follows you around, and its card is built to shout a number. A packet is a
+/// countable thing with a clock on it, so this card is built around the two
+/// counts that define it — how many visits, how many days — with the price
+/// underneath as the ask rather than the headline.
+///
+/// Selectable for the same reason the coupon cards are: it is the object the Buy
+/// bar acts on, and a bar that acts on something invisible reads as a guess. A
+/// lone packet starts selected, because there is nothing to choose between.
+class LumiStartPacketCard extends StatelessWidget {
+  const LumiStartPacketCard({
+    super.key,
+    required this.campaign,
+    required this.selected,
+    this.onTap,
+  });
+
+  final PromoCampaign campaign;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final saving = campaign.saving;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(20.r),
+          // The selected state is carried by the border and a brand tint, not by
+          // a filled card: the packet's own artwork already owns the colour, and
+          // inverting the whole surface made the unselected state look disabled.
+          border: Border.all(
+            color: selected ? AppColors.brandPurple : c.border,
+            width: selected ? 2 : 1,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.brandPurple.withValues(alpha: 0.18),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // The name, which is the point of the packet having one.
+                Expanded(
+                  child: Text(
+                    campaign.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bold18.copyWith(color: c.textPrimary),
+                  ),
+                ),
+                if (selected)
+                  Assets.icons.sucess.svg(
+                    width: 20.w,
+                    height: 20.w,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.brandPurple,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+              ],
+            ),
+            if ((campaign.subtitle ?? '').isNotEmpty) ...[
+              4.kh,
+              Text(
+                campaign.subtitle!,
+                style: AppText.regular13.copyWith(color: c.textSecondary),
+              ),
+            ],
+            14.kh,
+            // The two counts that ARE the packet, side by side so they read as
+            // one offer rather than two facts.
+            Row(
+              children: [
+                Expanded(
+                  child: _PacketStat(
+                    value: '${campaign.activitiesCount}',
+                    label: 'aksiya_packet_visits'.tr(
+                      namedArgs: {'count': '${campaign.activitiesCount}'},
+                    ),
+                  ),
+                ),
+                10.kw,
+                Expanded(
+                  child: _PacketStat(
+                    value: '${campaign.validDays}',
+                    label: 'aksiya_packet_days'.tr(
+                      namedArgs: {'days': '${campaign.validDays}'},
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            14.kh,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  campaign.price.toRawUzsPrice(),
+                  style: AppText.heading20.copyWith(color: c.textPrimary),
+                ),
+                if (campaign.oldPrice != null) ...[
+                  8.kw,
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Text(
+                      campaign.oldPrice!.toRawUzsPrice(),
+                      style: AppText.regular13.copyWith(
+                        color: c.textMuted,
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: c.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                if (saving != null)
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(40.r),
+                    ),
+                    child: Text(
+                      'aksiya_packet_saving'
+                          .tr(namedArgs: {'amount': saving.toRawUzsPrice()}),
+                      style:
+                          AppText.semibold12.copyWith(color: AppColors.green),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One of the packet's two counts: a big numeral over its noun.
+class _PacketStat extends StatelessWidget {
+  const _PacketStat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: c.control,
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: AppText.heading20.copyWith(
+              color: AppColors.brandPurple,
+              height: 1,
+            ),
+          ),
+          4.kh,
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.regular12.copyWith(color: c.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// "How it works" — buy, book, go. Three steps, because the five-day deadline
 /// only makes sense once the buyer can see where in the sequence it bites.
 class AksiyaSteps extends StatelessWidget {

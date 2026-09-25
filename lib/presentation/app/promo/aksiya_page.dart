@@ -9,6 +9,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/card_input_formatters.dart';
@@ -21,6 +22,7 @@ import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/promo/aksiya_pass_page.dart';
 import 'package:lumi_pass/presentation/app/promo/aksiya_success_page.dart';
@@ -326,6 +328,11 @@ class _AksiyaPageState extends State<AksiyaPage> with WidgetsBindingObserver {
       },
     );
 
+    // Publish the packet BEFORE the success screen opens: every price in the
+    // catalogue hangs off this, and the buyer's next move is straight into that
+    // catalogue from the success CTA. Leaving it until the screen closes would
+    // show them the prices they just paid to stop seeing.
+    await getIt<AppCubit>().syncPromoPass();
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -430,13 +437,37 @@ class _AksiyaPageState extends State<AksiyaPage> with WidgetsBindingObserver {
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
       children: [
         AksiyaHero(campaign: campaign),
-        // Someone who already owns the bundle is shown what is left on it
+        // Someone who already owns the packet is shown what is left on it
         // first — that, not the pitch, is what they opened this screen for.
         if (held != null) ...[
           16.kh,
           AksiyaPassCard.fromSummary(
             held,
             onTap: () => _openPass(held.id),
+          ),
+          12.kh,
+          // What the packet is DOING right now, said plainly. Prices vanishing
+          // from the whole catalogue is a big change to the app, and a buyer who
+          // is not told why will read it as a bug.
+          _PricesHiddenNote(visitsLeft: held.activitiesLeft),
+        ]
+        // The packet as a thing to pick and buy. Only while there is one to
+        // buy — offering a second beside a live one is what `can_purchase`
+        // already refuses.
+        else if (campaign.canPurchase) ...[
+          20.kh,
+          Text(
+            'aksiya_packet_section'.tr(),
+            style: AppText.semibold18.copyWith(color: c.textSection),
+          ),
+          12.kh,
+          LumiStartPacketCard(
+            campaign: campaign,
+            // A lone packet has nothing to choose between, so it opens
+            // selected: the Buy bar acts on it either way, and an unselected
+            // card beside a live Buy button reads as a step not yet taken.
+            selected: true,
+            onTap: null,
           ),
         ],
         if ((campaign.description ?? '').isNotEmpty) ...[
@@ -544,6 +575,58 @@ class _AksiyaShimmer extends StatelessWidget {
           block(78),
           block(78),
           block(78),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Your prices are hidden, and here is why."
+///
+/// The packet's most visible effect is negative — figures stop appearing all
+/// over the app — so it is stated where the purchase lives, with the count that
+/// says when it ends.
+class _PricesHiddenNote extends StatelessWidget {
+  const _PricesHiddenNote({required this.visitsLeft});
+
+  final int visitsLeft;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: AppColors.green.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Assets.icons.sucess.svg(
+            width: 18.w,
+            height: 18.w,
+            colorFilter:
+                const ColorFilter.mode(AppColors.green, BlendMode.srcIn),
+          ),
+          10.kw,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'aksiya_prices_hidden_title'.tr(),
+                  style: AppText.semibold14.copyWith(color: c.textPrimary),
+                ),
+                4.kh,
+                Text(
+                  'aksiya_prices_hidden_body'
+                      .tr(namedArgs: {'count': '$visitsLeft'}),
+                  style: AppText.regular13.copyWith(color: c.textSecondary),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

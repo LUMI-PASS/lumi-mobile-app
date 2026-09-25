@@ -22,6 +22,7 @@ import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
@@ -564,6 +565,25 @@ class _CoursePriceText extends StatelessWidget {
           // around it. Wrong in emphasis, never wrong in money.
           return money;
       }
+    }
+
+    // A "Lumi Start" packet pays for a course's TRIAL lesson — one lesson, one
+    // day, the shape the packet is sold against — and never its whole term.
+    // `showsWholeCoursePrice` is what draws that line, the same line the coupon
+    // below is held to.
+    //
+    // Skipped when the figure is already zero: a free first lesson has nothing
+    // for a packet to cover, and "included in Lumi Start" would claim a visit
+    // was spent on something that costs nothing.
+    final pass = watchPromoPass(context);
+    if (price > 0 &&
+        pass != null &&
+        pass.covers(
+          activityId: hc.id,
+          price: price,
+          isWholeCourse: hc.showsWholeCoursePrice,
+        )) {
+      return PromoIncludedLabel(pass: pass);
     }
 
     // Only a trial headline can carry one — `showsWholeCoursePrice` is what

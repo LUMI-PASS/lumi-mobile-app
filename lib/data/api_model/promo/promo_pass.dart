@@ -81,6 +81,23 @@ class PromoPass {
   /// Whether the visits must be at different activities — true for the flagship.
   final bool distinctActivities;
 
+  // ── Scope, for hiding prices in the catalogue ───────────────────────────────
+  // Carried on the pass so the app can decide PER CARD whether an activity is
+  // included, without an eligibility call for every row of a scrolling list.
+  // Applied by [PromoPassCoverage]; checkout remains the authority.
+  /// Named activities the packet may be spent on. Empty (with
+  /// [scopeCategoryIds] empty too) means the whole catalogue.
+  final List<String> scopeActivityIds;
+
+  final List<String> scopeCategoryIds;
+
+  /// Per-visit ceiling, when the campaign sets one.
+  final num? maxActivityPrice;
+
+  /// Whether a whole-course enrolment may be paid with a visit. False for the
+  /// flagship — a visit buys a course's TRIAL lesson, never its term.
+  final bool allowCourses;
+
   final DateTime? purchasedAt;
   final DateTime? expiresAt;
 
@@ -108,6 +125,10 @@ class PromoPass {
     this.coverage = PromoCoverage.full,
     this.discountPercentage = 0,
     this.distinctActivities = true,
+    this.scopeActivityIds = const [],
+    this.scopeCategoryIds = const [],
+    this.maxActivityPrice,
+    this.allowCourses = false,
     this.purchasedAt,
     this.expiresAt,
     this.daysLeft = 0,
@@ -156,6 +177,14 @@ class PromoPass {
       coverage: PromoCoverage.fromKey(json['coverage']?.toString()),
       discountPercentage: (json['discount_percentage'] as num?) ?? 0,
       distinctActivities: json['distinct_activities'] != false,
+      scopeActivityIds: ((json['activity_ids'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+      scopeCategoryIds: ((json['category_ids'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+      maxActivityPrice: json['max_activity_price'] as num?,
+      allowCourses: json['allow_courses'] == true,
       purchasedAt: date(json['purchased_at']),
       expiresAt: date(json['expires_at']),
       daysLeft: count(json['days_left']),

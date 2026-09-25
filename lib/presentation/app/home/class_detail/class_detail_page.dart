@@ -24,6 +24,8 @@ import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
+import 'package:lumi_pass/common/utils/promo_pass_coverage.dart';
+import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/location_preview_map.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
@@ -319,6 +321,27 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// what a course page prices there is the enrolment, and a coupon never
   /// discounts that.
   num get _couponPct => _couponPercent(isWholeCourse: _isCourse);
+
+  /// The "Lumi Start" packet covering THIS activity, or null.
+  ///
+  /// Resolved here — the one place that knows which activity the screen is —
+  /// and threaded down the same channel `couponPct` already travels, so the
+  /// price rows need no idea the packet exists beyond rendering its label.
+  ///
+  /// `price: 0` deliberately: a screen shows several tiers at once and the
+  /// ceiling applies per booking, so it is tested per ROW rather than here. The
+  /// rows re-ask with their own figure.
+  PromoPassCoverage? _promoPassFor({required bool isWholeCourse}) {
+    final pass = watchPromoPass(context);
+    if (pass == null) return null;
+    return pass.covers(
+      activityId: widget.classModel.id,
+      price: 0,
+      isWholeCourse: isWholeCourse,
+    )
+        ? pass
+        : null;
+  }
 
   /// The coupon on ONE trial lesson — the course purchase a coupon does
   /// discount, so the trial ladder prices it even though [_couponPct] is 0.
@@ -1459,7 +1482,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             final r = rows[i];
             return Padding(
               padding: EdgeInsets.only(bottom: i == rows.length - 1 ? 0 : 8.h),
-              child: _PriceRow(c: c, row: r, couponPct: _couponPct),
+              child: _PriceRow(
+                c: c,
+                row: r,
+                couponPct: _couponPct,
+                promoPass: _promoPassFor(isWholeCourse: _isCourse),
+              ),
             );
           }),
         ],
@@ -1506,6 +1534,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 level: level,
                 timetable: courseTimetableSummary(_courseCalendar(level)),
                 trialCouponPct: _trialCouponPct,
+                trialPromoPass: _promoPassFor(isWholeCourse: false),
                 // The lone group is always the one being bought, so it reads as
                 // picked without a radio to tap.
                 selectable: !single,
@@ -1858,10 +1887,17 @@ typedef _PriceRowData = ({
 
 class _PriceRow extends StatelessWidget {
   const _PriceRow(
-      {required this.c, required this.row, required this.couponPct});
+      {required this.c,
+      required this.row,
+      required this.couponPct,
+      this.promoPass});
   final AppColorScheme c;
   final _PriceRowData row;
   final num couponPct;
+
+  /// Non-null while a packet pays for this activity — the price is then
+  /// replaced by the included badge rather than quoted or discounted.
+  final PromoPassCoverage? promoPass;
 
   @override
   Widget build(BuildContext context) {
@@ -1915,6 +1951,20 @@ class _PriceRow extends StatelessWidget {
   /// rather than the end of the line it belongs to. Nothing needs a container
   /// to be findable at the right edge of its own row.
   Widget _priceText() {
+    // Outranks the coupon: there is nothing left to discount once the visit is
+    // paid for.
+    //
+    // `_promoPassFor` already settled everything that is true of the ACTIVITY —
+    // scope, distinctness, courses. The per-visit ceiling is the one rule that
+    // belongs to a single booking, and a class lists several tiers at once, so
+    // it is applied here against this row's own figure.
+    final pass = promoPass;
+    final ceiling = pass?.maxActivityPrice;
+    if (pass != null &&
+        row.price > 0 &&
+        (ceiling == null || row.price <= ceiling)) {
+      return PromoIncludedLabel(pass: pass, compact: false);
+    }
     if (couponPct <= 0 || row.price <= 0) {
       return Text(
         row.price <= 0 ? 'price_free'.tr() : row.price.toRawUzsPrice(),
@@ -2171,7 +2221,12 @@ class _CourseTrialSection extends StatefulWidget {
     required this.couponPct,
     required this.onBuy,
     this.onFrosted = false,
+    this.promoPass,
   });
+
+  /// Non-null while a packet pays for this course's TRIAL lesson. A visit buys
+  /// one lesson, never the term — the same line [couponPct] is held to.
+  final PromoPassCoverage? promoPass;
 
   final CourseLevel level;
 
@@ -2395,6 +2450,7 @@ class _CourseTrialSectionState extends State<_CourseTrialSection> {
       lesson: lesson,
       selected: key == _pickedKey,
       couponPct: widget.couponPct,
+      promoPass: widget.promoPass,
       onFrosted: widget.onFrosted,
       // Locked until the rungs below it are done — see [_nextRungKey].
       locked: lesson.isAvailable && !isNext,
@@ -2438,7 +2494,12 @@ class _TrialLessonRow extends StatelessWidget {
     required this.onTap,
     required this.onFrosted,
     this.locked = false,
+    this.promoPass,
   });
+
+  /// Non-null while a packet pays for this lesson — the price is then replaced
+  /// by the included badge rather than quoted or discounted.
+  final PromoPassCoverage? promoPass;
 
   final CourseLesson lesson;
   final bool selected;
@@ -2542,7 +2603,18 @@ class _TrialLessonRow extends StatelessWidget {
                 ),
               ),
               8.horizontalSpace,
-              if (discounted == null)
+              // Paid for by a packet: the figure is replaced, not struck. Only
+              // on a rung that can actually be taken — striking or hiding the
+              // price of a locked or already-passed lesson would claim a visit
+              // covers something not on offer. The ceiling is re-tested here
+              // because it belongs to a single booking.
+              if (promoPass != null &&
+                  !free &&
+                  enabled &&
+                  (promoPass!.maxActivityPrice == null ||
+                      price <= promoPass!.maxActivityPrice!))
+                PromoIncludedLabel(pass: promoPass!)
+              else if (discounted == null)
                 Text(
                   free ? 'price_free'.tr() : price.toRawUzsPrice(),
                   style: AppText.bold16
@@ -2799,6 +2871,7 @@ class _CourseLevelPanel extends StatelessWidget {
     required this.onSelect,
     required this.onBuyTrial,
     required this.trialCouponPct,
+    this.trialPromoPass,
     required this.trialLessons,
     required this.trialDatesKnown,
     this.selectable = true,
@@ -2826,6 +2899,11 @@ class _CourseLevelPanel extends StatelessWidget {
   /// down to the ladder rows — the group's own course price is NOT discounted
   /// by it, so it goes no further than the trial section.
   final num trialCouponPct;
+
+  /// The packet paying for a TRIAL lesson of this course, or null. Travels the
+  /// same path [trialCouponPct] does, and is held to the same line: a visit buys
+  /// one lesson, never the term.
+  final PromoPassCoverage? trialPromoPass;
 
   /// Whether this is the picked group. Single select across the list; always
   /// true when this is the only group.
@@ -2981,6 +3059,7 @@ class _CourseLevelPanel extends StatelessWidget {
                   lessons: trialLessons,
                   datesKnown: trialDatesKnown,
                   couponPct: trialCouponPct,
+                  promoPass: trialPromoPass,
                   onBuy: onBuyTrial,
                   onFrosted: true,
                 ),

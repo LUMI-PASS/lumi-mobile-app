@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lumi_pass/common/utils/promo_pass_coverage.dart';
 
 part 'app_state.freezed.dart';
 
@@ -12,6 +13,15 @@ class AppBuildable with _$AppBuildable {
   const factory AppBuildable({
     @Default(false) bool hasPremium,
     @Default(0) int planDiscountPercentage,
+
+    /// The live "Lumi Start" packet, or null when the user holds none.
+    ///
+    /// Here for the same reason the coupon plan is: it decides what every price
+    /// in the catalogue RENDERS — a covered activity shows an included badge
+    /// instead of a figure — so it has to be one value every card watches, not
+    /// a fetch per screen. Null the moment it is spent or expires, which is
+    /// what brings the prices back.
+    PromoPassCoverage? promoPass,
   }) = _AppBuildable;
 }
 

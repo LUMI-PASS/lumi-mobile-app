@@ -17,6 +17,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -758,6 +759,23 @@ class _ShortSlide extends StatelessWidget {
 
     String fmt(num v) =>
         showFrom ? 'price_from'.tr(args: [v.toRawUzsPrice()]) : v.toRawUzsPrice();
+
+    // A held "Lumi Start" packet replaces the figure outright — a buyer who has
+    // already paid must not be quoted a price they will not be charged. This
+    // overlay renders strings rather than widgets, so it says it in words where
+    // the cards use the badge.
+    final pass = watchPromoPass(context);
+    if (pass != null &&
+        pass.covers(
+          activityId: hc.id,
+          price: effectivePrice,
+          isWholeCourse: hc.showsWholeCoursePrice,
+        )) {
+      return (
+        label: 'promo_included_in'.tr(namedArgs: {'packet': pass.title}),
+        discountedLabel: null,
+      );
+    }
 
     final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
     final planPct = effectiveCouponPercent(
