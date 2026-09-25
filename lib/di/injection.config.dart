@@ -27,12 +27,15 @@ import 'package:lumi_pass/data/service/interest_reporter.dart' as _i606;
 import 'package:lumi_pass/data/service/meta_service.dart' as _i295;
 import 'package:lumi_pass/data/service/push_notification_service.dart' as _i361;
 import 'package:lumi_pass/data/service/recent_search_store.dart' as _i789;
+import 'package:lumi_pass/data/service/referral/referral_coordinator.dart'
+    as _i422;
 import 'package:lumi_pass/data/storage/storage.dart' as _i279;
 import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
 import 'package:lumi_pass/domain/impl/auth_repository_impl.dart' as _i98;
 import 'package:lumi_pass/domain/impl/home_repository_impl.dart' as _i162;
 import 'package:lumi_pass/domain/impl/promo_repository_impl.dart' as _i40;
+import 'package:lumi_pass/domain/impl/referral_repository_impl.dart' as _i265;
 import 'package:lumi_pass/domain/impl/shop_repository_impl.dart' as _i66;
 import 'package:lumi_pass/domain/impl/wallet_repository_impl.dart' as _i728;
 import 'package:lumi_pass/domain/repo/auth/auth_api.dart' as _i79;
@@ -48,6 +51,9 @@ import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart'
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart' as _i748;
 import 'package:lumi_pass/domain/repo/promo/promo_api.dart' as _i582;
 import 'package:lumi_pass/domain/repo/promo/promo_repository.dart' as _i789;
+import 'package:lumi_pass/domain/repo/referrals/referral_repository.dart'
+    as _i57;
+import 'package:lumi_pass/domain/repo/referrals/referrals_api.dart' as _i538;
 import 'package:lumi_pass/domain/repo/shop/shop_api.dart' as _i323;
 import 'package:lumi_pass/domain/repo/shop/shop_repository.dart' as _i1070;
 import 'package:lumi_pass/domain/repo/wallet/wallet_api.dart' as _i605;
@@ -69,6 +75,8 @@ import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit
     as _i239;
 import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_detail_cubit.dart'
     as _i133;
+import 'package:lumi_pass/presentation/app/profile/referral/cubit/referral_cubit.dart'
+    as _i649;
 import 'package:lumi_pass/presentation/app/profile/wallet/cubit/wallet_cubit.dart'
     as _i822;
 import 'package:lumi_pass/presentation/app/shop/cubit/cart_cubit.dart' as _i82;
@@ -126,6 +134,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i789.RecentSearchStore(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
+    gh.factory<_i538.ReferralsApi>(() => _i538.ReferralsApi(
+          gh<_i361.Dio>(),
+          gh<_i279.Storage>(),
+        ));
     gh.lazySingleton<_i361.PushNotificationService>(
         () => _i361.PushNotificationService(
               gh<_i361.Dio>(),
@@ -152,6 +164,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i260.AppsFlyerService>(),
           gh<_i295.MetaService>(),
         ));
+    gh.factory<_i57.ReferralRepository>(
+        () => _i265.ReferralRepositoryImpl(gh<_i538.ReferralsApi>()));
     gh.factory<_i526.HomeRepository>(() => _i162.HomeRepositoryImpl(
           gh<_i433.HomeApi>(),
           gh<_i279.Storage>(),
@@ -165,6 +179,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i279.Storage>(),
           gh<_i361.PushNotificationService>(),
           gh<_i594.AnalyticsService>(),
+        ));
+    gh.lazySingleton<_i422.ReferralCoordinator>(() => _i422.ReferralCoordinator(
+          gh<_i279.Storage>(),
+          gh<_i57.ReferralRepository>(),
         ));
     gh.factory<_i24.AttendanceCubit>(
         () => _i24.AttendanceCubit(gh<_i526.HomeRepository>()));
@@ -194,14 +212,13 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i66.ShopRepositoryImpl(gh<_i323.ShopApi>()));
     gh.factory<_i822.WalletCubit>(
         () => _i822.WalletCubit(gh<_i890.WalletRepository>()));
+    gh.factory<_i649.ReferralCubit>(() => _i649.ReferralCubit(
+          gh<_i57.ReferralRepository>(),
+          gh<_i422.ReferralCoordinator>(),
+        ));
     gh.factory<_i999.SearchCubit>(() => _i999.SearchCubit(
           gh<_i526.HomeRepository>(),
           gh<_i789.RecentSearchStore>(),
-        ));
-    gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
-          gh<_i279.Storage>(),
-          gh<_i526.HomeRepository>(),
-          gh<_i890.WalletRepository>(),
         ));
     gh.lazySingleton<_i915.AppCubit>(() => _i915.AppCubit(
           gh<_i652.AuthRepository>(),
@@ -211,6 +228,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i386.HomeCubit>(() => _i386.HomeCubit(
           gh<_i526.HomeRepository>(),
           gh<_i279.Storage>(),
+        ));
+    gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
+          gh<_i279.Storage>(),
+          gh<_i526.HomeRepository>(),
+          gh<_i890.WalletRepository>(),
+          gh<_i57.ReferralRepository>(),
+          gh<_i422.ReferralCoordinator>(),
         ));
     gh.factory<_i189.ShopCubit>(() => _i189.ShopCubit(
           gh<_i1070.ShopRepository>(),

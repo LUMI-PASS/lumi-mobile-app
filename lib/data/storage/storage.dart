@@ -39,6 +39,22 @@ class Storage {
   /// bound. Cleared with the app's data, like everything else in this box.
   BaseStorage<String?> get installId => BaseStorage(_box, 'install_id');
 
+  /// An invite code waiting to be applied, with when it arrived (ms since
+  /// epoch) and how (`link` | `typed`). See [PendingReferralPolicy].
+  ///
+  /// Device-scoped, NOT account-scoped, and deliberately left alone by
+  /// [logout]: the invite is clicked before there is an account at all, and
+  /// the person who clicked it may sign in as someone else next. It expires on
+  /// its own after seven days instead.
+  BaseStorage<String?> get pendingReferralCode =>
+      BaseStorage(_box, 'pending_referral_code');
+
+  BaseStorage<int?> get pendingReferralAt =>
+      BaseStorage(_box, 'pending_referral_at');
+
+  BaseStorage<String?> get pendingReferralOrigin =>
+      BaseStorage(_box, 'pending_referral_origin');
+
   BaseStorage<String?> get currencyCode => BaseStorage(_box, 'currencyCode');
 
   BaseStorage<String?> get localeCode => BaseStorage(_box, 'localeCode');
@@ -162,6 +178,9 @@ class Storage {
     await needsOnboarding.set(null);
     await couponPromoShown.set(null);
     await profilePromptDismissed.set(null);
+
+    // NOT cleared: installId, pendingReferral* — those belong to the device,
+    // not to the account being left.
   }
 // BaseStorage<String> get username => BaseStorage(_box, 'username');
 //

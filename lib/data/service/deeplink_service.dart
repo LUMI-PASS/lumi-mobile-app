@@ -7,6 +7,9 @@ import 'package:flutter/widgets.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:lumi_pass/common/router/deep_link_routes.dart';
+import 'package:lumi_pass/common/router/referral_link.dart';
+import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
+import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/data/service/interest_source.dart';
 
 class DeeplinkService {
@@ -134,10 +137,21 @@ class DeeplinkService {
     _lastLink = link;
     _lastLinkAt = now;
 
-    final target = DeepLinkRoutes.resolve(uri);
-    if (target == null) {
-      dlog('handle: STOP — nothing in this build handles that link');
-      return;
+    final DeepLinkTarget target;
+    switch (classifyLink(uri)) {
+      // An invite is not a destination: store the code (and apply it if there
+      // is a session) right here, BEFORE the readiness check below. A deferred
+      // invite lands on the very first launch, long before the tabs exist, and
+      // must not wait in [_pending] — nor push anything when it is replayed.
+      case StoreReferralCode(:final code):
+        dlog('handle: referral invite "$code" — stored, nothing to open');
+        unawaited(getIt<ReferralCoordinator>().onLinkCode(code));
+        return;
+      case IgnoreLink():
+        dlog('handle: STOP — nothing in this build handles that link');
+        return;
+      case OpenDestination(target: final resolved):
+        target = resolved;
     }
 
     final entry = DeepLinkRoutes.lookup(target.key);

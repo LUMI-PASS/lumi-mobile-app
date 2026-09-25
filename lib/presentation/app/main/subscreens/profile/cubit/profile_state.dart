@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/referral/referral_models.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 
 part 'profile_state.freezed.dart';
@@ -23,6 +24,10 @@ class ProfileBuildable with _$ProfileBuildable {
     /// so the section still renders during development instead of vanishing —
     /// see ProfileCubit._loadWallet. Always null in release.
     String? walletError,
+
+    /// `GET /referrals/me`. Null until it lands or when it failed — the invite
+    /// card and the "Have a referral code?" row then simply don't show.
+    ReferralMe? referral,
   }) = _ProfileBuildable;
 }
 

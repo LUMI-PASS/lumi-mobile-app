@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/api_model/notification_model/notification_type.dart';
 
 const _kBookingTypes = {
   'booking_approved',
@@ -242,7 +243,11 @@ class PushNotificationManager {
 
       try {
         _appRouter.popUntilRoot();
-        if (_kBookingTypes.contains(type)) {
+        if (NotificationType.fromKey(type) == NotificationType.referral) {
+          // Reward issued, voucher expiring/revoked, welcome voucher — all
+          // explained on the referral screen.
+          _appRouter.navigate(const ReferralRoute());
+        } else if (_kBookingTypes.contains(type)) {
           _appRouter.navigate(const MyBookingsRoute());
         } else {
           _appRouter.navigate(const CalendarRoute());

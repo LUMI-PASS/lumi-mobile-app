@@ -281,6 +281,14 @@ abstract final class DeepLinkRoutes {
       mode: DeepLinkNavMode.root,
       build: (_) => const FaqRoute(),
     ),
+    // The referral screen — what `referral` pushes and in-app notifications
+    // (`lumi://referral`) open. An invite LINK carrying a code
+    // (`lumi://referral?code=…`, `/r/<code>`) never gets here: `classifyLink`
+    // takes it first, stores the code and navigates nowhere.
+    'referral': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (_) => const ReferralRoute(),
+    ),
   };
 
   /// `lumi://class/<id>` — pushes the detail page with a minimal [HomClass].

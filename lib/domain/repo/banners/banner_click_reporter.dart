@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:math' show Random;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lumi_pass/common/router/deep_link_log.dart';
 import 'package:injectable/injectable.dart';
+import 'package:lumi_pass/data/storage/install_id.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -63,19 +63,8 @@ class BannerClickReporter {
     }
   }
 
-  /// The install id, generated on first use and persisted. See [Storage.installId].
-  String _installId() {
-    final existing = _storage.installId.call();
-    if (existing != null && existing.isNotEmpty) return existing;
-
-    final random = Random.secure();
-    final id = List.generate(
-      16,
-      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
-    ).join();
-    _storage.installId.set(id);
-    return id;
-  }
+  /// The install id, generated on first use and persisted. See [installIdOf].
+  String _installId() => installIdOf(_storage);
 
   String? _platform() {
     if (kIsWeb) return 'web';

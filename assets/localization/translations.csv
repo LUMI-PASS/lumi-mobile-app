@@ -1304,3 +1304,73 @@ book_paid_by_packet,Оплачено пакетом Lumi Start,Lumi Start paketi
 book_paid_by_packet_body,Платить на месте ничего не нужно. Одно посещение — один билет,Joyida hech narsa to‘lash kerak emas. Bitta tashrif — bitta chipta,Nothing to pay at the door. One visit is one ticket
 book_packet_after,После брони останется посещений: {count},Brondan keyin qoladi: {count} tashrif,{count} visits left after this
 book_with_packet_cta,Забронировать по пакету,Paket bilan band qilish,Book with my packet
+referral_title,Пригласить друзей,Do'stlarni taklif qilish,Invite friends
+referral_invite_title,Пригласите друзей,Do'stlaringizni taklif qiling,Invite friends
+referral_reward_line,"Получите скидку {}% (до {}), когда друг сделает первую покупку",Do'stingiz birinchi xaridini qilganda {}% chegirma oling (ko'pi bilan {}),Get {}% off (up to {}) when a friend makes their first purchase
+referral_copy,Копировать,Nusxalash,Copy
+referral_copied,Скопировано,Nusxa olindi,Copied
+referral_share,Поделиться,Ulashish,Share
+referral_have_code,Есть код приглашения?,Taklif kodingiz bormi?,Have a referral code?
+referral_have_code_subtitle,"Введите код друга, который вас пригласил",Sizni taklif qilgan do'stingiz kodini kiriting,Enter the code of the friend who invited you
+referral_have_code_row_subtitle,Введите код друга,Do'stingiz kodini kiriting,Enter a friend's code
+referral_code_hint,"Например, LUMI7K3Q","Masalan, LUMI7K3Q","For example, LUMI7K3Q"
+referral_code_optional,Код приглашения (необязательно),Taklif kodi (ixtiyoriy),Referral code (optional)
+referral_code_unknown_hint,Такой код не найден — проверьте его,Bunday kod topilmadi — tekshirib ko'ring,We couldn't find this code — please check it
+referral_code_valid,Код действителен,Kod yaroqli,The code is valid
+referral_invited_by,Вас пригласил(а) {},Sizni {} taklif qildi,Invited by {}
+referral_applied_success,Код приглашения применён,Taklif kodi qo'llandi,Referral code applied
+referral_apply,Применить,Qo'llash,Apply
+referral_you_were_invited_by,Вас пригласил(а) {},Sizni {} taklif qilgan,You were invited by {}
+referral_you_were_invited,Вы присоединились по приглашению,Siz taklif orqali qo'shildingiz,You joined by invitation
+referral_how_it_works,Как это работает,Bu qanday ishlaydi,How it works
+referral_step_share,Поделитесь своим кодом или ссылкой с другом,Kodingiz yoki havolangizni do'stingizga yuboring,Share your code or link with a friend
+referral_step_friend_buys,Друг регистрируется по вашему коду и совершает первую покупку,"Do'stingiz kodingiz bilan ro'yxatdan o'tib, birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase
+referral_step_friend_buys_min,Друг регистрируется по вашему коду и совершает первую покупку от {},"Do'stingiz kodingiz bilan ro'yxatdan o'tib, {} dan boshlab birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase of {} or more
+referral_step_reward,Вы получаете скидку {}% (до {}) на следующую запись — она действует {} дн.,Siz keyingi bron uchun {}% chegirma olasiz (ko'pi bilan {}) — u {} kun amal qiladi,"You get {}% off (up to {}) your next booking, valid for {} days"
+referral_your_friends,Ваши друзья,Do'stlaringiz,Your friends
+referral_stats_invited,Приглашено,Taklif qilingan,Invited
+referral_stats_pending,В ожидании,Kutilmoqda,Pending
+referral_stats_rewarded,Награды,Mukofotlar,Rewarded
+referral_no_invitees,Пока никто не присоединился по вашему коду,Hozircha kodingiz orqali hech kim qo'shilmadi,Nobody has joined with your code yet
+referral_friend,Друг,Do'st,Friend
+referral_status_applied,Присоединился,Qo'shildi,Joined
+referral_status_order_paid,Оплатил заказ,Buyurtma to'landi,Order paid
+referral_status_qualified,Подтверждено,Tasdiqlandi,Qualified
+referral_status_queued,В очереди,Navbatda,Queued
+referral_status_rewarded,Награда получена,Mukofot olindi,Rewarded
+referral_status_expired,Истекло,Muddati tugagan,Expired
+referral_status_rejected,Отклонено,Rad etildi,Rejected
+referral_status_unknown,В обработке,Ko'rib chiqilmoqda,In progress
+referral_your_vouchers,Ваши скидки,Chegirmalaringiz,Your vouchers
+referral_no_vouchers,"Скидки появятся здесь, когда друзья совершат первую покупку",Do'stlaringiz birinchi xaridini qilganda chegirmalar shu yerda paydo bo'ladi,Vouchers appear here once your friends make their first purchase
+referral_program_off,Программа приглашений сейчас не действует,Taklif dasturi hozir faol emas,The referral programme is not running right now
+referral_voucher_title,"−{}%, до {}","−{}%, ko'pi bilan {}","−{}%, up to {}"
+referral_voucher_min_order,Заказ от {},{} dan boshlab buyurtma,Orders from {}
+referral_voucher_expires,До {},{} gacha,Until {}
+referral_voucher_saved,Сэкономлено {},{} tejaldi,Saved {}
+referral_voucher_status_active,Активна,Faol,Active
+referral_voucher_status_reserved,Зарезервирована,Band qilingan,Reserved
+referral_voucher_status_used,Использована,Ishlatilgan,Used
+referral_voucher_status_expired,Истекла,Muddati tugagan,Expired
+referral_voucher_status_revoked,Отменена,Bekor qilingan,Revoked
+referral_voucher_status_unknown,Недоступна,Mavjud emas,Unavailable
+referral.error.code_not_found,Такой код не найден,Bunday kod topilmadi,This code doesn't exist
+referral.error.own_code,Нельзя применить собственный код,O'z kodingizni qo'llab bo'lmaydi,You can't use your own code
+referral.error.code_inactive,Этот код больше не действует,Bu kod endi amal qilmaydi,This code is no longer active
+referral.error.already_applied,Вы уже применили код приглашения,Siz allaqachon taklif kodini qo'llagansiz,You've already used a referral code
+referral.error.window_closed,Срок для ввода кода приглашения истёк,Taklif kodini kiritish muddati tugagan,The time to enter a referral code has passed
+referral.error.not_new_user,Код приглашения доступен только новым пользователям,Taklif kodi faqat yangi foydalanuvchilar uchun,Referral codes are for new users only
+referral.error.program_off,Программа приглашений сейчас не действует,Taklif dasturi hozir faol emas,The referral programme is not running right now
+referral.error.too_many_attempts,Слишком много попыток. Попробуйте позже,Juda ko'p urinish. Keyinroq qayta urinib ko'ring,Too many attempts. Please try again later
+referral.error.unknown,Не удалось применить код. Попробуйте ещё раз,Kodni qo'llab bo'lmadi. Qayta urinib ko'ring,Couldn't apply the code. Please try again
+promo_voucher_not_found,Скидка с таким кодом не найдена,Bunday kodli chegirma topilmadi,No voucher with this code was found
+promo_voucher_used,Эта скидка уже использована,Bu chegirma allaqachon ishlatilgan,This voucher has already been used
+promo_voucher_unavailable,Эта скидка уже используется в другом заказе,Bu chegirma boshqa buyurtmada ishlatilmoqda,This voucher is already being used in another order
+promo_voucher_expired,Срок действия скидки истёк,Chegirma muddati tugagan,This voucher has expired
+promo_voucher_min_order,Скидка действует для заказов от {},Chegirma {} dan boshlab buyurtmalar uchun amal qiladi,This voucher is valid for orders from {}
+voucher_chip_title,"−{}%, до {}","−{}%, ko'pi bilan {}","−{}%, max {}"
+voucher_chip_until,до {},{} gacha,until {}
+voucher_reason_min_order,Для заказов от {},{} dan boshlab buyurtmalar uchun,For orders from {}
+voucher_reason_not_applicable,Не действует для этого занятия,Bu mashg'ulot uchun amal qilmaydi,Not valid for this activity
+voucher_reason_coupon_plan,Не суммируется с купонным тарифом,Kupon tarifi bilan birga ishlamaydi,Can't be combined with a coupon plan
+voucher_reason_unknown,Сейчас недоступна,Hozir mavjud emas,Not available right now

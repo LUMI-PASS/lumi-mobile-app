@@ -28,6 +28,10 @@ import 'package:lumi_pass/common/widget/time_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/promo_error_code.dart';
+import 'package:lumi_pass/data/api_model/referral/referral_enums.dart';
+import 'package:lumi_pass/data/api_model/referral/referral_models.dart';
+import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
+import 'package:lumi_pass/domain/repo/referrals/referral_repository.dart';
 import 'package:lumi_pass/data/api_model/wallet/cashback_config.dart';
 import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
@@ -301,9 +305,16 @@ class _BookingPageState extends State<BookingPage> {
 
   /// Validate the entered code against the current subtotal and show a preview
   /// of the new total. The discount is re-checked server-side at checkout.
-  Future<void> _applyPromo() async {
+  ///
+  /// [auto] marks the voucher pre-selection (see [_maybeAutoPickVoucher]): its
+  /// failure is not the user's doing, so it clears the field silently instead
+  /// of printing an error under a code they never entered. Anything else is
+  /// the user choosing a code themselves, which ends pre-selection for this
+  /// screen.
+  Future<void> _applyPromo({bool auto = false}) async {
     final code = _promoCtrl.text.trim();
     if (code.isEmpty || _promoLoading) return;
+    if (!auto) _voucherAutoPickOff = true;
     FocusScope.of(context).unfocus();
     setState(() {
       _promoLoading = true;
@@ -326,14 +337,16 @@ class _BookingPageState extends State<BookingPage> {
       if (!mounted) return;
       setState(() {
         _appliedPromo = null;
-        _promoError = _promoErrorMessage(data);
+        _promoError = auto ? null : _promoErrorMessage(data);
+        if (auto) _promoCtrl.clear();
         _promoLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _appliedPromo = null;
-        _promoError = 'promo_invalid'.tr();
+        _promoError = auto ? null : 'promo_invalid'.tr();
+        if (auto) _promoCtrl.clear();
         _promoLoading = false;
       });
     }
@@ -363,7 +376,8 @@ class _BookingPageState extends State<BookingPage> {
     final rawCode = data['error_code'];
     final serverMessage = _serverMessage(data['message']);
 
-    switch (PromoErrorCode.fromKey(rawCode is String ? rawCode : null)) {
+    final code = PromoErrorCode.fromKey(rawCode is String ? rawCode : null);
+    switch (code) {
       case PromoErrorCode.maxOrder:
         final raw = data['max_order_amount'];
         final amount = raw is num ? raw : num.tryParse('$raw') ?? 0;
@@ -384,6 +398,16 @@ class _BookingPageState extends State<BookingPage> {
         return limit <= 1
             ? 'promo_one_ticket_only'.tr()
             : 'promo_ticket_limit'.tr(args: ['$limit']);
+      // Referral vouchers ride the same field and the same 400.
+      case PromoErrorCode.voucherNotFound:
+      case PromoErrorCode.voucherUsed:
+      case PromoErrorCode.voucherUnavailable:
+      case PromoErrorCode.voucherExpired:
+        return code.messageKey.tr();
+      case PromoErrorCode.voucherMinOrder:
+        final raw = data['min_order_amount'];
+        final amount = raw is num ? raw : num.tryParse('$raw') ?? 0;
+        return code.messageKey.tr(args: [amount.toRawUzsPrice()]);
       case PromoErrorCode.unknown:
         return _untaggedUsageMessage(serverMessage) ??
             serverMessage ??
@@ -413,6 +437,8 @@ class _BookingPageState extends State<BookingPage> {
 
   void _removePromo() {
     setState(() {
+      // Removing a pre-selected voucher is a choice — don't put it back.
+      _voucherAutoPickOff = true;
       _appliedPromo = null;
       _promoError = null;
       _promoCtrl.clear();
@@ -443,7 +469,138 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
+  // ─── Referral vouchers ─────────────────────────────────────────────────────
+  // A voucher is a personal promocode (`R-XXXXXX`). It is offered under the
+  // promo field and spent THROUGH it — a tap fills the code and runs the
+  // ordinary [_applyPromo] — so the preview, the discount line, the total and
+  // checkout's `promocode` are exactly the promocode path's. Like promocodes,
+  // vouchers never meet a coupon plan: this block lives inside the promo
+  // section, which [_hasCouponPlan] hides.
+
+  /// Unspent vouchers for the current subtotal, best first (server order).
+  List<ReferralVoucher> _vouchers = const [];
+
+  /// The subtotal [_vouchers] was requested for — applicability depends on it.
+  num? _vouchersSubtotal;
+  Timer? _voucherDebounce;
+  int _voucherRequest = 0;
+
+  /// Set once the user picks, types or removes a code themselves; from then on
+  /// the best voucher is no longer pre-selected on this screen (spec 4.5).
+  bool _voucherAutoPickOff = false;
+
+  /// Refetches when the subtotal moved. Called from build, so it only ever
+  /// schedules: the fetch itself runs on a short debounce, which also folds a
+  /// burst of stepper taps into one request.
+  void _maybeReloadVouchers() {
+    if (_appliedPromo != null) return;
+    final subtotal = _total;
+    if (_vouchersSubtotal == subtotal) return;
+    _vouchersSubtotal = subtotal;
+    // No session, no vouchers — and a 401 here would sign the buyer out.
+    if (!getIt<ReferralCoordinator>().isSignedIn) return;
+    _voucherDebounce?.cancel();
+    _voucherDebounce =
+        Timer(const Duration(milliseconds: 350), () => _loadVouchers(subtotal));
+  }
+
+  Future<void> _loadVouchers(num subtotal) async {
+    final request = ++_voucherRequest;
+    final list = await getIt<ReferralRepository>().getVouchers(
+      subtotal: subtotal,
+      activityId: widget.clazz.id,
+    );
+    if (!mounted || request != _voucherRequest) return;
+    setState(() => _vouchers = list);
+    _maybeAutoPickVoucher();
+  }
+
+  /// Pre-selects the best applicable voucher when nothing else is applied or
+  /// being typed, until the user takes the choice into their own hands.
+  void _maybeAutoPickVoucher() {
+    if (_voucherAutoPickOff || _hasCouponPlan) return;
+    if (_appliedPromo != null || _promoLoading) return;
+    // Something the user typed is theirs. The field may still hold an earlier
+    // pre-selected voucher, though — a ticket change drops the applied code
+    // but leaves its text — and that one may be re-picked for the new total.
+    final typed = _promoCtrl.text.trim().toUpperCase();
+    if (typed.isNotEmpty && !_vouchers.any((v) => v.code == typed)) return;
+    final best = _vouchers.where((v) => v.isApplicable).firstOrNull;
+    if (best == null) return;
+    _promoCtrl.text = best.code;
+    _applyPromo(auto: true);
+  }
+
+  void _applyVoucher(ReferralVoucher v) {
+    if (_promoLoading) return;
+    setState(() {
+      _promoCtrl.text = v.code;
+      _promoError = null;
+    });
+    _applyPromo();
+  }
+
+  /// Why a listed voucher can't be spent on this order.
+  String _voucherReasonText(ReferralVoucher v) {
+    final reason = v.voucherReason;
+    if (reason == null) return 'voucher_reason_unknown'.tr();
+    switch (reason) {
+      case ReferralVoucherReason.minOrder:
+        return 'voucher_reason_min_order'
+            .tr(args: [v.minOrderAmount.toRawUzsPrice()]);
+      case ReferralVoucherReason.notApplicable:
+        return 'voucher_reason_not_applicable'.tr();
+      case ReferralVoucherReason.couponPlan:
+        return 'voucher_reason_coupon_plan'.tr();
+      case ReferralVoucherReason.unknown:
+        return 'voucher_reason_unknown'.tr();
+    }
+  }
+
+  Widget _buildVoucherList() {
+    final c = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final v in _vouchers) ...[
+          8.kh,
+          Opacity(
+            opacity: v.isApplicable ? 1 : 0.5,
+            child: PillCard(
+              onTap: v.isApplicable ? () => _applyVoucher(v) : null,
+              leading: PillIconBadge(
+                child: Text(
+                  '−${v.percent}%',
+                  style: AppText.semibold12.copyWith(color: c.textPrimary),
+                ),
+              ),
+              trailing: v.isApplicable
+                  ? PillActionChip(
+                      label: 'promo_apply'.tr(),
+                      onTap: _promoLoading ? null : () => _applyVoucher(v),
+                    )
+                  : null,
+              child: PillCaption(
+                title: 'voucher_chip_title'
+                    .tr(args: ['${v.percent}', v.maxDiscount.toRawUzsPrice()]),
+                subtitle: v.isApplicable
+                    ? [
+                        v.code,
+                        if (v.expiresAt != null)
+                          'voucher_chip_until'.tr(
+                              args: [v.expiresAt!.toRussianShortFormat(context)]),
+                      ].join(' · ')
+                    : _voucherReasonText(v),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildPromoSection() {
+    _maybeReloadVouchers();
     final applied = _appliedPromo;
 
     // Applied: the field is replaced by the code + what it saved, and the
@@ -524,6 +681,7 @@ class _BookingPageState extends State<BookingPage> {
             ),
           ),
         ],
+        if (_vouchers.isNotEmpty) _buildVoucherList(),
       ],
     );
   }
@@ -850,6 +1008,7 @@ class _BookingPageState extends State<BookingPage> {
   void dispose() {
     _promoCtrl.dispose();
     _promoDebounce?.cancel();
+    _voucherDebounce?.cancel();
     super.dispose();
   }
 
@@ -1855,7 +2014,10 @@ class _BookingPageState extends State<BookingPage> {
             '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
       ));
     }
-    if (!_isCourse && !_hasCouponPlan && _promoDiscount > 0) {
+    // Courses included: a referral voucher can discount a course, and the
+    // package line above would otherwise leave the smaller total unexplained.
+    // (Plain promocodes are refused on courses, so for them nothing changes.)
+    if (!_hasCouponPlan && _promoDiscount > 0) {
       out.add(_SummaryLine(
         icon: Assets.icons.detail.iconsaxTicketDiscount,
         label: 'promo_discount'.tr(),

@@ -45,6 +45,28 @@ no-op on that build.
 | `map` | venues map | no |
 | `plans` `coupons` `wallet` `cards` `payment-history` | the money screens | no |
 | `my-bookings` `notifications` `faq` | account screens | no |
+| `referral` | the referral programme screen | no |
+
+## Referral invites are not destinations
+
+An invite link carries a friend's code, and must never open a screen on its
+own. `classifyLink` (`lib/common/router/referral_link.dart`) checks for one
+before the registry is consulted, so a code can never be mistaken for a key
+(`lumi://referral?code=PLANS` stores `PLANS`; it does not open the plans
+screen). Recognised shapes:
+
+| Shape | Example |
+| --- | --- |
+| OneLink (UDL) | `deep_link_value=referral`, code in `deep_link_sub1` / `af_sub1` |
+| Raw OneLink URL | `https://link.lumipass.uz/JBWe?deep_link_value=referral&deep_link_sub1=<CODE>` |
+| Web fallback | `https://app.lumipass.uz/r/<CODE>` |
+| Custom scheme | `lumi://referral?code=<CODE>` or `lumi://referral/<CODE>` |
+
+The code is stored on the device for seven days (`ReferralCoordinator`) —
+before the tabs exist, so a deferred invite survives onboarding and login — and
+applied silently once there is a session. `lumi://referral` **without** a code
+is the ordinary `referral` destination above (push and in-app notifications use
+it).
 
 ## How a link is routed
 
