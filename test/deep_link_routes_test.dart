@@ -78,4 +78,31 @@ void main() {
       expect(DeepLinkRoutes.lookup(key), isNotNull, reason: key);
     }
   });
+
+  group('the Lumi Start packet', () {
+    test('opens from either key, bare or with a campaign slug', () {
+      // `packet` is what the screens call it and what new banners should use;
+      // `aksiya` is the key the first release shipped with, so it is a contract
+      // and has to keep working — a banner already pointed at it must not break.
+      for (final key in ['packet', 'aksiya']) {
+        expect(resolve('lumi://$key'), isNotNull, reason: key);
+        expect(resolve('lumi://$key/lumi-start'), isNotNull, reason: key);
+        // The https share shape has to mean the same screen, so marketing can
+        // paste whichever they were given.
+        expect(
+          resolve('https://mobile-api.lumipass.uz/share/$key/lumi-start'),
+          isNotNull,
+          reason: key,
+        );
+      }
+    });
+
+    test('carries the campaign slug through as the id', () {
+      // Without this a named-packet banner silently opens whatever is on sale.
+      expect(
+        DeepLinkRoutes.resolve(Uri.parse('lumi://packet/lumi-start'))!.params['id'],
+        'lumi-start',
+      );
+    });
+  });
 }

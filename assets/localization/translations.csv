@@ -1239,9 +1239,9 @@ course_ends_in_days,Курс заканчивается через {} дн.,Kurs
 course_ends_tomorrow,Курс заканчивается завтра,Kurs ertaga tugaydi,Course ends tomorrow
 course_ends_today,Сегодня последний урок,Bugun oxirgi dars,Last lesson is today
 course_renew_cta,Продлить,Uzaytirish,Renew
-aksiya_title,Акция,Aksiya,Promo
-aksiya_badge,АКЦИЯ,AKSIYA,PROMO
-aksiya_banner_title,Акция для новичков,Yangi boshlovchilar uchun aksiya,Starter promo
+aksiya_title,Пакет,Paket,Packet
+aksiya_badge,ПАКЕТ,PAKET,PACKET
+aksiya_banner_title,Пакет для новичков,Yangi boshlovchilar uchun paket,Starter packet
 aksiya_banner_subtitle,Несколько занятий по одной цене — и несколько дней на всё,Bir necha mashg‘ulot — bitta narxda; hammasi uchun bir necha kun,A few activities for one price — and a few days to use them
 aksiya_hero_visits,{count} занятия в разных местах,{count} ta mashg‘ulot — turli joylarda,{count} activities at different places
 aksiya_hero_deadline,{days} дней на использование,Foydalanishga {days} kun,{days} days to use them
@@ -1256,54 +1256,53 @@ aksiya_step3_body_distinct,Каждое из {count} посещений — в �
 aksiya_rule_distinct,Посещения нужно использовать в {count} разных местах,Tashriflardan {count} ta turli joyda foydalanish kerak,The visits must be used at {count} different places
 aksiya_rule_max_price,Покрывает занятия стоимостью до {price},{price} gacha bo‘lgan mashg‘ulotlarni qoplaydi,Covers activities priced up to {price}
 aksiya_payment_section,Оплата,To‘lov,Payment
-aksiya_price_label,Цена акции,Aksiya narxi,Promo price
-aksiya_buy_cta,Купить акцию,Aksiyani sotib olish,Buy the promo
+aksiya_price_label,Цена пакета,Paket narxi,Packet price
+aksiya_buy_cta,Купить пакет,Paketni sotib olish,Buy the packet
 aksiya_spend_cta,Выбрать занятие,Mashg‘ulot tanlash,Choose an activity
 aksiya_unavailable_cta,Сейчас недоступно,Hozircha mavjud emas,Not available right now
-aksiya_empty_title,Акций пока нет,Hozircha aksiyalar yo‘q,No promos right now
+aksiya_empty_title,Пакетов пока нет,Hozircha paketlar yo‘q,No packets right now
 aksiya_empty_body,Загляните позже — мы готовим новые предложения,Keyinroq kiring — yangi takliflar tayyorlanmoqda,Check back soon — new offers are on the way
-aksiya_pass_title,Моя акция,Mening aksiyam,My promo pass
+aksiya_pass_title,Мой пакет,Mening paketim,My packet
 aksiya_pass_visits_left,Осталось посещений: {count},Qolgan tashriflar: {count},{count} visits left
 aksiya_pass_days_left,Осталось {days} дн.,{days} kun qoldi,{days} days left
 aksiya_pass_expired,Срок действия истёк,Muddati tugadi,Expired
 aksiya_pass_until,Действует до {date},{date} gacha amal qiladi,Valid until {date}
-aksiya_pass_code_label,Код акции,Aksiya kodi,Promo code
+aksiya_pass_code_label,Код пакета,Paket kodi,Packet code
 aksiya_pass_used_section,Использованные посещения,Foydalanilgan tashriflar,Visits used
 aksiya_pass_remaining_hint,Осталось {count} посещения — успейте забронировать до окончания срока,Yana {count} ta tashrif qoldi — muddat tugagunga qadar band qiling,{count} visits left — book them before the pass runs out
 aksiya_pass_all_used,Все посещения использованы. Спасибо!,Barcha tashriflardan foydalanildi. Rahmat!,All visits used. Thank you!
-aksiya_pass_load_failed,Не удалось загрузить акцию,Aksiyani yuklab bo‘lmadi,Could not load the pass
+aksiya_pass_load_failed,Не удалось загрузить пакет,Paketni yuklab bo‘lmadi,Could not load the packet
 aksiya_visit_generic,Занятие,Mashg‘ulot,Activity
 aksiya_visit_attended,Посещено,Tashrif buyurilgan,Attended
 aksiya_visit_booked,Забронировано,Band qilingan,Booked
-aksiya_success_title,Акция ваша!,Aksiya sizniki!,The promo is yours!
+aksiya_success_title,Пакет ваш!,Paket sizniki!,The packet is yours!
 aksiya_success_body,Вам доступно {count} посещения. Забронируйте и посетите их в течение {days} дней.,"Sizda {count} ta tashrif bor. Ularni {days} kun ichida band qilib, tashrif buyuring.",You have {count} visits. Book and attend them within {days} days.
 aksiya_success_deadline,Отсчёт уже пошёл: {days} дней,Hisob boshlandi: {days} kun,The clock has started: {days} days
 aksiya_success_book_cta,Выбрать занятие,Mashg‘ulot tanlash,Choose an activity
 aksiya_success_later,Позже,Keyinroq,Later
-aksiya_use_pass,Оплатить акцией,Aksiya bilan to‘lash,Pay with my promo
+aksiya_use_pass,Оплатить пакетом,Paket bilan to‘lash,Pay with my packet
 aksiya_use_pass_left,Осталось посещений: {count},Qolgan tashriflar: {count},{count} visits left
 aksiya_use_pass_covers,Покрывает {amount},{amount} ni qoplaydi,Covers {amount}
-aksiya_applied,Оплачено акцией,Aksiya bilan to‘landi,Paid with promo
-aksiya_why_no_pass,У вас нет активной акции,Sizda faol aksiya yo‘q,You have no active promo pass
-aksiya_why_expired,Срок действия акции истёк,Aksiya muddati tugagan,Your promo pass has expired
-aksiya_why_exhausted,Все посещения по акции использованы,Aksiya bo‘yicha barcha tashriflar ishlatilgan,No visits left on your promo pass
-aksiya_why_already_used_here,Это занятие уже оплачено акцией — она действует на разные места,Bu mashg‘ulot aksiya bilan to‘langan — u turli joylar uchun amal qiladi,This activity was already paid with the pass — it covers different places
-aksiya_why_date_after_expiry,Эта дата позже окончания акции — выберите более раннюю,Bu sana aksiya muddatidan keyin — oldinroq sanani tanlang,This date is after the pass expires — pick an earlier one
-aksiya_why_out_of_scope,Это занятие не участвует в акции,Bu mashg‘ulot aksiyada qatnashmaydi,This activity is not part of the promo
-aksiya_why_too_expensive,"Это занятие дороже, чем покрывает акция",Bu mashg‘ulot aksiya qoplaydiganidan qimmat,This activity costs more than the promo covers
-aksiya_why_course,"Акция действует на разовые занятия, а не на курсы","Aksiya kurslarga emas, bir martalik mashg‘ulotlarga amal qiladi","The promo covers single visits, not courses"
-aksiya_why_generic,Акцию нельзя применить к этому бронированию,Aksiyani bu bandga qo‘llab bo‘lmaydi,The promo cannot be used for this booking
+aksiya_applied,Оплачено пакетом,Paket bilan to‘landi,Paid with the packet
+aksiya_why_no_pass,У вас нет активного пакета,Sizda faol paket yo‘q,You have no active packet
+aksiya_why_expired,Срок действия пакета истёк,Paket muddati tugagan,Your packet has expired
+aksiya_why_exhausted,Все посещения по пакету использованы,Paket bo‘yicha barcha tashriflar ishlatilgan,No visits left on your packet
+aksiya_why_already_used_here,Это занятие уже оплачено пакетом — он действует на разные места,Bu mashg‘ulot paket bilan to‘langan — u turli joylar uchun amal qiladi,This activity was already paid with the packet — it covers different places
+aksiya_why_date_after_expiry,Эта дата позже окончания пакета — выберите более раннюю,Bu sana paket muddatidan keyin — oldinroq sanani tanlang,This date is after the packet expires — pick an earlier one
+aksiya_why_out_of_scope,Это занятие не входит в пакет,Bu mashg‘ulot paketga kirmaydi,This activity is not part of the packet
+aksiya_why_too_expensive,"Это занятие дороже, чем покрывает пакет",Bu mashg‘ulot paket qoplaydiganidan qimmat,This activity costs more than the packet covers
+aksiya_why_course,"Пакет действует на разовые занятия и пробные уроки, а не на курсы","Paket kurslarga emas, bir martalik mashg‘ulot va sinov darslariga amal qiladi","The packet covers single visits and trial lessons, not whole courses"
+aksiya_why_generic,Пакет нельзя применить к этому бронированию,Paketni bu bandga qo‘llab bo‘lmaydi,The packet cannot be used for this booking
 promo_included_in,Входит в {packet},{packet} ichida,Included in {packet}
 promo_included_left,Осталось посещений: {count},Qolgan tashriflar: {count},{count} visits left
 aksiya_packet_visits,{count} занятия,{count} ta mashg‘ulot,{count} activities
 aksiya_packet_days,{days} дней,{days} kun,{days} days
-aksiya_packet_saving,Выгода {amount},Foyda {amount},Save {amount}
 aksiya_packet_selected,Выбрано,Tanlangan,Selected
 aksiya_packet_section,Пакет,Paket,Packet
 aksiya_prices_hidden_title,Цены скрыты,Narxlar yashirilgan,Prices are hidden
 aksiya_prices_hidden_body,"Пока пакет активен, разовые занятия и пробные уроки показаны как включённые. Осталось посещений: {count}","Paket faol ekan, bir martalik mashg‘ulotlar va sinov darslari kiritilgan deb ko‘rsatiladi. Qolgan tashriflar: {count}","While the packet is live, one-time activities and trial lessons show as included. {count} visits left"
-aksiya_why_too_many_tickets,Акция покрывает один билет за посещение — оставьте один билет,Aksiya bir tashrifga bitta chipta qoplaydi — bitta chipta qoldiring,The promo covers one ticket per visit — leave one ticket
-aksiya_why_with_promocode,Акцию и промокод нельзя применить вместе,Aksiya va promokodni birga qo‘llash mumkin emas,A promo packet and a promocode cannot be used together
+aksiya_why_too_many_tickets,Пакет покрывает один билет за посещение — оставьте один билет,Paket bir tashrifga bitta chipta qoplaydi — bitta chipta qoldiring,The packet covers one ticket per visit — leave one ticket
+aksiya_why_with_promocode,Пакет и промокод нельзя применить вместе,Paket va promokodni birga qo‘llash mumkin emas,A packet and a promocode cannot be used together
 book_paid_by_packet,Оплачено пакетом Lumi Start,Lumi Start paketi bilan to‘langan,Paid with your Lumi Start packet
 book_paid_by_packet_body,Платить на месте ничего не нужно. Одно посещение — один билет,Joyida hech narsa to‘lash kerak emas. Bitta tashrif — bitta chipta,Nothing to pay at the door. One visit is one ticket
 book_packet_after,После брони останется посещений: {count},Brondan keyin qoladi: {count} tashrif,{count} visits left after this

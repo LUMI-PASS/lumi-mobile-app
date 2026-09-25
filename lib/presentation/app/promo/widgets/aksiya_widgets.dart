@@ -75,7 +75,10 @@ class AksiyaHero extends StatelessWidget {
                     style:
                         AppText.heading20.copyWith(color: AppColors.onBrand),
                   ),
-                  if (campaign.oldPrice != null) ...[
+                  // Guarded by `saving` for the same reason as the packet
+                  // card's: an old price that is not actually higher is a
+                  // misconfiguration, not a discount to strike through.
+                  if (campaign.saving != null) ...[
                     8.kw,
                     Padding(
                       padding: EdgeInsets.only(bottom: 2.h),
@@ -181,7 +184,10 @@ class LumiStartPacketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final saving = campaign.saving;
+    // A comparison price is only shown when it IS one. `saving` is the guard:
+    // an `old_price` at or below the real price is a misconfiguration, and
+    // striking it through claims a discount that does not exist.
+    final hasSaving = campaign.saving != null;
 
     return GestureDetector(
       onTap: onTap,
@@ -274,7 +280,7 @@ class LumiStartPacketCard extends StatelessWidget {
                   campaign.price.toRawUzsPrice(),
                   style: AppText.heading20.copyWith(color: c.textPrimary),
                 ),
-                if (campaign.oldPrice != null) ...[
+                if (hasSaving) ...[
                   8.kw,
                   Padding(
                     padding: EdgeInsets.only(bottom: 2.h),
@@ -288,22 +294,6 @@ class LumiStartPacketCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                const Spacer(),
-                if (saving != null)
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.green.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(40.r),
-                    ),
-                    child: Text(
-                      'aksiya_packet_saving'
-                          .tr(namedArgs: {'amount': saving.toRawUzsPrice()}),
-                      style:
-                          AppText.semibold12.copyWith(color: AppColors.green),
-                    ),
-                  ),
               ],
             ),
           ],

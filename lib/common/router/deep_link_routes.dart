@@ -218,8 +218,18 @@ abstract final class DeepLinkRoutes {
       mode: DeepLinkNavMode.root,
       build: (_) => const CouponsRoute(),
     ),
-    // `lumi://aksiya` opens the best bundle on sale; `lumi://aksiya/<slug>`
-    // opens a named one, so a campaign can be advertised by its own link.
+    // The Lumi Start packet. Bare opens the best packet on sale;
+    // `lumi://packet/<slug>` opens a named one, so a campaign can be advertised
+    // by its own link.
+    //
+    // `aksiya` is kept as an alias and must stay: a key is a CONTRACT with the
+    // adminka, and any banner already pointed at it would stop working the day
+    // we dropped it. `packet` is the one to write from now on — it matches what
+    // the screens call the thing.
+    'packet': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (params) => AksiyaRoute(slug: params['id']),
+    ),
     'aksiya': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
       build: (params) => AksiyaRoute(slug: params['id']),
