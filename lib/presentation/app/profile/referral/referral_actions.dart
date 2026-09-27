@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/widget/display/display.dart';
 import 'package:lumi_pass/data/api_model/referral/referral_enums.dart';
 import 'package:lumi_pass/data/api_model/referral/referral_models.dart';
@@ -43,10 +42,15 @@ Future<void> shareReferral(BuildContext context, ReferralMe me) async {
   }
 }
 
-/// "Get 50% off (up to 200 000 so'm) when a friend makes their first purchase".
-String referralRewardLine(ReferralReward reward) => 'referral_reward_line'.tr(
-      args: ['${reward.percent}', reward.maxDiscount.toRawUzsPrice()],
-    );
+/// "Get 50% off when a friend makes their first purchase".
+///
+/// The cap (`reward.maxDiscount`) is deliberately NOT in this line. It is a
+/// ceiling on what one voucher can take off, which says nothing to someone who
+/// has not earned a voucher yet — and a figure that big next to the percentage
+/// reads as the reward itself. It still appears on the voucher rows, where it
+/// describes something the user actually holds.
+String referralRewardLine(ReferralReward reward) =>
+    'referral_reward_line'.tr(args: ['${reward.percent}']);
 
 /// The localised message for a refused typed code.
 String referralErrorMessage(ReferralErrorCode? code) =>

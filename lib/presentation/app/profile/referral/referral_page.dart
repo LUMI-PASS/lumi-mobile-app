@@ -221,9 +221,9 @@ class _HowItWorks extends StatelessWidget {
           ? 'referral_step_friend_buys_min'
               .tr(args: [me.qualifyMinOrder.toRawUzsPrice()])
           : 'referral_step_friend_buys'.tr(),
+      // No cap here either — see [referralRewardLine].
       'referral_step_reward'.tr(args: [
         '${reward.percent}',
-        reward.maxDiscount.toRawUzsPrice(),
         '${reward.validityDays}',
       ]),
     ];

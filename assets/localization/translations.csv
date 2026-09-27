@@ -1305,7 +1305,7 @@ book_packet_after,После брони останется посещений: {
 book_with_packet_cta,Забронировать по пакету,Paket bilan band qilish,Book with my packet
 referral_title,Пригласить друзей,Do'stlarni taklif qilish,Invite friends
 referral_invite_title,Пригласите друзей,Do'stlaringizni taklif qiling,Invite friends
-referral_reward_line,"Получите скидку {}% (до {}), когда друг сделает первую покупку",Do'stingiz birinchi xaridini qilganda {}% chegirma oling (ko'pi bilan {}),Get {}% off (up to {}) when a friend makes their first purchase
+referral_reward_line,"Получите скидку {}%, когда друг сделает первую покупку",Do'stingiz birinchi xaridini qilganda {}% chegirma oling,Get {}% off when a friend makes their first purchase
 referral_copy,Копировать,Nusxalash,Copy
 referral_copied,Скопировано,Nusxa olindi,Copied
 referral_share,Поделиться,Ulashish,Share
@@ -1325,7 +1325,7 @@ referral_how_it_works,Как это работает,Bu qanday ishlaydi,How it w
 referral_step_share,Поделитесь своим кодом или ссылкой с другом,Kodingiz yoki havolangizni do'stingizga yuboring,Share your code or link with a friend
 referral_step_friend_buys,Друг регистрируется по вашему коду и совершает первую покупку,"Do'stingiz kodingiz bilan ro'yxatdan o'tib, birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase
 referral_step_friend_buys_min,Друг регистрируется по вашему коду и совершает первую покупку от {},"Do'stingiz kodingiz bilan ro'yxatdan o'tib, {} dan boshlab birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase of {} or more
-referral_step_reward,Вы получаете скидку {}% (до {}) на следующую запись — она действует {} дн.,Siz keyingi bron uchun {}% chegirma olasiz (ko'pi bilan {}) — u {} kun amal qiladi,"You get {}% off (up to {}) your next booking, valid for {} days"
+referral_step_reward,Вы получаете скидку {}% на следующую запись — она действует {} дн.,Siz keyingi bron uchun {}% chegirma olasiz — u {} kun amal qiladi,"You get {}% off your next booking, valid for {} days"
 referral_your_friends,Ваши друзья,Do'stlaringiz,Your friends
 referral_stats_invited,Приглашено,Taklif qilingan,Invited
 referral_stats_pending,В ожидании,Kutilmoqda,Pending
