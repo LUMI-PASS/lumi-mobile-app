@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/promo/promo_campaign.dart';
 
 part 'home_state.freezed.dart';
 
@@ -19,6 +20,13 @@ class HomeBuildable with _$HomeBuildable {
     @Default(false) bool success,
     HomeModel? homeModel,
     List<HomCategory>? categories,
+
+    /// The packet ("аксия") on sale — the offer BOTH the carousel slide and the
+    /// feed's ad card advertise. Held here so the screen makes one request for
+    /// it however many slots show it, and so a purchase can refresh every slot
+    /// at once. Null while it loads and when nothing is on sale, in which case
+    /// neither slot renders.
+    PromoCampaign? packet,
     // Location
     @Default(null) double? lat,
     @Default(null) double? lng,

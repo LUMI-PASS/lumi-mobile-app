@@ -16,7 +16,6 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/interest_source.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/data/api_model/promo/promo_campaign.dart';
-import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart';
 import 'package:shimmer/shimmer.dart';
@@ -117,10 +116,10 @@ class HomeCouponBanner extends StatelessWidget {
 /// `Flexible`, and the art is a fixed-width sibling rather than a `Positioned`
 /// that the text has to dodge.
 ///
-/// Loads the campaign itself. The price and the counts are server-driven — the
-/// whole point of not hardcoding 99 000 — and the home feed does not carry
-/// promo campaigns, so one small public GET is the honest way to get them. It
-/// also lets the slide REMOVE itself when nothing is on sale, instead of
+/// Every figure is server-driven — the whole point of not hardcoding 99 000.
+/// `HomeCubit` fetches the campaign (the home feed does not carry promo
+/// campaigns, so it takes one small public GET of its own) and the slots that
+/// advertise it simply don't render when nothing is on sale, rather than
 /// advertising a screen with an empty state on it.
 class HomeAksiyaBanner extends StatelessWidget {
   const HomeAksiyaBanner({
@@ -316,9 +315,15 @@ class HomeBannerCarousel extends StatefulWidget {
     required this.banners,
     required this.onCouponTap,
     required this.onAksiyaTap,
+    this.packet,
   });
 
   final List<HomBanner> banners;
+
+  /// The packet on sale, or null while it loads and when there is none. It
+  /// decides whether the packet slide exists AT ALL, which is the carousel's
+  /// business: a page that renders nothing still takes a swipe and a dot.
+  final PromoCampaign? packet;
 
   /// Tapping the leading coupon page opens the coupon plans screen.
   final VoidCallback onCouponTap;
@@ -333,29 +338,6 @@ class HomeBannerCarousel extends StatefulWidget {
 class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   int _current = 0;
 
-  /// The packet slide's content, or null while it loads and when nothing is on
-  /// sale. Held HERE rather than in the slide because it decides whether the
-  /// slide exists at all, and that is the carousel's business: a page that
-  /// renders nothing still takes a swipe and a dot.
-  PromoCampaign? _packet;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPacket();
-  }
-
-  Future<void> _loadPacket() async {
-    try {
-      final all = await getIt<PromoRepository>().getCampaigns();
-      if (!mounted) return;
-      setState(() => _packet = all.isEmpty ? null : all.first);
-    } catch (_) {
-      // Leave it out. Advertising a screen we could not read is worse than one
-      // slide fewer, and the carousel has real banners either side of it.
-    }
-  }
-
   String _resolveSrc(String? url, String? id) {
     final raw = (url ?? '').replaceAll(RegExp(r'\s+'), '').trim();
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
@@ -366,7 +348,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final packet = _packet;
+    final packet = widget.packet;
     final pages = <Widget>[
       // The packet leads: it is the offer with a deadline on it, and the one a
       // first-time visitor is most likely to act on. Absent entirely until it
@@ -465,8 +447,44 @@ void openBanner(HomBanner banner, {required String placement}) {
   AppLinkOpener.open(banner.link!, source: InterestSource.banner);
 }
 
+/// The feed's `Реклама` slot, filled by the packet on sale.
+///
+/// Deliberately the SAME card as the carousel's [HomeAksiyaBanner] rather than a
+/// second design of the same offer: it is the same offer, and the slot otherwise
+/// holds a flat picture whose price goes stale the day marketing changes it.
+/// Here the name, the visit count and the price all come off the live campaign,
+/// so the ad cannot quote a figure that no longer exists.
+///
+/// [HomeAdCard] still backs the slot when no packet is on sale — see the ad
+/// sliver in `home_page.dart`.
+class HomeAksiyaAdCard extends StatelessWidget {
+  const HomeAksiyaAdCard({
+    super.key,
+    required this.campaign,
+    required this.onTap,
+  });
+
+  final PromoCampaign campaign;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: SizedBox(
+        // The banner has no intrinsic height — its layout is built to fit a
+        // stated one — so the slot states it, at the same 144 the carousel
+        // gives the slide. Anything shorter is what clipped the copy before.
+        height: 144.h,
+        child: HomeAksiyaBanner(campaign: campaign, onTap: onTap),
+      ),
+    );
+  }
+}
+
 /// Full-width advertisement/promo card (Figma home `Реклама`). Reuses a real
-/// banner image with a "Реклама" badge overlay.
+/// banner image with a "Реклама" badge overlay. The fallback for the ad slot
+/// now that [HomeAksiyaAdCard] owns it whenever a packet is on sale.
 class HomeAdCard extends StatelessWidget {
   const HomeAdCard({super.key, required this.imageUrl, required this.onTap});
 

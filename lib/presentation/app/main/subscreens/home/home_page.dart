@@ -120,6 +120,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             SliverToBoxAdapter(
               child: HomeBannerCarousel(
                 banners: state.homeModel?.data?.banners ?? [],
+                packet: state.packet,
                 onCouponTap: () => context.router.push(const PlansRoute()),
                 onAksiyaTap: () => context.router.push(AksiyaRoute()),
               ),
@@ -141,13 +142,31 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               ),
             if (state.nearClassesList.isNotEmpty)
               ..._buildNearYou(context, state),
-            // "Реклама" ad card — the last banner, shown full width.
+            // "Реклама" — the last slot on the feed, full width.
             //
-            // It used to send every tap to the plans screen regardless of what
-            // the banner was advertising. It now opens the banner's own link,
-            // and is hidden entirely when that banner has none, rather than
-            // showing an ad that lies about where it goes.
-            if (_adBanner(state) != null)
+            // The packet gets it whenever one is on sale: it is the offer with
+            // a deadline on it, and the card quotes its real name, visit count
+            // and price straight off the live campaign, so the ad can never
+            // advertise a price marketing has already changed. A picture ad
+            // cannot do that — it says whatever it said the day it was
+            // uploaded.
+            //
+            // The adminka's own banner keeps the slot when there is no packet.
+            // That banner opens its OWN link (it used to send every tap to the
+            // plans screen regardless of what it advertised) and is left out
+            // entirely when it has none, rather than showing an ad that lies
+            // about where it goes. With neither, the slot simply isn't there.
+            if (state.packet != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8.h),
+                  child: HomeAksiyaAdCard(
+                    campaign: state.packet!,
+                    onTap: () => context.router.push(AksiyaRoute()),
+                  ),
+                ),
+              )
+            else if (_adBanner(state) != null)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.only(top: 8.h),

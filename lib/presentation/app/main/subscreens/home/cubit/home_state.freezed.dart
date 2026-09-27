@@ -28,8 +28,14 @@ mixin _$HomeBuildable {
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
   HomeModel? get homeModel => throw _privateConstructorUsedError;
-  List<HomCategory>? get categories =>
-      throw _privateConstructorUsedError; // Location
+  List<HomCategory>? get categories => throw _privateConstructorUsedError;
+
+  /// The packet ("аксия") on sale — the offer BOTH the carousel slide and the
+  /// feed's ad card advertise. Held here so the screen makes one request for
+  /// it however many slots show it, and so a purchase can refresh every slot
+  /// at once. Null while it loads and when nothing is on sale, in which case
+  /// neither slot renders.
+  PromoCampaign? get packet => throw _privateConstructorUsedError; // Location
   double? get lat => throw _privateConstructorUsedError;
   double? get lng =>
       throw _privateConstructorUsedError; // Pagination for new classes
@@ -64,6 +70,7 @@ abstract class $HomeBuildableCopyWith<$Res> {
       bool success,
       HomeModel? homeModel,
       List<HomCategory>? categories,
+      PromoCampaign? packet,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -97,6 +104,7 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? success = null,
     Object? homeModel = freezed,
     Object? categories = freezed,
+    Object? packet = freezed,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -130,6 +138,10 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
           ? _value.categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>?,
+      packet: freezed == packet
+          ? _value.packet
+          : packet // ignore: cast_nullable_to_non_nullable
+              as PromoCampaign?,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -204,6 +216,7 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       bool success,
       HomeModel? homeModel,
       List<HomCategory>? categories,
+      PromoCampaign? packet,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -236,6 +249,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? success = null,
     Object? homeModel = freezed,
     Object? categories = freezed,
+    Object? packet = freezed,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -269,6 +283,10 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           ? _value._categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<HomCategory>?,
+      packet: freezed == packet
+          ? _value.packet
+          : packet // ignore: cast_nullable_to_non_nullable
+              as PromoCampaign?,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -326,6 +344,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.success = false,
       this.homeModel,
       final List<HomCategory>? categories,
+      this.packet,
       this.lat = null,
       this.lng = null,
       final List<HomClass> newClassesList = const [],
@@ -371,6 +390,13 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     return EqualUnmodifiableListView(value);
   }
 
+  /// The packet ("аксия") on sale — the offer BOTH the carousel slide and the
+  /// feed's ad card advertise. Held here so the screen makes one request for
+  /// it however many slots show it, and so a purchase can refresh every slot
+  /// at once. Null while it loads and when nothing is on sale, in which case
+  /// neither slot renders.
+  @override
+  final PromoCampaign? packet;
 // Location
   @override
   @JsonKey()
@@ -435,7 +461,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, lat: $lat, lng: $lng, newClassesList: $newClassesList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, lat: $lat, lng: $lng, newClassesList: $newClassesList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -452,6 +478,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
                 other.homeModel == homeModel) &&
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
+            (identical(other.packet, packet) || other.packet == packet) &&
             (identical(other.lat, lat) || other.lat == lat) &&
             (identical(other.lng, lng) || other.lng == lng) &&
             const DeepCollectionEquality()
@@ -482,6 +509,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       success,
       homeModel,
       const DeepCollectionEquality().hash(_categories),
+      packet,
       lat,
       lng,
       const DeepCollectionEquality().hash(_newClassesList),
@@ -508,6 +536,7 @@ abstract class _HomeBuildable implements HomeBuildable {
       final bool success,
       final HomeModel? homeModel,
       final List<HomCategory>? categories,
+      final PromoCampaign? packet,
       final double? lat,
       final double? lng,
       final List<HomClass> newClassesList,
@@ -538,6 +567,14 @@ abstract class _HomeBuildable implements HomeBuildable {
   HomeModel? get homeModel;
   @override
   List<HomCategory>? get categories;
+  @override
+
+  /// The packet ("аксия") on sale — the offer BOTH the carousel slide and the
+  /// feed's ad card advertise. Held here so the screen makes one request for
+  /// it however many slots show it, and so a purchase can refresh every slot
+  /// at once. Null while it loads and when nothing is on sale, in which case
+  /// neither slot renders.
+  PromoCampaign? get packet;
   @override // Location
   double? get lat;
   @override

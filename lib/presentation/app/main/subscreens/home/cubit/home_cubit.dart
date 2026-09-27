@@ -11,13 +11,16 @@ import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
 import 'home_state.dart';
 
 @injectable
 class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
-  HomeCubit(this._repo, this._storage) : super(const HomeBuildable());
+  HomeCubit(this._repo, this._storage, this._promo)
+      : super(const HomeBuildable());
   final HomeRepository _repo;
   final Storage _storage;
+  final PromoRepository _promo;
 
   String _lastLang = '';
   // Track premium/coupon state so we can detect changes on focus regain.
@@ -67,8 +70,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // happens after the feed is on screen — see below.
     await _applyLocation(prompt: false);
 
-    // Load home feed and the full category list concurrently.
-    await Future.wait([getHome(), _loadAllCategories()]);
+    // Load home feed, the full category list and the packet concurrently.
+    await Future.wait([getHome(), _loadAllCategories(), _loadPacket()]);
 
     // Now that home has rendered, ask for the permission — once, ever. Nothing
     // is awaited by the caller: whether the user grants, refuses or ignores the
@@ -132,6 +135,21 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     } catch (_) {}
   }
 
+  /// Fetches the packet campaign on its own small public GET.
+  ///
+  /// Never folded into [getHome]: the home feed does not carry promo campaigns,
+  /// and a failure here has to cost the feed nothing — the slots that advertise
+  /// the packet just don't render. Keeps the last good campaign on failure
+  /// rather than pulling a card off the screen the user is looking at.
+  Future<void> _loadPacket() async {
+    try {
+      final all = await _promo.getCampaigns();
+      // The list is ordered best-offer-first, so the first row is the one to
+      // advertise.
+      build((b) => b.copyWith(packet: all.isEmpty ? null : all.first));
+    } catch (_) {}
+  }
+
   /// Reloads the greeting name from the server on every home fetch.
   ///
   /// Both directions matter. Writing the name when the server sends one was
@@ -165,6 +183,11 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   /// OR coupon/premium status has changed since the last load, so discount
   /// badges and prices update immediately after a plan purchase.
   Future<void> refreshOnFocusGained() async {
+    // Ahead of the change checks below, and deliberately not gated by them:
+    // buying the packet turns its card from an offer into "2 visits left", and
+    // none of the signals those checks watch move when that happens.
+    unawaited(_loadPacket());
+
     final lang = currentLang;
     final hasPremium = _storage.hasPremium() == true;
     final couponPct = _storage.planDiscountPercentage() ?? 0;
@@ -243,8 +266,10 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
 
   /// Silent refresh (used on tab focus) — no shimmer.
   Future<void> refreshSilently() async {
-    // Reload categories in parallel so they stay up-to-date on language change.
+    // Reload categories and the packet in parallel so they stay up-to-date on
+    // language change.
     unawaited(_loadAllCategories());
+    unawaited(_loadPacket());
     try {
       final data = await _repo.getHome(
         newClassesPage: 1,
