@@ -8,6 +8,7 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/coupon_promo_dialog.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/custom_bottomnavigation.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/onboarding_bottomsheet.dart';
+import 'package:lumi_pass/presentation/app/main/widgets/packet_ad_screen.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/profile_prompt_banner.dart';
 
 /// Index of the Profile tab in [MainPage]'s bottom nav. Keep in sync with the
@@ -45,24 +46,54 @@ class _MainPageState extends State<MainPage> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // A new user is no longer stopped at the door for their name and child —
-      // the banner above the nav asks for those, whenever they feel like it. The
-      // flag is still consumed here so the one-time "get coupon" reward popup
-      // fires once, for the users who came in registering.
-      if (_storage.needsOnboarding.call() != true) return;
-      _storage.needsOnboarding.set(false);
-
-      if (_storage.couponPromoShown.call() != true) {
-        _storage.couponPromoShown.set(true);
-        await Future.delayed(const Duration(milliseconds: 350));
-        if (!mounted) return;
-        showCouponPromoDialog(
-          context,
-          onGetCoupon: () => context.router.push(const PlansRoute()),
-        );
-      }
+      // The two launch popups, in one place and in order, because the screen
+      // can only hold one: whichever fires leaves the other for another launch.
+      // Stacking them would put an ad on top of a reward and lose both.
+      //
+      // The PACKET AD GOES FIRST, and the order matters on the launch that
+      // matters most. A freshly registered user has `needsOnboarding` set, so
+      // with the coupon popup first the ad lost every first launch — the one
+      // launch a campaign with a deadline on it is actually aimed at. Deferring
+      // the coupon popup instead costs nothing: it is evergreen, and returning
+      // early here leaves `needsOnboarding` unconsumed, so it fires on the next
+      // launch exactly as it always did.
+      if (await _showPacketAdIfDue()) return;
+      await _showCouponPromoIfDue();
     });
   }
+
+  /// The one-time premium "get coupon" reward popup, for the users who came in
+  /// registering. Returns whether it was shown.
+  ///
+  /// A new user is no longer stopped at the door for their name and child — the
+  /// banner above the nav asks for those, whenever they feel like it. The
+  /// `needsOnboarding` flag is still consumed here so this fires once.
+  Future<bool> _showCouponPromoIfDue() async {
+    if (_storage.needsOnboarding.call() != true) return false;
+    _storage.needsOnboarding.set(false);
+    if (_storage.couponPromoShown.call() == true) return false;
+
+    _storage.couponPromoShown.set(true);
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted) return false;
+    showCouponPromoDialog(
+      context,
+      onGetCoupon: () => context.router.push(const PlansRoute()),
+    );
+    return true;
+  }
+
+  /// The full-screen packet ad, gated on Remote Config, `is_ad_seen`, and a
+  /// packet actually being on sale — see [maybeShowPacketAd], which owns every
+  /// one of those conditions and the settle delay. Returns whether it was shown.
+  ///
+  /// Here rather than on the home tab because it is an interstitial: it belongs
+  /// to the launch, not to a screen, and MainPage is the one chokepoint every
+  /// route into the app passes through.
+  Future<bool> _showPacketAdIfDue() => maybeShowPacketAd(
+        context,
+        onBuy: () => context.router.push(AksiyaRoute()),
+      );
 
   /// Ask only while there is something to ask for: the prompt is gone once the
   /// user has closed it, and once they have actually given us a name.

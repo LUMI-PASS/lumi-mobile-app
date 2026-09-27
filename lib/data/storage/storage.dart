@@ -115,6 +115,19 @@ class Storage {
   BaseStorage<bool> get couponPromoShown =>
       BaseStorage(_box, 'couponPromoShown');
 
+  /// Whether the full-screen packet ad has already been shown.
+  ///
+  /// An interstitial earns at most one showing. Set the moment we decide to
+  /// show it rather than when it is dismissed, so an app killed mid-ad does not
+  /// bring it back on the next launch — being shown an ad twice because the
+  /// phone rang is worse than missing the second half of one.
+  ///
+  /// A single flag, so it covers the packet ad as a whole rather than one
+  /// campaign: a SECOND campaign will not re-show it to someone who has seen
+  /// the first. Key this by campaign id (or clear it on a new slug) if
+  /// marketing ever needs to run a second interstitial.
+  BaseStorage<bool> get isAdSeen => BaseStorage(_box, 'is_ad_seen');
+
   /// Whether we have already shown the OS location prompt once.
   ///
   /// The home feed asks for location on the user's first visit and never again:
@@ -178,6 +191,7 @@ class Storage {
     await needsOnboarding.set(null);
     await couponPromoShown.set(null);
     await profilePromptDismissed.set(null);
+    await isAdSeen.set(null);
 
     // NOT cleared: installId, pendingReferral* — those belong to the device,
     // not to the account being left.

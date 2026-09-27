@@ -36,6 +36,11 @@ class AnalyticsEvent {
 
   /// A booking was paid for with a pass visit rather than with money.
   static const aksiyaPassRedeemed = 'aksiya_pass_redeemed';
+
+  /// The full-screen packet ad was put on screen. Fires at most once per user
+  /// (`is_ad_seen`), so its count is reach rather than impressions — compare it
+  /// against `aksiya_purchase_started` to see what the interstitial converted.
+  static const aksiyaAdShown = 'aksiya_ad_shown';
   static const checkoutPageOpened = 'checkout_page_opened';
   static const paymeRedirect = 'payme_redirect';
   static const paymeOpenFailed = 'payme_open_failed';

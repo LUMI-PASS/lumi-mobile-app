@@ -76,6 +76,28 @@ class RemoteConfigService {
   /// already paid for.
   bool get isShopEnabled => _bool('shop_enabled', false);
 
+  // ─── Full-screen packet ad ─────────────────────────────────────────────────
+
+  /// Whether the Lumi Start packet gets a full-screen ad on launch.
+  ///
+  /// **Ships OFF.** An interstitial is the most intrusive placement the app
+  /// has — it stands between someone and the screen they opened the app for —
+  /// so it goes up when marketing decides it goes up, not the moment a build
+  /// reaches a device. Flip `promo_ad_enabled` in the Firebase console to run
+  /// it, and back off the moment the campaign ends or it starts costing more
+  /// goodwill than it earns.
+  ///
+  /// OFF is also the only safe fallback: a cold start with no network cannot
+  /// read the console, and the wrong answer there is showing an ad for a
+  /// campaign that may be over rather than showing none.
+  ///
+  /// This is the gate, not the whole condition. The ad also needs a campaign
+  /// actually on sale, a buyer who does not already hold a pass, and an unset
+  /// `is_ad_seen` — see `maybeShowPacketAd`. Turning the key off hides it
+  /// everywhere; turning it on does NOT re-show it to someone who has already
+  /// seen it.
+  bool get isPacketAdEnabled => _bool('promo_ad_enabled', false);
+
   // ─── Yandex MapKit key ─────────────────────────────────────────────────────
   // MapKit is handed its key natively — `MainApplication.onCreate` on Android,
   // `didFinishLaunchingWithOptions` on iOS — and both run before Dart does, so
@@ -187,6 +209,7 @@ class RemoteConfigService {
         // Registered so the value is defined before the first fetch lands;
         // without it `getBool` answers false anyway, but only by accident.
         'shop_enabled': false,
+        'promo_ad_enabled': false,
       });
 
       await _remoteConfig?.setConfigSettings(RemoteConfigSettings(
