@@ -28,6 +28,12 @@ mixin _$AppBuildable {
   /// what brings the prices back.
   PromoPassCoverage? get promoPass => throw _privateConstructorUsedError;
 
+  /// "Lumi Coin": whether packs are on sale and what this user holds.
+  ///
+  /// Null until the first sync lands, which reads the same as "not on sale"
+  /// — every coin surface stays hidden rather than flashing in and out.
+  NewCoinsSummary? get newCoins => throw _privateConstructorUsedError;
+
   @JsonKey(ignore: true)
   $AppBuildableCopyWith<AppBuildable> get copyWith =>
       throw _privateConstructorUsedError;
@@ -42,7 +48,8 @@ abstract class $AppBuildableCopyWith<$Res> {
   $Res call(
       {bool hasPremium,
       int planDiscountPercentage,
-      PromoPassCoverage? promoPass});
+      PromoPassCoverage? promoPass,
+      NewCoinsSummary? newCoins});
 }
 
 /// @nodoc
@@ -61,6 +68,7 @@ class _$AppBuildableCopyWithImpl<$Res, $Val extends AppBuildable>
     Object? hasPremium = null,
     Object? planDiscountPercentage = null,
     Object? promoPass = freezed,
+    Object? newCoins = freezed,
   }) {
     return _then(_value.copyWith(
       hasPremium: null == hasPremium
@@ -75,6 +83,10 @@ class _$AppBuildableCopyWithImpl<$Res, $Val extends AppBuildable>
           ? _value.promoPass
           : promoPass // ignore: cast_nullable_to_non_nullable
               as PromoPassCoverage?,
+      newCoins: freezed == newCoins
+          ? _value.newCoins
+          : newCoins // ignore: cast_nullable_to_non_nullable
+              as NewCoinsSummary?,
     ) as $Val);
   }
 }
@@ -90,7 +102,8 @@ abstract class _$$AppBuildableImplCopyWith<$Res>
   $Res call(
       {bool hasPremium,
       int planDiscountPercentage,
-      PromoPassCoverage? promoPass});
+      PromoPassCoverage? promoPass,
+      NewCoinsSummary? newCoins});
 }
 
 /// @nodoc
@@ -107,6 +120,7 @@ class __$$AppBuildableImplCopyWithImpl<$Res>
     Object? hasPremium = null,
     Object? planDiscountPercentage = null,
     Object? promoPass = freezed,
+    Object? newCoins = freezed,
   }) {
     return _then(_$AppBuildableImpl(
       hasPremium: null == hasPremium
@@ -121,6 +135,10 @@ class __$$AppBuildableImplCopyWithImpl<$Res>
           ? _value.promoPass
           : promoPass // ignore: cast_nullable_to_non_nullable
               as PromoPassCoverage?,
+      newCoins: freezed == newCoins
+          ? _value.newCoins
+          : newCoins // ignore: cast_nullable_to_non_nullable
+              as NewCoinsSummary?,
     ));
   }
 }
@@ -131,7 +149,8 @@ class _$AppBuildableImpl implements _AppBuildable {
   const _$AppBuildableImpl(
       {this.hasPremium = false,
       this.planDiscountPercentage = 0,
-      this.promoPass});
+      this.promoPass,
+      this.newCoins});
 
   @override
   @JsonKey()
@@ -150,9 +169,16 @@ class _$AppBuildableImpl implements _AppBuildable {
   @override
   final PromoPassCoverage? promoPass;
 
+  /// "Lumi Coin": whether packs are on sale and what this user holds.
+  ///
+  /// Null until the first sync lands, which reads the same as "not on sale"
+  /// — every coin surface stays hidden rather than flashing in and out.
+  @override
+  final NewCoinsSummary? newCoins;
+
   @override
   String toString() {
-    return 'AppBuildable(hasPremium: $hasPremium, planDiscountPercentage: $planDiscountPercentage, promoPass: $promoPass)';
+    return 'AppBuildable(hasPremium: $hasPremium, planDiscountPercentage: $planDiscountPercentage, promoPass: $promoPass, newCoins: $newCoins)';
   }
 
   @override
@@ -165,12 +191,14 @@ class _$AppBuildableImpl implements _AppBuildable {
             (identical(other.planDiscountPercentage, planDiscountPercentage) ||
                 other.planDiscountPercentage == planDiscountPercentage) &&
             (identical(other.promoPass, promoPass) ||
-                other.promoPass == promoPass));
+                other.promoPass == promoPass) &&
+            (identical(other.newCoins, newCoins) ||
+                other.newCoins == newCoins));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, hasPremium, planDiscountPercentage, promoPass);
+  int get hashCode => Object.hash(
+      runtimeType, hasPremium, planDiscountPercentage, promoPass, newCoins);
 
   @JsonKey(ignore: true)
   @override
@@ -183,7 +211,8 @@ abstract class _AppBuildable implements AppBuildable {
   const factory _AppBuildable(
       {final bool hasPremium,
       final int planDiscountPercentage,
-      final PromoPassCoverage? promoPass}) = _$AppBuildableImpl;
+      final PromoPassCoverage? promoPass,
+      final NewCoinsSummary? newCoins}) = _$AppBuildableImpl;
 
   @override
   bool get hasPremium;
@@ -199,6 +228,13 @@ abstract class _AppBuildable implements AppBuildable {
   /// a fetch per screen. Null the moment it is spent or expires, which is
   /// what brings the prices back.
   PromoPassCoverage? get promoPass;
+  @override
+
+  /// "Lumi Coin": whether packs are on sale and what this user holds.
+  ///
+  /// Null until the first sync lands, which reads the same as "not on sale"
+  /// — every coin surface stays hidden rather than flashing in and out.
+  NewCoinsSummary? get newCoins;
   @override
   @JsonKey(ignore: true)
   _$$AppBuildableImplCopyWith<_$AppBuildableImpl> get copyWith =>

@@ -5,7 +5,9 @@ import 'package:lumi_pass/data/service/push_notification_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
+import 'package:lumi_pass/common/utils/new_coins_summary.dart';
 import 'package:lumi_pass/common/utils/promo_pass_coverage.dart';
+import 'package:lumi_pass/domain/repo/new_coins/new_coins_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +54,10 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
       // survive the app being closed — see [InterestReporter].
       getIt<InterestReporter>().flush();
     }
+    // Outside the signed-in block: the shelf is public, and whether anything
+    // is on it decides if a guest sees coin prices at all. The balance half
+    // is skipped for a guest inside the sync itself.
+    _syncNewCoins();
     analytics.logEvent(AnalyticsEvent.appOpen);
   }
 
@@ -98,6 +104,40 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
     }
   }
 
+  /// Public entry point for every flow that moves coins: buying a pack or
+  /// loose coins, and paying for a booking with them.
+  Future<void> syncNewCoins() => _syncNewCoins();
+
+  /// Pulls the coin shelf and, when signed in, the balance.
+  ///
+  /// The two are fetched independently and each failure leaves its own half
+  /// standing, for the reason [_syncPromoPass] does: a flaky network must not
+  /// flash the coin option out from under someone about to pay with it.
+  /// Checkout re-tests the balance regardless, so a stale figure can never
+  /// spend coins that are not there.
+  Future<void> _syncNewCoins() async {
+    final repo = getIt<NewCoinsRepository>();
+    try {
+      final catalogue = await repo.getCatalogue();
+      build((b) => b.copyWith(
+            newCoins:
+                (b.newCoins ?? const NewCoinsSummary()).withCatalogue(catalogue),
+          ));
+    } catch (_) {
+      // Network failure, or a backend that predates coins — leave as-is.
+    }
+    final tokens = _storage.tokens();
+    if (tokens?.access == null || tokens!.access!.isEmpty) return;
+    try {
+      final held = await repo.getBalance();
+      build((b) => b.copyWith(
+            newCoins: (b.newCoins ?? const NewCoinsSummary()).withBalance(held),
+          ));
+    } catch (_) {
+      // Network / auth failure — leave state as-is.
+    }
+  }
+
   /// Called when a plan purchase is confirmed paid. Marks the plan active
   /// straight away — the payment is settled, so the prices on screen should
   /// drop on this frame — then confirms against the server, which is what
@@ -121,6 +161,9 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
         hasPremium: false,
         planDiscountPercentage: 0,
         promoPass: null,
+        // The shelf stays — it is public — but the coins were the last
+        // account's.
+        newCoins: b.newCoins?.signedOut(),
       ));
 
   /// Signing in is the other half of that: the cubit was built at cold start,
@@ -129,6 +172,7 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
   Future<void> onSignedIn() async {
     await _syncSubscriptionStatus();
     await _syncPromoPass();
+    await _syncNewCoins();
   }
 
   /// Fetches the user's active subscription from the backend and updates
