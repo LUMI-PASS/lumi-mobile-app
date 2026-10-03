@@ -212,6 +212,7 @@ class HomeRepositoryImpl extends HomeRepository {
     double? lng,
     List<String>? districts,
     String? kind,
+    bool centres = false,
   }) {
     return _api
         .discoveryClasses(
@@ -231,6 +232,7 @@ class HomeRepositoryImpl extends HomeRepository {
           lng: lng,
           districts: districts,
           kind: kind,
+          centres: centres,
         )
         .then((value) {
       final data = value.data['data'] ?? value.data;
@@ -239,7 +241,21 @@ class HomeRepositoryImpl extends HomeRepository {
       ClassPricingCache.mergeFromList(listView);
       final pages = (data is Map ? data['pages'] : null) ?? 1;
       final total = (data is Map ? data['total'] : null);
+      // Present only when asked for AND the backend knows the parameter; a
+      // server that predates it answers with the classes alone.
+      final centresBlock = data is Map ? data['branches'] : null;
+      final centresList = centresBlock is Map ? centresBlock['data'] : null;
+      final centresTotal = centresBlock is Map ? centresBlock['total'] : null;
       return ClassesPage(
+        branches: centresList is List
+            ? centresList
+                .map((e) => HomBranch.fromJson(Map<String, dynamic>.from(e)))
+                .toList()
+            : null,
+        branchesTotal: centresTotal is int
+            ? centresTotal
+            : int.tryParse('$centresTotal') ??
+                (centresList is List ? centresList.length : 0),
         classes: listView.map((e) => HomClass.fromJson(e)).toList(),
         totalPages: pages is int ? pages : int.tryParse('$pages') ?? 1,
         total: total is int ? total : int.tryParse('$total') ?? listView.length,

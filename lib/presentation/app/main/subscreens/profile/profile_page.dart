@@ -1048,7 +1048,7 @@ class _MenuRow extends StatelessWidget {
   /// Material fallback glyph (used by rows without a Figma asset, e.g. theme).
   final IconData? icon;
 
-  /// Iconsax SVG asset. Tinted with the brand gradient, or red when [danger].
+  /// Iconsax SVG asset. Tinted with the primary ink, or red when [danger].
   final SvgGenImage? iconAsset;
   final String label;
   final String? trailingValue;
@@ -1061,31 +1061,28 @@ class _MenuRow extends StatelessWidget {
   final bool danger;
   final VoidCallback? onTap;
 
-  /// Renders the row glyph: a Material icon, or an Iconsax SVG tinted with the
-  /// brand gradient (or solid red for destructive rows, matching Figma).
-  Widget _rowIcon(Color accent) {
+  /// Renders the row glyph in [ink]: a Material icon or an Iconsax SVG.
+  ///
+  /// Neutral, not brand-coloured. Every row on this screen used to carry the
+  /// brand gradient, which made a list of settings read as one purple block
+  /// and left nothing for the colour to point at. It now marks only what the
+  /// screen wants pressed — the share button, the switch — and red still
+  /// marks the one destructive row.
+  Widget _rowIcon(Color ink) {
     if (iconAsset == null) {
-      return Icon(icon, size: 20.sp, color: accent);
+      return Icon(icon, size: 20.sp, color: ink);
     }
-    final svg = iconAsset!.svg(
+    return iconAsset!.svg(
       width: 20.sp,
       height: 20.sp,
-      colorFilter: danger
-          ? const ColorFilter.mode(AppColors.error, BlendMode.srcIn)
-          : null,
-    );
-    if (danger) return svg;
-    return ShaderMask(
-      blendMode: BlendMode.srcIn,
-      shaderCallback: (rect) => AppGradients.brand.createShader(rect),
-      child: svg,
+      colorFilter: ColorFilter.mode(ink, BlendMode.srcIn),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final accent = danger ? AppColors.error : AppColors.brandPurple;
+    final ink = danger ? AppColors.error : c.textPrimary;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -1103,9 +1100,11 @@ class _MenuRow extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: accent.withOpacity(0.12),
+                color: danger
+                    ? AppColors.error.withValues(alpha: 0.12)
+                    : c.control,
               ),
-              child: _rowIcon(accent),
+              child: _rowIcon(ink),
             ),
             12.kw,
             Expanded(
@@ -1611,7 +1610,7 @@ class _QuickTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _GradientGlyph(icon: icon, iconAsset: iconAsset),
+            _RowGlyph(icon: icon, iconAsset: iconAsset),
             10.kw,
             Expanded(
               child: Column(
@@ -1645,30 +1644,28 @@ class _QuickTile extends StatelessWidget {
   }
 }
 
-/// The circular, brand-gradient glyph [_MenuRow] uses, on its own so the
-/// shortcut tiles carry exactly the same mark rather than a lookalike.
-class _GradientGlyph extends StatelessWidget {
-  const _GradientGlyph({this.icon, this.iconAsset});
+/// The circular, neutral glyph [_MenuRow] uses, on its own so the shortcut
+/// tiles carry exactly the same mark rather than a lookalike.
+class _RowGlyph extends StatelessWidget {
+  const _RowGlyph({this.icon, this.iconAsset});
 
   final IconData? icon;
   final SvgGenImage? iconAsset;
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Container(
       width: 40.w,
       height: 40.w,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.brandPurple.withValues(alpha: 0.12),
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: c.control),
       child: iconAsset == null
-          ? Icon(icon, size: 20.sp, color: AppColors.brandPurple)
-          : ShaderMask(
-              blendMode: BlendMode.srcIn,
-              shaderCallback: (rect) => AppGradients.brand.createShader(rect),
-              child: iconAsset!.svg(width: 20.sp, height: 20.sp),
+          ? Icon(icon, size: 20.sp, color: c.textPrimary)
+          : iconAsset!.svg(
+              width: 20.sp,
+              height: 20.sp,
+              colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
             ),
     );
   }

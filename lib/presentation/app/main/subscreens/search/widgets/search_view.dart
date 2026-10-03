@@ -1,9 +1,7 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
@@ -103,16 +101,6 @@ class _SearchViewState extends State<SearchView> {
     if (result != null) cubit.applyFilter(result);
   }
 
-  void _openMap() {
-    context.router.push(
-      BranchesMapRoute(
-        branches: widget.state.branches,
-        categories: widget.state.categories,
-        selectedCategories: widget.state.selectedCategories,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -162,20 +150,11 @@ class _SearchViewState extends State<SearchView> {
               _RecentHeader(onClear: cubit.clearRecents),
               14.verticalSpace,
             ] else ...[
-              16.verticalSpace,
-              SearchChips(
-                // Two chips, and one of them is always lit. Courses used to be
-                // a third: they now share the first list with activities, and
-                // narrowing to them is a filter (see `ActivityKind`) rather
-                // than a place. Display order matches the tab indices, so no
-                // remap.
-                labels: [
-                  'search_tab_classes'.tr(),
-                  'search_tab_centers'.tr(),
-                ],
-                activeIndex: state.activeTab,
-                onSelect: cubit.setTab,
-              ),
+              // No Activities / Centres chips: the screen lists activities
+              // (and courses, by filter) and nothing else. Centres are on the
+              // map, one row below. The cubit still knows both tabs — the map
+              // loads the centres one — so the list simply never leaves the
+              // first.
               if (selectedCategories.isNotEmpty) ...[
                 16.verticalSpace,
                 Padding(
@@ -193,11 +172,11 @@ class _SearchViewState extends State<SearchView> {
                   ),
                 ),
               ],
-              16.verticalSpace,
-              SearchMapCard(onTap: _openMap),
-              24.verticalSpace,
-              SearchCountRow(count: cubit.resultCount),
-              14.verticalSpace,
+              // No "view on map" row: the map is a shortcut on the search tab
+              // this screen is opened from. The count is not here either — it
+              // scrolls away with the results it counts, as the first thing
+              // in the list.
+              20.verticalSpace,
             ],
             Expanded(
               child: Builder(
@@ -251,39 +230,63 @@ class _SearchViewState extends State<SearchView> {
                       itemBuilder: (_, __) => _CardSkeleton(c: c),
                     );
                   }
-                  if (items.isEmpty) return const SearchEmptyView();
+                  // One search, one list: the centres whose name matched
+                  // lead, the activities follow, all in the same grid. A
+                  // centre is a result like any other — it is told apart by
+                  // its tag, not by living in a section of its own.
+                  final centres = state.branches;
+                  if (items.isEmpty && centres.isEmpty) {
+                    return const SearchEmptyView();
+                  }
 
                   return RefreshIndicator(
                     onRefresh: cubit.refresh,
-                    child: GridView.builder(
+                    child: CustomScrollView(
                       controller: _scrollController,
-                      padding: padding,
                       physics: const AlwaysScrollableScrollPhysics(),
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,
-                      gridDelegate: grid,
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        if (isClasses) {
-                          final model = state.classes[index];
-                          return HomeCourseCard(
-                            key: ValueKey(model.id ?? index),
-                            homClass: model,
-                            width: double.infinity,
-                            margin: EdgeInsets.zero,
-                            // What the user opens from a search IS the search,
-                            // as far as this screen is concerned — it is what
-                            // greets them next time (see [showRecents]).
-                            onOpen: () => cubit.rememberRecent(model),
-                          );
-                        }
-                        final branch = state.branches[index];
-                        return SearchBranchCard(
-                          key: ValueKey(branch.id ?? index),
-                          branch: branch,
-                          width: columnWidth,
-                        );
-                      },
+                      slivers: [
+                        SliverToBoxAdapter(
+                          // Everything the grid can reach: every matching
+                          // activity, plus the centres it is showing.
+                          child: SearchCountRow(
+                            count: cubit.resultCount + centres.length,
+                          ),
+                        ),
+                        SliverToBoxAdapter(child: 14.verticalSpace),
+                        SliverPadding(
+                          padding: padding,
+                          sliver: SliverGrid.builder(
+                            gridDelegate: grid,
+                            itemCount: centres.length + state.classes.length,
+                            itemBuilder: (context, index) {
+                              if (index < centres.length) {
+                                final branch = centres[index];
+                                return SearchBranchCard(
+                                  key: ValueKey('centre-${branch.id ?? index}'),
+                                  branch: branch,
+                                  width: columnWidth,
+                                  tag: 'search_centre_tag'.tr(),
+                                );
+                              }
+                              final model =
+                                  state.classes[index - centres.length];
+                              return HomeCourseCard(
+                                key: ValueKey(model.id ?? index),
+                                homClass: model,
+                                width: double.infinity,
+                                margin: EdgeInsets.zero,
+                                // What the user opens from a search IS the
+                                // search, as far as this screen is concerned —
+                                // it is what greets them next time (see
+                                // [showRecents]).
+                                onOpen: () => cubit.rememberRecent(model),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },

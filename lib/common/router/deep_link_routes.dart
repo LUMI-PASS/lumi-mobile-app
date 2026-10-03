@@ -85,7 +85,6 @@ abstract final class DeepLinkRoutes {
 
   // Visual tab order — must match `routes` in main_page.dart's AutoTabsScaffold.
   static const int _tabHome = 0;
-  static const int _tabMap = 1;
   static const int _tabShorts = 2;
   static const int _tabCalendar = 3;
   static const int _tabProfile = 4;
@@ -205,9 +204,12 @@ abstract final class DeepLinkRoutes {
       mode: DeepLinkNavMode.root,
       build: (_) => SearchDiscoveryRoute(autofocusSearch: true),
     ),
-    // The map has its own tab now, so the link switches to it rather than
-    // pushing a second copy on top of whatever the user was looking at.
-    'map': const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabMap),
+    // The map is no longer a tab — search took its slot — so the link pushes
+    // the map screen, as it did before the map had a tab.
+    'map': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (_) => BranchesMapRoute(),
+    ),
 
     // ── Money ──────────────────────────────────────────────────────────────
     'plans': DeepLinkRoute(

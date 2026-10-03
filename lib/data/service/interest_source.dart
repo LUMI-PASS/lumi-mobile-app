@@ -39,6 +39,7 @@ const _sourceByRoute = <String, String>{
   'ClassesGridRoute': InterestSource.category,
   'SearchRoute': InterestSource.search,
   'SearchDiscoveryRoute': InterestSource.search,
+  'SearchCategoriesRoute': InterestSource.search,
   'BranchesMapRoute': InterestSource.map,
   'MapRoute': InterestSource.map,
   'BranchDetailRoute': InterestSource.branch,

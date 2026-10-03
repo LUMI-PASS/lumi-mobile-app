@@ -36,6 +36,17 @@ class AppGradients {
     colors: [AppColors.darkControl, AppColors.darkSurface],
   );
 
+  /// Flat white, in BOTH themes — the fill behind category artwork.
+  ///
+  /// The category images are drawn on a white background, so the tile under
+  /// them has to be white too: on the themed [frostedControl] /
+  /// [frostedControlDark] fill the picture reads as a white square pasted onto
+  /// a lavender or charcoal one. A gradient only because that is what
+  /// `FrostedCard` takes.
+  static const LinearGradient artworkWhite = LinearGradient(
+    colors: [AppColors.white, AppColors.white],
+  );
+
   /// Partner / provider tag — light green → deep green.
   static const LinearGradient green = LinearGradient(
     begin: Alignment.centerLeft,

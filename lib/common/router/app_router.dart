@@ -25,6 +25,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/map/map_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/branches_map_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/search_categories_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discovery_page.dart';
 // SearchPage (Учреждения) is off the bottom nav for now, but it is still a
 // @RoutePage, so the generated part file names it and needs this import.
@@ -117,10 +118,12 @@ class AppRouter extends _$AppRouter {
       page: MainRoute.page,
       children: [
         AutoRoute(page: HomeRoute.page),
-        AutoRoute(page: MapRoute.page),
+        AutoRoute(page: SearchCategoriesRoute.page),
         AutoRoute(page: ShortsRoute.page),
         AutoRoute(page: CalendarRoute.page),
         AutoRoute(page: ProfileRoute.page),
+        // `MapRoute` is off the bar too: the search tab took its place, and
+        // the map is one tap into it (and still the pushed `BranchesMapRoute`).
         // `SearchRoute` (Учреждения) is deliberately absent: the tab is hidden
         // until the centres section is real. The page and its cubit stay put
         // so putting it back is a one-line change here and in `MainPage`.

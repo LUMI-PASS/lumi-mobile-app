@@ -209,6 +209,7 @@ class HomeApi {
     double? lng,
     List<String>? districts,
     String? kind,
+    bool centres = false,
   }) {
     return _dio.get('discovery/classes', queryParameters: {
       'page': page,
@@ -231,6 +232,9 @@ class HomeApi {
       if (districts != null && districts.isNotEmpty)
         'districts': districts.join(','),
       if (kind != null) 'kind': kind,
+      // Asks for the matching centres in the same response (`branches`), so a
+      // search that shows both costs one request.
+      if (centres) 'centres': 1,
     });
   }
 

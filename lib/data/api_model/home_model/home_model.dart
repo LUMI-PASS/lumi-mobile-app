@@ -310,10 +310,18 @@ class ClassesPage {
   /// result count). Falls back to 0 when the API omits it.
   final int total;
 
+  /// The centres matching the same search, when the request asked for them.
+  /// `null` when it did not — or when the server predates the parameter —
+  /// which is different from an empty list: "none matched".
+  final List<HomBranch>? branches;
+  final int branchesTotal;
+
   const ClassesPage({
     required this.classes,
     required this.totalPages,
     this.total = 0,
+    this.branches,
+    this.branchesTotal = 0,
   });
 }
 

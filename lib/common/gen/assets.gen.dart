@@ -83,6 +83,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/cards.svg
   SvgGenImage get cards => const SvgGenImage('assets/icons/cards.svg');
 
+  /// File path: assets/icons/category_all.svg
+  SvgGenImage get categoryAll =>
+      const SvgGenImage('assets/icons/category_all.svg');
+
   /// File path: assets/icons/circles.svg
   SvgGenImage get circles => const SvgGenImage('assets/icons/circles.svg');
 
@@ -255,6 +259,7 @@ class $AssetsIconsGen {
         call,
         card,
         cards,
+        categoryAll,
         circles,
         coinLumi,
         coupon,

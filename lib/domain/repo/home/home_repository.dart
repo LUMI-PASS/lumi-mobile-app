@@ -86,6 +86,9 @@ abstract class HomeRepository {
     /// activities only — what it has always done for a caller that says
     /// nothing.
     String? kind,
+    /// Also return the centres matching [search] and [categoryIds], as
+    /// [ClassesPage.branches] — one request for a search that shows both.
+    bool centres = false,
   });
 
   Future<ClassesPage> getDiscoveryShorts({

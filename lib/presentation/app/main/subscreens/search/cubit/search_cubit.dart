@@ -40,6 +40,26 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   int get resultCount =>
       buildable.activeTab == kSearchTabBranches ? _branchesTotal : _classesTotal;
 
+  /// Total matching centres, for the centres row above the activities grid.
+  int get centresCount => _branchesTotal;
+
+  /// Whether a search of activities also asks for the centres that match.
+  ///
+  /// The results screen shows both in one grid — the centres first, the
+  /// activities after them — so one term finds a place by its name as well as
+  /// what runs there. Only for a typed term: with nothing typed the centres
+  /// would be every centre there is, standing in front of the activities the
+  /// user came to browse. They come back in the SAME response as the activities
+  /// (`centres=1`), never from a second request. Not with a filter on: ages, prices, dates and districts
+  /// describe a CLASS and `discovery/branches` ignores them, so the row would
+  /// show centres the filter was supposed to rule out. And not on the map,
+  /// which loads every centre itself.
+  bool get _listsCentres =>
+      buildable.activeTab == kSearchTabClasses &&
+      !_allBranches &&
+      buildable.searchTerm.isNotEmpty &&
+      activeFilterCount == 0;
+
   /// Categories cached from the home feed (have resolved title strings).
   /// Used by search so we don't depend on the raw categories/ endpoint.
   static List<HomCategory> cachedCategories = [];
@@ -402,9 +422,14 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           lng: _lng,
           districts: q.districts,
           kind: q.kind,
+          // First page only: the row is not paged, so a "load more" has no
+          // use for them.
+          centres: !append && _listsCentres,
         );
 
         _classesTotal = result.total;
+        final centres = result.branches;
+        if (centres != null) _branchesTotal = result.branchesTotal;
 
         if (append) {
           final existingIds = buildable.classes.map((c) => c.id).toSet();
@@ -423,6 +448,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
                 classesPage: 2,
                 classesTotalPages: result.totalPages,
                 classesLoaded: true,
+                branches: centres ?? b.branches,
               ));
         }
       } else {

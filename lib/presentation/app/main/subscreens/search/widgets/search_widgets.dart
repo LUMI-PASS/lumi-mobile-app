@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// Iconsax glyphs used by the search screen, tinted per theme via [BlendMode].
@@ -410,9 +411,13 @@ class SearchCategoryChip extends StatelessWidget {
 
 /// Result count row — "Все • 15 751" (Figma `Brand section`).
 class SearchCountRow extends StatelessWidget {
-  const SearchCountRow({super.key, required this.count});
+  const SearchCountRow({super.key, required this.count, this.label});
 
   final int count;
+
+  /// What is being counted. Omit for the generic "All • N"; pass a name when
+  /// the screen counts more than one thing and each row has to say which.
+  final String? label;
 
   static String _grouped(int value) {
     final digits = value.toString();
@@ -430,7 +435,9 @@ class SearchCountRow extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Text(
-        'all_count'.tr(args: [_grouped(count)]),
+        label == null
+            ? 'all_count'.tr(args: [_grouped(count)])
+            : '$label • ${_grouped(count)}',
         style: AppText.medium14.copyWith(color: c.textSecondary),
       ),
     );
@@ -483,10 +490,19 @@ class SearchBranchCard extends StatelessWidget {
     super.key,
     required this.branch,
     required this.width,
+    this.tag,
   });
 
   final HomBranch branch;
   final double width;
+
+  /// A pill above the name, in the slot an activity card gives its provider.
+  ///
+  /// Set where centres and activities share one grid: it says which kind of
+  /// result this is, and it puts the name on the same line as the activity
+  /// next to it. Omit in a grid of centres only, where it would say the same
+  /// word on every card.
+  final String? tag;
 
   String? get _imageUrl {
     final direct = sanitizeImageUrl(branch.image);
@@ -539,7 +555,13 @@ class SearchBranchCard extends StatelessWidget {
                 ),
               ),
             ),
-            10.verticalSpace,
+            if (tag != null) ...[
+              // The activity card's own spacing, so the two line up.
+              14.verticalSpace,
+              HomePillTag(label: tag!, gradient: AppGradients.indigo),
+              6.verticalSpace,
+            ] else
+              10.verticalSpace,
             Text(
               branch.title ?? '',
               maxLines: 1,

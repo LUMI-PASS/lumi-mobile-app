@@ -314,6 +314,12 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    SearchCategoriesRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const SearchCategoriesPage(),
+      );
+    },
     SearchDiscoveryRoute.name: (routeData) {
       final args = routeData.argsAs<SearchDiscoveryRouteArgs>(
           orElse: () => const SearchDiscoveryRouteArgs());
@@ -1430,6 +1436,20 @@ class RegisterRouteArgs {
   String toString() {
     return 'RegisterRouteArgs{key: $key, phoneOrMail: $phoneOrMail}';
   }
+}
+
+/// generated route for
+/// [SearchCategoriesPage]
+class SearchCategoriesRoute extends PageRouteInfo<void> {
+  const SearchCategoriesRoute({List<PageRouteInfo>? children})
+      : super(
+          SearchCategoriesRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'SearchCategoriesRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

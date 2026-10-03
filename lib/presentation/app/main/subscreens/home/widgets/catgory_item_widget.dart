@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
@@ -66,6 +67,9 @@ class CategoryItemWidget extends StatelessWidget {
                 height: 56.w,
                 padding: EdgeInsets.zero,
                 borderWidth: 1.6,
+                // White in both themes — the artwork has a white background.
+                gradient: AppGradients.artworkWhite,
+                borderColor: AppColors.white,
                 clipBehavior: Clip.antiAlias,
                 child: url == null
                     ? _fallback()

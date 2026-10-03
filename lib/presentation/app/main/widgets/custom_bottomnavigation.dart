@@ -69,15 +69,15 @@ class CustomBottomBar extends StatelessWidget {
   static const Color _figmaGrey = Color(0xFFA5A6BB);
 
   // Tab icon + localization key, per tab:
-  // Главный · Карта · Видео · Броны · Профиль.
+  // Главный · Поиск · Видео · Броны · Профиль.
   //
   // `Учреждения` (tab_explore) is not here: the centres section is still a
-  // coming-soon card, and the map — which shows those same centres, and is
-  // something you can actually use — took its place. Keep this list in step
-  // with `routes` in `MainPage.build`.
+  // coming-soon card. The map that stood in for it is now a card at the top
+  // of the search tab. Keep this list in step with `routes` in
+  // `MainPage.build`.
   static final List<(SvgGenImage, String)> _tabs = [
     (Assets.icons.home.home, 'tab_home'),
-    (Assets.icons.home.map, 'tab_map'),
+    (Assets.icons.home.search, 'search_title'),
     (Assets.icons.home.video, 'tab_shorts'),
     (Assets.icons.home.calendar, 'tab_bookings'),
     (Assets.icons.home.profile, 'tab_profile'),
