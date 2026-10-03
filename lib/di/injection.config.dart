@@ -34,6 +34,7 @@ import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
 import 'package:lumi_pass/domain/impl/auth_repository_impl.dart' as _i98;
 import 'package:lumi_pass/domain/impl/home_repository_impl.dart' as _i162;
+import 'package:lumi_pass/domain/impl/new_coins_repository_impl.dart' as _i412;
 import 'package:lumi_pass/domain/impl/promo_repository_impl.dart' as _i40;
 import 'package:lumi_pass/domain/impl/referral_repository_impl.dart' as _i265;
 import 'package:lumi_pass/domain/impl/shop_repository_impl.dart' as _i66;
@@ -46,6 +47,9 @@ import 'package:lumi_pass/domain/repo/courses/courses_api.dart' as _i298;
 import 'package:lumi_pass/domain/repo/home/home_api.dart' as _i433;
 import 'package:lumi_pass/domain/repo/home/home_repository.dart' as _i526;
 import 'package:lumi_pass/domain/repo/interests/interests_api.dart' as _i1041;
+import 'package:lumi_pass/domain/repo/new_coins/new_coins_api.dart' as _i259;
+import 'package:lumi_pass/domain/repo/new_coins/new_coins_repository.dart'
+    as _i550;
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart'
     as _i376;
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart' as _i748;
@@ -149,16 +153,19 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
+    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
     gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
     gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
     gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
-    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i582.PromoApi>(() => _i582.PromoApi(gh<_i361.Dio>()));
+    gh.factory<_i259.NewCoinsApi>(() => _i259.NewCoinsApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
+    gh.factory<_i550.NewCoinsRepository>(
+        () => _i412.NewCoinsRepositoryImpl(gh<_i259.NewCoinsApi>()));
     gh.lazySingleton<_i594.AnalyticsService>(() => _i594.AnalyticsService(
           gh<_i279.Storage>(),
           gh<_i260.AppsFlyerService>(),

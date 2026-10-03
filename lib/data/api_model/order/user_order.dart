@@ -60,6 +60,13 @@ class UserOrder {
   /// METHOD rather than a discount — the order still cost [totalAmount].
   final num walletAmount;
 
+  /// True when the booking was paid entirely with coins ("Lumi Coin") rather
+  /// than money. Such a booking cannot be cancelled — coins are not refunded.
+  final bool paidWithNewCoins;
+
+  /// What it cost in coins. 0 unless [paidWithNewCoins].
+  final int newCoinAmount;
+
   /// Where it was booked — the activity's branch title. Null when the payload
   /// didn't populate one, which is every order fetched from a server older
   /// than the branch populate on the list endpoint.
@@ -290,6 +297,8 @@ class UserOrder {
     this.subcourseName,
     this.startsAt,
     this.walletAmount = 0,
+    this.paidWithNewCoins = false,
+    this.newCoinAmount = 0,
     this.branchName,
     this.activitySchedule = const [],
   });
@@ -376,6 +385,9 @@ class UserOrder {
           : null,
       startsAt: json['starts_at']?.toString().split('T').first,
       walletAmount: (json['wallet_amount'] as num?) ?? 0,
+      // Absent on every money order and on a server that predates coins.
+      paidWithNewCoins: json['paid_with_new_coins'] == true,
+      newCoinAmount: (json['new_coin_amount'] as num?)?.toInt() ?? 0,
       activityId: activityId,
       activityName: _readLocalized(activityMap?['name']),
       activityImage: sanitizeImageUrl(activityMap?['image']?.toString()),

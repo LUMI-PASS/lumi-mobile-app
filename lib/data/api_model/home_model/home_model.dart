@@ -214,6 +214,10 @@ class HomClass with _$HomClass {
     /// at. Informational: what the card OFFERS is [cardPrice], which comes from
     /// the trial prices the centre set, not from this division.
     num? perLessonPrice,
+
+    /// The cheapest ticket in coins ("Lumi Coin"). Null or absent for a course
+    /// — courses are money-only — and on a server that predates coins.
+    num? newCoinPrice,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,

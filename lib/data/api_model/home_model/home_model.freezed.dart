@@ -2151,6 +2151,10 @@ mixin _$HomClass {
   /// at. Informational: what the card OFFERS is [cardPrice], which comes from
   /// the trial prices the centre set, not from this division.
   num? get perLessonPrice => throw _privateConstructorUsedError;
+
+  /// The cheapest ticket in coins ("Lumi Coin"). Null or absent for a course
+  /// — courses are money-only — and on a server that predates coins.
+  num? get newCoinPrice => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -2199,6 +2203,7 @@ abstract class $HomClassCopyWith<$Res> {
       int? trialLessonsLeft,
       int? lessonsCount,
       num? perLessonPrice,
+      num? newCoinPrice,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2251,6 +2256,7 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? trialLessonsLeft = freezed,
     Object? lessonsCount = freezed,
     Object? perLessonPrice = freezed,
+    Object? newCoinPrice = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2384,6 +2390,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.perLessonPrice
           : perLessonPrice // ignore: cast_nullable_to_non_nullable
               as num?,
+      newCoinPrice: freezed == newCoinPrice
+          ? _value.newCoinPrice
+          : newCoinPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2453,6 +2463,7 @@ abstract class _$$HomClassImplCopyWith<$Res>
       int? trialLessonsLeft,
       int? lessonsCount,
       num? perLessonPrice,
+      num? newCoinPrice,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2504,6 +2515,7 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? trialLessonsLeft = freezed,
     Object? lessonsCount = freezed,
     Object? perLessonPrice = freezed,
+    Object? newCoinPrice = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2637,6 +2649,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.perLessonPrice
           : perLessonPrice // ignore: cast_nullable_to_non_nullable
               as num?,
+      newCoinPrice: freezed == newCoinPrice
+          ? _value.newCoinPrice
+          : newCoinPrice // ignore: cast_nullable_to_non_nullable
+              as num?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2690,6 +2706,7 @@ class _$HomClassImpl extends _HomClass {
       this.trialLessonsLeft,
       this.lessonsCount,
       this.perLessonPrice,
+      this.newCoinPrice,
       this.createdAt,
       this.updatedAt,
       this.deletedAt})
@@ -2800,6 +2817,11 @@ class _$HomClassImpl extends _HomClass {
   /// the trial prices the centre set, not from this division.
   @override
   final num? perLessonPrice;
+
+  /// The cheapest ticket in coins ("Lumi Coin"). Null or absent for a course
+  /// — courses are money-only — and on a server that predates coins.
+  @override
+  final num? newCoinPrice;
   @override
   final String? createdAt;
   @override
@@ -2809,7 +2831,7 @@ class _$HomClassImpl extends _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, newCoinPrice: $newCoinPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2872,6 +2894,8 @@ class _$HomClassImpl extends _HomClass {
                 other.lessonsCount == lessonsCount) &&
             (identical(other.perLessonPrice, perLessonPrice) ||
                 other.perLessonPrice == perLessonPrice) &&
+            (identical(other.newCoinPrice, newCoinPrice) ||
+                other.newCoinPrice == newCoinPrice) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -2916,6 +2940,7 @@ class _$HomClassImpl extends _HomClass {
         trialLessonsLeft,
         lessonsCount,
         perLessonPrice,
+        newCoinPrice,
         createdAt,
         updatedAt,
         deletedAt
@@ -2969,6 +2994,7 @@ abstract class _HomClass extends HomClass {
       final int? trialLessonsLeft,
       final int? lessonsCount,
       final num? perLessonPrice,
+      final num? newCoinPrice,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomClassImpl;
@@ -3078,6 +3104,11 @@ abstract class _HomClass extends HomClass {
   /// at. Informational: what the card OFFERS is [cardPrice], which comes from
   /// the trial prices the centre set, not from this division.
   num? get perLessonPrice;
+  @override
+
+  /// The cheapest ticket in coins ("Lumi Coin"). Null or absent for a course
+  /// — courses are money-only — and on a server that predates coins.
+  num? get newCoinPrice;
   @override
   String? get createdAt;
   @override

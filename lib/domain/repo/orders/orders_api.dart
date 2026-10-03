@@ -184,12 +184,19 @@ class OrdersApi {
     String? savedCardId,
     bool useWallet = false,
     bool usePromoPass = false,
+    bool payWithNewCoins = false,
     bool test = false,
   }) async {
     final body = {
       'activity_id': activityId,
       'items': items.map((e) => e.toJson()).toList(),
       'ticket_date': ticketDate,
+      // Pay the whole booking from the buyer's coin packs ("Lumi Coin"). Sent
+      // only when asked for — a money checkout omits the field entirely, so it
+      // is the same request it has always been. The server refuses coins
+      // combined with a wallet, a pass or a promocode, and the caller never
+      // sends them together.
+      if (payWithNewCoins) 'pay_with': 'new_coins',
       // Asks the server to apply the wallet; it decides how much. No amount is
       // sent — v1 redemption is all-or-nothing, and letting the client name a
       // figure only invites it to disagree with the one that lands.

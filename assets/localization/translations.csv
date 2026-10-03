@@ -1388,3 +1388,56 @@ reviews_empty,Пока нет отзывов,Hali sharhlar yo‘q,No reviews yet
 rate_prompt_yours,Ваша оценка,Sizning bahoyingiz,Your rating
 rate_prompt_hint,"Нажмите, чтобы оценить",Baholash uchun bosing,Tap to rate
 search_centre_tag,Центр,Markaz,Centre
+new_coins_title,Lumi Coin,Lumi Coin,Lumi Coin
+new_coins_amount,{} Lumi Coin,{} Lumi Coin,{} Lumi Coin
+new_coins_about,Lumi Coin покупают пакетами и оплачивают ими занятия целиком — вместо денег. Это не кешбэк-кошелёк.,Lumi Coin paketlab sotib olinadi va mashg‘ulot uchun to‘liq to‘lanadi — pul o‘rniga. Bu keshbek hamyoni emas.,"Lumi Coin is bought in packs and pays for an activity in full, instead of money. It is not the cashback wallet."
+new_coins_balance_label,Ваш баланс Lumi Coin,Lumi Coin balansingiz,Your Lumi Coin balance
+new_coins_balance_line,Баланс: {} Lumi Coin,Balans: {} Lumi Coin,Balance: {} Lumi Coin
+new_coins_expire_on,{} Lumi Coin сгорят {},{} Lumi Coin {} kuni kuyadi,{} Lumi Coin expire on {}
+new_coins_valid_until,Действуют до {},{} gacha amal qiladi,Valid until {}
+new_coins_never_expire,Не сгорают,Muddati cheklanmagan,Never expire
+new_coins_history,История,Tarix,History
+new_coins_history_empty,Здесь появятся покупки и списания Lumi Coin.,Bu yerda Lumi Coin xaridlari va sarflari ko‘rinadi.,Your Lumi Coin purchases and spends will appear here.
+new_coins_monthly_section,Месячные пакеты,Oylik paketlar,Monthly packs
+new_coins_extra_section,Дополнительные пакеты,Qo‘shimcha paketlar,Extra packs
+new_coins_single_section,Отдельные коины,Alohida coinlar,Single coins
+new_coins_single_title,Купить Lumi Coin поштучно,Lumi Coin donalab sotib olish,Buy single Lumi Coin
+new_coins_single_hint,"Не сгорают — удобно, когда на занятие не хватает пары коинов.",Muddati cheklanmagan — mashg‘ulotga bir-ikki coin yetmaganda qulay.,They never expire — handy when a booking is a coin or two short.
+new_coins_extras_locked,Доступно при активном месячном пакете.,Faol oylik paket bo‘lganda mavjud.,Available with an active monthly pack.
+new_coins_valid_days,Действует {} дн.,{} kun amal qiladi,Valid for {} days
+new_coins_per_coin,{} за коин,1 coin — {},{} per coin
+new_coins_buy_for,Купить за {},{} ga sotib olish,Buy for {}
+new_coins_bonus_badge,+{} в подарок,+{} sovg‘a,+{} bonus
+new_coins_empty_title,Lumi Coin пока недоступны,Lumi Coin hozircha mavjud emas,Lumi Coin is not available yet
+new_coins_empty_body,Пакеты скоро появятся. Загляните позже.,Paketlar tez orada paydo bo‘ladi. Keyinroq qarab ko‘ring.,Packs are coming soon. Check back later.
+new_coins_success_title,Lumi Coin зачислены!,Lumi Coin hisobingizga tushdi!,Your Lumi Coin are in!
+new_coins_success_body,Вы купили {} Lumi Coin. Ими можно оплачивать занятия.,Siz {} Lumi Coin sotib oldingiz. Ular bilan mashg‘ulotlar uchun to‘lash mumkin.,You bought {} Lumi Coin. Use them to pay for activities.
+new_coins_success_cta,Готово,Tayyor,Done
+new_coins_pay_with,Оплатить Lumi Coin,Lumi Coin bilan to‘lash,Pay with Lumi Coin
+new_coins_pay_cta,Оплатить {} Lumi Coin,{} Lumi Coin to‘lash,Pay {} Lumi Coin
+new_coins_short,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi,{} Lumi Coin short
+new_coins_left_after,Останется после оплаты,To‘lovdan keyin qoladi,Left after payment
+new_coins_paid_with,Оплачено: {} Lumi Coin,To‘landi: {} Lumi Coin,Paid with {} Lumi Coin
+new_coins_paid_with_label,Оплачено Lumi Coin,Lumi Coin bilan to‘langan,Paid with Lumi Coin
+new_coins_not_cancelable,"Бронь, оплаченную Lumi Coin, отменить нельзя.",Lumi Coin bilan to‘langan bronni bekor qilib bo‘lmaydi.,Bookings paid with Lumi Coin cannot be cancelled.
+new_coins_shortfall_title,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi,You are {} Lumi Coin short
+new_coins_shortfall_body,"Нужно {} Lumi Coin, а у вас {}.","{} Lumi Coin kerak, sizda esa {}.",This booking needs {} Lumi Coin and you have {}.
+new_coins_shortfall_buy_missing,Докупить {} Lumi Coin за {},{} Lumi Coin — {} ga sotib olish,Buy {} Lumi Coin for {}
+new_coins_shortfall_open_store,Выбрать пакет,Paket tanlash,Choose a pack
+new_coins_lot_monthly,Месячный пакет,Oylik paket,Monthly pack
+new_coins_lot_extra,Дополнительный пакет,Qo‘shimcha paket,Extra pack
+new_coins_lot_single,Отдельные коины,Alohida coinlar,Single coins
+new_coins_lot_bonus,Бонус,Bonus,Bonus
+new_coins_lot_grant,Начисление от Lumi,Lumi tomonidan berilgan,Credited by Lumi
+new_coins_lot_other,Lumi Coin,Lumi Coin,Lumi Coin
+new_coins_tx_purchase,Покупка,Xarid,Purchase
+new_coins_tx_bonus,Бонус,Bonus,Bonus
+new_coins_tx_spend,Оплата занятия,Mashg‘ulot uchun to‘lov,Activity payment
+new_coins_tx_expire,Срок действия истёк,Muddati tugadi,Expired
+new_coins_tx_grant,Начисление от Lumi,Lumi tomonidan berilgan,Credited by Lumi
+new_coins_tx_revoke,Списание,Yechib olindi,Revoked
+new_coins_tx_other,Операция,Amal,Transaction
+new_coins_err_monthly_required,Сначала купите месячный пакет.,Avval oylik paket sotib oling.,Buy a monthly pack first.
+new_coins_err_pack_inactive,Этот пакет больше не продаётся.,Bu paket endi sotilmaydi.,This pack is no longer on sale.
+new_coins_err_insufficient,Недостаточно Lumi Coin для этой брони.,Bu bron uchun Lumi Coin yetarli emas.,Not enough Lumi Coin for this booking.
+new_coins_err_exclusive,"Lumi Coin нельзя совмещать с промокодом, кошельком или пакетом.","Lumi Coin promokod, hamyon yoki paket bilan birga ishlatilmaydi.","Lumi Coin cannot be combined with a promocode, the wallet or a packet."

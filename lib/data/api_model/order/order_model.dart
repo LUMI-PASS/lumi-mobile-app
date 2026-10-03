@@ -80,6 +80,18 @@ class CheckoutResult {
   final String? paylovMessage;
   final String? paylovOrderId;
 
+  // ── New coins ("Lumi Coin") ────────────────────────────────────────────────
+  /// True when the booking was settled entirely from the buyer's coin packs
+  /// (`paid_with: 'new_coins'`). Such an order comes back already PAID with no
+  /// [checkoutUrl], and no so'm was charged for it.
+  final bool paidWithNewCoins;
+
+  /// What the booking cost in coins. 0 unless [paidWithNewCoins].
+  final int newCoinAmount;
+
+  /// The coin balance left after the spend. Null when the server did not say.
+  final int? newCoinBalance;
+
   const CheckoutResult({
     required this.orderId,
     required this.totalAmount,
@@ -101,6 +113,9 @@ class CheckoutResult {
     this.paylovState,
     this.paylovMessage,
     this.paylovOrderId,
+    this.paidWithNewCoins = false,
+    this.newCoinAmount = 0,
+    this.newCoinBalance,
   });
 
   /// True when this is a Paylov card checkout awaiting an OTP confirmation
@@ -143,6 +158,10 @@ class CheckoutResult {
           : int.tryParse('${json['state'] ?? ''}'),
       paylovMessage: nonEmpty(json['message']),
       paylovOrderId: nonEmpty(json['paylov_order_id']),
+      // Absent on a server that predates coins, and on every money order.
+      paidWithNewCoins: json['paid_with']?.toString() == 'new_coins',
+      newCoinAmount: (json['new_coin_amount'] as num?)?.toInt() ?? 0,
+      newCoinBalance: (json['new_coin_balance'] as num?)?.toInt(),
     );
   }
 }

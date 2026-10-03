@@ -65,6 +65,19 @@ class ClassFullModel {
   /// page swaps its CTA and lesson list rather than offering ticket booking.
   final bool isCourse;
 
+  // ── New coins ("Lumi Coin") ────────────────────────────────────────────────
+  /// The cheapest and dearest ticket of this activity, in coins. Null when the
+  /// server sent none — an older backend, or a course, which is money-only.
+  final int? newCoinPriceMin;
+  final int? newCoinPriceMax;
+
+  /// So'm per coin the prices above were worked out at.
+  final num? newCoinRate;
+
+  /// Whether this activity can be quoted in coins at all. Courses never are,
+  /// whatever the payload carries.
+  bool get hasNewCoinPrices => !isCourse && newCoinRate != null;
+
   /// The trial ladder each group of this course is CONFIGURED with, keyed by
   /// sub-course id — `null` for the course's own ladder, which is what a course
   /// entered without sub-courses carries. Empty for anything that isn't a
@@ -119,6 +132,9 @@ class ClassFullModel {
     this.rating = const RatingSummary(),
     this.isCourse = false,
     this.courseTrials = const {},
+    this.newCoinPriceMin,
+    this.newCoinPriceMax,
+    this.newCoinRate,
   });
 
   /// The configured trial ladder for one group of this course, or the course's
@@ -218,6 +234,10 @@ class ClassFullModel {
               ageFrom: t.ageFrom,
               ageTo: t.ageTo ?? 99,
               price: minPrice,
+              newCoinPrice: t.durations
+                  .where((d) => d.price == minPrice)
+                  .firstOrNull
+                  ?.newCoinPrice,
             );
           }).toList();
 
@@ -286,6 +306,9 @@ class ClassFullModel {
       rating: RatingSummary.fromJson(json),
       isCourse: json['is_course'] == true,
       courseTrials: _courseTrials(json['course']),
+      newCoinPriceMin: (json['new_coin_price_min'] as num?)?.toInt(),
+      newCoinPriceMax: (json['new_coin_price_max'] as num?)?.toInt(),
+      newCoinRate: json['new_coin_rate'] as num?,
     );
   }
 }
@@ -452,7 +475,10 @@ class AgeDuration {
   final int? duration; // minutes; null = unlimited / full-time
   final num price;
 
-  AgeDuration({required this.duration, required this.price});
+  /// The same ticket in coins. Null when the server sent none.
+  final int? newCoinPrice;
+
+  AgeDuration({required this.duration, required this.price, this.newCoinPrice});
 
   /// Human-readable duration label.
   String get durationLabel {
@@ -468,6 +494,7 @@ class AgeDuration {
     return AgeDuration(
       duration: (json['duration'] as num?)?.toInt(),
       price: (json['price'] as num?) ?? 0,
+      newCoinPrice: (json['new_coin_price'] as num?)?.toInt(),
     );
   }
 }
@@ -479,10 +506,14 @@ class PriceRangeItem {
   final int ageTo;
   final num price;
 
+  /// The same ticket in coins. Null when the server sent none.
+  final int? newCoinPrice;
+
   PriceRangeItem({
     required this.ageFrom,
     required this.ageTo,
     required this.price,
+    this.newCoinPrice,
   });
 
   factory PriceRangeItem.fromJson(Map<String, dynamic> json) {
@@ -490,6 +521,7 @@ class PriceRangeItem {
       ageFrom: (json['age_from'] as num?)?.toInt() ?? 0,
       ageTo: (json['age_to'] as num?)?.toInt() ?? 0,
       price: (json['price'] as num?) ?? 0,
+      newCoinPrice: (json['new_coin_price'] as num?)?.toInt(),
     );
   }
 
