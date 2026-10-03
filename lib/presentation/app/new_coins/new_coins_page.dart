@@ -21,7 +21,6 @@ import 'package:lumi_pass/presentation/app/new_coins/new_coins_history_page.dart
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_purchase_controller.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_success_page.dart';
 import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_widgets.dart';
-import 'package:shimmer/shimmer.dart';
 
 /// The "Lumi Coin" screen: what the buyer holds, when it expires, and the
 /// shelf — main packs, extra packs and loose coins.
@@ -354,13 +353,18 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     // screen of headings with nothing under them.
     final empty = !_catalogue.isOnSale && _balance.balance <= 0;
 
-    if (_isLoading || _failed || empty) {
+    // Loading wears the shelf's own stage — the wash, the back pill, the Buy
+    // bar's place — so the packs arrive into the screen that was already
+    // there, rather than a light list of blocks flipping to a dark showcase.
+    if (_isLoading) {
+      return _NewCoinsLoading(onBack: () => context.router.maybePop());
+    }
+
+    if (_failed || empty) {
       return Scaffold(
         backgroundColor: c.pageBg,
         appBar: BaseAppBar(title: 'new_coins_title'.tr()),
-        body: _isLoading
-            ? const _NewCoinsShimmer()
-            : _NewCoinsUnavailable(onRetry: _load),
+        body: _NewCoinsUnavailable(onRetry: _load),
       );
     }
 
@@ -684,28 +688,225 @@ class _TopPill extends StatelessWidget {
   }
 }
 
-class _NewCoinsShimmer extends StatelessWidget {
-  const _NewCoinsShimmer();
+/// The shelf while it loads: the stage and its wash exactly as the loaded
+/// screen draws them, with the first pack's page sketched in shimmer — the
+/// coin, the name and price, the pill, the "what's in the pack" card and the
+/// Buy button.
+///
+/// The shapes are translucent white and breathe rather than sweep: a shimmer
+/// repaints its child in its own opaque colours, which would cut flat blocks
+/// out of the wash this screen is about.
+class _NewCoinsLoading extends StatefulWidget {
+  const _NewCoinsLoading({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  State<_NewCoinsLoading> createState() => _NewCoinsLoadingState();
+}
+
+class _NewCoinsLoadingState extends State<_NewCoinsLoading>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breath = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _pulse = Tween(begin: 0.45, end: 1.0)
+      .animate(CurvedAnimation(parent: _breath, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    _breath.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
-    Widget block(double height) => Container(
+    final onBack = widget.onBack;
+    final top = MediaQuery.of(context).viewPadding.top;
+    final bottom = MediaQuery.of(context).viewPadding.bottom;
+    // The first main pack leads the shelf, so its tone is the one the loaded
+    // screen most often opens on.
+    final tone = NewCoinTone.main(0);
+    final ghost = AppColors.white.withValues(alpha: 0.22);
+
+    Widget bar(double width, double height) => Container(
+          width: width.w,
           height: height.h,
-          margin: EdgeInsets.only(bottom: 12.h),
           decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(20.r),
+            color: ghost,
+            borderRadius: BorderRadius.circular(height.h),
           ),
         );
 
-    return Shimmer.fromColors(
-      baseColor: c.surface,
-      highlightColor: c.control,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
-        physics: const NeverScrollableScrollPhysics(),
-        children: [block(120), 8.kh, block(170), block(170)],
+    Widget row() => Padding(
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+          child: Row(
+            children: [
+              Container(
+                width: 26.w,
+                height: 26.w,
+                decoration: BoxDecoration(color: ghost, shape: BoxShape.circle),
+              ),
+              14.kw,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [bar(150, 14), 8.kh, bar(210, 10)],
+              ),
+            ],
+          ),
+        );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.coinStage,
+        body: Stack(
+          children: [
+            Positioned.fill(child: NewCoinsBackdrop(tone: tone)),
+            Positioned.fill(
+              child: FadeTransition(
+                opacity: _pulse,
+                child: SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  // The loaded page's own insets: under the top pills, and
+                  // one carousel card wide.
+                  padding: EdgeInsets.fromLTRB(
+                    0.07.sw + 6.w,
+                    top + 52.h,
+                    0.07.sw + 6.w,
+                    0,
+                  ),
+                  child: Column(
+                    children: [
+                      // The coin, in the box NewCoinArt gives it.
+                      SizedBox(
+                        height: 168.w,
+                        child: Center(
+                          child: Container(
+                            width: 132.w,
+                            height: 132.w,
+                            decoration: BoxDecoration(
+                              color: ghost,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                      14.kh,
+                      bar(180, 26),
+                      12.kh,
+                      bar(110, 14),
+                      16.kh,
+                      bar(170, 36),
+                      20.kh,
+                      Container(
+                        padding: EdgeInsets.all(6.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.white.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 12.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(24.r),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 32.w,
+                                    height: 32.w,
+                                    decoration: BoxDecoration(
+                                      color: ghost,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  12.kw,
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      bar(140, 14),
+                                      8.kh,
+                                      bar(200, 10),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            6.kh,
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 14.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(24.r),
+                              ),
+                              child: Column(
+                                children: [row(), row(), row(), row()],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Where the Buy bar will be: its fade to the stage colour, and
+            // the button's shape under it.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(16.w, 36.h, 16.w, 16.h + bottom),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0, 0.32, 1],
+                    colors: [
+                      AppColors.coinStage.withValues(alpha: 0),
+                      AppColors.coinStage.withValues(alpha: 0.94),
+                      AppColors.coinStage,
+                    ],
+                  ),
+                ),
+                child: FadeTransition(
+                  opacity: _pulse,
+                  child: Container(
+                    height: 58.h,
+                    decoration: BoxDecoration(
+                      color: ghost,
+                      borderRadius: BorderRadius.circular(18.r),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: top + 8.h,
+              left: 16.w,
+              child: _TopPill(
+                onTap: onBack,
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  size: 20.w,
+                  color: AppColors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
