@@ -1041,6 +1041,16 @@ class _BookingPageState extends State<BookingPage> {
       _flatCounts = List<int>.filled(widget.clazz.pricesSummary.length, 0);
       _tierCounts = const [];
     }
+    // One ticket row and nothing to choose between: it opens at 1 rather than
+    // at 0, for the same reason a single course bracket does just below. Two
+    // or more rows is a genuine choice, so those still open at 0.
+    if (!_isCourse) {
+      if (_tierCounts.length == 1 && _tierCounts.first.length == 1) {
+        _tierCounts.first[0] = 1;
+      } else if (_flatCounts.length == 1) {
+        _flatCounts[0] = 1;
+      }
+    }
     // Exactly one bracket is really "priced by age" in name only — there is
     // nothing to choose between, so it starts at 1, same as a single-price
     // group needs no picking either. Two or more brackets is a genuine choice,
@@ -2321,17 +2331,11 @@ class _BookingPageState extends State<BookingPage> {
                           // that covers the order — so the payment-method
                           // picker is hidden entirely.
                           //
-                          // Coins-only: the rail picker is never shown. Its
-                          // place is taken by what the booking costs in coins
-                          // and what that leaves — coins are THE payment, so
-                          // there is nothing to choose.
-                          if (_coinsOnly) ...[
-                            20.kh,
-                            Shaker(
-                              key: _paymentShake,
-                              child: _newCoinPaymentSection(c),
-                            ),
-                          ] else if (!_skipsGateway) ...[
+                          // Coins-only: the rail picker is never shown and
+                          // nothing takes its place — coins are THE payment,
+                          // and the receipt below already says what it costs
+                          // and what that leaves.
+                          if (!_coinsOnly && !_skipsGateway) ...[
                             20.kh,
                             Shaker(
                               key: _paymentShake,
@@ -2810,22 +2814,6 @@ class _BookingPageState extends State<BookingPage> {
     return '';
   }
 
-  /// What a coins-only booking costs and what that leaves on the balance —
-  /// in the slot the payment-method row used to fill.
-  Widget _newCoinPaymentSection(AppColorScheme c) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeader(c, 'book_payment_method'.tr()),
-          _NewCoinPaymentBlock(
-            total: _newCoinTotal,
-            balance: _newCoins.balance,
-            // A "Lumi Start" visit is paying: the cost is shown, and shown as
-            // not being taken.
-            notCharged: _paidByPromoPass,
-          ),
-        ],
-      );
-
   Widget _paymentMethodRow(AppColorScheme c) {
     final payment = _payment;
     final card = payment?.card;
@@ -2876,10 +2864,12 @@ class _BookingPageState extends State<BookingPage> {
 
   /// The receipt of a coin-paid booking: the tickets and the total in coins,
   /// and the one condition the buyer is accepting — a booking paid with coins
-  /// cannot be cancelled. The balance arithmetic lives in the payment block
-  /// above, not here, so it is said once.
+  /// cannot be cancelled. Under the total: what the buyer holds and what
+  /// paying leaves, or how far short they are.
   Widget _newCoinBreakdown(AppColorScheme c) {
     final total = _newCoinTotal;
+    final balance = _newCoins.balance;
+    final short = total > balance;
     return FrostedCard(
       borderWidth: 2,
       borderRadius: BorderRadius.circular(12.r),
@@ -2942,6 +2932,43 @@ class _BookingPageState extends State<BookingPage> {
               ),
             ],
           ),
+          12.kh,
+          Divider(height: 1, color: c.border),
+          12.kh,
+          Row(
+            children: [
+              Expanded(
+                child: Text('new_coins_your_balance'.tr(),
+                    style: AppText.regular14.copyWith(color: c.textSecondary)),
+              ),
+              CoinAmount(
+                amount: balance,
+                style: AppText.semibold14,
+                color: c.textPrimary,
+              ),
+            ],
+          ),
+          8.kh,
+          if (short)
+            Text(
+              'new_coins_short'.tr(args: [(total - balance).toGrouped()]),
+              style: AppText.medium14.copyWith(color: AppColors.warning),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: Text('new_coins_left_after'.tr(),
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
+                ),
+                CoinAmount(
+                  amount: balance - total,
+                  style: AppText.semibold14,
+                  color: c.textPrimary,
+                ),
+              ],
+            ),
           12.kh,
           // Said BEFORE the coins are taken, not discovered on the bookings
           // screen afterwards: it is the condition being accepted.
@@ -3524,103 +3551,6 @@ class _NewCoinsShortfallError implements Exception {
   const _NewCoinsShortfallError(this.shortfall);
 
   final NewCoinShortfall shortfall;
-}
-
-/// The payment, on a coins-only booking: what it costs in Lumi Coin, what the
-/// buyer holds, and what paying leaves — or how far short they are.
-///
-/// A statement rather than a control. There is no method to pick, so nothing
-/// here is tappable; a short balance is fixed from the main button, which
-/// turns into "Top up" for exactly that case.
-class _NewCoinPaymentBlock extends StatelessWidget {
-  const _NewCoinPaymentBlock({
-    required this.total,
-    required this.balance,
-    this.notCharged = false,
-  });
-
-  /// What the booking costs in coins. 0 until a ticket is picked.
-  final int total;
-  final int balance;
-
-  /// A "Lumi Start" visit is paying for the booking, so no coins are taken.
-  final bool notCharged;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final short = balance < total;
-
-    Widget line(String label, Widget value) => Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: AppText.regular14.copyWith(color: c.textSecondary),
-              ),
-            ),
-            value,
-          ],
-        );
-
-    return FrostedCard(
-      borderWidth: 2,
-      borderRadius: BorderRadius.circular(20.r),
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'new_coins_to_pay'.tr(),
-            style: AppText.regular13.copyWith(color: c.textSecondary),
-          ),
-          6.kh,
-          CoinAmount(
-            amount: total,
-            style: AppText.heading20.copyWith(
-              decoration: notCharged ? TextDecoration.lineThrough : null,
-            ),
-            color: notCharged ? c.textMuted : c.textPrimary,
-          ),
-          if (notCharged) ...[
-            6.kh,
-            Text(
-              'new_coins_not_charged'.tr(),
-              style: AppText.regular13.copyWith(color: AppColors.green),
-            ),
-          ],
-          12.kh,
-          Divider(height: 1, color: c.border),
-          12.kh,
-          line(
-            'new_coins_your_balance'.tr(),
-            CoinAmount(
-              amount: balance,
-              style: AppText.semibold14,
-              color: c.textPrimary,
-            ),
-          ),
-          if (!notCharged) ...[
-            8.kh,
-            if (short)
-              Text(
-                'new_coins_short'.tr(args: [(total - balance).toGrouped()]),
-                style: AppText.semibold14.copyWith(color: AppColors.warning),
-              )
-            else
-              line(
-                'new_coins_left_after'.tr(),
-                CoinAmount(
-                  amount: balance - total,
-                  style: AppText.semibold14,
-                  color: c.textPrimary,
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 /// One row of the order breakdown. See [_BookingPageState._summaryLines].
