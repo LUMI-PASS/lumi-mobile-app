@@ -307,19 +307,10 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
   List<NewCoinFeature> _featuresOf(NewCoinPack pack) {
     final isMain = _catalogue.main.any((p) => p.id == pack.id);
     final bonus = isMain ? _catalogue.firstPackBonus : 0;
-    final perCoin = pack.pricePerCoin ?? 0;
-    final saving = isMain ? _savingPercent(pack) : 0;
 
+    // The price of one coin is not a row here: the pack is sold as a pack, and
+    // what it saves is already the badge on its header.
     return [
-      if (perCoin > 0)
-        NewCoinFeature(
-          icon: Icons.savings_rounded,
-          title: 'new_coins_feat_per_coin_title'.tr(),
-          body: saving > 0
-              ? 'new_coins_feat_per_coin_body'.tr(args: ['$saving'])
-              : null,
-          chip: perCoin.toRawUzsPrice(),
-        ),
       NewCoinFeature(
         icon: Icons.toll_rounded,
         title: 'new_coins_feat_coins_title'.tr(),

@@ -446,12 +446,15 @@ class ProfilePage
                         onAdd: () => _openChildDetails(context, cubit, null),
                       ),
                     ],
-                    // Services first — what the screen is FOR: the bookings
-                    // and the shop. The wallet and the cards pay for those, so
-                    // they follow as their own pair rather than leading.
+                    // Services — what the screen is FOR: the bookings, and the
+                    // cards that pay for them.
                     //
-                    // Guests have none of this: no account, no wallet, nothing
-                    // to save a card against.
+                    // The cashback wallet and the shop it spends in have no
+                    // tile here: Lumi Coin below is the one balance this
+                    // screen shows. Both are still reachable by deep link.
+                    //
+                    // Guests have none of this: no account, nothing to save a
+                    // card against.
                     if (!showGuest) ...[
                       16.kh,
                       _SectionLabel('services_title'.tr()),
@@ -467,45 +470,6 @@ class ProfilePage
                                   context.router.push(const MyBookingsRoute()),
                             ),
                           ),
-                          // Behind a Remote Config flag that ships OFF: the
-                          // storefront has real stock and a delivery team
-                          // behind it, so it opens when someone decides it
-                          // opens rather than when a build lands on a device.
-                          // Without it the bookings tile takes the full width
-                          // rather than sitting beside a gap.
-                          if (RemoteConfigService.instance.isShopEnabled) ...[
-                            12.kw,
-                            Expanded(
-                              child: _QuickTile(
-                                iconAsset: _ProfileIcons.shop,
-                                label: 'shop_title'.tr(),
-                                subtitle: 'shop_tile_subtitle'.tr(),
-                                onTap: () => context.router.push(ShopRoute()),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      12.kh,
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _QuickTile(
-                              iconAsset: _ProfileIcons.wallet,
-                              label: 'wallet_title'.tr(),
-                              // Null while the balance is still unknown — the
-                              // tile then names itself rather than showing a
-                              // zero it has no reason to believe.
-                              value: state.wallet == null
-                                  ? null
-                                  : CoinAmount(
-                                      amount: state.wallet!.available,
-                                      style: AppText.semibold16,
-                                    ),
-                              onTap: () =>
-                                  context.router.push(const WalletRoute()),
-                            ),
-                          ),
                           12.kw,
                           Expanded(
                             child: _QuickTile(
@@ -518,9 +482,8 @@ class ProfilePage
                           ),
                         ],
                       ),
-                      // Lumi Coin — a balance of its own, not the wallet
-                      // above: coins are bought in packs and pay for an
-                      // activity outright. The tile exists only while packs
+                      // Lumi Coin — not the cashback wallet: coins are bought
+                      // in packs and pay for an activity outright. The tile exists only while packs
                       // are on sale (or coins are still held), so before the
                       // first pack is created nothing here hints at it.
                       //
@@ -973,12 +936,6 @@ class _DashedCirclePainter extends CustomPainter {
 /// Figma (node 96-1829) Iconsax glyphs used by the profile settings rows.
 class _ProfileIcons {
   static final bookings = Assets.icons.detail.iconsaxAiCalendar;
-  // Drawn for these tiles rather than reused from the shop tree: the shop's
-  // own bag is a 16px glyph that goes soft at 20, and the wallet had no icon
-  // at all — it was borrowing a Material one, the only non-house mark on the
-  // screen.
-  static final shop = Assets.icons.profile.shopBag;
-  static final wallet = Assets.icons.profile.wallet;
   static final newCoins = Assets.icons.dollarRounded;
   static final cards = Assets.icons.icCard;
   static final language = Assets.icons.detail.iconsaxLanguageCircle;

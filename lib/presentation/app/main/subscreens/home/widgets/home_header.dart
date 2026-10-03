@@ -13,7 +13,7 @@ import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
-import 'package:lumi_pass/common/widget/coin_amount.dart';
+import 'package:lumi_pass/common/extensions/date_extensions.dart';
 
 /// Home top bar — avatar + greeting with the notification bell on the right,
 /// and a tappable search field underneath (Figma `User bar`). The field is a
@@ -168,8 +168,9 @@ class _ControlButton extends StatelessWidget {
   }
 }
 
-/// The Lumi Coin balance, one tap from the shelf — sized and tinted as the
-/// bell beside it so the two read as one row of controls.
+/// The Lumi Coin balance, one tap from the shelf: a pill holding the number,
+/// with the coin sitting on its left end and standing a little proud of it —
+/// so it reads as a balance, not as one more square control beside the bell.
 ///
 /// Renders nothing (not even its gap) while the feature is not live for this
 /// user: no pack on sale and no coins held.
@@ -182,26 +183,45 @@ class _NewCoinsButton extends StatelessWidget {
     final coins = watchNewCoins(context);
     if (!coins.isVisible) return const SizedBox.shrink();
 
+    // The bell is an 8-padded 16 glyph, so the coin is its height and the
+    // pill is the shorter of the two.
+    final coin = 34.w;
+    final pill = 28.w;
+
     return Padding(
       padding: EdgeInsets.only(right: 8.w),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => context.router.push(NewCoinsRoute()),
-        child: Container(
-          // The bell is an 8-padded 16 glyph; the same box height here.
-          height: 34.w,
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: c.control,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: c.controlBorder),
-          ),
-          child: CoinAmount(
-            amount: coins.balance,
-            style: AppText.semibold14,
-            color: c.textPrimary,
-            iconSize: 16,
+        child: SizedBox(
+          height: coin,
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            children: [
+              Container(
+                height: pill,
+                // Starts under the middle of the coin, and leaves the number
+                // clear of the coin's right edge.
+                margin: EdgeInsets.only(left: coin / 2),
+                padding: EdgeInsets.only(left: coin / 2 + 6.w, right: 12.w),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.control,
+                  borderRadius: BorderRadius.circular(pill),
+                  border: Border.all(color: c.controlBorder),
+                ),
+                child: Text(
+                  coins.balance.toGrouped(),
+                  style: AppText.semibold14.copyWith(color: c.textPrimary),
+                ),
+              ),
+              Assets.icons.coinLumi.image(
+                width: coin,
+                height: coin,
+                // Decoration on a number the text already reads out.
+                excludeFromSemantics: true,
+              ),
+            ],
           ),
         ),
       ),
