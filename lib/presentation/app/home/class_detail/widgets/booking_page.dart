@@ -21,6 +21,12 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
+import 'package:lumi_pass/common/utils/new_coins_summary.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
+import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
+import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_shortfall_sheet.dart';
 import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/common/widget/shaker.dart';
@@ -205,6 +211,59 @@ class _BookingPageState extends State<BookingPage> {
   /// Guards against an out-of-order answer overwriting a newer one: only the
   /// most recent request is allowed to land.
   int _promoRequestId = 0;
+
+  // ─── New coins ("Lumi Coin") ──────────────────────────────────────────────
+  /// Whether the buyer chose to pay this booking with coins instead of money.
+  ///
+  /// Not a contribution like the wallet: a booking is paid EITHER wholly in
+  /// coins or wholly in money, so switching this on takes the promocode, the
+  /// promo pass and the wallet off the table — the server refuses any of them
+  /// alongside coins. Read it through [_coinsSelected].
+  bool _payWithNewCoins = false;
+
+  /// "Lumi Coin" as the app knows it: on sale or not, and the balance. `read`
+  /// for the reason [_hasCouponPlan] is — [_pay] reaches it too.
+  NewCoinsSummary get _newCoins => _appState.newCoins ?? const NewCoinsSummary();
+
+  /// Whether this booking can be paid with coins at all: an activity (a course
+  /// is money-only), for which the server sent coin prices, while packs are on
+  /// sale or the buyer still holds coins.
+  bool get _newCoinsOffered =>
+      !_isCourse && widget.clazz.hasNewCoinPrices && _newCoins.isVisible;
+
+  bool get _coinsSelected => _payWithNewCoins && _newCoinsOffered;
+
+  /// One ticket in coins: the server's own figure, or `ceil(price / rate)`
+  /// where a row arrived without one.
+  int _newCoinPrice(num price, int? sent) =>
+      sent ?? newCoinPriceFor(price, widget.clazz.newCoinRate) ?? 0;
+
+  /// What the booking as it stands costs in coins — the sum over tickets, at
+  /// the LIST price: a coupon plan does not discount a coin price. A preview;
+  /// checkout quotes it again and its answer is what is spent.
+  int get _newCoinTotal {
+    var sum = 0;
+    if (_hasAgeTiers) {
+      for (var t = 0; t < _tierCounts.length; t++) {
+        final durs = widget.clazz.ageTiers[t].durations;
+        for (var d = 0; d < _tierCounts[t].length; d++) {
+          if (d >= durs.length) continue;
+          sum += _newCoinPrice(durs[d].price, durs[d].newCoinPrice) *
+              _tierCounts[t][d];
+        }
+      }
+      return sum;
+    }
+    for (var i = 0; i < _flatCounts.length; i++) {
+      final r = widget.clazz.pricesSummary[i];
+      sum += _newCoinPrice(r.price, r.newCoinPrice) * _flatCounts[i];
+    }
+    return sum;
+  }
+
+  /// Coins are what the Pay button will charge: chosen, and with something to
+  /// charge. A free booking stays on the free path whatever is selected.
+  bool get _paysWithNewCoins => _coinsSelected && _newCoinTotal > 0;
 
   /// Coalesces stepper taps — see [_schedulePromoRefresh].
   Timer? _promoDebounce;
@@ -1170,6 +1229,7 @@ class _BookingPageState extends State<BookingPage> {
     setState(() {
       _usePromoPass = v;
       if (v) {
+        _payWithNewCoins = false;
         _appliedPromo = null;
         _promoCtrl.clear();
         _promoError = null;
@@ -1208,6 +1268,32 @@ class _BookingPageState extends State<BookingPage> {
       _useWallet = v;
       if (_error != null) _error = null;
     });
+  }
+
+  /// The "Pay with Lumi Coin" option. Coins settle the WHOLE booking, so
+  /// choosing them drops everything that would otherwise share the bill — the
+  /// server refuses the combination, and a summary showing both would be
+  /// showing an order that cannot be placed.
+  void _onNewCoinsToggled() {
+    setState(() {
+      _payWithNewCoins = !_payWithNewCoins;
+      if (_payWithNewCoins) {
+        _usePromoPass = false;
+        _useWallet = false;
+        _appliedPromo = null;
+        _promoCtrl.clear();
+        _promoError = null;
+      }
+      if (_error != null) _error = null;
+    });
+  }
+
+  /// Tapping the payment-method row while coins are selected: back to money.
+  /// A rail picked earlier is kept, so the chooser only opens when there is
+  /// nothing to go back to.
+  Future<void> _selectMoney() async {
+    setState(() => _payWithNewCoins = false);
+    if (_payment == null) await _openChooser();
   }
 
   /// How much an "аксия" visit would take off this order right now.
@@ -1702,6 +1788,7 @@ class _BookingPageState extends State<BookingPage> {
     String? cardNumber,
     String? expireDate,
     String? savedCardId,
+    bool withNewCoins = false,
   }) async {
     final id = widget.clazz.id!;
     final items = _buildCheckoutItems();
@@ -1785,7 +1872,9 @@ class _BookingPageState extends State<BookingPage> {
         ticketDate: _selectedDate!.isoKey,
         // Coupon plan and promocode never stack — only send a code when the
         // user has no coupon plan (the promo field is hidden in that case).
-        promoCode: _hasCouponPlan ? null : _appliedPromo?.code,
+        // …and never alongside coins, which settle the whole booking alone.
+        promoCode:
+            _hasCouponPlan || withNewCoins ? null : _appliedPromo?.code,
         // A saved-card checkout sends only saved_card_id (no provider): the
         // order is created PENDING and charged via the token afterwards.
         paymentProvider: savedCardId != null ? null : provider,
@@ -1796,12 +1885,15 @@ class _BookingPageState extends State<BookingPage> {
         // The wallet stacks with whatever discount already applied — it is a
         // payment method, not a competing discount. Only the intent is sent;
         // the server decides the amount and returns it on the result.
-        useWallet: _useWallet,
+        useWallet: !withNewCoins && _useWallet,
         // Same contract, with one difference: a pass the server refuses fails
         // the checkout rather than silently falling back to the card. The
         // buyer asked to pay with it, and charging them instead is not a
         // graceful degradation.
-        usePromoPass: _usePromoPass,
+        usePromoPass: !withNewCoins && _usePromoPass,
+        // The whole booking from the coin balance: no rail, no wallet, no
+        // pass and no promocode go with it — see the guards just above.
+        payWithNewCoins: withNewCoins,
       );
       getIt<AnalyticsService>().logEvent(
         AnalyticsEvent.bookingCheckoutStarted,
@@ -1811,11 +1903,21 @@ class _BookingPageState extends State<BookingPage> {
           'ticket_date': _selectedDate!.isoKey,
           'used_coupon': _hasCoupon.toString(),
           'requires_booking_slot': _requiresBookingSlot.toString(),
-          'provider': provider ?? 'payme',
+          'provider': withNewCoins ? 'new_coins' : (provider ?? 'payme'),
         },
       );
       return result;
     } on DioException catch (e) {
+      // A coin refusal carries its own `error_code`. A short balance is not an
+      // error to print — it is an offer to top up, so it travels as its own
+      // type for [_payWithNewCoinsNow] to open the sheet with.
+      final coinError = NewCoinErrorCode.fromResponse(e.response?.data);
+      final coinMessageKey = coinError.messageKey;
+      if (coinMessageKey != null) {
+        final shortfall = NewCoinShortfall.fromResponse(e.response?.data);
+        if (shortfall != null) throw _NewCoinsShortfallError(shortfall);
+        throw CheckoutFriendlyError(coinMessageKey.tr());
+      }
       // A packet refusal arrives as a structured `error_code`, so it is shown in
       // the buyer's own language rather than as the server's English fallback.
       // Handled before the generic mapping below because that would print the
@@ -1879,6 +1981,20 @@ class _BookingPageState extends State<BookingPage> {
     return converted.isEmpty ? expiry : converted;
   }
 
+  /// What the success screen says this order earns back.
+  ///
+  /// The server's own figure, priced off what the card actually paid; the
+  /// local preview is only the fallback, for a backend that doesn't send one.
+  ///
+  /// Zero for an activity: cashback is hidden from the activity flow (product
+  /// decision), so only a course purchase still quotes it.
+  num _cashbackShown(CheckoutResult result) {
+    if (!_isCourse) return 0;
+    return result.cashbackEstimate > 0
+        ? result.cashbackEstimate
+        : cashbackFor(_cashback, result.payableAmount);
+  }
+
   Future<void> _completeRedirect(CheckoutResult result) async {
     // Snapshot before we close: was a coupon slot consumed for this order?
     final usedCoupon = _hasCoupon;
@@ -1896,12 +2012,7 @@ class _BookingPageState extends State<BookingPage> {
           builder: (_) => PaycomCheckoutPage(
             result: result,
             provider: _payment?.rail.name ?? PaymentRail.card.name,
-            // The server's own figure, priced off what the card actually
-            // paid. The local preview is only the fallback, for a backend
-            // that doesn't send one yet.
-            cashbackEarned: result.cashbackEstimate > 0
-                ? result.cashbackEstimate
-                : cashbackFor(_cashback, result.payableAmount),
+            cashbackEarned: _cashbackShown(result),
             walletApplied: result.walletAmount,
           ),
         ),
@@ -1958,6 +2069,7 @@ class _BookingPageState extends State<BookingPage> {
       required String rangeLabel,
       required num price,
       required int count,
+      int newCoinPrice = 0,
     }) {
       if (count <= 0) return;
       final sub = (_hasCoupon ? _applyDiscount(price) : price) * count;
@@ -1966,7 +2078,11 @@ class _BookingPageState extends State<BookingPage> {
             ? Assets.icons.detail.iconsaxAiUsers
             : Assets.icons.detail.babyGirl,
         label: '$rangeLabel (${count}x)',
-        value: sub.toRawUzsPrice(),
+        // The unit follows what is being paid: quoting so'm per line while the
+        // button charges coins would itemise a bill nobody is paying.
+        value: _paysWithNewCoins
+            ? 'new_coins_amount'.tr(args: [(newCoinPrice * count).toGrouped()])
+            : sub.toRawUzsPrice(),
       ));
     }
 
@@ -1981,6 +2097,10 @@ class _BookingPageState extends State<BookingPage> {
             ageTo: tier.ageTo,
             rangeLabel: tier.rangeLabel,
             price: tier.durations[d].price,
+            newCoinPrice: _newCoinPrice(
+              tier.durations[d].price,
+              tier.durations[d].newCoinPrice,
+            ),
             count: _tierCounts[t][d],
           );
         }
@@ -1993,6 +2113,7 @@ class _BookingPageState extends State<BookingPage> {
           ageTo: r.ageTo,
           rangeLabel: r.rangeLabel,
           price: r.price,
+          newCoinPrice: _newCoinPrice(r.price, r.newCoinPrice),
           count: _flatCounts[i],
         );
       }
@@ -2017,7 +2138,7 @@ class _BookingPageState extends State<BookingPage> {
     // Courses included: a referral voucher can discount a course, and the
     // package line above would otherwise leave the smaller total unexplained.
     // (Plain promocodes are refused on courses, so for them nothing changes.)
-    if (!_hasCouponPlan && _promoDiscount > 0) {
+    if (!_hasCouponPlan && _promoDiscount > 0 && !_paysWithNewCoins) {
       out.add(_SummaryLine(
         icon: Assets.icons.detail.iconsaxTicketDiscount,
         label: 'promo_discount'.tr(),
@@ -2092,9 +2213,7 @@ class _BookingPageState extends State<BookingPage> {
               canReturnToActivity: true,
               result: result,
               lines: lines,
-              cashbackEarned: result.cashbackEstimate > 0
-                  ? result.cashbackEstimate
-                  : cashbackFor(_cashback, result.payableAmount),
+              cashbackEarned: _cashbackShown(result),
               walletApplied: result.walletAmount,
             ),
           ),
@@ -2105,6 +2224,12 @@ class _BookingPageState extends State<BookingPage> {
       }
       if (_usePromoPass) {
         getIt<AppCubit>().syncPromoPass();
+      }
+      // Coins just left the balance — the profile tile and the next booking's
+      // coin option both read it. Re-pulled rather than trusted from the
+      // result: the server owns the count.
+      if (result.paidWithNewCoins) {
+        getIt<AppCubit>().syncNewCoins();
       }
     });
   }
@@ -2219,7 +2344,11 @@ class _BookingPageState extends State<BookingPage> {
                           // and the server refuses the combination outright. A
                           // field whose only possible outcome is an error is not
                           // an option, it is a trap.
-                          if (!_hasCouponPlan && !_paidByPromoPass) ...[
+                          //
+                          // Hidden while coins pay, for the same reason.
+                          if (!_hasCouponPlan &&
+                              !_paidByPromoPass &&
+                              !_coinsSelected) ...[
                             20.kh,
                             _promoSection(c),
                           ],
@@ -2228,7 +2357,7 @@ class _BookingPageState extends State<BookingPage> {
                           // a payment method the buyer already owns, not a
                           // competing discount. It renders nothing when there is
                           // no pass, so it costs an empty box at worst.
-                          if (_promo.shouldShowRow) ...[
+                          if (_promo.shouldShowRow && !_coinsSelected) ...[
                             20.kh,
                             UsePromoPassRow(
                               eligibility: _promo,
@@ -2245,7 +2374,14 @@ class _BookingPageState extends State<BookingPage> {
                           // …but not when the packet has already covered the
                           // whole order. The wallet would contribute zero, and a
                           // switch that moves no money reads as broken.
-                          if (_wallet.available > 0 && !_paidByPromoPass) ...[
+                          //
+                          // Courses only. The wallet (and the cashback that
+                          // fills it) is hidden from the ACTIVITY flow —
+                          // product decision — so on an activity this row is
+                          // simply never offered and `_useWallet` stays off.
+                          if (_isCourse &&
+                              _wallet.available > 0 &&
+                              !_paidByPromoPass) ...[
                             20.kh,
                             UseBalanceRow(
                               wallet: _wallet,
@@ -2333,7 +2469,11 @@ class _BookingPageState extends State<BookingPage> {
       color: c.scaffoldBg,
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h + bottomInset),
       child: GradientButton(
-        text: _paidByPromoPass
+        text: _paysWithNewCoins
+            // The amount in the unit being charged — coins have no so'm
+            // figure to quote.
+            ? 'new_coins_pay_cta'.tr(args: [_newCoinTotal.toGrouped()])
+            : _paidByPromoPass
             // Not "book for free": it was paid for, days ago, and the buyer
             // should recognise which purchase is covering this.
             ? 'book_with_packet_cta'.tr()
@@ -2409,6 +2549,7 @@ class _BookingPageState extends State<BookingPage> {
       required VoidCallback onMinus,
       required VoidCallback onPlus,
       bool locked = false,
+      int? newCoinPrice,
     }) {
       if (rows.isNotEmpty) rows.add(8.kh);
       rows.add(_TariffRow(
@@ -2423,6 +2564,9 @@ class _BookingPageState extends State<BookingPage> {
         price: price,
         discountedPrice: _hasCoupon ? _applyDiscount(price) : null,
         promoPass: _rowPromoPass(price),
+        // Null for a course or a trial, and whenever coins are not on offer —
+        // the row then renders exactly as it always has.
+        newCoinPrice: _newCoinsOffered ? newCoinPrice : null,
         count: count,
         onMinus: onMinus,
         onPlus: onPlus,
@@ -2464,6 +2608,7 @@ class _BookingPageState extends State<BookingPage> {
             label: tier.rangeLabel,
             durationLabel: dur.durationLabel,
             price: dur.price,
+            newCoinPrice: _newCoinPrice(dur.price, dur.newCoinPrice),
             count: _tierCounts[t][d],
             onMinus: () => _bumpTier(t, d, -1),
             onPlus: () => _bumpTier(t, d, 1),
@@ -2479,6 +2624,7 @@ class _BookingPageState extends State<BookingPage> {
           label: r.rangeLabel,
           durationLabel: null,
           price: r.price,
+          newCoinPrice: _newCoinPrice(r.price, r.newCoinPrice),
           count: _flatCounts[i],
           onMinus: () => _bumpFlat(i, -1),
           onPlus: () => _bumpFlat(i, 1),
@@ -2654,14 +2800,31 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _paymentMethodRow(AppColorScheme c) {
-    final payment = _payment;
+    // While coins are selected the rail row reads as unchosen and tapping it
+    // is the way back to money — choosing either one unchooses the other, as
+    // on the shop checkout.
+    final coins = _coinsSelected;
+    final payment = coins ? null : _payment;
     final card = payment?.card;
+    final onTap = coins ? _selectMoney : _openChooser;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(c, 'book_payment_method'.tr()),
+        // Above the rails: coins are the one method that has to be chosen
+        // deliberately, and picking a rail already means money.
+        if (_newCoinsOffered) ...[
+          _NewCoinOption(
+            selected: coins,
+            coinTotal: _newCoinTotal,
+            balance: _newCoins.balance,
+            enabled: !_submitting,
+            onTap: _onNewCoinsToggled,
+          ),
+          8.kh,
+        ],
         PillCard(
-          onTap: _openChooser,
+          onTap: onTap,
           leading: PillIconBadge(child: _paymentLeading(payment)),
           child: PillCaption(
             // Nothing picked yet: the row itself is the prompt to pick.
@@ -2674,7 +2837,7 @@ class _BookingPageState extends State<BookingPage> {
           ),
           trailing: PillActionChip(
             label: payment == null ? 'book_choose'.tr() : 'book_change'.tr(),
-            onTap: _openChooser,
+            onTap: onTap,
           ),
         ),
       ],
@@ -2695,7 +2858,112 @@ class _BookingPageState extends State<BookingPage> {
     // receipt-shaped card would be a table of zeroes. It says what is happening
     // and what is left on the packet instead.
     if (_paidByPromoPass) return _promoPaidSummary(c);
+    // Paid with coins: the same receipt, counted in the unit being charged.
+    if (_paysWithNewCoins) return _newCoinBreakdown(c);
     return _moneyBreakdown(c);
+  }
+
+  /// The receipt of a coin-paid booking: the tickets and the total in coins,
+  /// what that leaves on the balance, and the one condition the buyer is
+  /// accepting — a booking paid with coins cannot be cancelled.
+  Widget _newCoinBreakdown(AppColorScheme c) {
+    final total = _newCoinTotal;
+    final balance = _newCoins.balance;
+    final short = balance < total;
+    return FrostedCard(
+      borderWidth: 2,
+      borderRadius: BorderRadius.circular(12.r),
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  gradient: AppGradients.indigo,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Assets.icons.detail.iconsaxReceipt.svg(
+                  width: 14.w,
+                  height: 14.w,
+                  colorFilter: const ColorFilter.mode(
+                      AppColors.onBrand, BlendMode.srcIn),
+                ),
+              ),
+              6.kw,
+              Text('book_payment_summary'.tr(),
+                  style: AppText.semibold16.copyWith(color: c.textPrimary)),
+            ],
+          ),
+          for (final l in _summaryLines()) ...[
+            16.kh,
+            Row(
+              children: [
+                l.icon.svg(
+                  width: 20.w,
+                  height: 20.w,
+                  colorFilter:
+                      ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
+                ),
+                8.kw,
+                Expanded(
+                  child: Text(l.label,
+                      style:
+                          AppText.regular14.copyWith(color: c.textSecondary)),
+                ),
+                Text(l.value,
+                    style: AppText.semibold14.copyWith(color: c.textPrimary)),
+              ],
+            ),
+          ],
+          16.kh,
+          Row(
+            children: [
+              Expanded(
+                child: Text('book_grand_total'.tr(),
+                    style: AppText.bold18.copyWith(color: c.textSecondary)),
+              ),
+              CoinAmount(
+                amount: total,
+                style: AppText.bold18,
+                color: c.textPrimary,
+              ),
+            ],
+          ),
+          12.kh,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  short
+                      ? 'new_coins_short'
+                          .tr(args: [(total - balance).toGrouped()])
+                      : 'new_coins_left_after'.tr(),
+                  style: AppText.regular14.copyWith(
+                    color: short ? AppColors.warning : c.textSecondary,
+                  ),
+                ),
+              ),
+              if (!short)
+                CoinAmount(
+                  amount: balance - total,
+                  style: AppText.semibold14,
+                  color: c.textPrimary,
+                ),
+            ],
+          ),
+          12.kh,
+          // Said BEFORE the coins are taken, not discovered on the bookings
+          // screen afterwards: it is the condition being accepted.
+          Text(
+            'new_coins_not_cancelable'.tr(),
+            style: AppText.regular12.copyWith(color: c.textSecondary),
+          ),
+        ],
+      ),
+    );
   }
 
   /// The summary a packet-paid booking gets: what it confirms, and what remains.
@@ -2889,7 +3157,9 @@ class _BookingPageState extends State<BookingPage> {
           //
           // Priced off what the CARD pays: money the wallet covered earns
           // nothing, or the balance would refill itself.
-          if (cashbackFor(_cashback, _gatewayTotal) > 0) ...[
+          //
+          // Courses only — cashback is hidden from the activity flow.
+          if (_isCourse && cashbackFor(_cashback, _gatewayTotal) > 0) ...[
             12.kh,
             CashbackEarnLine(preview: _cashback, orderAmount: _gatewayTotal),
           ],
@@ -3000,11 +3270,92 @@ class _BookingPageState extends State<BookingPage> {
     storage.lastSavedCardId.set(sel.card?.savedCardId);
   }
 
+  /// Pays the booking from the coin balance.
+  ///
+  /// A balance known to be short never reaches the server: it is re-read once
+  /// — coins may have been bought on another device — and if it is still
+  /// short the top-up sheet opens instead. The server has the last word either
+  /// way, and its `insufficient_new_coins` lands on the same sheet.
+  Future<void> _payWithNewCoinsNow() async {
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    final required = _newCoinTotal;
+    if (_newCoins.balance < required) {
+      await getIt<AppCubit>().syncNewCoins();
+      if (!mounted) return;
+      final available = _newCoins.balance;
+      if (available < required) {
+        setState(() => _submitting = false);
+        await _offerNewCoinsTopUp(
+          NewCoinShortfall.of(required: required, available: available),
+        );
+        return;
+      }
+    }
+    try {
+      final order = await _runCheckout(withNewCoins: true);
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      // Already paid and fulfilled, with no URL to open — the same road the
+      // zero-gateway branch below takes to the success screen.
+      _completeCardPaid(order);
+    } on _NewCoinsShortfallError catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      // The balance on screen was wrong; put the true one there before asking.
+      await getIt<AppCubit>().syncNewCoins();
+      if (!mounted) return;
+      await _offerNewCoinsTopUp(e.shortfall);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = e is CheckoutFriendlyError ? e.message : e.toString();
+      });
+    }
+  }
+
+  /// "You are N coins short" — and the two ways to fix it: buy exactly the
+  /// missing coins as loose ones (only with a live monthly pack), or open the
+  /// Lumi Coin screen for a pack. Either purchase comes straight back here
+  /// with the balance refreshed, the booking untouched and ready to pay.
+  Future<void> _offerNewCoinsTopUp(NewCoinShortfall shortfall) async {
+    final coins = _newCoins;
+    final action = await showNewCoinsShortfallSheet(
+      context,
+      shortfall: shortfall,
+      canBuySingle: coins.canBuySingle,
+      singleCoinPrice: coins.singleCoinPrice,
+    );
+    if (action == null || !mounted) return;
+    await context.router.push(
+      NewCoinsRoute(
+        buySingle: action == NewCoinsShortfallAction.buyMissing
+            ? shortfall.missing
+            : null,
+        returnOnPurchase: true,
+      ),
+    );
+    // Whatever happened over there — bought, backed out — the balance is
+    // re-read rather than assumed.
+    await getIt<AppCubit>().syncNewCoins();
+    if (mounted) setState(() {});
+  }
+
   /// Pay CTA: create the order and charge it on the chosen rail. Card payments
   /// confirm an OTP in a sheet; the other rails hand off to the checkout page.
   Future<void> _pay() async {
     if (_submitting) return;
     if (!_validateForPayment()) return;
+
+    // Coins cover it all: no rail to pick and no gateway to open. The server
+    // takes the coins and marks the order paid on the spot.
+    if (_paysWithNewCoins) {
+      await _payWithNewCoinsNow();
+      return;
+    }
 
     // Nothing to charge — a 100%-off discount, or a wallet covering the whole
     // order. The order is still created, but there's no payment method to pick
@@ -3171,6 +3522,78 @@ class _BookingPageState extends State<BookingPage> {
         _error = e is CheckoutFriendlyError ? e.message : e.toString();
       });
     }
+  }
+}
+
+/// The server refused a coin checkout because the balance fell short. Not a
+/// message to print — the booking page answers it with the top-up sheet.
+class _NewCoinsShortfallError implements Exception {
+  const _NewCoinsShortfallError(this.shortfall);
+
+  final NewCoinShortfall shortfall;
+}
+
+/// "Pay with Lumi Coin" — the one payment method that needs naming on this
+/// screen, sitting above the rail row and mutually exclusive with it.
+///
+/// The shop checkout's coin option in this page's own pill shape. Unlike the
+/// shop's it does NOT go dead when the balance is short: tapping Pay then
+/// offers to buy the coins that are missing, which a disabled row could not.
+class _NewCoinOption extends StatelessWidget {
+  const _NewCoinOption({
+    required this.selected,
+    required this.coinTotal,
+    required this.balance,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final bool selected;
+
+  /// What the booking costs in coins. 0 until a ticket is picked.
+  final int coinTotal;
+  final int balance;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final short = coinTotal > balance;
+
+    return PillCard(
+      onTap: enabled ? onTap : null,
+      leading: PillIconBadge(
+        child: Assets.icons.coinLumi.image(
+          width: 22.w,
+          height: 22.w,
+          excludeFromSemantics: true,
+        ),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (coinTotal > 0) ...[
+            NewCoinPricePill(amount: coinTotal),
+            8.kw,
+          ],
+          Icon(
+            selected
+                ? Icons.radio_button_checked
+                : Icons.radio_button_unchecked,
+            size: 20.w,
+            color: selected ? AppColors.brandPurple : c.textPlaceholder,
+          ),
+        ],
+      ),
+      child: PillCaption(
+        title: 'new_coins_pay_with'.tr(),
+        subtitle: short
+            ? 'new_coins_short'.tr(args: [(coinTotal - balance).toGrouped()])
+            : 'new_coins_balance_line'.tr(args: [balance.toGrouped()]),
+        subtitleColor: short ? AppColors.warning : null,
+      ),
+    );
   }
 }
 
@@ -3585,7 +4008,12 @@ class _TariffRow extends StatelessWidget {
     this.discountedPrice,
     this.locked = false,
     this.promoPass,
+    this.newCoinPrice,
   });
+
+  /// The same ticket in Lumi Coin, shown as a pill after the so'm price. Null
+  /// hides it — a course, a trial, or coins not on offer.
+  final int? newCoinPrice;
 
   /// Non-null while a packet pays for this booking — the row then shows the
   /// included badge instead of a figure, matching the catalogue it was picked
@@ -3673,6 +4101,11 @@ class _TariffRow extends StatelessWidget {
                       : 'price_free'.tr(),
                   style: AppText.semibold12.copyWith(color: AppColors.tagGreen),
                 ),
+              // A second price, not a discount: the booking is paid either in
+              // so'm or in coins. Dropped while the packet pays — that visit
+              // is already paid for.
+              if (promoPass == null && (newCoinPrice ?? 0) > 0)
+                NewCoinPricePill(amount: newCoinPrice!),
             ],
           ),
         ],

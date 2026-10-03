@@ -453,17 +453,27 @@ class _OrderCard extends StatelessWidget {
             ),
           ],
           16.verticalSpace,
-          Row(
-            children: [
-              Expanded(
-                child: Text('book_grand_total'.tr(),
-                    style:
-                        AppText.bold18.copyWith(color: colors.textSecondary)),
-              ),
-              Text(result.totalAmount.toRawUzsPrice(),
-                  style: AppText.bold18.copyWith(color: colors.textPrimary)),
-            ],
-          ),
+          // Paid with Lumi Coin: no so'm was charged, so the so'm total would
+          // be quoting a payment that never happened. The line says what was
+          // actually spent instead.
+          if (result.paidWithNewCoins)
+            Text(
+              'new_coins_paid_with'
+                  .tr(args: [result.newCoinAmount.toGrouped()]),
+              style: AppText.bold18.copyWith(color: colors.textPrimary),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: Text('book_grand_total'.tr(),
+                      style: AppText.bold18
+                          .copyWith(color: colors.textSecondary)),
+                ),
+                Text(result.totalAmount.toRawUzsPrice(),
+                    style: AppText.bold18.copyWith(color: colors.textPrimary)),
+              ],
+            ),
           // How the total was settled, when part of it came off the balance.
           if (walletApplied > 0) ...[
             12.verticalSpace,

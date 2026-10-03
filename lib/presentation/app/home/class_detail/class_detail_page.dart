@@ -20,6 +20,8 @@ import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/course_timetable.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
+import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
@@ -946,6 +948,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             subtitle: subtitle,
             duration: null,
             price: 0,
+            newCoinPrice: null,
             icon: icon,
           ));
           continue;
@@ -956,6 +959,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             subtitle: subtitle,
             duration: d.durationLabel,
             price: d.price,
+            newCoinPrice:
+                d.newCoinPrice ?? newCoinPriceFor(d.price, full.newCoinRate),
             icon: icon,
           ));
         }
@@ -967,6 +972,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           subtitle: 'price_tier_children'.tr(),
           duration: null,
           price: r.price,
+          newCoinPrice:
+              r.newCoinPrice ?? newCoinPriceFor(r.price, full.newCoinRate),
           icon: Assets.icons.home.babyGirl,
         ));
       }
@@ -1523,6 +1530,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   // ─── Prices card ────────────────────────────────────────────────────────────
   Widget _pricesCard(AppColorScheme c, List<_PriceRowData> rows) {
+    // The same tickets in Lumi Coin, beside the so'm price. Only while packs
+    // are on sale (or this user still holds coins), only when the server sent
+    // coin prices for this activity, and never on a course — a course is
+    // money-only.
+    final showCoins = watchNewCoins(context).isVisible &&
+        !_isCourse &&
+        (_full?.hasNewCoinPrices ?? false);
     return DetailCard(
       c: c,
       child: Column(
@@ -1539,7 +1553,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           // One badge for the card, not one per row: the rate is the same
           // whichever age tier is bought, and repeating it down the list would
           // read as a per-row offer.
-          if (_cashback.hasRate) ...[
+          //
+          // Cashback is hidden from the activity flow (product decision), and
+          // this card renders for activities only — so the chip is gated to
+          // courses, which today means it is never shown here. The fetch and
+          // the widget stay, so bringing it back is deleting this condition.
+          if (_isCourse && _cashback.hasRate) ...[
             12.verticalSpace,
             Align(
               alignment: Alignment.centerLeft,
@@ -1556,6 +1575,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 row: r,
                 couponPct: _couponPct,
                 promoPass: _promoPassFor(isWholeCourse: _isCourse),
+                showNewCoinPrice: showCoins,
               ),
             );
           }),
@@ -1967,6 +1987,10 @@ typedef _PriceRowData = ({
   /// price-summary fallback has none.
   String? duration,
   num price,
+
+  /// The same ticket in Lumi Coin, or null when the server gave no way to
+  /// quote one.
+  int? newCoinPrice,
   SvgGenImage icon,
 });
 
@@ -1975,7 +1999,8 @@ class _PriceRow extends StatelessWidget {
       {required this.c,
       required this.row,
       required this.couponPct,
-      this.promoPass});
+      this.promoPass,
+      this.showNewCoinPrice = false});
   final AppColorScheme c;
   final _PriceRowData row;
   final num couponPct;
@@ -1984,8 +2009,21 @@ class _PriceRow extends StatelessWidget {
   /// replaced by the included badge rather than quoted or discounted.
   final PromoPassCoverage? promoPass;
 
+  /// Whether to quote [_PriceRowData.newCoinPrice] under the so'm price.
+  final bool showNewCoinPrice;
+
+  /// The packet is paying for this row — see [_priceText].
+  bool get _coveredByPass {
+    final pass = promoPass;
+    final ceiling = pass?.maxActivityPrice;
+    return pass != null &&
+        row.price > 0 &&
+        (ceiling == null || row.price <= ceiling);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final coins = row.newCoinPrice;
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 8.h),
       decoration: BoxDecoration(
@@ -2022,7 +2060,21 @@ class _PriceRow extends StatelessWidget {
               ],
             ),
           ),
-          _priceText(),
+          // A visit the packet already covers has no second price to offer.
+          if (showNewCoinPrice && coins != null && coins > 0 && !_coveredByPass)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _priceText(),
+                4.verticalSpace,
+                // On the row's own control fill, so the pill takes the
+                // surface tint to stay visible.
+                NewCoinPricePill(amount: coins, color: c.surface),
+              ],
+            )
+          else
+            _priceText(),
         ],
       ),
     );
