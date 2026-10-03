@@ -457,10 +457,27 @@ class _OrderCard extends StatelessWidget {
           // be quoting a payment that never happened. The line says what was
           // actually spent instead.
           if (result.paidWithNewCoins)
-            Text(
-              'new_coins_paid_with'
-                  .tr(args: [result.newCoinAmount.toGrouped()]),
-              style: AppText.bold18.copyWith(color: colors.textPrimary),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'new_coins_paid_with'
+                      .tr(args: [result.newCoinAmount.toGrouped()]),
+                  style: AppText.bold18.copyWith(color: colors.textPrimary),
+                ),
+                // What is left to spend, straight from the server's answer.
+                // Absent on a backend that did not say, and then left out
+                // rather than guessed.
+                if (result.newCoinBalance != null) ...[
+                  8.verticalSpace,
+                  Text(
+                    'new_coins_balance_line'
+                        .tr(args: [result.newCoinBalance!.toGrouped()]),
+                    style: AppText.regular14
+                        .copyWith(color: colors.textSecondary),
+                  ),
+                ],
+              ],
             )
           else
             Row(

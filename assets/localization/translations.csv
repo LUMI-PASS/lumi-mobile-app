@@ -1413,7 +1413,6 @@ new_coins_empty_body,Пакеты скоро появятся. Заглянит�
 new_coins_success_title,Lumi Coin зачислены!,Lumi Coin hisobingizga tushdi!,Your Lumi Coin are in!
 new_coins_success_body,Вы купили {} Lumi Coin. Ими можно оплачивать занятия.,Siz {} Lumi Coin sotib oldingiz. Ular bilan mashg‘ulotlar uchun to‘lash mumkin.,You bought {} Lumi Coin. Use them to pay for activities.
 new_coins_success_cta,Готово,Tayyor,Done
-new_coins_pay_with,Оплатить Lumi Coin,Lumi Coin bilan to‘lash,Pay with Lumi Coin
 new_coins_pay_cta,Оплатить {} Lumi Coin,{} Lumi Coin to‘lash,Pay {} Lumi Coin
 new_coins_short,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi,{} Lumi Coin short
 new_coins_left_after,Останется после оплаты,To‘lovdan keyin qoladi,Left after payment
@@ -1445,3 +1444,7 @@ new_coins_days,{} дн.,{} kun,{} days
 new_coins_save_badge,−{}%,−{}%,−{}%
 new_coins_first_pack_banner,+{} Lumi Coin в подарок к первому пакету,Birinchi paketga +{} Lumi Coin sovg‘a,+{} Lumi Coin free with your first pack
 new_coins_buy_cta,Купить {} Lumi Coin · {},{} Lumi Coin · {} — sotib olish,Buy {} Lumi Coin · {}
+new_coins_top_up_cta,Пополнить Lumi Coin,Lumi Coin to‘ldirish,Top up Lumi Coin
+new_coins_to_pay,К оплате,To‘lanadi,To pay
+new_coins_your_balance,Ваш баланс,Balansingiz,Your balance
+new_coins_not_charged,Lumi Coin не списываются — оплачено пакетом.,Lumi Coin yechilmaydi — paket hisobidan to‘langan.,No Lumi Coin are taken — paid by your packet.
