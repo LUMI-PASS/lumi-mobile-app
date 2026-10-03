@@ -236,6 +236,12 @@ abstract final class DeepLinkRoutes {
       mode: DeepLinkNavMode.root,
       build: (params) => AksiyaRoute(slug: params['id']),
     ),
+    // The Lumi Coin shelf — packs of coins that pay for activities. Not the
+    // wallet below, which is the cashback balance.
+    'coins': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (_) => NewCoinsRoute(),
+    ),
     'wallet': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
       build: (_) => const WalletRoute(),

@@ -12,6 +12,8 @@ import 'package:lumi_pass/common/widget/user_avatar.dart';
 import 'package:lumi_pass/domain/repo/notifications/notifications_api.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 
 /// Home top bar — avatar + greeting with the notification bell on the right,
 /// and a tappable search field underneath (Figma `User bar`). The field is a
@@ -88,6 +90,7 @@ class HomeHeader extends StatelessWidget {
                 ),
               ),
               8.horizontalSpace,
+              const _NewCoinsButton(),
               const _NotificationButton(),
             ],
           ),
@@ -160,6 +163,47 @@ class _ControlButton extends StatelessWidget {
           border: Border.all(color: c.controlBorder),
         ),
         child: HomeIcon(icon, size: 16, color: c.textPrimary),
+      ),
+    );
+  }
+}
+
+/// The Lumi Coin balance, one tap from the shelf — sized and tinted as the
+/// bell beside it so the two read as one row of controls.
+///
+/// Renders nothing (not even its gap) while the feature is not live for this
+/// user: no pack on sale and no coins held.
+class _NewCoinsButton extends StatelessWidget {
+  const _NewCoinsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final coins = watchNewCoins(context);
+    if (!coins.isVisible) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.only(right: 8.w),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => context.router.push(NewCoinsRoute()),
+        child: Container(
+          // The bell is an 8-padded 16 glyph; the same box height here.
+          height: 34.w,
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: c.control,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: c.controlBorder),
+          ),
+          child: CoinAmount(
+            amount: coins.balance,
+            style: AppText.semibold14,
+            color: c.textPrimary,
+            iconSize: 16,
+          ),
+        ),
       ),
     );
   }
