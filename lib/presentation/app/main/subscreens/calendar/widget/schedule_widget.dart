@@ -329,9 +329,15 @@ class BookingCard extends StatelessWidget {
               // A coupon or a wallet balance that covered the whole order
               // leaves nothing to charge, and "0 so'm" reads like a bug beside
               // a real booking. Name it for what it is.
-              value: order.totalAmount <= 0
-                  ? 'price_free'.tr()
-                  : order.totalAmount.toRawUzsPrice(),
+              //
+              // Paid with Lumi Coin: no so'm was charged, so the row quotes
+              // the coins that were.
+              value: order.paidWithNewCoins
+                  ? 'new_coins_amount'
+                      .tr(args: [order.newCoinAmount.toGrouped()])
+                  : order.totalAmount <= 0
+                      ? 'price_free'.tr()
+                      : order.totalAmount.toRawUzsPrice(),
             ),
             // The enrolment is running out. A push can be missed or muted;
             // this is the same warning on the surface the buyer actually opens,

@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +10,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
+import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -74,9 +76,16 @@ class _TicketReceiptPageState extends State<TicketReceiptPage> {
       context.router.maybePop(true);
     } catch (e) {
       if (!mounted) return;
+      // A booking paid with Lumi Coin cannot be cancelled; say so in the
+      // buyer's language rather than printing the exception.
+      final coinKey = e is DioException
+          ? NewCoinErrorCode.fromResponse(e.response?.data).messageKey
+          : null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('booking_cancel_failed'.tr(args: [e.toString()])),
+          content: Text(
+            coinKey?.tr() ?? 'booking_cancel_failed'.tr(args: [e.toString()]),
+          ),
           backgroundColor: AppColors.error,
         ),
       );

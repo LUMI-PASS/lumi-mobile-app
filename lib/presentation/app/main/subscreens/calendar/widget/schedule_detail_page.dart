@@ -24,6 +24,7 @@ import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
+import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/common/widget/purchase_kind_chip.dart';
 import 'package:lumi_pass/data/api_model/order/course_purchase.dart';
@@ -232,6 +233,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     // bookings. The window below guards a PAID seat, so it doesn't apply.
     if (order.isPending) return true;
     if (!order.isPaid) return false;
+    // Coins are not refunded, so a booking paid with them has no way out —
+    // the server refuses it (`new_coins_not_cancelable`) whatever the window.
+    if (order.paidWithNewCoins) return false;
     final dateStr = _detail!.earliestTicketDate;
     if (dateStr == null || dateStr.isEmpty) return false;
     final startTime = _detail!.tickets.firstOrNull?.startTime ??
@@ -786,6 +790,18 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
           // than next to the struck-through subtotal, which would read as
           // money off. Without it the card rail is quoted for an amount the
           // card was never charged.
+          // Paid with Lumi Coin — the so'm figure above is what the booking
+          // is worth, not what was charged; this is what was actually spent.
+          if (order.paidWithNewCoins) ...[
+            12.verticalSpace,
+            _DetailPill(
+              c: c,
+              icon: Assets.icons.home.money,
+              label: 'new_coins_paid_with_label'.tr(),
+              value: 'new_coins_amount'
+                  .tr(args: [order.newCoinAmount.toGrouped()]),
+            ),
+          ],
           if (order.hasWalletPayment) ...[
             12.verticalSpace,
             _DetailPill(
@@ -869,7 +885,17 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         children: [
           _StatusBar(c: c, label: 'order_paid'.tr(), color: AppColors.green),
           8.verticalSpace,
-          _cancelButton(c),
+          // Paid with Lumi Coin: there is no cancellation to offer, at any
+          // hour, so the button is not shown inert under the cut-off message
+          // (which would be the wrong reason) — the row says why instead.
+          if (order.paidWithNewCoins)
+            Text(
+              'new_coins_not_cancelable'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.regular12.copyWith(color: c.textMuted),
+            )
+          else
+            _cancelButton(c),
         ],
       );
     }
@@ -1087,6 +1113,11 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   String _cancelMessage(Object e) {
     if (e is DioException) {
       final data = e.response?.data;
+      // A coin-paid booking the app still offered to cancel (an order loaded
+      // before the field existed): say it in the buyer's language rather than
+      // the server's English.
+      final coinKey = NewCoinErrorCode.fromResponse(data).messageKey;
+      if (coinKey != null) return coinKey.tr();
       final msg = data is Map ? data['message'] : null;
       if (msg != null && '$msg'.isNotEmpty) return '$msg';
       return e.message ?? e.toString();
