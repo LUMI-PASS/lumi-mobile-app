@@ -1448,3 +1448,11 @@ new_coins_top_up_cta,Пополнить Lumi Coin,Lumi Coin to‘ldirish,Top up 
 new_coins_to_pay,К оплате,To‘lanadi,To pay
 new_coins_your_balance,Ваш баланс,Balansingiz,Your balance
 new_coins_not_charged,Lumi Coin не списываются — оплачено пакетом.,Lumi Coin yechilmaydi — paket hisobidan to‘langan.,No Lumi Coin are taken — paid by your packet.
+new_coins_tab_packs,Пакеты,Paketlar,Packs
+new_coins_tab_mine,Мои коины,Mening coinlarim,My coins
+new_coins_hero_subtitle,Покупайте Lumi Coin пакетами и оплачивайте ими занятия,Lumi Coin paketlarini oling va mashg‘ulotlar uchun ular bilan to‘lang,Buy Lumi Coin in packs and pay for activities with them
+new_coins_step1,Выберите пакет Lumi Coin,Lumi Coin paketini tanlang,Choose a Lumi Coin pack
+new_coins_step2,Оплатите — коины сразу на балансе,To‘lang — coinlar darhol balansda,Pay — coins land on your balance
+new_coins_step3,Оплачивайте занятия коинами вместо денег,Mashg‘ulotlar uchun pul o‘rniga coin bilan to‘lang,Pay for activities with coins instead of money
+new_coins_price_label,Цена пакета,Paket narxi,Pack price
+new_coins_buy_btn,Купить,Sotib olish,Buy

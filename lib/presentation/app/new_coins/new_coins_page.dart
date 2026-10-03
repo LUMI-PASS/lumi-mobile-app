@@ -6,7 +6,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/env/runtime_env.dart';
-import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -15,7 +14,8 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/card_input_formatters.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
-import 'package:lumi_pass/common/widget/pill_card.dart';
+import 'package:lumi_pass/common/widget/adaptive_card.dart';
+import 'package:lumi_pass/common/widget/segmented_tabs.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
@@ -107,9 +107,16 @@ class _NewCoinsPageState extends State<NewCoinsPage>
 
   int _singleQuantity = 1;
 
-  /// Id of the pack the Buy button pays for. Picked by tapping a tile; the
-  /// first main pack until then, so the button is never without a subject.
+  /// Id of the pack the buy bar pays for — whichever card of the carousel is
+  /// in front.
   String? _selectedId;
+
+  /// 0 = the shelf, 1 = what the buyer holds. The balance and its history are
+  /// deliberately off the shelf: that tab is for choosing a pack and nothing
+  /// else.
+  int _tab = 0;
+
+  final PageController _pageController = PageController(viewportFraction: 0.92);
 
   /// The [NewCoinsPage.buySingle] hand-off has run. It fires once — a reload
   /// after a failed payment must not restart a purchase nobody re-asked for.
@@ -143,6 +150,7 @@ class _NewCoinsPageState extends State<NewCoinsPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _pollTimer?.cancel();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -181,6 +189,7 @@ class _NewCoinsPageState extends State<NewCoinsPage>
         // Keep the pick across a reload when that pack is still on the shelf.
         if (_selectedPack == null) _selectedId = _defaultPick()?.id;
       });
+      _showSelectedCard();
       _maybeAutoBuy();
     } catch (_) {
       if (mounted) setState(() => _failed = true);
@@ -203,6 +212,34 @@ class _NewCoinsPageState extends State<NewCoinsPage>
   /// is a row of things the buyer cannot have.
   List<NewCoinPack> get _extras =>
       _catalogue.canBuyExtras ? _catalogue.extra : const [];
+
+  /// Every pack on offer, in carousel order.
+  List<NewCoinPack> get _shelf => _extrasFirst
+      ? [..._extras, ..._catalogue.main]
+      : [..._catalogue.main, ..._extras];
+
+  /// Brings the carousel to the selected pack once it has been laid out — the
+  /// top-up hand-off opens on a pack that is rarely the first card.
+  void _showSelectedCard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      final index = _shelf.indexWhere((p) => p.id == _selectedId);
+      if (index > 0) _pageController.jumpToPage(index);
+    });
+  }
+
+  /// The main pack whose coin is cheapest — the one worth a badge. Null when
+  /// there is nothing to compare it with.
+  String? get _bestOfferId {
+    if (_catalogue.main.length < 2) return null;
+    NewCoinPack? best;
+    for (final p in _catalogue.main) {
+      final perCoin = p.pricePerCoin ?? 0;
+      if (perCoin <= 0) continue;
+      if (best == null || perCoin < (best.pricePerCoin ?? 0)) best = p;
+    }
+    return best?.id;
+  }
 
   /// A booking that came up short sent the buyer here: extras lead.
   bool get _extrasFirst => widget.topUpFor != null && _extras.isNotEmpty;
@@ -527,26 +564,6 @@ class _NewCoinsPageState extends State<NewCoinsPage>
     );
   }
 
-  /// Glyph inside the payment row's badge — mirrors the packet screen's.
-  Widget _paymentLeading(PaymentSelection? payment) {
-    switch (payment?.rail) {
-      case PaymentRail.payme:
-        return Assets.images.pay.paymeLogo.image(width: 22.w, height: 22.w);
-      case PaymentRail.click:
-        return Assets.images.pay.clickLogo.image(width: 22.w, height: 22.w);
-      case PaymentRail.uzum:
-        return Assets.images.pay.uzumLogo.image(width: 22.w, height: 22.w);
-      case PaymentRail.card:
-      case null:
-        return Assets.icons.icCard.svg(
-          width: 20.w,
-          height: 20.w,
-          colorFilter:
-              ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
-        );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -555,80 +572,130 @@ class _NewCoinsPageState extends State<NewCoinsPage>
     // screen of headings with nothing under them.
     final empty = !_catalogue.isOnSale && _balance.balance <= 0;
 
+    if (_isLoading || _failed || empty) {
+      return Scaffold(
+        backgroundColor: c.pageBg,
+        appBar: BaseAppBar(title: 'new_coins_title'.tr()),
+        body: _isLoading
+            ? const _NewCoinsShimmer()
+            : _NewCoinsUnavailable(onRetry: _load),
+      );
+    }
+
+    final pack = _selectedPack;
+    final busy = _purchasing != null;
     return Scaffold(
       backgroundColor: c.pageBg,
-      appBar: BaseAppBar(title: 'new_coins_title'.tr()),
-      bottomNavigationBar:
-          !_isLoading && !_failed && _catalogue.isOnSale ? _buyBar() : null,
-      body: _isLoading
-          ? const _NewCoinsShimmer()
-          : _failed || empty
-              ? _NewCoinsUnavailable(onRetry: _load)
-              : _content(),
+      body: Stack(
+        children: [
+          // Soft wash bleeding out from behind the coin, as on the coupons
+          // screen.
+          Positioned(
+            top: -80.h,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: 300.h,
+                decoration: const BoxDecoration(
+                  gradient: AppGradients.ticketStubGlow,
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.only(bottom: 24.h),
+                    children: [
+                      NewCoinsHero(bonus: _catalogue.firstPackBonus),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: SegmentedTabs(
+                          segments: [
+                            'new_coins_tab_packs'.tr(),
+                            'new_coins_tab_mine'.tr(),
+                          ],
+                          selected: _tab,
+                          onChanged: (i) {
+                            setState(() => _tab = i);
+                            if (i == 0) _showSelectedCard();
+                          },
+                        ),
+                      ),
+                      if (_tab == 0) ..._shelfTab() else ..._mineTab(),
+                    ],
+                  ),
+                ),
+                // One action, and only on the shelf: the pack in front and
+                // Buy. The rail is asked for when Buy is pressed, not chosen
+                // up here as a second decision.
+                if (_tab == 0 && pack != null)
+                  NewCoinsBuyBar(
+                    price: pack.price,
+                    isLoading: _purchasing == pack.id,
+                    onBuy: busy ? null : () => _buy(_Purchase.pack(pack)),
+                  ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).viewPadding.top + 16.h,
+            right: 20.w,
+            child: AdaptiveCard(
+              onTap: () => context.router.maybePop(),
+              tone: CardTone.control,
+              bordered: true,
+              padding: EdgeInsets.all(8.w),
+              child: Icon(
+                Icons.close_rounded,
+                size: 16.sp,
+                color: c.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _content() {
-    final c = context.colors;
+  Widget _sectionTitle(String title) => Padding(
+        padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 12.h),
+        child: Text(
+          title,
+          style: AppText.semibold18.copyWith(color: context.colors.textSection),
+        ),
+      );
+
+  /// The shelf: one pack in front at a time, and how coins work under it.
+  List<Widget> _shelfTab() {
     final busy = _purchasing != null;
+    final shelf = _shelf;
+    final bestId = _bestOfferId;
+    final active = shelf.indexWhere((p) => p.id == _selectedId);
 
-    Widget section(String title) => Padding(
-          padding: EdgeInsets.only(top: 22.h, bottom: 12.h),
-          child: Text(
-            title,
-            style: AppText.semibold18.copyWith(color: c.textSection),
-          ),
-        );
+    Widget card(NewCoinPack pack) {
+      final isMain = _catalogue.main.any((p) => p.id == pack.id);
+      return NewCoinPackCard(
+        pack: pack,
+        isBestOffer: pack.id == bestId,
+        bonus: isMain ? _catalogue.firstPackBonus : 0,
+        savingPercent: isMain ? _savingPercent(pack) : 0,
+      );
+    }
 
-    Widget shelf(List<NewCoinPack> packs, {required bool savings}) =>
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12.h,
-            crossAxisSpacing: 12.w,
-            mainAxisExtent: 124.h,
-          ),
-          itemCount: packs.length,
-          itemBuilder: (_, i) {
-            final pack = packs[i];
-            return NewCoinPackTile(
-              pack: pack,
-              selected: pack.id == _selectedId,
-              savingPercent: savings ? _savingPercent(pack) : 0,
-              onTap: busy ? null : () => setState(() => _selectedId = pack.id),
-            );
-          },
-        );
-
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
-      children: [
-        NewCoinsBalanceCard(balance: _balance, onHistory: _openHistory),
-        if (_extrasFirst) ...[
-          section('new_coins_extra_section'.tr()),
-          shelf(_extras, savings: false),
-        ],
-        if (_catalogue.main.isNotEmpty) ...[
-          section('new_coins_main_section'.tr()),
-          if (_catalogue.firstPackBonus > 0) ...[
-            NewCoinsBonusBanner(coins: _catalogue.firstPackBonus),
-            12.kh,
-          ],
-          shelf(_catalogue.main, savings: true),
-        ],
-        if (!_extrasFirst && _extras.isNotEmpty) ...[
-          section('new_coins_extra_section'.tr()),
-          shelf(_extras, savings: false),
-        ],
-        // Loose coins have no place on the shelf. The one way to them is the
-        // booking screen's "you are N short" hand-off, which opens this
-        // screen to buy exactly that many — and only then is the card shown.
-        if (widget.buySingle != null && _canBuySingle) ...[
-          section('new_coins_single_section'.tr()),
-          NewCoinSingleCard(
+    return [
+      // Loose coins have no place on the shelf. The one way to them is the
+      // booking screen's "you are N short" hand-off, which opens this screen
+      // to buy exactly that many — and only then is the card shown.
+      if (widget.buySingle != null && _canBuySingle) ...[
+        16.kh,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: NewCoinSingleCard(
             unitPrice: _catalogue.singleCoinPrice,
             quantity: _singleQuantity,
             isLoading: _purchasing == _Purchase._singleKey,
@@ -636,78 +703,60 @@ class _NewCoinsPageState extends State<NewCoinsPage>
             onChanged: (q) => setState(() => _singleQuantity = q),
             onBuy: () => _buy(_singlePurchase),
           ),
-        ],
-        20.kh,
-        Text(
-          'new_coins_about'.tr(),
-          style: AppText.regular13.copyWith(color: c.textSecondary),
         ),
       ],
-    );
-  }
-
-  /// Pinned under the shelf: the rail, and the one button that buys the
-  /// selected pack. Picking a rail here never charges; with none picked, Buy
-  /// asks first.
-  Widget _buyBar() {
-    final c = context.colors;
-    final busy = _purchasing != null;
-    final pack = _selectedPack;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: c.pageBg,
-        border: Border(top: BorderSide(color: c.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PillCard(
-                onTap: busy ? null : _choosePayment,
-                leading: PillIconBadge(child: _paymentLeading(_payment)),
-                trailing: PillActionChip(
-                  label: _payment == null
-                      ? 'book_choose'.tr()
-                      : 'book_change'.tr(),
-                  onTap: busy ? null : _choosePayment,
-                ),
-                child: PillCaption(
-                  captionFirst: true,
-                  subtitle: 'book_pay_method_label'.tr(),
-                  // The card rail has no wordmark — the card itself is its
-                  // name, as in the booking and tariffs rows.
-                  title: _payment == null
-                      ? 'book_pick_payment'.tr()
-                      : _payment!.rail == PaymentRail.card
-                          ? (_payment!.card?.label ?? 'pay_with_card'.tr())
-                          : _payment!.rail.brandName,
-                  titleColor: _payment == null ? c.textSecondary : null,
-                ),
+      _sectionTitle('new_coins_tab_packs'.tr()),
+      // A lone pack has nothing to page to, so it spans the width rather
+      // than leaving the carousel's peek gap.
+      if (shelf.length == 1)
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: SizedBox(
+            height: kNewCoinPackCardHeight.h,
+            child: card(shelf.first),
+          ),
+        )
+      else ...[
+        SizedBox(
+          height: kNewCoinPackCardHeight.h,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: shelf.length,
+            padEnds: false,
+            // Swiping to a card is choosing it. Locked while a purchase is
+            // in flight, so the bar cannot change subject under it.
+            physics: busy ? const NeverScrollableScrollPhysics() : null,
+            onPageChanged: (i) => setState(() => _selectedId = shelf[i].id),
+            itemBuilder: (_, i) => Padding(
+              padding: EdgeInsets.only(
+                left: 16.w,
+                right: i == shelf.length - 1 ? 16.w : 0,
               ),
-              10.kh,
-              NewCoinsBuyButton(
-                label: pack == null
-                    ? 'new_coins_shortfall_open_store'.tr()
-                    : 'new_coins_buy_cta'.tr(args: [
-                        pack.coins.toGrouped(),
-                        pack.price.toRawUzsPrice(),
-                      ]),
-                onTap: () {
-                  if (pack != null) _buy(_Purchase.pack(pack));
-                },
-                isLoading: pack != null && _purchasing == pack.id,
-                enabled: pack != null && !busy,
-              ),
-            ],
+              child: card(shelf[i]),
+            ),
           ),
         ),
+        12.kh,
+        NewCoinsDots(count: shelf.length, active: active < 0 ? 0 : active),
+      ],
+      _sectionTitle('plan_how_title'.tr()),
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: NewCoinsHowItWorks(),
       ),
-    );
+    ];
   }
+
+  /// What the buyer holds: the balance, the deadlines behind it, and the way
+  /// into the history.
+  List<Widget> _mineTab() => [
+        16.kh,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child:
+              NewCoinsBalanceCard(balance: _balance, onHistory: _openHistory),
+        ),
+      ];
 }
 
 class _NewCoinsShimmer extends StatelessWidget {

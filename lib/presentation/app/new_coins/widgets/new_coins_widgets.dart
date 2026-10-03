@@ -4,9 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/adaptive_card.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
@@ -194,56 +196,148 @@ class _LotRow extends StatelessWidget {
   }
 }
 
-/// "+N Lumi Coin with your first pack" — the gift, said once above the shelf
-/// instead of as a badge repeated on every tile.
-class NewCoinsBonusBanner extends StatelessWidget {
-  const NewCoinsBonusBanner({super.key, required this.coins});
+/// Height of a pack card in the carousel. Fixed so the [PageView] can size
+/// itself; the card's content is top-aligned inside it.
+const double kNewCoinPackCardHeight = 176;
 
-  final int coins;
+/// The top of the Lumi Coin screen: the coin, the name on a tilted chip, the
+/// first-pack gift on another, and one line saying what coins are for.
+///
+/// The composition is the coupons screen's hero (`plans_page.dart`) — artwork
+/// with two rotated chips hanging off its corners over a soft glow — so the
+/// two shops read as the same family.
+class NewCoinsHero extends StatelessWidget {
+  const NewCoinsHero({super.key, this.bonus = 0});
+
+  /// Coins added to the buyer's first main pack. 0 hides the chip.
+  final int bonus;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: AppColors.green.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.card_giftcard_rounded, size: 20.w, color: AppColors.green),
-          10.kw,
-          Expanded(
+    final art = 112.w;
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 176.h,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: art,
+                height: art,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Assets.icons.coinLumi.image(
+                      width: art,
+                      height: art,
+                      fit: BoxFit.contain,
+                    ),
+                    _HeroArtChip(
+                      label: 'new_coins_title'.tr(),
+                      art: art,
+                      centerX: -0.18,
+                      centerY: 0.2,
+                      angle: -0.385,
+                    ),
+                    if (bonus > 0)
+                      _HeroArtChip(
+                        label: 'new_coins_bonus_badge'
+                            .tr(args: [bonus.toGrouped()]),
+                        art: art,
+                        centerX: 1.2,
+                        centerY: 0.82,
+                        angle: 0.217,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 48.w),
+          child: Text(
+            'new_coins_hero_subtitle'.tr(),
+            textAlign: TextAlign.center,
+            style:
+                AppText.regular12.copyWith(color: context.colors.textSecondary),
+          ),
+        ),
+        16.kh,
+      ],
+    );
+  }
+}
+
+/// A tilted chip pinned to a point on the hero artwork — [centerX]/[centerY]
+/// are fractions of the artwork box and mark where the chip's centre lands.
+class _HeroArtChip extends StatelessWidget {
+  const _HeroArtChip({
+    required this.label,
+    required this.art,
+    required this.centerX,
+    required this.centerY,
+    required this.angle,
+  });
+
+  final String label;
+  final double art;
+  final double centerX;
+  final double centerY;
+  final double angle;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Positioned(
+      left: centerX * art,
+      top: centerY * art,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, -0.5),
+        child: Transform.rotate(
+          angle: angle,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: c.border),
+            ),
             child: Text(
-              'new_coins_first_pack_banner'.tr(args: [coins.toGrouped()]),
-              style: AppText.medium14.copyWith(color: AppColors.green),
+              label,
+              style: AppText.semibold14.copyWith(color: c.textPrimary),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// One pack on the shelf, as a tile to pick: how many coins, what it costs,
-/// how long it lasts and what a coin works out at.
+/// One pack, as a card in the carousel: what kind it is, how many coins, and
+/// underneath — small — what it costs, how long it lasts and what a coin
+/// works out at.
 ///
-/// Picking is all a tile does — the single Buy button under the shelf pays
-/// for whichever one is selected, so four packs are four choices rather than
-/// four competing buttons. [savingPercent] is how much cheaper a coin is here
-/// than in the dearest pack beside it; 0 hides the badge.
-class NewCoinPackTile extends StatelessWidget {
-  const NewCoinPackTile({
+/// The card itself has no button. Swiping to it is choosing it, and the buy
+/// bar under the carousel pays for whichever card is in front.
+class NewCoinPackCard extends StatelessWidget {
+  const NewCoinPackCard({
     super.key,
     required this.pack,
-    required this.selected,
-    required this.onTap,
+    this.isBestOffer = false,
+    this.bonus = 0,
     this.savingPercent = 0,
   });
 
   final NewCoinPack pack;
-  final bool selected;
-  final VoidCallback? onTap;
+  final bool isBestOffer;
+
+  /// First-pack gift, shown on main packs. 0 hides it.
+  final int bonus;
+
+  /// How much cheaper a coin is here than in the dearest main pack. 0 hides it.
   final int savingPercent;
 
   @override
@@ -251,64 +345,363 @@ class NewCoinPackTile extends StatelessWidget {
     final c = context.colors;
     final perCoin = pack.pricePerCoin;
 
-    return FrostedCard(
-      onTap: onTap,
-      padding: EdgeInsets.all(14.w),
-      borderRadius: BorderRadius.circular(20.r),
-      borderColor: selected ? AppColors.brandPurple : null,
-      borderWidth: selected ? 2 : 1,
+    return AdaptiveCard(
+      padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  gradient: AppGradients.indigo,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Assets.icons.coupons.icRocket.svg(
+                  width: 14.w,
+                  height: 14.w,
+                ),
+              ),
+              12.kw,
               Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: CoinAmount(
-                    amount: pack.coins,
-                    style: AppText.semibold24,
-                    color: c.textPrimary,
+                child: Text(
+                  pack.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bold18.copyWith(color: c.textPrimary),
+                ),
+              ),
+              if (isBestOffer) ...[8.kw, const _BestOfferBadge()],
+            ],
+          ),
+          14.kh,
+          // The headline: how many coins — the thing being compared — big and
+          // in the brand colour, with the gift beside it when there is one.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                pack.coins.toGrouped(),
+                style: AppText.phone32.copyWith(
+                  fontSize: 40.sp,
+                  fontWeight: FontWeight.w900,
+                  color: c.primary,
+                  height: 1,
+                ),
+              ),
+              8.kw,
+              Flexible(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 3.h),
+                  child: Text(
+                    'new_coins_title'.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold24.copyWith(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w800,
+                      color: c.primary,
+                    ),
                   ),
                 ),
               ),
-              if (savingPercent > 0) ...[
-                6.kw,
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(40.r),
-                  ),
-                  child: Text(
-                    'new_coins_save_badge'.tr(args: ['$savingPercent']),
-                    style: AppText.semibold12.copyWith(color: AppColors.green),
+              if (bonus > 0) ...[
+                8.kw,
+                Padding(
+                  padding: EdgeInsets.only(bottom: 5.h),
+                  child: _GreenChip(
+                    label: 'new_coins_bonus_badge'.tr(args: ['$bonus']),
                   ),
                 ),
               ],
             ],
           ),
-          const Spacer(),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              pack.price.toRawUzsPrice(),
-              style: AppText.semibold16.copyWith(color: c.textPrimary),
+          8.kh,
+          Text(
+            'coupon_valid_days_short'
+                .tr(namedArgs: {'days': '${pack.validDays}'}),
+            style: AppText.regular12.copyWith(color: c.textMuted),
+          ),
+          12.kh,
+          // Price and the per-coin figure, deliberately small: the buy bar
+          // below repeats the price next to the button.
+          Row(
+            children: [
+              Text(
+                pack.price.toRawUzsPrice(),
+                style: AppText.semibold12.copyWith(color: c.textSecondary),
+              ),
+              if (perCoin != null && perCoin > 0) ...[
+                6.kw,
+                Text('·',
+                    style: AppText.regular12.copyWith(color: c.textMuted)),
+                6.kw,
+                Flexible(
+                  child: Text(
+                    'new_coins_per_coin'.tr(args: [perCoin.toRawUzsPrice()]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.regular12.copyWith(color: c.textMuted),
+                  ),
+                ),
+              ],
+              if (savingPercent > 0) ...[
+                8.kw,
+                _GreenChip(
+                  label: 'new_coins_save_badge'.tr(args: ['$savingPercent']),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GreenChip extends StatelessWidget {
+  const _GreenChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: AppColors.green.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(40.r),
+      ),
+      child: Text(
+        label,
+        style: AppText.semibold12.copyWith(color: AppColors.green),
+      ),
+    );
+  }
+}
+
+/// "BEST OFFER" — the coupons screen's badge, on the pack whose coin is
+/// cheapest.
+class _BestOfferBadge extends StatelessWidget {
+  const _BestOfferBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(6.w, 2.h, 9.w, 2.h),
+      decoration: BoxDecoration(
+        gradient: AppGradients.indigo,
+        borderRadius: BorderRadius.circular(100.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Assets.icons.coupons.icLightning.svg(width: 12.w, height: 12.w),
+          4.kw,
+          Text(
+            'coupon_best_offer'.tr(),
+            style: AppText.bold10.copyWith(color: AppColors.white),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Which card of the carousel is in front.
+class NewCoinsDots extends StatelessWidget {
+  const NewCoinsDots({super.key, required this.count, required this.active});
+
+  final int count;
+  final int active;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 8.w,
+          height: 8.w,
+          margin: EdgeInsets.symmetric(horizontal: 3.w),
+          decoration: BoxDecoration(
+            color: i == active ? c.textPrimary : c.border,
+            shape: BoxShape.circle,
+          ),
+        );
+      }),
+    );
+  }
+}
+
+/// "How it works" — three numbered steps, laid out as on the coupons screen.
+class NewCoinsHowItWorks extends StatelessWidget {
+  const NewCoinsHowItWorks({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _StepCard(
+                  icon: Assets.icons.coupons.icMagicSelection,
+                  number: '01',
+                  text: 'new_coins_step1'.tr(),
+                ),
+              ),
+              8.kw,
+              Expanded(
+                child: _StepCard(
+                  icon: Assets.icons.coupons.icAddInvoice,
+                  number: '02',
+                  text: 'new_coins_step2'.tr(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        8.kh,
+        _StepCard(
+          icon: Assets.icons.coupons.icCoupon,
+          number: '03',
+          text: 'new_coins_step3'.tr(),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  const _StepCard({
+    required this.icon,
+    required this.number,
+    required this.text,
+  });
+
+  final SvgGenImage icon;
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: 0,
+            top: -6.h,
+            child: ShaderMask(
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (bounds) =>
+                  AppGradients.stepNumeral.createShader(bounds),
+              child: Text(
+                number,
+                style: AppText.semibold24.copyWith(
+                  fontSize: 36.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                ),
+              ),
             ),
           ),
-          4.kh,
-          Text(
-            [
-              if (pack.validDays > 0)
-                'new_coins_days'.tr(args: ['${pack.validDays}']),
-              if (perCoin != null && perCoin > 0)
-                'new_coins_per_coin'.tr(args: [perCoin.toGrouped()]),
-            ].join(' · '),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.regular12.copyWith(color: c.textSecondary),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              icon.svg(width: 30.w, height: 30.w),
+              32.kh,
+              Text(
+                text,
+                style: AppText.regular14
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The one action on the screen: the price of the pack in front, and Buy.
+class NewCoinsBuyBar extends StatelessWidget {
+  const NewCoinsBuyBar({
+    super.key,
+    required this.price,
+    required this.isLoading,
+    required this.onBuy,
+  });
+
+  final num price;
+  final bool isLoading;
+  final VoidCallback? onBuy;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      color: c.bottomBar,
+      padding: EdgeInsets.fromLTRB(
+        16.w,
+        16.h,
+        16.w,
+        16.h + MediaQuery.of(context).viewPadding.bottom,
+      ),
+      child: Row(
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'new_coins_price_label'.tr(),
+                style: AppText.regular14.copyWith(color: c.textSecondary),
+              ),
+              4.kh,
+              Text(
+                price.toRawUzsPrice(),
+                style: AppText.bold16.copyWith(color: c.textPrimary),
+              ),
+            ],
+          ),
+          24.kw,
+          Expanded(
+            child: GestureDetector(
+              onTap: isLoading ? null : onBuy,
+              child: Container(
+                height: 50.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: AppGradients.brand,
+                  borderRadius: BorderRadius.circular(44.r),
+                ),
+                child: isLoading
+                    ? SizedBox(
+                        width: 20.w,
+                        height: 20.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(c.onPrimary),
+                        ),
+                      )
+                    : Text(
+                        'new_coins_buy_btn'.tr(),
+                        style: AppText.medium16.copyWith(color: c.onPrimary),
+                      ),
+              ),
+            ),
           ),
         ],
       ),
