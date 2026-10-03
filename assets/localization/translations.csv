@@ -881,7 +881,6 @@ pay_generic_error,Не удалось выполнить платёж. Попр�
 pay_add_card_subtitle,Для проверки карты спишем 100 сум. Оплатить можно будет на следующем шаге,Kartani tekshirish uchun 100 so'm yechiladi. To'lovni keyingi bosqichda qilasiz,We'll charge 100 soum to verify the card. You'll pay on the next step
 pay_card_number_hint,Номер карты,Karta raqami,Card number
 pay_card_expiry_hint,мм/гг,oo/yy,mm/yy
-detail_happy_parents,Довольные родители,Mamnun ota-onalar,Happy parents
 ad_label,Реклама,Reklama,Ad
 dark_mode,Тёмная тема,Tungi rejim,Dark mode
 dark_mode_on,Включена,Yoqilgan,On
@@ -1374,3 +1373,17 @@ voucher_reason_not_applicable,Не действует для этого заня
 voucher_reason_coupon_plan,Не суммируется с купонным тарифом,Kupon tarifi bilan birga ishlamaydi,Can't be combined with a coupon plan
 voucher_reason_unknown,Сейчас недоступна,Hozir mavjud emas,Not available right now
 aksiya_hero_visits_suffix,занятия в разных местах,ta mashg‘ulot — turli joylarda,activities at different places
+rating_count,Оценок: {},Baholar: {},Ratings: {}
+rating_sheet_title,Оцените занятие,Mashg‘ulotni baholang,Rate this activity
+rating_sheet_hint,Ваша оценка поможет другим родителям с выбором,Bahoyingiz boshqa ota-onalarga tanlashda yordam beradi,Your rating helps other parents choose
+rating_submit,Отправить,Yuborish,Submit
+rating_saved_toast,Спасибо за оценку!,Bahoyingiz uchun rahmat!,Thanks for rating!
+rating_failed,Не удалось сохранить оценку,Bahoni saqlab bo‘lmadi,Could not save your rating
+rating_comment_label,Комментарий (необязательно),Izoh (ixtiyoriy),Comment (optional)
+rating_comment_public,Комментарий увидят другие родители,Izohingizni boshqa ota-onalar ko‘radi,Other parents will see your comment
+reviews_title,Отзывы,Sharhlar,Reviews
+reviews_retry,Повторить,Qayta urinish,Try again
+review_anonymous,Родитель,Ota-ona,Parent
+reviews_empty,Пока нет отзывов,Hali sharhlar yo‘q,No reviews yet
+rate_prompt_yours,Ваша оценка,Sizning bahoyingiz,Your rating
+rate_prompt_hint,"Нажмите, чтобы оценить",Baholash uchun bosing,Tap to rate

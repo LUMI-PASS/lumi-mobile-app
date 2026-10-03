@@ -56,6 +56,9 @@ class ClassFullModel {
   /// is a question asked before paying.
   final bool viewerPurchased;
 
+  /// The star rating: everyone's average, and this viewer's own stars.
+  final RatingSummary rating;
+
   /// A COURSE is its own kind of thing, not a category — it keeps a normal
   /// category and is additionally flagged here. It is sold as a package (the
   /// trial lessons, or the whole course) rather than per session, so the detail
@@ -113,6 +116,7 @@ class ClassFullModel {
     required this.category,
     required this.isParentControlRequired,
     this.viewerPurchased = false,
+    this.rating = const RatingSummary(),
     this.isCourse = false,
     this.courseTrials = const {},
   });
@@ -279,8 +283,96 @@ class ClassFullModel {
       isParentControlRequired:
           json['is_parent_control_required'] == true,
       viewerPurchased: json['viewer_purchased'] == true,
+      rating: RatingSummary.fromJson(json),
       isCourse: json['is_course'] == true,
       courseTrials: _courseTrials(json['course']),
+    );
+  }
+}
+
+/// An activity's star rating — `rating_avg` / `rating_count` plus the viewer's
+/// own `viewer_rating` / `viewer_comment`, which `/classes/:id` carries flat on
+/// the activity and `PUT /classes/:id/rating` answers with on their own.
+class RatingSummary {
+  const RatingSummary({
+    this.average = 0,
+    this.count = 0,
+    this.viewerRating,
+    this.viewerComment,
+  });
+
+  /// 1–5, rounded by the backend to one decimal. 0 while nobody has rated —
+  /// read [hasRatings] rather than testing this.
+  final double average;
+  final int count;
+
+  /// The stars THIS viewer gave, or null if they have not rated (or are signed
+  /// out).
+  final int? viewerRating;
+
+  /// What this viewer wrote alongside their stars, if anything.
+  final String? viewerComment;
+
+  bool get hasRatings => count > 0;
+
+  factory RatingSummary.fromJson(Map<String, dynamic> json) => RatingSummary(
+        average: (json['rating_avg'] as num?)?.toDouble() ?? 0,
+        count: (json['rating_count'] as num?)?.toInt() ?? 0,
+        viewerRating: (json['viewer_rating'] as num?)?.toInt(),
+        viewerComment: json['viewer_comment'] as String?,
+      );
+}
+
+/// One public review of an activity: a customer's stars and what they wrote.
+///
+/// Only ratings that carry a comment are listed, and the author is a first
+/// name and a picture — the backend sends nothing more about them.
+class ActivityReview {
+  const ActivityReview({
+    required this.id,
+    required this.rating,
+    required this.comment,
+    this.date,
+    this.authorName,
+    this.authorAvatar,
+  });
+
+  final String id;
+  final int rating;
+  final String comment;
+
+  /// When it was written or last changed.
+  final DateTime? date;
+
+  /// Null when the customer never filled in a name.
+  final String? authorName;
+  final String? authorAvatar;
+
+  factory ActivityReview.fromJson(Map<String, dynamic> json) => ActivityReview(
+        id: json['id']?.toString() ?? '',
+        rating: (json['rating'] as num?)?.toInt() ?? 0,
+        comment: json['comment']?.toString() ?? '',
+        date: DateTime.tryParse(json['date']?.toString() ?? '')?.toLocal(),
+        authorName: json['author_name'] as String?,
+        authorAvatar: json['author_avatar'] as String?,
+      );
+}
+
+/// A page of [ActivityReview]s, with how many there are in all.
+class ActivityReviewPage {
+  const ActivityReviewPage({this.reviews = const [], this.total = 0});
+
+  final List<ActivityReview> reviews;
+  final int total;
+
+  factory ActivityReviewPage.fromJson(Map<String, dynamic> json) {
+    final raw = (json['data'] as List?) ?? const [];
+    return ActivityReviewPage(
+      reviews: raw
+          .whereType<Map>()
+          .map((e) => ActivityReview.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      total: (json['total'] as num?)?.toInt() ?? 0,
     );
   }
 }

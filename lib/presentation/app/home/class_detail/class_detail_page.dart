@@ -3,7 +3,6 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,6 +37,9 @@ import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/interest_reporter.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/home/course_detail/intake_waitlist_sheet.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_widgets.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_sheet.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/reviews_sheet.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
@@ -287,6 +289,56 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       ? (_full?.branch?.supportPhones ?? const <String>[])
       : const <String>[];
 
+  /// The rating as last answered by `PUT /classes/:id/rating`, once this viewer
+  /// has rated on this page — newer than what [_full] was loaded with.
+  RatingSummary? _ratedSummary;
+
+  RatingSummary get _rating =>
+      _ratedSummary ?? _full?.rating ?? const RatingSummary();
+
+  /// Only a buyer may rate — the backend refuses anyone else, so they are not
+  /// offered the button.
+  bool get _canRate => _full?.viewerPurchased == true;
+
+  /// [star] is the one tapped in the [RatePrompt] — the sheet opens with it
+  /// already picked.
+  Future<void> _openRating(int star) async {
+    final id = widget.classModel.id;
+    final full = _full;
+    if (id == null || full == null) return;
+    final summary = await RatingSheet.show(
+      context,
+      activityId: id,
+      initialRating: star,
+      initialComment: _rating.viewerComment,
+      title: _localized(full.name, fallback: widget.classModel.title ?? ''),
+    );
+    if (summary == null || !mounted) return;
+    setState(() => _ratedSummary = summary);
+    // Their comment is public the moment it is saved — show it to them too.
+    unawaited(_loadReviews());
+  }
+
+  /// How many reviews the detail page's horizontal strip loads.
+  static const _reviewsPreview = 8;
+
+  /// The newest public reviews, and how many there are in all.
+  ActivityReviewPage _reviews = const ActivityReviewPage();
+
+  /// Non-fatal: the page is complete without its reviews card.
+  Future<void> _loadReviews() async {
+    final id = widget.classModel.id;
+    if (id == null) return;
+    try {
+      final page = await getIt<OrdersApi>()
+          .getClassReviews(id, limit: _reviewsPreview);
+      if (!mounted) return;
+      setState(() => _reviews = page);
+    } catch (_) {
+      // Keep whatever was already shown.
+    }
+  }
+
   /// Dials a number. `tel:` wants it unpunctuated — the console stores it the
   /// way a human reads it, so the digits are pulled back out here.
   ///
@@ -437,6 +489,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     // end. A course opened from somewhere that didn't say so falls back to
     // the chained call below, once `/classes/:id` has answered.
     final knownCourse = widget.classModel.isCourse == true;
+    unawaited(_loadReviews());
     if (knownCourse) {
       // One frame late, not synchronously: this runs from initState, and
       // `_loadCourse` reads `context.locale` — an inherited lookup that is
@@ -979,6 +1032,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           'class-detail-location',
           KeyedSubtree(key: _venueCardKey, child: _locationCard(c, branchTitle)),
         ),
+      // The home of everything about ratings: the score, the stars a buyer
+      // taps to give theirs, and what others wrote. Shown as soon as there is
+      // any of the three.
+      if (_rating.hasRatings || _reviews.reviews.isNotEmpty || _canRate)
+        _detailSection(
+          'class-detail-reviews',
+          _reviewsCard(c),
+        ),
       if (notes.isNotEmpty)
         _detailSection(
           'class-detail-notes',
@@ -1289,6 +1350,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppText.heading20.copyWith(color: c.textPrimary)),
+          // What other parents think, stated where a listing states it — right
+          // under the name. Rating it yourself happens in the reviews card.
+          if (_rating.hasRatings) ...[
+            6.verticalSpace,
+            RatingInline(
+              rating: _rating,
+              onTap: _reviews.reviews.isEmpty || widget.classModel.id == null
+                  ? null
+                  : () => ReviewsSheet.show(
+                        context,
+                        activityId: widget.classModel.id!,
+                      ),
+            ),
+          ],
           // Says why there are no dates and no buy button, at the top of the
           // page rather than only down at the CTA.
           if (_isIntake) ...[
@@ -1440,12 +1515,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
               ),
             ],
-          ),
-          16.verticalSpace,
-          _HappyParents(
-            c: c,
-            seed: (widget.classModel.id ?? widget.classModel.title ?? '')
-                .hashCode,
           ),
         ],
       ),
@@ -1722,6 +1791,105 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   // ─── Language card ──────────────────────────────────────────────────────────
+  // ─── Reviews card ───────────────────────────────────────────────────────────
+  /// Laid out like a store listing's "Ratings & Reviews": the score, a strip
+  /// of review cards to swipe through, then the stars to tap.
+  Widget _reviewsCard(AppColorScheme c) {
+    final id = widget.classModel.id;
+    final openAll = id == null || _reviews.reviews.isEmpty
+        ? null
+        : () => ReviewsSheet.show(context, activityId: id);
+    return DetailCard(
+      c: c,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // The header is the way to every review — a chevron, not a button
+          // under the list.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: openAll,
+            child: Row(
+              children: [
+                Expanded(
+                  child: DetailCardHeader(
+                    c: c,
+                    icon: Assets.icons.detail.heart,
+                    iconGradient: AppGradients.brand,
+                    title: 'reviews_title'.tr(),
+                  ),
+                ),
+                if (openAll != null)
+                  Icon(Icons.chevron_right_rounded,
+                      size: 24.sp, color: c.textSecondary),
+              ],
+            ),
+          ),
+          // The score: the number on the left, the stars and how many rated
+          // on the right.
+          if (_rating.hasRatings) ...[
+            8.verticalSpace,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  _rating.average.toStringAsFixed(1),
+                  style: AppText.heading20.copyWith(
+                    color: c.textPrimary,
+                    fontSize: 44.sp,
+                    height: 1.1,
+                  ),
+                ),
+                const Spacer(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    RatingStars(filled: _rating.average.round(), size: 16),
+                    4.verticalSpace,
+                    Text(
+                      'rating_count'.tr(args: ['${_rating.count}']),
+                      style:
+                          AppText.regular13.copyWith(color: c.textSecondary),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+          if (_reviews.reviews.isNotEmpty) ...[
+            12.verticalSpace,
+            SizedBox(
+              height: ReviewCard.height,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                // Bleeds to the card's edges, so the next review peeks in and
+                // the strip reads as something to swipe.
+                clipBehavior: Clip.none,
+                itemCount: _reviews.reviews.length,
+                separatorBuilder: (_, __) => 8.horizontalSpace,
+                itemBuilder: (_, index) => ReviewCard(
+                  review: _reviews.reviews[index],
+                  onTap: openAll,
+                ),
+              ),
+            ),
+          ] else if (!_canRate) ...[
+            12.verticalSpace,
+            Text(
+              'reviews_empty'.tr(),
+              style: AppText.regular13.copyWith(color: c.textSecondary),
+            ),
+          ],
+          // For someone who bought it: the stars themselves, to tap.
+          if (_canRate) ...[
+            16.verticalSpace,
+            Center(child: RatePrompt(rating: _rating, onRate: _openRating)),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _languageCard(AppColorScheme c, List<String> languages) {
     return DetailCard(
       c: c,
@@ -1748,89 +1916,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 }
 
 // ─── Reusable pieces ──────────────────────────────────────────────────────────
-
-/// "Довольные родители" — decorative avatar group (Figma 60:3421). No real
-/// data source; renders overlapping brand-gradient avatars + a "+N" chip.
-class _HappyParents extends StatelessWidget {
-  const _HappyParents({required this.c, required this.seed});
-  final AppColorScheme c;
-
-  /// Stable per-class seed (from the class id/title) so each class shows a
-  /// different trio of parent photos and a different "+N" — not a fixed +12.
-  final int seed;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = seed.abs();
-    // Three distinct real-photo avatars, varied per class (pravatar has 1–70).
-    final photoIds = <int>[
-      s % 70 + 1,
-      (s ~/ 11) % 70 + 1,
-      (s ~/ 23) % 70 + 1,
-    ];
-    // "+N" overflow count varies per class (~8–48) instead of always +12.
-    final extra = 8 + s % 41;
-
-    Widget avatar(int id) => Container(
-          width: 40.w,
-          height: 40.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: c.surface, width: 2),
-          ),
-          child: ClipOval(
-            child: CachedNetworkImage(
-              imageUrl: 'https://i.pravatar.cc/120?img=$id',
-              width: 40.w,
-              height: 40.w,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => Container(color: c.control),
-              errorWidget: (_, __, ___) => Container(
-                color: c.control,
-                alignment: Alignment.center,
-                child: Icon(CupertinoIcons.person_fill,
-                    size: 20.sp, color: c.textSecondary),
-              ),
-            ),
-          ),
-        );
-
-    return Row(
-      children: [
-        SizedBox(
-          width: 40.w * 3 - 24.w + 40.w,
-          height: 40.w,
-          child: Stack(
-            children: [
-              Positioned(left: 0, child: avatar(photoIds[0])),
-              Positioned(left: 28.w, child: avatar(photoIds[1])),
-              Positioned(left: 56.w, child: avatar(photoIds[2])),
-              Positioned(
-                left: 84.w,
-                child: Container(
-                  width: 40.w,
-                  height: 40.w,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: c.control,
-                    border: Border.all(color: c.surface, width: 2),
-                  ),
-                  child: Text('+$extra',
-                      style:
-                          AppText.semibold12.copyWith(color: c.textSecondary)),
-                ),
-              ),
-            ],
-          ),
-        ),
-        10.horizontalSpace,
-        Text('detail_happy_parents'.tr(),
-            style: AppText.regular12.copyWith(color: c.textPrimary)),
-      ],
-    );
-  }
-}
 
 class _InfoTile extends StatelessWidget {
   const _InfoTile({

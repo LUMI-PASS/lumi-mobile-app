@@ -31,6 +31,8 @@ import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_widgets.dart';
+import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/widget/schedule_widget.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:shimmer/shimmer.dart';
@@ -164,6 +166,32 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         });
       }
     }
+  }
+
+  /// The rating as last answered by the rating sheet, once this viewer has
+  /// rated from this page — newer than what [_classFull] was loaded with.
+  RatingSummary? _ratedSummary;
+
+  RatingSummary get _rating =>
+      _ratedSummary ?? _classFull?.rating ?? const RatingSummary();
+
+  /// Rating is offered here because this is where a parent who has BEEN looks:
+  /// at the ticket, not back in the catalog. The backend decides who may — a
+  /// paid order — and says so in `viewer_purchased`.
+  bool get _canRate => _classFull?.viewerPurchased == true;
+
+  Future<void> _openRating(int star) async {
+    final id = _detail?.order.activityId;
+    if (id == null) return;
+    final summary = await RatingSheet.show(
+      context,
+      activityId: id,
+      initialRating: star,
+      initialComment: _rating.viewerComment,
+      title: _classFullTitle(),
+    );
+    if (summary == null || !mounted) return;
+    setState(() => _ratedSummary = summary);
   }
 
   /// Computed display status taking into account required_booking logic and
@@ -585,6 +613,12 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                     )
                   : null,
             ),
+          ],
+          // The stars to tap, for a buyer — on the ticket, because that is
+          // what they are holding once they have been.
+          if (_canRate) ...[
+            16.verticalSpace,
+            Center(child: RatePrompt(rating: _rating, onRate: _openRating)),
           ],
         ],
       ),

@@ -21,6 +21,46 @@ class OrdersApi {
     return ClassFullModel.fromJson(data);
   }
 
+  /// Rates a class: [rating] is 1–5 stars, [comment] is optional and shown
+  /// publicly under the customer's first name. One rating per customer —
+  /// sending another replaces both, and an empty comment removes the old one.
+  /// The backend refuses anyone who has not paid for the class (403), so only
+  /// offer this where `viewerPurchased` is true.
+  ///
+  /// Answers with the class's new average and count.
+  Future<RatingSummary> rateClass(
+    String id,
+    int rating, {
+    String comment = '',
+  }) async {
+    final response = await _dio.put(
+      'classes/$id/rating',
+      data: {'rating': rating, 'comment': comment.trim()},
+    );
+    final raw = response.data;
+    final data = raw is Map && raw['data'] is Map
+        ? Map<String, dynamic>.from(raw['data'] as Map)
+        : Map<String, dynamic>.from(raw as Map);
+    return RatingSummary.fromJson(data);
+  }
+
+  /// The public reviews of a class, newest first — only the ratings that carry
+  /// a comment.
+  Future<ActivityReviewPage> getClassReviews(
+    String id, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _dio.get(
+      'classes/$id/ratings',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final raw = response.data;
+    return raw is Map
+        ? ActivityReviewPage.fromJson(Map<String, dynamic>.from(raw))
+        : const ActivityReviewPage();
+  }
+
   /// Returns the bookable days inside [from, to] for an activity. Each entry
   /// holds the slots that apply on that date — empty when the class doesn't
   /// run that day. Powers the calendar carousel without dumping the full
