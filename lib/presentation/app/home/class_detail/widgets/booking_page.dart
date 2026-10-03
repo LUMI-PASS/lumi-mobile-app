@@ -26,6 +26,7 @@ import 'package:lumi_pass/common/utils/new_coins_summary.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
+import 'package:lumi_pass/presentation/app/new_coins/new_coins_purchase_controller.dart';
 import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_shortfall_sheet.dart';
 import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
@@ -1032,6 +1033,7 @@ class _BookingPageState extends State<BookingPage> {
   @override
   void initState() {
     super.initState();
+    _coinBuyer.attach();
     if (_hasAgeTiers) {
       _tierCounts = widget.clazz.ageTiers
           .map((t) => List<int>.filled(t.durations.length.clamp(1, 999), 0))
@@ -1089,6 +1091,7 @@ class _BookingPageState extends State<BookingPage> {
 
   @override
   void dispose() {
+    _coinBuyer.dispose();
     _promoCtrl.dispose();
     _promoDebounce?.cancel();
     _voucherDebounce?.cancel();
@@ -2495,7 +2498,7 @@ class _BookingPageState extends State<BookingPage> {
             // What the CARD is charged, after the wallet — the buyer is about
             // to authorise this number, not the order total.
             : 'book_pay_cta'.tr(args: [_gatewayTotal.toRawUzsPrice()]),
-        loading: _submitting,
+        loading: _submitting || _coinBuyer.purchasing != null,
         onPressed: _pay,
       ),
     );
@@ -3324,6 +3327,31 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
+  /// Buys coins without leaving the booking — the same purchase flow the Lumi
+  /// Coin screen runs, hosted here. While it is in flight the Pay button is
+  /// held, and once the money lands the balance has already been re-read, so
+  /// the button is back to "Pay" with nothing else to do.
+  late final NewCoinsPurchaseController _coinBuyer = NewCoinsPurchaseController(
+    host: this,
+    notify: () => setState(() {}),
+    onPaid: (purchase, _) async {
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('new_coins_success_title'.tr())),
+      );
+    },
+    onError: (message) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message, maxLines: 3),
+          backgroundColor: context.colors.error,
+        ),
+      );
+    },
+  );
+
   /// "You are N coins short" — and the two ways to fix it: buy exactly the
   /// missing coins as loose ones (only with a live main pack), or open the
   /// Lumi Coin screen for a pack. Either purchase comes straight back here
@@ -3337,14 +3365,17 @@ class _BookingPageState extends State<BookingPage> {
       singleCoinPrice: coins.singleCoinPrice,
     );
     if (action == null || !mounted) return;
+    // "Buy the missing coins" is paid for right here: the payment sheet opens
+    // over the booking and the buyer never leaves it. Only choosing a pack —
+    // a different decision, with a shelf to look at — opens the coin screen.
+    if (action == NewCoinsShortfallAction.buyMissing) {
+      await _coinBuyer.buy(
+        NewCoinPurchase.single(shortfall.missing, coins.singleCoinPrice),
+      );
+      return;
+    }
     await context.router.push(
-      NewCoinsRoute(
-        buySingle: action == NewCoinsShortfallAction.buyMissing
-            ? shortfall.missing
-            : null,
-        topUpFor: shortfall.missing,
-        returnOnPurchase: true,
-      ),
+      NewCoinsRoute(topUpFor: shortfall.missing, returnOnPurchase: true),
     );
     // Whatever happened over there — bought, backed out — the balance is
     // re-read rather than assumed.

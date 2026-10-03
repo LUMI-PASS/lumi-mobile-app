@@ -1,56 +1,25 @@
-import 'dart:async';
-
 import 'package:auto_route/auto_route.dart';
-import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/utils/card_input_formatters.dart';
-import 'package:lumi_pass/common/utils/payment_error.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/adaptive_card.dart';
 import 'package:lumi_pass/common/widget/segmented_tabs.dart';
-import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
-import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/new_coins/new_coins_repository.dart';
-import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
-import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_history_page.dart';
+import 'package:lumi_pass/presentation/app/new_coins/new_coins_purchase_controller.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_success_page.dart';
 import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_widgets.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-/// What is being bought: a pack off the shelf, or [quantity] loose coins.
-class _Purchase {
-  const _Purchase.pack(NewCoinPack this.pack)
-      : quantity = 0,
-        singlePrice = 0;
-
-  const _Purchase.single(this.quantity, this.singlePrice) : pack = null;
-
-  final NewCoinPack? pack;
-  final int quantity;
-  final num singlePrice;
-
-  /// Marks which card shows the spinner while the purchase runs.
-  String get key => pack?.id ?? _singleKey;
-
-  int get coins => pack?.coins ?? quantity;
-  num get price => pack?.price ?? singlePrice * quantity;
-
-  static const _singleKey = 'single';
-}
 
 /// The "Lumi Coin" screen: what the buyer holds, when it expires, and the
 /// shelf — main packs, extra packs and loose coins.
@@ -91,19 +60,29 @@ class NewCoinsPage extends StatefulWidget {
   State<NewCoinsPage> createState() => _NewCoinsPageState();
 }
 
-class _NewCoinsPageState extends State<NewCoinsPage>
-    with WidgetsBindingObserver {
+class _NewCoinsPageState extends State<NewCoinsPage> {
   final NewCoinsRepository _repo = getIt<NewCoinsRepository>();
-  final OrdersApi _orders = getIt<OrdersApi>();
 
   NewCoinCatalogue _catalogue = NewCoinCatalogue.empty;
   NewCoinBalance _balance = NewCoinBalance.empty;
   bool _isLoading = true;
   bool _failed = false;
 
-  /// [_Purchase.key] of the purchase in flight, or null. One at a time: every
-  /// other buy button is inert while it is set.
-  String? _purchasing;
+  /// Runs a purchase from Buy to coins on the balance — the same controller
+  /// the booking screen tops up with.
+  late final NewCoinsPurchaseController _buyer = NewCoinsPurchaseController(
+    host: this,
+    notify: () => setState(() {}),
+    onPaid: _finishSuccess,
+    onError: _showError,
+    // The shelf on screen is out of date — a main pack lapsed, or a pack was
+    // withdrawn. Refresh it under the message.
+    onShelfStale: _load,
+  );
+
+  /// [NewCoinPurchase.key] of the purchase in flight, or null. One at a time:
+  /// every other buy button is inert while it is set.
+  String? get _purchasing => _buyer.purchasing;
 
   int _singleQuantity = 1;
 
@@ -122,23 +101,10 @@ class _NewCoinsPageState extends State<NewCoinsPage>
   /// after a failed payment must not restart a purchase nobody re-asked for.
   bool _autoBuyDone = false;
 
-  /// Rail the buyer picked from the same chooser the booking checkout uses.
-  /// Nothing is picked for them — buying asks first when this is null.
-  PaymentSelection? _payment;
-
-  /// A redirect checkout the buyer was sent off to pay. Those rails open an
-  /// external app, so the only signal we get back is the OS resuming us — at
-  /// which point we poll this order until it reads as paid.
-  ({_Purchase purchase, CheckoutResult checkout})? _pendingCheckout;
-  Timer? _pollTimer;
-  bool _navigated = false;
-
-  static const _pollInterval = Duration(seconds: 2);
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    _buyer.attach();
     final preset = widget.buySingle;
     if (preset != null && preset > 0) {
       _singleQuantity = preset.clamp(1, NewCoinSingleCard.maxQuantity);
@@ -148,22 +114,9 @@ class _NewCoinsPageState extends State<NewCoinsPage>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _pollTimer?.cancel();
+    _buyer.dispose();
     _pageController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_pendingCheckout == null) return;
-    if (state == AppLifecycleState.resumed) {
-      _checkPaymentStatus();
-      _pollTimer?.cancel();
-      _pollTimer = Timer.periodic(_pollInterval, (_) => _checkPaymentStatus());
-    } else if (state == AppLifecycleState.paused) {
-      _pollTimer?.cancel();
-    }
   }
 
   Future<void> _load() async {
@@ -290,258 +243,27 @@ class _NewCoinsPageState extends State<NewCoinsPage>
   bool get _canBuySingle =>
       _catalogue.canBuyExtras && _catalogue.singleCoinPrice > 0;
 
-  _Purchase get _singlePurchase =>
-      _Purchase.single(_singleQuantity, _catalogue.singleCoinPrice);
+  NewCoinPurchase get _singlePurchase =>
+      NewCoinPurchase.single(_singleQuantity, _catalogue.singleCoinPrice);
 
   // ── Buying ─────────────────────────────────────────────────────────────────
 
-  /// Opens the rail chooser and remembers what the buyer picked.
-  ///
-  /// **Picking alone never charges** — exactly as on the packet screen. A card
-  /// typed into the sheet is bound and saved there; coins are paid for from a
-  /// Buy button.
-  Future<PaymentSelection?> _choosePayment() async {
-    if (_purchasing != null) return null;
-    final picked = await showPaymentChooser(
-      context,
-      initial: _payment,
-      cards: [if (_payment?.card != null) _payment!.card!],
-      cardsComingSoon: !kCardPaymentsEnabled,
-      // The first-pack gift is for a main pack paid by card. Said here, on the
-      // card rail, because this is where the method is being chosen.
-      cardBadge: _bonusOnCard
-          ? 'new_coins_amount'.tr(args: ['+${_catalogue.firstPackBonus}'])
-          : null,
-    );
-    if (picked == null || !mounted) return null;
-    setState(() => _payment = picked);
-    return picked;
-  }
+  /// The perk to show on the card rail of the payment sheet: the first-pack
+  /// gift is for a main pack paid by card, and it is said there because that
+  /// is where the method is being chosen.
+  String? get _cardBadge => _bonusOnCard
+      ? 'new_coins_amount'.tr(args: ['+${_catalogue.firstPackBonus}'])
+      : null;
 
-  /// A Buy button: pays with the rail already picked, or opens the chooser and
-  /// pays with whatever comes back. The buyer has pressed Buy either way, so
-  /// the pick completes that instruction.
-  Future<void> _buy(_Purchase purchase) async {
-    if (_purchasing != null) return;
-    final payment = _payment ?? await _choosePayment();
-    if (payment == null || !mounted) return;
-    await _pay(purchase, payment);
-  }
-
-  Future<NewCoinPurchaseResult> _request(
-    _Purchase purchase, {
-    String? paymentProvider,
-    String? returnUrl,
-    String? cardNumber,
-    String? expireDate,
-    String? savedCardId,
-  }) {
-    final lang = context.locale.languageCode;
-    final pack = purchase.pack;
-    if (pack != null) {
-      return _repo.purchasePack(
-        pack.id,
-        lang: lang,
-        paymentProvider: paymentProvider,
-        returnUrl: returnUrl,
-        cardNumber: cardNumber,
-        expireDate: expireDate,
-        savedCardId: savedCardId,
-      );
-    }
-    return _repo.purchaseSingle(
-      quantity: purchase.quantity,
-      lang: lang,
-      paymentProvider: paymentProvider,
-      returnUrl: returnUrl,
-      cardNumber: cardNumber,
-      expireDate: expireDate,
-      savedCardId: savedCardId,
-    );
-  }
-
-  Future<void> _pay(_Purchase purchase, PaymentSelection payment) async {
-    setState(() => _purchasing = purchase.key);
-    getIt<AnalyticsService>().logEvent(
-      AnalyticsEvent.newCoinsPurchaseStarted,
-      params: {
-        'pack_id': purchase.pack?.id ?? '',
-        'kind': purchase.pack?.kindKey ?? 'single',
-        'coins': purchase.coins,
-        'payment_provider': payment.rail.providerKey,
-        'amount': purchase.price,
-      },
-    );
-
-    final card = payment.rail == PaymentRail.card ? payment.card : null;
-    final isRedirect = payment.rail != PaymentRail.card;
-    try {
-      // A saved card creates the order and nothing else; the charge is its own
-      // call, which is what opens the OTP session.
-      if (card != null && card.isSaved) {
-        final order =
-            (await _request(purchase, savedCardId: card.savedCardId)).checkout;
-        if (!mounted) return;
-        final charge = await _orders.payOrderWithSavedCard(
-          orderId: order.orderId,
-          cardId: card.savedCardId!,
-        );
-        if (!mounted) return;
-        setState(() => _purchasing = null);
-        if (!charge.otpRequired) {
-          await _finishSuccess(purchase, order);
-          return;
-        }
-        await _confirmCardOtp(
-          purchase,
-          order,
-          transactionId: charge.transactionId ?? '',
-          cid: charge.cid ?? '',
-          otpSentPhone: charge.otpSentPhone,
-        );
-        return;
-      }
-
-      final result = (await _request(
-        purchase,
-        paymentProvider: payment.rail.providerKey,
-        // Only a redirect rail has anywhere to bounce the buyer back from; the
-        // card rail never leaves the app.
-        returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
-        cardNumber: card?.pan,
-        // Typed MM/YY, sent YYMM — the same conversion the booking screens run.
-        expireDate: card == null ? null : expiryToYyMm(card.expiry),
-      ))
-          .checkout;
-      if (!mounted) return;
-      setState(() => _purchasing = null);
-
-      if (result.isCardOtpPending) {
-        await _confirmCardOtp(
-          purchase,
-          result,
-          transactionId: result.transactionId ?? '',
-          cid: result.cid ?? '',
-          otpSentPhone: result.otpSentPhone,
-        );
-      } else if (result.status == 'paid') {
-        // Nothing left to charge — the rail settled it outright.
-        await _finishSuccess(purchase, result);
-      } else if (result.checkoutUrl.isNotEmpty) {
-        await _openRedirect(purchase, result);
-      } else {
-        _showError(result.paylovMessage ?? 'pay_generic_error'.tr());
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _purchasing = null);
-      _showError(_errorMessage(e));
-    }
-  }
-
-  /// A coin refusal in the buyer's own language, else whatever the gateway
-  /// said, else the generic line.
-  String _errorMessage(Object e) {
-    if (e is DioException) {
-      final code = NewCoinErrorCode.fromResponse(e.response?.data);
-      final key = code.messageKey;
-      if (key != null) {
-        // The shelf on screen is out of date — a main pack lapsed, or a
-        // pack was withdrawn. Refresh it under the message.
-        _load();
-        return key.tr();
-      }
-    }
-    return PaymentError.fromDio(e) ?? 'pay_generic_error'.tr();
-  }
-
-  /// Collects the SMS code for a card charge and, once the gateway confirms it,
-  /// hands off to the same success path a redirect payment takes. Backing out
-  /// of the sheet leaves the order PENDING — nothing is charged and no coins
-  /// are minted, because they only appear when the money lands.
-  Future<void> _confirmCardOtp(
-    _Purchase purchase,
-    CheckoutResult order, {
-    required String transactionId,
-    required String cid,
-    String? otpSentPhone,
-  }) async {
-    final paid = await showCardOtpSheet(
-      context,
-      transactionId: transactionId,
-      cid: cid,
-      otpSentPhone: otpSentPhone,
-      confirmCard: ({
-        required String transactionId,
-        required String cid,
-        required String otp,
-      }) =>
-          _orders.paylovConfirmCard(
-        transactionId: transactionId,
-        cid: cid,
-        otp: otp,
-      ),
-    );
-    if (paid == true && mounted) await _finishSuccess(purchase, order);
-  }
-
-  /// Redirect rails hand off to an external app. We stay on this page and poll
-  /// the order once the OS brings us back.
-  Future<void> _openRedirect(_Purchase purchase, CheckoutResult result) async {
-    final uri = Uri.tryParse(result.checkoutUrl);
-    if (uri == null) {
-      _showError('pay_generic_error'.tr());
-      return;
-    }
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      _showError('pay_generic_error'.tr());
-      return;
-    }
-    if (!mounted) return;
-    setState(
-      () => _pendingCheckout = (purchase: purchase, checkout: result),
-    );
-  }
-
-  Future<void> _checkPaymentStatus() async {
-    final pending = _pendingCheckout;
-    if (_navigated || pending == null || !mounted) return;
-    if (pending.checkout.orderId.isEmpty) return;
-    try {
-      final detail = await _orders.getOrderDetail(pending.checkout.orderId);
-      if (detail.order.isPaid) {
-        await _finishSuccess(pending.purchase, pending.checkout);
-      }
-    } catch (_) {
-      // A hiccup while polling is non-fatal — the next tick retries.
-    }
-  }
+  Future<void> _buy(NewCoinPurchase purchase) => _buyer.buy(purchase,
+      cardBadge: purchase.pack == null ? null : _cardBadge);
 
   /// Hands off to the success screen, then either returns to whoever opened
   /// this screen or reloads the shelf with the new balance on it.
-  Future<void> _finishSuccess(_Purchase purchase, CheckoutResult result) async {
-    if (_navigated) return;
-    _navigated = true;
-    _pollTimer?.cancel();
-
-    getIt<AnalyticsService>().logEvent(
-      AnalyticsEvent.paymentSucceeded,
-      params: {
-        'product': 'new_coins',
-        'pack_id': purchase.pack?.id ?? '',
-        // What was actually charged. AppsFlyer maps this onto af_revenue —
-        // without it the purchase lands in the dashboard as a zero-value
-        // conversion.
-        'amount': result.totalAmount == 0 ? purchase.price : result.totalAmount,
-        'currency': result.currency,
-      },
-    );
-
-    // Publish the balance BEFORE the success screen opens: the profile tile
-    // and the booking the buyer may be heading back to both read it.
-    await getIt<AppCubit>().syncNewCoins();
-    if (!mounted) return;
+  Future<void> _finishSuccess(
+    NewCoinPurchase purchase,
+    CheckoutResult result,
+  ) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => NewCoinsSuccessPage(coins: purchase.coins),
@@ -552,10 +274,6 @@ class _NewCoinsPageState extends State<NewCoinsPage>
       context.router.maybePop(true);
       return;
     }
-    setState(() {
-      _navigated = false;
-      _pendingCheckout = null;
-    });
     await _load();
   }
 
@@ -642,7 +360,7 @@ class _NewCoinsPageState extends State<NewCoinsPage>
                   NewCoinsBuyBar(
                     price: pack.price,
                     isLoading: _purchasing == pack.id,
-                    onBuy: busy ? null : () => _buy(_Purchase.pack(pack)),
+                    onBuy: busy ? null : () => _buy(NewCoinPurchase.pack(pack)),
                   ),
               ],
             ),
@@ -702,7 +420,7 @@ class _NewCoinsPageState extends State<NewCoinsPage>
           child: NewCoinSingleCard(
             unitPrice: _catalogue.singleCoinPrice,
             quantity: _singleQuantity,
-            isLoading: _purchasing == _Purchase._singleKey,
+            isLoading: _purchasing == NewCoinPurchase.singleKey,
             enabled: !busy,
             onChanged: (q) => setState(() => _singleQuantity = q),
             onBuy: () => _buy(_singlePurchase),
