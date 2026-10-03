@@ -3350,6 +3350,7 @@ class _BookingPageState extends State<BookingPage> {
         buySingle: action == NewCoinsShortfallAction.buyMissing
             ? shortfall.missing
             : null,
+        topUpFor: shortfall.missing,
         returnOnPurchase: true,
       ),
     );

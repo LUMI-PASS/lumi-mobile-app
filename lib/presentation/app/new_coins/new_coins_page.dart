@@ -67,6 +67,7 @@ class NewCoinsPage extends StatefulWidget {
   const NewCoinsPage({
     super.key,
     this.buySingle,
+    this.topUpFor,
     this.returnOnPurchase = false,
   });
 
@@ -74,6 +75,12 @@ class NewCoinsPage extends StatefulWidget {
   /// are N short" sheet. The stepper is preset and the purchase starts as soon
   /// as the shelf has loaded, provided this buyer may buy loose coins at all.
   final int? buySingle;
+
+  /// Opened because a booking is this many coins short. The shelf then leads
+  /// with the extra packs — a top-up is what the buyer came for — and opens
+  /// on the cheapest pack that covers the gap. Extras are sold only on top of
+  /// a live main pack, so without one the main packs still lead.
+  final int? topUpFor;
 
   /// Close the screen once a purchase succeeds, instead of staying on the
   /// shelf. Set by a caller the buyer wants to get back to — a booking that
@@ -172,10 +179,7 @@ class _NewCoinsPageState extends State<NewCoinsPage>
         _catalogue = results[0] as NewCoinCatalogue;
         _balance = results[1] as NewCoinBalance;
         // Keep the pick across a reload when that pack is still on the shelf.
-        if (_selectedPack == null) {
-          _selectedId =
-              _catalogue.main.isEmpty ? null : _catalogue.main.first.id;
-        }
+        if (_selectedPack == null) _selectedId = _defaultPick()?.id;
       });
       _maybeAutoBuy();
     } catch (_) {
@@ -199,6 +203,26 @@ class _NewCoinsPageState extends State<NewCoinsPage>
   /// is a row of things the buyer cannot have.
   List<NewCoinPack> get _extras =>
       _catalogue.canBuyExtras ? _catalogue.extra : const [];
+
+  /// A booking that came up short sent the buyer here: extras lead.
+  bool get _extrasFirst => widget.topUpFor != null && _extras.isNotEmpty;
+
+  /// The pack the Buy button starts on. For a top-up, the cheapest pack that
+  /// covers the gap — extras before main packs — so the default purchase is
+  /// the smallest one that lets the booking go through. Otherwise the first
+  /// main pack.
+  NewCoinPack? _defaultPick() {
+    final missing = widget.topUpFor;
+    if (missing != null) {
+      for (final shelf in [_extras, _catalogue.main]) {
+        final covering = shelf.where((p) => p.coins >= missing).toList()
+          ..sort((a, b) => a.price.compareTo(b.price));
+        if (covering.isNotEmpty) return covering.first;
+      }
+      if (_extras.isNotEmpty) return _extras.last;
+    }
+    return _catalogue.main.isEmpty ? null : _catalogue.main.first;
+  }
 
   NewCoinPack? get _selectedPack {
     for (final pack in [..._catalogue.main, ..._extras]) {
@@ -583,6 +607,10 @@ class _NewCoinsPageState extends State<NewCoinsPage>
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
       children: [
         NewCoinsBalanceCard(balance: _balance, onHistory: _openHistory),
+        if (_extrasFirst) ...[
+          section('new_coins_extra_section'.tr()),
+          shelf(_extras, savings: false),
+        ],
         if (_catalogue.main.isNotEmpty) ...[
           section('new_coins_main_section'.tr()),
           if (_catalogue.firstPackBonus > 0) ...[
@@ -591,7 +619,7 @@ class _NewCoinsPageState extends State<NewCoinsPage>
           ],
           shelf(_catalogue.main, savings: true),
         ],
-        if (_extras.isNotEmpty) ...[
+        if (!_extrasFirst && _extras.isNotEmpty) ...[
           section('new_coins_extra_section'.tr()),
           shelf(_extras, savings: false),
         ],
