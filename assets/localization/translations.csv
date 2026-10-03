@@ -1458,3 +1458,4 @@ new_coins_price_label,Цена пакета,Paket narxi,Pack price
 new_coins_buy_btn,Купить,Sotib olish,Buy
 new_coins_history_more,Показать ещё,Yana ko‘rsatish,Show more
 new_coins_tx_refund,Возврат за отменённую бронь,Bekor qilingan bron uchun qaytarildi,Refund for a cancelled booking
+new_coins_bonus_card_chip,+{} при оплате картой,+{} karta orqali,+{} with card

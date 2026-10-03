@@ -135,6 +135,9 @@ Future<PaymentSelection?> showPaymentChooser(
   PaymentSelection? initial,
   List<PaymentCard> cards = const [],
   bool cardsComingSoon = false,
+  // A short perk shown on the card rail ("+10 Lumi Coin") when paying by card
+  // earns something the other rails do not. Null on every ordinary checkout.
+  String? cardBadge,
 }) {
   return showModalBottomSheet<PaymentSelection>(
     context: context,
@@ -147,6 +150,7 @@ Future<PaymentSelection?> showPaymentChooser(
       initial: initial,
       cards: cards,
       cardsComingSoon: cardsComingSoon,
+      cardBadge: cardBadge,
     ),
   );
 }
@@ -190,7 +194,11 @@ class _ChooserSheet extends StatefulWidget {
     required this.initial,
     required this.cards,
     this.cardsComingSoon = false,
+    this.cardBadge,
   });
+
+  /// See [showPaymentChooser].
+  final String? cardBadge;
 
   final PaymentSelection? initial;
   final List<PaymentCard> cards;
@@ -551,7 +559,11 @@ class _ChooserSheetState extends State<_ChooserSheet> {
           _railTile(PaymentRail.uzum,
               logo: Assets.images.pay.uzum, logoHeight: 24),
           4.verticalSpace,
-          _railTile(PaymentRail.card, disabled: widget.cardsComingSoon),
+          _railTile(
+            PaymentRail.card,
+            disabled: widget.cardsComingSoon,
+            badge: widget.cardsComingSoon ? null : widget.cardBadge,
+          ),
           // The card list belongs to the card rail — it only appears once that
           // rail is picked, as in the design.
           if (isCard) ...[
@@ -588,6 +600,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     AssetGenImage? logo,
     double logoHeight = 20,
     bool disabled = false,
+    String? badge,
   }) {
     final c = context.colors;
     // A disabled rail is dimmed and shows a "coming soon" badge where its radio
@@ -611,6 +624,24 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             12.horizontalSpace,
             Text('pay_with_card'.tr(),
                 style: AppText.semibold16.copyWith(color: c.textPrimary)),
+          ],
+          if (badge != null) ...[
+            10.horizontalSpace,
+            Flexible(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: AppColors.green.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(40.r),
+                ),
+                child: Text(
+                  badge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.semibold12.copyWith(color: AppColors.green),
+                ),
+              ),
+            ),
           ],
           const Spacer(),
           if (disabled) const _ComingSoonBadge() else _radio(_rail == r),

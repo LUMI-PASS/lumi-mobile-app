@@ -178,7 +178,8 @@ const double kNewCoinPackCardHeight = 176;
 class NewCoinsHero extends StatelessWidget {
   const NewCoinsHero({super.key, this.bonus = 0});
 
-  /// Coins added to the buyer's first main pack. 0 hides the chip.
+  /// Coins added to the buyer's first main pack when it is paid by card. 0
+  /// hides the chip.
   final int bonus;
 
   @override
@@ -212,7 +213,7 @@ class NewCoinsHero extends StatelessWidget {
                     ),
                     if (bonus > 0)
                       _HeroArtChip(
-                        label: 'new_coins_bonus_badge'
+                        label: 'new_coins_bonus_card_chip'
                             .tr(args: [bonus.toGrouped()]),
                         art: art,
                         centerX: 1.2,
@@ -296,15 +297,11 @@ class NewCoinPackCard extends StatelessWidget {
     super.key,
     required this.pack,
     this.isBestOffer = false,
-    this.bonus = 0,
     this.savingPercent = 0,
   });
 
   final NewCoinPack pack;
   final bool isBestOffer;
-
-  /// First-pack gift, shown on main packs. 0 hides it.
-  final int bonus;
 
   /// How much cheaper a coin is here than in the dearest main pack. 0 hides it.
   final int savingPercent;
@@ -375,15 +372,6 @@ class NewCoinPackCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (bonus > 0) ...[
-                8.kw,
-                Padding(
-                  padding: EdgeInsets.only(bottom: 5.h),
-                  child: _GreenChip(
-                    label: 'new_coins_bonus_badge'.tr(args: ['$bonus']),
-                  ),
-                ),
-              ],
             ],
           ),
           8.kh,

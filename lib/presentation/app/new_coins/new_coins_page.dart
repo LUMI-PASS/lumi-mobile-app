@@ -241,6 +241,12 @@ class _NewCoinsPageState extends State<NewCoinsPage>
     return best?.id;
   }
 
+  /// Whether paying for the pack in front BY CARD brings the first-pack gift:
+  /// it is still on offer, and the pack is a main one.
+  bool get _bonusOnCard =>
+      _catalogue.firstPackBonus > 0 &&
+      _catalogue.main.any((p) => p.id == _selectedId);
+
   /// A booking that came up short sent the buyer here: extras lead.
   bool get _extrasFirst => widget.topUpFor != null && _extras.isNotEmpty;
 
@@ -301,6 +307,11 @@ class _NewCoinsPageState extends State<NewCoinsPage>
       initial: _payment,
       cards: [if (_payment?.card != null) _payment!.card!],
       cardsComingSoon: !kCardPaymentsEnabled,
+      // The first-pack gift is for a main pack paid by card. Said here, on the
+      // card rail, because this is where the method is being chosen.
+      cardBadge: _bonusOnCard
+          ? 'new_coins_amount'.tr(args: ['+${_catalogue.firstPackBonus}'])
+          : null,
     );
     if (picked == null || !mounted) return null;
     setState(() => _payment = picked);
@@ -676,7 +687,6 @@ class _NewCoinsPageState extends State<NewCoinsPage>
       return NewCoinPackCard(
         pack: pack,
         isBestOffer: pack.id == bestId,
-        bonus: isMain ? _catalogue.firstPackBonus : 0,
         savingPercent: isMain ? _savingPercent(pack) : 0,
       );
     }

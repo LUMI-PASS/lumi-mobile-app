@@ -60,12 +60,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 // DeeplinkService handles the actual navigation; auto_route just sees the normal
 // root route so the InitialGuard runs and the app starts cleanly.
 
+//
+// Only a COLD start needs that root route. On a warm link the app already has
+// a stack, and auto_route applies a routes deep link with `pushAll` — so
+// answering with the root route pushed a SECOND root on top of the screen the
+// user was on. The guard then mounted a second MainRoute under the same key as
+// the first: "Duplicate GlobalKey", a truncated tree, a black screen. That is
+// what a payment's `lumi://class` return did to whichever screen was polling
+// for the result. A warm link is therefore left to DeeplinkService alone.
+
 DeepLink _nativeDeepLink(PlatformDeepLink link) {
   final uri = link.uri;
   if (uri.scheme == 'lumi' ||
       (uri.host == 'mobile-api.lumipass.uz' &&
           uri.path.contains('/share/class/'))) {
-    return DeepLink.single(const EmptyRouterRoute());
+    return link.initial
+        ? DeepLink.single(const EmptyRouterRoute())
+        : DeepLink.none;
   }
   return link;
 }
