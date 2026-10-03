@@ -21,14 +21,9 @@ import 'package:lumi_pass/presentation/app/shop/widgets/shop_quantity_stepper.da
 /// are listed underneath only when there is more than one, because a single
 /// lot says nothing the hero has not already said.
 class NewCoinsBalanceCard extends StatelessWidget {
-  const NewCoinsBalanceCard({
-    super.key,
-    required this.balance,
-    required this.onHistory,
-  });
+  const NewCoinsBalanceCard({super.key, required this.balance});
 
   final NewCoinBalance balance;
-  final VoidCallback onHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -48,21 +43,10 @@ class NewCoinsBalanceCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'new_coins_balance_label'.tr(),
-                      style: AppText.medium14
-                          .copyWith(color: onHero.withValues(alpha: 0.85)),
-                    ),
-                  ),
-                  _HeroChip(
-                    label: 'new_coins_history'.tr(),
-                    onTap: onHistory,
-                    trailing: Icons.chevron_right_rounded,
-                  ),
-                ],
+              Text(
+                'new_coins_balance_label'.tr(),
+                style: AppText.medium14
+                    .copyWith(color: onHero.withValues(alpha: 0.85)),
               ),
               10.kh,
               CoinAmount(
@@ -103,51 +87,36 @@ class NewCoinsBalanceCard extends StatelessWidget {
   }
 }
 
-/// A translucent pill on the gradient hero — the history link and the expiry
-/// line share it so the hero has one kind of secondary element, not two.
+/// A translucent pill on the gradient hero, carrying the expiry line.
 class _HeroChip extends StatelessWidget {
-  const _HeroChip({
-    required this.label,
-    this.onTap,
-    this.leading,
-    this.trailing,
-  });
+  const _HeroChip({required this.label, required this.leading});
 
   final String label;
-  final VoidCallback? onTap;
-  final IconData? leading;
-  final IconData? trailing;
+  final IconData leading;
 
   @override
   Widget build(BuildContext context) {
     final onHero = context.colors.onPrimary;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: onHero.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(40.r),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (leading != null) ...[
-              Icon(leading, size: 14.w, color: onHero),
-              5.kw,
-            ],
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.medium12.copyWith(color: onHero),
-              ),
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: onHero.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(40.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(leading, size: 14.w, color: onHero),
+          5.kw,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.medium12.copyWith(color: onHero),
             ),
-            if (trailing != null) Icon(trailing, size: 16.w, color: onHero),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

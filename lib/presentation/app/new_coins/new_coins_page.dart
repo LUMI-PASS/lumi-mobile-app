@@ -558,12 +558,6 @@ class _NewCoinsPageState extends State<NewCoinsPage>
     );
   }
 
-  void _openHistory() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const NewCoinsHistoryPage()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -747,14 +741,18 @@ class _NewCoinsPageState extends State<NewCoinsPage>
     ];
   }
 
-  /// What the buyer holds: the balance, the deadlines behind it, and the way
-  /// into the history.
+  /// What the buyer holds: the balance, the deadlines behind it, and under
+  /// them every movement that led there.
   List<Widget> _mineTab() => [
         16.kh,
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child:
-              NewCoinsBalanceCard(balance: _balance, onHistory: _openHistory),
+          child: NewCoinsBalanceCard(balance: _balance),
+        ),
+        _sectionTitle('new_coins_history'.tr()),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: NewCoinsHistoryList(),
         ),
       ];
 }

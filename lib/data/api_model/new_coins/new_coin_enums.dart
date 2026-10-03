@@ -78,6 +78,9 @@ enum NewCoinTransactionKind {
   expire('expire'),
   grant('grant'),
   revoke('revoke'),
+
+  /// Coins returned because Lumi cancelled a booking they had paid for.
+  refund('refund'),
   unknown('');
 
   const NewCoinTransactionKind(this.key);
@@ -100,6 +103,7 @@ enum NewCoinTransactionKind {
         NewCoinTransactionKind.expire => 'new_coins_tx_expire',
         NewCoinTransactionKind.grant => 'new_coins_tx_grant',
         NewCoinTransactionKind.revoke => 'new_coins_tx_revoke',
+        NewCoinTransactionKind.refund => 'new_coins_tx_refund',
         NewCoinTransactionKind.unknown => 'new_coins_tx_other',
       };
 }
@@ -147,8 +151,7 @@ enum NewCoinErrorCode {
   /// The translations.csv key for this refusal, or null for [unknown] — which
   /// is not a coin refusal at all and is left to the caller's own handling.
   String? get messageKey => switch (this) {
-        NewCoinErrorCode.mainPackRequired =>
-          'new_coins_err_main_required',
+        NewCoinErrorCode.mainPackRequired => 'new_coins_err_main_required',
         NewCoinErrorCode.packInactive => 'new_coins_err_pack_inactive',
         NewCoinErrorCode.insufficient => 'new_coins_err_insufficient',
         NewCoinErrorCode.exclusive => 'new_coins_err_exclusive',

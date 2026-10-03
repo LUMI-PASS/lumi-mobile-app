@@ -39,7 +39,7 @@ void main() {
         expect(NewCoinTransactionKind.fromKey(kind.key), kind);
       }
       expect(
-        NewCoinTransactionKind.fromKey('refund'),
+        NewCoinTransactionKind.fromKey('some_future_kind'),
         NewCoinTransactionKind.unknown,
       );
       expect(

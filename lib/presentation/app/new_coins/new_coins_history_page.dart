@@ -6,7 +6,6 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
-import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -14,19 +13,19 @@ import 'package:lumi_pass/domain/repo/new_coins/new_coins_repository.dart';
 
 /// The coin ledger: every purchase, bonus, spend and expiry, newest first.
 ///
-/// A plain list on purpose. It answers one question — "where did my coins
-/// go?" — and each row says what happened, when, by how much, and what that
-/// left.
-class NewCoinsHistoryPage extends StatefulWidget {
-  const NewCoinsHistoryPage({super.key});
+/// Embedded under the balance rather than behind a link — the question it
+/// answers, "where did my coins go?", is asked right where the balance is
+/// shown. It sits inside the host screen's own scroll view, so it pages with
+/// a "show more" row instead of a scroll listener of its own.
+class NewCoinsHistoryList extends StatefulWidget {
+  const NewCoinsHistoryList({super.key});
 
   @override
-  State<NewCoinsHistoryPage> createState() => _NewCoinsHistoryPageState();
+  State<NewCoinsHistoryList> createState() => _NewCoinsHistoryListState();
 }
 
-class _NewCoinsHistoryPageState extends State<NewCoinsHistoryPage> {
+class _NewCoinsHistoryListState extends State<NewCoinsHistoryList> {
   final NewCoinsRepository _repo = getIt<NewCoinsRepository>();
-  final ScrollController _scroll = ScrollController();
 
   final List<NewCoinTransaction> _items = [];
   int _page = 0;
@@ -37,20 +36,7 @@ class _NewCoinsHistoryPageState extends State<NewCoinsHistoryPage> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
     _loadMore();
-  }
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
-      _loadMore();
-    }
   }
 
   Future<void> _loadMore() async {
@@ -79,75 +65,48 @@ class _NewCoinsHistoryPageState extends State<NewCoinsHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Scaffold(
-      backgroundColor: c.pageBg,
-      appBar: BaseAppBar(title: 'new_coins_history'.tr()),
-      body: _items.isEmpty ? _placeholder() : _list(),
-    );
-  }
 
-  Widget _placeholder() {
-    final c = context.colors;
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _failed
-                  ? 'book_network_error'.tr()
-                  : 'new_coins_history_empty'.tr(),
-              textAlign: TextAlign.center,
-              style: AppText.regular14.copyWith(color: c.textSecondary),
-            ),
-            if (_failed) ...[
-              12.kh,
-              TextButton(
-                onPressed: _loadMore,
-                child: Text(
-                  'retry'.tr(),
-                  style:
-                      AppText.medium14.copyWith(color: AppColors.brandPurple),
-                ),
-              ),
-            ],
-          ],
+    if (_items.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 24.h),
+        child: Center(
+          child: _loading
+              ? const CircularProgressIndicator()
+              : _failed
+                  ? _more('retry'.tr())
+                  : Text(
+                      'new_coins_history_empty'.tr(),
+                      textAlign: TextAlign.center,
+                      style: AppText.regular14.copyWith(color: c.textSecondary),
+                    ),
         ),
-      ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var i = 0; i < _items.length; i++) ...[
+          if (i > 0) Divider(height: 1, color: c.border),
+          _TransactionRow(tx: _items[i]),
+        ],
+        if (_hasMore || _failed)
+          Padding(
+            padding: EdgeInsets.only(top: 8.h),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _more(_failed ? 'retry'.tr() : 'new_coins_history_more'.tr()),
+          ),
+      ],
     );
   }
 
-  Widget _list() {
-    final c = context.colors;
-    return ListView.separated(
-      controller: _scroll,
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
-      itemCount: _items.length + (_hasMore ? 1 : 0),
-      separatorBuilder: (_, __) => Divider(height: 1, color: c.border),
-      itemBuilder: (context, i) {
-        if (i >= _items.length) {
-          return Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.h),
-            child: Center(
-              child: _failed
-                  ? TextButton(
-                      onPressed: _loadMore,
-                      child: Text(
-                        'retry'.tr(),
-                        style: AppText.medium14
-                            .copyWith(color: AppColors.brandPurple),
-                      ),
-                    )
-                  : const CircularProgressIndicator(),
-            ),
-          );
-        }
-        return _TransactionRow(tx: _items[i]);
-      },
-    );
-  }
+  Widget _more(String label) => TextButton(
+        onPressed: _loadMore,
+        child: Text(
+          label,
+          style: AppText.medium14.copyWith(color: AppColors.brandPurple),
+        ),
+      );
 }
 
 class _TransactionRow extends StatelessWidget {
