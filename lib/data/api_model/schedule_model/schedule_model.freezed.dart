@@ -293,6 +293,10 @@ mixin _$ScheduleItem {
   @JsonKey(name: 'related_bookings')
   List<RelatedBooking>? get relatedBookings =>
       throw _privateConstructorUsedError;
+
+  /// True when the booking was paid with Lumi Coin — it then cannot be
+  /// cancelled. Absent on old data, which reads as false.
+  bool? get paidWithNewCoins => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   String? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
@@ -324,6 +328,7 @@ abstract class $ScheduleItemCopyWith<$Res> {
       String? notes,
       @JsonKey(name: 'for_child') ScheduleChild? forChild,
       @JsonKey(name: 'related_bookings') List<RelatedBooking>? relatedBookings,
+      bool? paidWithNewCoins,
       @JsonKey(name: 'created_at') String? createdAt,
       @JsonKey(name: 'updated_at') String? updatedAt});
 
@@ -357,6 +362,7 @@ class _$ScheduleItemCopyWithImpl<$Res, $Val extends ScheduleItem>
     Object? notes = freezed,
     Object? forChild = freezed,
     Object? relatedBookings = freezed,
+    Object? paidWithNewCoins = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -413,6 +419,10 @@ class _$ScheduleItemCopyWithImpl<$Res, $Val extends ScheduleItem>
           ? _value.relatedBookings
           : relatedBookings // ignore: cast_nullable_to_non_nullable
               as List<RelatedBooking>?,
+      paidWithNewCoins: freezed == paidWithNewCoins
+          ? _value.paidWithNewCoins
+          : paidWithNewCoins // ignore: cast_nullable_to_non_nullable
+              as bool?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -471,6 +481,7 @@ abstract class _$$ScheduleItemImplCopyWith<$Res>
       String? notes,
       @JsonKey(name: 'for_child') ScheduleChild? forChild,
       @JsonKey(name: 'related_bookings') List<RelatedBooking>? relatedBookings,
+      bool? paidWithNewCoins,
       @JsonKey(name: 'created_at') String? createdAt,
       @JsonKey(name: 'updated_at') String? updatedAt});
 
@@ -504,6 +515,7 @@ class __$$ScheduleItemImplCopyWithImpl<$Res>
     Object? notes = freezed,
     Object? forChild = freezed,
     Object? relatedBookings = freezed,
+    Object? paidWithNewCoins = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -560,6 +572,10 @@ class __$$ScheduleItemImplCopyWithImpl<$Res>
           ? _value._relatedBookings
           : relatedBookings // ignore: cast_nullable_to_non_nullable
               as List<RelatedBooking>?,
+      paidWithNewCoins: freezed == paidWithNewCoins
+          ? _value.paidWithNewCoins
+          : paidWithNewCoins // ignore: cast_nullable_to_non_nullable
+              as bool?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -591,6 +607,7 @@ class _$ScheduleItemImpl implements _ScheduleItem {
       @JsonKey(name: 'for_child') this.forChild,
       @JsonKey(name: 'related_bookings')
       final List<RelatedBooking>? relatedBookings,
+      this.paidWithNewCoins,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt})
       : _relatedBookings = relatedBookings;
@@ -641,6 +658,10 @@ class _$ScheduleItemImpl implements _ScheduleItem {
     return EqualUnmodifiableListView(value);
   }
 
+  /// True when the booking was paid with Lumi Coin — it then cannot be
+  /// cancelled. Absent on old data, which reads as false.
+  @override
+  final bool? paidWithNewCoins;
   @override
   @JsonKey(name: 'created_at')
   final String? createdAt;
@@ -650,7 +671,7 @@ class _$ScheduleItemImpl implements _ScheduleItem {
 
   @override
   String toString() {
-    return 'ScheduleItem(id: $id, scheduleClass: $scheduleClass, dayOfWeek: $dayOfWeek, forDate: $forDate, startTime: $startTime, endTime: $endTime, startDate: $startDate, endDate: $endDate, capacity: $capacity, status: $status, notes: $notes, forChild: $forChild, relatedBookings: $relatedBookings, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'ScheduleItem(id: $id, scheduleClass: $scheduleClass, dayOfWeek: $dayOfWeek, forDate: $forDate, startTime: $startTime, endTime: $endTime, startDate: $startDate, endDate: $endDate, capacity: $capacity, status: $status, notes: $notes, forChild: $forChild, relatedBookings: $relatedBookings, paidWithNewCoins: $paidWithNewCoins, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -678,6 +699,8 @@ class _$ScheduleItemImpl implements _ScheduleItem {
                 other.forChild == forChild) &&
             const DeepCollectionEquality()
                 .equals(other._relatedBookings, _relatedBookings) &&
+            (identical(other.paidWithNewCoins, paidWithNewCoins) ||
+                other.paidWithNewCoins == paidWithNewCoins) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -701,6 +724,7 @@ class _$ScheduleItemImpl implements _ScheduleItem {
       notes,
       forChild,
       const DeepCollectionEquality().hash(_relatedBookings),
+      paidWithNewCoins,
       createdAt,
       updatedAt);
 
@@ -734,6 +758,7 @@ abstract class _ScheduleItem implements ScheduleItem {
           @JsonKey(name: 'for_child') final ScheduleChild? forChild,
           @JsonKey(name: 'related_bookings')
           final List<RelatedBooking>? relatedBookings,
+          final bool? paidWithNewCoins,
           @JsonKey(name: 'created_at') final String? createdAt,
           @JsonKey(name: 'updated_at') final String? updatedAt}) =
       _$ScheduleItemImpl;
@@ -776,6 +801,11 @@ abstract class _ScheduleItem implements ScheduleItem {
   @override
   @JsonKey(name: 'related_bookings')
   List<RelatedBooking>? get relatedBookings;
+  @override
+
+  /// True when the booking was paid with Lumi Coin — it then cannot be
+  /// cancelled. Absent on old data, which reads as false.
+  bool? get paidWithNewCoins;
   @override
   @JsonKey(name: 'created_at')
   String? get createdAt;

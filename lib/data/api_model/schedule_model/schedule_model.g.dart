@@ -49,6 +49,7 @@ _$ScheduleItemImpl _$$ScheduleItemImplFromJson(Map<String, dynamic> json) =>
       relatedBookings: (json['related_bookings'] as List<dynamic>?)
           ?.map((e) => RelatedBooking.fromJson(e as Map<String, dynamic>))
           .toList(),
+      paidWithNewCoins: json['paid_with_new_coins'] as bool?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );
@@ -68,6 +69,7 @@ Map<String, dynamic> _$$ScheduleItemImplToJson(_$ScheduleItemImpl instance) =>
       'notes': instance.notes,
       'for_child': instance.forChild,
       'related_bookings': instance.relatedBookings,
+      'paid_with_new_coins': instance.paidWithNewCoins,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
     };

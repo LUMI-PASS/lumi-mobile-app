@@ -98,7 +98,12 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    final visible = _orders.where((o) => !o.isPending).toList();
+    // `GET orders` returns every order type, and only an activity order is a
+    // booking. A Lumi Coin pack (like a packet or a shop order) has no
+    // activity and no tickets, so without this it read as a paid booking with
+    // a future date and sat in "active" as an empty card.
+    final visible =
+        _orders.where((o) => o.isActivityOrder && !o.isPending).toList();
     final active = visible.where(_isActive).toList();
     final past = visible.where((o) => !_isActive(o)).toList();
 

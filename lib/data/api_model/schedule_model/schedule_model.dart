@@ -35,6 +35,10 @@ class ScheduleItem with _$ScheduleItem {
     String? notes,
     @JsonKey(name: 'for_child') ScheduleChild? forChild,
     @JsonKey(name: 'related_bookings') List<RelatedBooking>? relatedBookings,
+
+    /// True when the booking was paid with Lumi Coin — it then cannot be
+    /// cancelled. Absent on old data, which reads as false.
+    bool? paidWithNewCoins,
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _ScheduleItem;
