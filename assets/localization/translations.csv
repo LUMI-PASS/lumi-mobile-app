@@ -1441,3 +1441,7 @@ new_coins_err_main_required,Сначала купите основной пак�
 new_coins_err_pack_inactive,Этот пакет больше не продаётся.,Bu paket endi sotilmaydi.,This pack is no longer on sale.
 new_coins_err_insufficient,Недостаточно Lumi Coin для этой брони.,Bu bron uchun Lumi Coin yetarli emas.,Not enough Lumi Coin for this booking.
 new_coins_err_exclusive,"Lumi Coin нельзя совмещать с промокодом, кошельком или пакетом.","Lumi Coin promokod, hamyon yoki paket bilan birga ishlatilmaydi.","Lumi Coin cannot be combined with a promocode, the wallet or a packet."
+new_coins_days,{} дн.,{} kun,{} days
+new_coins_save_badge,−{}%,−{}%,−{}%
+new_coins_first_pack_banner,+{} Lumi Coin в подарок к первому пакету,Birinchi paketga +{} Lumi Coin sovg‘a,+{} Lumi Coin free with your first pack
+new_coins_buy_cta,Купить {} Lumi Coin · {},{} Lumi Coin · {} — sotib olish,Buy {} Lumi Coin · {}
