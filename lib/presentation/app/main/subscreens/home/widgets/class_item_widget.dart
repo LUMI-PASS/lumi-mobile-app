@@ -14,6 +14,7 @@ import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/container_3d.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
@@ -445,6 +446,9 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     if (effectivePrice < 100) {
       return Text('price_free'.tr(), style: priceStyle);
     }
+    // The server's coin figure is for the cheapest ticket, so it is only the
+    // one to print while that is the ticket being quoted.
+    final sentCoinPrice = hasFreeAndPaid ? null : widget.homClass?.newCoinPrice;
     // Routed through the same funnel as a discount, so the packet is applied
     // once rather than at each of the three return paths below.
 
@@ -456,6 +460,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
         ),
         originalPrice: effectivePrice,
         discountPct: discountPct,
+        priceStyle: priceStyle,
+        sentCoinPrice: sentCoinPrice,
         showFrom: true,
       );
     }
@@ -463,6 +469,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
       originalWidget: Text(effectivePrice.toRawUzsPrice(), style: priceStyle),
       originalPrice: effectivePrice,
       discountPct: discountPct,
+      priceStyle: priceStyle,
+      sentCoinPrice: sentCoinPrice,
     );
   }
 
@@ -470,6 +478,8 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
     required Widget originalWidget,
     required num originalPrice,
     required int discountPct,
+    required TextStyle priceStyle,
+    num? sentCoinPrice,
     bool showFrom = false,
   }) {
     // A "Lumi Start" packet outranks every discount below: there is nothing to
@@ -488,6 +498,18 @@ class _ClassItemWidgetState extends State<ClassItemWidget> {
           isWholeCourse: widget.homClass?.showsWholeCoursePrice ?? false,
         )) {
       return PromoIncludedLabel(pass: pass);
+    }
+
+    // An activity is paid in Lumi Coin, so that is what the card quotes — in
+    // place of the so'm figure, and with no coupon preview: a coupon plan does
+    // not discount a coin price. A course stays on money.
+    if (widget.homClass?.isCourse != true) {
+      final coinPrice = watchNewCoinPriceOf(context, originalPrice,
+          sent: sentCoinPrice);
+      if (coinPrice != null) {
+        return NewCoinPriceText(
+            amount: coinPrice, from: showFrom, style: priceStyle);
+      }
     }
 
     final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();

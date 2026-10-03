@@ -22,6 +22,7 @@ import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
@@ -692,6 +693,18 @@ class _PriceText extends StatelessWidget {
 
     if (effectivePrice < 100) {
       return Text('price_free'.tr(), style: baseStyle);
+    }
+
+    // An activity is paid in Lumi Coin, so that is what the card quotes — in
+    // place of the so'm figure, and with no coupon preview: a coupon plan does
+    // not discount a coin price.
+    // The server's figure is for the cheapest ticket, so it is only the one to
+    // print while that is the ticket being quoted.
+    final coinPrice = watchNewCoinPriceOf(context, effectivePrice,
+        sent: hasFreeAndPaid ? null : hc?.newCoinPrice);
+    if (coinPrice != null) {
+      return NewCoinPriceText(
+          amount: coinPrice, from: showFrom, style: baseStyle);
     }
 
     String label(num v) => showFrom

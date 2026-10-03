@@ -17,6 +17,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/common/widget/promo_included_label.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
@@ -742,7 +743,7 @@ class _ShortSlide extends StatelessWidget {
   // plan, [discountedLabel] carries the discounted price to show alongside
   // the struck-through original, capped the same way the charge will be —
   // this page was the one place still showing the raw price.
-  ({String label, String? discountedLabel})? _priceInfo(BuildContext context) {
+  ({String label, String? discountedLabel, int? coins, bool from})? _priceInfo(BuildContext context) {
     final snap = ClassPricingCache.get(hc.id);
     final hasFreeAndPaid =
         snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
@@ -754,7 +755,7 @@ class _ShortSlide extends StatelessWidget {
     final showFrom = hasFreeAndPaid ||
         (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
     if (effectivePrice < 100) {
-      return (label: 'price_free'.tr(), discountedLabel: null);
+      return (label: 'price_free'.tr(), discountedLabel: null, coins: null, from: false);
     }
 
     String fmt(num v) =>
@@ -774,7 +775,27 @@ class _ShortSlide extends StatelessWidget {
       return (
         label: 'promo_included_in'.tr(namedArgs: {'packet': pass.title}),
         discountedLabel: null,
+        coins: null,
+        from: false,
       );
+    }
+
+    // An activity is paid in Lumi Coin, so that is what the overlay quotes —
+    // in place of the so'm figure, and with no coupon preview: a coupon plan
+    // does not discount a coin price. A course stays on money.
+    if (hc.isCourse != true) {
+      // The server's figure is for the cheapest ticket, so it is only the one
+      // to print while that is the ticket being quoted.
+      final coinPrice = watchNewCoinPriceOf(context, effectivePrice,
+          sent: hasFreeAndPaid ? null : hc.newCoinPrice);
+      if (coinPrice != null) {
+        return (
+          label: fmt(effectivePrice),
+          discountedLabel: null,
+          coins: coinPrice,
+          from: showFrom,
+        );
+      }
     }
 
     final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
@@ -783,10 +804,15 @@ class _ShortSlide extends StatelessWidget {
       hc.discountPercentage,
       isWholeCourse: hc.showsWholeCoursePrice,
     );
-    if (planPct <= 0) return (label: fmt(effectivePrice), discountedLabel: null);
+    if (planPct <= 0) return (label: fmt(effectivePrice), discountedLabel: null, coins: null, from: false);
 
     final discounted = effectivePrice * (1 - planPct / 100);
-    return (label: fmt(effectivePrice), discountedLabel: fmt(discounted));
+    return (
+      label: fmt(effectivePrice),
+      discountedLabel: fmt(discounted),
+      coins: null,
+      from: false,
+    );
   }
 
   @override
@@ -958,7 +984,7 @@ class _DetailsCta extends StatelessWidget {
   const _DetailsCta({required this.hc, required this.price});
 
   final HomClass hc;
-  final ({String label, String? discountedLabel})? price;
+  final ({String label, String? discountedLabel, int? coins, bool from})? price;
 
   @override
   Widget build(BuildContext context) {
@@ -1005,7 +1031,17 @@ class _DetailsCta extends StatelessWidget {
                   margin: EdgeInsets.symmetric(horizontal: 10.w),
                   color: Colors.white.withOpacity(0.4),
                 ),
-                if (p.discountedLabel != null) ...[
+                if (p.coins != null)
+                  NewCoinPriceText(
+                    amount: p.coins!,
+                    from: p.from,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                else if (p.discountedLabel != null) ...[
                   Text(
                     p.label,
                     maxLines: 1,

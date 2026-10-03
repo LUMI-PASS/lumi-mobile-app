@@ -17,6 +17,7 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/strip_html.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
@@ -758,10 +759,23 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
-                    Text(
-                      order.totalAmount.toRawUzsPrice(),
-                      style: AppText.heading20.copyWith(color: amountColor),
-                    ),
+                    // Paid with Lumi Coin: the coins ARE the amount paid. The
+                    // so'm total is only what the booking was worth, and is
+                    // not quoted on a booking nobody paid so'm for.
+                    if (order.paidWithNewCoins)
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: CoinAmount(
+                          amount: order.newCoinAmount,
+                          style: AppText.heading20,
+                          color: amountColor,
+                        ),
+                      )
+                    else
+                      Text(
+                        order.totalAmount.toRawUzsPrice(),
+                        style: AppText.heading20.copyWith(color: amountColor),
+                      ),
                   ],
                 ),
               ),
@@ -790,18 +804,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
           // than next to the struck-through subtotal, which would read as
           // money off. Without it the card rail is quoted for an amount the
           // card was never charged.
-          // Paid with Lumi Coin — the so'm figure above is what the booking
-          // is worth, not what was charged; this is what was actually spent.
-          if (order.paidWithNewCoins) ...[
-            12.verticalSpace,
-            _DetailPill(
-              c: c,
-              icon: Assets.icons.home.money,
-              label: 'new_coins_paid_with_label'.tr(),
-              value: 'new_coins_amount'
-                  .tr(args: [order.newCoinAmount.toGrouped()]),
-            ),
-          ],
           if (order.hasWalletPayment) ...[
             12.verticalSpace,
             _DetailPill(

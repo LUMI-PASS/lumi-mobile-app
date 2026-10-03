@@ -20,6 +20,7 @@ import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/course_timetable.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
@@ -1530,7 +1531,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   // ─── Prices card ────────────────────────────────────────────────────────────
   Widget _pricesCard(AppColorScheme c, List<_PriceRowData> rows) {
-    // The same tickets in Lumi Coin, beside the so'm price. Only while packs
+    // The tickets in Lumi Coin, instead of the so'm price. Only while packs
     // are on sale (or this user still holds coins), only when the server sent
     // coin prices for this activity, and never on a course — a course is
     // money-only.
@@ -2009,7 +2010,7 @@ class _PriceRow extends StatelessWidget {
   /// replaced by the included badge rather than quoted or discounted.
   final PromoPassCoverage? promoPass;
 
-  /// Whether to quote [_PriceRowData.newCoinPrice] under the so'm price.
+  /// Whether to quote [_PriceRowData.newCoinPrice] in place of the so'm price.
   final bool showNewCoinPrice;
 
   /// The packet is paying for this row — see [_priceText].
@@ -2062,16 +2063,12 @@ class _PriceRow extends StatelessWidget {
           ),
           // A visit the packet already covers has no second price to offer.
           if (showNewCoinPrice && coins != null && coins > 0 && !_coveredByPass)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _priceText(),
-                4.verticalSpace,
-                // On the row's own control fill, so the pill takes the
-                // surface tint to stay visible.
-                NewCoinPricePill(amount: coins, color: c.surface),
-              ],
+            // In place of the so'm price, not under it: an activity is paid in
+            // coins, so that is the only figure the row owes the buyer.
+            CoinAmount(
+              amount: coins,
+              style: AppText.semibold14,
+              color: c.textPrimary,
             )
           else
             _priceText(),
