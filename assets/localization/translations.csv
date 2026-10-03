@@ -1398,12 +1398,12 @@ new_coins_valid_until,Действуют до {},{} gacha amal qiladi,Valid unti
 new_coins_never_expire,Не сгорают,Muddati cheklanmagan,Never expire
 new_coins_history,История,Tarix,History
 new_coins_history_empty,Здесь появятся покупки и списания Lumi Coin.,Bu yerda Lumi Coin xaridlari va sarflari ko‘rinadi.,Your Lumi Coin purchases and spends will appear here.
-new_coins_monthly_section,Месячные пакеты,Oylik paketlar,Monthly packs
+new_coins_main_section,Основные пакеты,Asosiy paketlar,Main packs
 new_coins_extra_section,Дополнительные пакеты,Qo‘shimcha paketlar,Extra packs
 new_coins_single_section,Отдельные коины,Alohida coinlar,Single coins
 new_coins_single_title,Купить Lumi Coin поштучно,Lumi Coin donalab sotib olish,Buy single Lumi Coin
 new_coins_single_hint,"Не сгорают — удобно, когда на занятие не хватает пары коинов.",Muddati cheklanmagan — mashg‘ulotga bir-ikki coin yetmaganda qulay.,They never expire — handy when a booking is a coin or two short.
-new_coins_extras_locked,Доступно при активном месячном пакете.,Faol oylik paket bo‘lganda mavjud.,Available with an active monthly pack.
+new_coins_extras_locked,Доступно при активном основном пакете.,Faol asosiy paket bo‘lganda mavjud.,Available with an active main pack.
 new_coins_valid_days,Действует {} дн.,{} kun amal qiladi,Valid for {} days
 new_coins_per_coin,{} за коин,1 coin — {},{} per coin
 new_coins_buy_for,Купить за {},{} ga sotib olish,Buy for {}
@@ -1424,7 +1424,7 @@ new_coins_shortfall_title,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi
 new_coins_shortfall_body,"Нужно {} Lumi Coin, а у вас {}.","{} Lumi Coin kerak, sizda esa {}.",This booking needs {} Lumi Coin and you have {}.
 new_coins_shortfall_buy_missing,Докупить {} Lumi Coin за {},{} Lumi Coin — {} ga sotib olish,Buy {} Lumi Coin for {}
 new_coins_shortfall_open_store,Выбрать пакет,Paket tanlash,Choose a pack
-new_coins_lot_monthly,Месячный пакет,Oylik paket,Monthly pack
+new_coins_lot_main,Основной пакет,Asosiy paket,Main pack
 new_coins_lot_extra,Дополнительный пакет,Qo‘shimcha paket,Extra pack
 new_coins_lot_single,Отдельные коины,Alohida coinlar,Single coins
 new_coins_lot_bonus,Бонус,Bonus,Bonus
@@ -1437,7 +1437,7 @@ new_coins_tx_expire,Срок действия истёк,Muddati tugadi,Expired
 new_coins_tx_grant,Начисление от Lumi,Lumi tomonidan berilgan,Credited by Lumi
 new_coins_tx_revoke,Списание,Yechib olindi,Revoked
 new_coins_tx_other,Операция,Amal,Transaction
-new_coins_err_monthly_required,Сначала купите месячный пакет.,Avval oylik paket sotib oling.,Buy a monthly pack first.
+new_coins_err_main_required,Сначала купите основной пакет.,Avval asosiy paket sotib oling.,Buy a main pack first.
 new_coins_err_pack_inactive,Этот пакет больше не продаётся.,Bu paket endi sotilmaydi.,This pack is no longer on sale.
 new_coins_err_insufficient,Недостаточно Lumi Coin для этой брони.,Bu bron uchun Lumi Coin yetarli emas.,Not enough Lumi Coin for this booking.
 new_coins_err_exclusive,"Lumi Coin нельзя совмещать с промокодом, кошельком или пакетом.","Lumi Coin promokod, hamyon yoki paket bilan birga ishlatilmaydi.","Lumi Coin cannot be combined with a promocode, the wallet or a packet."

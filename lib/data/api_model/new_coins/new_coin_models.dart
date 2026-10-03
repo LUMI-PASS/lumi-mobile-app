@@ -77,7 +77,7 @@ class NewCoinPack {
 /// Everything the "Lumi Coin" screen sells, in one read (`new-coins/packs`).
 class NewCoinCatalogue {
   const NewCoinCatalogue({
-    this.monthly = const [],
+    this.main = const [],
     this.extra = const [],
     this.singleCoinPrice = 0,
     this.activityRate = 0,
@@ -87,7 +87,7 @@ class NewCoinCatalogue {
 
   static const empty = NewCoinCatalogue();
 
-  final List<NewCoinPack> monthly;
+  final List<NewCoinPack> main;
   final List<NewCoinPack> extra;
 
   /// Unit price of one loose coin, in so'm. 0 when loose coins are not sold.
@@ -96,16 +96,16 @@ class NewCoinCatalogue {
   /// So'm per coin when paying for an activity (`ceil(price / rate)`).
   final num activityRate;
 
-  /// Extras and loose coins are sold only on top of a live monthly pack.
+  /// Extras and loose coins are sold only on top of a live main pack.
   final bool canBuyExtras;
 
-  /// Coins added to the buyer's FIRST monthly pack. 0 means there is nothing
+  /// Coins added to the buyer's FIRST main pack. 0 means there is nothing
   /// to advertise — the bonus is off, or this buyer already had it.
   final int firstPackBonus;
 
-  /// The whole feature hangs off this: with no monthly pack on sale there is
+  /// The whole feature hangs off this: with no main pack on sale there is
   /// no way into the system, so nothing about it is shown anywhere.
-  bool get isOnSale => monthly.isNotEmpty;
+  bool get isOnSale => main.isNotEmpty;
 
   factory NewCoinCatalogue.fromJson(Map<String, dynamic> json) {
     List<NewCoinPack> packs(Object? raw) => ((raw as List?) ?? const [])
@@ -114,7 +114,7 @@ class NewCoinCatalogue {
         .toList();
 
     return NewCoinCatalogue(
-      monthly: packs(json['monthly']),
+      main: packs(json['main']),
       extra: packs(json['extra']),
       singleCoinPrice: _num(json['single_coin_price']),
       activityRate: _num(json['activity_rate']),
@@ -165,7 +165,7 @@ class NewCoinLot {
 class NewCoinBalance {
   const NewCoinBalance({
     this.balance = 0,
-    this.hasActiveMonthly = false,
+    this.hasActiveMain = false,
     this.nearestExpiry,
     this.nearestExpiryCoins = 0,
     this.lots = const [],
@@ -174,7 +174,7 @@ class NewCoinBalance {
   static const empty = NewCoinBalance();
 
   final int balance;
-  final bool hasActiveMonthly;
+  final bool hasActiveMain;
 
   /// The soonest deadline among the coins still held, and how many it takes.
   final DateTime? nearestExpiry;
@@ -185,7 +185,7 @@ class NewCoinBalance {
 
   factory NewCoinBalance.fromJson(Map<String, dynamic> json) => NewCoinBalance(
         balance: _int(json['balance']),
-        hasActiveMonthly: json['has_active_monthly'] == true,
+        hasActiveMain: json['has_active_main'] == true,
         nearestExpiry: _date(json['nearest_expiry']),
         nearestExpiryCoins: _int(json['nearest_expiry_coins']),
         lots: ((json['lots'] as List?) ?? const [])
@@ -292,7 +292,7 @@ class NewCoinPurchaseResult {
 
   final CheckoutResult checkout;
 
-  /// `monthly` / `extra` for a pack, `single` for loose coins.
+  /// `main` / `extra` for a pack, `single` for loose coins.
   final String kindKey;
   final int coins;
   final int validDays;

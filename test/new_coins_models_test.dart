@@ -16,7 +16,7 @@ import 'package:lumi_pass/data/api_model/order/user_order.dart';
 void main() {
   group('enums fall back to unknown', () {
     test('pack kind', () {
-      expect(NewCoinPackKind.fromKey('monthly'), NewCoinPackKind.monthly);
+      expect(NewCoinPackKind.fromKey('main'), NewCoinPackKind.main);
       expect(NewCoinPackKind.fromKey('extra'), NewCoinPackKind.extra);
       expect(NewCoinPackKind.fromKey('yearly'), NewCoinPackKind.unknown);
       expect(NewCoinPackKind.fromKey(null), NewCoinPackKind.unknown);
@@ -72,10 +72,10 @@ void main() {
   group('NewCoinCatalogue', () {
     test('parses the shelf', () {
       final c = NewCoinCatalogue.fromJson({
-        'monthly': [
+        'main': [
           {
             'id': 'p1',
-            'kind': 'monthly',
+            'kind': 'main',
             'name': 'Start',
             'description': null,
             'price': 450000,
@@ -104,11 +104,11 @@ void main() {
       });
 
       expect(c.isOnSale, isTrue);
-      expect(c.monthly.single.kind, NewCoinPackKind.monthly);
-      expect(c.monthly.single.coins, 100);
-      expect(c.monthly.single.validDays, 30);
-      expect(c.monthly.single.pricePerCoin, 4500);
-      expect(c.monthly.single.description, isNull);
+      expect(c.main.single.kind, NewCoinPackKind.main);
+      expect(c.main.single.coins, 100);
+      expect(c.main.single.validDays, 30);
+      expect(c.main.single.pricePerCoin, 4500);
+      expect(c.main.single.description, isNull);
       expect(c.extra.single.kind, NewCoinPackKind.extra);
       expect(c.extra.single.description, 'Ten more');
       expect(c.singleCoinPrice, 6000);
@@ -120,7 +120,7 @@ void main() {
     test('an empty body is an empty shelf, not a crash', () {
       final c = NewCoinCatalogue.fromJson({});
       expect(c.isOnSale, isFalse);
-      expect(c.monthly, isEmpty);
+      expect(c.main, isEmpty);
       expect(c.extra, isEmpty);
       expect(c.singleCoinPrice, 0);
       expect(c.canBuyExtras, isFalse);
@@ -141,13 +141,13 @@ void main() {
     test('parses lots and the nearest deadline', () {
       final b = NewCoinBalance.fromJson({
         'balance': 42,
-        'has_active_monthly': true,
+        'has_active_main': true,
         'nearest_expiry': '2026-11-01T00:00:00.000Z',
         'nearest_expiry_coins': 12,
         'lots': [
           {
             'id': 'l1',
-            'kind': 'monthly',
+            'kind': 'main',
             'coins_total': 100,
             'coins_left': 12,
             'expires_at': '2026-11-01T00:00:00.000Z',
@@ -168,11 +168,11 @@ void main() {
       });
 
       expect(b.balance, 42);
-      expect(b.hasActiveMonthly, isTrue);
+      expect(b.hasActiveMain, isTrue);
       expect(b.nearestExpiry, DateTime.utc(2026, 11, 1));
       expect(b.nearestExpiryCoins, 12);
       expect(b.lots, hasLength(3));
-      expect(b.lots[0].kind, NewCoinLotKind.monthly);
+      expect(b.lots[0].kind, NewCoinLotKind.main);
       expect(b.lots[1].kind, NewCoinLotKind.single);
       // Loose coins never expire.
       expect(b.lots[1].expiresAt, isNull);
@@ -183,7 +183,7 @@ void main() {
     test('absent fields read as an empty balance', () {
       final b = NewCoinBalance.fromJson({});
       expect(b.balance, 0);
-      expect(b.hasActiveMonthly, isFalse);
+      expect(b.hasActiveMain, isFalse);
       expect(b.nearestExpiry, isNull);
       expect(b.nearestExpiryCoins, 0);
       expect(b.lots, isEmpty);
@@ -233,7 +233,7 @@ void main() {
     test('carries the ordinary checkout result plus what the order mints', () {
       final r = NewCoinPurchaseResult.fromJson({
         'order_id': 'o9',
-        'kind': 'monthly',
+        'kind': 'main',
         'coins': 100,
         'valid_days': 30,
         'total_amount': 450000,
@@ -246,7 +246,7 @@ void main() {
 
       expect(r.coins, 100);
       expect(r.validDays, 30);
-      expect(r.kind, NewCoinLotKind.monthly);
+      expect(r.kind, NewCoinLotKind.main);
       expect(r.checkout.orderId, 'o9');
       expect(r.checkout.totalAmount, 450000);
       expect(r.checkout.checkoutUrl, 'https://pay.example/x');
@@ -436,7 +436,7 @@ void main() {
   });
 
   group('NewCoinsSummary', () {
-    test('invisible until a monthly pack is on sale', () {
+    test('invisible until a main pack is on sale', () {
       expect(const NewCoinsSummary().isVisible, isFalse);
       final extrasOnly = const NewCoinsSummary().withCatalogue(
         NewCoinCatalogue.fromJson({
@@ -450,8 +450,8 @@ void main() {
 
       final onSale = const NewCoinsSummary().withCatalogue(
         NewCoinCatalogue.fromJson({
-          'monthly': [
-            {'id': 'p', 'kind': 'monthly'},
+          'main': [
+            {'id': 'p', 'kind': 'main'},
           ],
         }),
       );
@@ -465,7 +465,7 @@ void main() {
       expect(held.isVisible, isTrue);
     });
 
-    test('loose coins need a live monthly pack and a price', () {
+    test('loose coins need a live main pack and a price', () {
       NewCoinsSummary of(Map<String, dynamic> json) => const NewCoinsSummary()
           .withCatalogue(NewCoinCatalogue.fromJson(json));
 
@@ -483,21 +483,21 @@ void main() {
     test('signing out keeps the shelf and drops the coins', () {
       final signedIn = const NewCoinsSummary()
           .withCatalogue(NewCoinCatalogue.fromJson({
-            'monthly': [
-              {'id': 'p', 'kind': 'monthly'},
+            'main': [
+              {'id': 'p', 'kind': 'main'},
             ],
             'can_buy_extras': true,
             'activity_rate': 4500,
           }))
           .withBalance(NewCoinBalance.fromJson({
             'balance': 20,
-            'has_active_monthly': true,
+            'has_active_main': true,
           }));
       final out = signedIn.signedOut();
       expect(out.onSale, isTrue);
       expect(out.activityRate, 4500);
       expect(out.balance, 0);
-      expect(out.hasActiveMonthly, isFalse);
+      expect(out.hasActiveMain, isFalse);
       expect(out.canBuyExtras, isFalse);
     });
   });

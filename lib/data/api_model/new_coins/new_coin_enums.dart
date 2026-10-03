@@ -7,10 +7,10 @@
 enum NewCoinPackKind {
   /// The main tariff: a batch of coins with a validity in days. Holding a live
   /// one is what unlocks [extra] packs and loose coins.
-  monthly('monthly'),
+  main('main'),
 
   /// A short top-up with its own deadline, sold only on top of a live
-  /// [monthly] pack.
+  /// [main] pack.
   extra('extra'),
 
   unknown('');
@@ -33,7 +33,7 @@ enum NewCoinPackKind {
 /// Where a batch of held coins came from. A balance is a list of these "lots",
 /// each with its own deadline.
 enum NewCoinLotKind {
-  monthly('monthly'),
+  main('main'),
   extra('extra'),
 
   /// Loose coins bought at the unit price. These never expire.
@@ -61,7 +61,7 @@ enum NewCoinLotKind {
 
   /// The translations.csv key naming this lot in the balance list.
   String get labelKey => switch (this) {
-        NewCoinLotKind.monthly => 'new_coins_lot_monthly',
+        NewCoinLotKind.main => 'new_coins_lot_main',
         NewCoinLotKind.extra => 'new_coins_lot_extra',
         NewCoinLotKind.single => 'new_coins_lot_single',
         NewCoinLotKind.bonus => 'new_coins_lot_bonus',
@@ -109,8 +109,8 @@ enum NewCoinTransactionKind {
 /// [unknown] is the fallback for any code that isn't modelled here; the caller
 /// then degrades to whatever it would have shown anyway.
 enum NewCoinErrorCode {
-  /// An extra pack or loose coins were asked for without a live monthly pack.
-  monthlyPackRequired('new_coins_monthly_pack_required'),
+  /// An extra pack or loose coins were asked for without a live main pack.
+  mainPackRequired('new_coins_main_pack_required'),
 
   /// The pack was taken off sale between the list loading and the tap.
   packInactive('new_coins_pack_inactive'),
@@ -147,8 +147,8 @@ enum NewCoinErrorCode {
   /// The translations.csv key for this refusal, or null for [unknown] — which
   /// is not a coin refusal at all and is left to the caller's own handling.
   String? get messageKey => switch (this) {
-        NewCoinErrorCode.monthlyPackRequired =>
-          'new_coins_err_monthly_required',
+        NewCoinErrorCode.mainPackRequired =>
+          'new_coins_err_main_required',
         NewCoinErrorCode.packInactive => 'new_coins_err_pack_inactive',
         NewCoinErrorCode.insufficient => 'new_coins_err_insufficient',
         NewCoinErrorCode.exclusive => 'new_coins_err_exclusive',

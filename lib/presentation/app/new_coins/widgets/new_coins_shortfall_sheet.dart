@@ -25,7 +25,7 @@ enum NewCoinsShortfallAction {
 ///
 /// Offers the two ways to fix it and resolves to the one picked, or null when
 /// the buyer backs out. [canBuySingle] gates the first: loose coins are sold
-/// only on top of a live monthly pack, and offering a purchase the server
+/// only on top of a live main pack, and offering a purchase the server
 /// would refuse is worse than not offering it.
 Future<NewCoinsShortfallAction?> showNewCoinsShortfallSheet(
   BuildContext context, {

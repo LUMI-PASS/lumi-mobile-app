@@ -11,7 +11,7 @@ class NewCoinsSummary {
   const NewCoinsSummary({
     this.onSale = false,
     this.balance = 0,
-    this.hasActiveMonthly = false,
+    this.hasActiveMain = false,
     this.nearestExpiry,
     this.nearestExpiryCoins = 0,
     this.canBuyExtras = false,
@@ -19,14 +19,14 @@ class NewCoinsSummary {
     this.activityRate = 0,
   });
 
-  /// At least one monthly pack is on sale.
+  /// At least one main pack is on sale.
   final bool onSale;
   final int balance;
-  final bool hasActiveMonthly;
+  final bool hasActiveMain;
   final DateTime? nearestExpiry;
   final int nearestExpiryCoins;
 
-  /// Extras and loose coins are sold only on top of a live monthly pack.
+  /// Extras and loose coins are sold only on top of a live main pack.
   final bool canBuyExtras;
 
   /// Unit price of one loose coin, in so'm.
@@ -37,20 +37,20 @@ class NewCoinsSummary {
 
   /// The gate on every coin surface in the app.
   ///
-  /// With no monthly pack on sale there is no way into the system, so the
+  /// With no main pack on sale there is no way into the system, so the
   /// feature stays invisible — the backend is live before any pack exists.
   /// Someone still HOLDING coins keeps seeing it regardless: taking a pack off
   /// sale must not strand a balance that was paid for.
   bool get isVisible => onSale || balance > 0;
 
   /// Loose coins can be bought right now: they are priced, and this user holds
-  /// the monthly pack they are sold on top of.
+  /// the main pack they are sold on top of.
   bool get canBuySingle => canBuyExtras && singleCoinPrice > 0;
 
   NewCoinsSummary withCatalogue(NewCoinCatalogue catalogue) => NewCoinsSummary(
         onSale: catalogue.isOnSale,
         balance: balance,
-        hasActiveMonthly: hasActiveMonthly,
+        hasActiveMain: hasActiveMain,
         nearestExpiry: nearestExpiry,
         nearestExpiryCoins: nearestExpiryCoins,
         canBuyExtras: catalogue.canBuyExtras,
@@ -61,7 +61,7 @@ class NewCoinsSummary {
   NewCoinsSummary withBalance(NewCoinBalance held) => NewCoinsSummary(
         onSale: onSale,
         balance: held.balance,
-        hasActiveMonthly: held.hasActiveMonthly,
+        hasActiveMain: held.hasActiveMain,
         nearestExpiry: held.nearestExpiry,
         nearestExpiryCoins: held.nearestExpiryCoins,
         canBuyExtras: canBuyExtras,
@@ -82,7 +82,7 @@ class NewCoinsSummary {
       other is NewCoinsSummary &&
       other.onSale == onSale &&
       other.balance == balance &&
-      other.hasActiveMonthly == hasActiveMonthly &&
+      other.hasActiveMain == hasActiveMain &&
       other.nearestExpiry == nearestExpiry &&
       other.nearestExpiryCoins == nearestExpiryCoins &&
       other.canBuyExtras == canBuyExtras &&
@@ -93,7 +93,7 @@ class NewCoinsSummary {
   int get hashCode => Object.hash(
         onSale,
         balance,
-        hasActiveMonthly,
+        hasActiveMain,
         nearestExpiry,
         nearestExpiryCoins,
         canBuyExtras,

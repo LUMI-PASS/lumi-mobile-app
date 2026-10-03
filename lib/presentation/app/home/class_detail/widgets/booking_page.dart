@@ -3318,7 +3318,7 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   /// "You are N coins short" — and the two ways to fix it: buy exactly the
-  /// missing coins as loose ones (only with a live monthly pack), or open the
+  /// missing coins as loose ones (only with a live main pack), or open the
   /// Lumi Coin screen for a pack. Either purchase comes straight back here
   /// with the balance refreshed, the booking untouched and ready to pay.
   Future<void> _offerNewCoinsTopUp(NewCoinShortfall shortfall) async {

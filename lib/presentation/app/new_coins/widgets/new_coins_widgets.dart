@@ -149,8 +149,8 @@ class _LotRow extends StatelessWidget {
 /// out at, and the button that buys it.
 ///
 /// [lockedNote] greys the card out and explains why under the button — used
-/// for extra packs offered to someone without a live monthly pack. The card
-/// still renders, so the buyer can see what the monthly pack unlocks.
+/// for extra packs offered to someone without a live main pack. The card
+/// still renders, so the buyer can see what the main pack unlocks.
 class NewCoinPackCard extends StatelessWidget {
   const NewCoinPackCard({
     super.key,
@@ -165,7 +165,7 @@ class NewCoinPackCard extends StatelessWidget {
   final NewCoinPack pack;
   final VoidCallback onBuy;
 
-  /// Coins added on the buyer's first monthly pack. 0 hides the badge.
+  /// Coins added on the buyer's first main pack. 0 hides the badge.
   final int bonus;
   final bool isLoading;
 
@@ -278,7 +278,7 @@ class _BonusBadge extends StatelessWidget {
 ///
 /// For the one or two a booking is short. They never expire, which is why they
 /// cost more per coin than a pack — and why they are sold only on top of a
-/// live monthly pack ([lockedNote] says so when there is none).
+/// live main pack ([lockedNote] says so when there is none).
 class NewCoinSingleCard extends StatelessWidget {
   const NewCoinSingleCard({
     super.key,

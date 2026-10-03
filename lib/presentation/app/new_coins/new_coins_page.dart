@@ -52,7 +52,7 @@ class _Purchase {
 }
 
 /// The "Lumi Coin" screen: what the buyer holds, when it expires, and the
-/// shelf — monthly packs, extra packs and loose coins.
+/// shelf — main packs, extra packs and loose coins.
 ///
 /// Lumi Coin is NOT the cashback wallet: it is bought with money in packs and
 /// pays for an activity booking outright, instead of money.
@@ -339,7 +339,7 @@ class _NewCoinsPageState extends State<NewCoinsPage>
       final code = NewCoinErrorCode.fromResponse(e.response?.data);
       final key = code.messageKey;
       if (key != null) {
-        // The shelf on screen is out of date — a monthly pack lapsed, or a
+        // The shelf on screen is out of date — a main pack lapsed, or a
         // pack was withdrawn. Refresh it under the message.
         _load();
         return key.tr();
@@ -510,9 +510,9 @@ class _NewCoinsPageState extends State<NewCoinsPage>
   Widget _content() {
     final c = context.colors;
     final busy = _purchasing != null;
-    // Extras and loose coins are sold only on top of a live monthly pack. They
+    // Extras and loose coins are sold only on top of a live main pack. They
     // stay on screen without one — greyed, with the reason — so the buyer can
-    // see what the monthly pack unlocks.
+    // see what the main pack unlocks.
     final extrasNote =
         _catalogue.canBuyExtras ? null : 'new_coins_extras_locked'.tr();
 
@@ -533,9 +533,9 @@ class _NewCoinsPageState extends State<NewCoinsPage>
           'new_coins_about'.tr(),
           style: AppText.regular13.copyWith(color: c.textSecondary),
         ),
-        if (_catalogue.monthly.isNotEmpty) ...[
-          section('new_coins_monthly_section'.tr()),
-          for (final pack in _catalogue.monthly) ...[
+        if (_catalogue.main.isNotEmpty) ...[
+          section('new_coins_main_section'.tr()),
+          for (final pack in _catalogue.main) ...[
             NewCoinPackCard(
               pack: pack,
               bonus: _catalogue.firstPackBonus,

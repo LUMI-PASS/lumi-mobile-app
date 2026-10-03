@@ -19,7 +19,7 @@ import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 class NewCoinsSuccessPage extends StatelessWidget {
   const NewCoinsSuccessPage({super.key, required this.coins});
 
-  /// How many coins the purchase was for. A first monthly pack may add a bonus
+  /// How many coins the purchase was for. A first main pack may add a bonus
   /// on top, which is why the balance below is read live rather than summed.
   final int coins;
 
