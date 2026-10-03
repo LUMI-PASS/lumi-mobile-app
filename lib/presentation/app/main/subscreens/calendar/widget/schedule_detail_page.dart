@@ -884,18 +884,12 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _StatusBar(c: c, label: 'order_paid'.tr(), color: AppColors.green),
-          8.verticalSpace,
           // Paid with Lumi Coin: there is no cancellation to offer, at any
-          // hour, so the button is not shown inert under the cut-off message
-          // (which would be the wrong reason) — the row says why instead.
-          if (order.paidWithNewCoins)
-            Text(
-              'new_coins_not_cancelable'.tr(),
-              textAlign: TextAlign.center,
-              style: AppText.regular12.copyWith(color: c.textMuted),
-            )
-          else
+          // hour, so the button is simply not there.
+          if (!order.paidWithNewCoins) ...[
+            8.verticalSpace,
             _cancelButton(c),
+          ],
         ],
       );
     }

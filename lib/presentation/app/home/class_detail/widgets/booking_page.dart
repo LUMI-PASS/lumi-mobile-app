@@ -2862,10 +2862,9 @@ class _BookingPageState extends State<BookingPage> {
     return _moneyBreakdown(c);
   }
 
-  /// The receipt of a coin-paid booking: the tickets and the total in coins,
-  /// and the one condition the buyer is accepting — a booking paid with coins
-  /// cannot be cancelled. Under the total: what the buyer holds and what
-  /// paying leaves, or how far short they are.
+  /// The receipt of a coin-paid booking: the tickets and the total in coins.
+  /// Under the total: what the buyer holds and what paying leaves, or how far
+  /// short they are.
   Widget _newCoinBreakdown(AppColorScheme c) {
     final total = _newCoinTotal;
     final balance = _newCoins.balance;
@@ -2969,13 +2968,6 @@ class _BookingPageState extends State<BookingPage> {
                 ),
               ],
             ),
-          12.kh,
-          // Said BEFORE the coins are taken, not discovered on the bookings
-          // screen afterwards: it is the condition being accepted.
-          Text(
-            'new_coins_not_cancelable'.tr(),
-            style: AppText.regular12.copyWith(color: c.textSecondary),
-          ),
         ],
       ),
     );
