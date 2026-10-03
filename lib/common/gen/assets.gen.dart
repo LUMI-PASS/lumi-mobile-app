@@ -94,6 +94,26 @@ class $AssetsIconsGen {
   AssetGenImage get coinLumi =>
       const AssetGenImage('assets/icons/coin_lumi.png');
 
+  /// File path: assets/icons/coin_lumi_glass.png
+  AssetGenImage get coinLumiGlass =>
+      const AssetGenImage('assets/icons/coin_lumi_glass.png');
+
+  /// File path: assets/icons/coin_lumi_glass_blue.png
+  AssetGenImage get coinLumiGlassBlue =>
+      const AssetGenImage('assets/icons/coin_lumi_glass_blue.png');
+
+  /// File path: assets/icons/coin_lumi_glass_mint.png
+  AssetGenImage get coinLumiGlassMint =>
+      const AssetGenImage('assets/icons/coin_lumi_glass_mint.png');
+
+  /// File path: assets/icons/coin_lumi_glass_orange.png
+  AssetGenImage get coinLumiGlassOrange =>
+      const AssetGenImage('assets/icons/coin_lumi_glass_orange.png');
+
+  /// File path: assets/icons/coin_lumi_glass_violet.png
+  AssetGenImage get coinLumiGlassViolet =>
+      const AssetGenImage('assets/icons/coin_lumi_glass_violet.png');
+
   /// File path: assets/icons/coupon.svg
   SvgGenImage get coupon => const SvgGenImage('assets/icons/coupon.svg');
 
@@ -262,6 +282,11 @@ class $AssetsIconsGen {
         categoryAll,
         circles,
         coinLumi,
+        coinLumiGlass,
+        coinLumiGlassBlue,
+        coinLumiGlassMint,
+        coinLumiGlassOrange,
+        coinLumiGlassViolet,
         coupon,
         dollar,
         dollarRounded,

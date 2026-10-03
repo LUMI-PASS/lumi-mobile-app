@@ -1,15 +1,17 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
-import 'package:lumi_pass/common/widget/adaptive_card.dart';
-import 'package:lumi_pass/common/widget/segmented_tabs.dart';
+import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -90,12 +92,8 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
   /// in front.
   String? _selectedId;
 
-  /// 0 = the shelf, 1 = what the buyer holds. The balance and its history are
-  /// deliberately off the shelf: that tab is for choosing a pack and nothing
-  /// else.
-  int _tab = 0;
-
-  final PageController _pageController = PageController(viewportFraction: 0.92);
+  /// Narrower than the screen, so the neighbouring packs' cards peek in.
+  final PageController _pageController = PageController(viewportFraction: 0.86);
 
   /// The [NewCoinsPage.buySingle] hand-off has run. It fires once — a reload
   /// after a failed payment must not restart a purchase nobody re-asked for.
@@ -287,6 +285,76 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     );
   }
 
+  /// The tone [pack] is shown in: main packs take theirs by shelf position,
+  /// extras share one.
+  NewCoinTone _toneOf(NewCoinPack pack) {
+    final index = _catalogue.main.indexWhere((p) => p.id == pack.id);
+    return index < 0 ? NewCoinTone.extra : NewCoinTone.main(index);
+  }
+
+  /// Where the carousel is, as a fraction between cards — [fallback] until it
+  /// has been laid out.
+  double _pageOr(int fallback) {
+    if (_pageController.hasClients && _pageController.position.haveDimensions) {
+      return _pageController.page ?? fallback.toDouble();
+    }
+    return fallback.toDouble();
+  }
+
+  /// What buying [pack] gives, row by row. Only what is true of this pack for
+  /// this buyer: the gift row goes once the gift has been had, and a figure
+  /// the server did not send is a row left out.
+  List<NewCoinFeature> _featuresOf(NewCoinPack pack) {
+    final isMain = _catalogue.main.any((p) => p.id == pack.id);
+    final bonus = isMain ? _catalogue.firstPackBonus : 0;
+    final perCoin = pack.pricePerCoin ?? 0;
+    final saving = isMain ? _savingPercent(pack) : 0;
+
+    return [
+      if (perCoin > 0)
+        NewCoinFeature(
+          icon: Icons.savings_rounded,
+          title: 'new_coins_feat_per_coin_title'.tr(),
+          body: saving > 0
+              ? 'new_coins_feat_per_coin_body'.tr(args: ['$saving'])
+              : null,
+          chip: perCoin.toRawUzsPrice(),
+        ),
+      NewCoinFeature(
+        icon: Icons.toll_rounded,
+        title: 'new_coins_feat_coins_title'.tr(),
+        body: 'new_coins_step3'.tr(),
+        chip: 'new_coins_amount'.tr(args: [pack.coins.toGrouped()]),
+      ),
+      if (bonus > 0)
+        NewCoinFeature(
+          icon: Icons.card_giftcard_rounded,
+          title: 'new_coins_feat_bonus_title'.tr(),
+          body: 'new_coins_feat_bonus_body'.tr(),
+          chip: 'new_coins_amount'.tr(args: ['+${bonus.toGrouped()}']),
+        ),
+      if (pack.validDays > 0)
+        NewCoinFeature(
+          icon: Icons.schedule_rounded,
+          title: 'new_coins_feat_valid_title'.tr(),
+          body: 'new_coins_feat_valid_body'.tr(args: ['${pack.validDays}']),
+          chip: 'new_coins_days'.tr(args: ['${pack.validDays}']),
+        ),
+      if (isMain)
+        NewCoinFeature(
+          icon: Icons.autorenew_rounded,
+          title: 'new_coins_feat_carry_title'.tr(),
+          body: 'new_coins_feat_carry_body'.tr(),
+        )
+      else
+        NewCoinFeature(
+          icon: Icons.add_circle_outline_rounded,
+          title: 'new_coins_feat_extra_title'.tr(),
+          body: 'new_coins_feat_extra_body'.tr(),
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -305,184 +373,324 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       );
     }
 
+    final shelf = _shelf;
     final pack = _selectedPack;
     final busy = _purchasing != null;
-    return Scaffold(
-      backgroundColor: c.pageBg,
-      body: Stack(
-        children: [
-          // Soft wash bleeding out from behind the coin, as on the coupons
-          // screen.
-          Positioned(
-            top: -80.h,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Container(
-                height: 300.h,
-                decoration: const BoxDecoration(
-                  gradient: AppGradients.ticketStubGlow,
+    final selected = shelf.indexWhere((p) => p.id == _selectedId);
+    final active = selected < 0 ? 0 : selected;
+    final tones = [for (final p in shelf) _toneOf(p)];
+    final top = MediaQuery.of(context).viewPadding.top;
+
+    // The shelf is a showcase and is dark in both themes: each pack's colour
+    // is a glow fading into black, which a light page cannot carry. The
+    // payment sheets and "my coins" open from the State's own context, above
+    // this override, so they keep the app's theme.
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.dark,
+        extensions: const [AppColorScheme.dark],
+      ),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          backgroundColor: AppColors.coinStage,
+          body: Stack(
+            children: [
+              // The wash follows the swipe, blending from one pack's colour
+              // into the next rather than snapping when the page settles.
+              if (tones.isNotEmpty)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _pageController,
+                      builder: (_, __) {
+                        final page =
+                            _pageOr(active).clamp(0.0, tones.length - 1.0);
+                        final from = page.floor();
+                        final to = page.ceil();
+                        return NewCoinsBackdrop(
+                          tone: NewCoinTone.lerp(
+                            tones[from],
+                            tones[to],
+                            page - from,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.only(bottom: 24.h),
+              // ONE vertical scroll for the whole shelf, with the pager inside
+              // it — so the pack in front and the neighbours peeking in at
+              // the edges move up and down as a single sheet.
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    top: top + 52.h,
+                    // Clears the buy bar, so the last row can be scrolled out
+                    // from under it.
+                    bottom: MediaQuery.of(context).viewPadding.bottom + 150.h,
+                  ),
+                  child: Stack(
                     children: [
-                      NewCoinsHero(bonus: _catalogue.firstPackBonus),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: SegmentedTabs(
-                          segments: [
-                            'new_coins_tab_packs'.tr(),
-                            'new_coins_tab_mine'.tr(),
-                          ],
-                          selected: _tab,
-                          onChanged: (i) {
-                            setState(() => _tab = i);
-                            if (i == 0) _showSelectedCard();
-                          },
+                      // A PageView has no height of its own. Every page is
+                      // laid out here, unseen, on top of one another, so the
+                      // stack — and the pager filling it — is as tall as the
+                      // tallest pack.
+                      TickerMode(
+                        enabled: false,
+                        child: ExcludeSemantics(
+                          child: IgnorePointer(
+                            child: Opacity(
+                              opacity: 0,
+                              child: Stack(
+                                children: [
+                                  for (var i = 0; i < shelf.length; i++)
+                                    Align(
+                                      alignment: Alignment.topCenter,
+                                      child: FractionallySizedBox(
+                                        widthFactor:
+                                            _pageController.viewportFraction,
+                                        child: _packPage(
+                                          shelf[i],
+                                          i,
+                                          tones[i],
+                                          active,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      if (_tab == 0) ..._shelfTab() else ..._mineTab(),
+                      Positioned.fill(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: shelf.length,
+                          // Swiping to a pack is choosing it. Locked while a
+                          // purchase is in flight, so the button cannot
+                          // change subject under it.
+                          physics: busy
+                              ? const NeverScrollableScrollPhysics()
+                              : null,
+                          onPageChanged: (i) =>
+                              setState(() => _selectedId = shelf[i].id),
+                          itemBuilder: (_, i) => Align(
+                            alignment: Alignment.topCenter,
+                            child: _packPage(shelf[i], i, tones[i], active),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                // One action, and only on the shelf: the pack in front and
-                // Buy. The rail is asked for when Buy is pressed, not chosen
-                // up here as a second decision.
-                if (_tab == 0 && pack != null)
-                  NewCoinsBuyBar(
+              ),
+              // One action: the pack in front and Buy. The rail is asked for
+              // when Buy is pressed, not chosen up here as a second decision.
+              if (pack != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: NewCoinsBuyBar(
+                    tone: tones[active],
                     price: pack.price,
                     isLoading: _purchasing == pack.id,
                     onBuy: busy ? null : () => _buy(NewCoinPurchase.pack(pack)),
+                    dots: shelf.length > 1
+                        ? NewCoinsDots(count: shelf.length, active: active)
+                        : null,
                   ),
-              ],
+                ),
+              Positioned(
+                top: top + 8.h,
+                left: 16.w,
+                right: 16.w,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _TopPill(
+                      onTap: () => context.router.maybePop(),
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        size: 20.w,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    // What the buyer holds, and the way to the deadlines and
+                    // the history behind it — off the shelf, which is for
+                    // choosing a pack and nothing else.
+                    _TopPill(
+                      onTap: _openMine,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CoinAmount(
+                            amount: _balance.balance,
+                            style: AppText.semibold14,
+                            color: AppColors.white,
+                          ),
+                          2.kw,
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18.w,
+                            color: AppColors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// One pack's page: its header, then what is in it. It does not scroll —
+  /// the shelf around the pager does.
+  Widget _packPage(
+    NewCoinPack pack,
+    int index,
+    NewCoinTone tone,
+    int active,
+  ) {
+    final busy = _purchasing != null;
+    final isMain = _catalogue.main.any((p) => p.id == pack.id);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 6.w),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Only the pack in front has a header: a neighbour's would be cut
+          // in half by the screen edge, so it fades out with distance and
+          // leaves just its card peeking in.
+          AnimatedBuilder(
+            animation: _pageController,
+            builder: (_, child) => Opacity(
+              opacity:
+                  (1 - (_pageOr(active) - index).abs() * 1.8).clamp(0.0, 1.0),
+              child: child,
+            ),
+            child: NewCoinPackHeader(
+              pack: pack,
+              tone: tone,
+              isBestOffer: pack.id == _bestOfferId,
+              savingPercent: isMain ? _savingPercent(pack) : 0,
             ),
           ),
-          Positioned(
-            top: MediaQuery.of(context).viewPadding.top + 16.h,
-            right: 20.w,
-            child: AdaptiveCard(
-              onTap: () => context.router.maybePop(),
-              tone: CardTone.control,
-              bordered: true,
-              padding: EdgeInsets.all(8.w),
-              child: Icon(
-                Icons.close_rounded,
-                size: 16.sp,
-                color: c.textPrimary,
-              ),
+          20.kh,
+          // Loose coins have no place on the shelf. The one way to them is the
+          // booking screen's "you are N short" hand-off, which opens this
+          // screen to buy exactly that many — and only then is the card shown.
+          if (widget.buySingle != null && _canBuySingle) ...[
+            NewCoinSingleCard(
+              unitPrice: _catalogue.singleCoinPrice,
+              quantity: _singleQuantity,
+              isLoading: _purchasing == NewCoinPurchase.singleKey,
+              enabled: !busy,
+              onChanged: (q) => setState(() => _singleQuantity = q),
+              onBuy: () => _buy(_singlePurchase),
             ),
+            12.kh,
+          ],
+          NewCoinPackFeatures(
+            tone: tone,
+            title: 'new_coins_pack_includes'.tr(),
+            subtitle: pack.description ?? 'new_coins_hero_subtitle'.tr(),
+            features: _featuresOf(pack),
           ),
         ],
       ),
     );
   }
 
-  Widget _sectionTitle(String title) => Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 12.h),
-        child: Text(
-          title,
-          style: AppText.semibold18.copyWith(color: context.colors.textSection),
-        ),
-      );
-
-  /// The shelf: one pack in front at a time, and how coins work under it.
-  List<Widget> _shelfTab() {
-    final busy = _purchasing != null;
-    final shelf = _shelf;
-    final bestId = _bestOfferId;
-    final active = shelf.indexWhere((p) => p.id == _selectedId);
-
-    Widget card(NewCoinPack pack) {
-      final isMain = _catalogue.main.any((p) => p.id == pack.id);
-      return NewCoinPackCard(
-        pack: pack,
-        isBestOffer: pack.id == bestId,
-        savingPercent: isMain ? _savingPercent(pack) : 0,
-      );
-    }
-
-    return [
-      // Loose coins have no place on the shelf. The one way to them is the
-      // booking screen's "you are N short" hand-off, which opens this screen
-      // to buy exactly that many — and only then is the card shown.
-      if (widget.buySingle != null && _canBuySingle) ...[
-        16.kh,
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: NewCoinSingleCard(
-            unitPrice: _catalogue.singleCoinPrice,
-            quantity: _singleQuantity,
-            isLoading: _purchasing == NewCoinPurchase.singleKey,
-            enabled: !busy,
-            onChanged: (q) => setState(() => _singleQuantity = q),
-            onBuy: () => _buy(_singlePurchase),
-          ),
-        ),
-      ],
-      _sectionTitle('new_coins_tab_packs'.tr()),
-      // A lone pack has nothing to page to, so it spans the width rather
-      // than leaving the carousel's peek gap.
-      if (shelf.length == 1)
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: SizedBox(
-            height: kNewCoinPackCardHeight.h,
-            child: card(shelf.first),
-          ),
-        )
-      else ...[
-        SizedBox(
-          height: kNewCoinPackCardHeight.h,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: shelf.length,
-            padEnds: false,
-            // Swiping to a card is choosing it. Locked while a purchase is
-            // in flight, so the bar cannot change subject under it.
-            physics: busy ? const NeverScrollableScrollPhysics() : null,
-            onPageChanged: (i) => setState(() => _selectedId = shelf[i].id),
-            itemBuilder: (_, i) => Padding(
-              padding: EdgeInsets.only(
-                left: 16.w,
-                right: i == shelf.length - 1 ? 16.w : 0,
-              ),
-              child: card(shelf[i]),
-            ),
-          ),
-        ),
-        12.kh,
-        NewCoinsDots(count: shelf.length, active: active < 0 ? 0 : active),
-      ],
-      _sectionTitle('plan_how_title'.tr()),
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        child: NewCoinsHowItWorks(),
-      ),
-    ];
-  }
-
   /// What the buyer holds: the balance, the deadlines behind it, and under
-  /// them every movement that led there.
-  List<Widget> _mineTab() => [
-        16.kh,
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: NewCoinsBalanceCard(balance: _balance),
+  /// them every movement that led there — in a sheet over the shelf.
+  void _openMine() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (sheetContext, scroll) {
+          final c = sheetContext.colors;
+          return Container(
+            decoration: BoxDecoration(
+              color: c.pageBg,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+            ),
+            child: ListView(
+              controller: scroll,
+              padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 32.h),
+              children: [
+                Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: c.border,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
+                ),
+                18.kh,
+                Text(
+                  'new_coins_tab_mine'.tr(),
+                  style: AppText.semibold18.copyWith(color: c.textSection),
+                ),
+                12.kh,
+                NewCoinsBalanceCard(balance: _balance),
+                20.kh,
+                Text(
+                  'new_coins_history'.tr(),
+                  style: AppText.semibold18.copyWith(color: c.textSection),
+                ),
+                12.kh,
+                const NewCoinsHistoryList(),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// A translucent control floating over the wash at the top of the shelf.
+class _TopPill extends StatelessWidget {
+  const _TopPill({required this.child, required this.onTap});
+
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 40.w,
+        constraints: BoxConstraints(minWidth: 40.w),
+        padding: EdgeInsets.symmetric(horizontal: 10.w),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.white.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(40.r),
+          border: Border.all(color: AppColors.white.withValues(alpha: 0.18)),
         ),
-        _sectionTitle('new_coins_history'.tr()),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: NewCoinsHistoryList(),
-        ),
-      ];
+        child: child,
+      ),
+    );
+  }
 }
 
 class _NewCoinsShimmer extends StatelessWidget {

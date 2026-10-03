@@ -1459,3 +1459,15 @@ new_coins_buy_btn,Купить,Sotib olish,Buy
 new_coins_history_more,Показать ещё,Yana ko‘rsatish,Show more
 new_coins_tx_refund,Возврат за отменённую бронь,Bekor qilingan bron uchun qaytarildi,Refund for a cancelled booking
 new_coins_bonus_card_chip,+{} при оплате картой,+{} karta orqali,+{} with card
+new_coins_pack_includes,Что входит в пакет,Paketga nimalar kiradi,What's in the pack
+new_coins_feat_coins_title,Коины в пакете,Paketdagi coinlar,Coins in the pack
+new_coins_feat_bonus_title,Подарок к первому пакету,Birinchi paket sovg‘asi,First pack gift
+new_coins_feat_bonus_body,Начисляется один раз при оплате картой,Karta orqali to‘laganda bir marta beriladi,Added once when you pay by card
+new_coins_feat_valid_title,Срок действия,Amal qilish muddati,Validity
+new_coins_feat_valid_body,Коины действуют {} дн. со дня покупки,Coinlar xarid kunidan boshlab {} kun amal qiladi,Coins are valid for {} days from purchase
+new_coins_feat_per_coin_title,Цена одного коина,Bir coin narxi,Price per coin
+new_coins_feat_per_coin_body,Экономия {}% на каждом коине,Har bir coinda {}% tejaysiz,Save {}% on every coin
+new_coins_feat_carry_title,Остаток переходит дальше,Qoldiq yangi paketga o‘tadi,Leftovers carry over
+new_coins_feat_carry_body,Купите новый основной пакет — неиспользованные коины перейдут на его срок,Yangi asosiy paket olsangiz — ishlatilmagan coinlar uning muddatiga o‘tadi,Buy a new main pack and unused coins move to its date
+new_coins_feat_extra_title,Пополнение к основному пакету,Asosiy paketga qo‘shimcha,Top-up for your main pack
+new_coins_feat_extra_body,У этих коинов свой срок действия,Bu coinlarning o‘z muddati bor,These coins keep their own deadline

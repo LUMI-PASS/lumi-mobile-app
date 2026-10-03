@@ -29,6 +29,27 @@ abstract final class AppColors {
   /// Neutral status pill (white label on grey). Theme-invariant by design.
   static const chipGrey = Color(0xFF4B4B55);
 
+  // Lumi Coin pack tones — each pack on the coin shelf is shown in its own
+  // colour: a pale tint, the accent and a deep shade. Theme-invariant: that
+  // screen is dark in both themes.
+  /// The shelf's own page colour and the panels on it — true black and a
+  /// neutral charcoal, so a pack's colour stays clean instead of muddying.
+  static const coinStage = Color(0xFF000000);
+  static const coinPanel = Color(0xFF1C1C1F);
+  static const coinOrangeLight = Color(0xFFFFB38A);
+  static const coinOrange = Color(0xFFFF7A3D);
+  static const coinOrangeDeep = Color(0xFFD9480F);
+  static const coinVioletLight = Color(0xFFFFB3C8);
+  static const coinBlueLight = Color(0xFF9DB8FF);
+  static const coinBlue = Color(0xFF5B8CFF);
+  static const coinBlueDeep = Color(0xFF2F4BD8);
+  static const coinGoldLight = Color(0xFFFFE680);
+  static const coinGold = Color(0xFFFFCB1F);
+  static const coinGoldDeep = Color(0xFFE59A00);
+  static const coinMintLight = Color(0xFF9AF0CF);
+  static const coinMint = Color(0xFF3ED6A4);
+  static const coinMintDeep = Color(0xFF12946B);
+
   // Aurora — the shop's mesh-gradient page wash. A base plus four corner
   // glows leaning into the brand purple/pink.
   static const auroraBaseLight = Color(0xFFFBF9FD);
