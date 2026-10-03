@@ -254,6 +254,18 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const MyCardsPage(),
       );
     },
+    NewCoinsRoute.name: (routeData) {
+      final args = routeData.argsAs<NewCoinsRouteArgs>(
+          orElse: () => const NewCoinsRouteArgs());
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: NewCoinsPage(
+          key: args.key,
+          buySingle: args.buySingle,
+          returnOnPurchase: args.returnOnPurchase,
+        ),
+      );
+    },
     NotificationsRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -1246,6 +1258,49 @@ class MyCardsRoute extends PageRouteInfo<void> {
   static const String name = 'MyCardsRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [NewCoinsPage]
+class NewCoinsRoute extends PageRouteInfo<NewCoinsRouteArgs> {
+  NewCoinsRoute({
+    Key? key,
+    int? buySingle,
+    bool returnOnPurchase = false,
+    List<PageRouteInfo>? children,
+  }) : super(
+          NewCoinsRoute.name,
+          args: NewCoinsRouteArgs(
+            key: key,
+            buySingle: buySingle,
+            returnOnPurchase: returnOnPurchase,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'NewCoinsRoute';
+
+  static const PageInfo<NewCoinsRouteArgs> page =
+      PageInfo<NewCoinsRouteArgs>(name);
+}
+
+class NewCoinsRouteArgs {
+  const NewCoinsRouteArgs({
+    this.key,
+    this.buySingle,
+    this.returnOnPurchase = false,
+  });
+
+  final Key? key;
+
+  final int? buySingle;
+
+  final bool returnOnPurchase;
+
+  @override
+  String toString() {
+    return 'NewCoinsRouteArgs{key: $key, buySingle: $buySingle, returnOnPurchase: $returnOnPurchase}';
+  }
 }
 
 /// generated route for

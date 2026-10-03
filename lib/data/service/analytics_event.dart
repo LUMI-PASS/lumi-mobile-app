@@ -41,6 +41,10 @@ class AnalyticsEvent {
   /// (`is_ad_seen`), so its count is reach rather than impressions — compare it
   /// against `aksiya_purchase_started` to see what the interstitial converted.
   static const aksiyaAdShown = 'aksiya_ad_shown';
+
+  /// A "Lumi Coin" pack (or loose coins): the buyer pressed Buy and a rail was
+  /// picked. `payment_succeeded` fires on completion, with `product: new_coins`.
+  static const newCoinsPurchaseStarted = 'new_coins_purchase_started';
   static const checkoutPageOpened = 'checkout_page_opened';
   static const paymeRedirect = 'payme_redirect';
   static const paymeOpenFailed = 'payme_open_failed';

@@ -23,6 +23,7 @@ import 'package:lumi_pass/common/utils/avatar_notifier.dart';
 import 'package:lumi_pass/common/utils/photo_urls.dart';
 import 'package:lumi_pass/common/widget/theme_transition_overlay.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/common/widget/user_avatar.dart';
 import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
@@ -517,6 +518,36 @@ class ProfilePage
                           ),
                         ],
                       ),
+                      // Lumi Coin — a balance of its own, not the wallet
+                      // above: coins are bought in packs and pay for an
+                      // activity outright. The tile exists only while packs
+                      // are on sale (or coins are still held), so before the
+                      // first pack is created nothing here hints at it.
+                      //
+                      // Its own Builder so the `watch` belongs to an element
+                      // that is actually building, and only this tile
+                      // rebuilds when the balance moves.
+                      Builder(
+                        builder: (context) {
+                          final newCoins = watchNewCoins(context);
+                          if (!newCoins.isVisible) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: EdgeInsets.only(top: 12.h),
+                            child: _QuickTile(
+                              iconAsset: _ProfileIcons.newCoins,
+                              label: 'new_coins_title'.tr(),
+                              value: CoinAmount(
+                                amount: newCoins.balance,
+                                style: AppText.semibold16,
+                              ),
+                              onTap: () =>
+                                  context.router.push(NewCoinsRoute()),
+                            ),
+                          );
+                        },
+                      ),
                       // The referral programme: the invite card while it runs,
                       // and the way to enter someone else's code while this
                       // account may still take one. Both vanish with the
@@ -948,6 +979,7 @@ class _ProfileIcons {
   // screen.
   static final shop = Assets.icons.profile.shopBag;
   static final wallet = Assets.icons.profile.wallet;
+  static final newCoins = Assets.icons.dollarRounded;
   static final cards = Assets.icons.icCard;
   static final language = Assets.icons.detail.iconsaxLanguageCircle;
   static final faq = Assets.icons.detail.iconsaxQuestionMark;
