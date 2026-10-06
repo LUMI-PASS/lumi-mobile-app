@@ -8,6 +8,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
@@ -42,10 +43,34 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
   List<HomCategory> _categories = SearchCubit.cachedCategories;
   bool _loading = false;
 
+  /// How many activities each category holds, by category id, plus the whole
+  /// catalogue under [_allKey] for the "Barcha kategoriyalar" card.
+  ///
+  /// Static, so coming back to the tab shows the numbers it showed last time
+  /// instead of a grid of cards that grow a line each as the requests land.
+  /// A category count moves when a centre publishes something, which is not
+  /// often enough to be worth re-counting on every visit — [_load] refreshes it
+  /// when the category list itself is re-fetched.
+  static final Map<String, int> _counts = {};
+
+  /// Key [_counts] uses for the catalogue total. Not a real category id, and
+  /// cannot collide with one: ids are Mongo hex.
+  static const String _allKey = '*all*';
+
+  /// Set while the counts are in flight, so a rebuild (a tab switch, the
+  /// keyboard) does not fire the whole batch a second time.
+  bool _countsRequested = false;
+
+  final _saved = getIt<SavedActivityStore>();
+
   @override
   void initState() {
     super.initState();
-    if (_categories.isEmpty) _load();
+    if (_categories.isEmpty) {
+      _load();
+    } else {
+      _loadCounts(_categories);
+    }
   }
 
   StackRouter get _root => context.router.root;
@@ -57,12 +82,70 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
       if (categories.isNotEmpty) SearchCubit.cachedCategories = categories;
       if (!mounted) return;
       setState(() => _categories = categories);
+      // Counted against the list we just got, not the cached one: a category
+      // added since the last visit has no count yet, and an old count keyed to
+      // a category that is gone would never be read.
+      _countsRequested = false;
+      _loadCounts(categories);
     } catch (_) {
       // The "all categories" card and the search field still work without the
       // list, so a failed fetch leaves a usable screen rather than an error.
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Counts the catalogue, and then each category.
+  ///
+  /// There is no endpoint that returns these — `/api/categories` sends no
+  /// count — so each one is asked for with the lightest request that can
+  /// answer: page 1, ONE item, `kind: all`, filtered to that category. The
+  /// single result row is thrown away and only `total` is kept. That makes the
+  /// number on a card the number the grid will show when it is tapped, by
+  /// construction: it IS the same query.
+  ///
+  /// Batched rather than fired all at once: a dozen categories is a dozen
+  /// requests, and six in flight fills the grid top-down in a couple of rounds
+  /// without putting the whole screen's worth on the wire at the same moment.
+  ///
+  /// Silent on failure, per category. A card whose count did not come back
+  /// carries no line rather than a wrong one, and the rest of the grid is
+  /// unaffected.
+  Future<void> _loadCounts(List<HomCategory> categories) async {
+    if (_countsRequested) return;
+    _countsRequested = true;
+
+    final ids = <String>[
+      for (final category in categories)
+        if ((category.id ?? '').isNotEmpty) category.id!,
+    ];
+
+    // The catalogue total first: it is the "all categories" card, which is the
+    // first thing in the grid.
+    await _countInto(_allKey, null);
+    for (var i = 0; i < ids.length; i += _countBatch) {
+      if (!mounted) return;
+      final batch = ids.skip(i).take(_countBatch);
+      await Future.wait([for (final id in batch) _countInto(id, id)]);
+    }
+  }
+
+  /// How many counts are asked for at a time.
+  static const int _countBatch = 6;
+
+  /// Counts one slice of the catalogue into [_counts] under [key].
+  /// [categoryId] null means "everything".
+  Future<void> _countInto(String key, String? categoryId) async {
+    try {
+      final page = await getIt<HomeRepository>().getDiscoveryClasses(
+        page: 1,
+        limit: 1,
+        kind: ActivityKind.any.queryValue,
+        categoryIds: categoryId == null ? null : [categoryId],
+      );
+      _counts[key] = page.total;
+      if (mounted) setState(() {});
+    } catch (_) {}
   }
 
   void _openSearch() {
@@ -73,8 +156,20 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
     _root.push(BranchesMapRoute(categories: _categories));
   }
 
-  void _openCourses() {
-    _root.push(SearchDiscoveryRoute(initialKind: ActivityKind.courses));
+  /// Everything there is, which is what the discovery screen calls itself —
+  /// "Barcha mashg'ulotlar". It opens unfiltered, so the count on the card is
+  /// exactly what the list shows.
+  ///
+  /// This card used to say "Kurslar" and open courses alone. Courses are a
+  /// narrowing of the catalogue, not a section beside it — they are still one
+  /// tap away under the filter sheet's Type — and the shortcut row is for the
+  /// ways IN, of which "all of it" is the one that was missing.
+  void _openActivities() {
+    _root.push(SearchDiscoveryRoute());
+  }
+
+  void _openSaved() {
+    _root.push(const SavedActivitiesRoute());
   }
 
   void _openCategory(HomCategory? category) {
@@ -92,6 +187,7 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
     final cards = <Widget>[
       CategoryGridCard(
         title: 'all_categories'.tr(),
+        count: _counts[_allKey],
         onTap: () => _openCategory(null),
         icon: Assets.icons.categoryAll.svg(
           width: 28.w,
@@ -110,6 +206,7 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
             key: ValueKey(category.id),
             title: category.title ?? '',
             imageUrl: category.image,
+            count: _counts[category.id],
             onTap: () => _openCategory(category),
           ),
     ];
@@ -152,6 +249,10 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      // Three ways in, stretched to one height: where things
+                      // are, everything there is, and what you kept. The last
+                      // two carry a count, which is the whole reason they are
+                      // worth a card rather than a line of text.
                       child: IntrinsicHeight(
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,8 +270,33 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
                               child: SearchShortcutCard(
                                 icon: Assets.icons.home.book,
                                 color: AppColors.brandPink,
-                                label: 'courses'.tr(),
-                                onTap: _openCourses,
+                                label: 'activities'.tr(),
+                                // No count here. It said the same number the
+                                // "Barcha kategoriyalar" card below says, two
+                                // rows apart, and a total beside "Saqlanganlar"
+                                // read as though the two were comparable.
+                                onTap: _openActivities,
+                              ),
+                            ),
+                            8.horizontalSpace,
+                            Expanded(
+                              // Watches the store, so hearting something on a
+                              // detail screen moves this number by the time the
+                              // user is back on the tab.
+                              child: ValueListenableBuilder<Set<String>>(
+                                valueListenable: _saved.savedIds,
+                                builder: (_, ids, __) => SearchShortcutCard(
+                                  icon: Assets.icons.home.heart,
+                                  color: AppColors.error,
+                                  label: 'saved_title'.tr(),
+                                  // Zero IS the truth here, unlike the
+                                  // catalogue count: nothing saved is a fact
+                                  // this device knows for certain, and saying
+                                  // so is what explains the empty screen behind
+                                  // the tap.
+                                  count: ids.length,
+                                  onTap: _openSaved,
+                                ),
                               ),
                             ),
                           ],

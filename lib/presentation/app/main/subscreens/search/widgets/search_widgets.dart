@@ -3,6 +3,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lumi_pass/common/extensions/number_extensions.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
@@ -419,16 +420,6 @@ class SearchCountRow extends StatelessWidget {
   /// the screen counts more than one thing and each row has to say which.
   final String? label;
 
-  static String _grouped(int value) {
-    final digits = value.toString();
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(' ');
-      buffer.write(digits[i]);
-    }
-    return buffer.toString();
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -436,8 +427,8 @@ class SearchCountRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Text(
         label == null
-            ? 'all_count'.tr(args: [_grouped(count)])
-            : '$label • ${_grouped(count)}',
+            ? 'all_count'.tr(args: [count.grouped])
+            : '$label • ${count.grouped}',
         style: AppText.medium14.copyWith(color: c.textSecondary),
       ),
     );

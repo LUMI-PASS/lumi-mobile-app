@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/extensions/number_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
@@ -30,10 +32,19 @@ class CategoryGridCard extends StatelessWidget {
     required this.onTap,
     this.imageUrl,
     this.icon,
+    this.count,
   });
 
   final String title;
   final VoidCallback onTap;
+
+  /// How many activities are in this category.
+  ///
+  /// Null while it is still being counted — the line is then absent rather than
+  /// reading "0", which is a different and usually wrong statement. A category
+  /// that genuinely holds nothing DOES print 0: it is the one fact that would
+  /// stop someone tapping it, and finding out after the tap is worse.
+  final int? count;
 
   /// The category's artwork. Ignored when [icon] is given.
   final String? imageUrl;
@@ -82,6 +93,19 @@ class CategoryGridCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppText.semibold14.copyWith(color: c.textPrimary),
             ),
+            // How much is behind the name. Secondary ink and a size down: it
+            // qualifies the category, it is not a second name for it, and a
+            // grid where every card carried two lines of equal weight would
+            // read as a table.
+            if (count != null) ...[
+              2.verticalSpace,
+              Text(
+                'activities_count'.tr(args: [count!.grouped]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.regular12.copyWith(color: c.textSecondary),
+              ),
+            ],
           ],
         ),
       ),
@@ -132,8 +156,9 @@ class CategoryGridCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // A card with a one-line name: padding, badge, gap and the label.
-      height: (12 + _kBadgeSize + 10 + 20 + 12).w,
+      // A card with a one-line name and its count line: padding, badge, gap,
+      // label, gap, count.
+      height: (12 + _kBadgeSize + 10 + 20 + 2 + 16 + 12).w,
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(16.r),
