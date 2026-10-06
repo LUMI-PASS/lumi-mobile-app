@@ -270,9 +270,20 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     refresh();
   }
 
-  void applyFilter(FilterResult? filter) {
+  /// Commits what the filter sheet came back with.
+  ///
+  /// [categories] is passed when the sheet carried the category grid, so one
+  /// Apply is ONE request: setting the filter and the categories through their
+  /// two separate setters fired two refreshes, and the first one's results
+  /// were thrown away a frame later. Omitted by a caller whose sheet has no
+  /// grid (the map screen, which picks categories elsewhere), and the current
+  /// selection is then left exactly as it was.
+  void applyFilter(FilterResult? filter, {List<HomCategory>? categories}) {
     _leaveRecents();
-    build((b) => b.copyWith(filter: filter));
+    build((b) => b.copyWith(
+          filter: filter,
+          selectedCategories: categories ?? b.selectedCategories,
+        ));
     refresh();
   }
 

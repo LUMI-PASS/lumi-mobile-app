@@ -94,11 +94,20 @@ class _SearchViewState extends State<SearchView> {
 
   Future<void> _openFilter() async {
     final cubit = context.read<SearchCubit>();
+    final state = widget.state;
     final result = await FilterBottomSheet.show(
       context,
-      initial: widget.state.filter,
+      // The categories ride IN on the filter and back OUT on the result, so
+      // the sheet's grid opens already showing what is narrowing the list.
+      // Until now the only way to add one here was to arrive from Home with
+      // it: the chips above the results could remove a category but nothing on
+      // this screen could pick one.
+      initial: (state.filter ?? const FilterResult())
+          .copyWith(categories: state.selectedCategories),
+      categories: state.categories,
     );
-    if (result != null) cubit.applyFilter(result);
+    if (result == null) return;
+    cubit.applyFilter(result, categories: result.categories);
   }
 
   @override

@@ -11,6 +11,7 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/date_range_picker_sheet.dart';
+import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 
 enum DatePreset { none, today, tomorrow, thisWeek, custom }
 
@@ -67,6 +68,18 @@ class FilterResult {
   /// takes them as a comma-separated `districts` query param.
   final Set<String> districts;
 
+  /// The categories the buyer ticked in the sheet's grid. Empty = every
+  /// category.
+  ///
+  /// The resolved objects rather than bare ids, because that is the shape
+  /// `SearchCubit.selectedCategories` keeps — the removable chips above the
+  /// results read a title off each one, and an id cannot supply it.
+  ///
+  /// Carried on the filter so one Apply commits the whole sheet. The map
+  /// screen keeps its own dedicated category picker and simply never passes a
+  /// category list in, which leaves its grid section unbuilt and this empty.
+  final List<HomCategory> categories;
+
   const FilterResult({
     this.datePreset = DatePreset.none,
     this.fromDate,
@@ -78,6 +91,7 @@ class FilterResult {
     this.pricePreset = PricePreset.any,
     this.priceRange = const RangeValues(minPrice, maxPrice),
     this.districts = const {},
+    this.categories = const [],
   });
 
   static const double minPrice = 10000;
@@ -97,6 +111,7 @@ class FilterResult {
     PricePreset? pricePreset,
     RangeValues? priceRange,
     Set<String>? districts,
+    List<HomCategory>? categories,
   }) {
     return FilterResult(
       datePreset: datePreset ?? this.datePreset,
@@ -109,6 +124,7 @@ class FilterResult {
       pricePreset: pricePreset ?? this.pricePreset,
       priceRange: priceRange ?? this.priceRange,
       districts: districts ?? this.districts,
+      categories: categories ?? this.categories,
     );
   }
 }
@@ -116,14 +132,21 @@ class FilterResult {
 class FilterBottomSheet extends StatefulWidget {
   final FilterResult? initial;
 
+  /// Every category there is to offer — the grid section is built only when
+  /// this is non-empty, so a caller that filters categories some other way
+  /// (the map screen, which has its own picker) gets the sheet it always had.
+  final List<HomCategory> categories;
+
   const FilterBottomSheet({
     super.key,
     this.initial,
+    this.categories = const [],
   });
 
   static Future<FilterResult?> show(
     BuildContext context, {
     FilterResult? initial,
+    List<HomCategory> categories = const [],
   }) {
     return showModalBottomSheet<FilterResult>(
       context: context,
@@ -134,7 +157,8 @@ class FilterBottomSheet extends StatefulWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
-      builder: (_) => FilterBottomSheet(initial: initial),
+      builder: (_) =>
+          FilterBottomSheet(initial: initial, categories: categories),
     );
   }
 
@@ -154,6 +178,42 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   RangeValues _range =
       const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
 
+  /// The ticked categories, by id. Ids rather than objects so a tick survives
+  /// the catalogue being re-fetched underneath the sheet.
+  Set<String> _categoryIds = <String>{};
+
+  /// Every category this sheet can hand back, by id: the ones on offer PLUS
+  /// the ones that arrived already ticked.
+  ///
+  /// The second half matters. Search can open filtered by a category tapped on
+  /// Home while its own full category list is still in flight, so a pick can
+  /// be live without being in [FilterBottomSheet.categories] — and resolving
+  /// the result against that list alone would quietly drop it on Apply.
+  late final Map<String, HomCategory> _knownCategories = {
+    for (final cat in [
+      ...widget.categories,
+      ...?widget.initial?.categories,
+    ])
+      if (cat.id != null) cat.id!: cat,
+  };
+
+  /// What the grid draws: the catalogue, with any already-ticked category that
+  /// is missing from it appended, so a live pick is always visible and
+  /// untickable-by-accident.
+  List<HomCategory> get _offeredCategories {
+    final offered = [
+      for (final cat in widget.categories)
+        if ((cat.title ?? '').isNotEmpty) cat,
+    ];
+    final have = offered.map((c) => c.id).toSet();
+    for (final cat in widget.initial?.categories ?? const <HomCategory>[]) {
+      if ((cat.title ?? '').isNotEmpty && !have.contains(cat.id)) {
+        offered.add(cat);
+      }
+    }
+    return offered;
+  }
+
   /// Mirrors the age fields' emptiness so [_onAgeTyped] can tell when the Clear
   /// button's enabled state actually needs a rebuild.
   bool _ageFieldsEmpty = true;
@@ -168,6 +228,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _gender = init.gender;
     _kind = init.kind;
     _districts = {...init.districts};
+    _categoryIds = {
+      for (final cat in init.categories)
+        if (cat.id != null) cat.id!,
+    };
     _range = init.priceRange;
     if (init.ageYears != null) _ageFromController.text = '${init.ageYears}';
     if (init.ageToYears != null) _ageToController.text = '${init.ageToYears}';
@@ -217,6 +281,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _gender != Gender.any ||
       _kind != ActivityKind.any ||
       _districts.isNotEmpty ||
+      _categoryIds.isNotEmpty ||
       _isPriceChanged;
 
   /// Resets every control back to its default. Stays in the sheet on purpose:
@@ -234,6 +299,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _gender = Gender.any;
       _kind = ActivityKind.any;
       _districts = <String>{};
+      _categoryIds = <String>{};
       _range = const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
     });
   }
@@ -249,6 +315,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         pricePreset: _isPriceChanged ? PricePreset.custom : PricePreset.any,
         priceRange: _range,
         districts: _districts,
+        // Resolved through [_knownCategories] rather than filtered out of the
+        // offered list, so a pick made before the catalogue landed survives.
+        categories: [
+          for (final id in _categoryIds)
+            if (_knownCategories[id] != null) _knownCategories[id]!,
+        ],
       );
 
   void _selectDatePreset(DatePreset preset) {
@@ -340,6 +412,35 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     ),
                   ),
                   16.kh,
+                  // Categories, as a two-column grid.
+                  //
+                  // NOT the pill Wrap every other section uses: there are two
+                  // dozen of these and their titles are long, so wrapped pills
+                  // came out as ragged rows of wildly different widths that
+                  // read as a paragraph rather than a list to pick from. Two
+                  // even columns give every category the same target and the
+                  // same place to start reading.
+                  //
+                  // Multi-select, and no "all categories" tile: nothing ticked
+                  // already means every category, which is the same rule the
+                  // district section below runs on, and Clear empties it.
+                  if (_offeredCategories.isNotEmpty) ...[
+                    _Section(
+                      // "Категории" — the bare noun, like "Тип" and "Район"
+                      // beside it. `all_categories` is the Home row's own
+                      // heading and reads as a destination rather than as a
+                      // label over a pick list.
+                      label: 'categories'.tr(),
+                      child: _CategoryGrid(
+                        categories: _offeredCategories,
+                        selectedIds: _categoryIds,
+                        onToggle: (id) => setState(() {
+                          if (!_categoryIds.remove(id)) _categoryIds.add(id);
+                        }),
+                      ),
+                    ),
+                    16.kh,
+                  ],
                   _Section(
                     label: 'filter_date'.tr(),
                     child: Wrap(
@@ -581,6 +682,123 @@ class _FilterChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(40.r),
         ),
         child: Text(label, style: AppText.semibold12.copyWith(color: textColor)),
+      ),
+    );
+  }
+}
+
+/// The category picks, two to a row.
+///
+/// Laid out by hand rather than with a [GridView]: the sheet is already one
+/// scroll view, so a nested one would have to be shrink-wrapped and given a
+/// fixed `childAspectRatio` — and a fixed ratio is exactly what clips a
+/// two-line category title. [IntrinsicHeight] instead lets a row grow to its
+/// taller tile and keeps the pair the same height, which is what makes the
+/// columns read as columns.
+class _CategoryGrid extends StatelessWidget {
+  const _CategoryGrid({
+    required this.categories,
+    required this.selectedIds,
+    required this.onToggle,
+  });
+
+  final List<HomCategory> categories;
+  final Set<String> selectedIds;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < categories.length; i += 2) ...[
+          if (i > 0) 8.kh,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _tile(categories[i])),
+                8.kw,
+                // The last tile of an odd list keeps its column rather than
+                // stretching across both — a lone double-width tile reads as a
+                // different kind of control from the ones above it.
+                Expanded(
+                  child: i + 1 < categories.length
+                      ? _tile(categories[i + 1])
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _tile(HomCategory category) {
+    final id = category.id;
+    return _CategoryTile(
+      label: category.title ?? '',
+      selected: id != null && selectedIds.contains(id),
+      // A category the server sent without an id cannot be filtered on; it is
+      // shown, inert, rather than dropped out of a grid the user is reading
+      // against the catalogue they saw on Home.
+      onTap: id == null ? null : () => onToggle(id),
+    );
+  }
+}
+
+/// One cell of [_CategoryGrid] — the sheet's selected/unselected treatment at
+/// tile size, with a tick in the corner once it is on.
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final textColor = selected ? AppColors.onBrand : c.textPrimary;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Opacity(
+        opacity: onTap == null ? 0.45 : 1,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: selected ? null : c.control,
+            gradient: selected ? AppGradients.indigo : null,
+            borderRadius: BorderRadius.circular(14.r),
+            border: selected ? null : Border.all(color: c.controlBorder),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  // Two lines, because a tile is half the sheet wide and the
+                  // longer category names do not fit on one.
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.semibold12.copyWith(color: textColor),
+                ),
+              ),
+              if (selected) ...[
+                4.kw,
+                Icon(Icons.check_rounded, size: 16.sp, color: AppColors.onBrand),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
