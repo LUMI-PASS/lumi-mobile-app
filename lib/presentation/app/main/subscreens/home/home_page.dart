@@ -27,6 +27,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_header.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_skeletons.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/today_bookings.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
 
@@ -115,6 +116,15 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(child: 4.verticalSpace),
+            // "Bugun borilishi kerak" — today's visits, above everything the
+            // feed is selling. Somewhere to be in two hours beats an offer, so
+            // it takes the top of the page whenever there is one; it collapses
+            // to nothing on the days there isn't, which is most of them, and
+            // the carousel is then the first thing again.
+            if (state.todayBookings.isNotEmpty)
+              SliverToBoxAdapter(
+                child: TodayBookingsShelf(bookings: state.todayBookings),
+              ),
             // Full-bleed promo carousel: the Lumi Start packet leads it, then
             // the coupon card, then the API banners.
             SliverToBoxAdapter(

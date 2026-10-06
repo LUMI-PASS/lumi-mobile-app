@@ -35,7 +35,18 @@ mixin _$HomeBuildable {
   /// it however many slots show it, and so a purchase can refresh every slot
   /// at once. Null while it loads and when nothing is on sale, in which case
   /// neither slot renders.
-  PromoCampaign? get packet => throw _privateConstructorUsedError; // Location
+  PromoCampaign? get packet => throw _privateConstructorUsedError;
+
+  /// What the user has to attend TODAY, soonest first — the shelf above the
+  /// banner carousel.
+  ///
+  /// Every visit due today, not only the ones still ahead: the clock moves
+  /// while the screen is open, so what has already finished is dropped at
+  /// build time (see [DayBooking.stillToCome]) rather than being baked in
+  /// here at fetch time. Empty for a signed-out user, for whom the orders
+  /// endpoint is never called.
+  List<DayBooking> get todayBookings =>
+      throw _privateConstructorUsedError; // Location
   double? get lat => throw _privateConstructorUsedError;
   double? get lng =>
       throw _privateConstructorUsedError; // Pagination for new classes
@@ -71,6 +82,7 @@ abstract class $HomeBuildableCopyWith<$Res> {
       HomeModel? homeModel,
       List<HomCategory>? categories,
       PromoCampaign? packet,
+      List<DayBooking> todayBookings,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -105,6 +117,7 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? homeModel = freezed,
     Object? categories = freezed,
     Object? packet = freezed,
+    Object? todayBookings = null,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -142,6 +155,10 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
           ? _value.packet
           : packet // ignore: cast_nullable_to_non_nullable
               as PromoCampaign?,
+      todayBookings: null == todayBookings
+          ? _value.todayBookings
+          : todayBookings // ignore: cast_nullable_to_non_nullable
+              as List<DayBooking>,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -217,6 +234,7 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       HomeModel? homeModel,
       List<HomCategory>? categories,
       PromoCampaign? packet,
+      List<DayBooking> todayBookings,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -250,6 +268,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? homeModel = freezed,
     Object? categories = freezed,
     Object? packet = freezed,
+    Object? todayBookings = null,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -287,6 +306,10 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           ? _value.packet
           : packet // ignore: cast_nullable_to_non_nullable
               as PromoCampaign?,
+      todayBookings: null == todayBookings
+          ? _value._todayBookings
+          : todayBookings // ignore: cast_nullable_to_non_nullable
+              as List<DayBooking>,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -345,6 +368,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.homeModel,
       final List<HomCategory>? categories,
       this.packet,
+      final List<DayBooking> todayBookings = const [],
       this.lat = null,
       this.lng = null,
       final List<HomClass> newClassesList = const [],
@@ -357,6 +381,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.isLoadingNearClasses = false,
       this.hasMoreNearClasses = true})
       : _categories = categories,
+        _todayBookings = todayBookings,
         _newClassesList = newClassesList,
         _coursesList = coursesList,
         _nearClassesList = nearClassesList;
@@ -397,6 +422,33 @@ class _$HomeBuildableImpl implements _HomeBuildable {
   /// neither slot renders.
   @override
   final PromoCampaign? packet;
+
+  /// What the user has to attend TODAY, soonest first — the shelf above the
+  /// banner carousel.
+  ///
+  /// Every visit due today, not only the ones still ahead: the clock moves
+  /// while the screen is open, so what has already finished is dropped at
+  /// build time (see [DayBooking.stillToCome]) rather than being baked in
+  /// here at fetch time. Empty for a signed-out user, for whom the orders
+  /// endpoint is never called.
+  final List<DayBooking> _todayBookings;
+
+  /// What the user has to attend TODAY, soonest first — the shelf above the
+  /// banner carousel.
+  ///
+  /// Every visit due today, not only the ones still ahead: the clock moves
+  /// while the screen is open, so what has already finished is dropped at
+  /// build time (see [DayBooking.stillToCome]) rather than being baked in
+  /// here at fetch time. Empty for a signed-out user, for whom the orders
+  /// endpoint is never called.
+  @override
+  @JsonKey()
+  List<DayBooking> get todayBookings {
+    if (_todayBookings is EqualUnmodifiableListView) return _todayBookings;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_todayBookings);
+  }
+
 // Location
   @override
   @JsonKey()
@@ -461,7 +513,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, lat: $lat, lng: $lng, newClassesList: $newClassesList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, todayBookings: $todayBookings, lat: $lat, lng: $lng, newClassesList: $newClassesList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -479,6 +531,8 @@ class _$HomeBuildableImpl implements _HomeBuildable {
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
             (identical(other.packet, packet) || other.packet == packet) &&
+            const DeepCollectionEquality()
+                .equals(other._todayBookings, _todayBookings) &&
             (identical(other.lat, lat) || other.lat == lat) &&
             (identical(other.lng, lng) || other.lng == lng) &&
             const DeepCollectionEquality()
@@ -510,6 +564,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       homeModel,
       const DeepCollectionEquality().hash(_categories),
       packet,
+      const DeepCollectionEquality().hash(_todayBookings),
       lat,
       lng,
       const DeepCollectionEquality().hash(_newClassesList),
@@ -537,6 +592,7 @@ abstract class _HomeBuildable implements HomeBuildable {
       final HomeModel? homeModel,
       final List<HomCategory>? categories,
       final PromoCampaign? packet,
+      final List<DayBooking> todayBookings,
       final double? lat,
       final double? lng,
       final List<HomClass> newClassesList,
@@ -575,6 +631,17 @@ abstract class _HomeBuildable implements HomeBuildable {
   /// at once. Null while it loads and when nothing is on sale, in which case
   /// neither slot renders.
   PromoCampaign? get packet;
+  @override
+
+  /// What the user has to attend TODAY, soonest first — the shelf above the
+  /// banner carousel.
+  ///
+  /// Every visit due today, not only the ones still ahead: the clock moves
+  /// while the screen is open, so what has already finished is dropped at
+  /// build time (see [DayBooking.stillToCome]) rather than being baked in
+  /// here at fetch time. Empty for a signed-out user, for whom the orders
+  /// endpoint is never called.
+  List<DayBooking> get todayBookings;
   @override // Location
   double? get lat;
   @override

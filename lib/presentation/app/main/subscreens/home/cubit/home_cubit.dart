@@ -9,18 +9,22 @@ import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/order/day_booking.dart';
+import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
+import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/promo/promo_repository.dart';
 import 'home_state.dart';
 
 @injectable
 class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
-  HomeCubit(this._repo, this._storage, this._promo)
+  HomeCubit(this._repo, this._storage, this._promo, this._orders)
       : super(const HomeBuildable());
   final HomeRepository _repo;
   final Storage _storage;
   final PromoRepository _promo;
+  final OrdersApi _orders;
 
   String _lastLang = '';
   // Track premium/coupon state so we can detect changes on focus regain.
@@ -150,6 +154,36 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     } catch (_) {}
   }
 
+  /// Whether this device may ask the orders endpoint for anything.
+  ///
+  /// Guarded rather than attempted: [AuthInterceptor] logs the user out and
+  /// throws them at the login screen on ANY 401, so a speculative call for a
+  /// signed-out browser would not merely come back empty — it would end their
+  /// session. The review build is allowed through because the interceptor
+  /// supplies it a token of its own.
+  bool get _canReadOrders =>
+      _storage.tokens.call()?.access != null ||
+      RemoteConfigService.instance.isInReview;
+
+  /// Fetches what has to be attended today, for the shelf above the banners.
+  ///
+  /// Its own request, like the packet's, and for the same reason: the home
+  /// feed does not carry the user's bookings, and a failure here must cost the
+  /// feed nothing — the shelf simply isn't there. Keeps the last good list on
+  /// failure rather than pulling a card out from under someone mid-scroll.
+  Future<void> _loadTodayBookings() async {
+    if (!_canReadOrders) {
+      if (buildable.todayBookings.isNotEmpty) {
+        build((b) => b.copyWith(todayBookings: const []));
+      }
+      return;
+    }
+    try {
+      final orders = await _orders.getOrders();
+      build((b) => b.copyWith(todayBookings: DayBooking.dueToday(orders)));
+    } catch (_) {}
+  }
+
   /// Reloads the greeting name from the server on every home fetch.
   ///
   /// Both directions matter. Writing the name when the server sends one was
@@ -187,6 +221,11 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // buying the packet turns its card from an offer into "2 visits left", and
     // none of the signals those checks watch move when that happens.
     unawaited(_loadPacket());
+    // Same reasoning, and one more: a booking made minutes ago on another tab
+    // is due today, and nothing those checks watch moves when it is made. The
+    // clock alone is also a change — a lesson finishes while the app sits on
+    // another tab — so the shelf is re-read every time home comes back.
+    unawaited(_loadTodayBookings());
 
     final lang = currentLang;
     final hasPremium = _storage.hasPremium() == true;
@@ -220,6 +259,11 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   }
 
   Future<void> getHome() async {
+    // Alongside the feed, not inside it: a different endpoint, and the shelf
+    // must not hold up the first paint of the page. This covers both the first
+    // load and pull-to-refresh, which is the gesture someone makes when they
+    // have just paid for something.
+    unawaited(_loadTodayBookings());
     return callable(
       future: _repo.getHome(
         newClassesPage: 1,
@@ -270,6 +314,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // language change.
     unawaited(_loadAllCategories());
     unawaited(_loadPacket());
+    unawaited(_loadTodayBookings());
     try {
       final data = await _repo.getHome(
         newClassesPage: 1,

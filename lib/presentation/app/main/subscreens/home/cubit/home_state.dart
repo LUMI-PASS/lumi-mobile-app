@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/order/day_booking.dart';
 import 'package:lumi_pass/data/api_model/promo/promo_campaign.dart';
 
 part 'home_state.freezed.dart';
@@ -27,6 +28,16 @@ class HomeBuildable with _$HomeBuildable {
     /// at once. Null while it loads and when nothing is on sale, in which case
     /// neither slot renders.
     PromoCampaign? packet,
+
+    /// What the user has to attend TODAY, soonest first — the shelf above the
+    /// banner carousel.
+    ///
+    /// Every visit due today, not only the ones still ahead: the clock moves
+    /// while the screen is open, so what has already finished is dropped at
+    /// build time (see [DayBooking.stillToCome]) rather than being baked in
+    /// here at fetch time. Empty for a signed-out user, for whom the orders
+    /// endpoint is never called.
+    @Default([]) List<DayBooking> todayBookings,
     // Location
     @Default(null) double? lat,
     @Default(null) double? lng,

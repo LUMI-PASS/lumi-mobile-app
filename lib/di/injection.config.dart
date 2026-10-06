@@ -153,13 +153,13 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
-    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
     gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
     gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
     gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
+    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i582.PromoApi>(() => _i582.PromoApi(gh<_i361.Dio>()));
     gh.factory<_i259.NewCoinsApi>(() => _i259.NewCoinsApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
@@ -219,11 +219,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i66.ShopRepositoryImpl(gh<_i323.ShopApi>()));
     gh.factory<_i822.WalletCubit>(
         () => _i822.WalletCubit(gh<_i890.WalletRepository>()));
-    gh.factory<_i386.HomeCubit>(() => _i386.HomeCubit(
-          gh<_i526.HomeRepository>(),
-          gh<_i279.Storage>(),
-          gh<_i789.PromoRepository>(),
-        ));
     gh.factory<_i649.ReferralCubit>(() => _i649.ReferralCubit(
           gh<_i57.ReferralRepository>(),
           gh<_i422.ReferralCoordinator>(),
@@ -236,6 +231,12 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i652.AuthRepository>(),
           gh<_i361.PushNotificationService>(),
           gh<_i279.Storage>(),
+        ));
+    gh.factory<_i386.HomeCubit>(() => _i386.HomeCubit(
+          gh<_i526.HomeRepository>(),
+          gh<_i279.Storage>(),
+          gh<_i789.PromoRepository>(),
+          gh<_i748.OrdersApi>(),
         ));
     gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
           gh<_i279.Storage>(),

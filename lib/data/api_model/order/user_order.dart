@@ -147,14 +147,16 @@ class UserOrder {
     return null;
   }
 
-  /// The activity's own scheduled time for the weekday this booking falls on,
-  /// falling back to its first entry — a schedule that names one time for the
-  /// week answers correctly either way, and a date we cannot parse should not
-  /// cost the row entirely.
-  String? get _scheduledTimeRange {
+  /// The activity's own scheduled slot for the weekday [iso] falls on, falling
+  /// back to its first entry — a schedule that names one time for the week
+  /// answers correctly either way, and a date we cannot parse should not cost
+  /// the row entirely.
+  ///
+  /// Null when the activity sent no schedule, or when the slot it matched
+  /// names no start time, which is a slot that can say nothing about a clock.
+  ScheduleSlot? scheduleSlotOn(String? iso) {
     if (activitySchedule.isEmpty) return null;
     ScheduleSlot? match;
-    final iso = startDate;
     if (iso != null && iso.isNotEmpty) {
       try {
         final key = _weekdayKeys[DateTime.parse(iso).weekday - 1];
@@ -170,7 +172,13 @@ class UserOrder {
       }
     }
     final slot = match ?? activitySchedule.first;
-    if (slot.startTime.isEmpty) return null;
+    return slot.startTime.isEmpty ? null : slot;
+  }
+
+  /// That slot as a label, for the booking's own start date.
+  String? get _scheduledTimeRange {
+    final slot = scheduleSlotOn(startDate);
+    if (slot == null) return null;
     return slot.endTime.isEmpty
         ? slot.startTime
         : '${slot.startTime} - ${slot.endTime}';
@@ -184,13 +192,14 @@ class UserOrder {
   /// Null only when neither knows, and the row is then left out.
   String? get displayTimeRange => _bookedTimeRange ?? _scheduledTimeRange;
 
-  /// Today as `YYYY-MM-DD`, the shape every ticket date arrives in — string
+  /// [day] as `YYYY-MM-DD`, the shape every ticket date arrives in — string
   /// comparison is then the same thing as date comparison, with no parsing.
-  static String get _todayKey {
-    final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}'
-        '-${now.day.toString().padLeft(2, '0')}';
-  }
+  static String dayKey(DateTime day) =>
+      '${day.year}-${day.month.toString().padLeft(2, '0')}'
+      '-${day.day.toString().padLeft(2, '0')}';
+
+  /// Today, in that same shape.
+  static String get _todayKey => dayKey(DateTime.now());
 
   /// The lessons this order actually bought — dated, and not called off.
   Iterable<OrderTicketSummary> get _lessons => ticketSummaries.where((t) {
@@ -198,6 +207,15 @@ class UserOrder {
         if (d == null || d.isEmpty) return false;
         return t.status.toLowerCase() != 'canceled';
       });
+
+  /// The lessons this order booked on [iso] (`YYYY-MM-DD`) that are still
+  /// standing — a seat the buyer called off is not a visit to make.
+  ///
+  /// More than one is ordinary: a parent who booked two children onto the same
+  /// morning holds two seats on that date.
+  Iterable<OrderTicketSummary> lessonsOn(String iso) => ticketSummaries.where(
+        (t) => t.ticketDate == iso && t.status.toLowerCase() != 'canceled',
+      );
 
   /// How many lessons this order bought. Every seat on a course enrolment is
   /// one dated lesson, so the lesson count IS the ticket count.
