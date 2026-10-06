@@ -25,6 +25,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/map/map_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/branches_map_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/saved_activities_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_categories_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discovery_page.dart';
 // SearchPage (Учреждения) is off the bottom nav for now, but it is still a
@@ -134,6 +135,7 @@ class AppRouter extends _$AppRouter {
     ///Subscreens
 
     AutoRoute(page: ClassDetailRoute.page),
+    AutoRoute(page: SavedActivitiesRoute.page),
     AutoRoute(page: BranchDetailRoute.page),
     AutoRoute(page: BookingRoute.page),
     AutoRoute(page: CourseBookingRoute.page),

@@ -1474,3 +1474,6 @@ new_coins_feat_extra_body,У этих коинов свой срок дейст�
 today_to_attend,Сегодня нужно посетить,Bugun borilishi kerak,To attend today
 view_all_bookings,Все брони,Barcha bronlar,All bookings
 booking_now,Сейчас,Hozir,Now
+saved_title,Сохранённые,Saqlanganlar,Saved
+saved_empty_title,Пока ничего не сохранено,Hali hech narsa saqlanmagan,Nothing saved yet
+saved_empty_desc,Нажмите на сердечко у занятия — оно появится здесь,Mashg'ulotdagi yurakchani bosing — u shu yerda paydo bo'ladi,Tap the heart on an activity and it lands here

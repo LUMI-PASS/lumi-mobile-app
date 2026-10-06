@@ -327,6 +327,12 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    SavedActivitiesRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const SavedActivitiesPage(),
+      );
+    },
     SearchCategoriesRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -1497,6 +1503,20 @@ class RegisterRouteArgs {
   String toString() {
     return 'RegisterRouteArgs{key: $key, phoneOrMail: $phoneOrMail}';
   }
+}
+
+/// generated route for
+/// [SavedActivitiesPage]
+class SavedActivitiesRoute extends PageRouteInfo<void> {
+  const SavedActivitiesRoute({List<PageRouteInfo>? children})
+      : super(
+          SavedActivitiesRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'SavedActivitiesRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

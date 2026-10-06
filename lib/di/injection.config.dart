@@ -29,6 +29,7 @@ import 'package:lumi_pass/data/service/push_notification_service.dart' as _i361;
 import 'package:lumi_pass/data/service/recent_search_store.dart' as _i789;
 import 'package:lumi_pass/data/service/referral/referral_coordinator.dart'
     as _i422;
+import 'package:lumi_pass/data/service/saved_activity_store.dart' as _i966;
 import 'package:lumi_pass/data/storage/storage.dart' as _i279;
 import 'package:lumi_pass/di/app_module.dart' as _i591;
 import 'package:lumi_pass/di/network_module.dart' as _i85;
@@ -136,6 +137,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i295.MetaService(gh<_i279.Storage>()));
     gh.lazySingleton<_i789.RecentSearchStore>(
         () => _i789.RecentSearchStore(gh<_i279.Storage>()));
+    gh.lazySingleton<_i966.SavedActivityStore>(
+        () => _i966.SavedActivityStore(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
     gh.factory<_i538.ReferralsApi>(() => _i538.ReferralsApi(

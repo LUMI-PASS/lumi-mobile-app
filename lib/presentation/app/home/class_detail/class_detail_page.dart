@@ -42,6 +42,7 @@ import 'package:lumi_pass/presentation/app/home/course_detail/intake_waitlist_sh
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_widgets.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_sheet.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/reviews_sheet.dart';
+import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
@@ -70,7 +71,12 @@ const double _kHeroHeight = 300;
 const double _kVenueStripHeight = 140;
 
 class _ClassDetailPageState extends State<ClassDetailPage> {
-  bool _isFavorite = false;
+  /// The saved shelf ("Saqlanganlar"). The heart used to be a `bool` in this
+  /// state and nothing else: it filled on tap, emptied on the way back in, and
+  /// no screen in the app could tell you what you had hearted. It now writes
+  /// through to [SavedActivityStore], which is local and the only copy there
+  /// is — the backend has no favourites endpoint.
+  final _saved = getIt<SavedActivityStore>();
   List<String> _galleryImages = [];
   final PageController _pageController = PageController();
   final ScrollController _scrollController = ScrollController();
@@ -1088,11 +1094,22 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         size: 16, color: c.textSecondary),
                   ),
                   8.horizontalSpace,
-                  DetailControlButton(
-                    child: HomeIcon(Assets.icons.home.heart,
-                        size: 16,
-                        color: _isFavorite ? AppColors.error : c.textSecondary),
-                    onTap: () => setState(() => _isFavorite = !_isFavorite),
+                  // Reads the store rather than a local flag, so the heart is
+                  // already filled when the page opens on something saved, and
+                  // the shelf's count moves the moment it is tapped.
+                  ValueListenableBuilder<Set<String>>(
+                    valueListenable: _saved.savedIds,
+                    builder: (_, __, ___) {
+                      final isSaved = _saved.contains(widget.classModel.id);
+                      return DetailControlButton(
+                        child: HomeIcon(
+                          Assets.icons.home.heart,
+                          size: 16,
+                          color: isSaved ? AppColors.error : c.textSecondary,
+                        ),
+                        onTap: () => _saved.toggle(widget.classModel),
+                      );
+                    },
                   ),
                 ],
               ),

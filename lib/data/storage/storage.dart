@@ -96,6 +96,18 @@ class Storage {
   BaseStorage<List> get recentSearchClasses =>
       BaseStorage(_box, 'recent_search_classes');
 
+  /// The activities the user SAVED, newest first, as their raw `HomClass`
+  /// JSON — the "Saqlanganlar" shelf.
+  ///
+  /// Device-scoped and deliberately not account-scoped: there is no server
+  /// endpoint for a favourite, so this is the only copy, and wiping it on
+  /// logout would throw away work the user did rather than protect anything.
+  /// The whole card is stored rather than its id, for the same reason recents
+  /// are — see [SavedActivityStore] — so the shelf opens with no round trip
+  /// and still works offline.
+  BaseStorage<List> get savedActivities =>
+      BaseStorage(_box, 'saved_activities');
+
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
   /// Path of the parent's avatar on this device. The backend has no endpoint
