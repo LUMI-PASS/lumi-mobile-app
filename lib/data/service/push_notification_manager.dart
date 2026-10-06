@@ -8,13 +8,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/notification_model/notification_type.dart';
 
-const _kBookingTypes = {
-  'booking_approved',
-  'booking_rejected',
-  'booking_time_suggestion',
-  'booking_request_pending',
-};
-
 class PushNotificationManager {
   PushNotificationManager(this._appRouter);
 
@@ -247,10 +240,13 @@ class PushNotificationManager {
           // Reward issued, voucher expiring/revoked, welcome voucher — all
           // explained on the referral screen.
           _appRouter.navigate(const ReferralRoute());
-        } else if (_kBookingTypes.contains(type)) {
-          _appRouter.navigate(const MyBookingsRoute());
         } else {
-          _appRouter.navigate(const CalendarRoute());
+          // Everything else — the booking types and anything unmodelled —
+          // lands on the booking list. This used to split: the booking types
+          // here, the rest on the Броны tab. The Lumi Coin shelf has that tab
+          // now, and the list is the right screen for both, so the split (and
+          // the `_kBookingTypes` string set behind it) is gone.
+          _appRouter.navigate(const MyBookingsRoute());
         }
       } finally {
         Future.delayed(const Duration(milliseconds: 300), () {

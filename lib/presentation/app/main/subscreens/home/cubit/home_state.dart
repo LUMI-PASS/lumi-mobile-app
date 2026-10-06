@@ -43,6 +43,15 @@ class HomeBuildable with _$HomeBuildable {
     @Default(null) double? lng,
     // Pagination for new classes
     @Default([]) List<HomClass> newClassesList,
+
+    /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+    /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
+    ///
+    /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
+    /// feed already sent, and the shuffle is done ONCE here rather than in
+    /// `build` — a row shuffled per frame would deal itself new cards every
+    /// time anything on the screen moved.
+    @Default([]) List<HomClass> subscriptionList,
     /// Real courses — the home 'Курсы' row. Kept separate from the class
     /// lists because a course is bought as a trial or as the whole course.
     @Default([]) List<HomClass> coursesList,

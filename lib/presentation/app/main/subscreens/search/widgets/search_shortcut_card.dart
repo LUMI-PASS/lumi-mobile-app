@@ -47,9 +47,14 @@ class SearchShortcutCard extends StatelessWidget {
   ///
   /// The point is to answer "is it worth tapping" before the tap: a shelf of
   /// nine saved activities and an empty one look identical otherwise, and a
-  /// catalogue is more inviting when it says how big it is. Null while the
-  /// number is still being fetched — the line is then absent rather than
-  /// reading "0", which would be a different and wrong statement.
+  /// catalogue is more inviting when it says how big it is.
+  ///
+  /// Null prints no line at all, which is what a card passes for BOTH of the
+  /// cases where there is no number worth printing: the count has not been
+  /// fetched yet, and the count is zero. A "0" under the glyph answers the
+  /// question with "no" where saying nothing leaves the card as the plain way
+  /// in that it still is — and for an empty shelf the screen behind the tap
+  /// explains itself anyway.
   final int? count;
 
   @override

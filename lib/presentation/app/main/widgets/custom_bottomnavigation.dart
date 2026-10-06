@@ -69,7 +69,13 @@ class CustomBottomBar extends StatelessWidget {
   static const Color _figmaGrey = Color(0xFFA5A6BB);
 
   // Tab icon + localization key, per tab:
-  // Главный · Поиск · Видео · Броны · Профиль.
+  // Главный · Поиск · Видео · Тарифы · Профиль.
+  //
+  // The fourth slot is the **Lumi Coin shelf** (`NewCoinsPage`), labelled
+  // `Тарифы / Tariflar` — the packs an activity is paid with. It took the
+  // Броны slot: a booking list is something you check now and then, a tariff
+  // is something you buy, so the bar carries the one with a reason to be
+  // tapped. Bookings are still a tap into Profile (`MyBookingsRoute`).
   //
   // `Учреждения` (tab_explore) is not here: the centres section is still a
   // coming-soon card. The map that stood in for it is now a card at the top
@@ -79,7 +85,7 @@ class CustomBottomBar extends StatelessWidget {
     (Assets.icons.home.home, 'tab_home'),
     (Assets.icons.home.search, 'search_title'),
     (Assets.icons.home.video, 'tab_shorts'),
-    (Assets.icons.home.calendar, 'tab_bookings'),
+    (Assets.icons.home.money, 'tab_tariffs'),
     (Assets.icons.home.profile, 'tab_profile'),
   ];
 

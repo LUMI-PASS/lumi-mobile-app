@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
@@ -57,6 +58,122 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   bool _nearLoadLock = false;
 
   static const int _pageLimit = 10;
+
+  /// How many cards the "Входит в подписку" row deals. Ten, and ten only —
+  /// the row is a sample of what a pack buys, not a catalogue, so it does not
+  /// paginate. [loadMoreNewClasses] still tops it up while it is short, which
+  /// is the one case where a deeper page is worth fetching for it.
+  static const int subscriptionRowSize = 10;
+
+  /// The row is shuffled from this FIXED seed, and from a FRESH [Random] each
+  /// time, so the deal is a pure function of the feed: the same activities
+  /// always come out in the same order.
+  ///
+  /// Both halves matter. A clock- or entropy-seeded shuffle would re-deal on
+  /// every silent refresh, reordering the row under a parent who was
+  /// mid-scroll and had changed nothing. A single long-lived [Random] would do
+  /// the same more quietly — each deal would leave its state advanced, so the
+  /// next refresh would shuffle the identical feed differently.
+  static const int _shuffleSeed = 0x10C01;
+
+  /// What [coursesAcrossCategories] buckets a course by: its FIRST category,
+  /// lowercased.
+  ///
+  /// `HomClass.category` is a comma-separated LIST, not one name, and the card
+  /// displays only the first of them (see `_ClassImage.firstCategory`) — so the
+  /// first is what the user actually reads off the row, and spreading by
+  /// anything else would spread by something invisible. Keying on the raw
+  /// string instead would file "Dance, Fitness" and "Dance" as two different
+  /// categories and happily deal them back to back.
+  ///
+  /// A course with no category at all gets a bucket to ITSELF, not a shared
+  /// "uncategorised" one: pooled together they would take a single turn per
+  /// round between them, so all but one would be pushed behind every named
+  /// category.
+  static String _categoryKey(HomClass course) {
+    final first = (course.category ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .firstWhere((s) => s.isNotEmpty, orElse: () => '');
+    // Lowercased so a centre that typed "Shaxmat" and one that typed "shaxmat"
+    // are one category rather than two.
+    return first.isNotEmpty
+        ? first.toLowerCase()
+        : 'uncategorised:${course.id}';
+  }
+
+  /// An activity a Lumi Coin pack can pay for. The coin price is the whole
+  /// test: the server sends it only on what coins are accepted for, and never
+  /// on a course — courses are money-only, so they can never be in this row.
+  static bool _paidWithCoins(HomClass c) => (c.newCoinPrice ?? 0) > 0;
+
+  /// The row, dealt from everything the feed sent: the featured activities and
+  /// the nearby ones, deduplicated, narrowed to what coins buy, shuffled, cut
+  /// to [subscriptionRowSize].
+  List<HomClass> _dealSubscriptionRow(
+    List<HomClass> newClasses,
+    List<HomClass> nearClasses,
+  ) {
+    final seen = <String>{};
+    final pool = <HomClass>[];
+    for (final c in [...newClasses, ...nearClasses]) {
+      if (!_paidWithCoins(c)) continue;
+      // A nearby activity is very often a featured one as well; without this
+      // the row can deal the same card twice.
+      final id = c.id;
+      if (id != null && !seen.add(id)) continue;
+      pool.add(c);
+    }
+    pool.shuffle(Random(_shuffleSeed));
+    return pool.take(subscriptionRowSize).toList();
+  }
+
+  /// [courses] reordered to walk ACROSS categories: one from each in turn,
+  /// then the seconds, then the thirds. A feed that happened to send four
+  /// dance courses in a row would otherwise fill the whole visible part of the
+  /// "Qiziqishlarga asosan" row with dance.
+  ///
+  /// This is the row's ORDERING, not a recommendation: the interest signal the
+  /// app collects is write-only (see `InterestReporter` — the backend records
+  /// browsing itself and exposes no "recommended for you" endpoint), so a row
+  /// genuinely ranked by interest needs that endpoint before it can exist.
+  /// Category spread is the honest stand-in until then.
+  ///
+  /// Stable: no shuffle, and the buckets keep the order the feed introduced
+  /// them in, so the category it led with still leads the row.
+  static List<HomClass> coursesAcrossCategories(List<HomClass> courses) {
+    final byCategory = <String, List<HomClass>>{};
+    for (final course in courses) {
+      final key = _categoryKey(course);
+      byCategory.putIfAbsent(key, () => []).add(course);
+    }
+    final buckets = byCategory.values.toList();
+    final ordered = <HomClass>[];
+    for (var round = 0; ordered.length < courses.length; round++) {
+      for (final bucket in buckets) {
+        if (round < bucket.length) ordered.add(bucket[round]);
+      }
+    }
+    return ordered;
+  }
+
+  /// [row] with any newly-arrived coin activities appended, up to
+  /// [subscriptionRowSize]. APPENDS rather than re-deals: the cards already on
+  /// screen keep their places while a later page fills the row out behind
+  /// them.
+  static List<HomClass> growSubscriptionRow(
+    List<HomClass> row,
+    List<HomClass> incoming,
+  ) {
+    if (row.length >= subscriptionRowSize) return row;
+    final have = row.map((c) => c.id).toSet();
+    final fresh = incoming
+        .where((c) => _paidWithCoins(c) && !have.contains(c.id))
+        .toList()
+      ..shuffle(Random(_shuffleSeed));
+    if (fresh.isEmpty) return row;
+    return [...row, ...fresh].take(subscriptionRowSize).toList();
+  }
 
   Future<void> initWithLocation() async {
     // Held up front and not by getHome alone: resolving the location below is
@@ -285,7 +402,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
           homeModel: data,
           newClassesList: newClasses,
           nearClassesList: nearClasses,
-          coursesList: courses,
+          coursesList: coursesAcrossCategories(courses),
+          subscriptionList: _dealSubscriptionRow(newClasses, nearClasses),
           newClassesPage: 2,
           nearClassesPage: 2,
           hasMoreNewClasses: newClasses.length >= _pageLimit,
@@ -334,7 +452,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
             homeModel: data,
             newClassesList: newClasses,
             nearClassesList: nearClasses,
-            coursesList: courses,
+            coursesList: coursesAcrossCategories(courses),
+            subscriptionList: _dealSubscriptionRow(newClasses, nearClasses),
             newClassesPage: 2,
             nearClassesPage: 2,
             hasMoreNewClasses: newClasses.length >= _pageLimit,
@@ -362,6 +481,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
 
       build((b) => b.copyWith(
             newClassesList: [...b.newClassesList, ...unique],
+            subscriptionList: growSubscriptionRow(b.subscriptionList, unique),
             newClassesPage: b.newClassesPage + 1,
             isLoadingNewClasses: false,
             hasMoreNewClasses: incoming.length >= _pageLimit,

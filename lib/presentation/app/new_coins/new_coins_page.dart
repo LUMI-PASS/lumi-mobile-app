@@ -352,12 +352,19 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     // user, and a deep link here lands on the empty state rather than on a
     // screen of headings with nothing under them.
     final empty = !_catalogue.isOnSale && _balance.balance <= 0;
+    // The shelf is both the Тарифы tab and a pushed screen (the profile tile,
+    // the home balance pill, a booking that is short). As a tab it is a root
+    // with nothing behind it, so the back pill is left off — the same test
+    // [BaseAppBar] makes for its own leading button.
+    final canPop = context.router.canPop();
 
     // Loading wears the shelf's own stage — the wash, the back pill, the Buy
     // bar's place — so the packs arrive into the screen that was already
     // there, rather than a light list of blocks flipping to a dark showcase.
     if (_isLoading) {
-      return _NewCoinsLoading(onBack: () => context.router.maybePop());
+      return _NewCoinsLoading(
+        onBack: canPop ? () => context.router.maybePop() : null,
+      );
     }
 
     if (_failed || empty) {
@@ -376,17 +383,19 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     final tones = [for (final p in shelf) _toneOf(p)];
     final top = MediaQuery.of(context).viewPadding.top;
 
-    // The shelf is a showcase and is dark in both themes: each pack's colour
-    // is a glow fading into black, which a light page cannot carry. The
+    // The shelf is a showcase and is LIGHT in both themes: each pack's colour
+    // is a pale wash off the top edge onto a near-white stage, and the panels
+    // under it have always been white paper. Pinning the light table is what
+    // keeps a buyer in dark mode from getting white ink on that stage. The
     // payment sheets and "my coins" open from the State's own context, above
     // this override, so they keep the app's theme.
     return Theme(
       data: Theme.of(context).copyWith(
-        brightness: Brightness.dark,
-        extensions: const [AppColorScheme.dark],
+        brightness: Brightness.light,
+        extensions: const [AppColorScheme.light],
       ),
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
+        value: SystemUiOverlayStyle.dark,
         child: Scaffold(
           backgroundColor: AppColors.coinStage,
           body: Stack(
@@ -422,8 +431,11 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                   padding: EdgeInsets.only(
                     top: top + 52.h,
                     // Clears the buy bar, so the last row can be scrolled out
-                    // from under it.
-                    bottom: MediaQuery.of(context).viewPadding.bottom + 150.h,
+                    // from under it. `padding`, not `viewPadding`: on the
+                    // Тарифы tab the tabs scaffold runs `extendBody: true`,
+                    // which reports the nav pill's height here, so the bar —
+                    // and this inset above it — clear the pill too.
+                    bottom: MediaQuery.of(context).padding.bottom + 150.h,
                   ),
                   child: Stack(
                     children: [
@@ -505,14 +517,19 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _TopPill(
-                      onTap: () => context.router.maybePop(),
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        size: 20.w,
-                        color: AppColors.white,
-                      ),
-                    ),
+                    if (canPop)
+                      _TopPill(
+                        onTap: () => context.router.maybePop(),
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          size: 20.w,
+                          color: AppColors.ink,
+                        ),
+                      )
+                    else
+                      // `spaceBetween` still pushes the balance to the right
+                      // edge, where it sits whether or not the pill is there.
+                      const SizedBox.shrink(),
                     // What the buyer holds, and the way to the deadlines and
                     // the history behind it — off the shelf, which is for
                     // choosing a pack and nothing else.
@@ -524,13 +541,13 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                           CoinAmount(
                             amount: _balance.balance,
                             style: AppText.semibold14,
-                            color: AppColors.white,
+                            color: AppColors.ink,
                           ),
                           2.kw,
                           Icon(
                             Icons.chevron_right_rounded,
                             size: 18.w,
-                            color: AppColors.white,
+                            color: AppColors.ink,
                           ),
                         ],
                       ),
@@ -661,6 +678,10 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
 }
 
 /// A translucent control floating over the wash at the top of the shelf.
+///
+/// Tinted with the stage's own ink rather than with white: the wash it floats
+/// over is pale, and a white scrim on a pale ground is not a control, it is a
+/// smudge.
 class _TopPill extends StatelessWidget {
   const _TopPill({required this.child, required this.onTap});
 
@@ -678,9 +699,9 @@ class _TopPill extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 10.w),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.16),
+          color: AppColors.coinPanel.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(40.r),
-          border: Border.all(color: AppColors.white.withValues(alpha: 0.18)),
+          border: Border.all(color: AppColors.ink.withValues(alpha: 0.08)),
         ),
         child: child,
       ),
@@ -693,13 +714,15 @@ class _TopPill extends StatelessWidget {
 /// coin, the name and price, the pill, the "what's in the pack" card and the
 /// Buy button.
 ///
-/// The shapes are translucent white and breathe rather than sweep: a shimmer
+/// The shapes are translucent INK and breathe rather than sweep: a shimmer
 /// repaints its child in its own opaque colours, which would cut flat blocks
 /// out of the wash this screen is about.
 class _NewCoinsLoading extends StatefulWidget {
-  const _NewCoinsLoading({required this.onBack});
+  const _NewCoinsLoading({this.onBack});
 
-  final VoidCallback onBack;
+  /// Null on the Тарифы tab, where the shelf is a root and has nothing behind
+  /// it — the pill is then left off entirely.
+  final VoidCallback? onBack;
 
   @override
   State<_NewCoinsLoading> createState() => _NewCoinsLoadingState();
@@ -725,21 +748,28 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
   Widget build(BuildContext context) {
     final onBack = widget.onBack;
     final top = MediaQuery.of(context).viewPadding.top;
-    final bottom = MediaQuery.of(context).viewPadding.bottom;
+    // See the loaded screen's buy bar: `padding` carries the nav pill's
+    // height on the Тарифы tab, `viewPadding` would not.
+    final bottom = MediaQuery.of(context).padding.bottom;
     // The first main pack leads the shelf, so its tone is the one the loaded
     // screen most often opens on.
     final tone = NewCoinTone.main(0);
-    final ghost = AppColors.white.withValues(alpha: 0.22);
+    // Both grounds are light now — the near-white stage and the white panels —
+    // so both ghosts are ink. The stage one is the heavier of the two: it has
+    // to hold against the pack's wash as well as against the stage.
+    final ghost = AppColors.ink.withValues(alpha: 0.14);
+    final ghostOnPanel = AppColors.ink.withValues(alpha: 0.10);
 
-    Widget bar(double width, double height) => Container(
+    Widget bar(double width, double height, {Color? color}) => Container(
           width: width.w,
           height: height.h,
           decoration: BoxDecoration(
-            color: ghost,
+            color: color ?? ghost,
             borderRadius: BorderRadius.circular(height.h),
           ),
         );
 
+    // A feature row's stand-in — always inside a panel, so always dark.
     Widget row() => Padding(
           padding: EdgeInsets.symmetric(vertical: 14.h),
           child: Row(
@@ -747,19 +777,26 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
               Container(
                 width: 26.w,
                 height: 26.w,
-                decoration: BoxDecoration(color: ghost, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: ghostOnPanel,
+                  shape: BoxShape.circle,
+                ),
               ),
               14.kw,
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [bar(150, 14), 8.kh, bar(210, 10)],
+                children: [
+                  bar(150, 14, color: ghostOnPanel),
+                  8.kh,
+                  bar(210, 10, color: ghostOnPanel),
+                ],
               ),
             ],
           ),
         );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: SystemUiOverlayStyle.dark,
       child: Scaffold(
         backgroundColor: AppColors.coinStage,
         body: Stack(
@@ -804,7 +841,10 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                       Container(
                         padding: EdgeInsets.all(6.w),
                         decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.10),
+                          // Stands in for the loaded card's tone frame, which
+                          // is a gradient in the pack's colour — so the ghost
+                          // of it is that colour too, not a grey block.
+                          color: tone.accent.withValues(alpha: 0.22),
                           borderRadius: BorderRadius.circular(30.r),
                         ),
                         child: Column(
@@ -816,7 +856,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                                 vertical: 12.h,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.white.withValues(alpha: 0.06),
+                                color: AppColors.coinPanel,
                                 borderRadius: BorderRadius.circular(24.r),
                               ),
                               child: Row(
@@ -825,7 +865,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                                     width: 32.w,
                                     height: 32.w,
                                     decoration: BoxDecoration(
-                                      color: ghost,
+                                      color: ghostOnPanel,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -834,9 +874,9 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      bar(140, 14),
+                                      bar(140, 14, color: ghostOnPanel),
                                       8.kh,
-                                      bar(200, 10),
+                                      bar(200, 10, color: ghostOnPanel),
                                     ],
                                   ),
                                 ],
@@ -846,7 +886,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 14.w),
                               decoration: BoxDecoration(
-                                color: AppColors.white.withValues(alpha: 0.06),
+                                color: AppColors.coinPanel,
                                 borderRadius: BorderRadius.circular(24.r),
                               ),
                               child: Column(
@@ -893,18 +933,19 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                 ),
               ),
             ),
-            Positioned(
-              top: top + 8.h,
-              left: 16.w,
-              child: _TopPill(
-                onTap: onBack,
-                child: Icon(
-                  Icons.arrow_back_rounded,
-                  size: 20.w,
-                  color: AppColors.white,
+            if (onBack != null)
+              Positioned(
+                top: top + 8.h,
+                left: 16.w,
+                child: _TopPill(
+                  onTap: onBack,
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    size: 20.w,
+                    color: AppColors.ink,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

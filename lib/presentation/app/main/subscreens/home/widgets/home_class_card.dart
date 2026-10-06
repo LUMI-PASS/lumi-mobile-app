@@ -42,6 +42,7 @@ class HomeCourseCard extends StatelessWidget {
     this.onViewAsReels,
     this.onOpen,
     this.showDistance = true,
+    this.showPrice = true,
   });
 
   final HomClass? homClass;
@@ -65,6 +66,16 @@ class HomeCourseCard extends StatelessWidget {
   /// CHOOSING between everything at once: the "Near you" list, the see-all
   /// grid, search results and a centre's own class list.
   final bool showDistance;
+
+  /// Whether the card carries a price at all.
+  ///
+  /// Off for every COURSE card on home: a course's price is a package — a
+  /// whole term, sometimes per age bracket — and one figure on a 168pt card
+  /// could not say which it was without the wording the detail page has room
+  /// for. The feed's job there is to say what exists; the price is read on the
+  /// page that can explain it. On by default, so search, the see-all grid and
+  /// a centre's own list are unaffected.
+  final bool showPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +105,7 @@ class HomeCourseCard extends StatelessWidget {
               hc: hc,
               crossAxis: CrossAxisAlignment.start,
               showDistance: showDistance,
+              showPrice: showPrice,
             ),
           ],
         ),
@@ -109,10 +121,15 @@ class HomeNearbyCard extends StatelessWidget {
     super.key,
     required this.homClass,
     this.onViewAsReels,
+    this.showPrice = true,
   });
 
   final HomClass? homClass;
   final VoidCallback? onViewAsReels;
+
+  /// See [HomeCourseCard.showPrice]. "Near you" carries courses as well as
+  /// activities, so this is set per entry rather than for the whole list.
+  final bool showPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -157,6 +174,7 @@ class HomeNearbyCard extends StatelessWidget {
               hc: hc,
               crossAxis: CrossAxisAlignment.start,
               branchInline: true,
+              showPrice: showPrice,
             ),
           ),
         ],
@@ -330,6 +348,7 @@ class _ClassInfo extends StatelessWidget {
     required this.crossAxis,
     this.branchInline = false,
     this.showDistance = true,
+    this.showPrice = true,
   });
 
   final HomClass? hc;
@@ -346,6 +365,9 @@ class _ClassInfo extends StatelessWidget {
 
   /// See [HomeCourseCard.showDistance].
   final bool showDistance;
+
+  /// See [HomeCourseCard.showPrice].
+  final bool showPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -436,16 +458,24 @@ class _ClassInfo extends StatelessWidget {
         // when a course prints its per-lesson breakdown — and neither of those
         // second lines is the one the distance should pair with, so it sits
         // against the block as a whole.
-        final Widget priceLine = priceDistance == null
-            ? _PriceText(hc: hc)
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(child: _PriceText(hc: hc)),
-                  6.horizontalSpace,
-                  priceDistance,
-                ],
-              );
+        // With no price to carry, the row is the distance alone — which is
+        // why the distance is NOT simply moved up to the where-line: on the
+        // full-width card that line is already the centre pill plus the street
+        // address, and `branchInline` routes it through its own layout, where a
+        // third fragment has nowhere to go. Keeping its own row keeps it a
+        // fact of its own, exactly as it was beside the price.
+        final Widget? priceLine = !showPrice
+            ? priceDistance
+            : priceDistance == null
+                ? _PriceText(hc: hc)
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: _PriceText(hc: hc)),
+                      6.horizontalSpace,
+                      priceDistance,
+                    ],
+                  );
 
         return Column(
           crossAxisAlignment: crossAxis,
@@ -498,8 +528,13 @@ class _ClassInfo extends StatelessWidget {
               6.verticalSpace,
               whereLine,
             ],
-            6.verticalSpace,
-            priceLine,
+            // Nothing below the where-line on a card with no price and no
+            // distance, so the gap goes with it rather than hanging off the
+            // bottom of the card.
+            if (priceLine != null) ...[
+              6.verticalSpace,
+              priceLine,
+            ],
           ],
         );
       },
@@ -507,22 +542,23 @@ class _ClassInfo extends StatelessWidget {
   }
 }
 
-/// Price line for a COURSE.
+/// Price line for a COURSE: always the WHOLE course.
 ///
-/// A course is not sold per session, so it gets its own line: the card offers
-/// ONE lesson to try, and only falls back to the whole course price once there
-/// is nothing left to try. Which of those it is — and at what price — is
-/// decided by the server per user (see [CoursePriceKind]), because the same
-/// rules govern what checkout will charge; the card only words the verdict.
+/// A course is not sold per session, so it gets its own line. The server still
+/// prices each card per viewer and may come back with a trial lesson (see
+/// [CoursePriceKind]) — the rules that govern checkout — but a card no longer
+/// offers one: trial lessons are not shown anywhere in the app, so a card that
+/// advertised "first lesson free" would be selling a thing with no way to buy
+/// it. Such a verdict is collapsed to the whole-course figure here.
 ///
-/// A card shows ONE price, and it is the one being offered. A trial headline
-/// stands alone; only the whole-course headline carries a second line, breaking
-/// its own figure down per lesson.
+/// That collapse changes which figure is quoted as well as its wording:
+/// `cardPrice` is the TRIAL's price on a trial verdict, so the whole-course
+/// `coursePrice` is read instead. Quoting `cardPrice` with whole-course
+/// wording would print a term's enrolment at one lesson's price.
 ///
-/// A coupon plan discounts a TRIAL headline — a trial is one lesson bought one
-/// at a time, the shape the plan is sold against — and never a whole-course
-/// one. So the struck-through price appears here only while the card is still
-/// offering a trial. See `effectiveCouponPercent`.
+/// It also means neither a coupon plan nor a "Lumi Start" packet discounts
+/// this line: both are sold against one lesson bought at a time, never a whole
+/// term. See `effectiveCouponPercent`.
 class _CoursePriceText extends StatelessWidget {
   const _CoursePriceText({required this.hc});
 
@@ -531,12 +567,24 @@ class _CoursePriceText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final kind = hc.coursePriceKind;
-    final price = hc.cardPrice ?? hc.coursePrice ?? 0;
+    final served = hc.coursePriceKind;
+    // Every trial verdict reads as `full` here — see the class doc.
+    final kind = served.isTrial ? CoursePriceKind.full : served;
+    // `cardPrice` is the figure for whatever the server offered, so it is only
+    // the right one when that offer stands. On a collapsed trial it is one
+    // lesson's price and the whole course has to be priced from `coursePrice`.
+    final price = served.isTrial
+        ? (hc.coursePrice ?? 0)
+        : (hc.cardPrice ?? hc.coursePrice ?? 0);
+    // The card is quoting a whole term either way now, which is what the
+    // coupon and the packet below are gated on. Not `hc.showsWholeCoursePrice`:
+    // that reports what the SERVER offered, and checkout still needs it to mean
+    // that.
+    const isWholeCourse = true;
 
     /// The headline for a given figure. Taken as a parameter rather than closed
-    /// over one, because a coupon has to word the SAME offer around a different
-    /// number — "Try for 35 000" is the offer, 50 000 is only what it replaces.
+    /// over one, so the struck-through original and the figure that replaced it
+    /// are worded the same way.
     String labelFor(num value) {
       final money = value.toRawUzsPrice();
       if (hc.priceFrom == true && kind != CoursePriceKind.trialFree) {
@@ -546,6 +594,11 @@ class _CoursePriceText extends StatelessWidget {
         return 'price_from'.tr(args: [money]);
       }
       switch (kind) {
+        // The three trial arms are UNREACHABLE while trials are hidden: `kind`
+        // is the collapsed verdict, never a trial. They stay because the switch
+        // is exhaustive over the enum with no `default` — which is what makes a
+        // newly-added kind a compile-time warning here — and so the wording is
+        // still on hand if trials are ever shown again.
         case CoursePriceKind.trialFree:
           // "First lesson" only reads right for the first one — someone who
           // has already been to one is being offered their next.
@@ -582,7 +635,7 @@ class _CoursePriceText extends StatelessWidget {
         pass.covers(
           activityId: hc.id,
           price: price,
-          isWholeCourse: hc.showsWholeCoursePrice,
+          isWholeCourse: isWholeCourse,
         )) {
       return PromoIncludedLabel(pass: pass);
     }
@@ -595,7 +648,7 @@ class _CoursePriceText extends StatelessWidget {
     final couponPct = effectiveCouponPercent(
       app.hasPremium ? app.planDiscountPercentage : 0,
       hc.discountPercentage,
-      isWholeCourse: hc.showsWholeCoursePrice,
+      isWholeCourse: isWholeCourse,
     );
     // A free first lesson has nothing left to discount.
     final num? discounted = couponPct > 0 && price > 0

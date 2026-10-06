@@ -11,6 +11,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.canvas,
     required this.pageBg,
     required this.surface,
+    required this.coinBand,
     required this.bottomBar,
     required this.progressTrack,
     required this.control,
@@ -59,6 +60,10 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
 
   /// Cards, list items, sheets, unselected chips.
   final Color surface;
+
+  /// Fill of the Lumi Coin section's container on the home feed — the gold
+  /// that says the row is what a coin pack buys. See [AppColors.lightCoinBand].
+  final Color coinBand;
 
   /// Sticky bottom action bars — one step above [surface] in dark so the bar
   /// lifts off the page.
@@ -140,6 +145,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     canvas: AppColors.lightCanvas,
     pageBg: AppColors.lightCanvas,
     surface: AppColors.white,
+    coinBand: AppColors.lightCoinBand,
     bottomBar: AppColors.white,
     progressTrack: AppColors.inkChip,
     control: AppColors.lightControl,
@@ -171,6 +177,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     canvas: AppColors.darkCanvas,
     pageBg: AppColors.ink,
     surface: AppColors.darkSurface,
+    coinBand: AppColors.darkCoinBand,
     bottomBar: AppColors.darkSurfaceRaised,
     progressTrack: AppColors.chipGrey,
     control: AppColors.darkControl,
@@ -215,6 +222,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? canvas,
     Color? pageBg,
     Color? surface,
+    Color? coinBand,
     Color? bottomBar,
     Color? progressTrack,
     Color? control,
@@ -245,6 +253,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       canvas: canvas ?? this.canvas,
       pageBg: pageBg ?? this.pageBg,
       surface: surface ?? this.surface,
+      coinBand: coinBand ?? this.coinBand,
       bottomBar: bottomBar ?? this.bottomBar,
       progressTrack: progressTrack ?? this.progressTrack,
       control: control ?? this.control,
@@ -280,6 +289,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       canvas: Color.lerp(canvas, other.canvas, t)!,
       pageBg: Color.lerp(pageBg, other.pageBg, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
+      coinBand: Color.lerp(coinBand, other.coinBand, t)!,
       bottomBar: Color.lerp(bottomBar, other.bottomBar, t)!,
       progressTrack: Color.lerp(progressTrack, other.progressTrack, t)!,
       control: Color.lerp(control, other.control, t)!,

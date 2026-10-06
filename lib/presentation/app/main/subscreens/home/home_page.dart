@@ -137,16 +137,29 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             ),
             if (_categories(state).isNotEmpty)
               SliverToBoxAdapter(child: _buildCategories(context, state)),
-            // Popular activities first, then the courses row (swapped order).
-            if (state.newClassesList.isNotEmpty)
-              SliverToBoxAdapter(child: _buildCourses(context, state)),
+            // What a Lumi Coin pack buys, then the courses row.
+            //
+            // The fallback is not cosmetic: on a server that sends no coin
+            // prices at all — the feature off, or a backend that predates it —
+            // the subscription row would be empty and home would be left with
+            // no activities shelf whatsoever. It falls back to the row that
+            // used to be here, under its OWN old header: "Входит в подписку"
+            // over activities a pack cannot pay for is a promise the feed
+            // cannot keep.
+            if (state.subscriptionList.isNotEmpty)
+              SliverToBoxAdapter(child: _buildSubscription(context, state))
+            else if (state.newClassesList.isNotEmpty)
+              SliverToBoxAdapter(child: _buildPopular(context, state)),
             // REAL courses — the backend keeps these out of the class lists, so
-            // this row is the only place they appear.
+            // this row is the only place they appear. Ordered to walk across
+            // categories rather than to sit in whatever order the feed sent.
             if (state.coursesList.isNotEmpty)
               SliverToBoxAdapter(
                 child: _buildCoursesRow(
                   context,
-                  'courses_section'.tr(),
+                  'based_on_interests'.tr(),
+                  // Already walked across categories by the cubit, where the
+                  // feed lands — see [HomeCubit.coursesAcrossCategories].
                   state.coursesList,
                 ),
               ),
@@ -202,6 +215,16 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     );
   }
 
+  /// Whether a card on the home feed carries a price.
+  ///
+  /// No COURSE on home does. A course is sold as a package — a whole term,
+  /// sometimes priced per age bracket — and one figure on a feed card cannot
+  /// say which without the wording only the detail page has room for. Home
+  /// says what exists; the price is read where it can be explained.
+  ///
+  /// Activities keep theirs: a ticket is one figure and means one thing.
+  static bool _showsPrice(HomClass? item) => !(item?.isCourse ?? false);
+
   List<HomCategory> _categories(HomeBuildable state) =>
       (state.categories?.isNotEmpty == true)
           ? state.categories!
@@ -243,7 +266,107 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     );
   }
 
-  Widget _buildCourses(BuildContext context, HomeBuildable state) {
+  /// "Входит в подписку" — a sample of what a Lumi Coin pack pays for.
+  ///
+  /// The row is a fixed ten, dealt and shuffled in the cubit (see
+  /// `HomeCubit.subscriptionRowSize`), so it is a taste of the catalogue rather
+  /// than a list to get to the end of. It carries NO "see all": there is no
+  /// catalogue filter for "coins accepted", so the only screen a tap could
+  /// open is the unfiltered one — which would answer a question the header did
+  /// not ask. The categories row above leaves its own off for the same reason.
+  ///
+  /// It is drawn as a container of pale [AppColorScheme.coinBand] gold — the
+  /// coin's own colour — because what sets this row apart is not the cards,
+  /// which are the feed's ordinary ones, but that everything in it is already
+  /// paid for. The block of colour is what says so.
+  ///
+  /// No border: the fill alone draws it. That makes the fill the ONLY thing
+  /// separating the container from the feed, which is why the gold is held
+  /// where it is — see [AppColors.lightCoinBand].
+  ///
+  /// It carries no vertical margin and the rows either side of it add none, so
+  /// the container sits flush between the lists above and below rather than
+  /// floating in a gap of its own.
+  Widget _buildSubscription(BuildContext context, HomeBuildable state) {
+    final c = context.colors;
+    final rowH = 126.h + 14.h + 118.h;
+    final row = state.subscriptionList;
+    // The row only reaches for another page while it is still short of its
+    // ten. Once it is full there is nothing left to fetch for it, so the
+    // flick to the end stops asking.
+    final wantsMore =
+        row.length < HomeCubit.subscriptionRowSize && state.hasMoreNewClasses;
+    return Container(
+      // Still inset from the page edges rather than full-bleed: with the
+      // border gone the rounded corners are the only thing giving the block a
+      // shape, and they need room to be seen.
+      margin: EdgeInsets.symmetric(horizontal: 12.w),
+      padding: EdgeInsets.symmetric(vertical: 10.h),
+      decoration: BoxDecoration(
+        color: c.coinBand,
+        borderRadius: BorderRadius.circular(18.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          HomeSectionHeader(title: 'included_in_subscription'.tr()),
+          8.verticalSpace,
+          NotificationListener<ScrollNotification>(
+            onNotification: (scrollInfo) {
+              if (wantsMore &&
+                  scrollInfo.metrics.axis == Axis.horizontal &&
+                  scrollInfo.metrics.pixels >=
+                      scrollInfo.metrics.maxScrollExtent - 8) {
+                context.read<HomeCubit>().loadMoreNewClasses();
+              }
+              return scrollInfo.metrics.axis == Axis.horizontal;
+            },
+            child: SizedBox(
+              height: rowH,
+              child: Stack(
+                children: [
+                  ListView.builder(
+                    key: const PageStorageKey('subscription-list'),
+                    scrollDirection: Axis.horizontal,
+                    // Smaller than the other rows': theirs clears the page
+                    // margin, this one only has to clear the container's own
+                    // border a few pixels away.
+                    padding: EdgeInsets.only(left: 0, right: 8.w),
+                    itemCount: row.length,
+                    itemBuilder: (context, index) => HomeCourseCard(
+                      key: ValueKey('sub-${row[index].id ?? index}'),
+                      homClass: row[index],
+                      margin: EdgeInsets.only(left: 8.w),
+                      // A browsing shelf, not a comparison — see
+                      // [HomeCourseCard.showDistance].
+                      showDistance: false,
+                      showPrice: _showsPrice(row[index]),
+                      onViewAsReels: () => _openShorts(context, row, index),
+                    ),
+                  ),
+                  if (state.isLoadingNewClasses && wantsMore)
+                    Positioned(
+                      right: 16.w,
+                      top: 0,
+                      bottom: 8.h,
+                      child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The row this feed used to lead with: "Mashhur mashg'ulotlar", whatever
+  /// the adminka featured, paginating as it is scrolled.
+  ///
+  /// Kept only as [_buildSubscription]'s fallback — see the feed above.
+  Widget _buildPopular(BuildContext context, HomeBuildable state) {
     final rowH = 126.h + 14.h + 118.h;
     // Whatever the adminka has FEATURED, course or class alike. The row is the
     // centre's own pick, and a course it picked is as much that as a class is —
@@ -292,6 +415,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                     // A browsing shelf, not a comparison — see
                     // [HomeCourseCard.showDistance].
                     showDistance: false,
+                    showPrice: _showsPrice(popular[index]),
                     onViewAsReels: () =>
                         _openShorts(context, popular, index),
                   ),
@@ -313,8 +437,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     );
   }
 
-  /// A generic horizontal "Курсы" row (Figma's second popular section),
-  /// reusing whichever activity list is passed in.
+  /// A generic horizontal course row, reusing whichever list is passed in.
+  ///
+  /// Carries the feed's "На основе ваших интересов" row. The header names
+  /// interests but the ORDER is a category spread — see
+  /// [HomeCubit.coursesAcrossCategories] for why, and for what a genuinely
+  /// interest-ranked row would need first.
   Widget _buildCoursesRow(
       BuildContext context, String title, List<HomClass> list) {
     // Sized so ONE AND A HALF cards fill the screen: the half-card at the right
@@ -340,11 +468,32 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // card getting wider. It is the height the 200-wide card had, so the frame
     // simply shows more of the photo instead of standing taller.
     final cardImgH = 150.w;
-    final rowH = cardImgH + 14.h + 118.h;
+    // The text block under the photo: a provider pill, a one-line title and an
+    // address. NOT a price — a course on the feed carries none (see
+    // [_showsPrice]) — which is why this is no longer the 118 the priced rows
+    // reserve. Holding on to that figure left ~35pt of nothing at the bottom of
+    // every card, which the eye read as a gap between this row and "Sizga
+    // yaqin" under it rather than as part of the cards.
+    //
+    // Measured rather than estimated — see `home_courses_row_height_test.dart`,
+    // which fails if a card outgrows this or if the slack creeps back.
+    //
+    // The 118 branch stands for the day something priced lands in this list:
+    // the row would otherwise clip the price line off it.
+    //
+    // Scaled by the device's text size, so a large-font setting makes the row
+    // taller instead of cutting the address off the bottom. Clamped, because
+    // past 1.6 the row would be taller than the photo it belongs to.
+    final textScale =
+        MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6);
+    final textBlock = (list.any(_showsPrice) ? 118.0 : 84.0) * textScale;
+    final rowH = cardImgH + 14.h + textBlock.h;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        8.verticalSpace,
+        // No leading gap: this row follows the coin container, and the two
+        // lists are meant to sit flush. The container draws its own edge, so
+        // the space a header normally needs above it is already there.
         HomeSectionHeader(
           title: title,
           // The same discovery screen the activities row opens, narrowed to
@@ -372,6 +521,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               margin: EdgeInsets.only(left: 8.w),
               // Same shelf treatment as the activities row above it.
               showDistance: false,
+              showPrice: _showsPrice(list[index]),
               onViewAsReels: () => _openShorts(context, list, index),
             ),
           ),
@@ -419,6 +569,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                 HomeNearbyCard(
                   key: ValueKey(state.nearClassesList[index].id ?? index),
                   homClass: state.nearClassesList[index],
+                  // "Near you" carries courses as well as activities, so the
+                  // price is dropped per entry rather than for the list.
+                  showPrice: _showsPrice(state.nearClassesList[index]),
                   onViewAsReels: () =>
                       _openShorts(context, state.nearClassesList, index),
                 ),

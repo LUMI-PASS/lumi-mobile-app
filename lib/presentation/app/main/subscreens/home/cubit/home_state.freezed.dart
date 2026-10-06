@@ -52,6 +52,15 @@ mixin _$HomeBuildable {
       throw _privateConstructorUsedError; // Pagination for new classes
   List<HomClass> get newClassesList => throw _privateConstructorUsedError;
 
+  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
+  ///
+  /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
+  /// feed already sent, and the shuffle is done ONCE here rather than in
+  /// `build` — a row shuffled per frame would deal itself new cards every
+  /// time anything on the screen moved.
+  List<HomClass> get subscriptionList => throw _privateConstructorUsedError;
+
   /// Real courses — the home 'Курсы' row. Kept separate from the class
   /// lists because a course is bought as a trial or as the whole course.
   List<HomClass> get coursesList => throw _privateConstructorUsedError;
@@ -86,6 +95,7 @@ abstract class $HomeBuildableCopyWith<$Res> {
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
+      List<HomClass> subscriptionList,
       List<HomClass> coursesList,
       int newClassesPage,
       bool isLoadingNewClasses,
@@ -121,6 +131,7 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
+    Object? subscriptionList = null,
     Object? coursesList = null,
     Object? newClassesPage = null,
     Object? isLoadingNewClasses = null,
@@ -170,6 +181,10 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
       newClassesList: null == newClassesList
           ? _value.newClassesList
           : newClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      subscriptionList: null == subscriptionList
+          ? _value.subscriptionList
+          : subscriptionList // ignore: cast_nullable_to_non_nullable
               as List<HomClass>,
       coursesList: null == coursesList
           ? _value.coursesList
@@ -238,6 +253,7 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
+      List<HomClass> subscriptionList,
       List<HomClass> coursesList,
       int newClassesPage,
       bool isLoadingNewClasses,
@@ -272,6 +288,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
+    Object? subscriptionList = null,
     Object? coursesList = null,
     Object? newClassesPage = null,
     Object? isLoadingNewClasses = null,
@@ -321,6 +338,10 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
       newClassesList: null == newClassesList
           ? _value._newClassesList
           : newClassesList // ignore: cast_nullable_to_non_nullable
+              as List<HomClass>,
+      subscriptionList: null == subscriptionList
+          ? _value._subscriptionList
+          : subscriptionList // ignore: cast_nullable_to_non_nullable
               as List<HomClass>,
       coursesList: null == coursesList
           ? _value._coursesList
@@ -372,6 +393,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.lat = null,
       this.lng = null,
       final List<HomClass> newClassesList = const [],
+      final List<HomClass> subscriptionList = const [],
       final List<HomClass> coursesList = const [],
       this.newClassesPage = 2,
       this.isLoadingNewClasses = false,
@@ -383,6 +405,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       : _categories = categories,
         _todayBookings = todayBookings,
         _newClassesList = newClassesList,
+        _subscriptionList = subscriptionList,
         _coursesList = coursesList,
         _nearClassesList = nearClassesList;
 
@@ -467,6 +490,31 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     return EqualUnmodifiableListView(_newClassesList);
   }
 
+  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
+  ///
+  /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
+  /// feed already sent, and the shuffle is done ONCE here rather than in
+  /// `build` — a row shuffled per frame would deal itself new cards every
+  /// time anything on the screen moved.
+  final List<HomClass> _subscriptionList;
+
+  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
+  ///
+  /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
+  /// feed already sent, and the shuffle is done ONCE here rather than in
+  /// `build` — a row shuffled per frame would deal itself new cards every
+  /// time anything on the screen moved.
+  @override
+  @JsonKey()
+  List<HomClass> get subscriptionList {
+    if (_subscriptionList is EqualUnmodifiableListView)
+      return _subscriptionList;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_subscriptionList);
+  }
+
   /// Real courses — the home 'Курсы' row. Kept separate from the class
   /// lists because a course is bought as a trial or as the whole course.
   final List<HomClass> _coursesList;
@@ -513,7 +561,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, todayBookings: $todayBookings, lat: $lat, lng: $lng, newClassesList: $newClassesList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, todayBookings: $todayBookings, lat: $lat, lng: $lng, newClassesList: $newClassesList, subscriptionList: $subscriptionList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -538,6 +586,8 @@ class _$HomeBuildableImpl implements _HomeBuildable {
             const DeepCollectionEquality()
                 .equals(other._newClassesList, _newClassesList) &&
             const DeepCollectionEquality()
+                .equals(other._subscriptionList, _subscriptionList) &&
+            const DeepCollectionEquality()
                 .equals(other._coursesList, _coursesList) &&
             (identical(other.newClassesPage, newClassesPage) ||
                 other.newClassesPage == newClassesPage) &&
@@ -556,26 +606,28 @@ class _$HomeBuildableImpl implements _HomeBuildable {
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isSelected,
-      isLoading,
-      success,
-      homeModel,
-      const DeepCollectionEquality().hash(_categories),
-      packet,
-      const DeepCollectionEquality().hash(_todayBookings),
-      lat,
-      lng,
-      const DeepCollectionEquality().hash(_newClassesList),
-      const DeepCollectionEquality().hash(_coursesList),
-      newClassesPage,
-      isLoadingNewClasses,
-      hasMoreNewClasses,
-      const DeepCollectionEquality().hash(_nearClassesList),
-      nearClassesPage,
-      isLoadingNearClasses,
-      hasMoreNearClasses);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        isSelected,
+        isLoading,
+        success,
+        homeModel,
+        const DeepCollectionEquality().hash(_categories),
+        packet,
+        const DeepCollectionEquality().hash(_todayBookings),
+        lat,
+        lng,
+        const DeepCollectionEquality().hash(_newClassesList),
+        const DeepCollectionEquality().hash(_subscriptionList),
+        const DeepCollectionEquality().hash(_coursesList),
+        newClassesPage,
+        isLoadingNewClasses,
+        hasMoreNewClasses,
+        const DeepCollectionEquality().hash(_nearClassesList),
+        nearClassesPage,
+        isLoadingNearClasses,
+        hasMoreNearClasses
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -596,6 +648,7 @@ abstract class _HomeBuildable implements HomeBuildable {
       final double? lat,
       final double? lng,
       final List<HomClass> newClassesList,
+      final List<HomClass> subscriptionList,
       final List<HomClass> coursesList,
       final int newClassesPage,
       final bool isLoadingNewClasses,
@@ -648,6 +701,16 @@ abstract class _HomeBuildable implements HomeBuildable {
   double? get lng;
   @override // Pagination for new classes
   List<HomClass> get newClassesList;
+  @override
+
+  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
+  ///
+  /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
+  /// feed already sent, and the shuffle is done ONCE here rather than in
+  /// `build` — a row shuffled per frame would deal itself new cards every
+  /// time anything on the screen moved.
+  List<HomClass> get subscriptionList;
   @override
 
   /// Real courses — the home 'Курсы' row. Kept separate from the class

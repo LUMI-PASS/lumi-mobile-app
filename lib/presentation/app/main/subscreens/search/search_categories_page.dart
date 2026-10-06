@@ -289,12 +289,15 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
                                   icon: Assets.icons.home.heart,
                                   color: AppColors.error,
                                   label: 'saved_title'.tr(),
-                                  // Zero IS the truth here, unlike the
-                                  // catalogue count: nothing saved is a fact
-                                  // this device knows for certain, and saying
-                                  // so is what explains the empty screen behind
-                                  // the tap.
-                                  count: ids.length,
+                                  // Nothing saved prints no number at all,
+                                  // rather than a "0" under the heart. The
+                                  // count is here to say a shelf is worth
+                                  // opening; a zero says only that it isn't,
+                                  // which the empty screen behind the tap
+                                  // already says better. The card then reads
+                                  // as the plain way in that it is until
+                                  // something has been saved.
+                                  count: ids.isEmpty ? null : ids.length,
                                   onTap: _openSaved,
                                 ),
                               ),

@@ -120,17 +120,26 @@ class _MainPageState extends State<MainPage> {
     // Subscribe to locale changes so the bottom nav labels update immediately.
     context.locale;
 
-    // Order — Home · Search · Video · Bookings · Profile. Search is second
+    // Order — Home · Search · Video · Tariffs · Profile. Search is second
     // because it is the other way into the same catalog the home feed lists,
     // so it belongs next to it. It took the map's place: the map is the first
     // thing on that screen rather than a tab of its own. `Muassasalar` (the
     // centres tab, `SearchPage`) is off the bar for now — the section is still
     // a coming-soon card, and the centres it would have shown are on the map.
+    //
+    // The fourth slot is the Lumi Coin shelf (`Тарифы`), not the booking list
+    // it used to be: the packs are what an activity is paid with, so that is
+    // the screen worth a permanent place on the bar. `CalendarRoute` is off
+    // the bar and out of the router — bookings live behind Profile's "Мои
+    // брони" (`MyBookingsRoute`), which is where a push notification and
+    // `lumi://calendar` now land too. The page and its widgets stay put, so
+    // putting the tab back is a one-line change here, in `_tabs`, and in the
+    // router's `MainRoute` children.
     final routes = <PageRouteInfo>[
       const HomeRoute(),
       const SearchCategoriesRoute(),
       const ShortsRoute(),
-      const CalendarRoute(),
+      NewCoinsRoute(),
       ProfileRoute(),
     ];
 

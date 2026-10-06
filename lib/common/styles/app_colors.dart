@@ -31,11 +31,23 @@ abstract final class AppColors {
 
   // Lumi Coin pack tones — each pack on the coin shelf is shown in its own
   // colour: a pale tint, the accent and a deep shade. Theme-invariant: that
-  // screen is dark in both themes.
-  /// The shelf's own page colour and the panels on it — true black and a
-  /// neutral charcoal, so a pack's colour stays clean instead of muddying.
-  static const coinStage = Color(0xFF000000);
-  static const coinPanel = Color(0xFF1C1C1F);
+  // screen is LIGHT in both themes.
+  /// The shelf's own page colour — a near-white with the faintest lilac in it,
+  /// so the pack's wash at the top edge has somewhere to fade to instead of
+  /// stopping dead on flat white.
+  ///
+  /// It used to be true black. The shelf is a light screen now, so everything
+  /// drawn on the stage — the pack's name, its price, the top pills — takes a
+  /// fixed dark ink, the same rule the panels below already followed.
+  static const coinStage = Color(0xFFFAF8FD);
+
+  /// The panels inside a pack's tone frame. White: the cards read as paper
+  /// held up against the colour. Light in BOTH themes, like the other fixed
+  /// inks — the stage underneath never turns dark, so there is no dark variant
+  /// to switch to. Anything drawn on a panel therefore takes a fixed dark ink
+  /// ([ink], [lightTextSecondary]), never `context.colors`, which this screen
+  /// pins to the light table.
+  static const coinPanel = Color(0xFFFFFFFF);
   static const coinOrangeLight = Color(0xFFFFB38A);
   static const coinOrange = Color(0xFFFF7A3D);
   static const coinOrangeDeep = Color(0xFFD9480F);
@@ -66,6 +78,18 @@ abstract final class AppColors {
   // light
   static const lightScaffold = Color(0xFFF9F9FA);
   static const lightCanvas = Color(0xFFEFEEF5);
+
+  /// Fill of the "Входит в подписку" container on the home feed.
+  ///
+  /// Yellow on purpose: this is the Lumi Coin section, and gold is the coin's
+  /// own colour everywhere else in the app (see the `coinGold*` tones).
+  ///
+  /// A PALE gold, and it has no border, so it separates from [lightScaffold]
+  /// by hue rather than by weight — the two are close in luminance. That is
+  /// the intended look, but it is also why the blue channel is held this far
+  /// down: lighten it much further and the block stops reading as yellow and
+  /// starts reading as an off-white rectangle for no reason.
+  static const lightCoinBand = Color(0xFFFFF4C4);
   static const lightControl = Color(0xFFF2F1F6);
   static const lightControlBorder = Color(0xFFE6E5EC);
   static const lightTextSecondary = Color(0xFF6E6D78);
@@ -75,6 +99,11 @@ abstract final class AppColors {
 
   // dark
   static const darkCanvas = Color(0xFF1D1C23);
+
+  /// [lightCoinBand]'s dark counterpart — the same gold taken right down, so
+  /// a white label reads on it. NOT lightened to match the pale light value:
+  /// on a dark page the band has to stay the darker of the two surfaces.
+  static const darkCoinBand = Color(0xFF302713);
   static const darkSurface = Color(0xFF202024);
   static const darkSurfaceRaised = Color(0xFF26252B);
   static const darkControl = Color(0xFF313039);

@@ -86,7 +86,7 @@ abstract final class DeepLinkRoutes {
   // Visual tab order — must match `routes` in main_page.dart's AutoTabsScaffold.
   static const int _tabHome = 0;
   static const int _tabShorts = 2;
-  static const int _tabCalendar = 3;
+  static const int _tabTariffs = 3;
   static const int _tabProfile = 4;
 
   /// Hosts whose `https://` links belong to us and must open IN the app rather
@@ -179,8 +179,11 @@ abstract final class DeepLinkRoutes {
     'home': const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabHome),
     'shorts':
         const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabShorts),
+    // `calendar` used to be the Броны tab, which the Lumi Coin shelf took
+    // over. Bookings are a pushed screen now, so the link lands on the full
+    // list behind Profile — the same one the booking push notifications open.
     'calendar':
-        const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabCalendar),
+        const DeepLinkRoute(mode: DeepLinkNavMode.root, build: _buildBookings),
     // `search` used to be the Учреждения tab, which is off the bar for now.
     // The link still has to land somewhere sensible, and what anyone following
     // it wants is the search screen — the same one `discovery` opens.
@@ -238,10 +241,10 @@ abstract final class DeepLinkRoutes {
     ),
     // The Lumi Coin shelf — packs of coins that pay for activities. Not the
     // wallet below, which is the cashback balance.
-    'coins': DeepLinkRoute(
-      mode: DeepLinkNavMode.root,
-      build: (_) => NewCoinsRoute(),
-    ),
+    // It is the fourth tab now, so switch to it rather than stacking a second
+    // copy of the shelf on top of whatever the buyer was looking at.
+    'coins':
+        const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabTariffs),
     'wallet': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
       build: (_) => const WalletRoute(),
@@ -298,6 +301,14 @@ abstract final class DeepLinkRoutes {
       build: (_) => const ReferralRoute(),
     ),
   };
+
+  /// `lumi://calendar` — the booking list. It is no longer a tab (the Lumi
+  /// Coin shelf took that slot), so the link pushes the full list that sits
+  /// behind Profile instead of switching the bar.
+  static PageRouteInfo? _buildBookings(Map<String, String> params) {
+    dlog('build calendar: pushing MyBookingsRoute');
+    return const MyBookingsRoute();
+  }
 
   /// `lumi://class/<id>` — pushes the detail page with a minimal [HomClass].
   /// [ClassDetailPage] calls `_loadFull()` from `initState`, so the full record

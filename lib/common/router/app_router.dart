@@ -122,7 +122,11 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: HomeRoute.page),
         AutoRoute(page: SearchCategoriesRoute.page),
         AutoRoute(page: ShortsRoute.page),
-        AutoRoute(page: CalendarRoute.page),
+        // The fourth tab: the Lumi Coin shelf, in the slot `CalendarRoute`
+        // held. Registered here AND top-level below — as a tab it is the
+        // bare shelf, while a push carries arguments (`topUpFor`,
+        // `returnOnPurchase`) that only a caller can supply.
+        AutoRoute(page: NewCoinsRoute.page),
         AutoRoute(page: ProfileRoute.page),
         // `MapRoute` is off the bar too: the search tab took its place, and
         // the map is one tap into it (and still the pushed `BranchesMapRoute`).

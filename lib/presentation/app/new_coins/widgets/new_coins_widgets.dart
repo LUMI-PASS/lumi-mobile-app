@@ -254,6 +254,11 @@ class NewCoinTone {
 
 /// The wash behind the screen: the pack's colour at the top edge, gone by the
 /// middle.
+///
+/// It leads with [NewCoinTone.light], the pale tint, and lets the full-strength
+/// accent through only as a trace. That is what makes the stage's dark ink
+/// readable the whole way down — the pack's name sits a coin's height below
+/// the top edge, where the old black-stage version was still at 0.88 accent.
 class NewCoinsBackdrop extends StatelessWidget {
   const NewCoinsBackdrop({super.key, required this.tone});
 
@@ -269,25 +274,26 @@ class NewCoinsBackdrop extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              stops: const [0, 0.14, 0.34, 0.56],
+              stops: const [0, 0.18, 0.38, 0.6],
               colors: [
                 tone.light,
-                tone.accent.withValues(alpha: 0.88),
-                tone.accent.withValues(alpha: 0.3),
+                tone.light.withValues(alpha: 0.78),
+                tone.accent.withValues(alpha: 0.14),
                 tone.accent.withValues(alpha: 0),
               ],
             ),
           ),
         ),
         // A pale bloom off the top edge, so the colour reads as lit rather
-        // than as a flat band.
+        // than as a flat band. Stronger than it was on the black stage, where
+        // a white bloom had the whole dark page to show against.
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: RadialGradient(
               center: const Alignment(0.35, -1.05),
               radius: 0.75,
               colors: [
-                AppColors.white.withValues(alpha: 0.38),
+                AppColors.white.withValues(alpha: 0.6),
                 AppColors.white.withValues(alpha: 0),
               ],
             ),
@@ -335,9 +341,13 @@ class _NewCoinArtState extends State<NewCoinArt>
           DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              // Was a white halo, which did its lifting against a black
+              // stage and is simply invisible on a pale one. The pack's own
+              // pale tint, denser at the centre, gives the coin a ground to
+              // sit on either way.
               gradient: RadialGradient(
                 colors: [
-                  AppColors.white.withValues(alpha: 0.6),
+                  tone.light.withValues(alpha: 0.85),
                   tone.light.withValues(alpha: 0),
                 ],
               ),
@@ -412,10 +422,13 @@ class NewCoinPackHeader extends StatelessWidget {
                 pack.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                // Fixed dark ink, like everything else on this screen: the
+                // stage is light in both themes (see [AppColors.coinStage]),
+                // so there is no theme in which white would be right.
                 style: AppText.phone32.copyWith(
                   fontSize: 30.sp,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.white,
+                  color: AppColors.ink,
                 ),
               ),
             ),
@@ -425,13 +438,16 @@ class NewCoinPackHeader extends StatelessWidget {
         4.kh,
         Text(
           pack.price.toRawUzsPrice(),
-          style: AppText.semibold16.copyWith(color: AppColors.white),
+          style: AppText.semibold16
+              .copyWith(color: AppColors.ink.withValues(alpha: 0.7)),
         ),
         14.kh,
         Container(
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
           decoration: BoxDecoration(
-            color: AppColors.white.withValues(alpha: 0.12),
+            // Paper on the wash, the same move the top pills make — a white
+            // scrim would vanish into the pale tint behind it.
+            color: AppColors.coinPanel.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(40.r),
           ),
           child: Row(
@@ -440,7 +456,7 @@ class NewCoinPackHeader extends StatelessWidget {
               CoinAmount(
                 amount: pack.coins,
                 style: AppText.semibold14,
-                color: AppColors.white,
+                color: AppColors.ink,
               ),
               if (pack.validDays > 0) ...[
                 8.kw,
@@ -449,9 +465,17 @@ class NewCoinPackHeader extends StatelessWidget {
                   style: AppText.semibold14.copyWith(color: AppColors.inkMuted),
                 ),
                 8.kw,
-                Text(
-                  'new_coins_days'.tr(args: ['${pack.validDays}']),
-                  style: AppText.semibold14.copyWith(color: AppColors.white),
+                // Flexible, so a long translation of the deadline shortens
+                // instead of pushing the saving chip off the end of the pill.
+                // The coin amount and the chip are the two figures that must
+                // stay whole; this one reads fine clipped.
+                Flexible(
+                  child: Text(
+                    'new_coins_days'.tr(args: ['${pack.validDays}']),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold14.copyWith(color: AppColors.ink),
+                  ),
                 ),
               ],
               if (savingPercent > 0) ...[
@@ -468,7 +492,12 @@ class NewCoinPackHeader extends StatelessWidget {
   }
 }
 
-/// A light pill carrying one figure — "40 Lumi Coin", "30 days", "−12%".
+/// A pill carrying one figure — "40 Lumi Coin", "30 days", "−12%".
+///
+/// One fill, not two: both of this screen's grounds are white paper now — the
+/// header's own pill and a feature row's panel — so the chip is a tint of the
+/// ink it carries either way. It used to take [AppColors.inkChip] out on the
+/// stage, which only worked while that stage was black.
 class _ValueChip extends StatelessWidget {
   const _ValueChip({required this.label});
 
@@ -479,7 +508,7 @@ class _ValueChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 3.h),
       decoration: BoxDecoration(
-        color: AppColors.inkChip,
+        color: AppColors.ink.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(40.r),
       ),
       child: Text(
@@ -506,8 +535,8 @@ class NewCoinFeature {
   final String? chip;
 }
 
-/// "What's in the pack": a frame in the pack's colour around two dark panels —
-/// a heading, then every [NewCoinFeature] as a row.
+/// "What's in the pack": a frame in the pack's colour around two white panels
+/// — a heading, then every [NewCoinFeature] as a row.
 class NewCoinPackFeatures extends StatelessWidget {
   const NewCoinPackFeatures({
     super.key,
@@ -549,14 +578,17 @@ class NewCoinPackFeatures extends StatelessWidget {
                     children: [
                       Text(
                         title,
+                        // Fixed dark ink: the panel is white in both themes,
+                        // so a role would have to resolve the same way in
+                        // both, which is what a fixed ink says outright.
                         style:
-                            AppText.semibold16.copyWith(color: AppColors.white),
+                            AppText.semibold16.copyWith(color: AppColors.ink),
                       ),
                       2.kh,
                       Text(
                         subtitle,
                         style: AppText.regular13
-                            .copyWith(color: AppColors.inkMuted),
+                            .copyWith(color: AppColors.lightTextSecondary),
                       ),
                     ],
                   ),
@@ -578,7 +610,8 @@ class NewCoinPackFeatures extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: AppColors.white.withValues(alpha: 0.07),
+                      // Dark hairline now that it rules a white panel.
+                      color: AppColors.ink.withValues(alpha: 0.08),
                     ),
                   _FeatureRow(feature: features[i]),
                 ],
@@ -607,7 +640,7 @@ class _FeatureRow extends StatelessWidget {
           Icon(
             feature.icon,
             size: 26.w,
-            color: AppColors.white.withValues(alpha: 0.85),
+            color: AppColors.ink.withValues(alpha: 0.75),
           ),
           14.kw,
           Expanded(
@@ -616,17 +649,20 @@ class _FeatureRow extends StatelessWidget {
               children: [
                 Text(
                   feature.title,
-                  style: AppText.semibold16.copyWith(color: AppColors.white),
+                  style: AppText.semibold16.copyWith(color: AppColors.ink),
                 ),
                 if (body != null) ...[
                   2.kh,
                   Text(
                     body,
-                    style:
-                        AppText.regular13.copyWith(color: AppColors.inkMuted),
+                    style: AppText.regular13
+                        .copyWith(color: AppColors.lightTextSecondary),
                   ),
                 ],
-                if (chip != null) ...[8.kh, _ValueChip(label: chip)],
+                if (chip != null) ...[
+                  8.kh,
+                  _ValueChip(label: chip),
+                ],
               ],
             ),
           ),
@@ -665,7 +701,11 @@ class NewCoinsBuyBar extends StatelessWidget {
         16.w,
         36.h,
         16.w,
-        16.h + MediaQuery.of(context).viewPadding.bottom,
+        // `padding`, not `viewPadding`: on the Тарифы tab the tabs scaffold
+        // runs `extendBody: true`, so Flutter reports the nav pill's height
+        // here and Buy clears it. Pushed full-screen there is no pill and
+        // this is the safe-area inset, exactly as before.
+        16.h + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
