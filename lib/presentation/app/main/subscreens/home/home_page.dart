@@ -238,37 +238,83 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final categories = _categories(state);
     if (categories.isNotEmpty) SearchCubit.cachedCategories = categories;
 
+    Widget tile(int index) => CategoryItemWidget(
+          key: ValueKey(categories[index].id ?? index),
+          homeCategoryModel: categories[index],
+          padding: EdgeInsets.zero,
+          // A fifth of the row, so five columns exactly fill the screen.
+          width: (1.sw - 16.w) / _categoryColumns,
+          onTap: () => context.router.push(
+            SearchDiscoveryRoute(initialCategory: categories[index]),
+          ),
+        );
+
+    // The first ten the server sent and no more: the grid is two fixed rows
+    // of five and does not scroll. Every category is still one tap away, in
+    // search — home shows the ten the adminka put first.
+    final columns = categoryGridColumns(
+      categories.length.clamp(0, _categoryColumns * 2),
+    );
+    // A cell holds the artwork and a two-line label. One row of cells when
+    // there are too few categories to start a second.
+    final cellH = 84.h;
+    final rows = columns.any((column) => column.length > 1) ? 2 : 1;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        8.verticalSpace,
-        // No "see all": the row already scrolls through every category, so the
-        // grid it used to open was the same list a second time.
-        HomeSectionHeader(title: 'all_categories'.tr()),
-        10.verticalSpace,
-        SizedBox(
-          // Tall enough for a two-line label under the artwork, so a wrapped
-          // title doesn't overflow the row.
-          height: 92.h,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            // 8pt between columns, each as wide as its own label; the leading
-            // 8 here plus the column's own 8 keep the first on the page's
-            // 16pt margin.
-            padding: EdgeInsets.only(left: 8.w, right: 16.w),
-            itemCount: categories.length,
-            itemBuilder: (context, index) => CategoryItemWidget(
-              key: ValueKey(categories[index].id ?? index),
-              homeCategoryModel: categories[index],
-              padding: EdgeInsets.only(left: 8.w),
-              onTap: () => context.router.push(
-                SearchDiscoveryRoute(initialCategory: categories[index]),
-              ),
+        // No header and no "see all": the tiles name themselves.
+        14.verticalSpace,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: SizedBox(
+            height: cellH * rows + (rows - 1) * 4.h,
+            // A plain Row, not a list: at most five columns, each a fifth of
+            // the width, so there is nothing to scroll to.
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final column in columns)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final (row, index) in column.indexed) ...[
+                        if (row > 0) 4.verticalSpace,
+                        SizedBox(height: cellH, child: tile(index)),
+                      ],
+                    ],
+                  ),
+              ],
             ),
           ),
         ),
       ],
     );
+  }
+
+  /// How many category columns fit across the screen.
+  static const _categoryColumns = 5;
+
+  /// The category grid, as columns of indices into the category list.
+  ///
+  /// It reads like a page: the top row is the first five categories and the
+  /// row under it the next five, so the ten the adminka put first are the ten
+  /// on show, in order. Home stops there (see [_buildCategories]); given more
+  /// than ten, the rest follow in columns of two.
+  ///
+  /// With five or fewer there is no second row to fill, and each column holds
+  /// one.
+  static List<List<int>> categoryGridColumns(int count) {
+    const perRow = _categoryColumns;
+    if (count <= perRow) return [for (var i = 0; i < count; i++) [i]];
+    final columns = <List<int>>[
+      for (var c = 0; c < perRow; c++)
+        [c, if (c + perRow < count) c + perRow],
+    ];
+    for (var i = perRow * 2; i < count; i += 2) {
+      columns.add([i, if (i + 1 < count) i + 1]);
+    }
+    return columns;
   }
 
   /// "Входит в подписку" — a sample of what a Lumi Coin pack pays for.
