@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_shadows.dart';
@@ -22,6 +23,8 @@ import 'package:lumi_pass/common/widget/route_video_tile.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
+import 'package:lumi_pass/common/widget/save_heart_icon.dart';
+import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/common/utils/catalog_revision.dart';
@@ -47,6 +50,18 @@ class BranchDetailPage extends StatefulWidget {
 }
 
 class _BranchDetailPageState extends State<BranchDetailPage> {
+  final _saved = getIt<SavedActivityStore>();
+
+  /// The shelf is the account's, so a guest is sent to sign in instead. A
+  /// failed save needs nothing here: the store has already put the heart back.
+  Future<void> _toggleSaved() async {
+    final outcome = await _saved.toggleBranch(widget.branch);
+    if (!mounted) return;
+    if (outcome == SaveOutcome.needsSignIn) {
+      await context.router.push(LoginRoute());
+    }
+  }
+
   final PageController _pageController = PageController();
   final ScrollController _scrollController = ScrollController();
   Timer? _slideTimer;
@@ -340,6 +355,22 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                 onTap: () => context.router.pop(),
                 child: HomeIcon(Assets.icons.home.arrow,
                     size: 16, color: c.textPrimary),
+              ),
+            ),
+            // The centre's heart, opposite the back button — the same control
+            // and the same store the activity page's heart uses.
+            Positioned(
+              top: safeTop + 8.h,
+              right: 16.w,
+              child: ValueListenableBuilder<Set<String>>(
+                valueListenable: _saved.savedBranchIds,
+                builder: (_, __, ___) => DetailControlButton(
+                  onTap: _toggleSaved,
+                  child: SaveHeartIcon(
+                    saved: _saved.containsBranch(widget.branch.id),
+                    offColor: c.textSecondary,
+                  ),
+                ),
               ),
             ),
           ],

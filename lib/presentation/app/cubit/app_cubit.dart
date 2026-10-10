@@ -1,6 +1,7 @@
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/interest_reporter.dart';
+import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/data/service/push_notification_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -53,6 +54,9 @@ class AppCubit extends BaseCubit<AppBuildable, AppListenable> {
       // whole signal is a user who lost interest and left, so the send has to
       // survive the app being closed — see [InterestReporter].
       getIt<InterestReporter>().flush();
+      // The saved shelf is the account's, so another phone may have changed
+      // it since this one last looked.
+      getIt<SavedActivityStore>().sync();
     }
     // Outside the signed-in block: the shelf is public, and whether anything
     // is on it decides if a guest sees coin prices at all. The balance half

@@ -4,6 +4,7 @@ import 'package:lumi_pass/data/api_model/profile_model/profile_model.dart';
 import 'package:lumi_pass/data/base_model/token/tokens.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/interest_reporter.dart';
+import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/data/service/push_notification_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -28,6 +29,7 @@ class AuthRepositoryImpl extends AuthRepository {
     await _push.unregister();
     await _storage.tokens.set(null);
     await _storage.deviceToken.set(null);
+    await getIt<SavedActivityStore>().reset();
     await _analytics.clear();
   }
 
@@ -114,6 +116,8 @@ class AuthRepositoryImpl extends AuthRepository {
     // token to know whose history the event belongs to — so anything queued
     // while signed out goes now, rather than waiting for the next cold start.
     unawaited(getIt<InterestReporter>().flush());
+    // The account's saved shelf, so its hearts are tinted from the first screen.
+    unawaited(getIt<SavedActivityStore>().sync());
 
     return VerifyOtpResult(
       isNewUser: isNewUser,

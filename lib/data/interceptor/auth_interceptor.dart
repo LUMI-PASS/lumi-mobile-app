@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/web.dart';
@@ -40,6 +41,7 @@ class AuthInterceptor extends QueuedInterceptor {
     if (err.response?.statusCode == 401 &&
         !RemoteConfigService.instance.isInReview) {
       await _storage.logout();
+      await getIt<SavedActivityStore>().reset();
       getIt<AppRouter>().replaceAll([LoginRoute()]);
     }
     return handler.next(err);

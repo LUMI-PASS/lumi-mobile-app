@@ -96,17 +96,18 @@ class Storage {
   BaseStorage<List> get recentSearchClasses =>
       BaseStorage(_box, 'recent_search_classes');
 
-  /// The activities the user SAVED, newest first, as their raw `HomClass`
-  /// JSON — the "Saqlanganlar" shelf.
+  /// The ids of the activities the user SAVED — the "Saqlanganlar" shelf.
   ///
-  /// Device-scoped and deliberately not account-scoped: there is no server
-  /// endpoint for a favourite, so this is the only copy, and wiping it on
-  /// logout would throw away work the user did rather than protect anything.
-  /// The whole card is stored rather than its id, for the same reason recents
-  /// are — see [SavedActivityStore] — so the shelf opens with no round trip
-  /// and still works offline.
-  BaseStorage<List> get savedActivities =>
-      BaseStorage(_box, 'saved_activities');
+  /// A cache, not the shelf: that lives on the server, one per account (see
+  /// [SavedActivityStore]). Kept so the hearts tint on the first frame of a
+  /// cold start, and cleared on logout because it belongs to the account.
+  BaseStorage<List> get savedActivityIds =>
+      BaseStorage(_box, 'saved_activity_ids');
+
+  /// The ids of the CENTRES the user saved — the other half of the same
+  /// shelf, cached and cleared for the same reasons.
+  BaseStorage<List> get savedBranchIds =>
+      BaseStorage(_box, 'saved_branch_ids');
 
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
@@ -198,6 +199,8 @@ class Storage {
     await planDiscountPercentage.set(null);
     await lastPaymentRail.set(null);
     await lastSavedCardId.set(null);
+    await savedActivityIds.set(null);
+    await savedBranchIds.set(null);
 
     // Once-per-user prompts — the next user hasn't seen them.
     await needsOnboarding.set(null);

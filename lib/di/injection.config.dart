@@ -45,6 +45,7 @@ import 'package:lumi_pass/domain/repo/auth/auth_repository.dart' as _i652;
 import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart'
     as _i812;
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart' as _i298;
+import 'package:lumi_pass/domain/repo/favorites/favorites_api.dart' as _i109;
 import 'package:lumi_pass/domain/repo/home/home_api.dart' as _i433;
 import 'package:lumi_pass/domain/repo/home/home_repository.dart' as _i526;
 import 'package:lumi_pass/domain/repo/interests/interests_api.dart' as _i1041;
@@ -137,8 +138,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i295.MetaService(gh<_i279.Storage>()));
     gh.lazySingleton<_i789.RecentSearchStore>(
         () => _i789.RecentSearchStore(gh<_i279.Storage>()));
-    gh.lazySingleton<_i966.SavedActivityStore>(
-        () => _i966.SavedActivityStore(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
     gh.factory<_i538.ReferralsApi>(() => _i538.ReferralsApi(
@@ -156,17 +155,22 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
+    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(gh<_i361.Dio>()));
     gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
     gh.factory<_i748.OrdersApi>(() => _i748.OrdersApi(gh<_i361.Dio>()));
     gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
-    gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i582.PromoApi>(() => _i582.PromoApi(gh<_i361.Dio>()));
     gh.factory<_i259.NewCoinsApi>(() => _i259.NewCoinsApi(gh<_i361.Dio>()));
+    gh.factory<_i109.FavoritesApi>(() => _i109.FavoritesApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
+    gh.lazySingleton<_i966.SavedActivityStore>(() => _i966.SavedActivityStore(
+          gh<_i109.FavoritesApi>(),
+          gh<_i279.Storage>(),
+        ));
     gh.factory<_i550.NewCoinsRepository>(
         () => _i412.NewCoinsRepositoryImpl(gh<_i259.NewCoinsApi>()));
     gh.lazySingleton<_i594.AnalyticsService>(() => _i594.AnalyticsService(

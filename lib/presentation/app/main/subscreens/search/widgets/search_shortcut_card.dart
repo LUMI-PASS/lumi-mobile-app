@@ -18,18 +18,19 @@ import 'package:lumi_pass/common/widget/bouncing_button.dart';
 /// share a screen width, which leaves each one about a third of it — at the
 /// category cards' 14pt, "Mashg'ulotlar" ran past two lines and ellipsised.
 ///
-/// The colour is deliberately faint. Three saturated discs in a row, each with
-/// a coloured number under it, turned the top of the tab into the loudest thing
-/// on a screen whose actual subject is the category grid below. [color] now
-/// tints only the glyph; the disc behind it is a wash, the border is the
-/// lightest the palette has, and the count is plain ink. The green / pink / red
-/// are hints that tell the three cards apart, not blocks of colour competing
-/// with the content.
+/// The glyph carries the colour. Each shortcut has its own bold, filled,
+/// multicolour icon (`shortcut_*.svg`), drawn as it is with nothing behind it,
+/// so the three are told apart by shape and colour at once. The card stays
+/// quiet around it: the lightest border the palette has, and the count in
+/// plain ink.
+///
+/// Pass [color] only for a single-colour glyph that needs tinting; it is then
+/// drawn smaller, on a faint disc of that colour.
 class SearchShortcutCard extends StatelessWidget {
   const SearchShortcutCard({
     super.key,
     required this.icon,
-    required this.color,
+    this.color,
     required this.label,
     required this.onTap,
     this.count,
@@ -37,8 +38,9 @@ class SearchShortcutCard extends StatelessWidget {
 
   final SvgGenImage icon;
 
-  /// Tints the glyph and, faintly, the disc behind it.
-  final Color color;
+  /// Null for a multicolour glyph, which is drawn in its own colours. Set, it
+  /// tints a single-colour glyph and, faintly, a disc behind it.
+  final Color? color;
   final String label;
   final VoidCallback onTap;
 
@@ -75,20 +77,25 @@ class SearchShortcutCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40.w,
-              height: 40.w,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
+            // Both branches are 40pt tall, so the label sits on the same line
+            // whichever kind of glyph a card has.
+            if (color == null)
+              icon.svg(width: 40.w, height: 40.w)
+            else
+              Container(
+                width: 40.w,
+                height: 40.w,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color!.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: icon.svg(
+                  width: 22.w,
+                  height: 22.w,
+                  colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
+                ),
               ),
-              child: icon.svg(
-                width: 22.w,
-                height: 22.w,
-                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-              ),
-            ),
             8.verticalSpace,
             Text(
               label,

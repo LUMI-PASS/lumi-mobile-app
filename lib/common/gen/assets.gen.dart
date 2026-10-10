@@ -750,6 +750,18 @@ class $AssetsIconsHomeGen {
   /// File path: assets/icons/home/share.svg
   SvgGenImage get share => const SvgGenImage('assets/icons/home/share.svg');
 
+  /// File path: assets/icons/home/shortcut_activities.svg
+  SvgGenImage get shortcutActivities =>
+      const SvgGenImage('assets/icons/home/shortcut_activities.svg');
+
+  /// File path: assets/icons/home/shortcut_map.svg
+  SvgGenImage get shortcutMap =>
+      const SvgGenImage('assets/icons/home/shortcut_map.svg');
+
+  /// File path: assets/icons/home/shortcut_saved.svg
+  SvgGenImage get shortcutSaved =>
+      const SvgGenImage('assets/icons/home/shortcut_saved.svg');
+
   /// File path: assets/icons/home/user.svg
   SvgGenImage get user => const SvgGenImage('assets/icons/home/user.svg');
 
@@ -779,6 +791,9 @@ class $AssetsIconsHomeGen {
         profile2user,
         search,
         share,
+        shortcutActivities,
+        shortcutMap,
+        shortcutSaved,
         user,
         users,
         video

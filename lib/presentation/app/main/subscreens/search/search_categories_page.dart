@@ -8,7 +8,6 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
@@ -60,8 +59,6 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
   /// Set while the counts are in flight, so a rebuild (a tab switch, the
   /// keyboard) does not fire the whole batch a second time.
   bool _countsRequested = false;
-
-  final _saved = getIt<SavedActivityStore>();
 
   @override
   void initState() {
@@ -250,17 +247,14 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
                       // Three ways in, stretched to one height: where things
-                      // are, everything there is, and what you kept. The last
-                      // two carry a count, which is the whole reason they are
-                      // worth a card rather than a line of text.
+                      // are, everything there is, and what you kept.
                       child: IntrinsicHeight(
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Expanded(
                               child: SearchShortcutCard(
-                                icon: Assets.icons.location,
-                                color: AppColors.green,
+                                icon: Assets.icons.home.shortcutMap,
                                 label: 'map_title'.tr(),
                                 onTap: _openMap,
                               ),
@@ -268,8 +262,7 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
                             8.horizontalSpace,
                             Expanded(
                               child: SearchShortcutCard(
-                                icon: Assets.icons.home.book,
-                                color: AppColors.brandPink,
+                                icon: Assets.icons.home.shortcutActivities,
                                 label: 'activities'.tr(),
                                 // No count here. It said the same number the
                                 // "Barcha kategoriyalar" card below says, two
@@ -280,26 +273,14 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
                             ),
                             8.horizontalSpace,
                             Expanded(
-                              // Watches the store, so hearting something on a
-                              // detail screen moves this number by the time the
-                              // user is back on the tab.
-                              child: ValueListenableBuilder<Set<String>>(
-                                valueListenable: _saved.savedIds,
-                                builder: (_, ids, __) => SearchShortcutCard(
-                                  icon: Assets.icons.home.heart,
-                                  color: AppColors.error,
-                                  label: 'saved_title'.tr(),
-                                  // Nothing saved prints no number at all,
-                                  // rather than a "0" under the heart. The
-                                  // count is here to say a shelf is worth
-                                  // opening; a zero says only that it isn't,
-                                  // which the empty screen behind the tap
-                                  // already says better. The card then reads
-                                  // as the plain way in that it is until
-                                  // something has been saved.
-                                  count: ids.isEmpty ? null : ids.length,
-                                  onTap: _openSaved,
-                                ),
+                              child: SearchShortcutCard(
+                                icon: Assets.icons.home.shortcutSaved,
+                                label: 'saved_title'.tr(),
+                                // No count here either. With the other two
+                                // cards bare, a number under this one alone
+                                // made the row lopsided, and the shelf says
+                                // what is on it the moment it opens.
+                                onTap: _openSaved,
                               ),
                             ),
                           ],

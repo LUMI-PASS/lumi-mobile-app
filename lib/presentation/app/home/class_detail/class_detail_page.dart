@@ -42,6 +42,7 @@ import 'package:lumi_pass/presentation/app/home/course_detail/intake_waitlist_sh
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_widgets.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_sheet.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/reviews_sheet.dart';
+import 'package:lumi_pass/common/widget/save_heart_icon.dart';
 import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -74,9 +75,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// The saved shelf ("Saqlanganlar"). The heart used to be a `bool` in this
   /// state and nothing else: it filled on tap, emptied on the way back in, and
   /// no screen in the app could tell you what you had hearted. It now writes
-  /// through to [SavedActivityStore], which is local and the only copy there
-  /// is — the backend has no favourites endpoint.
+  /// through to [SavedActivityStore], which keeps the shelf on the server.
   final _saved = getIt<SavedActivityStore>();
+
+  /// The shelf is the account's, so a guest is sent to sign in instead — the
+  /// same hand-off buying a course makes. A failed save needs nothing here:
+  /// the store has already put the heart back.
+  Future<void> _toggleSaved() async {
+    final outcome = await _saved.toggle(widget.classModel);
+    if (!mounted) return;
+    if (outcome == SaveOutcome.needsSignIn) {
+      await context.router.push(LoginRoute());
+    }
+  }
   List<String> _galleryImages = [];
   final PageController _pageController = PageController();
   final ScrollController _scrollController = ScrollController();
@@ -1102,12 +1113,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     builder: (_, __, ___) {
                       final isSaved = _saved.contains(widget.classModel.id);
                       return DetailControlButton(
-                        child: HomeIcon(
-                          Assets.icons.home.heart,
-                          size: 16,
-                          color: isSaved ? AppColors.error : c.textSecondary,
+                        onTap: _toggleSaved,
+                        child: SaveHeartIcon(
+                          saved: isSaved,
+                          offColor: c.textSecondary,
                         ),
-                        onTap: () => _saved.toggle(widget.classModel),
                       );
                     },
                   ),

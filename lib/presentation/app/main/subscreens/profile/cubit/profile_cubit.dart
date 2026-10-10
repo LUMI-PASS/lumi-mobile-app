@@ -11,6 +11,7 @@ import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
+import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/domain/repo/referrals/referral_repository.dart';
@@ -152,6 +153,8 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
   /// is greeted by the previous user's name and avatar until the API answers.
   Future<void> _clearSession() async {
     await _storage.logout();
+    // Same reason as the notifiers below: the saved ids are held in memory.
+    await getIt<SavedActivityStore>().reset();
     displayNameNotifier.value = null;
     parentAvatarNotifier.value = null;
     // AppCubit outlives the session, so the plan has to be dropped from its

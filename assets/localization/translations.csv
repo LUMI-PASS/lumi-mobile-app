@@ -1487,5 +1487,5 @@ booking_now,Сейчас,Hozir,Now
 activities,Занятия,Mashg'ulotlar,Activities
 saved_title,Сохранённые,Saqlanganlar,Saved
 saved_empty_title,Пока ничего не сохранено,Hali hech narsa saqlanmagan,Nothing saved yet
-saved_empty_desc,Нажмите на сердечко у занятия — оно появится здесь,Mashg'ulotdagi yurakchani bosing — u shu yerda paydo bo'ladi,Tap the heart on an activity and it lands here
+saved_empty_desc,Нажмите на сердечко у занятия или центра — оно появится здесь,Mashg'ulot yoki markazdagi yurakchani bosing — u shu yerda paydo bo'ladi,Tap the heart on an activity or a centre and it lands here
 activities_count,{} занятий,{} mashg'ulot,{} activities
