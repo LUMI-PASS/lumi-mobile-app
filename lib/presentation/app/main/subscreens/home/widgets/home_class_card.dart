@@ -526,8 +526,19 @@ class _ClassInfo extends StatelessWidget {
         // address, and `branchInline` routes it through its own layout, where a
         // third fragment has nowhere to go. Keeping its own row keeps it a
         // fact of its own, exactly as it was beside the price.
+        //
+        // Alone or not, it is pinned to the RIGHT edge. Left to the column's
+        // start alignment it sat on the left on a priceless card and on the
+        // right on a priced one, so down a list mixing the two the distance
+        // jumped from side to side instead of forming a column the eye can
+        // run along.
         final Widget? priceLine = !showPrice
-            ? priceDistance
+            ? (priceDistance == null
+                ? null
+                : Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: priceDistance,
+                  ))
             : priceDistance == null
                 ? _PriceText(hc: hc)
                 : Row(
