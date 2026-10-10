@@ -47,6 +47,7 @@ Future<void> _seedDefaultLocale() async {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // ignore: avoid_print
   print(
       '[FCM] background — title:${message.notification?.title} data:${message.data}');
 }
