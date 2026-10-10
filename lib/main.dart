@@ -36,8 +36,7 @@ import 'data/base_model/material_colors.dart';
 import 'presentation/app/cubit/app_cubit.dart';
 import 'presentation/app/cubit/app_state.dart';
 
-// Ensures EasyLocalization defaults to uz_UZ on first launch instead of
-// picking up the device locale (which may be English on test/dev devices).
+
 Future<void> _seedDefaultLocale() async {
   final prefs = await SharedPreferences.getInstance();
   if (!prefs.containsKey('locale')) {
@@ -45,29 +44,13 @@ Future<void> _seedDefaultLocale() async {
   }
 }
 
-// ─── FCM background handler (must be top-level, annotated vm:entry-point) ────
-
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // ignore: avoid_print
   print(
       '[FCM] background — title:${message.notification?.title} data:${message.data}');
 }
 
-// ─── Native deep-link interceptor ────────────────────────────────────────────
-// Prevents auto_route from processing lumi:// and /share/class/ URLs itself.
-// DeeplinkService handles the actual navigation; auto_route just sees the normal
-// root route so the InitialGuard runs and the app starts cleanly.
-
-//
-// Only a COLD start needs that root route. On a warm link the app already has
-// a stack, and auto_route applies a routes deep link with `pushAll` — so
-// answering with the root route pushed a SECOND root on top of the screen the
-// user was on. The guard then mounted a second MainRoute under the same key as
-// the first: "Duplicate GlobalKey", a truncated tree, a black screen. That is
-// what a payment's `lumi://class` return did to whichever screen was polling
-// for the result. A warm link is therefore left to DeeplinkService alone.
 
 DeepLink _nativeDeepLink(PlatformDeepLink link) {
   final uri = link.uri;
@@ -187,25 +170,11 @@ Future<void> _runNative() async {
   await RuntimeEnv.load();
   await configureDependencies();
   initThemeMode();
-
-  // Do NOT await — getInitialMessage() inside requires the Flutter plugin to
-  // be registered, which only happens after runApp() with
-  // FlutterImplicitEngineDelegate. Fire and forget; all listeners are wired
-  // up synchronously before runApp returns, so no messages are missed.
   unawaited(getIt<PushNotificationManager>().initializeNotification());
   unawaited(getIt<DeeplinkService>().init());
-
-  // AppsFlyer, unlike app_links, resolves OneLinks itself and hands back the
-  // target — so point it at the same router the native links go through.
-  // Awaited: the SDK must be up before AppCubit fires its first event, and it
-  // is only a method-channel hop. Web is skipped inside init().
   final appsFlyer = getIt<AppsFlyerService>();
   appsFlyer.onDeepLink = getIt<DeeplinkService>().handleAppsFlyerLink;
   await appsFlyer.init();
-
-  // Same reasoning as AppsFlyer: up before AppCubit fires its first event, and
-  // only a method-channel hop. Meta has no deep-link role — it just needs to
-  // see the activation and the events. Web is skipped inside init().
   await getIt<MetaService>().init();
 
   initLangIfNeeded('uz');
@@ -249,9 +218,6 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
   @override
   void init(BuildContext context) {
     super.init(context);
-    // The update gate rides on the root navigator, which only exists once the
-    // router below has built — hence the post-frame hop. It is a no-op unless
-    // Remote Config puts this build below one of the two version floors.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppUpdateService.instance.maybeShow();
     });
@@ -262,9 +228,6 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
     return DisplayWidget(
       child: ScreenUtilInit(
         designSize: const Size(414, 896),
-        // The user's theme override drives `themeMode`; `AppColorScheme` rides
-        // along on `ThemeData.extensions`, so every `context.colors` lookup —
-        // and its lerp on switch — follows from here.
         child: ValueListenableBuilder<ThemeMode>(
           valueListenable: themeModeNotifier,
           builder: (context, mode, _) => MaterialApp.router(
@@ -272,19 +235,10 @@ class MyApp extends BasePage<AppCubit, AppBuildable, AppListenable> {
             debugShowCheckedModeBanner: AppEnv.isDev,
             routerConfig: getIt<AppRouter>().config(
               deepLinkBuilder: kIsWeb ? _initialWebDeepLink : _nativeDeepLink,
-              // A builder, called once per router — the nested one behind the
-              // bottom tabs included. Every instance writes into the one shared
-              // tracker, which is what tells the backend whether a class was
-              // opened from the home row or out of a search.
               navigatorObservers: () => [InterestSourceObserver()],
             ),
             scrollBehavior: _LumiScrollBehavior(),
-            // Innermost wrapper on purpose: the theme flips above it, so the
-            // tree under its RepaintBoundary repaints with the new colors while
-            // the stale snapshot is still being clipped away on top.
             builder: (context, child) => Listener(
-              // Translucent so the tap still reaches whatever was hit; this only
-              // rides along to drop the keyboard on any pointer down.
               behavior: HitTestBehavior.translucent,
               onPointerDown: (_) =>
                   FocusManager.instance.primaryFocus?.unfocus(),
