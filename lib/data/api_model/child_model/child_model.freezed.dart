@@ -31,6 +31,10 @@ mixin _$ChildModel {
   String? get phoneNumber => throw _privateConstructorUsedError;
   String? get dob => throw _privateConstructorUsedError;
   String? get gender => throw _privateConstructorUsedError;
+
+  /// Ids of the [InterestTopic]s picked for this child. Empty on a child
+  /// added before the picker existed, and on a server that predates it.
+  List<String>? get interests => throw _privateConstructorUsedError;
   String? get type => throw _privateConstructorUsedError;
   int? get age => throw _privateConstructorUsedError;
   @JsonKey(name: "child_age_type")
@@ -90,6 +94,7 @@ abstract class $ChildModelCopyWith<$Res> {
       @JsonKey(name: "phone_number") String? phoneNumber,
       String? dob,
       String? gender,
+      List<String>? interests,
       String? type,
       int? age,
       @JsonKey(name: "child_age_type") String? childAgeType,
@@ -135,6 +140,7 @@ class _$ChildModelCopyWithImpl<$Res, $Val extends ChildModel>
     Object? phoneNumber = freezed,
     Object? dob = freezed,
     Object? gender = freezed,
+    Object? interests = freezed,
     Object? type = freezed,
     Object? age = freezed,
     Object? childAgeType = freezed,
@@ -187,6 +193,10 @@ class _$ChildModelCopyWithImpl<$Res, $Val extends ChildModel>
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
               as String?,
+      interests: freezed == interests
+          ? _value.interests
+          : interests // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       type: freezed == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
@@ -295,6 +305,7 @@ abstract class _$$ChildModelImplCopyWith<$Res>
       @JsonKey(name: "phone_number") String? phoneNumber,
       String? dob,
       String? gender,
+      List<String>? interests,
       String? type,
       int? age,
       @JsonKey(name: "child_age_type") String? childAgeType,
@@ -338,6 +349,7 @@ class __$$ChildModelImplCopyWithImpl<$Res>
     Object? phoneNumber = freezed,
     Object? dob = freezed,
     Object? gender = freezed,
+    Object? interests = freezed,
     Object? type = freezed,
     Object? age = freezed,
     Object? childAgeType = freezed,
@@ -390,6 +402,10 @@ class __$$ChildModelImplCopyWithImpl<$Res>
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
               as String?,
+      interests: freezed == interests
+          ? _value._interests
+          : interests // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       type: freezed == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
@@ -493,6 +509,7 @@ class _$ChildModelImpl implements _ChildModel {
       @JsonKey(name: "phone_number") this.phoneNumber,
       this.dob,
       this.gender,
+      final List<String>? interests,
       this.type,
       this.age,
       @JsonKey(name: "child_age_type") this.childAgeType,
@@ -515,7 +532,8 @@ class _$ChildModelImpl implements _ChildModel {
       @JsonKey(name: "created_at") this.createdAt,
       @JsonKey(name: "updated_at") this.updatedAt,
       @JsonKey(name: "deleted_at") this.deletedAt,
-      this.parent});
+      this.parent})
+      : _interests = interests;
 
   factory _$ChildModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$ChildModelImplFromJson(json);
@@ -538,6 +556,22 @@ class _$ChildModelImpl implements _ChildModel {
   final String? dob;
   @override
   final String? gender;
+
+  /// Ids of the [InterestTopic]s picked for this child. Empty on a child
+  /// added before the picker existed, and on a server that predates it.
+  final List<String>? _interests;
+
+  /// Ids of the [InterestTopic]s picked for this child. Empty on a child
+  /// added before the picker existed, and on a server that predates it.
+  @override
+  List<String>? get interests {
+    final value = _interests;
+    if (value == null) return null;
+    if (_interests is EqualUnmodifiableListView) return _interests;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   final String? type;
   @override
@@ -601,7 +635,7 @@ class _$ChildModelImpl implements _ChildModel {
 
   @override
   String toString() {
-    return 'ChildModel(id: $id, parentId: $parentId, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, dob: $dob, gender: $gender, type: $type, age: $age, childAgeType: $childAgeType, city: $city, district: $district, isEligible: $isEligible, isVerified: $isVerified, hasPhoto: $hasPhoto, reason: $reason, remainingTrials: $remainingTrials, paidCoinAccumulator: $paidCoinAccumulator, unlockCyclesGranted: $unlockCyclesGranted, coinsIntoUnlockCycle: $coinsIntoUnlockCycle, coinsToNextUnlock: $coinsToNextUnlock, nextUnlockAtTotalPaidCoins: $nextUnlockAtTotalPaidCoins, unlockThresholdCoin: $unlockThresholdCoin, effectiveClassPrice: $effectiveClassPrice, willUseTrial: $willUseTrial, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt, parent: $parent)';
+    return 'ChildModel(id: $id, parentId: $parentId, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, dob: $dob, gender: $gender, interests: $interests, type: $type, age: $age, childAgeType: $childAgeType, city: $city, district: $district, isEligible: $isEligible, isVerified: $isVerified, hasPhoto: $hasPhoto, reason: $reason, remainingTrials: $remainingTrials, paidCoinAccumulator: $paidCoinAccumulator, unlockCyclesGranted: $unlockCyclesGranted, coinsIntoUnlockCycle: $coinsIntoUnlockCycle, coinsToNextUnlock: $coinsToNextUnlock, nextUnlockAtTotalPaidCoins: $nextUnlockAtTotalPaidCoins, unlockThresholdCoin: $unlockThresholdCoin, effectiveClassPrice: $effectiveClassPrice, willUseTrial: $willUseTrial, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt, parent: $parent)';
   }
 
   @override
@@ -620,6 +654,8 @@ class _$ChildModelImpl implements _ChildModel {
                 other.phoneNumber == phoneNumber) &&
             (identical(other.dob, dob) || other.dob == dob) &&
             (identical(other.gender, gender) || other.gender == gender) &&
+            const DeepCollectionEquality()
+                .equals(other._interests, _interests) &&
             (identical(other.type, type) || other.type == type) &&
             (identical(other.age, age) || other.age == age) &&
             (identical(other.childAgeType, childAgeType) ||
@@ -674,6 +710,7 @@ class _$ChildModelImpl implements _ChildModel {
         phoneNumber,
         dob,
         gender,
+        const DeepCollectionEquality().hash(_interests),
         type,
         age,
         childAgeType,
@@ -721,6 +758,7 @@ abstract class _ChildModel implements ChildModel {
       @JsonKey(name: "phone_number") final String? phoneNumber,
       final String? dob,
       final String? gender,
+      final List<String>? interests,
       final String? type,
       final int? age,
       @JsonKey(name: "child_age_type") final String? childAgeType,
@@ -766,6 +804,11 @@ abstract class _ChildModel implements ChildModel {
   String? get dob;
   @override
   String? get gender;
+  @override
+
+  /// Ids of the [InterestTopic]s picked for this child. Empty on a child
+  /// added before the picker existed, and on a server that predates it.
+  List<String>? get interests;
   @override
   String? get type;
   @override

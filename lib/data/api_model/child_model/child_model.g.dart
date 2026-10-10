@@ -15,6 +15,9 @@ _$ChildModelImpl _$$ChildModelImplFromJson(Map<String, dynamic> json) =>
       phoneNumber: json['phone_number'] as String?,
       dob: json['dob'] as String?,
       gender: json['gender'] as String?,
+      interests: (json['interests'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       type: json['type'] as String?,
       age: (json['age'] as num?)?.toInt(),
       childAgeType: json['child_age_type'] as String?,
@@ -49,6 +52,7 @@ Map<String, dynamic> _$$ChildModelImplToJson(_$ChildModelImpl instance) =>
       'phone_number': instance.phoneNumber,
       'dob': instance.dob,
       'gender': instance.gender,
+      'interests': instance.interests,
       'type': instance.type,
       'age': instance.age,
       'child_age_type': instance.childAgeType,

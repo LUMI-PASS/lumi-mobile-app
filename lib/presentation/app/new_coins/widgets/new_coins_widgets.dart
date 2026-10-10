@@ -375,7 +375,7 @@ class _NewCoinArtState extends State<NewCoinArt>
                 ],
               ),
               // The rendered glass coin in the pack's colour, for the hero
-              // only. Inline amounts keep the flat `coinLumi`, which stays
+              // only. Inline amounts keep the plain `coinLumi`, which stays
               // legible at text size.
               child: tone.art.image(
                 width: coin,

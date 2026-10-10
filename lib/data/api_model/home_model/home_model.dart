@@ -30,6 +30,12 @@ class HomData with _$HomData {
     // newClasses/nearClasses, because a course is bought as a trial or as the
     // whole course, not per session.
     HomClassPage? courses,
+
+    /// What suits this parent's children, picked from the topics chosen for
+    /// each of them — activities and courses together. Present only when
+    /// there is a child with topics picked and something matched; absent on a
+    /// server that predates it. Home draws it in place of [courses].
+    HomClassPage? forChildren,
   }) = _HomData;
 
   factory HomData.fromJson(Map<String, dynamic> json) =>
@@ -161,6 +167,10 @@ class HomClass with _$HomClass {
     int? minAge,
     int? maxAge,
     String? gender,
+
+    /// Whose card this is, on the feed's `for_children` row — the child's
+    /// first name. Null everywhere else.
+    String? forChildName,
     bool? isActive,
 
     /// False when the centre has taken this class off sale. It still browses

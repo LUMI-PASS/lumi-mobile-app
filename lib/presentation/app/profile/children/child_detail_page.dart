@@ -21,11 +21,12 @@ import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
+import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_state.dart';
 import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
 
-/// "Детали ребёнка" — name, age and gender for one child, reached from the
+/// "Детали ребёнка" — name, age, gender and interests for one child, reached from the
 /// edit badge on a child in Profile. With [child] null it adds a new one.
 ///
 /// The parent already holds the children, so the child is handed over on
@@ -37,6 +38,11 @@ class ChildDetailPage
   const ChildDetailPage({super.key, this.child});
 
   final ChildModel? child;
+
+  @override
+  void init(BuildContext context) {
+    context.read<ChildrenCubit>().loadInterestTopics();
+  }
 
   @override
   void listener(BuildContext context, ChildrenListenable state) {
@@ -62,7 +68,11 @@ class ChildDetailPage
             ),
         ],
       ),
-      body: _ChildForm(child: child, saving: state.buttonLoading),
+      body: _ChildForm(
+        child: child,
+        saving: state.buttonLoading,
+        topics: state.interestTopics,
+      ),
     );
   }
 }
@@ -81,10 +91,18 @@ Future<void> _confirmDeleteChild(BuildContext context, ChildModel child) async {
 }
 
 class _ChildForm extends StatefulWidget {
-  const _ChildForm({required this.child, required this.saving});
+  const _ChildForm({
+    required this.child,
+    required this.saving,
+    required this.topics,
+  });
 
   final ChildModel? child;
   final bool saving;
+
+  /// The words on offer. Empty while loading, and on a server with none —
+  /// in which case the section is left out and nothing is required.
+  final List<InterestTopic> topics;
 
   @override
   State<_ChildForm> createState() => _ChildFormState();
@@ -104,6 +122,13 @@ class _ChildFormState extends State<_ChildForm> {
   );
   late String _gender =
       (widget.child?.gender ?? '').toUpperCase() == _female ? _female : _male;
+
+  /// Topic ids, in the order they were picked — the order is kept, because
+  /// the feed deals its row out in it.
+  late final List<String> _interests = [...?widget.child?.interests];
+
+  /// Set by a save attempt with nothing picked; cleared by the next pick.
+  bool _interestsMissing = false;
 
   /// Picked on this screen; uploaded as part of the save.
   File? _photo;
@@ -139,8 +164,25 @@ class _ChildFormState extends State<_ChildForm> {
     return null;
   }
 
+  void _toggleInterest(String id) {
+    setState(() {
+      if (!_interests.remove(id)) _interests.add(id);
+      _interestsMissing = false;
+    });
+  }
+
   void _save() {
-    if (!_formKey.currentState!.validate()) return;
+    final fieldsValid = _formKey.currentState!.validate();
+    // At least one topic — but only of the ones actually offered. A topic the
+    // adminka has since retired stays on the child without counting here, and
+    // with no topics to offer there is nothing to require.
+    final offered = widget.topics.map((t) => t.id).toSet();
+    final interestsMissing =
+        offered.isNotEmpty && !_interests.any(offered.contains);
+    if (interestsMissing != _interestsMissing) {
+      setState(() => _interestsMissing = interestsMissing);
+    }
+    if (!fieldsValid || interestsMissing) return;
 
     final firstName = _firstNameController.text.trim();
     final dob = dobForAge(int.parse(_ageController.text.trim()));
@@ -151,8 +193,14 @@ class _ChildFormState extends State<_ChildForm> {
             firstName: firstName,
             dob: dob,
             gender: _gender,
+            interests: _interests,
           )
-        : ChildModel(firstName: firstName, dob: dob, gender: _gender);
+        : ChildModel(
+            firstName: firstName,
+            dob: dob,
+            gender: _gender,
+            interests: _interests,
+          );
 
     cubit.saveChild(child, _isEdit, _photo);
   }
@@ -206,19 +254,34 @@ class _ChildFormState extends State<_ChildForm> {
                   12.kh,
                   Row(
                     children: [
-                      _GenderChip(
+                      _PillChip(
                         label: 'male'.tr(),
                         selected: _gender == _male,
                         onTap: () => setState(() => _gender = _male),
                       ),
                       12.kw,
-                      _GenderChip(
+                      _PillChip(
                         label: 'female'.tr(),
                         selected: _gender == _female,
                         onTap: () => setState(() => _gender = _female),
                       ),
                     ],
                   ),
+                  ..._topicSection(
+                    'child_interests_title'.tr(),
+                    InterestTopicKind.child,
+                  ),
+                  ..._topicSection(
+                    'parent_needs_title'.tr(),
+                    InterestTopicKind.parent,
+                  ),
+                  if (_interestsMissing) ...[
+                    10.kh,
+                    Text(
+                      'child_interests_required'.tr(),
+                      style: AppText.regular13.copyWith(color: colors.error),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -233,6 +296,36 @@ class _ChildFormState extends State<_ChildForm> {
         ],
       ),
     );
+  }
+}
+
+extension on _ChildFormState {
+  /// One question and the words that answer it; nothing at all when the
+  /// adminka has no words of that [kind].
+  List<Widget> _topicSection(String title, InterestTopicKind kind) {
+    final topics =
+        widget.topics.where((topic) => topic.topicKind == kind).toList();
+    if (topics.isEmpty) return const [];
+    return [
+      24.kh,
+      Text(
+        title,
+        style: AppText.semibold16.copyWith(color: context.colors.textPrimary),
+      ),
+      12.kh,
+      Wrap(
+        spacing: 8.w,
+        runSpacing: 8.h,
+        children: [
+          for (final topic in topics)
+            _PillChip(
+              label: topic.name,
+              selected: _interests.contains(topic.id),
+              onTap: () => _toggleInterest(topic.id),
+            ),
+        ],
+      ),
+    ];
   }
 }
 
@@ -311,8 +404,8 @@ class _DeleteChildSheet extends StatelessWidget {
 }
 
 /// Pill toggle — brand gradient when picked, plain white card when not.
-class _GenderChip extends StatelessWidget {
-  const _GenderChip({
+class _PillChip extends StatelessWidget {
+  const _PillChip({
     required this.label,
     required this.selected,
     required this.onTap,

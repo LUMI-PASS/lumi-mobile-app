@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 
-/// The "Obunaga kiradi" container is a GOLD fill carrying the feed's ordinary
+/// The "Obunaga kiradi" container is a COLOURED fill — gold in light, a deep
+/// brand purple in dark, where a gold dark enough for white text only comes
+/// out brown — carrying the feed's ordinary
 /// cards, which paint their text in `textPrimary`. That pairing is chosen, not
 /// inherited — every other row sits on the scaffold — so the contrast is
 /// asserted here. A gold nudged a few steps darker would leave dark ink on a
@@ -41,23 +43,37 @@ void main() {
         );
       });
 
-      test('is still recognisably yellow', () {
-        // Yellow is blue held down while red and green stay up. Lighten the
-        // fill by raising blue and the block stops being gold and becomes an
-        // off-white rectangle for no reason — which is the one way this can
-        // be "lightened" into meaninglessness.
-        final band = scheme.coinBand;
-        // Proportional, not an absolute gap: the dark value is a deep brown,
-        // where every channel is small and so is the space between them. A
-        // fixed margin that suited the pale light gold would reject it for
-        // being dark rather than for being the wrong hue.
-        final brightest = band.r > band.g ? band.r : band.g;
-        expect(
-          band.b,
-          lessThan(brightest * 0.85),
-          reason: 'blue has caught up with red/green; the gold is gone',
-        );
-      });
+      // Light only: the dark band is deliberately not a gold — see
+      // [AppColors.darkCoinBand].
+      if (name == 'light')
+        test('is still recognisably yellow', () {
+          // Yellow is blue held down while red and green stay up. Lighten the
+          // fill by raising blue and the block stops being gold and becomes an
+          // off-white rectangle for no reason — which is the one way this can
+          // be "lightened" into meaninglessness.
+          final band = scheme.coinBand;
+          // Proportional, not an absolute gap: the dark value is a deep brown,
+          // where every channel is small and so is the space between them. A
+          // fixed margin that suited the pale light gold would reject it for
+          // being dark rather than for being the wrong hue.
+          final brightest = band.r > band.g ? band.r : band.g;
+          expect(
+            band.b,
+            lessThan(brightest * 0.85),
+            reason: 'blue has caught up with red/green; the gold is gone',
+          );
+        });
+
+      if (name == 'dark')
+        test('is a purple, not a neutral grey', () {
+          // Blue leads and green trails. Pull the channels together and the
+          // panel becomes one more charcoal surface, with nothing to say the
+          // row is a different kind of row.
+          final band = scheme.coinBand;
+          expect(band.b, greaterThan(band.r));
+          expect(band.g, lessThan(band.r));
+          expect(band.b - band.g, greaterThan(0.08));
+        });
 
       test('still differs from the page behind it', () {
         // With no border the fill is the ONLY thing separating the container

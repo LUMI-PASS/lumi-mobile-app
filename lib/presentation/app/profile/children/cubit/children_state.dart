@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
+import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 
 part 'children_state.freezed.dart';
@@ -13,6 +14,10 @@ class ChildrenBuildable with _$ChildrenBuildable {
     @Default('Female') String selectedGender,
     @Default(null) DateTime? selectedBirthDate,
     List<ChildModel>? childrenList,
+
+    /// The words the child form offers. Empty until loaded — and for good on
+    /// a server that has none, where the form simply leaves the section out.
+    @Default([]) List<InterestTopic> interestTopics,
     @Default([]) List<TimeSlot> timeSlots,
     // Trial summary
     @Default(null) ParentTrialSummary? trialSummary,

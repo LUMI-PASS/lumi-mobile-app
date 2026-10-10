@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:injectable/injectable.dart';
@@ -117,6 +118,20 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
     );
   }
 
+  /// The words the child form offers.
+  ///
+  /// Quiet on failure, and deliberately so: a server that predates topics
+  /// answers 404, and the form's answer to "no topics" is to leave the section
+  /// out and save the child as it always did — not to show an error for a
+  /// feature the parent never saw.
+  Future<void> loadInterestTopics() async {
+    try {
+      final topics = await _repo.getInterestTopics();
+      if (isClosed) return;
+      build((buildable) => buildable.copyWith(interestTopics: topics));
+    } catch (_) {}
+  }
+
   /// Save a child and, when one was picked, its photo — the two calls the
   /// child-details screen needs. A new child has to be created first, because
   /// the photo endpoint is keyed by child id.
@@ -146,6 +161,10 @@ class ChildrenCubit extends BaseCubit<ChildrenBuildable, ChildrenListenable> {
         }
       }
 
+      // The home feed's "for your children" row is built from exactly what
+      // was just saved — age, gender, topics — so home re-reads it the next
+      // time it is on screen instead of waiting for a pull to refresh.
+      markCatalogChanged();
       invoke(const ChildrenListenable(effect: ChildrenEffect.verify));
     } catch (error) {
       if (error is DioException &&

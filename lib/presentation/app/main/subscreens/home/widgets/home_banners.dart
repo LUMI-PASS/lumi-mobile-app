@@ -307,8 +307,8 @@ class _Disc extends StatelessWidget {
   }
 }
 
-/// Promo banner carousel — the coupon card first, then the API `banners`
-/// (Figma teacher / promo card with dot indicators).
+/// Promo banner carousel — the coupon card first, then the API `banners`.
+/// No dot indicators: the next banner peeking in at the edge marks the swipe.
 class HomeBannerCarousel extends StatefulWidget {
   const HomeBannerCarousel({
     super.key,
@@ -322,7 +322,7 @@ class HomeBannerCarousel extends StatefulWidget {
 
   /// The packet on sale, or null while it loads and when there is none. It
   /// decides whether the packet slide exists AT ALL, which is the carousel's
-  /// business: a page that renders nothing still takes a swipe and a dot.
+  /// business: a page that renders nothing still takes a swipe.
   final PromoCampaign? packet;
 
   /// Tapping the leading coupon page opens the coupon plans screen.
@@ -336,8 +336,6 @@ class HomeBannerCarousel extends StatefulWidget {
 }
 
 class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
-  int _current = 0;
-
   String _resolveSrc(String? url, String? id) {
     final raw = (url ?? '').replaceAll(RegExp(r'\s+'), '').trim();
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
@@ -352,7 +350,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
     final pages = <Widget>[
       // The packet leads: it is the offer with a deadline on it, and the one a
       // first-time visitor is most likely to act on. Absent entirely until it
-      // has loaded, so the carousel never holds a dot for a blank page.
+      // has loaded, so the carousel never holds a slot for a blank page.
       if (packet != null)
         HomeAksiyaBanner(campaign: packet, onTap: widget.onAksiyaTap),
       HomeCouponBanner(onTap: widget.onCouponTap),
@@ -384,46 +382,31 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
       }),
     ];
 
-    // ONE inset for the whole carousel, so every page sits on the same gutter as
-    // the coupon card and as the content below it. Padding pages individually is
-    // exactly what lets them drift apart — there is nothing here for a page to
-    // disagree with.
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Column(
-        children: [
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 144.h,
-              // The banners advance only when the user swipes them.
-              autoPlay: false,
-              viewportFraction: 1.0,
-              enlargeCenterPage: false,
-              onPageChanged: (index, _) => setState(() => _current = index),
-            ),
-            items: pages,
-          ),
-          if (pages.length > 1) ...[
-            10.verticalSpace,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(pages.length, (i) {
-                final active = i == _current;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: EdgeInsets.symmetric(horizontal: 3.w),
-                  width: active ? 20.w : 8.w,
-                  height: 8.h,
-                  decoration: BoxDecoration(
-                    color: active ? AppColors.brandPurple : c.surface,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                );
-              }),
-            ),
-          ],
-        ],
+    // Edge to edge, with the neighbouring banners showing at both sides — that
+    // sliver is what says there is more to swipe to, which is the job the dots
+    // under the carousel used to do.
+    //
+    // Each page's slot is the screen less 12 a side, and the banner is inset 4
+    // inside its slot. So the banner in view still sits on the page's 16pt
+    // gutter, with 8 between it and the next one and 8 of that one showing.
+    return CarouselSlider(
+      options: CarouselOptions(
+        height: 124.h,
+        // The banners advance only when the user swipes them.
+        autoPlay: false,
+        viewportFraction: (1.sw - 24.w) / 1.sw,
+        enlargeCenterPage: false,
+        // A lone banner has no neighbour to show; wrapping would put its own
+        // edge on both sides of itself.
+        enableInfiniteScroll: pages.length > 1,
       ),
+      items: [
+        for (final page in pages)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            child: page,
+          ),
+      ],
     );
   }
 

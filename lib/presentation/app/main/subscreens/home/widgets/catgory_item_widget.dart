@@ -35,37 +35,48 @@ class CategoryItemWidget extends StatelessWidget {
   /// [EdgeInsets.zero] when the tile sits in a grid cell.
   final EdgeInsetsGeometry? padding;
 
-  /// Tile column width. Defaults to the horizontal row's fixed 64pt; pass
-  /// `null`-widening (e.g. `double.infinity`) inside a grid.
+  /// Tile column width. Left null, the column takes the width of its own
+  /// label — never narrower than [_minColumn], never wider than [_maxColumn]
+  /// — so a row of these is spaced by a fixed gap rather than by columns of
+  /// one size, which left a short name like "Ijod" adrift in the room a long
+  /// one needed. Pass a width (e.g. `double.infinity`) inside a grid.
   final double? width;
+
+  static double get _minColumn => 52.w;
+
+  /// Just over the longest category name on one line at the label's size.
+  static double get _maxColumn => 76.w;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final url = sanitizeImageUrl(homeCategoryModel?.image);
-    // Decode the artwork at the size it is actually painted (56pt) instead of
+    // Decode the artwork at the size it is actually painted (48pt) instead of
     // the source's full resolution. A full-res bitmap is large enough that
     // Flutter's image cache evicts it as soon as the user leaves Home, so the
     // tile had to re-read and re-decode from disk — and flash its shimmer —
     // every time the screen came back. At tile size the whole row stays
     // resident and re-renders instantly.
-    final decodeSize = (56.w * MediaQuery.devicePixelRatioOf(context)).round();
+    final decodeSize = (48.w * MediaQuery.devicePixelRatioOf(context)).round();
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
         padding: padding ?? EdgeInsets.only(left: 16.w),
-        child: SizedBox(
-          width: width ?? 64.w,
+        child: ConstrainedBox(
+          constraints: width != null
+              ? BoxConstraints.tightFor(width: width)
+              : BoxConstraints(minWidth: _minColumn, maxWidth: _maxColumn),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               FrostedCard(
-                width: 56.w,
-                height: 56.w,
+                width: 48.w,
+                height: 48.w,
                 padding: EdgeInsets.zero,
+                borderRadius: BorderRadius.circular(14.r),
                 borderWidth: 1.6,
                 // White in both themes — the artwork has a white background.
                 gradient: AppGradients.artworkWhite,
@@ -86,22 +97,16 @@ class CategoryItemWidget extends StatelessWidget {
                         errorWidget: (_, __, ___) => _fallback(),
                       ),
               ),
-              8.verticalSpace,
-              // Two lines: at 64pt most category names don't survive a single
-              // line, so the label wraps instead of being cut short.
-              //
-              // Full-width so `textAlign.center` centres against the tile. A
-              // shrink-wrapped Text centres only its own second line, which
-              // leaves a one-line label sitting off-centre under the artwork.
-              SizedBox(
-                width: double.infinity,
-                child: Text(
-                  homeCategoryModel?.title ?? '',
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.medium12.copyWith(color: c.textPrimary),
-                ),
+              6.verticalSpace,
+              // Two lines, for a name too long for [_maxColumn]. The column
+              // centres the label under the tile, and `textAlign` centres the
+              // second line under the first.
+              Text(
+                homeCategoryModel?.title ?? '',
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.medium10.copyWith(color: c.textPrimary),
               ),
             ],
           ),

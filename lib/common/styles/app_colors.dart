@@ -100,10 +100,13 @@ abstract final class AppColors {
   // dark
   static const darkCanvas = Color(0xFF1D1C23);
 
-  /// [lightCoinBand]'s dark counterpart — the same gold taken right down, so
-  /// a white label reads on it. NOT lightened to match the pale light value:
-  /// on a dark page the band has to stay the darker of the two surfaces.
-  static const darkCoinBand = Color(0xFF302713);
+  /// [lightCoinBand]'s dark counterpart. NOT a gold: a yellow taken dark
+  /// enough to carry a white label is a brown or an olive (`302713` and
+  /// `453410` were both tried on a device), and it read as a muddy panel
+  /// rather than as the coin's colour. A deep brand purple instead — the
+  /// app's own accent, which holds its hue at low brightness — with the gold
+  /// left to the coins printed on the cards.
+  static const darkCoinBand = Color(0xFF2C2244);
   static const darkSurface = Color(0xFF202024);
   static const darkSurfaceRaised = Color(0xFF26252B);
   static const darkControl = Color(0xFF313039);

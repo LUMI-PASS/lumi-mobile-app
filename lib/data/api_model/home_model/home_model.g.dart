@@ -46,6 +46,9 @@ _$HomDataImpl _$$HomDataImplFromJson(Map<String, dynamic> json) =>
       courses: json['courses'] == null
           ? null
           : HomClassPage.fromJson(json['courses'] as Map<String, dynamic>),
+      forChildren: json['for_children'] == null
+          ? null
+          : HomClassPage.fromJson(json['for_children'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$HomDataImplToJson(_$HomDataImpl instance) =>
@@ -57,6 +60,7 @@ Map<String, dynamic> _$$HomDataImplToJson(_$HomDataImpl instance) =>
       'new_classes': instance.newClasses,
       'near_classes': instance.nearClasses,
       'courses': instance.courses,
+      'for_children': instance.forChildren,
     };
 
 _$HomForUserImpl _$$HomForUserImplFromJson(Map<String, dynamic> json) =>
@@ -206,6 +210,7 @@ _$HomClassImpl _$$HomClassImplFromJson(Map<String, dynamic> json) =>
       minAge: (json['min_age'] as num?)?.toInt(),
       maxAge: (json['max_age'] as num?)?.toInt(),
       gender: json['gender'] as String?,
+      forChildName: json['for_child_name'] as String?,
       isActive: json['is_active'] as bool?,
       isVisible: json['is_visible'] as bool?,
       hasPhoto: json['has_photo'] as bool?,
@@ -246,6 +251,7 @@ Map<String, dynamic> _$$HomClassImplToJson(_$HomClassImpl instance) =>
       'min_age': instance.minAge,
       'max_age': instance.maxAge,
       'gender': instance.gender,
+      'for_child_name': instance.forChildName,
       'is_active': instance.isActive,
       'is_visible': instance.isVisible,
       'has_photo': instance.hasPhoto,

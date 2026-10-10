@@ -3,6 +3,7 @@ import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
+import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
@@ -37,6 +38,9 @@ abstract class HomeRepository {
   Future<List<HomCategory>> getAllCategories();
 
   Future<List<ChildModel>> getChildren();
+
+  /// The words the child form offers, in the adminka's order.
+  Future<List<InterestTopic>> getInterestTopics();
 
   Future<ParentProfileResult> getParentProfile();
 

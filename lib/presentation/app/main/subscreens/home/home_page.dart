@@ -158,9 +158,13 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                 child: _buildCoursesRow(
                   context,
                   'based_on_interests'.tr(),
-                  // Already walked across categories by the cubit, where the
-                  // feed lands — see [HomeCubit.coursesAcrossCategories].
+                  // Picked for this parent's children when they have chosen
+                  // topics, otherwise the generic spread — decided in the
+                  // cubit, where the feed lands.
                   state.coursesList,
+                  forChildren:
+                      (state.homeModel?.data?.forChildren?.data ?? const [])
+                          .isNotEmpty,
                 ),
               ),
             if (state.nearClassesList.isNotEmpty)
@@ -245,11 +249,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         SizedBox(
           // Tall enough for a two-line label under the artwork, so a wrapped
           // title doesn't overflow the row.
-          height: 112.h,
+          height: 92.h,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            // 8pt between tiles; the leading 8 here plus the tile's own 8 keep
-            // the first one on the page's 16pt margin.
+            // 8pt between columns, each as wide as its own label; the leading
+            // 8 here plus the column's own 8 keep the first on the page's
+            // 16pt margin.
             padding: EdgeInsets.only(left: 8.w, right: 16.w),
             itemCount: categories.length,
             itemBuilder: (context, index) => CategoryItemWidget(
@@ -275,21 +280,22 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   /// open is the unfiltered one — which would answer a question the header did
   /// not ask. The categories row above leaves its own off for the same reason.
   ///
-  /// It is drawn as a container of pale [AppColorScheme.coinBand] gold — the
-  /// coin's own colour — because what sets this row apart is not the cards,
-  /// which are the feed's ordinary ones, but that everything in it is already
-  /// paid for. The block of colour is what says so.
+  /// It is drawn as a full-width panel of [AppColorScheme.coinBand] — the
+  /// coin's own gold in light, a deep brand purple in dark, where gold only
+  /// comes out brown — because what sets this row apart is that everything in
+  /// it is already paid for, and the block of colour is what says so. The entries are raised cards on that panel (see
+  /// [HomeCourseCard.carded]), so their text sits on a neutral surface rather
+  /// than on the gold.
   ///
-  /// No border: the fill alone draws it. That makes the fill the ONLY thing
-  /// separating the container from the feed, which is why the gold is held
-  /// where it is — see [AppColors.lightCoinBand].
+  /// Edge to edge: the panel is a band across the feed, not one more inset
+  /// tile among the rows. Its rounded corners still show against the page, and
+  /// its contents keep the feed's 16pt margin so the header and the first card
+  /// line up with the rows above and below.
   ///
-  /// It carries no vertical margin and the rows either side of it add none, so
-  /// the container sits flush between the lists above and below rather than
-  /// floating in a gap of its own.
+  /// No border: the fill alone draws it — see [AppColors.lightCoinBand].
   Widget _buildSubscription(BuildContext context, HomeBuildable state) {
     final c = context.colors;
-    final rowH = 126.h + 14.h + 118.h;
+    final rowH = 126.h + 14.h + 118.h + HomeCourseCard.cardedExtraHeight;
     final row = state.subscriptionList;
     // The row only reaches for another page while it is still short of its
     // ten. Once it is full there is nothing left to fetch for it, so the
@@ -297,20 +303,20 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final wantsMore =
         row.length < HomeCubit.subscriptionRowSize && state.hasMoreNewClasses;
     return Container(
-      // Still inset from the page edges rather than full-bleed: with the
-      // border gone the rounded corners are the only thing giving the block a
-      // shape, and they need room to be seen.
-      margin: EdgeInsets.symmetric(horizontal: 12.w),
-      padding: EdgeInsets.symmetric(vertical: 10.h),
+      // The gap below is the next row's header room: that row adds none of
+      // its own, and a title pressed against the panel's rounded corners
+      // reads as belonging to it.
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.symmetric(vertical: 16.h),
       decoration: BoxDecoration(
         color: c.coinBand,
-        borderRadius: BorderRadius.circular(18.r),
+        borderRadius: BorderRadius.circular(24.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           HomeSectionHeader(title: 'included_in_subscription'.tr()),
-          8.verticalSpace,
+          12.verticalSpace,
           NotificationListener<ScrollNotification>(
             onNotification: (scrollInfo) {
               if (wantsMore &&
@@ -328,15 +334,15 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                   ListView.builder(
                     key: const PageStorageKey('subscription-list'),
                     scrollDirection: Axis.horizontal,
-                    // Smaller than the other rows': theirs clears the page
-                    // margin, this one only has to clear the container's own
-                    // border a few pixels away.
-                    padding: EdgeInsets.only(left: 0, right: 8.w),
+                    // The feed's own inset: 8 here plus the card's 8 puts the
+                    // first card on the page's 16pt margin, under the header.
+                    padding: EdgeInsets.only(left: 8.w, right: 16.w),
                     itemCount: row.length,
                     itemBuilder: (context, index) => HomeCourseCard(
                       key: ValueKey('sub-${row[index].id ?? index}'),
                       homClass: row[index],
                       margin: EdgeInsets.only(left: 8.w),
+                      carded: true,
                       // A browsing shelf, not a comparison — see
                       // [HomeCourseCard.showDistance].
                       showDistance: false,
@@ -439,12 +445,16 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   /// A generic horizontal course row, reusing whichever list is passed in.
   ///
-  /// Carries the feed's "На основе ваших интересов" row. The header names
-  /// interests but the ORDER is a category spread — see
-  /// [HomeCubit.coursesAcrossCategories] for why, and for what a genuinely
-  /// interest-ranked row would need first.
+  /// Carries the feed's "На основе ваших интересов" row. With [forChildren]
+  /// the list is what the server picked for this parent's children —
+  /// activities and courses together, each card naming the child it is for.
+  /// Without it, the generic courses in a category spread.
   Widget _buildCoursesRow(
-      BuildContext context, String title, List<HomClass> list) {
+    BuildContext context,
+    String title,
+    List<HomClass> list, {
+    bool forChildren = false,
+  }) {
     // Sized so ONE AND A HALF cards fill the screen: the half-card at the right
     // edge is what says the row scrolls, and a course card carries more to read
     // than an activity's — a provider tag, a title, an address, and a price
@@ -491,20 +501,26 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // No leading gap: this row follows the coin container, and the two
-        // lists are meant to sit flush. The container draws its own edge, so
-        // the space a header normally needs above it is already there.
+        // No leading gap of its own: this row follows the coin panel, which
+        // carries the space between them as its bottom margin.
         HomeSectionHeader(
           title: title,
           // The same discovery screen the activities row opens, narrowed to
           // courses — this row named a type, so "see all" honours it. It lands
           // as a visible filter rather than a mode, so the user can widen back
           // to everything from the filter sheet.
+          //
+          // The children's row is activities and courses both, so it opens
+          // the whole catalog rather than promising "all courses".
           onViewAll: () => context.router.push(
-            SearchDiscoveryRoute(initialKind: ActivityKind.courses),
+            forChildren
+                ? SearchDiscoveryRoute()
+                : SearchDiscoveryRoute(initialKind: ActivityKind.courses),
           ),
-          // Named rather than generic, because the tap is narrowed to courses.
-          viewAllLabel: 'view_all_courses'.tr(),
+          // Named rather than generic, because the tap is narrowed.
+          viewAllLabel: forChildren
+              ? 'view_all_activities'.tr()
+              : 'view_all_courses'.tr(),
         ),
         10.verticalSpace,
         SizedBox(

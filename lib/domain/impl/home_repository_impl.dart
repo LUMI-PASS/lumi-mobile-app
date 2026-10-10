@@ -3,6 +3,7 @@ import 'dart:io' if (dart.library.html) 'package:lumi_pass/common/stubs/io_stub.
 import 'package:injectable/injectable.dart';
 import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
+import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
@@ -82,6 +83,18 @@ class HomeRepositoryImpl extends HomeRepository {
     } catch (e) {
       return false;
     }
+  }
+
+  @override
+  Future<List<InterestTopic>> getInterestTopics() async {
+    final response = await _api.getInterestTopics();
+    final rows = response.data is Map ? response.data['data'] : null;
+    if (rows is! List) return const [];
+    return rows
+        .map(InterestTopic.tryFromJson)
+        .whereType<InterestTopic>()
+        .where((topic) => topic.topicKind != InterestTopicKind.unknown)
+        .toList();
   }
 
   @override

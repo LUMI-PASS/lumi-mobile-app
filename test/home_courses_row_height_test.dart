@@ -113,4 +113,48 @@ void main() {
     expect(block, lessThanOrEqualTo(kTextBlock * 1.6),
         reason: 'text block $block overflows ${kTextBlock * 1.6}');
   });
+
+  // "Obunaga kiradi" draws its entries as raised cards on the coin panel, and
+  // sizes its row as the bare card's height plus
+  // [HomeCourseCard.cardedExtraHeight]. That figure is the card's own chrome —
+  // a tighter gap, a closing strip, a border — so it is checked against what
+  // the card actually adds, with the same content in both.
+  //
+  // Priceless here only because the price line needs the app's cubits; the
+  // price sits inside the same text block either way, so it does not change
+  // what the chrome adds.
+  testWidgets('a carded card is taller than a bare one by cardedExtraHeight',
+      (tester) async {
+    Widget card({required bool carded}) => ScreenUtilInit(
+          designSize: const Size(390, 844),
+          builder: (_, __) => MaterialApp(
+            theme: ThemeData(
+              brightness: Brightness.light,
+              extensions: const [AppColorScheme.light],
+            ),
+            home: Scaffold(
+              body: Align(
+                alignment: Alignment.topLeft,
+                child: HomeCourseCard(
+                  homClass: course,
+                  margin: EdgeInsets.zero,
+                  showDistance: false,
+                  showPrice: false,
+                  carded: carded,
+                ),
+              ),
+            ),
+          ),
+        );
+
+    await tester.pumpWidget(card(carded: false));
+    await tester.pumpAndSettle();
+    final bare = tester.getSize(find.byType(HomeCourseCard)).height;
+
+    await tester.pumpWidget(card(carded: true));
+    await tester.pumpAndSettle();
+    final carded = tester.getSize(find.byType(HomeCourseCard)).height;
+
+    expect(carded - bare, closeTo(HomeCourseCard.cardedExtraHeight, 0.01));
+  });
 }

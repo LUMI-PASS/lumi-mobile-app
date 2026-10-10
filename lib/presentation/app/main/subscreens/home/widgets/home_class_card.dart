@@ -43,13 +43,29 @@ class HomeCourseCard extends StatelessWidget {
     this.onOpen,
     this.showDistance = true,
     this.showPrice = true,
+    this.carded = false,
   });
+
+  /// Vertical room [carded] adds around the photo and text: the gap under the
+  /// photo is 2 tighter than the bare card's 14, and the card closes with an
+  /// 8 strip under the text, inside a 1pt border top and bottom. A row sizing
+  /// itself for carded entries adds this.
+  static double get cardedExtraHeight => 8.h - 2.h + 2;
 
   final HomClass? homClass;
   final double? width;
   final EdgeInsetsGeometry? margin;
   final double? imageHeight;
   final VoidCallback? onViewAsReels;
+
+  /// Draws the entry as its own raised surface — photo flush to the top
+  /// corners, text inset beneath — instead of a bare photo over text.
+  ///
+  /// For a row that sits on a coloured container (the home feed's coin band):
+  /// there the text would otherwise be laid straight onto the fill, and the
+  /// card is what keeps each entry reading as one thing. Same shape as
+  /// [HomeNearbyCard], at shelf size.
+  final bool carded;
 
   /// Fired just before the card opens the activity, for a screen that needs to
   /// record the tap — search remembers what was opened from it, so it can show
@@ -86,30 +102,65 @@ class HomeCourseCard extends StatelessWidget {
         onOpen?.call();
         context.router.push(ClassDetailRoute(classModel: hc ?? const HomClass()));
       },
-      child: Container(
-        width: width ?? 168.w,
-        margin: margin ?? EdgeInsets.only(left: 16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ClassImage(
-              imageUrl: sanitizeImageUrl(hc?.image),
-              height: imageHeight ?? 126.h,
-              category: hc?.category,
-              discountPercentage: hc?.discountPercentage ?? 0,
-              onViewAsReels: onViewAsReels,
+      child: carded
+          ? FrostedCard(
+              width: width ?? 168.w,
+              margin: margin ?? EdgeInsets.only(left: 16.w),
+              padding: EdgeInsets.only(bottom: 8.h),
+              borderRadius: BorderRadius.circular(16.r),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ClassImage(
+                    imageUrl: sanitizeImageUrl(hc?.image),
+                    height: imageHeight ?? 126.h,
+                    category: hc?.category,
+                    discountPercentage: hc?.discountPercentage ?? 0,
+                    onViewAsReels: onViewAsReels,
+                    forChildName: hc?.forChildName,
+                    // Flush with the card — see [HomeNearbyCard].
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(16.r)),
+                  ),
+                  12.verticalSpace,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    child: _ClassInfo(
+                      hc: hc,
+                      crossAxis: CrossAxisAlignment.start,
+                      showDistance: showDistance,
+                      showPrice: showPrice,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Container(
+              width: width ?? 168.w,
+              margin: margin ?? EdgeInsets.only(left: 16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ClassImage(
+                    imageUrl: sanitizeImageUrl(hc?.image),
+                    height: imageHeight ?? 126.h,
+                    category: hc?.category,
+                    discountPercentage: hc?.discountPercentage ?? 0,
+                    onViewAsReels: onViewAsReels,
+                    forChildName: hc?.forChildName,
+                  ),
+                  14.verticalSpace,
+                  _ClassInfo(
+                    hc: hc,
+                    crossAxis: CrossAxisAlignment.start,
+                    showDistance: showDistance,
+                    showPrice: showPrice,
+                  ),
+                ],
+              ),
             ),
-            14.verticalSpace,
-            _ClassInfo(
-              hc: hc,
-              crossAxis: CrossAxisAlignment.start,
-              showDistance: showDistance,
-              showPrice: showPrice,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -192,9 +243,15 @@ class _ClassImage extends StatelessWidget {
     required this.category,
     required this.discountPercentage,
     required this.onViewAsReels,
+    this.forChildName,
     this.fit = BoxFit.cover,
     this.borderRadius,
   });
+
+  /// The child this card was picked for, on home's "for your children" row.
+  /// Drawn as a second badge on the photo, so the card's text block — and
+  /// with it the row's height — is the same with or without it.
+  final String? forChildName;
 
   final String? imageUrl;
   final double height;
@@ -269,6 +326,11 @@ class _ClassImage extends StatelessWidget {
                       leading: HomeIcon(Assets.icons.home.book,
                           size: 12, color: Colors.white),
                       gradient: AppGradients.indigo,
+                    ),
+                  if ((forChildName ?? '').isNotEmpty)
+                    HomePillTag(
+                      label: 'for_child'.tr(args: [forChildName!]),
+                      gradient: AppGradients.brand,
                     ),
                 ],
               ),

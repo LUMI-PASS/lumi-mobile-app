@@ -200,6 +200,12 @@ mixin _$HomData {
 // whole course, not per session.
   HomClassPage? get courses => throw _privateConstructorUsedError;
 
+  /// What suits this parent's children, picked from the topics chosen for
+  /// each of them — activities and courses together. Present only when
+  /// there is a child with topics picked and something matched; absent on a
+  /// server that predates it. Home draws it in place of [courses].
+  HomClassPage? get forChildren => throw _privateConstructorUsedError;
+
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $HomDataCopyWith<HomData> get copyWith => throw _privateConstructorUsedError;
@@ -217,7 +223,8 @@ abstract class $HomDataCopyWith<$Res> {
       HomCategoryPage? categories,
       HomClassPage? newClasses,
       HomNearClasses? nearClasses,
-      HomClassPage? courses});
+      HomClassPage? courses,
+      HomClassPage? forChildren});
 
   $HomForUserCopyWith<$Res>? get forUser;
   $HomUpcomingClassCopyWith<$Res>? get upcomingClass;
@@ -225,6 +232,7 @@ abstract class $HomDataCopyWith<$Res> {
   $HomClassPageCopyWith<$Res>? get newClasses;
   $HomNearClassesCopyWith<$Res>? get nearClasses;
   $HomClassPageCopyWith<$Res>? get courses;
+  $HomClassPageCopyWith<$Res>? get forChildren;
 }
 
 /// @nodoc
@@ -247,6 +255,7 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
     Object? newClasses = freezed,
     Object? nearClasses = freezed,
     Object? courses = freezed,
+    Object? forChildren = freezed,
   }) {
     return _then(_value.copyWith(
       forUser: freezed == forUser
@@ -276,6 +285,10 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
       courses: freezed == courses
           ? _value.courses
           : courses // ignore: cast_nullable_to_non_nullable
+              as HomClassPage?,
+      forChildren: freezed == forChildren
+          ? _value.forChildren
+          : forChildren // ignore: cast_nullable_to_non_nullable
               as HomClassPage?,
     ) as $Val);
   }
@@ -351,6 +364,18 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
       return _then(_value.copyWith(courses: value) as $Val);
     });
   }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $HomClassPageCopyWith<$Res>? get forChildren {
+    if (_value.forChildren == null) {
+      return null;
+    }
+
+    return $HomClassPageCopyWith<$Res>(_value.forChildren!, (value) {
+      return _then(_value.copyWith(forChildren: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -367,7 +392,8 @@ abstract class _$$HomDataImplCopyWith<$Res> implements $HomDataCopyWith<$Res> {
       HomCategoryPage? categories,
       HomClassPage? newClasses,
       HomNearClasses? nearClasses,
-      HomClassPage? courses});
+      HomClassPage? courses,
+      HomClassPage? forChildren});
 
   @override
   $HomForUserCopyWith<$Res>? get forUser;
@@ -381,6 +407,8 @@ abstract class _$$HomDataImplCopyWith<$Res> implements $HomDataCopyWith<$Res> {
   $HomNearClassesCopyWith<$Res>? get nearClasses;
   @override
   $HomClassPageCopyWith<$Res>? get courses;
+  @override
+  $HomClassPageCopyWith<$Res>? get forChildren;
 }
 
 /// @nodoc
@@ -401,6 +429,7 @@ class __$$HomDataImplCopyWithImpl<$Res>
     Object? newClasses = freezed,
     Object? nearClasses = freezed,
     Object? courses = freezed,
+    Object? forChildren = freezed,
   }) {
     return _then(_$HomDataImpl(
       forUser: freezed == forUser
@@ -431,6 +460,10 @@ class __$$HomDataImplCopyWithImpl<$Res>
           ? _value.courses
           : courses // ignore: cast_nullable_to_non_nullable
               as HomClassPage?,
+      forChildren: freezed == forChildren
+          ? _value.forChildren
+          : forChildren // ignore: cast_nullable_to_non_nullable
+              as HomClassPage?,
     ));
   }
 }
@@ -446,7 +479,8 @@ class _$HomDataImpl implements _HomData {
       this.categories,
       this.newClasses,
       this.nearClasses,
-      this.courses})
+      this.courses,
+      this.forChildren})
       : _banners = banners;
 
   factory _$HomDataImpl.fromJson(Map<String, dynamic> json) =>
@@ -478,9 +512,16 @@ class _$HomDataImpl implements _HomData {
   @override
   final HomClassPage? courses;
 
+  /// What suits this parent's children, picked from the topics chosen for
+  /// each of them — activities and courses together. Present only when
+  /// there is a child with topics picked and something matched; absent on a
+  /// server that predates it. Home draws it in place of [courses].
+  @override
+  final HomClassPage? forChildren;
+
   @override
   String toString() {
-    return 'HomData(forUser: $forUser, upcomingClass: $upcomingClass, banners: $banners, categories: $categories, newClasses: $newClasses, nearClasses: $nearClasses, courses: $courses)';
+    return 'HomData(forUser: $forUser, upcomingClass: $upcomingClass, banners: $banners, categories: $categories, newClasses: $newClasses, nearClasses: $nearClasses, courses: $courses, forChildren: $forChildren)';
   }
 
   @override
@@ -498,7 +539,9 @@ class _$HomDataImpl implements _HomData {
                 other.newClasses == newClasses) &&
             (identical(other.nearClasses, nearClasses) ||
                 other.nearClasses == nearClasses) &&
-            (identical(other.courses, courses) || other.courses == courses));
+            (identical(other.courses, courses) || other.courses == courses) &&
+            (identical(other.forChildren, forChildren) ||
+                other.forChildren == forChildren));
   }
 
   @JsonKey(ignore: true)
@@ -511,7 +554,8 @@ class _$HomDataImpl implements _HomData {
       categories,
       newClasses,
       nearClasses,
-      courses);
+      courses,
+      forChildren);
 
   @JsonKey(ignore: true)
   @override
@@ -535,7 +579,8 @@ abstract class _HomData implements HomData {
       final HomCategoryPage? categories,
       final HomClassPage? newClasses,
       final HomNearClasses? nearClasses,
-      final HomClassPage? courses}) = _$HomDataImpl;
+      final HomClassPage? courses,
+      final HomClassPage? forChildren}) = _$HomDataImpl;
 
   factory _HomData.fromJson(Map<String, dynamic> json) = _$HomDataImpl.fromJson;
 
@@ -555,6 +600,13 @@ abstract class _HomData implements HomData {
 // newClasses/nearClasses, because a course is bought as a trial or as the
 // whole course, not per session.
   HomClassPage? get courses;
+  @override
+
+  /// What suits this parent's children, picked from the topics chosen for
+  /// each of them — activities and courses together. Present only when
+  /// there is a child with topics picked and something matched; absent on a
+  /// server that predates it. Home draws it in place of [courses].
+  HomClassPage? get forChildren;
   @override
   @JsonKey(ignore: true)
   _$$HomDataImplCopyWith<_$HomDataImpl> get copyWith =>
@@ -2093,6 +2145,10 @@ mixin _$HomClass {
   int? get minAge => throw _privateConstructorUsedError;
   int? get maxAge => throw _privateConstructorUsedError;
   String? get gender => throw _privateConstructorUsedError;
+
+  /// Whose card this is, on the feed's `for_children` row — the child's
+  /// first name. Null everywhere else.
+  String? get forChildName => throw _privateConstructorUsedError;
   bool? get isActive => throw _privateConstructorUsedError;
 
   /// False when the centre has taken this class off sale. It still browses
@@ -2183,6 +2239,7 @@ abstract class $HomClassCopyWith<$Res> {
       int? minAge,
       int? maxAge,
       String? gender,
+      String? forChildName,
       bool? isActive,
       bool? isVisible,
       bool? hasPhoto,
@@ -2236,6 +2293,7 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? minAge = freezed,
     Object? maxAge = freezed,
     Object? gender = freezed,
+    Object? forChildName = freezed,
     Object? isActive = freezed,
     Object? isVisible = freezed,
     Object? hasPhoto = freezed,
@@ -2309,6 +2367,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
       gender: freezed == gender
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
+      forChildName: freezed == forChildName
+          ? _value.forChildName
+          : forChildName // ignore: cast_nullable_to_non_nullable
               as String?,
       isActive: freezed == isActive
           ? _value.isActive
@@ -2443,6 +2505,7 @@ abstract class _$$HomClassImplCopyWith<$Res>
       int? minAge,
       int? maxAge,
       String? gender,
+      String? forChildName,
       bool? isActive,
       bool? isVisible,
       bool? hasPhoto,
@@ -2495,6 +2558,7 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? minAge = freezed,
     Object? maxAge = freezed,
     Object? gender = freezed,
+    Object? forChildName = freezed,
     Object? isActive = freezed,
     Object? isVisible = freezed,
     Object? hasPhoto = freezed,
@@ -2568,6 +2632,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
       gender: freezed == gender
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
+      forChildName: freezed == forChildName
+          ? _value.forChildName
+          : forChildName // ignore: cast_nullable_to_non_nullable
               as String?,
       isActive: freezed == isActive
           ? _value.isActive
@@ -2686,6 +2754,7 @@ class _$HomClassImpl extends _HomClass {
       this.minAge,
       this.maxAge,
       this.gender,
+      this.forChildName,
       this.isActive,
       this.isVisible,
       this.hasPhoto,
@@ -2739,6 +2808,11 @@ class _$HomClassImpl extends _HomClass {
   final int? maxAge;
   @override
   final String? gender;
+
+  /// Whose card this is, on the feed's `for_children` row — the child's
+  /// first name. Null everywhere else.
+  @override
+  final String? forChildName;
   @override
   final bool? isActive;
 
@@ -2831,7 +2905,7 @@ class _$HomClassImpl extends _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, newCoinPrice: $newCoinPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, forChildName: $forChildName, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, newCoinPrice: $newCoinPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2856,6 +2930,8 @@ class _$HomClassImpl extends _HomClass {
             (identical(other.minAge, minAge) || other.minAge == minAge) &&
             (identical(other.maxAge, maxAge) || other.maxAge == maxAge) &&
             (identical(other.gender, gender) || other.gender == gender) &&
+            (identical(other.forChildName, forChildName) ||
+                other.forChildName == forChildName) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
             (identical(other.isVisible, isVisible) ||
@@ -2920,6 +2996,7 @@ class _$HomClassImpl extends _HomClass {
         minAge,
         maxAge,
         gender,
+        forChildName,
         isActive,
         isVisible,
         hasPhoto,
@@ -2974,6 +3051,7 @@ abstract class _HomClass extends HomClass {
       final int? minAge,
       final int? maxAge,
       final String? gender,
+      final String? forChildName,
       final bool? isActive,
       final bool? isVisible,
       final bool? hasPhoto,
@@ -3027,6 +3105,11 @@ abstract class _HomClass extends HomClass {
   int? get maxAge;
   @override
   String? get gender;
+  @override
+
+  /// Whose card this is, on the feed's `for_children` row — the child's
+  /// first name. Null everywhere else.
+  String? get forChildName;
   @override
   bool? get isActive;
   @override

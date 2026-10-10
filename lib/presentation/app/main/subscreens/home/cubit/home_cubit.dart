@@ -128,16 +128,29 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     return pool.take(subscriptionRowSize).toList();
   }
 
+  /// What the "Qiziqishlarga asosan" row shows.
+  ///
+  /// The server's `for_children` when it sent one: what suits this parent's
+  /// children, from the topics picked for each. That list is used AS SENT —
+  /// the server already dealt it across topics and across children, and
+  /// re-spreading it by category here would undo exactly that.
+  ///
+  /// Otherwise the generic [courses], spread across categories: a parent with
+  /// no children, none with topics picked, or a server that predates them.
+  static List<HomClass> _interestsRow(HomData? data, List<HomClass> courses) {
+    final forChildren = data?.forChildren?.data ?? const <HomClass>[];
+    return forChildren.isNotEmpty
+        ? forChildren
+        : coursesAcrossCategories(courses);
+  }
+
   /// [courses] reordered to walk ACROSS categories: one from each in turn,
   /// then the seconds, then the thirds. A feed that happened to send four
   /// dance courses in a row would otherwise fill the whole visible part of the
   /// "Qiziqishlarga asosan" row with dance.
   ///
-  /// This is the row's ORDERING, not a recommendation: the interest signal the
-  /// app collects is write-only (see `InterestReporter` — the backend records
-  /// browsing itself and exposes no "recommended for you" endpoint), so a row
-  /// genuinely ranked by interest needs that endpoint before it can exist.
-  /// Category spread is the honest stand-in until then.
+  /// This is the row's FALLBACK ordering, not a recommendation — the stand-in
+  /// for a parent the server has no picked topics for. See [_interestsRow].
   ///
   /// Stable: no shuffle, and the buckets keep the order the feed introduced
   /// them in, so the category it led with still leads the row.
@@ -402,7 +415,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
           homeModel: data,
           newClassesList: newClasses,
           nearClassesList: nearClasses,
-          coursesList: coursesAcrossCategories(courses),
+          coursesList: _interestsRow(data.data, courses),
           subscriptionList: _dealSubscriptionRow(newClasses, nearClasses),
           newClassesPage: 2,
           nearClassesPage: 2,
@@ -452,7 +465,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
             homeModel: data,
             newClassesList: newClasses,
             nearClassesList: nearClasses,
-            coursesList: coursesAcrossCategories(courses),
+            coursesList: _interestsRow(data.data, courses),
             subscriptionList: _dealSubscriptionRow(newClasses, nearClasses),
             newClassesPage: 2,
             nearClassesPage: 2,

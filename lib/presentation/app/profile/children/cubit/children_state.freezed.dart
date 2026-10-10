@@ -22,6 +22,10 @@ mixin _$ChildrenBuildable {
   String get selectedGender => throw _privateConstructorUsedError;
   DateTime? get selectedBirthDate => throw _privateConstructorUsedError;
   List<ChildModel>? get childrenList => throw _privateConstructorUsedError;
+
+  /// The words the child form offers. Empty until loaded — and for good on
+  /// a server that has none, where the form simply leaves the section out.
+  List<InterestTopic> get interestTopics => throw _privateConstructorUsedError;
   List<TimeSlot> get timeSlots =>
       throw _privateConstructorUsedError; // Trial summary
   ParentTrialSummary? get trialSummary =>
@@ -55,6 +59,7 @@ abstract class $ChildrenBuildableCopyWith<$Res> {
       String selectedGender,
       DateTime? selectedBirthDate,
       List<ChildModel>? childrenList,
+      List<InterestTopic> interestTopics,
       List<TimeSlot> timeSlots,
       ParentTrialSummary? trialSummary,
       String parentCity,
@@ -88,6 +93,7 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
     Object? selectedGender = null,
     Object? selectedBirthDate = freezed,
     Object? childrenList = freezed,
+    Object? interestTopics = null,
     Object? timeSlots = null,
     Object? trialSummary = freezed,
     Object? parentCity = null,
@@ -124,6 +130,10 @@ class _$ChildrenBuildableCopyWithImpl<$Res, $Val extends ChildrenBuildable>
           ? _value.childrenList
           : childrenList // ignore: cast_nullable_to_non_nullable
               as List<ChildModel>?,
+      interestTopics: null == interestTopics
+          ? _value.interestTopics
+          : interestTopics // ignore: cast_nullable_to_non_nullable
+              as List<InterestTopic>,
       timeSlots: null == timeSlots
           ? _value.timeSlots
           : timeSlots // ignore: cast_nullable_to_non_nullable
@@ -195,6 +205,7 @@ abstract class _$$ChildrenBuildableImplCopyWith<$Res>
       String selectedGender,
       DateTime? selectedBirthDate,
       List<ChildModel>? childrenList,
+      List<InterestTopic> interestTopics,
       List<TimeSlot> timeSlots,
       ParentTrialSummary? trialSummary,
       String parentCity,
@@ -227,6 +238,7 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
     Object? selectedGender = null,
     Object? selectedBirthDate = freezed,
     Object? childrenList = freezed,
+    Object? interestTopics = null,
     Object? timeSlots = null,
     Object? trialSummary = freezed,
     Object? parentCity = null,
@@ -263,6 +275,10 @@ class __$$ChildrenBuildableImplCopyWithImpl<$Res>
           ? _value._childrenList
           : childrenList // ignore: cast_nullable_to_non_nullable
               as List<ChildModel>?,
+      interestTopics: null == interestTopics
+          ? _value._interestTopics
+          : interestTopics // ignore: cast_nullable_to_non_nullable
+              as List<InterestTopic>,
       timeSlots: null == timeSlots
           ? _value._timeSlots
           : timeSlots // ignore: cast_nullable_to_non_nullable
@@ -317,6 +333,7 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
       this.selectedGender = 'Female',
       this.selectedBirthDate = null,
       final List<ChildModel>? childrenList,
+      final List<InterestTopic> interestTopics = const [],
       final List<TimeSlot> timeSlots = const [],
       this.trialSummary = null,
       this.parentCity = 'Tashkent',
@@ -328,6 +345,7 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
       this.selectedTimeIndex = -1,
       this.selectedChildId = null})
       : _childrenList = childrenList,
+        _interestTopics = interestTopics,
         _timeSlots = timeSlots;
 
   @override
@@ -353,6 +371,20 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
     if (_childrenList is EqualUnmodifiableListView) return _childrenList;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(value);
+  }
+
+  /// The words the child form offers. Empty until loaded — and for good on
+  /// a server that has none, where the form simply leaves the section out.
+  final List<InterestTopic> _interestTopics;
+
+  /// The words the child form offers. Empty until loaded — and for good on
+  /// a server that has none, where the form simply leaves the section out.
+  @override
+  @JsonKey()
+  List<InterestTopic> get interestTopics {
+    if (_interestTopics is EqualUnmodifiableListView) return _interestTopics;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_interestTopics);
   }
 
   final List<TimeSlot> _timeSlots;
@@ -398,7 +430,7 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
 
   @override
   String toString() {
-    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, selectedGender: $selectedGender, selectedBirthDate: $selectedBirthDate, childrenList: $childrenList, timeSlots: $timeSlots, trialSummary: $trialSummary, parentCity: $parentCity, parentDistrict: $parentDistrict, currentStep: $currentStep, newChildId: $newChildId, selectedDate: $selectedDate, selectedScheduleId: $selectedScheduleId, selectedTimeIndex: $selectedTimeIndex, selectedChildId: $selectedChildId)';
+    return 'ChildrenBuildable(isLoading: $isLoading, buttonLoading: $buttonLoading, selectedIndex: $selectedIndex, selectedGender: $selectedGender, selectedBirthDate: $selectedBirthDate, childrenList: $childrenList, interestTopics: $interestTopics, timeSlots: $timeSlots, trialSummary: $trialSummary, parentCity: $parentCity, parentDistrict: $parentDistrict, currentStep: $currentStep, newChildId: $newChildId, selectedDate: $selectedDate, selectedScheduleId: $selectedScheduleId, selectedTimeIndex: $selectedTimeIndex, selectedChildId: $selectedChildId)';
   }
 
   @override
@@ -418,6 +450,8 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
                 other.selectedBirthDate == selectedBirthDate) &&
             const DeepCollectionEquality()
                 .equals(other._childrenList, _childrenList) &&
+            const DeepCollectionEquality()
+                .equals(other._interestTopics, _interestTopics) &&
             const DeepCollectionEquality()
                 .equals(other._timeSlots, _timeSlots) &&
             (identical(other.trialSummary, trialSummary) ||
@@ -449,6 +483,7 @@ class _$ChildrenBuildableImpl implements _ChildrenBuildable {
       selectedGender,
       selectedBirthDate,
       const DeepCollectionEquality().hash(_childrenList),
+      const DeepCollectionEquality().hash(_interestTopics),
       const DeepCollectionEquality().hash(_timeSlots),
       trialSummary,
       parentCity,
@@ -476,6 +511,7 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
       final String selectedGender,
       final DateTime? selectedBirthDate,
       final List<ChildModel>? childrenList,
+      final List<InterestTopic> interestTopics,
       final List<TimeSlot> timeSlots,
       final ParentTrialSummary? trialSummary,
       final String parentCity,
@@ -499,6 +535,11 @@ abstract class _ChildrenBuildable implements ChildrenBuildable {
   DateTime? get selectedBirthDate;
   @override
   List<ChildModel>? get childrenList;
+  @override
+
+  /// The words the child form offers. Empty until loaded — and for good on
+  /// a server that has none, where the form simply leaves the section out.
+  List<InterestTopic> get interestTopics;
   @override
   List<TimeSlot> get timeSlots;
   @override // Trial summary

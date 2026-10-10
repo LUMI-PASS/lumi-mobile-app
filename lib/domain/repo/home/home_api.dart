@@ -61,12 +61,27 @@ class HomeApi {
     return _dio.delete('users/parents/profile/children/$childId');
   }
 
-  /// Backend only needs first_name + dob; everything else is stripped.
+  /// The fields the child form writes; everything else on the model is the
+  /// server's and is left off.
+  ///
+  /// `gender` and `interests` are ignored by a server that predates them (it
+  /// strips unknown fields), so sending them is safe either way.
   Map<String, dynamic> _childWritePayload(ChildModel c) {
+    final gender = (c.gender ?? '').toLowerCase();
     return <String, dynamic>{
       if ((c.firstName ?? '').isNotEmpty) 'first_name': c.firstName,
       if ((c.dob ?? '').isNotEmpty) 'dob': c.dob,
+      // The form holds it upper-case; the server stores the same lower-case
+      // words an activity's own gender uses.
+      if (gender == 'male' || gender == 'female') 'gender': gender,
+      // Sent even when empty, so unpicking the last topic clears it.
+      if (c.interests != null) 'interests': c.interests,
     };
+  }
+
+  /// The words the child form offers. See [InterestTopic].
+  Future<Response> getInterestTopics() {
+    return _dio.get('interest-topics');
   }
 
   Future<Response> updateChildData() {

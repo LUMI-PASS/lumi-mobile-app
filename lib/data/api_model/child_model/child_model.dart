@@ -13,6 +13,10 @@ class ChildModel with _$ChildModel {
     @JsonKey(name: "phone_number") String? phoneNumber,
     String? dob,
     String? gender,
+
+    /// Ids of the [InterestTopic]s picked for this child. Empty on a child
+    /// added before the picker existed, and on a server that predates it.
+    List<String>? interests,
     String? type,
     int? age,
     @JsonKey(name: "child_age_type") String? childAgeType,

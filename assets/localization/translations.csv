@@ -1489,3 +1489,7 @@ saved_title,Сохранённые,Saqlanganlar,Saved
 saved_empty_title,Пока ничего не сохранено,Hali hech narsa saqlanmagan,Nothing saved yet
 saved_empty_desc,Нажмите на сердечко у занятия или центра — оно появится здесь,Mashg'ulot yoki markazdagi yurakchani bosing — u shu yerda paydo bo'ladi,Tap the heart on an activity or a centre and it lands here
 activities_count,{} занятий,{} mashg'ulot,{} activities
+child_interests_title,Чем увлекается ваш ребёнок?,Farzandingiz nimaga qiziqadi?,What is your child into?
+parent_needs_title,Что вы ищете?,Siz nimani qidiryapsiz?,What are you looking for?
+child_interests_required,Выберите хотя бы один вариант,Kamida bittasini tanlang,Pick at least one
+for_child,Для {},{} uchun,For {}

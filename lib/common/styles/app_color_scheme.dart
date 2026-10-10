@@ -61,8 +61,9 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   /// Cards, list items, sheets, unselected chips.
   final Color surface;
 
-  /// Fill of the Lumi Coin section's container on the home feed — the gold
-  /// that says the row is what a coin pack buys. See [AppColors.lightCoinBand].
+  /// Fill of the Lumi Coin section's container on the home feed — the block
+  /// of colour that says the row is what a coin pack buys. Gold in light, a
+  /// deep purple in dark: see [AppColors.lightCoinBand] and `darkCoinBand`.
   final Color coinBand;
 
   /// Sticky bottom action bars — one step above [surface] in dark so the bar
