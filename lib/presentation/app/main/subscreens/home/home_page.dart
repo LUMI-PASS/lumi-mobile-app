@@ -535,7 +535,21 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // past 1.6 the row would be taller than the photo it belongs to.
     final textScale =
         MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6);
-    final textBlock = (list.any(_showsPrice) ? 118.0 : 84.0) * textScale;
+    //
+    // The 118 is for a price that runs to TWO lines, and only one kind does:
+    // a so'm figure struck out over the coupon plan's discounted one. A coin
+    // price is a single line, and so is a so'm price with no plan — and on
+    // those the second line's worth of room sat empty under every card,
+    // where it read as a hole in the feed before "Sizga yaqin". So the full
+    // allowance is kept for the case that fills it, and the rest get one
+    // line's less.
+    final app =
+        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
+    final strikesPrice = app.hasPremium &&
+        app.planDiscountPercentage > 0 &&
+        !watchNewCoins(context).isVisible;
+    final priceBlock = strikesPrice ? 118.0 : 102.0;
+    final textBlock = (list.any(_showsPrice) ? priceBlock : 84.0) * textScale;
     final rowH = cardImgH + 14.h + textBlock.h;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
