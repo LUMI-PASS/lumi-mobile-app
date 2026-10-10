@@ -24,6 +24,19 @@ enum PromoErrorCode {
   /// `ticket_limit`: how many tickets the code still covers.
   ticketLimit('promo_ticket_limit'),
 
+  // ── Where a code may be spent ──────────────────────────────────────────────
+  // A code is issued either for activities or for Lumi Coin packs, and is
+  // refused on the other kind of order.
+
+  /// An activities-only code (or a referral voucher) typed on a coin pack.
+  notForCoinPacks('promo_not_for_coin_packs'),
+
+  /// A coin-pack-only code typed on a booking.
+  notForActivities('promo_not_for_activities'),
+
+  /// The code would make the coin pack free. A pack is always paid for.
+  fullDiscountNotAllowed('promo_full_discount_not_allowed'),
+
   // ── Referral vouchers ──────────────────────────────────────────────────────
   // A voucher (`R-XXXXXX`) is spent through the same promocode field, so its
   // refusals arrive on the same 400.
@@ -69,6 +82,10 @@ enum PromoErrorCode {
         PromoErrorCode.courseOnly => 'promo_course_only',
         PromoErrorCode.alreadyUsed => 'promo_already_used',
         PromoErrorCode.ticketLimit => 'promo_ticket_limit',
+        PromoErrorCode.notForCoinPacks => 'promo_not_for_coin_packs',
+        PromoErrorCode.notForActivities => 'promo_not_for_activities',
+        PromoErrorCode.fullDiscountNotAllowed =>
+          'promo_full_discount_not_allowed',
         PromoErrorCode.voucherNotFound => 'promo_voucher_not_found',
         PromoErrorCode.voucherUsed => 'promo_voucher_used',
         PromoErrorCode.voucherUnavailable => 'promo_voucher_unavailable',

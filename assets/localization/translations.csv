@@ -776,6 +776,13 @@ promo_already_used,Вы уже использовали этот промоко�
 promo_one_ticket_only,Промокод действует только на один билет,Promokod faqat bitta chiptaga amal qiladi,This promo code can only be used for one ticket
 promo_ticket_limit,Промокод действует максимум на {} билетов,Promokod ko'pi bilan {} ta chiptaga amal qiladi,This promo code can only be used for up to {} tickets
 promo_course_only,Промокод не действует для курсов,Promokod kurslar uchun amal qilmaydi,Promo codes cannot be used for courses
+promo_not_for_coin_packs,Этот промокод не действует для пакетов Lumi Coin,Bu promokod Lumi Coin paketlari uchun amal qilmaydi,This promo code cannot be used for Lumi Coin packs
+promo_not_for_activities,Этот промокод действует только для пакетов Lumi Coin,Bu promokod faqat Lumi Coin paketlari uchun amal qiladi,This promo code is valid only for Lumi Coin packs
+promo_full_discount_not_allowed,Этот промокод нельзя применить: пакет не может быть бесплатным,Bu promokodni qo'llab bo'lmaydi: paket bepul bo'lishi mumkin emas,This promo code cannot be applied: a pack cannot be free
+new_coins_checkout_title,Оформление покупки,Xaridni rasmiylashtirish,Checkout
+pay_card_short,Карта,Karta,Card
+new_coins_pack_label,Пакет,Paket,Pack
+promo_have_code,У вас есть промокод?,Sizda promokod bormi?,Have a promo code?
 plan_how_title,Как это работает,Bu qanday ishlaydi,How it works
 plan_step1,Выберите подходящий купон,O'zingizga mos kuponni tanlang,Choose the coupon that fits you
 plan_step2,Оплатите купон и активируйте его,Kuponni to'lang va faollashtiring,Pay for the coupon and activate it

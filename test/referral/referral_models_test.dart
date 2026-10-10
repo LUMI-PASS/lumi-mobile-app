@@ -126,6 +126,15 @@ void main() {
       expect(PromoErrorCode.unknown.messageKey, 'promo_invalid');
     });
 
+    test('where a promocode may be spent', () {
+      expect(PromoErrorCode.fromKey('promo_not_for_coin_packs'),
+          PromoErrorCode.notForCoinPacks);
+      expect(PromoErrorCode.fromKey('promo_not_for_activities'),
+          PromoErrorCode.notForActivities);
+      expect(PromoErrorCode.fromKey('promo_full_discount_not_allowed'),
+          PromoErrorCode.fullDiscountNotAllowed);
+    });
+
     test('every message key exists in ru, uz and en', () {
       final parser = FixedCsvParser(
         File('assets/localization/translations.csv').readAsStringSync(),

@@ -57,11 +57,13 @@ class NewCoinsRepositoryImpl extends NewCoinsRepository {
     String? cardNumber,
     String? expireDate,
     String? savedCardId,
+    String? promocode,
     bool test = false,
   }) {
     return _api
         .purchasePack(
           packId,
+          promocode: promocode,
           lang: lang,
           paymentProvider: paymentProvider,
           returnUrl: returnUrl,

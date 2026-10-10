@@ -20,17 +20,28 @@ import 'card_otp_sheet.dart';
 ///
 /// Returns the saved [SavedCard] once the whole flow succeeds, or null if the
 /// user backed out.
-Future<SavedCard?> showAddCardSheet(BuildContext context) {
+///
+/// [skin] dresses the sheet — and the OTP sheet it opens — in the colours of
+/// the screen it was opened from. Null is the app's own look.
+Future<SavedCard?> showAddCardSheet(
+  BuildContext context, {
+  PaymentSheetSkin? skin,
+}) {
   return showModalBottomSheet<SavedCard>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => const _AddCardSheet(),
+    builder: (context) {
+      final sheet = _AddCardSheet(skin: skin);
+      return skin?.wrap(context, sheet) ?? sheet;
+    },
   );
 }
 
 class _AddCardSheet extends StatefulWidget {
-  const _AddCardSheet();
+  const _AddCardSheet({this.skin});
+
+  final PaymentSheetSkin? skin;
 
   @override
   State<_AddCardSheet> createState() => _AddCardSheetState();
@@ -78,6 +89,7 @@ class _AddCardSheetState extends State<_AddCardSheet> {
         session: session,
         pan: _pan,
         expiry: expiryToYyMm(_expiryCtrl.text),
+        skin: widget.skin,
       );
       if (!mounted || saved == null) return;
       Navigator.of(context).pop(saved);

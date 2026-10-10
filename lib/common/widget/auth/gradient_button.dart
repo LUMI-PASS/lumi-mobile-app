@@ -15,7 +15,16 @@ class GradientButton extends StatelessWidget {
     this.onPressed,
     this.enabled = true,
     this.loading = false,
+    this.gradient,
+    this.foreground,
   });
+
+  /// Overrides the brand gradient — for a sheet reskinned to its host screen
+  /// (see `PaymentSheetSkin`). Null is the brand pink→purple.
+  final Gradient? gradient;
+
+  /// Ink on [gradient]. Null is the brand's own.
+  final Color? foreground;
 
   final String text;
   final VoidCallback? onPressed;
@@ -36,7 +45,7 @@ class GradientButton extends StatelessWidget {
           width: double.infinity,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: AppGradients.brand,
+            gradient: gradient ?? AppGradients.brand,
             borderRadius: BorderRadius.circular(44.r),
           ),
           child: Stack(
@@ -46,16 +55,17 @@ class GradientButton extends StatelessWidget {
                 SizedBox(
                   width: 22.r,
                   height: 22.r,
-                  child: const CircularProgressIndicator(
+                  child: CircularProgressIndicator(
                     strokeWidth: 2.4,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.onBrand),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        foreground ?? AppColors.onBrand),
                   ),
                 )
               else
                 Text(
                   text,
-                  style: AppText.medium16.copyWith(color: AppColors.onBrand),
+                  style: AppText.medium16
+                      .copyWith(color: foreground ?? AppColors.onBrand),
                 ),
             ],
           ),

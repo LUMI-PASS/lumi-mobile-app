@@ -164,6 +164,8 @@ Future<bool?> showCardOtpSheet(
   required String cid,
   String? otpSentPhone,
   required PaymentConfirmCard confirmCard,
+  // Dresses the sheet in its host screen's colours; null is the app's own.
+  PaymentSheetSkin? skin,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -171,12 +173,15 @@ Future<bool?> showCardOtpSheet(
     isScrollControlled: true,
     useSafeArea: false,
     isDismissible: false,
-    builder: (_) => _OtpSheet(
-      transactionId: transactionId,
-      cid: cid,
-      otpSentPhone: otpSentPhone,
-      confirmCard: confirmCard,
-    ),
+    builder: (context) {
+      final sheet = _OtpSheet(
+        transactionId: transactionId,
+        cid: cid,
+        otpSentPhone: otpSentPhone,
+        confirmCard: confirmCard,
+      );
+      return skin?.wrap(context, sheet) ?? sheet;
+    },
   );
 }
 
@@ -184,6 +189,11 @@ Future<bool?> showCardOtpSheet(
 
 /// Figma `Input Bg` — the dark tile behind the "add card" plus. Screen-local.
 const Color _kAddCardTile = Color(0xFF2A2A2A);
+
+/// A card in the chooser's horizontal strip, before screen scaling.
+const double _kCardTileWidth = 140;
+const double _kCardTileHeight = 96;
+const double _kCardTileGap = 8;
 
 // ─── Chooser sheet (rail + card) ──────────────────────────────────────────────
 
@@ -225,6 +235,10 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   final _expiryCtrl = TextEditingController();
   final _otpCtrl = TextEditingController();
 
+  /// Scrolls the card strip — so a card picked earlier is in view when the
+  /// sheet reopens, rather than somewhere off the right edge.
+  final _cardsScroll = ScrollController();
+
   String? _error;
 
   /// True while a bind request is in flight — keeps the buyer from firing a
@@ -238,7 +252,21 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   @override
   void initState() {
     super.initState();
+    _revealSelectedCard();
     _loadSavedCards();
+  }
+
+  /// Brings the selected card into view once the strip has laid out.
+  void _revealSelectedCard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_cardsScroll.hasClients) return;
+      final i = _cards.indexWhere((c) => identical(c, _card));
+      if (i <= 0) return;
+      final offset = i * (_kCardTileWidth + _kCardTileGap).w;
+      _cardsScroll.jumpTo(
+        offset.clamp(0.0, _cardsScroll.position.maxScrollExtent),
+      );
+    });
   }
 
   /// Pulls the buyer's bound cards from the backend and shows them at the top of
@@ -258,6 +286,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
           _cards.insert(i++, PaymentCard.saved(s));
         }
       });
+      _revealSelectedCard();
     } catch (_) {
       // Ignore — the manual add-card path remains available.
     }
@@ -268,6 +297,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     _numberCtrl.dispose();
     _expiryCtrl.dispose();
     _otpCtrl.dispose();
+    _cardsScroll.dispose();
     super.dispose();
   }
 
@@ -563,20 +593,33 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             PaymentRail.card,
             disabled: widget.cardsComingSoon,
             badge: widget.cardsComingSoon ? null : widget.cardBadge,
+            // Says there is more than one card behind the rail before it is
+            // even picked. One card needs no count.
+            count: widget.cardsComingSoon || _cards.length < 2
+                ? null
+                : _cards.length,
           ),
-          // The card list belongs to the card rail — it only appears once that
-          // rail is picked, as in the design.
+          // Two layers, not one list: the rails stack vertically, and the
+          // cards of the card rail sit beneath them on their own horizontal
+          // strip. Stacked in the same column, a card row read as a fifth,
+          // sixth, seventh payment type. The strip only appears once the card
+          // rail is picked.
           if (isCard) ...[
-            20.verticalSpace,
+            16.verticalSpace,
             Text('pay_choose_card'.tr(),
-                style: AppText.semibold14.copyWith(color: context.colors.textSecondary)),
-            14.verticalSpace,
-            for (var i = 0; i < _cards.length; i++) ...[
-              if (i > 0) _cardDivider(),
-              _cardRow(_cards[i]),
-            ],
-            if (_cards.isNotEmpty) _cardDivider(),
-            _addCardRow(),
+                style: AppText.semibold14.copyWith(color: c.textSecondary)),
+            10.verticalSpace,
+            SizedBox(
+              height: _kCardTileHeight.h,
+              child: ListView.separated(
+                controller: _cardsScroll,
+                scrollDirection: Axis.horizontal,
+                itemCount: _cards.length + 1,
+                separatorBuilder: (_, __) => _kCardTileGap.horizontalSpace,
+                itemBuilder: (_, i) =>
+                    i < _cards.length ? _cardTile(_cards[i]) : _addCardTile(),
+              ),
+            ),
           ],
           20.verticalSpace,
           PaymentSheetActions(
@@ -601,6 +644,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     double logoHeight = 20,
     bool disabled = false,
     String? badge,
+    int? count,
   }) {
     final c = context.colors;
     // A disabled rail is dimmed and shows a "coming soon" badge where its radio
@@ -624,6 +668,23 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             12.horizontalSpace,
             Text('pay_with_card'.tr(),
                 style: AppText.semibold16.copyWith(color: c.textPrimary)),
+          ],
+          if (count != null) ...[
+            8.horizontalSpace,
+            Container(
+              constraints: BoxConstraints(minWidth: 22.w),
+              padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(40.r),
+                border: Border.all(color: c.controlBorder),
+              ),
+              child: Text(
+                '$count',
+                style: AppText.semibold12.copyWith(color: c.textSecondary),
+              ),
+            ),
           ],
           if (badge != null) ...[
             10.horizontalSpace,
@@ -668,46 +729,74 @@ class _ChooserSheetState extends State<_ChooserSheet> {
     );
   }
 
-  /// Hairline between saved-card rows, inset past the artwork as in the design.
-  Widget _cardDivider() => Padding(
-        padding: EdgeInsets.only(left: 60.w),
-        child: Container(height: 1, color: context.colors.divider),
-      );
-
-  Widget _cardRow(PaymentCard card) {
+  /// One card on the strip: brand artwork and the radio on top, the brand name
+  /// and masked number beneath. A raised bordered tile, where a rail is a flat
+  /// filled one — the two layers should not look like one list.
+  Widget _cardTile(PaymentCard card) {
+    final c = context.colors;
     final selected = identical(_card, card);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => _selectCard(card),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        child: Row(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: _kCardTileWidth.w,
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+            color: selected ? AppColors.tagGreen : c.controlBorder,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CardArtwork(brand: card.brand),
-            16.horizontalSpace,
-            Expanded(
-              child: Text(
-                card.label,
-                style: AppText.medium16.copyWith(color: context.colors.textPrimary),
-              ),
+            Row(
+              children: [
+                CardArtwork(brand: card.brand),
+                const Spacer(),
+                _radio(selected),
+              ],
             ),
-            _radio(selected),
+            const Spacer(),
+            Text(
+              card.brand.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.semibold12.copyWith(color: c.textSecondary),
+            ),
+            Text(
+              '•••• ${card.last4}',
+              maxLines: 1,
+              style: AppText.semibold16.copyWith(color: c.textPrimary),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _addCardRow() {
+  /// The strip's last tile — opens the add-card step.
+  Widget _addCardTile() {
+    final c = context.colors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => setState(() {
         _error = null;
         _step = _Step.addCard;
       }),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        child: Row(
+      child: Container(
+        width: _kCardTileWidth.w,
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: c.controlBorder, width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 44.w,
@@ -720,13 +809,13 @@ class _ChooserSheetState extends State<_ChooserSheet> {
               child: Icon(Icons.add_rounded,
                   size: 18.sp, color: AppColors.onBrand),
             ),
-            16.horizontalSpace,
-            Expanded(
-              child: Text('pay_add_card'.tr(),
-                  style: AppText.medium16.copyWith(color: context.colors.textPrimary)),
+            const Spacer(),
+            Text(
+              'pay_add_card'.tr(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.semibold14.copyWith(color: c.textPrimary),
             ),
-            Icon(Icons.chevron_right_rounded,
-                size: 18.sp, color: context.colors.textPrimary),
           ],
         ),
       ),

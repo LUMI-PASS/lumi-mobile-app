@@ -69,19 +69,26 @@ class NewCoinsApi {
     String? cardNumber,
     String? expireDate,
     String? savedCardId,
+    // Packs only — loose coins take no promocode, so this is not part of the
+    // shared payment body.
+    String? promocode,
     bool test = false,
   }) {
+    final code = promocode?.trim().toUpperCase();
     return _dio.post(
       'new-coins/packs/$packId/purchase',
-      data: _paymentBody(
-        lang: lang,
-        paymentProvider: paymentProvider,
-        returnUrl: returnUrl,
-        cardNumber: cardNumber,
-        expireDate: expireDate,
-        savedCardId: savedCardId,
-        test: test,
-      ),
+      data: {
+        if (code != null && code.isNotEmpty) 'promocode': code,
+        ..._paymentBody(
+          lang: lang,
+          paymentProvider: paymentProvider,
+          returnUrl: returnUrl,
+          cardNumber: cardNumber,
+          expireDate: expireDate,
+          savedCardId: savedCardId,
+          test: test,
+        ),
+      },
     );
   }
 

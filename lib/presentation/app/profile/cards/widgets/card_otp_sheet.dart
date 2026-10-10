@@ -23,13 +23,17 @@ Future<SavedCard?> showCardVerifyOtpSheet(
   required CardVerifySession session,
   required String pan,
   required String expiry,
+  PaymentSheetSkin? skin,
 }) {
   return showModalBottomSheet<SavedCard>(
     context: context,
     isScrollControlled: true,
     isDismissible: false,
     backgroundColor: Colors.transparent,
-    builder: (_) => _CardOtpSheet(session: session, pan: pan, expiry: expiry),
+    builder: (context) {
+      final sheet = _CardOtpSheet(session: session, pan: pan, expiry: expiry);
+      return skin?.wrap(context, sheet) ?? sheet;
+    },
   );
 }
 
@@ -235,8 +239,10 @@ class _CardOtpSheetState extends State<_CardOtpSheet> {
                 child: Text(
                   'card_resend_code'.tr(),
                   style: AppText.semibold14.copyWith(
-                    color:
-                        canResend ? AppColors.brandPurple : c.textPlaceholder,
+                    color: canResend
+                        ? (PaymentSheetSkin.maybeOf(context)?.accent ??
+                            AppColors.brandPurple)
+                        : c.textPlaceholder,
                   ),
                 ),
               ),

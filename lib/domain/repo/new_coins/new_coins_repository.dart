@@ -16,6 +16,9 @@ abstract class NewCoinsRepository {
   /// The payment tail is the one every other purchase runs: a redirect URL for
   /// Payme/Click/Uzum, a transaction to confirm for a card, and neither of
   /// those for a saved card, which is charged by its own call afterwards.
+  ///
+  /// [promocode] discounts the pack; the returned checkout carries the
+  /// discounted amount. Loose coins take no code.
   Future<NewCoinPurchaseResult> purchasePack(
     String packId, {
     String? lang,
@@ -24,6 +27,7 @@ abstract class NewCoinsRepository {
     String? cardNumber,
     String? expireDate,
     String? savedCardId,
+    String? promocode,
     bool test = false,
   });
 

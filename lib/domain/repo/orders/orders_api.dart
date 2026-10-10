@@ -346,11 +346,15 @@ class OrdersApi {
     required num subtotal,
     String? activityId,
     int? count,
+    // Set when the code is for a Lumi Coin pack rather than a booking;
+    // [subtotal] is then the pack's price.
+    String? coinPackId,
   }) async {
     final response = await _dio.post('promocodes/validate', data: {
       'code': code.trim().toUpperCase(),
       'subtotal': subtotal,
       if (activityId != null) 'activity_id': activityId,
+      if (coinPackId != null) 'coin_pack_id': coinPackId,
       // Number of tickets selected. Usage limits are counted by tickets, so the
       // server can reject immediately when the code can't cover this many.
       if (count != null) 'count': count,

@@ -18,6 +18,7 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/new_coins/new_coins_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_history_page.dart';
+import 'package:lumi_pass/presentation/app/new_coins/new_coins_checkout_page.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_purchase_controller.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_success_page.dart';
 import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_widgets.dart';
@@ -252,8 +253,28 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       ? 'new_coins_amount'.tr(args: ['+${_catalogue.firstPackBonus}'])
       : null;
 
-  Future<void> _buy(NewCoinPurchase purchase) => _buyer.buy(purchase,
-      cardBadge: purchase.pack == null ? null : _cardBadge);
+  /// Loose coins are paid for right here, through the chooser sheet. A pack
+  /// opens its own checkout page, which is where a promocode goes; the page
+  /// comes back with the paid order, and the success screen follows as before.
+  Future<void> _buy(NewCoinPurchase purchase) async {
+    final pack = purchase.pack;
+    if (pack == null) return _buyer.buy(purchase);
+    final paid = await Navigator.of(context).push<NewCoinsCheckoutResult>(
+      MaterialPageRoute(
+        builder: (_) => NewCoinsCheckoutPage(
+          pack: pack,
+          tone: _toneOf(pack),
+          cardBadge: _cardBadge,
+          // The pack lapsed or was withdrawn while it was being checked out.
+          onShelfStale: _load,
+        ),
+      ),
+    );
+    // Backing out changes nothing, so the shelf is left exactly as it was —
+    // reloading it here flashed the loading screen on every Back.
+    if (!mounted || paid == null) return;
+    await _finishSuccess(paid.purchase, paid.checkout);
+  }
 
   /// Hands off to the success screen, then either returns to whoever opened
   /// this screen or reloads the shelf with the new balance on it.
@@ -263,7 +284,12 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
   ) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => NewCoinsSuccessPage(coins: purchase.coins),
+        builder: (_) => NewCoinsSuccessPage(
+          coins: purchase.coins,
+          tone: purchase.pack == null
+              ? NewCoinTone.extra
+              : _toneOf(purchase.pack!),
+        ),
       ),
     );
     if (!mounted) return;
@@ -769,8 +795,11 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
           ),
         );
 
-    // A feature row's stand-in — always inside a panel, so always dark.
-    Widget row() => Padding(
+    // A feature row's stand-in — always inside a panel, so always dark. The
+    // loaded row is a title, a two-line sentence and, on most rows, a chip
+    // with the figure: all three are ghosted, or the card comes out a third
+    // shorter than the one that replaces it.
+    Widget row({bool chip = true}) => Padding(
           padding: EdgeInsets.symmetric(vertical: 14.h),
           child: Row(
             children: [
@@ -787,13 +816,118 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   bar(150, 14, color: ghostOnPanel),
-                  8.kh,
-                  bar(210, 10, color: ghostOnPanel),
+                  9.kh,
+                  bar(220, 10, color: ghostOnPanel),
+                  7.kh,
+                  bar(120, 10, color: ghostOnPanel),
+                  if (chip) ...[
+                    10.kh,
+                    bar(92, 22, color: ghostOnPanel),
+                  ],
                 ],
               ),
             ],
           ),
         );
+
+    // The "what's in the pack" card: a frame in a pack's colour around two
+    // white panels. [frame] stands in for the loaded card's tone gradient.
+    Widget card(Color frame) => Container(
+          padding: EdgeInsets.all(6.w),
+          decoration: BoxDecoration(
+            color: frame,
+            borderRadius: BorderRadius.circular(30.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: AppColors.coinPanel,
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32.w,
+                      height: 32.w,
+                      decoration: BoxDecoration(
+                        color: ghostOnPanel,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    12.kw,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        bar(150, 14, color: ghostOnPanel),
+                        8.kh,
+                        bar(210, 10, color: ghostOnPanel),
+                        6.kh,
+                        bar(180, 10, color: ghostOnPanel),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              6.kh,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.w),
+                decoration: BoxDecoration(
+                  color: AppColors.coinPanel,
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+                child: Column(
+                  children: [row(), row(), row(chip: false), row()],
+                ),
+              ),
+            ],
+          ),
+        );
+
+    // One carousel card is 86% of the screen, with 6 of padding inside it.
+    final side = 0.07.sw + 6.w;
+    // The header, piece by piece at the loaded header's own heights, so the
+    // card under it — and the neighbour's card beside that — land where the
+    // real ones will.
+    final header = Column(
+      children: [
+        // The coin, in the box NewCoinArt gives it, tinted in the pack's colour
+        // like the glow it stands in for.
+        SizedBox(
+          height: 168.w,
+          child: Center(
+            child: Container(
+              width: 132.w,
+              height: 132.w,
+              decoration: BoxDecoration(
+                color: tone.accent.withValues(alpha: 0.26),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+        8.kh,
+        SizedBox(height: 38.h, child: Center(child: bar(120, 28))),
+        4.kh,
+        SizedBox(height: 20.h, child: Center(child: bar(124, 14))),
+        14.kh,
+        // The "40 coins · 30 days" pill is white paper on the wash.
+        Container(
+          width: 150.w,
+          height: 38.h,
+          decoration: BoxDecoration(
+            color: AppColors.coinPanel.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(40.r),
+          ),
+          alignment: Alignment.center,
+          child: bar(100, 12, color: ghostOnPanel),
+        ),
+        20.kh,
+      ],
+    );
+    final headerHeight = 168.w + 8.h + 38.h + 4.h + 20.h + 14.h + 38.h + 20.h;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
@@ -807,93 +941,27 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                 opacity: _pulse,
                 child: SingleChildScrollView(
                   physics: const NeverScrollableScrollPhysics(),
-                  // The loaded page's own insets: under the top pills, and
-                  // one carousel card wide.
-                  padding: EdgeInsets.fromLTRB(
-                    0.07.sw + 6.w,
-                    top + 52.h,
-                    0.07.sw + 6.w,
-                    0,
-                  ),
-                  child: Column(
+                  // The loaded page's own inset under the top pills.
+                  padding: EdgeInsets.only(top: top + 52.h),
+                  child: Stack(
                     children: [
-                      // The coin, in the box NewCoinArt gives it.
-                      SizedBox(
-                        height: 168.w,
-                        child: Center(
-                          child: Container(
-                            width: 132.w,
-                            height: 132.w,
-                            decoration: BoxDecoration(
-                              color: ghost,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: side),
+                        child: Column(
+                          children: [
+                            header,
+                            card(tone.accent.withValues(alpha: 0.42)),
+                          ],
                         ),
                       ),
-                      14.kh,
-                      bar(180, 26),
-                      12.kh,
-                      bar(110, 14),
-                      16.kh,
-                      bar(170, 36),
-                      20.kh,
-                      Container(
-                        padding: EdgeInsets.all(6.w),
-                        decoration: BoxDecoration(
-                          // Stands in for the loaded card's tone frame, which
-                          // is a gradient in the pack's colour — so the ghost
-                          // of it is that colour too, not a grey block.
-                          color: tone.accent.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(30.r),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 14.w,
-                                vertical: 12.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.coinPanel,
-                                borderRadius: BorderRadius.circular(24.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 32.w,
-                                    height: 32.w,
-                                    decoration: BoxDecoration(
-                                      color: ghostOnPanel,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  12.kw,
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      bar(140, 14, color: ghostOnPanel),
-                                      8.kh,
-                                      bar(200, 10, color: ghostOnPanel),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            6.kh,
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 14.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.coinPanel,
-                                borderRadius: BorderRadius.circular(24.r),
-                              ),
-                              child: Column(
-                                children: [row(), row(), row(), row()],
-                              ),
-                            ),
-                          ],
+                      // The next pack's card, peeking in at the right edge as
+                      // it does once the shelf has loaded.
+                      Positioned(
+                        top: headerHeight,
+                        left: 0.93.sw + 6.w,
+                        width: 0.86.sw - 12.w,
+                        child: card(
+                          NewCoinTone.main(1).accent.withValues(alpha: 0.42),
                         ),
                       ),
                     ],
@@ -901,8 +969,8 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                 ),
               ),
             ),
-            // Where the Buy bar will be: its fade to the stage colour, and
-            // the button's shape under it.
+            // Where the Buy bar will be: its fade to the stage colour, the
+            // carousel's dots, and the button in the pack's colour.
             Positioned(
               left: 0,
               right: 0,
@@ -923,13 +991,54 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                 ),
                 child: FadeTransition(
                   opacity: _pulse,
-                  child: Container(
-                    height: 58.h,
-                    decoration: BoxDecoration(
-                      color: ghost,
-                      borderRadius: BorderRadius.circular(18.r),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (var i = 0; i < 4; i++)
+                            Container(
+                              width: 8.w,
+                              height: 8.w,
+                              margin: EdgeInsets.symmetric(horizontal: 3.w),
+                              decoration: BoxDecoration(
+                                color: ghost,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      14.kh,
+                      Container(
+                        height: 58.h,
+                        decoration: BoxDecoration(
+                          color: tone.accent.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(18.r),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+              ),
+            ),
+            // The balance pill at the top right — always there once loaded.
+            Positioned(
+              top: top + 8.h,
+              right: 16.w,
+              child: FadeTransition(
+                opacity: _pulse,
+                child: Container(
+                  width: 78.w,
+                  height: 40.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.coinPanel.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(40.r),
+                    border: Border.all(
+                        color: AppColors.ink.withValues(alpha: 0.08)),
+                  ),
+                  child: bar(44, 12, color: ghostOnPanel),
                 ),
               ),
             ),

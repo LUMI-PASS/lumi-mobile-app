@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
@@ -14,6 +15,58 @@ import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 /// These started out private to the checkout sheet. The profile needs the same
 /// look for adding and confirming a card, and two copies of a payment sheet
 /// would drift, so they live here instead.
+
+/// Dresses a card sheet in the colours of the screen that opened it.
+///
+/// The sheets wear the app's theme and the brand gradient, which is right
+/// everywhere but one place: the Lumi Coin checkout is a light stage in both
+/// themes, with every action in the pack's own colour. Opened over it, a dark
+/// sheet with a pink button read as another app. A skin pins the sheet light
+/// and hands it the host's colours.
+///
+/// A modal sheet is built in the navigator's overlay, so nothing the host
+/// provides is inherited by it: the skin is passed to each `show…Sheet` call,
+/// which wraps its content in [wrap].
+class PaymentSheetSkin {
+  const PaymentSheetSkin({
+    required this.gradient,
+    required this.onGradient,
+    required this.accent,
+    required this.background,
+  });
+
+  /// The primary button's fill, and the ink on it.
+  final Gradient gradient;
+  final Color onGradient;
+
+  /// Text links (resend code).
+  final Color accent;
+
+  /// The sheet's own fill.
+  final Color background;
+
+  static PaymentSheetSkin? maybeOf(BuildContext context) => context
+      .dependOnInheritedWidgetOfExactType<_PaymentSheetSkinScope>()
+      ?.skin;
+
+  /// [child] under the light colour table, with this skin in scope.
+  Widget wrap(BuildContext context, Widget child) => Theme(
+        data: Theme.of(context).copyWith(
+          brightness: Brightness.light,
+          extensions: const [AppColorScheme.light],
+        ),
+        child: _PaymentSheetSkinScope(skin: this, child: child),
+      );
+}
+
+class _PaymentSheetSkinScope extends InheritedWidget {
+  const _PaymentSheetSkinScope({required this.skin, required super.child});
+
+  final PaymentSheetSkin skin;
+
+  @override
+  bool updateShouldNotify(_PaymentSheetSkinScope old) => old.skin != skin;
+}
 
 /// The rounded sheet body: grab handle, keyboard-aware padding, scrolling
 /// content that can't overflow the screen.
@@ -32,7 +85,7 @@ class PaymentSheetShell extends StatelessWidget {
     return Container(
       constraints: BoxConstraints(maxHeight: 0.9.sh),
       decoration: BoxDecoration(
-        color: c.scaffoldBg,
+        color: PaymentSheetSkin.maybeOf(context)?.background ?? c.scaffoldBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       padding: EdgeInsets.only(
@@ -105,6 +158,10 @@ class PaymentField extends StatelessWidget {
     this.focusNode,
     this.autofocus = false,
     this.onChanged,
+    this.onSubmitted,
+    this.enabled = true,
+    this.textCapitalization = TextCapitalization.none,
+    this.textInputAction,
   });
 
   final TextEditingController controller;
@@ -115,6 +172,10 @@ class PaymentField extends StatelessWidget {
   final FocusNode? focusNode;
   final bool autofocus;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final bool enabled;
+  final TextCapitalization textCapitalization;
+  final TextInputAction? textInputAction;
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +196,10 @@ class PaymentField extends StatelessWidget {
               keyboardType: keyboardType,
               inputFormatters: inputFormatters,
               onChanged: onChanged,
+              onSubmitted: onSubmitted,
+              enabled: enabled,
+              textCapitalization: textCapitalization,
+              textInputAction: textInputAction,
               cursorColor: AppColors.link,
               style:
                   AppText.medium16.copyWith(color: context.colors.textPrimary),
@@ -172,6 +237,7 @@ class PaymentSheetActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = PaymentSheetSkin.maybeOf(context);
     return Row(
       children: [
         Expanded(
@@ -199,6 +265,8 @@ class PaymentSheetActions extends StatelessWidget {
             text: primaryLabel,
             loading: busy,
             onPressed: onPrimary,
+            gradient: skin?.gradient,
+            foreground: skin?.onGradient,
           ),
         ),
       ],

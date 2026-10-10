@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/utils/card_input_formatters.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
+import 'package:lumi_pass/common/utils/promo_error_message.dart';
+import 'package:lumi_pass/common/widget/payment_sheet_chrome.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
@@ -59,7 +61,12 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
     required this.onPaid,
     required this.onError,
     this.onShelfStale,
+    this.sheetSkin,
   }) : _host = host;
+
+  /// Dresses the card OTP sheet in the host screen's colours. Null is the
+  /// app's own look.
+  final PaymentSheetSkin? sheetSkin;
 
   final State _host;
 
@@ -87,6 +94,23 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
   /// Rail the buyer picked. Nothing is picked for them — buying asks first
   /// when this is null.
   PaymentSelection? payment;
+
+  /// The promocode applied to a pack, with the pack it was previewed against.
+  /// A discount is priced against ONE pack, so it never carries to another.
+  /// Loose coins take no code.
+  ({String packId, PromocodePreview preview})? _packPromo;
+
+  PromocodePreview? _promoFor(NewCoinPurchase purchase) {
+    final pack = purchase.pack;
+    final held = _packPromo;
+    return pack != null && held != null && held.packId == pack.id
+        ? held.preview
+        : null;
+  }
+
+  /// What [purchase] costs once its promocode (if any) is taken off.
+  num _payable(NewCoinPurchase purchase) =>
+      _promoFor(purchase)?.totalAmount ?? purchase.price;
 
   /// A redirect checkout the buyer was sent off to pay. Those rails open an
   /// external app, so the only signal back is the OS resuming us — at which
@@ -143,9 +167,36 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
     return picked;
   }
 
+  /// The code applied to [pack], or null.
+  PromocodePreview? promoFor(NewCoinPack pack) =>
+      _packPromo?.packId == pack.id ? _packPromo!.preview : null;
+
+  /// Previews [code] against [pack] and keeps it for the purchase. Returns the
+  /// refusal, in the buyer's language, or null once the code is applied.
+  ///
+  /// Only a preview: the code is checked again when the order is created.
+  Future<String?> applyPromo(NewCoinPack pack, String code) async {
+    try {
+      final preview = await _orders.validatePromocode(
+        code: code.trim().toUpperCase(),
+        subtotal: pack.price,
+        coinPackId: pack.id,
+      );
+      _set(() => _packPromo = (packId: pack.id, preview: preview));
+      return null;
+    } on DioException catch (e) {
+      return PromoErrorMessage.fromData(e.response?.data);
+    } catch (_) {
+      return 'promo_invalid'.tr();
+    }
+  }
+
+  void clearPromo() => _set(() => _packPromo = null);
+
   /// A Buy button: pays with the rail already picked, or opens the chooser and
   /// pays with whatever comes back. The buyer has pressed Buy either way, so
-  /// the pick completes that instruction.
+  /// the pick completes that instruction. A pack goes out with the code
+  /// applied to it, if there is one.
   Future<void> buy(NewCoinPurchase purchase, {String? cardBadge}) async {
     if (purchasing != null) return;
     final picked = payment ?? await choosePayment(cardBadge: cardBadge);
@@ -172,6 +223,7 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
         cardNumber: cardNumber,
         expireDate: expireDate,
         savedCardId: savedCardId,
+        promocode: _promoFor(purchase)?.code,
       );
     }
     return _repo.purchaseSingle(
@@ -194,9 +246,10 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
         'kind': purchase.pack?.kindKey ?? 'single',
         'coins': purchase.coins,
         'payment_provider': payment.rail.providerKey,
-        'amount': purchase.price,
+        'amount': _payable(purchase),
       },
     );
+    final promoSent = _promoFor(purchase) != null;
 
     final card = payment.rail == PaymentRail.card ? payment.card : null;
     final isRedirect = payment.rail != PaymentRail.card;
@@ -260,19 +313,31 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
     } catch (e) {
       if (!_mounted) return;
       _set(() => purchasing = null);
-      onError(_errorMessage(e));
+      onError(_errorMessage(e, promoSent: promoSent));
     }
   }
 
-  /// A coin refusal in the buyer's own language, else whatever the gateway
-  /// said, else the generic line.
-  String _errorMessage(Object e) {
+  /// A coin refusal in the buyer's own language, else a promocode refusal,
+  /// else whatever the gateway said, else the generic line.
+  ///
+  /// The preview in the sheet is only a preview: the code is checked again
+  /// when the order is created and can be refused there (expired meanwhile,
+  /// its last use taken). The stored code is then dropped, so the next Buy
+  /// goes out without it rather than failing the same way.
+  String _errorMessage(Object e, {bool promoSent = false}) {
     if (e is DioException) {
       final code = NewCoinErrorCode.fromResponse(e.response?.data);
       final key = code.messageKey;
       if (key != null) {
         onShelfStale?.call();
         return key.tr();
+      }
+      if (promoSent) {
+        final refusal = PromoErrorMessage.refusalFromData(e.response?.data);
+        if (refusal != null) {
+          _packPromo = null;
+          return refusal;
+        }
       }
     }
     return PaymentError.fromDio(e) ?? 'pay_generic_error'.tr();
@@ -294,6 +359,7 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
       transactionId: transactionId,
       cid: cid,
       otpSentPhone: otpSentPhone,
+      skin: sheetSkin,
       confirmCard: ({
         required String transactionId,
         required String cid,
@@ -349,6 +415,10 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
     _settling = true;
     _pollTimer?.cancel();
     _pending = null;
+    // Read before the code is dropped: it is spent now, and must not ride
+    // along on the next purchase of the same pack.
+    final expected = _payable(purchase);
+    if (_promoFor(purchase) != null) _packPromo = null;
 
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.paymentSucceeded,
@@ -358,7 +428,7 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
         // What was actually charged. AppsFlyer maps this onto af_revenue —
         // without it the purchase lands in the dashboard as a zero-value
         // conversion.
-        'amount': result.totalAmount == 0 ? purchase.price : result.totalAmount,
+        'amount': result.totalAmount == 0 ? expected : result.totalAmount,
         'currency': result.currency,
       },
     );

@@ -679,14 +679,17 @@ class NewCoinsBuyBar extends StatelessWidget {
   const NewCoinsBuyBar({
     super.key,
     required this.tone,
-    required this.price,
     required this.isLoading,
     required this.onBuy,
+    this.price,
     this.dots,
   });
 
   final NewCoinTone tone;
-  final num price;
+
+  /// Shown on a chip beside the label. Null leaves the label alone — the
+  /// checkout page states the sum just above the bar and need not repeat it.
+  final num? price;
   final bool isLoading;
   final VoidCallback? onBuy;
 
@@ -696,6 +699,7 @@ class NewCoinsBuyBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dots = this.dots;
+    final price = this.price;
     return Container(
       padding: EdgeInsets.fromLTRB(
         16.w,
@@ -757,22 +761,24 @@ class NewCoinsBuyBar extends StatelessWidget {
                           style:
                               AppText.semibold16.copyWith(color: tone.onAccent),
                         ),
-                        10.kw,
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 9.w,
-                            vertical: 4.h,
+                        if (price != null) ...[
+                          10.kw,
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 9.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: tone.onAccent.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Text(
+                              price.toRawUzsPrice(),
+                              style: AppText.semibold14
+                                  .copyWith(color: tone.onAccent),
+                            ),
                           ),
-                          decoration: BoxDecoration(
-                            color: tone.onAccent.withValues(alpha: 0.16),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Text(
-                            price.toRawUzsPrice(),
-                            style: AppText.semibold14
-                                .copyWith(color: tone.onAccent),
-                          ),
-                        ),
+                        ],
                       ],
                     ),
             ),
