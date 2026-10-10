@@ -45,8 +45,13 @@ mixin _$HomeBuildable {
   /// build time (see [DayBooking.stillToCome]) rather than being baked in
   /// here at fetch time. Empty for a signed-out user, for whom the orders
   /// endpoint is never called.
-  List<DayBooking> get todayBookings =>
-      throw _privateConstructorUsedError; // Location
+  List<DayBooking> get todayBookings => throw _privateConstructorUsedError;
+
+  /// Centres near the user — the round-photo shelf that interrupts "Near
+  /// you". Its own request, like the packet's: the home feed carries
+  /// activities, never the places themselves. Empty until it lands and when
+  /// it fails, in which case the shelf is simply not dealt into the feed.
+  List<HomBranch> get centres => throw _privateConstructorUsedError; // Location
   double? get lat => throw _privateConstructorUsedError;
   double? get lng =>
       throw _privateConstructorUsedError; // Pagination for new classes
@@ -92,6 +97,7 @@ abstract class $HomeBuildableCopyWith<$Res> {
       List<HomCategory>? categories,
       PromoCampaign? packet,
       List<DayBooking> todayBookings,
+      List<HomBranch> centres,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -128,6 +134,7 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? categories = freezed,
     Object? packet = freezed,
     Object? todayBookings = null,
+    Object? centres = null,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -170,6 +177,10 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
           ? _value.todayBookings
           : todayBookings // ignore: cast_nullable_to_non_nullable
               as List<DayBooking>,
+      centres: null == centres
+          ? _value.centres
+          : centres // ignore: cast_nullable_to_non_nullable
+              as List<HomBranch>,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -250,6 +261,7 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       List<HomCategory>? categories,
       PromoCampaign? packet,
       List<DayBooking> todayBookings,
+      List<HomBranch> centres,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -285,6 +297,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? categories = freezed,
     Object? packet = freezed,
     Object? todayBookings = null,
+    Object? centres = null,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -327,6 +340,10 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           ? _value._todayBookings
           : todayBookings // ignore: cast_nullable_to_non_nullable
               as List<DayBooking>,
+      centres: null == centres
+          ? _value._centres
+          : centres // ignore: cast_nullable_to_non_nullable
+              as List<HomBranch>,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -390,6 +407,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       final List<HomCategory>? categories,
       this.packet,
       final List<DayBooking> todayBookings = const [],
+      final List<HomBranch> centres = const [],
       this.lat = null,
       this.lng = null,
       final List<HomClass> newClassesList = const [],
@@ -404,6 +422,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.hasMoreNearClasses = true})
       : _categories = categories,
         _todayBookings = todayBookings,
+        _centres = centres,
         _newClassesList = newClassesList,
         _subscriptionList = subscriptionList,
         _coursesList = coursesList,
@@ -470,6 +489,24 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     if (_todayBookings is EqualUnmodifiableListView) return _todayBookings;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_todayBookings);
+  }
+
+  /// Centres near the user — the round-photo shelf that interrupts "Near
+  /// you". Its own request, like the packet's: the home feed carries
+  /// activities, never the places themselves. Empty until it lands and when
+  /// it fails, in which case the shelf is simply not dealt into the feed.
+  final List<HomBranch> _centres;
+
+  /// Centres near the user — the round-photo shelf that interrupts "Near
+  /// you". Its own request, like the packet's: the home feed carries
+  /// activities, never the places themselves. Empty until it lands and when
+  /// it fails, in which case the shelf is simply not dealt into the feed.
+  @override
+  @JsonKey()
+  List<HomBranch> get centres {
+    if (_centres is EqualUnmodifiableListView) return _centres;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_centres);
   }
 
 // Location
@@ -561,7 +598,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, todayBookings: $todayBookings, lat: $lat, lng: $lng, newClassesList: $newClassesList, subscriptionList: $subscriptionList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, todayBookings: $todayBookings, centres: $centres, lat: $lat, lng: $lng, newClassesList: $newClassesList, subscriptionList: $subscriptionList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -581,6 +618,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
             (identical(other.packet, packet) || other.packet == packet) &&
             const DeepCollectionEquality()
                 .equals(other._todayBookings, _todayBookings) &&
+            const DeepCollectionEquality().equals(other._centres, _centres) &&
             (identical(other.lat, lat) || other.lat == lat) &&
             (identical(other.lng, lng) || other.lng == lng) &&
             const DeepCollectionEquality()
@@ -615,6 +653,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
         const DeepCollectionEquality().hash(_categories),
         packet,
         const DeepCollectionEquality().hash(_todayBookings),
+        const DeepCollectionEquality().hash(_centres),
         lat,
         lng,
         const DeepCollectionEquality().hash(_newClassesList),
@@ -645,6 +684,7 @@ abstract class _HomeBuildable implements HomeBuildable {
       final List<HomCategory>? categories,
       final PromoCampaign? packet,
       final List<DayBooking> todayBookings,
+      final List<HomBranch> centres,
       final double? lat,
       final double? lng,
       final List<HomClass> newClassesList,
@@ -695,6 +735,13 @@ abstract class _HomeBuildable implements HomeBuildable {
   /// here at fetch time. Empty for a signed-out user, for whom the orders
   /// endpoint is never called.
   List<DayBooking> get todayBookings;
+  @override
+
+  /// Centres near the user — the round-photo shelf that interrupts "Near
+  /// you". Its own request, like the packet's: the home feed carries
+  /// activities, never the places themselves. Empty until it lands and when
+  /// it fails, in which case the shelf is simply not dealt into the feed.
+  List<HomBranch> get centres;
   @override // Location
   double? get lat;
   @override

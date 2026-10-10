@@ -1493,3 +1493,11 @@ child_interests_title,Чем увлекается ваш ребёнок?,Farzand
 parent_needs_title,Что вы ищете?,Siz nimani qidiryapsiz?,What are you looking for?
 child_interests_required,Выберите хотя бы один вариант,Kamida bittasini tanlang,Pick at least one
 for_child,Для {},{} uchun,For {}
+home_discounts_title,Со скидкой,Chegirma bilan,On sale
+home_centres_title,Центры рядом,Yaqin markazlar,Centres nearby
+home_invite_title,Позовите друга,Do‘stingizni chaqiring,Bring a friend
+home_invite_subtitle,Он покупает — вы получаете скидку,U xarid qiladi — siz chegirma olasiz,"They buy, you get a discount"
+home_coins_title,Один пакет — много занятий,Bitta paket — ko‘p mashg‘ulot,"One pack, many activities"
+home_coins_subtitle,Купите Lumi Coin и платите коинами,Lumi Coin oling va coin bilan to‘lang,Get Lumi Coin and pay with coins
+home_saved_title,"Сохраняйте, что понравилось",Yoqqanini saqlab qo‘ying,Save what you like
+home_saved_subtitle,Всё сохранённое — в одном месте,Saqlanganlar bir joyda turadi,"Everything you saved, in one place"

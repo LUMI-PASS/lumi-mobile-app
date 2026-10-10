@@ -38,6 +38,12 @@ class HomeBuildable with _$HomeBuildable {
     /// here at fetch time. Empty for a signed-out user, for whom the orders
     /// endpoint is never called.
     @Default([]) List<DayBooking> todayBookings,
+
+    /// Centres near the user — the round-photo shelf that interrupts "Near
+    /// you". Its own request, like the packet's: the home feed carries
+    /// activities, never the places themselves. Empty until it lands and when
+    /// it fails, in which case the shelf is simply not dealt into the feed.
+    @Default([]) List<HomBranch> centres,
     // Location
     @Default(null) double? lat,
     @Default(null) double? lng,

@@ -90,6 +90,13 @@ abstract final class AppColors {
   /// down: lighten it much further and the block stops reading as yellow and
   /// starts reading as an off-white rectangle for no reason.
   static const lightCoinBand = Color(0xFFFFF4C4);
+
+  /// Fills of the home feed's other coloured shelves — see
+  /// `AppColorScheme.trialBand` and `discountBand`. Pale for the same reason
+  /// [lightCoinBand] is: the cards on them are white, and the band only has
+  /// to say "this row is a different kind of thing".
+  static const lightTrialBand = Color(0xFFE2EAFF);
+  static const lightDiscountBand = Color(0xFFFFE1E9);
   static const lightControl = Color(0xFFF2F1F6);
   static const lightControlBorder = Color(0xFFE6E5EC);
   static const lightTextSecondary = Color(0xFF6E6D78);
@@ -107,6 +114,8 @@ abstract final class AppColors {
   /// app's own accent, which holds its hue at low brightness — with the gold
   /// left to the coins printed on the cards.
   static const darkCoinBand = Color(0xFF2C2244);
+  static const darkTrialBand = Color(0xFF1B2545);
+  static const darkDiscountBand = Color(0xFF3B1E2B);
   static const darkSurface = Color(0xFF202024);
   static const darkSurfaceRaised = Color(0xFF26252B);
   static const darkControl = Color(0xFF313039);

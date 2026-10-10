@@ -13,12 +13,18 @@ import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/constants/constants.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
+import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/home_feed_layout.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_feed_inserts.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/catgory_item_widget.dart';
 import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_banners.dart';
@@ -100,6 +106,17 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         state.nearClassesList.isEmpty;
     if (isEmpty) return _ConnectionErrorView(context.read<HomeCubit>());
 
+    // Laid out once per build and shared by the two places that need it: the
+    // near list itself, and the end-of-feed ad that stands down when the list
+    // has already dealt one.
+    final slots = layoutNearYou(
+      state.nearClassesList.length,
+      _inserts(context, state),
+    );
+    final adDealt = slots.any(
+      (slot) => slot is HomeInsertSlot && slot.insert == HomeInsert.ad,
+    );
+
     return RefreshIndicator(
       color: AppColors.brandPurple,
       onRefresh: () => context.read<HomeCubit>().getHome(),
@@ -168,42 +185,18 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                 ),
               ),
             if (state.nearClassesList.isNotEmpty)
-              ..._buildNearYou(context, state),
-            // "Реклама" — the last slot on the feed, full width.
-            //
-            // The packet gets it whenever one is on sale: it is the offer with
-            // a deadline on it, and the card quotes its real name, visit count
-            // and price straight off the live campaign, so the ad can never
-            // advertise a price marketing has already changed. A picture ad
-            // cannot do that — it says whatever it said the day it was
-            // uploaded.
-            //
-            // The adminka's own banner keeps the slot when there is no packet.
-            // That banner opens its OWN link (it used to send every tap to the
-            // plans screen regardless of what it advertised) and is left out
-            // entirely when it has none, rather than showing an ad that lies
-            // about where it goes. With neither, the slot simply isn't there.
-            if (state.packet != null)
+              ..._buildNearYou(context, state, slots),
+            // "Реклама" — normally dealt INTO the near list (see
+            // [_inserts]), where it is actually seen: that list paginates
+            // without end, so a card placed after it was a card nobody
+            // reached. It keeps this slot only on a feed too short to have
+            // dealt it — no near list, or fewer cards than it takes to get to
+            // its turn.
+            if (!adDealt && _adSlot(context, state) != null)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.only(top: 8.h),
-                  child: HomeAksiyaAdCard(
-                    campaign: state.packet!,
-                    onTap: () => context.router.push(AksiyaRoute()),
-                  ),
-                ),
-              )
-            else if (_adBanner(state) != null)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 8.h),
-                  child: HomeAdCard(
-                    imageUrl: _bannerSrc(_adBanner(state)!),
-                    onTap: () => openBanner(
-                      _adBanner(state)!,
-                      placement: BannerPlacement.homeAd,
-                    ),
-                  ),
+                  child: _adSlot(context, state),
                 ),
               ),
             SliverToBoxAdapter(
@@ -609,7 +602,104 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return '${Constants.assetsUrl}${banner.id ?? ''}';
   }
 
-  List<Widget> _buildNearYou(BuildContext context, HomeBuildable state) {
+  /// How many cards a coloured band needs before it is worth dealing. Under
+  /// this it is a wide panel with a card or two adrift in it.
+  static const int _bandMinimum = 3;
+
+  /// The most a band shows. A shelf to glance along, not a second catalogue.
+  static const int _bandMaximum = 10;
+
+  /// Everything the feed has loaded, each activity once — the pool the
+  /// coloured bands are picked from. No request of their own: a band is a
+  /// different cut of what is already on the page.
+  List<HomClass> _loaded(HomeBuildable state) {
+    final seen = <String>{};
+    return [
+      for (final c in [
+        ...state.newClassesList,
+        ...state.coursesList,
+        ...state.nearClassesList,
+      ])
+        if (c.id == null || seen.add(c.id!)) c,
+    ];
+  }
+
+  List<HomClass> _trials(HomeBuildable state) => _loaded(state)
+      .where((c) => c.trialEnabled ?? false)
+      .take(_bandMaximum)
+      .toList();
+
+  List<HomClass> _discounted(HomeBuildable state) => _loaded(state)
+      .where((c) => (c.discountPercentage ?? 0) > 0)
+      .take(_bandMaximum)
+      .toList();
+
+  /// What may interrupt "Near you" on THIS feed, in dealing order.
+  ///
+  /// Each entry is here only if it has something to show or somewhere to go:
+  /// a band needs its cards, a banner for an account feature needs an
+  /// account, the coin banner needs the coin feature to be live. Leaving one
+  /// out closes the gap — the next takes its turn — so the feed never holds
+  /// an empty panel or a banner that opens a dead end.
+  List<HomeInsert> _inserts(BuildContext context, HomeBuildable state) {
+    final signedIn = context.read<HomeCubit>().isSignedIn;
+    final coinsLive = watchNewCoins(context).isVisible;
+    return [
+      for (final insert in HomeInsert.values)
+        if (switch (insert) {
+          HomeInsert.inviteBanner => signedIn,
+          HomeInsert.categoryTiles => _categories(state).length >= 4,
+          HomeInsert.trialBand => _trials(state).length >= _bandMinimum,
+          HomeInsert.coinBanner => coinsLive,
+          HomeInsert.centres => state.centres.length >= _bandMinimum,
+          HomeInsert.discountBand => _discounted(state).length >= _bandMinimum,
+          HomeInsert.savedBanner => signedIn,
+          HomeInsert.ad => state.packet != null || _adBanner(state) != null,
+        })
+          insert,
+    ];
+  }
+
+  /// The feed's one advertisement, or null when there is nothing to advertise.
+  ///
+  /// The packet gets it whenever one is on sale: it is the offer with a
+  /// deadline on it, and the card quotes its real name, visit count and price
+  /// straight off the live campaign, so the ad can never advertise a price
+  /// marketing has already changed. A picture ad cannot do that — it says
+  /// whatever it said the day it was uploaded.
+  ///
+  /// The adminka's own banner takes it when there is no packet. That banner
+  /// opens its OWN link and is left out entirely when it has none, rather
+  /// than showing an ad that lies about where it goes.
+  Widget? _adSlot(BuildContext context, HomeBuildable state) {
+    final packet = state.packet;
+    if (packet != null) {
+      return HomeAksiyaAdCard(
+        campaign: packet,
+        onTap: () => context.router.push(AksiyaRoute()),
+      );
+    }
+    final banner = _adBanner(state);
+    if (banner == null) return null;
+    return HomeAdCard(
+      imageUrl: _bannerSrc(banner),
+      onTap: () => openBanner(banner, placement: BannerPlacement.homeAd),
+    );
+  }
+
+  /// "Near you", opening in runs of two or three cards with something else
+  /// between each run, each insert shown once — see [layoutNearYou].
+  ///
+  /// It used to be one unbroken list: a screen and a half of identical cards,
+  /// then another, without end. The cards are the same and in the same order;
+  /// what changed is that the eye gets a different shape every few rows — a
+  /// coupon, a band of colour, a grid of tiles — which is also the only place
+  /// on the feed the app's own features are ever mentioned.
+  List<Widget> _buildNearYou(
+    BuildContext context,
+    HomeBuildable state,
+    List<HomeFeedSlot> slots,
+  ) {
     return [
       SliverToBoxAdapter(
         child: Column(
@@ -623,29 +713,33 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       ),
       SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final isLast = index == state.nearClassesList.length - 1;
+          (context, i) {
+            final slot = slots[i];
+            final isLast = i == slots.length - 1;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                HomeNearbyCard(
-                  key: ValueKey(state.nearClassesList[index].id ?? index),
-                  homClass: state.nearClassesList[index],
-                  // "Near you" carries courses as well as activities, so the
-                  // price is dropped per entry rather than for the list.
-                  showPrice: _showsPrice(state.nearClassesList[index]),
-                  onViewAsReels: () =>
-                      _openShorts(context, state.nearClassesList, index),
-                ),
-                // Each card now carries its own frosted edge and shadow, so
-                // the gap alone separates one entry from the next — the rule
-                // that used to sit here would only fight that edge. The last
-                // one gets less air: there is nothing after it to divide from.
+                switch (slot) {
+                  HomeNearSlot(:final index) => HomeNearbyCard(
+                      key: ValueKey(state.nearClassesList[index].id ?? index),
+                      homClass: state.nearClassesList[index],
+                      // "Near you" carries courses as well as activities, so
+                      // the price is dropped per entry rather than for the
+                      // list.
+                      showPrice: _showsPrice(state.nearClassesList[index]),
+                      onViewAsReels: () =>
+                          _openShorts(context, state.nearClassesList, index),
+                    ),
+                  HomeInsertSlot() => _buildInsert(context, state, slot),
+                },
+                // Each card carries its own frosted edge and shadow, so the
+                // gap alone separates one entry from the next. The last one
+                // gets less air: there is nothing after it to divide from.
                 if (!isLast) 16.verticalSpace else 12.verticalSpace,
               ],
             );
           },
-          childCount: state.nearClassesList.length,
+          childCount: slots.length,
         ),
       ),
       if (state.isLoadingNearClasses)
@@ -656,6 +750,128 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           ),
         ),
     ];
+  }
+
+  Widget _buildInsert(
+    BuildContext context,
+    HomeBuildable state,
+    HomeInsertSlot slot,
+  ) {
+    switch (slot.insert) {
+      case HomeInsert.inviteBanner:
+        return HomeTicketBanner(
+          color: AppColors.brandPurple,
+          title: 'home_invite_title'.tr(),
+          subtitle: 'home_invite_subtitle'.tr(),
+          art: Assets.images.banner.bannerInvite,
+          onTap: () => context.router.push(const ReferralRoute()),
+        );
+      case HomeInsert.coinBanner:
+        return HomeTicketBanner(
+          color: AppColors.coinGold,
+          // White cannot be read on gold.
+          onColor: AppColors.ink,
+          title: 'home_coins_title'.tr(),
+          subtitle: 'home_coins_subtitle'.tr(),
+          art: Assets.images.banner.bannerCoins,
+          onTap: () => context.router.push(NewCoinsRoute()),
+        );
+      case HomeInsert.savedBanner:
+        return HomeTicketBanner(
+          color: AppColors.brandPink,
+          title: 'home_saved_title'.tr(),
+          subtitle: 'home_saved_subtitle'.tr(),
+          art: Assets.images.banner.bannerSaved,
+          onTap: () => context.router.push(const SavedActivitiesRoute()),
+        );
+      case HomeInsert.categoryTiles:
+        return HomeCategoryTiles(
+          categories: _categories(state).take(4).toList(),
+          onTap: (category) => context.router.push(
+            SearchDiscoveryRoute(initialCategory: category),
+          ),
+        );
+      case HomeInsert.trialBand:
+        return _buildBand(
+          context,
+          title: 'trial_lessons'.tr(),
+          list: _trials(state),
+          color: context.colors.trialBand,
+          storageKey: 'trial-band',
+        );
+      case HomeInsert.discountBand:
+        return _buildBand(
+          context,
+          title: 'home_discounts_title'.tr(),
+          list: _discounted(state),
+          color: context.colors.discountBand,
+          storageKey: 'discount-band',
+        );
+      case HomeInsert.centres:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            HomeSectionHeader(
+              title: 'home_centres_title'.tr(),
+              onViewAll: () => context.router.push(BranchesMapRoute()),
+              viewAllLabel: 'centers_on_map'.tr(),
+            ),
+            12.verticalSpace,
+            HomeCentresShelf(branches: state.centres),
+          ],
+        );
+      case HomeInsert.ad:
+        // [_inserts] deals this only when there is one.
+        return _adSlot(context, state) ?? const SizedBox.shrink();
+    }
+  }
+
+  /// A full-width block of colour holding one horizontal row of cards — the
+  /// shape [_buildSubscription] introduced, for the bands dealt into "Near
+  /// you". Edge to edge and unbordered for the reasons given there.
+  ///
+  /// Unlike that row it does not paginate: its cards are a cut of what the
+  /// feed already loaded (see [_loaded]), so there is no next page to ask for.
+  Widget _buildBand(
+    BuildContext context, {
+    required String title,
+    required List<HomClass> list,
+    required Color color,
+    required String storageKey,
+  }) {
+    final rowH = 126.h + 14.h + 118.h + HomeCourseCard.cardedExtraHeight;
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 16.h),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(24.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          HomeSectionHeader(title: title),
+          12.verticalSpace,
+          SizedBox(
+            height: rowH,
+            child: ListView.builder(
+              key: PageStorageKey(storageKey),
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.only(left: 8.w, right: 16.w),
+              itemCount: list.length,
+              itemBuilder: (context, index) => HomeCourseCard(
+                key: ValueKey('$storageKey-${list[index].id ?? index}'),
+                homClass: list[index],
+                margin: EdgeInsets.only(left: 8.w),
+                carded: true,
+                showDistance: false,
+                showPrice: _showsPrice(list[index]),
+                onViewAsReels: () => _openShorts(context, list, index),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _openShorts(BuildContext context, List<HomClass> feed, int index) {

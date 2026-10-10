@@ -206,6 +206,9 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
 
     // Load home feed, the full category list and the packet concurrently.
     await Future.wait([getHome(), _loadAllCategories(), _loadPacket()]);
+    // After the location is known, and off the first paint: the shelf sits
+    // well below the fold.
+    unawaited(_loadCentres());
 
     // Now that home has rendered, ask for the permission — once, ever. Nothing
     // is awaited by the caller: whether the user grants, refuses or ignores the
@@ -283,6 +286,27 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       build((b) => b.copyWith(packet: all.isEmpty ? null : all.first));
     } catch (_) {}
   }
+
+  /// Fetches the centres shelf — see [HomeBuildable.centres]. Asked from the
+  /// same place the near list is measured from, so the two agree on what
+  /// "near" means. Keeps the last good list on failure.
+  Future<void> _loadCentres() async {
+    try {
+      final page = await _repo.getDiscoveryBranches(
+        page: 1,
+        limit: _pageLimit,
+        lat: _lat,
+        lng: _lng,
+      );
+      build((b) => b.copyWith(centres: page.branches));
+    } catch (_) {}
+  }
+
+  /// Whether there is an account behind this session. The feed's banners for
+  /// things only an account has — a referral code, a saved list — are left
+  /// out without one, rather than opening a screen that answers 401 and
+  /// throws the visitor at the login page.
+  bool get isSignedIn => _canReadOrders;
 
   /// Whether this device may ask the orders endpoint for anything.
   ///
@@ -446,6 +470,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     unawaited(_loadAllCategories());
     unawaited(_loadPacket());
     unawaited(_loadTodayBookings());
+    unawaited(_loadCentres());
     try {
       final data = await _repo.getHome(
         newClassesPage: 1,

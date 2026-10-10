@@ -12,6 +12,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.pageBg,
     required this.surface,
     required this.coinBand,
+    required this.trialBand,
+    required this.discountBand,
     required this.bottomBar,
     required this.progressTrack,
     required this.control,
@@ -65,6 +67,15 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   /// of colour that says the row is what a coin pack buys. Gold in light, a
   /// deep purple in dark: see [AppColors.lightCoinBand] and `darkCoinBand`.
   final Color coinBand;
+
+  /// Fill of the home feed's "trial lessons" band — one of the coloured
+  /// shelves that break up the "Near you" list. A cool tone, so it cannot be
+  /// taken for [coinBand] a few rows above it.
+  final Color trialBand;
+
+  /// Fill of the home feed's "discounts" band. Warm pink — the discount tag's
+  /// own family — and distinct from both [coinBand] and [trialBand].
+  final Color discountBand;
 
   /// Sticky bottom action bars — one step above [surface] in dark so the bar
   /// lifts off the page.
@@ -147,6 +158,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     pageBg: AppColors.lightCanvas,
     surface: AppColors.white,
     coinBand: AppColors.lightCoinBand,
+    trialBand: AppColors.lightTrialBand,
+    discountBand: AppColors.lightDiscountBand,
     bottomBar: AppColors.white,
     progressTrack: AppColors.inkChip,
     control: AppColors.lightControl,
@@ -179,6 +192,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     pageBg: AppColors.ink,
     surface: AppColors.darkSurface,
     coinBand: AppColors.darkCoinBand,
+    trialBand: AppColors.darkTrialBand,
+    discountBand: AppColors.darkDiscountBand,
     bottomBar: AppColors.darkSurfaceRaised,
     progressTrack: AppColors.chipGrey,
     control: AppColors.darkControl,
@@ -224,6 +239,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? pageBg,
     Color? surface,
     Color? coinBand,
+    Color? trialBand,
+    Color? discountBand,
     Color? bottomBar,
     Color? progressTrack,
     Color? control,
@@ -255,6 +272,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       pageBg: pageBg ?? this.pageBg,
       surface: surface ?? this.surface,
       coinBand: coinBand ?? this.coinBand,
+      trialBand: trialBand ?? this.trialBand,
+      discountBand: discountBand ?? this.discountBand,
       bottomBar: bottomBar ?? this.bottomBar,
       progressTrack: progressTrack ?? this.progressTrack,
       control: control ?? this.control,
@@ -291,6 +310,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       pageBg: Color.lerp(pageBg, other.pageBg, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
       coinBand: Color.lerp(coinBand, other.coinBand, t)!,
+      trialBand: Color.lerp(trialBand, other.trialBand, t)!,
+      discountBand: Color.lerp(discountBand, other.discountBand, t)!,
       bottomBar: Color.lerp(bottomBar, other.bottomBar, t)!,
       progressTrack: Color.lerp(progressTrack, other.progressTrack, t)!,
       control: Color.lerp(control, other.control, t)!,

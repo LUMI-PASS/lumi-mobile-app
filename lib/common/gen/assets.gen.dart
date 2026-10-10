@@ -904,12 +904,25 @@ class $AssetsIconsShopGen {
 class $AssetsImagesBannerGen {
   const $AssetsImagesBannerGen();
 
+  /// File path: assets/images/banner/banner_coins.png
+  AssetGenImage get bannerCoins =>
+      const AssetGenImage('assets/images/banner/banner_coins.png');
+
+  /// File path: assets/images/banner/banner_invite.png
+  AssetGenImage get bannerInvite =>
+      const AssetGenImage('assets/images/banner/banner_invite.png');
+
+  /// File path: assets/images/banner/banner_saved.png
+  AssetGenImage get bannerSaved =>
+      const AssetGenImage('assets/images/banner/banner_saved.png');
+
   /// File path: assets/images/banner/banner_ticket_percentage.png
   AssetGenImage get bannerTicketPercentage =>
       const AssetGenImage('assets/images/banner/banner_ticket_percentage.png');
 
   /// List of all assets
-  List<AssetGenImage> get values => [bannerTicketPercentage];
+  List<AssetGenImage> get values =>
+      [bannerCoins, bannerInvite, bannerSaved, bannerTicketPercentage];
 }
 
 class $AssetsImagesMascotGen {
