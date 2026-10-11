@@ -400,6 +400,20 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
+  Future<HomBranch?> getBranch(String branchId) async {
+    try {
+      final res = await _api.getBranch(branchId);
+      final json = (res.data is Map ? (res.data as Map)['data'] : null);
+      if (json is! Map) return null;
+      return HomBranch.fromJson(Map<String, dynamic>.from(json));
+    } catch (_) {
+      // Swallowed on purpose: every caller is filling in an extra, and a page
+      // that already has its centre must not fail over one.
+      return null;
+    }
+  }
+
+  @override
   Future<ExploreResult> explore({
     int page = 1,
     int limit = 10,

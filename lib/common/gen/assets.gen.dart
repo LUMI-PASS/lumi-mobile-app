@@ -242,6 +242,7 @@ class $AssetsIconsGen {
       const SvgGenImage('assets/icons/search_unselected.svg');
 
   $AssetsIconsShopGen get shop => const $AssetsIconsShopGen();
+  $AssetsIconsSocialGen get social => const $AssetsIconsSocialGen();
 
   /// File path: assets/icons/sucess.svg
   SvgGenImage get sucess => const SvgGenImage('assets/icons/sucess.svg');
@@ -909,6 +910,33 @@ class $AssetsIconsShopGen {
 
   /// List of all assets
   List<SvgGenImage> get values => [bag, cart, mapPin, orders, products];
+}
+
+class $AssetsIconsSocialGen {
+  const $AssetsIconsSocialGen();
+
+  /// File path: assets/icons/social/facebook.svg
+  SvgGenImage get facebook =>
+      const SvgGenImage('assets/icons/social/facebook.svg');
+
+  /// File path: assets/icons/social/instagram.svg
+  SvgGenImage get instagram =>
+      const SvgGenImage('assets/icons/social/instagram.svg');
+
+  /// File path: assets/icons/social/tiktok.svg
+  SvgGenImage get tiktok => const SvgGenImage('assets/icons/social/tiktok.svg');
+
+  /// File path: assets/icons/social/website.svg
+  SvgGenImage get website =>
+      const SvgGenImage('assets/icons/social/website.svg');
+
+  /// File path: assets/icons/social/youtube.svg
+  SvgGenImage get youtube =>
+      const SvgGenImage('assets/icons/social/youtube.svg');
+
+  /// List of all assets
+  List<SvgGenImage> get values =>
+      [facebook, instagram, tiktok, website, youtube];
 }
 
 class $AssetsImagesBannerGen {

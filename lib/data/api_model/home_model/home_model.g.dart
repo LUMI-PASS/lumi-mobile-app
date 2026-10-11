@@ -217,6 +217,7 @@ _$HomClassImpl _$$HomClassImplFromJson(Map<String, dynamic> json) =>
       forChildName: json['for_child_name'] as String?,
       isActive: json['is_active'] as bool?,
       isVisible: json['is_visible'] as bool?,
+      isCatalog: json['is_catalog'] as bool?,
       hasPhoto: json['has_photo'] as bool?,
       image: json['image'] as String?,
       distance: (json['distance'] as num?)?.toDouble(),
@@ -258,6 +259,7 @@ Map<String, dynamic> _$$HomClassImplToJson(_$HomClassImpl instance) =>
       'for_child_name': instance.forChildName,
       'is_active': instance.isActive,
       'is_visible': instance.isVisible,
+      'is_catalog': instance.isCatalog,
       'has_photo': instance.hasPhoto,
       'image': instance.image,
       'distance': instance.distance,
@@ -406,6 +408,10 @@ _$HomBranchImpl _$$HomBranchImplFromJson(Map<String, dynamic> json) =>
       images:
           (json['images'] as List<dynamic>?)?.map((e) => e as String).toList(),
       videoUrl: json['video_url'] as String?,
+      isCatalog: json['is_catalog'] as bool?,
+      socials: json['socials'] == null
+          ? null
+          : CentreSocials.fromJson(json['socials'] as Map<String, dynamic>),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
@@ -428,6 +434,8 @@ Map<String, dynamic> _$$HomBranchImplToJson(_$HomBranchImpl instance) =>
       'image': instance.image,
       'images': instance.images,
       'video_url': instance.videoUrl,
+      'is_catalog': instance.isCatalog,
+      'socials': instance.socials,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
       'deleted_at': instance.deletedAt,

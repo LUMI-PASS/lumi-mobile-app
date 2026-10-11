@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lumi_pass/data/api_model/socials/centre_socials.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
 
 part 'home_model.freezed.dart';
@@ -181,6 +182,17 @@ class HomClass with _$HomClass {
     /// and still opens — only booking is closed, which the detail screen says
     /// on its CTA. Absent counts as visible.
     bool? isVisible,
+
+    /// True for a CATALOGUE listing: a venue Lumi listed itself from a public
+    /// directory rather than one that signed up. There is no contract behind
+    /// it and nothing on it to sell, so the detail page draws NO bottom bar at
+    /// all — not even the "booking available soon" one — and offers the
+    /// centre's own social accounts instead. Absent counts as a real partner.
+    ///
+    /// Carried on the card as well as on the detail payload so the page knows
+    /// on its first frame, before `/classes/:id` lands, that there is no
+    /// button to draw.
+    bool? isCatalog,
     bool? hasPhoto,
     String? image,
     double? distance,
@@ -404,6 +416,16 @@ class HomBranch with _$HomBranch {
     /// The centre's own "how to find us" clip, played from the branch page
     /// beside the map strip. A plain link — the player resolves the provider.
     String? videoUrl,
+
+    /// True for a CATALOGUE centre — see [HomClass.isCatalog]. Nothing at this
+    /// venue is bookable.
+    bool? isCatalog,
+
+    /// Where this centre can be found outside the app. Only a catalogue centre
+    /// has any, and only `branches/:id/mobile` answers them — they take a join
+    /// through to the owning brand, so the feed's cards carry nothing here.
+    /// That is why the branch page refreshes itself on open.
+    CentreSocials? socials,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,

@@ -136,6 +136,15 @@ abstract class HomeRepository {
     int limit = 10,
   });
 
+  /// One centre, mapped the way the feed maps it.
+  ///
+  /// The branch page is handed its centre and normally fetches nothing — but
+  /// a CATALOGUE centre's social accounts are not on the feed's cards (they
+  /// take a join through to the owning brand, which a card has no use for), so
+  /// the page asks for them here. Null when the centre could not be loaded,
+  /// which leaves the page exactly as complete as it already was.
+  Future<HomBranch?> getBranch(String branchId);
+
   Future<ExploreResult> explore({
     int page = 1,
     int limit = 10,

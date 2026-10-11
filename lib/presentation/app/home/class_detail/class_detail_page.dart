@@ -23,6 +23,7 @@ import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
+import 'package:lumi_pass/common/widget/detail/socials_card.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/utils/promo_pass_coverage.dart';
@@ -33,6 +34,7 @@ import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/route_video_tile.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
+import 'package:lumi_pass/data/api_model/socials/centre_socials.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
@@ -212,8 +214,24 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   bool get _isBookable {
     final listed = widget.classModel;
     if (listed.isActive == false || listed.isVisible == false) return false;
+    if (_isCatalog) return false;
     return _full?.isBookable ?? true;
   }
+
+  /// Whether this is a CATALOGUE listing — a venue Lumi listed itself from a
+  /// public directory, with no contract behind it and nothing on it to sell.
+  ///
+  /// Read from the card first so the answer is right on the FIRST frame: the
+  /// bottom bar is not drawn at all for one of these, and a Book button that
+  /// appears for the half-second before `/classes/:id` lands and then vanishes
+  /// is worse than either outcome. Either payload saying yes is enough.
+  bool get _isCatalog =>
+      widget.classModel.isCatalog == true || _full?.isCatalog == true;
+
+  /// The centre's own accounts, which stand in for the Book button on a
+  /// catalogue row. Only `/classes/:id` carries them, so this is empty until
+  /// it lands — and empty for a real partner, always.
+  CentreSocials get _socials => _full?.socials ?? CentreSocials.empty;
 
   // ─── Venue coordinates ────────────────────────────────────────────────────
   /// Where the class actually takes place, for the route sheet. The list model
@@ -738,6 +756,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   Future<void> _openBooking() async {
     final full = _full;
+    // Unreachable while the bar is drawn from [_isBookable] — belt and braces
+    // for a class that turns out to be a catalogue listing, which has no
+    // contract and no price behind it and would fail at checkout.
+    if (_isCatalog) return;
     if (full == null || (full.pricesSummary.isEmpty && full.ageTiers.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('cta_loading'.tr())),
@@ -927,7 +949,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     // and not its trial lessons — so a course carries no bottom bar. An INTAKE
     // keeps one: its button joins a waiting list, which costs nothing and is
     // the only thing there is to do on a group that is still filling up.
-    final hasBottomBar = !_isCourse || _isIntake;
+    // A CATALOGUE listing gets none either, and for a different reason: there
+    // is nothing to sell. Not even the inert "booking available soon" bar —
+    // that promises a sale that is never coming. The centre's own accounts
+    // take its place in the cards below.
+    final hasBottomBar = (!_isCourse || _isIntake) && !_isCatalog;
     final notes =
         full == null ? const <String>[] : _bullets(full.importantNotes);
     final requiredItems =
@@ -942,6 +968,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         key: const ValueKey<String>('class-detail-main'),
         child: _mainCard(c, title, branchTitle),
       ),
+      // The centre's own accounts — Instagram, Telegram, website. A catalogue
+      // row has no bottom bar, so this card is the only thing on the page a
+      // parent can act on; it goes directly under the title rather than at the
+      // bottom with the small print.
+      if (_socials.openable.isNotEmpty)
+        _detailSection(
+          'class-detail-socials',
+          CentreSocialsCard(
+            c: c,
+            socials: _socials,
+            hint: 'detail_socials_hint'.tr(),
+          ),
+        ),
       // The "Guruhlar" card is gone: a course is no longer presented as the
       // groups it is split into. It used to carry four things at once — the
       // group picker, the timetable, the price and the trial ladder — so what

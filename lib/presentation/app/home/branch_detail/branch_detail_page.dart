@@ -15,6 +15,7 @@ import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
+import 'package:lumi_pass/common/widget/detail/socials_card.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/location_preview_map.dart';
@@ -22,6 +23,7 @@ import 'package:lumi_pass/common/widget/map_route_sheet.dart';
 import 'package:lumi_pass/common/widget/route_video_tile.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/socials/centre_socials.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/common/widget/save_heart_icon.dart';
 import 'package:lumi_pass/data/service/saved_activity_store.dart';
@@ -91,6 +93,15 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
   /// is resolved once.
   late final List<String> _gallery = _resolveGallery();
 
+  /// The centre's accounts outside the app — Instagram, Telegram, website.
+  ///
+  /// Only a CATALOGUE centre has any (one Lumi listed from a public directory,
+  /// where nothing is bookable), and only the branch endpoint answers them:
+  /// they live on the owning brand, so the feed's cards do not pay for the
+  /// join. A centre reached by deep link therefore arrives with them already,
+  /// and one tapped on the feed fills them in — see [_loadSocials].
+  late CentreSocials _socials = widget.branch.socials ?? CentreSocials.empty;
+
   List<HomClass> _classes = [];
   bool _isLoadingClasses = true;
   String? _classesError;
@@ -107,6 +118,7 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
   void initState() {
     super.initState();
     _loadClasses();
+    _loadSocials();
     _startAutoSlide();
     _scrollController.addListener(_onScroll);
     // This centre's offerings include courses, and a course card is priced per
@@ -202,6 +214,21 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
   /// itself when `append` is false.
   void _reloadClasses() {
     if (mounted) _loadClasses();
+  }
+
+  /// Fills in [_socials] for a catalogue centre that arrived without them.
+  ///
+  /// Nothing to do for a real partner — whose accounts the app deliberately
+  /// does not publish, so the endpoint sends none — nor for a centre that
+  /// already has them, so the page costs no extra request in either case.
+  Future<void> _loadSocials() async {
+    final id = widget.branch.id;
+    if (id == null || id.isEmpty) return;
+    if (widget.branch.isCatalog != true || _socials.isNotEmpty) return;
+    final branch = await getIt<HomeRepository>().getBranch(id);
+    final socials = branch?.socials;
+    if (!mounted || socials == null || socials.isEmpty) return;
+    setState(() => _socials = socials);
   }
 
   Future<void> _loadClasses({int page = 1, bool append = false}) async {
@@ -308,6 +335,18 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                   child: Column(
                     children: [
                       _aboutCard(c, b, description),
+                      // A catalogue centre cannot be booked through Lumi, so
+                      // its own accounts are the only way to reach it. Right
+                      // under the address, where "how do I contact this place"
+                      // is asked.
+                      if (_socials.openable.isNotEmpty) ...[
+                        6.verticalSpace,
+                        CentreSocialsCard(
+                          c: c,
+                          socials: _socials,
+                          hint: 'detail_socials_hint'.tr(),
+                        ),
+                      ],
                       20.verticalSpace,
                     ],
                   ),

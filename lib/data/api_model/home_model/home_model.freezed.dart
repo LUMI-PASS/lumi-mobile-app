@@ -2198,6 +2198,17 @@ mixin _$HomClass {
   /// and still opens — only booking is closed, which the detail screen says
   /// on its CTA. Absent counts as visible.
   bool? get isVisible => throw _privateConstructorUsedError;
+
+  /// True for a CATALOGUE listing: a venue Lumi listed itself from a public
+  /// directory rather than one that signed up. There is no contract behind
+  /// it and nothing on it to sell, so the detail page draws NO bottom bar at
+  /// all — not even the "booking available soon" one — and offers the
+  /// centre's own social accounts instead. Absent counts as a real partner.
+  ///
+  /// Carried on the card as well as on the detail payload so the page knows
+  /// on its first frame, before `/classes/:id` lands, that there is no
+  /// button to draw.
+  bool? get isCatalog => throw _privateConstructorUsedError;
   bool? get hasPhoto => throw _privateConstructorUsedError;
   String? get image => throw _privateConstructorUsedError;
   double? get distance => throw _privateConstructorUsedError;
@@ -2285,6 +2296,7 @@ abstract class $HomClassCopyWith<$Res> {
       String? forChildName,
       bool? isActive,
       bool? isVisible,
+      bool? isCatalog,
       bool? hasPhoto,
       String? image,
       double? distance,
@@ -2339,6 +2351,7 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? forChildName = freezed,
     Object? isActive = freezed,
     Object? isVisible = freezed,
+    Object? isCatalog = freezed,
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? distance = freezed,
@@ -2422,6 +2435,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
       isVisible: freezed == isVisible
           ? _value.isVisible
           : isVisible // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isCatalog: freezed == isCatalog
+          ? _value.isCatalog
+          : isCatalog // ignore: cast_nullable_to_non_nullable
               as bool?,
       hasPhoto: freezed == hasPhoto
           ? _value.hasPhoto
@@ -2551,6 +2568,7 @@ abstract class _$$HomClassImplCopyWith<$Res>
       String? forChildName,
       bool? isActive,
       bool? isVisible,
+      bool? isCatalog,
       bool? hasPhoto,
       String? image,
       double? distance,
@@ -2604,6 +2622,7 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? forChildName = freezed,
     Object? isActive = freezed,
     Object? isVisible = freezed,
+    Object? isCatalog = freezed,
     Object? hasPhoto = freezed,
     Object? image = freezed,
     Object? distance = freezed,
@@ -2687,6 +2706,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
       isVisible: freezed == isVisible
           ? _value.isVisible
           : isVisible // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isCatalog: freezed == isCatalog
+          ? _value.isCatalog
+          : isCatalog // ignore: cast_nullable_to_non_nullable
               as bool?,
       hasPhoto: freezed == hasPhoto
           ? _value.hasPhoto
@@ -2800,6 +2823,7 @@ class _$HomClassImpl extends _HomClass {
       this.forChildName,
       this.isActive,
       this.isVisible,
+      this.isCatalog,
       this.hasPhoto,
       this.image,
       this.distance,
@@ -2864,6 +2888,18 @@ class _$HomClassImpl extends _HomClass {
   /// on its CTA. Absent counts as visible.
   @override
   final bool? isVisible;
+
+  /// True for a CATALOGUE listing: a venue Lumi listed itself from a public
+  /// directory rather than one that signed up. There is no contract behind
+  /// it and nothing on it to sell, so the detail page draws NO bottom bar at
+  /// all — not even the "booking available soon" one — and offers the
+  /// centre's own social accounts instead. Absent counts as a real partner.
+  ///
+  /// Carried on the card as well as on the detail payload so the page knows
+  /// on its first frame, before `/classes/:id` lands, that there is no
+  /// button to draw.
+  @override
+  final bool? isCatalog;
   @override
   final bool? hasPhoto;
   @override
@@ -2948,7 +2984,7 @@ class _$HomClassImpl extends _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, forChildName: $forChildName, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, newCoinPrice: $newCoinPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, forChildName: $forChildName, isActive: $isActive, isVisible: $isVisible, isCatalog: $isCatalog, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, newCoinPrice: $newCoinPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -2979,6 +3015,8 @@ class _$HomClassImpl extends _HomClass {
                 other.isActive == isActive) &&
             (identical(other.isVisible, isVisible) ||
                 other.isVisible == isVisible) &&
+            (identical(other.isCatalog, isCatalog) ||
+                other.isCatalog == isCatalog) &&
             (identical(other.hasPhoto, hasPhoto) ||
                 other.hasPhoto == hasPhoto) &&
             (identical(other.image, image) || other.image == image) &&
@@ -3042,6 +3080,7 @@ class _$HomClassImpl extends _HomClass {
         forChildName,
         isActive,
         isVisible,
+        isCatalog,
         hasPhoto,
         image,
         distance,
@@ -3097,6 +3136,7 @@ abstract class _HomClass extends HomClass {
       final String? forChildName,
       final bool? isActive,
       final bool? isVisible,
+      final bool? isCatalog,
       final bool? hasPhoto,
       final String? image,
       final double? distance,
@@ -3161,6 +3201,18 @@ abstract class _HomClass extends HomClass {
   /// and still opens — only booking is closed, which the detail screen says
   /// on its CTA. Absent counts as visible.
   bool? get isVisible;
+  @override
+
+  /// True for a CATALOGUE listing: a venue Lumi listed itself from a public
+  /// directory rather than one that signed up. There is no contract behind
+  /// it and nothing on it to sell, so the detail page draws NO bottom bar at
+  /// all — not even the "booking available soon" one — and offers the
+  /// centre's own social accounts instead. Absent counts as a real partner.
+  ///
+  /// Carried on the card as well as on the detail payload so the page knows
+  /// on its first frame, before `/classes/:id` lands, that there is no
+  /// button to draw.
+  bool? get isCatalog;
   @override
   bool? get hasPhoto;
   @override
@@ -4427,6 +4479,16 @@ mixin _$HomBranch {
   /// The centre's own "how to find us" clip, played from the branch page
   /// beside the map strip. A plain link — the player resolves the provider.
   String? get videoUrl => throw _privateConstructorUsedError;
+
+  /// True for a CATALOGUE centre — see [HomClass.isCatalog]. Nothing at this
+  /// venue is bookable.
+  bool? get isCatalog => throw _privateConstructorUsedError;
+
+  /// Where this centre can be found outside the app. Only a catalogue centre
+  /// has any, and only `branches/:id/mobile` answers them — they take a join
+  /// through to the owning brand, so the feed's cards carry nothing here.
+  /// That is why the branch page refreshes itself on open.
+  CentreSocials? get socials => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -4458,6 +4520,8 @@ abstract class $HomBranchCopyWith<$Res> {
       String? image,
       List<String>? images,
       String? videoUrl,
+      bool? isCatalog,
+      CentreSocials? socials,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -4491,6 +4555,8 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
     Object? image = freezed,
     Object? images = freezed,
     Object? videoUrl = freezed,
+    Object? isCatalog = freezed,
+    Object? socials = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -4556,6 +4622,14 @@ class _$HomBranchCopyWithImpl<$Res, $Val extends HomBranch>
           ? _value.videoUrl
           : videoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      isCatalog: freezed == isCatalog
+          ? _value.isCatalog
+          : isCatalog // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      socials: freezed == socials
+          ? _value.socials
+          : socials // ignore: cast_nullable_to_non_nullable
+              as CentreSocials?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -4596,6 +4670,8 @@ abstract class _$$HomBranchImplCopyWith<$Res>
       String? image,
       List<String>? images,
       String? videoUrl,
+      bool? isCatalog,
+      CentreSocials? socials,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -4627,6 +4703,8 @@ class __$$HomBranchImplCopyWithImpl<$Res>
     Object? image = freezed,
     Object? images = freezed,
     Object? videoUrl = freezed,
+    Object? isCatalog = freezed,
+    Object? socials = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -4692,6 +4770,14 @@ class __$$HomBranchImplCopyWithImpl<$Res>
           ? _value.videoUrl
           : videoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      isCatalog: freezed == isCatalog
+          ? _value.isCatalog
+          : isCatalog // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      socials: freezed == socials
+          ? _value.socials
+          : socials // ignore: cast_nullable_to_non_nullable
+              as CentreSocials?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -4728,6 +4814,8 @@ class _$HomBranchImpl implements _HomBranch {
       this.image,
       final List<String>? images,
       this.videoUrl,
+      this.isCatalog,
+      this.socials,
       this.createdAt,
       this.updatedAt,
       this.deletedAt})
@@ -4776,6 +4864,18 @@ class _$HomBranchImpl implements _HomBranch {
   /// beside the map strip. A plain link — the player resolves the provider.
   @override
   final String? videoUrl;
+
+  /// True for a CATALOGUE centre — see [HomClass.isCatalog]. Nothing at this
+  /// venue is bookable.
+  @override
+  final bool? isCatalog;
+
+  /// Where this centre can be found outside the app. Only a catalogue centre
+  /// has any, and only `branches/:id/mobile` answers them — they take a join
+  /// through to the owning brand, so the feed's cards carry nothing here.
+  /// That is why the branch page refreshes itself on open.
+  @override
+  final CentreSocials? socials;
   @override
   final String? createdAt;
   @override
@@ -4785,7 +4885,7 @@ class _$HomBranchImpl implements _HomBranch {
 
   @override
   String toString() {
-    return 'HomBranch(id: $id, title: $title, address: $address, landmark: $landmark, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, description: $description, distance: $distance, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, images: $images, videoUrl: $videoUrl, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomBranch(id: $id, title: $title, address: $address, landmark: $landmark, longitude: $longitude, latitude: $latitude, partnerId: $partnerId, managerId: $managerId, description: $description, distance: $distance, isActive: $isActive, hasPhoto: $hasPhoto, image: $image, images: $images, videoUrl: $videoUrl, isCatalog: $isCatalog, socials: $socials, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -4818,6 +4918,9 @@ class _$HomBranchImpl implements _HomBranch {
             const DeepCollectionEquality().equals(other._images, _images) &&
             (identical(other.videoUrl, videoUrl) ||
                 other.videoUrl == videoUrl) &&
+            (identical(other.isCatalog, isCatalog) ||
+                other.isCatalog == isCatalog) &&
+            (identical(other.socials, socials) || other.socials == socials) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -4828,26 +4931,29 @@ class _$HomBranchImpl implements _HomBranch {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      title,
-      address,
-      landmark,
-      longitude,
-      latitude,
-      partnerId,
-      managerId,
-      description,
-      distance,
-      isActive,
-      hasPhoto,
-      image,
-      const DeepCollectionEquality().hash(_images),
-      videoUrl,
-      createdAt,
-      updatedAt,
-      deletedAt);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        title,
+        address,
+        landmark,
+        longitude,
+        latitude,
+        partnerId,
+        managerId,
+        description,
+        distance,
+        isActive,
+        hasPhoto,
+        image,
+        const DeepCollectionEquality().hash(_images),
+        videoUrl,
+        isCatalog,
+        socials,
+        createdAt,
+        updatedAt,
+        deletedAt
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -4880,6 +4986,8 @@ abstract class _HomBranch implements HomBranch {
       final String? image,
       final List<String>? images,
       final String? videoUrl,
+      final bool? isCatalog,
+      final CentreSocials? socials,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomBranchImpl;
@@ -4920,6 +5028,18 @@ abstract class _HomBranch implements HomBranch {
   /// The centre's own "how to find us" clip, played from the branch page
   /// beside the map strip. A plain link — the player resolves the provider.
   String? get videoUrl;
+  @override
+
+  /// True for a CATALOGUE centre — see [HomClass.isCatalog]. Nothing at this
+  /// venue is bookable.
+  bool? get isCatalog;
+  @override
+
+  /// Where this centre can be found outside the app. Only a catalogue centre
+  /// has any, and only `branches/:id/mobile` answers them — they take a join
+  /// through to the owning brand, so the feed's cards carry nothing here.
+  /// That is why the branch page refreshes itself on open.
+  CentreSocials? get socials;
   @override
   String? get createdAt;
   @override

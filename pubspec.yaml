@@ -137,6 +137,7 @@ flutter:
     # assets/icons/ does not bundle assets/icons/shop/. Without this line every
     # shop glyph resolves to nothing and renders as an empty circle.
     - assets/icons/shop/
+    - assets/icons/social/
     - assets/images/
     - assets/images/banner/
     - assets/images/mascot/

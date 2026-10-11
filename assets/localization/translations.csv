@@ -846,6 +846,8 @@ sale,Акция,Aksiya,Sale
 buy_tickets,Купить билеты,Chiptalarni sotib olish,Buy tickets
 detail_location,Расположение,Manzilni ko'rish,Location
 detail_venue_contact,Контакты центра,Markaz kontaktlari,Contact the centre
+detail_socials,Соцсети центра,Markaz ijtimoiy tarmoqlari,Social accounts
+detail_socials_hint,Это заведение пока не принимает брони через Lumi — свяжитесь с ним напрямую.,Bu muassasa hozircha Lumi orqali bron qabul qilmaydi — u bilan to‘g‘ridan-to‘g‘ri bog‘laning.,This centre doesn't take bookings through Lumi yet — get in touch with them directly.
 order_back_to_activity,Вернуться к занятию,Mashg‘ulotga qaytish,Back to the activity
 detail_duration,Длительность,Davomiyligi,Duration
 detail_age,Возраст,Yosh,Age

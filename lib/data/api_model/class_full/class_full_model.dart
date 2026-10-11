@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
+import 'package:lumi_pass/data/api_model/socials/centre_socials.dart';
 
 /// Plain (non-freezed) model for the full /api/classes/:id response.
 /// Supports both the legacy flat prices_summary format and the new
@@ -28,6 +29,25 @@ class ClassFullModel {
   /// class is live; the discovery feed derives its `is_active` from exactly
   /// this. Absent counts as approved, same reasoning as [isVisible].
   final String? status;
+
+  /// Whether this is a CATALOGUE listing — a venue Lumi listed itself from a
+  /// public directory rather than one that signed up (`is_catalog`).
+  ///
+  /// Nothing about it is for sale: there is no contract, no settlement and no
+  /// agreed price, so the detail page draws no bottom bar at all and shows
+  /// [socials] in its place. Distinct from [isVisible] / [status], which are a
+  /// real partner's class being temporarily off sale — that one still gets a
+  /// bar, saying booking is coming.
+  ///
+  /// True also when only the VENUE carries the flag: the backend answers the
+  /// inherited verdict, and the branch is read here as well so an older
+  /// payload reaches the same answer.
+  final bool isCatalog;
+
+  /// The centre's accounts outside the app, sent for a catalogue row only.
+  /// Empty for a real partner — whose accounts are deliberately not published
+  /// here, because a bookable centre is booked in the app.
+  final CentreSocials socials;
   final num priceMin;
   final num priceMax;
   final bool hasMultiplePrices;
@@ -112,6 +132,8 @@ class ClassFullModel {
     required this.hasAgePricing,
     this.isVisible = true,
     this.status,
+    this.isCatalog = false,
+    this.socials = CentreSocials.empty,
     required this.priceMin,
     required this.priceMax,
     required this.hasMultiplePrices,
@@ -148,12 +170,17 @@ class ClassFullModel {
       courseTrials[null] ??
       const <CourseTrialEntry>[];
 
-  /// Whether this class can be booked at all. Two independent switches take it
-  /// off sale — the centre hiding it ([isVisible]) and moderation not having
-  /// approved it ([status]) — and the detail page must refuse booking on
-  /// either, since checkout would reject it regardless.
+  /// Whether this class can be booked at all. Three independent switches take
+  /// it off sale — it being a catalogue listing ([isCatalog]), the centre
+  /// hiding it ([isVisible]) and moderation not having approved it
+  /// ([status]) — and the detail page must refuse booking on any of them,
+  /// since checkout would reject it regardless.
+  ///
+  /// [isCatalog] is the one that also removes the bar rather than making it
+  /// inert: the other two are temporary and worth saying "soon" about, while a
+  /// directory listing was never on sale and never will be from here.
   bool get isBookable =>
-      isVisible && (status == null || status == 'approved');
+      !isCatalog && isVisible && (status == null || status == 'approved');
 
   /// Returns the first non-empty video link (vimeo → youtube → videoUrl).
   String? get effectiveVideoUrl {
@@ -272,6 +299,16 @@ class ClassFullModel {
       hasAgePricing: json['has_age_pricing'] == true || ageTiers.isNotEmpty,
       isVisible: json['is_visible'] != false,
       status: json['status']?.toString(),
+      // The venue's flag counts too: the console flags a whole centre at once,
+      // and the server already folds that in — this is belt and braces for a
+      // payload that only carries it on the branch.
+      isCatalog: json['is_catalog'] == true ||
+          (json['branch_id'] is Map &&
+              (json['branch_id'] as Map)['is_catalog'] == true),
+      socials: json['socials'] is Map
+          ? CentreSocials.fromJson(
+              Map<String, dynamic>.from(json['socials'] as Map))
+          : CentreSocials.empty,
       priceMin: priceMin,
       priceMax: priceMax,
       hasMultiplePrices:
@@ -620,6 +657,10 @@ class BranchSummary {
   /// viewer has bought — see [ClassFullModel.viewerPurchased].
   final List<String> supportPhones;
 
+  /// True when the VENUE is a catalogue listing — see
+  /// [ClassFullModel.isCatalog], which inherits it.
+  final bool isCatalog;
+
   BranchSummary({
     required this.id,
     required this.title,
@@ -629,6 +670,7 @@ class BranchSummary {
     required this.lng,
     this.videoUrl,
     this.supportPhones = const <String>[],
+    this.isCatalog = false,
   });
 
   factory BranchSummary.fromJson(Map<String, dynamic> json) {
@@ -648,6 +690,7 @@ class BranchSummary {
           ? (loc['lng'] as num).toDouble()
           : null,
       videoUrl: json['video_url']?.toString(),
+      isCatalog: json['is_catalog'] == true,
       // Blank rows are dropped here rather than at the call site: a number a
       // parent can tap has to be one that can actually be dialled.
       supportPhones: phones is List
