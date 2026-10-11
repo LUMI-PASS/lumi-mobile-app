@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:auto_route/auto_route.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:lumi_pass/common/router/app_link_opener.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/notification_model/notification_type.dart';
+import 'package:lumi_pass/data/service/interest_source.dart';
 
 class PushNotificationManager {
   PushNotificationManager(this._appRouter);
@@ -219,6 +223,30 @@ class PushNotificationManager {
       }
       if (_isNavigating) return;
 
+      // A notification that names its own destination goes there — the same
+      // rule `NotificationsPage._onTap` applies to a row in the list, so the
+      // banner and the row finally agree. They used to disagree: this handler
+      // read nothing but `type`, so a `course_ending` tap threw away its
+      // `lumi://course/<id>` and showed the bookings list — one screen short of
+      // where renewing actually happens.
+      //
+      // Handled BEFORE the readiness check below on purpose. [AppLinkOpener]
+      // hands the link to [DeeplinkService], whose own `_navigate` retries
+      // while the tabs mount and then HOLDS the link across login/onboarding
+      // rather than dropping it — strictly better than the five one-second
+      // retries here, and it de-duplicates deliveries over a 3 s window, which
+      // comfortably covers `onMessageOpenedApp` and `getInitialMessage` both
+      // firing for one tap.
+      final link = message.data['deep_link']?.toString().trim() ?? '';
+      if (link.isNotEmpty) {
+        log('[Push] deep link: "$link"');
+        _lastNavigationTime = now;
+        unawaited(
+          AppLinkOpener.open(link, source: InterestSource.notification),
+        );
+        return;
+      }
+
       if (_appRouter.stack.isEmpty) {
         if (retryCount < 5) {
           Future.delayed(const Duration(milliseconds: 1000), () {
@@ -231,23 +259,12 @@ class PushNotificationManager {
       _isNavigating = true;
       _lastNavigationTime = now;
 
-      final type = message.data['type'] as String? ?? '';
+      final type = message.data['type']?.toString() ?? '';
       log('[Push] navigating for type: "$type"');
 
       try {
         _appRouter.popUntilRoot();
-        if (NotificationType.fromKey(type) == NotificationType.referral) {
-          // Reward issued, voucher expiring/revoked, welcome voucher — all
-          // explained on the referral screen.
-          _appRouter.navigate(const ReferralRoute());
-        } else {
-          // Everything else — the booking types and anything unmodelled —
-          // lands on the booking list. This used to split: the booking types
-          // here, the rest on the Броны tab. The Lumi Coin shelf has that tab
-          // now, and the list is the right screen for both, so the split (and
-          // the `_kBookingTypes` string set behind it) is gone.
-          _appRouter.navigate(const MyBookingsRoute());
-        }
+        _appRouter.navigate(_routeFor(type));
       } finally {
         Future.delayed(const Duration(milliseconds: 300), () {
           _isNavigating = false;
@@ -256,6 +273,42 @@ class PushNotificationManager {
     } catch (e) {
       _isNavigating = false;
       log('[Push] Navigation error: $e');
+    }
+  }
+
+  /// Where a tap lands when the payload named no `deep_link` of its own.
+  PageRouteInfo _routeFor(String type) {
+    // No `type` at all is an adminka campaign — a title and a body, nothing
+    // else. The message IS the destination, so it opens the notification
+    // centre, where `broadcastToAll` now leaves a row for it. It used to fall
+    // through to the bookings list, which yanked a user out of whatever they
+    // were doing and showed them an unrelated screen.
+    if (type.isEmpty) return const NotificationsRoute();
+
+    switch (NotificationType.fromKey(type)) {
+      // Reward issued, voucher expiring/revoked, welcome voucher — all
+      // explained on the referral screen. It also carries
+      // `deep_link: lumi://referral`, so this is the belt to that braces.
+      case NotificationType.referral:
+        return const ReferralRoute();
+
+      // The booking types, and anything unmodelled, land on the booking list.
+      // This used to split: the booking types here, the rest on the Броны tab.
+      // The Lumi Coin shelf has that tab now, and the list is the right screen
+      // for both, so the split (and the `_kBookingTypes` string set behind it)
+      // is gone.
+      //
+      // `courseEnding` is here only as a fallback: its point is the course and
+      // it says so in `deep_link`, handled above. Reaching this line means a
+      // payload without one, and a course id alone isn't enough to build that
+      // route.
+      case NotificationType.bookingApproved:
+      case NotificationType.bookingRejected:
+      case NotificationType.bookingTimeSuggestion:
+      case NotificationType.bookingRequestPending:
+      case NotificationType.courseEnding:
+      case NotificationType.unknown:
+        return const MyBookingsRoute();
     }
   }
 }
