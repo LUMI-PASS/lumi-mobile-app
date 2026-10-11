@@ -119,13 +119,9 @@ abstract class HomeRepository {
     double? lng,
   });
 
-  /// Centres Lumi listed itself, before they signed — see [UnclaimedCentre].
-  Future<List<UnclaimedCentre>> getUnclaimedCentres({
-    int page = 1,
-    int limit = 10,
-    double? lat,
-    double? lng,
-  });
+  /// The home feed's rows of centres Lumi listed itself, before they signed —
+  /// see [UnclaimedShelf].
+  Future<List<UnclaimedShelf>> getUnclaimedShelves({double? lat, double? lng});
 
   /// One of them, in full.
   Future<UnclaimedCentre> getUnclaimedCentre(String id);

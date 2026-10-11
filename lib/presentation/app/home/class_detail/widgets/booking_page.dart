@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:auto_route/auto_route.dart';
+import 'package:lumi_pass/common/widget/sale_notice.dart';
+import 'package:lumi_pass/data/api_model/activity_sale/activity_sale.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/utils/cashback.dart';
 import 'package:lumi_pass/common/utils/coupon_discount.dart';
@@ -240,8 +242,13 @@ class _BookingPageState extends State<BookingPage> {
 
   /// One ticket in coins: the server's own figure, or `ceil(price / rate)`
   /// where a row arrived without one.
-  int _newCoinPrice(num price, int? sent) =>
-      sent ?? newCoinPriceFor(price, widget.clazz.newCoinRate) ?? 0;
+  ///
+  /// On a lesson the centre has put on sale the server's figure is the LIST
+  /// one, so the coins are worked out from the sale price instead — which is
+  /// what checkout quotes.
+  int _newCoinPrice(num price, int? sent) => _hasSale
+      ? newCoinPriceFor(_salePrice(price), widget.clazz.newCoinRate) ?? 0
+      : sent ?? newCoinPriceFor(price, widget.clazz.newCoinRate) ?? 0;
 
   /// What the booking as it stands costs in coins — the sum over tickets, at
   /// the LIST price: a coupon plan does not discount a coin price. A preview;
@@ -317,10 +324,79 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
-  bool get _hasCoupon => _couponPct > 0;
-  num _applyDiscount(num price) =>
-      _hasCoupon ? (price * (100 - _couponPct) / 100).round() : price;
-  num get _discountedTotal => _applyDiscount(_total);
+  // ─── The centre's own sale ─────────────────────────────────────────────────
+  // A percentage the centre takes off lessons on some dates, weekdays and
+  // hours (see [ActivitySale]). It is judged by the LESSON, so it follows the
+  // day and the time picked on this sheet: pick Tuesday 11:00 and every price
+  // below drops, move to Saturday and they go back.
+  //
+  // It is the centre's discount, not Lumi's, and nothing of Lumi's stacks on
+  // it — while a lesson is on sale the coupon plan stands down and the
+  // promocode field is not offered. Checkout enforces the same and prices the
+  // order itself; what is shown here is that sum repeated.
+
+  /// The start time checkout will judge this booking by: the slot picked, or
+  /// — where each ticket has its own window — the last window given a start,
+  /// which is the one the server keeps for tickets of the same kind.
+  String? get _saleStartTime {
+    if (!_requiresBookingSlot) return _selectedSlot?.startTime;
+    for (final window in _customWindows.reversed) {
+      if (window.start != null) return _fmtTime(window.start!);
+    }
+    return null;
+  }
+
+  /// The sale on the lesson as it is picked right now, or null. Never on a
+  /// course or a trial — those are not sold by the visit.
+  ActivitySale? get _sale {
+    if (_isCourse) return null;
+    final date = _selectedDate?.date;
+    if (date == null) return null;
+    return widget.clazz.saleFor(date, startTime: _saleStartTime);
+  }
+
+  int get _salePct => _sale?.percent ?? 0;
+  bool get _hasSale => _salePct > 0;
+
+  /// One ticket at [price], on sale — rounded as checkout rounds it.
+  num _salePrice(num price) => ActivitySale.discountedBy(price, _salePct);
+
+  /// The whole booking on sale: each ticket rounded on its own, then summed,
+  /// so the total is the sum of the prices printed on the rows above it.
+  num get _saleTotal {
+    num sum = 0;
+    if (_hasAgeTiers) {
+      for (var t = 0; t < _tierCounts.length; t++) {
+        final durs = widget.clazz.ageTiers[t].durations;
+        for (var d = 0; d < _tierCounts[t].length; d++) {
+          if (d >= durs.length) continue;
+          sum += _salePrice(durs[d].price) * _tierCounts[t][d];
+        }
+      }
+      return sum;
+    }
+    for (var i = 0; i < _flatCounts.length; i++) {
+      sum += _salePrice(widget.clazz.pricesSummary[i].price) * _flatCounts[i];
+    }
+    return sum;
+  }
+
+  /// Whether a ticket's price is cut on this booking — by the centre's sale,
+  /// or by the buyer's coupon plan. Never both: the sale comes first.
+  bool get _hasCoupon => _hasSale || _couponPct > 0;
+
+  /// Whether the buyer's COUPON PLAN is what cut the price — for the things
+  /// that are about the plan itself (its uses, the analytics), which a
+  /// centre's sale must not be counted as.
+  bool get _usedCouponPlan => !_hasSale && _couponPct > 0;
+  num _applyDiscount(num price) {
+    if (_hasSale) return _salePrice(price);
+    return _couponPct > 0
+        ? (price * (100 - _couponPct) / 100).round()
+        : price;
+  }
+
+  num get _discountedTotal => _hasSale ? _saleTotal : _applyDiscount(_total);
 
   // ─── Promocode ─────────────────────────────────────────────────────────────
   // Coupon plans and promocodes never stack, so this whole block is hidden
@@ -331,12 +407,16 @@ class _BookingPageState extends State<BookingPage> {
   bool _promoLoading = false;
   String? _promoError;
 
-  num get _promoDiscount => _appliedPromo?.discountAmount ?? 0;
+  /// Nothing while the lesson is on sale: a code typed in before the day was
+  /// picked stays in the field, but it is neither counted nor sent.
+  num get _promoDiscount =>
+      _hasSale ? 0 : (_appliedPromo?.discountAmount ?? 0);
 
   /// The amount the user actually pays. A coupon plan and a promocode are
   /// mutually exclusive: the coupon plan auto-discounts (and hides the promo
   /// field); otherwise an applied promocode reduces the total.
   num get _payableTotal {
+    if (_hasSale) return _saleTotal;
     if (_hasCouponPlan) return _discountedTotal;
     final t = _total - _promoDiscount;
     return t < 0 ? 0 : t;
@@ -1778,7 +1858,8 @@ class _BookingPageState extends State<BookingPage> {
               _isTrial && _selectedDate != null ? [_selectedDate!.isoKey] : null,
           // Whole course: the day picked above is when the enrolment starts.
           startsAt: !_isTrial ? _selectedDate?.isoKey : null,
-          promocode: _hasCouponPlan ? null : _appliedPromo?.code,
+          promocode:
+              _hasCouponPlan || _hasSale ? null : _appliedPromo?.code,
           lang: context.locale.languageCode,
           paymentProvider: savedCardId != null ? null : provider,
           returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
@@ -1806,7 +1887,9 @@ class _BookingPageState extends State<BookingPage> {
         // user has no coupon plan (the promo field is hidden in that case).
         // …and never alongside coins, which settle the whole booking alone.
         promoCode:
-            _hasCouponPlan || withNewCoins ? null : _appliedPromo?.code,
+            _hasCouponPlan || withNewCoins || _hasSale
+                ? null
+                : _appliedPromo?.code,
         // A saved-card checkout sends only saved_card_id (no provider): the
         // order is created PENDING and charged via the token afterwards.
         paymentProvider: savedCardId != null ? null : provider,
@@ -1833,7 +1916,7 @@ class _BookingPageState extends State<BookingPage> {
           'activity_id': id,
           'ticket_count': _totalTickets,
           'ticket_date': _selectedDate!.isoKey,
-          'used_coupon': _hasCoupon.toString(),
+          'used_coupon': _usedCouponPlan.toString(),
           'requires_booking_slot': _requiresBookingSlot.toString(),
           'provider': withNewCoins ? 'new_coins' : (provider ?? 'payme'),
         },
@@ -1929,7 +2012,7 @@ class _BookingPageState extends State<BookingPage> {
 
   Future<void> _completeRedirect(CheckoutResult result) async {
     // Snapshot before we close: was a coupon slot consumed for this order?
-    final usedCoupon = _hasCoupon;
+    final usedCoupon = _usedCouponPlan;
     final requiresSlot = _requiresBookingSlot;
     final id = widget.clazz.id;
     markCatalogChanged();
@@ -2067,6 +2150,16 @@ class _BookingPageState extends State<BookingPage> {
             '${_selectedDate!.date.day} ${'month_short_${_selectedDate!.date.month}'.tr()}$time',
       ));
     }
+    // The centre's sale. The ticket lines above are already at the sale
+    // price, so this says why rather than subtracting a second time.
+    if (_hasSale) {
+      out.add(_SummaryLine(
+        icon: Assets.icons.detail.iconsaxTicketDiscount,
+        label: 'sale_title'.tr(),
+        value: '−$_salePct%',
+        negative: true,
+      ));
+    }
     // Courses included: a referral voucher can discount a course, and the
     // package line above would otherwise leave the smaller total unexplained.
     // (Plain promocodes are refused on courses, so for them nothing changes.)
@@ -2107,7 +2200,7 @@ class _BookingPageState extends State<BookingPage> {
   /// Card rail: the OTP was confirmed and the order is already paid — go
   /// straight to the success screen (no external checkout redirect needed).
   void _completeCardPaid(CheckoutResult result) {
-    final usedCoupon = _hasCoupon;
+    final usedCoupon = _usedCouponPlan;
     final requiresSlot = _requiresBookingSlot;
     final id = widget.clazz.id;
     final lines = _orderLines();
@@ -2286,6 +2379,7 @@ class _BookingPageState extends State<BookingPage> {
                           // activity takes no promocode for now.
                           if (!_hasCouponPlan &&
                               !_paidByPromoPass &&
+                              !_hasSale &&
                               !_coinsOnly) ...[
                             20.kh,
                             _promoSection(c),
@@ -2511,6 +2605,7 @@ class _BookingPageState extends State<BookingPage> {
         durationLabel: durationLabel,
         price: price,
         discountedPrice: _hasCoupon ? _applyDiscount(price) : null,
+        salePercent: _salePct,
         promoPass: _rowPromoPass(price),
         // Null for a course or a trial, and whenever coins are not on offer —
         // the row then renders exactly as it always has.
@@ -2586,6 +2681,14 @@ class _BookingPageState extends State<BookingPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(c, 'detail_prices'.tr()),
+        // The sale in full, above the prices it moves. The one that applies
+        // to the lesson picked when there is one; otherwise the one the
+        // activity is advertising, so the buyer can see which day and hour
+        // would get it.
+        if ((_sale ?? widget.clazz.sale) != null) ...[
+          SaleNotice(sale: (_sale ?? widget.clazz.sale)!),
+          8.kh,
+        ],
         ...rows,
       ],
     );
@@ -2598,6 +2701,14 @@ class _BookingPageState extends State<BookingPage> {
         loadingSlots: _loadingSlots,
         slotsLoaded: _slotsLoaded,
         header: _sectionHeader(c, 'book_available_times'.tr()),
+        salePercentOf: (slot) {
+          final date = _selectedDate?.date;
+          if (_isCourse || date == null) return 0;
+          return widget.clazz
+                  .saleFor(date, startTime: slot.startTime)
+                  ?.percent ??
+              0;
+        },
         onPickSlot: (s) => setState(() {
           _selectedSlot = s;
           _error = null;
@@ -3671,7 +3782,11 @@ class _SlotPicker extends StatelessWidget {
     required this.slotsLoaded,
     required this.header,
     required this.onPickSlot,
+    required this.salePercentOf,
   });
+
+  /// The centre's sale on a slot of the day shown, in percent; 0 for none.
+  final int Function(ScheduleSlotInfo slot) salePercentOf;
 
   final _AvailableDate? selected;
   final ScheduleSlotInfo? selectedSlot;
@@ -3727,6 +3842,7 @@ class _SlotPicker extends StatelessWidget {
             for (final s in slots)
               _SlotChip(
                 slot: s,
+                salePercent: salePercentOf(s),
                 isSelected: selectedSlot?.startTime == s.startTime &&
                     selectedSlot?.endTime == s.endTime,
                 onTap: () => onPickSlot(s),
@@ -3753,7 +3869,12 @@ class _SlotChip extends StatelessWidget {
     required this.slot,
     required this.isSelected,
     required this.onTap,
+    this.salePercent = 0,
   });
+
+  /// The centre's sale on this time, in percent — printed on the chip, so the
+  /// cheaper hours can be told from the others before one is picked.
+  final int salePercent;
 
   final ScheduleSlotInfo slot;
   final bool isSelected;
@@ -3796,7 +3917,21 @@ class _SlotChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(40.r),
             border: isSelected ? null : Border.all(color: c.controlBorder),
           ),
-          child: label,
+          child: salePercent > 0
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    label,
+                    6.horizontalSpace,
+                    Text(
+                      '−$salePercent%',
+                      style: AppText.semibold12.copyWith(
+                        color: isSelected ? AppColors.onBrand : AppColors.error,
+                      ),
+                    ),
+                  ],
+                )
+              : label,
         ),
       ),
     );
@@ -3918,11 +4053,16 @@ class _TariffRow extends StatelessWidget {
     required this.onMinus,
     required this.onPlus,
     this.discountedPrice,
+    this.salePercent = 0,
     this.locked = false,
     this.promoPass,
     this.newCoinPrice,
     this.coinPrimary = false,
   });
+
+  /// The centre's sale on the lesson picked, in percent; 0 when it is not on
+  /// sale. Printed after the price, so a cut is never shown without its size.
+  final int salePercent;
 
   /// The same ticket in Lumi Coin. Null hides it — a course, a trial, or
   /// coins not on offer.
@@ -4010,8 +4150,12 @@ class _TariffRow extends StatelessWidget {
                 ),
                 // For reference only: what the ticket is worth, not a second
                 // way to pay and not a figure a coupon discounts here.
+                // On a lesson on sale it is the sale price — the coins beside
+                // it were worked out from that.
                 Text(
-                  priceText,
+                  salePercent > 0 && discounted != null && discounted > 0
+                      ? discounted.toRawUzsPrice()
+                      : priceText,
                   style: AppText.regular12
                       .copyWith(color: context.colors.textMuted),
                 ),
@@ -4038,6 +4182,11 @@ class _TariffRow extends StatelessWidget {
               // is already paid for.
               if (promoPass == null && !coinPrimary && (newCoinPrice ?? 0) > 0)
                 NewCoinPricePill(amount: newCoinPrice!),
+              if (promoPass == null && salePercent > 0)
+                Text(
+                  '−$salePercent%',
+                  style: AppText.semibold12.copyWith(color: AppColors.error),
+                ),
             ],
           ),
         ],

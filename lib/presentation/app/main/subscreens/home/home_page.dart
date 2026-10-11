@@ -16,6 +16,7 @@ import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
@@ -154,22 +155,6 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             ),
             if (_categories(state).isNotEmpty)
               SliverToBoxAdapter(child: _buildCategories(context, state)),
-            // Centres listed from open sources, straight under the categories.
-            // Not drawn until the adminka has published at least one.
-            if (state.unclaimedCentres.isNotEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 18.h, bottom: 6.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      HomeSectionHeader(title: 'home_unclaimed_title'.tr()),
-                      12.verticalSpace,
-                      HomeUnclaimedShelf(centres: state.unclaimedCentres),
-                    ],
-                  ),
-                ),
-              ),
             // What a Lumi Coin pack buys, then the courses row.
             //
             // The fallback is not cosmetic: on a server that sends no coin
@@ -660,7 +645,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       .toList();
 
   List<HomClass> _discounted(HomeBuildable state) => _loaded(state)
-      .where((c) => (c.discountPercentage ?? 0) > 0)
+      .where((c) => c.sale != null)
       .take(_bandMaximum)
       .toList();
 
@@ -674,7 +659,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   List<HomeInsert> _inserts(BuildContext context, HomeBuildable state) {
     final signedIn = context.read<HomeCubit>().isSignedIn;
     final coinsLive = watchNewCoins(context).isVisible;
-    return [
+    final fixed = [
       for (final insert in HomeInsert.values)
         if (switch (insert) {
           HomeInsert.inviteBanner => signedIn,
@@ -682,12 +667,17 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           HomeInsert.trialBand => _trials(state).length >= _bandMinimum,
           HomeInsert.coinBanner => coinsLive,
           HomeInsert.centres => state.centres.length >= _bandMinimum,
-          HomeInsert.discountBand => _discounted(state).length >= _bandMinimum,
+          // Real sales are rare and each is worth showing, so this band does
+          // not wait for three of them the way the trial band does.
+          HomeInsert.discountBand => _discounted(state).isNotEmpty,
           HomeInsert.savedBanner => signedIn,
           HomeInsert.ad => state.packet != null || _adBanner(state) != null,
+          // Not one of the fixed ones: woven in below, once per row.
+          HomeInsert.unclaimedShelf => false,
         })
           insert,
     ];
+    return weaveShelves(fixed, state.unclaimedShelves.length);
   }
 
   /// The feed's one advertisement, or null when there is nothing to advertise.
@@ -850,10 +840,31 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             HomeCentresShelf(branches: state.centres),
           ],
         );
+      case HomeInsert.unclaimedShelf:
+        // [_inserts] deals one per row, so the ordinal is always a row —
+        // unless the rows were refetched shorter between layout and build.
+        final shelves = state.unclaimedShelves;
+        if (slot.ordinal >= shelves.length) return const SizedBox.shrink();
+        return _buildUnclaimed(shelves[slot.ordinal]);
       case HomeInsert.ad:
         // [_inserts] deals this only when there is one.
         return _adSlot(context, state) ?? const SizedBox.shrink();
     }
+  }
+
+  /// One of the adminka's rows of open-source centres, dealt into "Near you".
+  Widget _buildUnclaimed(UnclaimedShelf shelf) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        HomeSectionHeader(title: shelf.title),
+        12.verticalSpace,
+        HomeUnclaimedShelf(
+          centres: shelf.centres,
+          storageKey: 'unclaimed-shelf-${shelf.id}',
+        ),
+      ],
+    );
   }
 
   /// A full-width block of colour holding one horizontal row of cards — the

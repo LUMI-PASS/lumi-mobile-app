@@ -8,6 +8,15 @@ Color _shimmerBase(BuildContext c) => c.colors.surface;
 Color _shimmerHi(BuildContext c) =>
     c.colors.isDark ? const Color(0xFF2E2E35) : Colors.white;
 
+/// The home feed while its first request is out, drawn in the feed's own
+/// shapes — the banner carousel, the two rows of categories, a shelf of small
+/// cards and the first full-width cards of "Near you" — so that when the real
+/// thing lands nothing on screen moves, it only fills in.
+///
+/// The sizes are the ones `home_page.dart` lays those sections out with. They
+/// are repeated here rather than shared because this is a picture of that
+/// layout, not a part of it: a section resized there wants its outline here
+/// looked at, not silently dragged along.
 class HomeShimmer extends StatelessWidget {
   const HomeShimmer({super.key});
 
@@ -18,27 +27,23 @@ class HomeShimmer extends StatelessWidget {
       highlightColor: _shimmerHi(context),
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.only(bottom: 20.h),
+        padding: EdgeInsets.only(top: 4.h, bottom: 20.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Coupon banner skeleton
-            _BannerSkeleton(),
-            24.verticalSpace,
-            // Categories skeleton
-            _SectionTitleSkeleton(),
+            const _CarouselSkeleton(),
+            16.verticalSpace,
+            const _CategoriesSkeleton(),
+            20.verticalSpace,
+            const _TitleSkeleton(),
             12.verticalSpace,
-            _CategoriesRowSkeleton(),
-            24.verticalSpace,
-            // New classes skeleton
-            _SectionTitleSkeleton(),
+            const _ShelfSkeleton(),
+            20.verticalSpace,
+            const _TitleSkeleton(),
             12.verticalSpace,
-            _ClassCardsRowSkeleton(),
-            24.verticalSpace,
-            // Near you skeleton
-            _SectionTitleSkeleton(),
-            12.verticalSpace,
-            _NearYouListSkeleton(),
+            const _FeedCardSkeleton(),
+            16.verticalSpace,
+            const _FeedCardSkeleton(),
           ],
         ),
       ),
@@ -46,171 +51,155 @@ class HomeShimmer extends StatelessWidget {
   }
 }
 
-class _BannerSkeleton extends StatelessWidget {
+/// One block of the skeleton. Every shape in it is this, so they all take the
+/// shimmer's colour and none can drift to a paint of its own.
+class _Bone extends StatelessWidget {
+  const _Bone({this.width, this.height, this.radius = 8});
+
+  final double? width;
+  final double? height;
+  final double radius;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        height: 180.h,
-        decoration: BoxDecoration(
-          color: _shimmerBase(context),
-          borderRadius: BorderRadius.circular(24.r),
-        ),
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: _shimmerBase(context),
+        borderRadius: BorderRadius.circular(radius.r),
       ),
     );
   }
 }
 
-class _SectionTitleSkeleton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        width: 140.w,
-        height: 24.h,
-        decoration: BoxDecoration(
-          color: _shimmerBase(context),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-      ),
-    );
-  }
-}
+/// The promo carousel: one banner on the page gutter and the edge of the next.
+class _CarouselSkeleton extends StatelessWidget {
+  const _CarouselSkeleton();
 
-class _CategoriesRowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     return SizedBox(
-      height: screenWidth * 0.37,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.only(left: 16.w),
-        itemCount: 4,
-        itemBuilder: (_, __) => Container(
-          width: screenWidth * 0.285,
-          margin: EdgeInsets.only(right: 12.w),
-          decoration: BoxDecoration(
-            color: _shimmerBase(context),
-            borderRadius: BorderRadius.circular(18.r),
-          ),
+      height: 124.h,
+      child: OverflowBox(
+        alignment: Alignment.centerLeft,
+        maxWidth: double.infinity,
+        child: Row(
+          children: [
+            16.horizontalSpace,
+            _Bone(width: 1.sw - 32.w, height: 124.h, radius: 12),
+            8.horizontalSpace,
+            _Bone(width: 1.sw - 32.w, height: 124.h, radius: 12),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ClassCardsRowSkeleton extends StatelessWidget {
+/// The categories: two rows of five, an icon over a short label.
+class _CategoriesSkeleton extends StatelessWidget {
+  const _CategoriesSkeleton();
+
+  static const _columns = 5;
+
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth * 0.68;
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.48,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.only(left: 16.w),
-        itemCount: 3,
-        itemBuilder: (_, __) => Container(
-          width: cardWidth,
-          margin: EdgeInsets.only(right: 12.w),
-          decoration: BoxDecoration(
-            color: _shimmerBase(context),
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 4 / 3,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: _shimmerBase(context),
-                    borderRadius: BorderRadius.circular(12.r),
+    Widget row() => Row(
+          children: [
+            for (var i = 0; i < _columns; i++)
+              Expanded(
+                child: SizedBox(
+                  height: 84.h,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _Bone(width: 52.w, height: 52.w, radius: 16),
+                      8.verticalSpace,
+                      _Bone(width: 44.w, height: 10.h, radius: 5),
+                    ],
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.all(8.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                        width: 160.w,
-                        height: 14.h,
-                        color: _shimmerBase(context)),
-                    SizedBox(height: 8.h),
-                    Container(
-                        width: 100.w,
-                        height: 12.h,
-                        color: _shimmerBase(context)),
-                    SizedBox(height: 8.h),
-                    Container(
-                        width: 180.w,
-                        height: 12.h,
-                        color: _shimmerBase(context)),
-                  ],
-                ),
+          ],
+        );
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.w),
+      child: Column(children: [row(), 4.verticalSpace, row()]),
+    );
+  }
+}
+
+/// A section header.
+class _TitleSkeleton extends StatelessWidget {
+  const _TitleSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: _Bone(width: 180.w, height: 20.h, radius: 10),
+    );
+  }
+}
+
+/// A horizontal shelf of small cards: a photo with three lines under it.
+class _ShelfSkeleton extends StatelessWidget {
+  const _ShelfSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final width = 150.w;
+    return SizedBox(
+      height: 126.h + 14.h + 62.h,
+      child: OverflowBox(
+        alignment: Alignment.topLeft,
+        maxWidth: double.infinity,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            16.horizontalSpace,
+            for (var i = 0; i < 3; i++) ...[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Bone(width: width, height: 126.h, radius: 16),
+                  14.verticalSpace,
+                  _Bone(width: width * 0.9, height: 14.h, radius: 7),
+                  8.verticalSpace,
+                  _Bone(width: width * 0.6, height: 12.h, radius: 6),
+                  8.verticalSpace,
+                  _Bone(width: width * 0.45, height: 12.h, radius: 6),
+                ],
               ),
+              12.horizontalSpace,
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _NearYouListSkeleton extends StatelessWidget {
+/// A full-width "Near you" card: the photo, then a title and two lines.
+class _FeedCardSkeleton extends StatelessWidget {
+  const _FeedCardSkeleton();
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Column(
-        children: List.generate(
-          2,
-          (_) => Container(
-            width: double.infinity,
-            height: 220.h,
-            margin: EdgeInsets.only(bottom: 16.h),
-            decoration: BoxDecoration(
-              color: _shimmerBase(context),
-              borderRadius: BorderRadius.circular(22.r),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 160.h,
-                  decoration: BoxDecoration(
-                    color: _shimmerBase(context),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                          width: 200.w,
-                          height: 14.h,
-                          color: _shimmerBase(context)),
-                      SizedBox(height: 8.h),
-                      Container(
-                          width: 140.w,
-                          height: 12.h,
-                          color: _shimmerBase(context)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Bone(width: double.infinity, height: 160.h, radius: 20),
+          12.verticalSpace,
+          _Bone(width: 220.w, height: 16.h, radius: 8),
+          8.verticalSpace,
+          _Bone(width: 150.w, height: 12.h, radius: 6),
+          8.verticalSpace,
+          _Bone(width: 100.w, height: 12.h, radius: 6),
+        ],
       ),
     );
   }

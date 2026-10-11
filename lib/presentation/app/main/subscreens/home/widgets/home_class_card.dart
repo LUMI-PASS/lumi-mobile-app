@@ -1,3 +1,5 @@
+import 'package:lumi_pass/common/utils/sale_label.dart';
+import 'package:lumi_pass/data/api_model/activity_sale/activity_sale.dart';
 import 'package:auto_route/auto_route.dart';
 import 'dart:ui';
 
@@ -119,6 +121,7 @@ class HomeCourseCard extends StatelessWidget {
                     discountPercentage: hc?.discountPercentage ?? 0,
                     onViewAsReels: onViewAsReels,
                     forChildName: hc?.forChildName,
+                    sale: hc?.sale,
                     // Flush with the card — see [HomeNearbyCard].
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(16.r)),
@@ -150,6 +153,7 @@ class HomeCourseCard extends StatelessWidget {
                     discountPercentage: hc?.discountPercentage ?? 0,
                     onViewAsReels: onViewAsReels,
                     forChildName: hc?.forChildName,
+                    sale: hc?.sale,
                   ),
                   14.verticalSpace,
                   _ClassInfo(
@@ -209,6 +213,7 @@ class HomeNearbyCard extends StatelessWidget {
             height: 160.h,
             category: hc?.category,
             discountPercentage: hc?.discountPercentage ?? 0,
+            sale: hc?.sale,
             onViewAsReels: onViewAsReels,
             fit: BoxFit.cover,
             // Flush with the card, so the photo takes the card's own top
@@ -243,6 +248,7 @@ class _ClassImage extends StatelessWidget {
     required this.category,
     required this.discountPercentage,
     required this.onViewAsReels,
+    this.sale,
     this.forChildName,
     this.fit = BoxFit.cover,
     this.borderRadius,
@@ -258,6 +264,11 @@ class _ClassImage extends StatelessWidget {
   final String? category;
   final int discountPercentage;
   final VoidCallback? onViewAsReels;
+
+  /// The centre's own sale, drawn as a badge on the photo — and, when it only
+  /// holds on some days or hours, a second badge saying which, so the
+  /// percentage is never read without its condition.
+  final ActivitySale? sale;
 
   /// [BoxFit.cover] fills the frame but crops whatever doesn't fit.
   ///
@@ -332,6 +343,17 @@ class _ClassImage extends StatelessWidget {
                       label: 'for_child'.tr(args: [forChildName!]),
                       gradient: AppGradients.brand,
                     ),
+                  if (sale != null) ...[
+                    HomePillTag(
+                      label: salePercentLabel(sale!),
+                      color: AppColors.error,
+                    ),
+                    if (saleWhenLabel(sale!) != null)
+                      HomePillTag(
+                        label: saleWhenLabel(sale!)!,
+                        color: AppColors.ink,
+                      ),
+                  ],
                 ],
               ),
             ),

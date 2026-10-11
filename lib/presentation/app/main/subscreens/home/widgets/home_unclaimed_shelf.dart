@@ -28,16 +28,24 @@ String unclaimedKindLabel(UnclaimedKind kind) => switch (kind) {
 /// so it is drawn unlike an activity card on purpose: the place's photo with
 /// its logo on it, what it offers as one line of words, and no price.
 class HomeUnclaimedShelf extends StatelessWidget {
-  const HomeUnclaimedShelf({super.key, required this.centres});
+  const HomeUnclaimedShelf({
+    super.key,
+    required this.centres,
+    required this.storageKey,
+  });
 
   final List<UnclaimedCentre> centres;
+
+  /// Names this row's scroll position — the feed holds one shelf per kind, and
+  /// each keeps its own.
+  final String storageKey;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: _UnclaimedCard.photoHeight.h + 92.h,
       child: ListView.builder(
-        key: const PageStorageKey('unclaimed-centres'),
+        key: PageStorageKey(storageKey),
         scrollDirection: Axis.horizontal,
         // The feed's own inset: 8 here plus the card's 8 is the 16pt margin.
         padding: EdgeInsets.only(left: 8.w, right: 16.w),

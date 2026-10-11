@@ -1,3 +1,4 @@
+import 'package:lumi_pass/data/api_model/activity_sale/activity_sale.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/socials/centre_socials.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
@@ -244,6 +245,12 @@ class HomClass with _$HomClass {
     /// The cheapest ticket in coins ("Lumi Coin"). Null or absent for a course
     /// — courses are money-only — and on a server that predates coins.
     num? newCoinPrice,
+
+    /// The centre's own sale on this activity — running now or starting this
+    /// week. Null for most cards, for every course, and on a server that
+    /// predates sales. Not to be confused with [discountPercentage], which is
+    /// Lumi's share of the class and only caps coupon-plan discounts.
+    @JsonKey(fromJson: ActivitySale.saleFromJson) ActivitySale? sale,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,

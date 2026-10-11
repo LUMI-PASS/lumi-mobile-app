@@ -302,17 +302,13 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     } catch (_) {}
   }
 
-  /// Fetches the open-source centres shelf — see
-  /// [HomeBuildable.unclaimedCentres]. Same origin as the near list, and the
-  /// last good list is kept on failure.
-  Future<void> _loadUnclaimedCentres() async {
+  /// Fetches the rows of open-source centres — see
+  /// [HomeBuildable.unclaimedShelves]. Same origin as the near list, and the
+  /// last good rows are kept on failure.
+  Future<void> _loadUnclaimedShelves() async {
     try {
-      final centres = await _repo.getUnclaimedCentres(
-        limit: _pageLimit,
-        lat: _lat,
-        lng: _lng,
-      );
-      build((b) => b.copyWith(unclaimedCentres: centres));
+      final shelves = await _repo.getUnclaimedShelves(lat: _lat, lng: _lng);
+      build((b) => b.copyWith(unclaimedShelves: shelves));
     } catch (_) {}
   }
 
@@ -434,7 +430,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     unawaited(_loadTodayBookings());
     // Here rather than at start-up only, so a pull-to-refresh picks up a
     // centre that was published a minute ago.
-    unawaited(_loadUnclaimedCentres());
+    unawaited(_loadUnclaimedShelves());
     return callable(
       future: _repo.getHome(
         newClassesPage: 1,
@@ -488,7 +484,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     unawaited(_loadPacket());
     unawaited(_loadTodayBookings());
     unawaited(_loadCentres());
-    unawaited(_loadUnclaimedCentres());
+    unawaited(_loadUnclaimedShelves());
     try {
       final data = await _repo.getHome(
         newClassesPage: 1,
