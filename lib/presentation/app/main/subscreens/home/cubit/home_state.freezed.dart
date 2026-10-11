@@ -51,7 +51,13 @@ mixin _$HomeBuildable {
   /// you". Its own request, like the packet's: the home feed carries
   /// activities, never the places themselves. Empty until it lands and when
   /// it fails, in which case the shelf is simply not dealt into the feed.
-  List<HomBranch> get centres => throw _privateConstructorUsedError; // Location
+  List<HomBranch> get centres => throw _privateConstructorUsedError;
+
+  /// Centres Lumi listed from open sources before they signed — the shelf
+  /// under the categories. Its own request; empty until it lands, when it
+  /// fails and while nothing is published, and the shelf is then not drawn.
+  List<UnclaimedCentre> get unclaimedCentres =>
+      throw _privateConstructorUsedError; // Location
   double? get lat => throw _privateConstructorUsedError;
   double? get lng =>
       throw _privateConstructorUsedError; // Pagination for new classes
@@ -98,6 +104,7 @@ abstract class $HomeBuildableCopyWith<$Res> {
       PromoCampaign? packet,
       List<DayBooking> todayBookings,
       List<HomBranch> centres,
+      List<UnclaimedCentre> unclaimedCentres,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -135,6 +142,7 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
     Object? packet = freezed,
     Object? todayBookings = null,
     Object? centres = null,
+    Object? unclaimedCentres = null,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -181,6 +189,10 @@ class _$HomeBuildableCopyWithImpl<$Res, $Val extends HomeBuildable>
           ? _value.centres
           : centres // ignore: cast_nullable_to_non_nullable
               as List<HomBranch>,
+      unclaimedCentres: null == unclaimedCentres
+          ? _value.unclaimedCentres
+          : unclaimedCentres // ignore: cast_nullable_to_non_nullable
+              as List<UnclaimedCentre>,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -262,6 +274,7 @@ abstract class _$$HomeBuildableImplCopyWith<$Res>
       PromoCampaign? packet,
       List<DayBooking> todayBookings,
       List<HomBranch> centres,
+      List<UnclaimedCentre> unclaimedCentres,
       double? lat,
       double? lng,
       List<HomClass> newClassesList,
@@ -298,6 +311,7 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
     Object? packet = freezed,
     Object? todayBookings = null,
     Object? centres = null,
+    Object? unclaimedCentres = null,
     Object? lat = freezed,
     Object? lng = freezed,
     Object? newClassesList = null,
@@ -344,6 +358,10 @@ class __$$HomeBuildableImplCopyWithImpl<$Res>
           ? _value._centres
           : centres // ignore: cast_nullable_to_non_nullable
               as List<HomBranch>,
+      unclaimedCentres: null == unclaimedCentres
+          ? _value._unclaimedCentres
+          : unclaimedCentres // ignore: cast_nullable_to_non_nullable
+              as List<UnclaimedCentre>,
       lat: freezed == lat
           ? _value.lat
           : lat // ignore: cast_nullable_to_non_nullable
@@ -408,6 +426,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       this.packet,
       final List<DayBooking> todayBookings = const [],
       final List<HomBranch> centres = const [],
+      final List<UnclaimedCentre> unclaimedCentres = const [],
       this.lat = null,
       this.lng = null,
       final List<HomClass> newClassesList = const [],
@@ -423,6 +442,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
       : _categories = categories,
         _todayBookings = todayBookings,
         _centres = centres,
+        _unclaimedCentres = unclaimedCentres,
         _newClassesList = newClassesList,
         _subscriptionList = subscriptionList,
         _coursesList = coursesList,
@@ -507,6 +527,23 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     if (_centres is EqualUnmodifiableListView) return _centres;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_centres);
+  }
+
+  /// Centres Lumi listed from open sources before they signed — the shelf
+  /// under the categories. Its own request; empty until it lands, when it
+  /// fails and while nothing is published, and the shelf is then not drawn.
+  final List<UnclaimedCentre> _unclaimedCentres;
+
+  /// Centres Lumi listed from open sources before they signed — the shelf
+  /// under the categories. Its own request; empty until it lands, when it
+  /// fails and while nothing is published, and the shelf is then not drawn.
+  @override
+  @JsonKey()
+  List<UnclaimedCentre> get unclaimedCentres {
+    if (_unclaimedCentres is EqualUnmodifiableListView)
+      return _unclaimedCentres;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_unclaimedCentres);
   }
 
 // Location
@@ -598,7 +635,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
 
   @override
   String toString() {
-    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, todayBookings: $todayBookings, centres: $centres, lat: $lat, lng: $lng, newClassesList: $newClassesList, subscriptionList: $subscriptionList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
+    return 'HomeBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel, categories: $categories, packet: $packet, todayBookings: $todayBookings, centres: $centres, unclaimedCentres: $unclaimedCentres, lat: $lat, lng: $lng, newClassesList: $newClassesList, subscriptionList: $subscriptionList, coursesList: $coursesList, newClassesPage: $newClassesPage, isLoadingNewClasses: $isLoadingNewClasses, hasMoreNewClasses: $hasMoreNewClasses, nearClassesList: $nearClassesList, nearClassesPage: $nearClassesPage, isLoadingNearClasses: $isLoadingNearClasses, hasMoreNearClasses: $hasMoreNearClasses)';
   }
 
   @override
@@ -619,6 +656,8 @@ class _$HomeBuildableImpl implements _HomeBuildable {
             const DeepCollectionEquality()
                 .equals(other._todayBookings, _todayBookings) &&
             const DeepCollectionEquality().equals(other._centres, _centres) &&
+            const DeepCollectionEquality()
+                .equals(other._unclaimedCentres, _unclaimedCentres) &&
             (identical(other.lat, lat) || other.lat == lat) &&
             (identical(other.lng, lng) || other.lng == lng) &&
             const DeepCollectionEquality()
@@ -654,6 +693,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
         packet,
         const DeepCollectionEquality().hash(_todayBookings),
         const DeepCollectionEquality().hash(_centres),
+        const DeepCollectionEquality().hash(_unclaimedCentres),
         lat,
         lng,
         const DeepCollectionEquality().hash(_newClassesList),
@@ -685,6 +725,7 @@ abstract class _HomeBuildable implements HomeBuildable {
       final PromoCampaign? packet,
       final List<DayBooking> todayBookings,
       final List<HomBranch> centres,
+      final List<UnclaimedCentre> unclaimedCentres,
       final double? lat,
       final double? lng,
       final List<HomClass> newClassesList,
@@ -742,6 +783,12 @@ abstract class _HomeBuildable implements HomeBuildable {
   /// activities, never the places themselves. Empty until it lands and when
   /// it fails, in which case the shelf is simply not dealt into the feed.
   List<HomBranch> get centres;
+  @override
+
+  /// Centres Lumi listed from open sources before they signed — the shelf
+  /// under the categories. Its own request; empty until it lands, when it
+  /// fails and while nothing is published, and the shelf is then not drawn.
+  List<UnclaimedCentre> get unclaimedCentres;
   @override // Location
   double? get lat;
   @override

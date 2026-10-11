@@ -12,6 +12,8 @@ import 'package:lumi_pass/data/api_model/shop/shop_product.dart';
 import 'package:lumi_pass/presentation/app/connection_error/connection_error_page.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
 import 'package:lumi_pass/presentation/app/home/branch_detail/branch_detail_page.dart';
+import 'package:lumi_pass/presentation/app/home/unclaimed_centre/unclaimed_centre_page.dart';
+import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_page.dart';
 import 'package:lumi_pass/presentation/app/home/course_detail/course_booking_page.dart';
@@ -141,6 +143,7 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: ClassDetailRoute.page),
     AutoRoute(page: SavedActivitiesRoute.page),
     AutoRoute(page: BranchDetailRoute.page),
+    AutoRoute(page: UnclaimedCentreRoute.page),
     AutoRoute(page: BookingRoute.page),
     AutoRoute(page: CourseBookingRoute.page),
     AutoRoute(page: BookingCompleteRoute.page),

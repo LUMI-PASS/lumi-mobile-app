@@ -441,6 +441,16 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    UnclaimedCentreRoute.name: (routeData) {
+      final args = routeData.argsAs<UnclaimedCentreRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: UnclaimedCentrePage(
+          key: args.key,
+          centre: args.centre,
+        ),
+      );
+    },
     VerifyRoute.name: (routeData) {
       final args = routeData.argsAs<VerifyRouteArgs>();
       return AutoRoutePage<dynamic>(
@@ -1893,6 +1903,44 @@ class TicketReceiptRouteArgs {
   @override
   String toString() {
     return 'TicketReceiptRouteArgs{key: $key, ticket: $ticket, className: $className, branch: $branch, orderId: $orderId, canCancel: $canCancel, price: $price, paidPrice: $paidPrice, fromPromocode: $fromPromocode}';
+  }
+}
+
+/// generated route for
+/// [UnclaimedCentrePage]
+class UnclaimedCentreRoute extends PageRouteInfo<UnclaimedCentreRouteArgs> {
+  UnclaimedCentreRoute({
+    Key? key,
+    required UnclaimedCentre centre,
+    List<PageRouteInfo>? children,
+  }) : super(
+          UnclaimedCentreRoute.name,
+          args: UnclaimedCentreRouteArgs(
+            key: key,
+            centre: centre,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'UnclaimedCentreRoute';
+
+  static const PageInfo<UnclaimedCentreRouteArgs> page =
+      PageInfo<UnclaimedCentreRouteArgs>(name);
+}
+
+class UnclaimedCentreRouteArgs {
+  const UnclaimedCentreRouteArgs({
+    this.key,
+    required this.centre,
+  });
+
+  final Key? key;
+
+  final UnclaimedCentre centre;
+
+  @override
+  String toString() {
+    return 'UnclaimedCentreRouteArgs{key: $key, centre: $centre}';
   }
 }
 

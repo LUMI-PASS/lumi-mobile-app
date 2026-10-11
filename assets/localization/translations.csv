@@ -1503,3 +1503,23 @@ home_saved_title,"Сохраняйте, что понравилось",Yoqqanini
 home_saved_subtitle,Всё сохранённое — в одном месте,Saqlanganlar bir joyda turadi,"Everything you saved, in one place"
 child_gender_boy,Мальчик,O'g'il,Boy
 child_gender_girl,Девочка,Qiz,Girl
+home_unclaimed_title,Ещё в городе,Shaharda yana,More around the city
+unclaimed_kind_center,Центр,Markaz,Centre
+unclaimed_kind_sports,Спорт,Sport,Sports
+unclaimed_kind_playground,Игровая площадка,O‘yin maydoni,Playground
+unclaimed_unverified_title,Данные не подтверждены центром,Markaz maʼlumotni tasdiqlamagan,Not confirmed by the centre
+unclaimed_unverified_body,Мы собрали их из открытых источников. Уточните по телефону перед визитом.,Maʼlumot ochiq manbalardan olingan. Borishdan oldin qo‘ng‘iroq qilib aniqlang.,We gathered this from open sources. Call to check before you go.
+unclaimed_age,Возраст,Yosh,Age
+unclaimed_price_month,сум в месяц,so‘m / oy,so‘m a month
+unclaimed_price_year,сум в год,so‘m / yil,so‘m a year
+unclaimed_price_visit,сум за визит,so‘m / tashrif,so‘m a visit
+unclaimed_since,Работает с,Ochilgan yili,Open since
+unclaimed_activities,Направления,Yo‘nalishlar,What they offer
+unclaimed_hours,Часы работы,Ish vaqti,Opening hours
+unclaimed_facilities,Удобства,Qulayliklar,Facilities
+unclaimed_languages,Языки обучения,Taʼlim tillari,Teaching languages
+unclaimed_studied_languages,Изучаемые языки,O‘rganiladigan tillar,Languages taught
+unclaimed_programmes,Программы,Dasturlar,Programmes
+unclaimed_contacts,Контакты,Aloqa,Contacts
+unclaimed_call,Позвонить,Qo‘ng‘iroq qilish,Call
+unclaimed_retry,Не удалось загрузить. Повторить,Yuklab bo‘lmadi. Qayta urinish,Could not load. Try again

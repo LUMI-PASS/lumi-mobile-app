@@ -5,6 +5,7 @@ import 'package:lumi_pass/data/api_model/attendance/attendance_model.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
 import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
@@ -117,6 +118,17 @@ abstract class HomeRepository {
     double? lat,
     double? lng,
   });
+
+  /// Centres Lumi listed itself, before they signed — see [UnclaimedCentre].
+  Future<List<UnclaimedCentre>> getUnclaimedCentres({
+    int page = 1,
+    int limit = 10,
+    double? lat,
+    double? lng,
+  });
+
+  /// One of them, in full.
+  Future<UnclaimedCentre> getUnclaimedCentre(String id);
 
   Future<BranchClassesPage> getBranchClasses(
     String branchId, {

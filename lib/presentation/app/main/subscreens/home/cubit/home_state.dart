@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/order/day_booking.dart';
 import 'package:lumi_pass/data/api_model/promo/promo_campaign.dart';
+import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 
 part 'home_state.freezed.dart';
 
@@ -44,6 +45,10 @@ class HomeBuildable with _$HomeBuildable {
     /// activities, never the places themselves. Empty until it lands and when
     /// it fails, in which case the shelf is simply not dealt into the feed.
     @Default([]) List<HomBranch> centres,
+    /// Centres Lumi listed from open sources before they signed — the shelf
+    /// under the categories. Its own request; empty until it lands, when it
+    /// fails and while nothing is published, and the shelf is then not drawn.
+    @Default([]) List<UnclaimedCentre> unclaimedCentres,
     // Location
     @Default(null) double? lat,
     @Default(null) double? lng,

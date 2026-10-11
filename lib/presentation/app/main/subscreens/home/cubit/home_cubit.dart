@@ -302,6 +302,20 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     } catch (_) {}
   }
 
+  /// Fetches the open-source centres shelf — see
+  /// [HomeBuildable.unclaimedCentres]. Same origin as the near list, and the
+  /// last good list is kept on failure.
+  Future<void> _loadUnclaimedCentres() async {
+    try {
+      final centres = await _repo.getUnclaimedCentres(
+        limit: _pageLimit,
+        lat: _lat,
+        lng: _lng,
+      );
+      build((b) => b.copyWith(unclaimedCentres: centres));
+    } catch (_) {}
+  }
+
   /// Whether there is an account behind this session. The feed's banners for
   /// things only an account has — a referral code, a saved list — are left
   /// out without one, rather than opening a screen that answers 401 and
@@ -418,6 +432,9 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // load and pull-to-refresh, which is the gesture someone makes when they
     // have just paid for something.
     unawaited(_loadTodayBookings());
+    // Here rather than at start-up only, so a pull-to-refresh picks up a
+    // centre that was published a minute ago.
+    unawaited(_loadUnclaimedCentres());
     return callable(
       future: _repo.getHome(
         newClassesPage: 1,
@@ -471,6 +488,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     unawaited(_loadPacket());
     unawaited(_loadTodayBookings());
     unawaited(_loadCentres());
+    unawaited(_loadUnclaimedCentres());
     try {
       final data = await _repo.getHome(
         newClassesPage: 1,

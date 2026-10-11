@@ -33,6 +33,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_header.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_skeletons.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_unclaimed_shelf.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/today_bookings.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
@@ -154,6 +155,22 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             ),
             if (_categories(state).isNotEmpty)
               SliverToBoxAdapter(child: _buildCategories(context, state)),
+            // Centres listed from open sources, straight under the categories.
+            // Not drawn until the adminka has published at least one.
+            if (state.unclaimedCentres.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 18.h, bottom: 6.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeSectionHeader(title: 'home_unclaimed_title'.tr()),
+                      12.verticalSpace,
+                      HomeUnclaimedShelf(centres: state.unclaimedCentres),
+                    ],
+                  ),
+                ),
+              ),
             // What a Lumi Coin pack buys, then the courses row.
             //
             // The fallback is not cosmetic: on a server that sends no coin

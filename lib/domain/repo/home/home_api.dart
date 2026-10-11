@@ -301,6 +301,25 @@ class HomeApi {
     });
   }
 
+  /// Centres listed from open sources — published ones, nearest first.
+  Future<Response> unclaimedCentres({
+    int page = 1,
+    int limit = 10,
+    double? lat,
+    double? lng,
+  }) {
+    return _dio.get('unclaimed-centres', queryParameters: {
+      'page': page,
+      'limit': limit,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+    });
+  }
+
+  Future<Response> unclaimedCentre(String id) {
+    return _dio.get('unclaimed-centres/$id');
+  }
+
   /// Returns the count of activities that have a discount_percentage >= [minDiscount].
   /// Used on the coupon success screen to tell the user how many activities
   /// their plan applies to.
