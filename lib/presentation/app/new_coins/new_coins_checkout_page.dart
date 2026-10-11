@@ -6,7 +6,6 @@ import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/last_payment_method.dart';
 import 'package:lumi_pass/common/widget/payment_sheet_chrome.dart';
@@ -91,13 +90,12 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
     },
   );
 
-  /// The sheets this page opens — add a card, the SMS codes — in the stage's
-  /// colours: light, with the pack's own button.
+  /// The sheets this page opens — add a card, the SMS codes — with the pack's
+  /// own button.
   late final PaymentSheetSkin _sheetSkin = PaymentSheetSkin(
     gradient: widget.tone.button,
     onGradient: widget.tone.onAccent,
     accent: widget.tone.deep,
-    background: AppColors.coinStage,
   );
 
   final _promoCtrl = TextEditingController();
@@ -238,122 +236,112 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
     );
   }
 
-  /// The stage is light in both themes, as the shelf is (see `NewCoinsPage`),
-  /// so its ink is read off the light table rather than the app's theme. The
-  /// State's own `context` sits ABOVE the override below — which is also why
-  /// the chooser sheet it opens keeps the app's theme.
-  static const AppColorScheme _c = AppColorScheme.light;
+  AppColorScheme get _c => context.colors;
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    return Theme(
-      data: Theme.of(context).copyWith(
-        brightness: Brightness.light,
-        extensions: const [AppColorScheme.light],
-      ),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark,
-        child: Scaffold(
-          backgroundColor: AppColors.coinStage,
-          // The Buy bar stays where it is and the keyboard covers it: riding
-          // up over the keyboard it sat on top of the promocode being typed.
-          // The field is near the top of the page, so nothing it needs is
-          // hidden.
-          resizeToAvoidBottomInset: false,
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: NewCoinsBackdrop(tone: widget.tone),
-                ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: context.colors.overlayStyle,
+      child: Scaffold(
+        backgroundColor: context.colors.coinStage,
+        // The Buy bar stays where it is and the keyboard covers it: riding
+        // up over the keyboard it sat on top of the promocode being typed.
+        // The field is near the top of the page, so nothing it needs is
+        // hidden.
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: NewCoinsBackdrop(tone: widget.tone),
               ),
-              Positioned.fill(
-                child: Column(
-                  children: [
-                    // The list starts BELOW the top bar and fades out as it
-                    // reaches it. The bar has no fill of its own — the pack's
-                    // wash shows through it — so rows scrolling under it ran
-                    // straight through the title. A fade keeps the wash and
-                    // still gets them out of the way.
-                    SizedBox(height: media.viewPadding.top + 58.h),
-                    Expanded(
-                      child: ShaderMask(
-                        blendMode: BlendMode.dstIn,
-                        shaderCallback: (bounds) => LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: [0, 18.h / bounds.height],
-                          colors: const [Colors.transparent, Colors.black],
-                        ).createShader(bounds),
-                        child: ListView(
-                          padding: EdgeInsets.fromLTRB(
-                            16.w,
-                            16.h,
-                            16.w,
-                            // Clears the Buy bar floating over the list.
-                            media.padding.bottom + 120.h,
-                          ),
-                          children: [
-                            _detailsCard(),
-                            8.verticalSpace,
-                            _totalCard(),
-                            8.verticalSpace,
-                            Container(
-                              padding:
-                                  EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
-                              decoration: BoxDecoration(
-                                color: AppColors.coinPanel,
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 2.w, bottom: 10.h),
-                                    child: Text(
-                                      'promo_have_code'.tr(),
-                                      style: AppText.medium16
-                                          .copyWith(color: AppColors.ink),
-                                    ),
-                                  ),
-                                  _promoSection(),
-                                ],
-                              ),
-                            ),
-                            // In the scroll, under the code — not pinned over
-                            // the button: the card strip makes this block grow,
-                            // and pinned it squeezed the receipt above it.
-                            22.verticalSpace,
-                            _paymentSection(),
-                          ],
+            ),
+            Positioned.fill(
+              child: Column(
+                children: [
+                  // The list starts BELOW the top bar and fades out as it
+                  // reaches it. The bar has no fill of its own — the pack's
+                  // wash shows through it — so rows scrolling under it ran
+                  // straight through the title. A fade keeps the wash and
+                  // still gets them out of the way.
+                  SizedBox(height: media.viewPadding.top + 58.h),
+                  Expanded(
+                    child: ShaderMask(
+                      blendMode: BlendMode.dstIn,
+                      shaderCallback: (bounds) => LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: [0, 18.h / bounds.height],
+                        colors: const [Colors.transparent, Colors.black],
+                      ).createShader(bounds),
+                      child: ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          16.w,
+                          16.h,
+                          16.w,
+                          // Clears the Buy bar floating over the list.
+                          media.padding.bottom + 120.h,
                         ),
+                        children: [
+                          _detailsCard(),
+                          8.verticalSpace,
+                          _totalCard(),
+                          8.verticalSpace,
+                          Container(
+                            padding:
+                                EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
+                            decoration: BoxDecoration(
+                              color: context.colors.coinPanel,
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding:
+                                      EdgeInsets.only(left: 2.w, bottom: 10.h),
+                                  child: Text(
+                                    'promo_have_code'.tr(),
+                                    style: AppText.medium16.copyWith(
+                                        color: context.colors.textPrimary),
+                                  ),
+                                ),
+                                _promoSection(),
+                              ],
+                            ),
+                          ),
+                          // In the scroll, under the code — not pinned over
+                          // the button: the card strip makes this block grow,
+                          // and pinned it squeezed the receipt above it.
+                          22.verticalSpace,
+                          _paymentSection(),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // Over the list, as on the shelf: the bar's own fade to the
-              // stage colour is what cuts the content off above the button.
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: NewCoinsBuyBar(
-                  tone: widget.tone,
-                  isLoading: _paying,
-                  onBuy: _promoBusy ? null : _pay,
-                ),
+            ),
+            // Over the list, as on the shelf: the bar's own fade to the
+            // stage colour is what cuts the content off above the button.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: NewCoinsBuyBar(
+                tone: widget.tone,
+                isLoading: _paying,
+                onBuy: _promoBusy ? null : _pay,
               ),
-              Positioned(
-                top: media.viewPadding.top + 8.h,
-                left: 16.w,
-                right: 16.w,
-                child: _topBar(),
-              ),
-            ],
-          ),
+            ),
+            Positioned(
+              top: media.viewPadding.top + 8.h,
+              left: 16.w,
+              right: 16.w,
+              child: _topBar(),
+            ),
+          ],
         ),
       ),
     );
@@ -376,13 +364,14 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
                 height: 40.w,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.coinPanel.withValues(alpha: 0.72),
+                  color: context.colors.coinPanel.withValues(alpha: 0.72),
                   shape: BoxShape.circle,
-                  border:
-                      Border.all(color: AppColors.ink.withValues(alpha: 0.08)),
+                  border: Border.all(
+                      color:
+                          context.colors.textPrimary.withValues(alpha: 0.08)),
                 ),
                 child: Icon(Icons.arrow_back_rounded,
-                    size: 20.w, color: AppColors.ink),
+                    size: 20.w, color: context.colors.textPrimary),
               ),
             ),
           ),
@@ -391,7 +380,8 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
             children: [
               Text(
                 'new_coins_checkout_title'.tr(),
-                style: AppText.semibold16.copyWith(color: AppColors.ink),
+                style: AppText.semibold16
+                    .copyWith(color: context.colors.textPrimary),
               ),
               Text(
                 'new_coins_title'.tr(),
@@ -441,7 +431,7 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: AppColors.coinPanel,
+        color: context.colors.coinPanel,
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Column(
@@ -455,7 +445,8 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
     );
   }
 
-  TextStyle get _value => AppText.medium16.copyWith(color: AppColors.ink);
+  TextStyle get _value =>
+      AppText.medium16.copyWith(color: context.colors.textPrimary);
 
   Widget _row(String label, Widget value) => Padding(
         padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -463,7 +454,8 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
           children: [
             Expanded(
               child: Text(label,
-                  style: AppText.regular16.copyWith(color: AppColors.ink)),
+                  style: AppText.regular16
+                      .copyWith(color: context.colors.textPrimary)),
             ),
             8.horizontalSpace,
             value,
@@ -477,17 +469,19 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: AppColors.coinPanel,
+        color: context.colors.coinPanel,
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text('amount_due'.tr(),
-                style: AppText.medium16.copyWith(color: AppColors.ink)),
+                style: AppText.medium16
+                    .copyWith(color: context.colors.textPrimary)),
           ),
           Text(_total.toRawUzsPrice(),
-              style: AppText.semibold24.copyWith(color: AppColors.ink)),
+              style: AppText.semibold24
+                  .copyWith(color: context.colors.textPrimary)),
         ],
       ),
     );
@@ -513,7 +507,8 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
                 applied.code,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.semibold14.copyWith(color: AppColors.ink),
+                style: AppText.semibold14
+                    .copyWith(color: context.colors.textPrimary),
               ),
             ),
             8.horizontalSpace,
@@ -610,7 +605,8 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
           padding: EdgeInsets.only(left: 4.w, bottom: 10.h),
           child: Text(
             'book_pick_payment'.tr(),
-            style: AppText.semibold16.copyWith(color: AppColors.ink),
+            style:
+                AppText.semibold16.copyWith(color: context.colors.textPrimary),
           ),
         ),
         Row(
@@ -663,7 +659,7 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
           border: selected
               ? null
               : Border.all(
-                  color: AppColors.ink.withValues(alpha: 0.2),
+                  color: context.colors.textPrimary.withValues(alpha: 0.2),
                   width: 1.5,
                 ),
         ),
@@ -672,7 +668,7 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
             : null,
       );
 
-  /// A tile on the stage's white paper, ringed in the pack's colour when
+  /// A tile on the stage's paper, ringed in the pack's colour when
   /// picked — the shape the rails and the cards share.
   Widget _tile({
     required bool selected,
@@ -688,12 +684,12 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
         width: width,
         padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
-          color: AppColors.coinPanel,
+          color: context.colors.coinPanel,
           borderRadius: BorderRadius.circular(18.r),
           border: Border.all(
             color: selected
                 ? widget.tone.accent
-                : AppColors.ink.withValues(alpha: 0.06),
+                : context.colors.textPrimary.withValues(alpha: 0.06),
             width: 1.5,
           ),
         ),
@@ -706,8 +702,11 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
   /// rail has no brand to show, so it is an icon with its name.
   Widget _railTile(PaymentRail rail, bool selected) {
     final Widget mark = switch (rail) {
+      // The Click wordmark ships in two tints: dark letters for the light
+      // panel, white ones for the dark.
       PaymentRail.click =>
-        Assets.images.pay.clickLight.image(height: 20.h, fit: BoxFit.contain),
+        (_c.isDark ? Assets.images.pay.clickDark : Assets.images.pay.clickLight)
+            .image(height: 20.h, fit: BoxFit.contain),
       PaymentRail.payme =>
         Assets.images.pay.payme.image(height: 24.h, fit: BoxFit.contain),
       PaymentRail.uzum =>
@@ -719,7 +718,7 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
               width: 20.w,
               height: 20.w,
               colorFilter:
-                  const ColorFilter.mode(AppColors.ink, BlendMode.srcIn),
+                  ColorFilter.mode(context.colors.textPrimary, BlendMode.srcIn),
             ),
             8.horizontalSpace,
             Flexible(
@@ -727,7 +726,8 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
                 'pay_card_short'.tr(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.semibold14.copyWith(color: AppColors.ink),
+                style: AppText.semibold14
+                    .copyWith(color: context.colors.textPrimary),
               ),
             ),
           ],
@@ -764,7 +764,7 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
                   color: widget.tone.accent,
                   shape: BoxShape.circle,
                   // A rim of the stage colour lifts it off the ring.
-                  border: Border.all(color: AppColors.coinStage, width: 2),
+                  border: Border.all(color: context.colors.coinStage, width: 2),
                 ),
                 child: Icon(Icons.check_rounded,
                     size: 11.w, color: widget.tone.onAccent),
@@ -804,7 +804,8 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
           Text(
             '•••• ${card.last4}',
             maxLines: 1,
-            style: AppText.semibold16.copyWith(color: AppColors.ink),
+            style:
+                AppText.semibold16.copyWith(color: context.colors.textPrimary),
           ),
         ],
       ),
@@ -825,17 +826,19 @@ class _NewCoinsCheckoutPageState extends State<NewCoinsCheckoutPage> {
             height: 28.h,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.ink.withValues(alpha: 0.06),
+              color: context.colors.textPrimary.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(6.r),
             ),
-            child: Icon(Icons.add_rounded, size: 18.sp, color: AppColors.ink),
+            child: Icon(Icons.add_rounded,
+                size: 18.sp, color: context.colors.textPrimary),
           ),
           const Spacer(),
           Text(
             'pay_add_card'.tr(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.semibold14.copyWith(color: AppColors.ink),
+            style:
+                AppText.semibold14.copyWith(color: context.colors.textPrimary),
           ),
         ],
       ),
@@ -851,7 +854,7 @@ class _DashedDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       size: const Size(double.infinity, 1),
-      painter: _DashPainter(AppColors.ink.withValues(alpha: 0.16)),
+      painter: _DashPainter(context.colors.textPrimary.withValues(alpha: 0.16)),
     );
   }
 }

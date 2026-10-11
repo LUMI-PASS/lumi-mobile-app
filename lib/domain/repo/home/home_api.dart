@@ -301,16 +301,10 @@ class HomeApi {
     });
   }
 
-  /// Centres listed from open sources — published ones, nearest first.
-  Future<Response> unclaimedCentres({
-    int page = 1,
-    int limit = 10,
-    double? lat,
-    double? lng,
-  }) {
-    return _dio.get('unclaimed-centres', queryParameters: {
-      'page': page,
-      'limit': limit,
+  /// The home feed's rows of centres listed from open sources — titled and
+  /// ordered by the adminka, each row nearest first.
+  Future<Response> unclaimedShelves({double? lat, double? lng}) {
+    return _dio.get('unclaimed-centres/shelves', queryParameters: {
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
     });

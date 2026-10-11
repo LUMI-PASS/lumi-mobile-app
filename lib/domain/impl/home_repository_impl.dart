@@ -319,24 +319,18 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
-  Future<List<UnclaimedCentre>> getUnclaimedCentres({
-    int page = 1,
-    int limit = 10,
+  Future<List<UnclaimedShelf>> getUnclaimedShelves({
     double? lat,
     double? lng,
   }) async {
-    final response = await _api.unclaimedCentres(
-      page: page,
-      limit: limit,
-      lat: lat,
-      lng: lng,
-    );
+    final response = await _api.unclaimedShelves(lat: lat, lng: lng);
     final list = response.data is Map ? response.data['data'] : null;
     if (list is! List) return const [];
     return list
         .whereType<Map>()
-        .map((e) => UnclaimedCentre.fromJson(Map<String, dynamic>.from(e)))
-        .where((centre) => centre.id.isNotEmpty)
+        .map((e) => UnclaimedShelf.fromJson(Map<String, dynamic>.from(e)))
+        // A row with nothing in it is a title over a gap.
+        .where((shelf) => shelf.centres.isNotEmpty)
         .toList();
   }
 

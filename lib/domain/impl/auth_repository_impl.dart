@@ -131,13 +131,11 @@ class AuthRepositoryImpl extends AuthRepository {
     required String phone,
     required String firstName,
     required String lastName,
-    List<String>? interests,
   }) async {
     final response = await _api.register(
       phone: phone,
       firstName: firstName,
       lastName: lastName,
-      interests: interests,
     );
     final data = response.data['data'] as Map<String, dynamic>;
     final token = data['access_token'] as String?;

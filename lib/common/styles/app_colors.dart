@@ -30,24 +30,13 @@ abstract final class AppColors {
   static const chipGrey = Color(0xFF4B4B55);
 
   // Lumi Coin pack tones — each pack on the coin shelf is shown in its own
-  // colour: a pale tint, the accent and a deep shade. Theme-invariant: that
-  // screen is LIGHT in both themes.
-  /// The shelf's own page colour — a near-white with the faintest lilac in it,
-  /// so the pack's wash at the top edge has somewhere to fade to instead of
-  /// stopping dead on flat white.
-  ///
-  /// It used to be true black. The shelf is a light screen now, so everything
-  /// drawn on the stage — the pack's name, its price, the top pills — takes a
-  /// fixed dark ink, the same rule the panels below already followed.
-  static const coinStage = Color(0xFFFAF8FD);
-
-  /// The panels inside a pack's tone frame. White: the cards read as paper
-  /// held up against the colour. Light in BOTH themes, like the other fixed
-  /// inks — the stage underneath never turns dark, so there is no dark variant
-  /// to switch to. Anything drawn on a panel therefore takes a fixed dark ink
-  /// ([ink], [lightTextSecondary]), never `context.colors`, which this screen
-  /// pins to the light table.
-  static const coinPanel = Color(0xFFFFFFFF);
+  // colour: a pale tint, the accent and a deep shade. Theme-invariant: the
+  // tones are the packs' identity, and it is the stage and the panels under
+  // them that follow the theme — see `AppColorScheme.coinStage` / `coinPanel`.
+  /// The coin shelf's page colour in light — a near-white with the faintest
+  /// lilac in it, so the pack's wash at the top edge has somewhere to fade to
+  /// instead of stopping dead on flat white. Dark uses [ink].
+  static const lightCoinStage = Color(0xFFFAF8FD);
   static const coinOrangeLight = Color(0xFFFFB38A);
   static const coinOrange = Color(0xFFFF7A3D);
   static const coinOrangeDeep = Color(0xFFD9480F);
@@ -79,17 +68,21 @@ abstract final class AppColors {
   static const lightScaffold = Color(0xFFF9F9FA);
   static const lightCanvas = Color(0xFFEFEEF5);
 
-  /// Fill of the "Входит в подписку" container on the home feed.
+  /// Fill of the coin-row container on the home feed.
   ///
-  /// Yellow on purpose: this is the Lumi Coin section, and gold is the coin's
-  /// own colour everywhere else in the app (see the `coinGold*` tones).
+  /// A pale brand lavender. The panel is ONE hue in both themes — this and
+  /// [darkCoinBand] are the same violet at two depths — so the section reads
+  /// as the same thing whichever theme it is opened in. It was a pale gold
+  /// here over a purple there, which made it two different-looking sections.
   ///
-  /// A PALE gold, and it has no border, so it separates from [lightScaffold]
-  /// by hue rather than by weight — the two are close in luminance. That is
-  /// the intended look, but it is also why the blue channel is held this far
-  /// down: lighten it much further and the block stops reading as yellow and
-  /// starts reading as an off-white rectangle for no reason.
-  static const lightCoinBand = Color(0xFFFFF4C4);
+  /// Purple rather than gold because only purple survives the trip to dark: a
+  /// gold deep enough to carry white text is a brown. The coin's gold is left
+  /// to the coins printed on the cards.
+  ///
+  /// It has no border, so it separates from [lightScaffold] by hue alone —
+  /// the two are close in luminance. That is why green is held this far under
+  /// blue: lift it and the block turns into an off-white rectangle.
+  static const lightCoinBand = Color(0xFFE6DDFB);
 
   /// Fills of the home feed's other coloured shelves — see
   /// `AppColorScheme.trialBand` and `discountBand`. Pale for the same reason
@@ -107,12 +100,11 @@ abstract final class AppColors {
   // dark
   static const darkCanvas = Color(0xFF1D1C23);
 
-  /// [lightCoinBand]'s dark counterpart. NOT a gold: a yellow taken dark
-  /// enough to carry a white label is a brown or an olive (`302713` and
-  /// `453410` were both tried on a device), and it read as a muddy panel
-  /// rather than as the coin's colour. A deep brand purple instead — the
-  /// app's own accent, which holds its hue at low brightness — with the gold
-  /// left to the coins printed on the cards.
+  /// [lightCoinBand]'s dark counterpart: the same brand violet taken right
+  /// down, so a white label reads on it and the dark cards lift off it.
+  ///
+  /// The two golds tried here first (`302713`, `453410`) both came out as a
+  /// muddy brown on a device, which is what moved the whole panel to purple.
   static const darkCoinBand = Color(0xFF2C2244);
   static const darkTrialBand = Color(0xFF1B2545);
   static const darkDiscountBand = Color(0xFF3B1E2B);

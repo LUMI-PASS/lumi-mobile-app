@@ -386,8 +386,6 @@ class _UnclaimedCentrePageState extends State<UnclaimedCentrePage> {
               ),
             ],
           ),
-          14.verticalSpace,
-          _UnverifiedNotice(c: c),
           if (facts.isNotEmpty) ...[
             14.verticalSpace,
             Row(
@@ -514,15 +512,6 @@ class _UnclaimedCentrePageState extends State<UnclaimedCentrePage> {
                     style: AppText.medium14.copyWith(color: c.textPrimary),
                   ),
                 ),
-                if (_hasMap) ...[
-                  8.horizontalSpace,
-                  RouteIconButton(
-                    lat: _centre.latitude!,
-                    lng: _centre.longitude!,
-                    title: _centre.name,
-                    subtitle: address,
-                  ),
-                ],
               ],
             ),
           ),
@@ -654,6 +643,23 @@ class _UnclaimedCentrePageState extends State<UnclaimedCentrePage> {
     );
   }
 
+  /// The network's own mark, in the brand purple the phone row uses.
+  Widget _socialIcon(String key) {
+    final svg = switch (key) {
+      'instagram' => Assets.icons.social.instagram,
+      'telegram' => Assets.icons.telegram,
+      'facebook' => Assets.icons.social.facebook,
+      'youtube' => Assets.icons.social.youtube,
+      'tiktok' => Assets.icons.social.tiktok,
+      _ => null,
+    };
+    if (svg == null) {
+      return Icon(Icons.language_rounded,
+          size: 18.w, color: AppColors.brandPurple);
+    }
+    return HomeIcon(svg, size: 18, color: AppColors.brandPurple);
+  }
+
   // ─── How to reach it ───────────────────────────────────────────────────────
   Widget _contactsCard(AppColorScheme c) {
     const order = [
@@ -672,16 +678,15 @@ class _UnclaimedCentrePageState extends State<UnclaimedCentrePage> {
       for (final phone in _centre.phones)
         _ContactRow(
           c: c,
-          icon: Icons.call_rounded,
+          icon: Icon(Icons.call_rounded,
+              size: 18.w, color: AppColors.brandPurple),
           label: phone,
           onTap: () => _call(phone),
         ),
       for (final (key, link) in socials)
         _ContactRow(
           c: c,
-          icon: key == 'website'
-              ? Icons.language_rounded
-              : Icons.alternate_email_rounded,
+          icon: _socialIcon(key),
           label: key == 'website'
               ? link.replaceFirst(RegExp(r'^https?://(www\.)?'), '')
               : '${key[0].toUpperCase()}${key.substring(1)}',
@@ -704,52 +709,6 @@ class _UnclaimedCentrePageState extends State<UnclaimedCentrePage> {
             if (i > 0) 8.verticalSpace,
             row,
           ],
-        ],
-      ),
-    );
-  }
-}
-
-/// "Lumi collected this; the centre has not confirmed it."
-///
-/// Amber, not red: nothing is wrong, the reader is only being told how far to
-/// trust the page. The ink is the theme's own text colour over a wash of the
-/// warning hue, so it reads in both themes.
-class _UnverifiedNotice extends StatelessWidget {
-  const _UnverifiedNotice({required this.c});
-
-  final AppColorScheme c;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 10.h),
-      decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: c.isDark ? 0.16 : 0.14),
-        borderRadius: BorderRadius.circular(14.r),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline_rounded,
-              size: 18.w, color: AppColors.warning),
-          8.horizontalSpace,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'unclaimed_unverified_title'.tr(),
-                  style: AppText.semibold14.copyWith(color: c.textPrimary),
-                ),
-                2.verticalSpace,
-                Text(
-                  'unclaimed_unverified_body'.tr(),
-                  style: AppText.regular12.copyWith(color: c.textSecondary),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -804,7 +763,7 @@ class _ContactRow extends StatelessWidget {
   });
 
   final AppColorScheme c;
-  final IconData icon;
+  final Widget icon;
   final String label;
   final VoidCallback onTap;
 
@@ -827,7 +786,7 @@ class _ContactRow extends StatelessWidget {
               alignment: Alignment.center,
               decoration:
                   BoxDecoration(color: c.surface, shape: BoxShape.circle),
-              child: Icon(icon, size: 18.w, color: AppColors.brandPurple),
+              child: icon,
             ),
             10.horizontalSpace,
             Expanded(

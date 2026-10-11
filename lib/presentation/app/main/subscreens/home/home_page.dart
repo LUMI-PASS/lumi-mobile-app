@@ -16,6 +16,7 @@ import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
@@ -155,31 +156,14 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             ),
             if (_categories(state).isNotEmpty)
               SliverToBoxAdapter(child: _buildCategories(context, state)),
-            // Centres listed from open sources, straight under the categories.
-            // Not drawn until the adminka has published at least one.
-            if (state.unclaimedCentres.isNotEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 18.h, bottom: 6.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      HomeSectionHeader(title: 'home_unclaimed_title'.tr()),
-                      12.verticalSpace,
-                      HomeUnclaimedShelf(centres: state.unclaimedCentres),
-                    ],
-                  ),
-                ),
-              ),
             // What a Lumi Coin pack buys, then the courses row.
             //
             // The fallback is not cosmetic: on a server that sends no coin
             // prices at all — the feature off, or a backend that predates it —
             // the subscription row would be empty and home would be left with
             // no activities shelf whatsoever. It falls back to the row that
-            // used to be here, under its OWN old header: "Входит в подписку"
-            // over activities a pack cannot pay for is a promise the feed
-            // cannot keep.
+            // used to be here. Both carry the same "Популярные занятия"
+            // header; only the coin row is drawn on the violet band.
             if (state.subscriptionList.isNotEmpty)
               SliverToBoxAdapter(child: _buildSubscription(context, state))
             else if (state.newClassesList.isNotEmpty)
@@ -327,7 +311,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return columns;
   }
 
-  /// "Входит в подписку" — a sample of what a Lumi Coin pack pays for.
+  /// The coin row — a sample of what a Lumi Coin pack pays for.
+  ///
+  /// Headed "Популярные занятия", not "Входит в подписку" as it once was:
+  /// every bookable activity has a coin price, so "included" singled out
+  /// nothing, and a coin pack is not a subscription.
   ///
   /// The row is a fixed ten, dealt and shuffled in the cubit (see
   /// `HomeCubit.subscriptionRowSize`), so it is a taste of the catalogue rather
@@ -337,11 +325,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   /// not ask. The categories row above leaves its own off for the same reason.
   ///
   /// It is drawn as a full-width panel of [AppColorScheme.coinBand] — the
-  /// coin's own gold in light, a deep brand purple in dark, where gold only
-  /// comes out brown — because what sets this row apart is that everything in
-  /// it is already paid for, and the block of colour is what says so. The entries are raised cards on that panel (see
+  /// brand violet, pale in light and deep in dark — because what sets this row
+  /// apart is that everything in it is already paid for, and the block of
+  /// colour is what says so. The entries are raised cards on that panel (see
   /// [HomeCourseCard.carded]), so their text sits on a neutral surface rather
-  /// than on the gold.
+  /// than on the tint.
   ///
   /// Edge to edge: the panel is a band across the feed, not one more inset
   /// tile among the rows. Its rounded corners still show against the page, and
@@ -371,7 +359,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeSectionHeader(title: 'included_in_subscription'.tr()),
+          HomeSectionHeader(title: 'popular_activities'.tr()),
           12.verticalSpace,
           NotificationListener<ScrollNotification>(
             onNotification: (scrollInfo) {
@@ -661,7 +649,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       .toList();
 
   List<HomClass> _discounted(HomeBuildable state) => _loaded(state)
-      .where((c) => (c.discountPercentage ?? 0) > 0)
+      .where((c) => c.sale != null)
       .take(_bandMaximum)
       .toList();
 
@@ -675,7 +663,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   List<HomeInsert> _inserts(BuildContext context, HomeBuildable state) {
     final signedIn = context.read<HomeCubit>().isSignedIn;
     final coinsLive = watchNewCoins(context).isVisible;
-    return [
+    final fixed = [
       for (final insert in HomeInsert.values)
         if (switch (insert) {
           HomeInsert.inviteBanner => signedIn,
@@ -683,12 +671,17 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           HomeInsert.trialBand => _trials(state).length >= _bandMinimum,
           HomeInsert.coinBanner => coinsLive,
           HomeInsert.centres => state.centres.length >= _bandMinimum,
-          HomeInsert.discountBand => _discounted(state).length >= _bandMinimum,
+          // Real sales are rare and each is worth showing, so this band does
+          // not wait for three of them the way the trial band does.
+          HomeInsert.discountBand => _discounted(state).isNotEmpty,
           HomeInsert.savedBanner => signedIn,
           HomeInsert.ad => state.packet != null || _adBanner(state) != null,
+          // Not one of the fixed ones: woven in below, once per row.
+          HomeInsert.unclaimedShelf => false,
         })
           insert,
     ];
+    return weaveShelves(fixed, state.unclaimedShelves.length);
   }
 
   /// The feed's one advertisement, or null when there is nothing to advertise.
@@ -851,10 +844,31 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             HomeCentresShelf(branches: state.centres),
           ],
         );
+      case HomeInsert.unclaimedShelf:
+        // [_inserts] deals one per row, so the ordinal is always a row —
+        // unless the rows were refetched shorter between layout and build.
+        final shelves = state.unclaimedShelves;
+        if (slot.ordinal >= shelves.length) return const SizedBox.shrink();
+        return _buildUnclaimed(shelves[slot.ordinal]);
       case HomeInsert.ad:
         // [_inserts] deals this only when there is one.
         return _adSlot(context, state) ?? const SizedBox.shrink();
     }
+  }
+
+  /// One of the adminka's rows of open-source centres, dealt into "Near you".
+  Widget _buildUnclaimed(UnclaimedShelf shelf) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        HomeSectionHeader(title: shelf.title),
+        12.verticalSpace,
+        HomeUnclaimedShelf(
+          centres: shelf.centres,
+          storageKey: 'unclaimed-shelf-${shelf.id}',
+        ),
+      ],
+    );
   }
 
   /// A full-width block of colour holding one horizontal row of cards — the

@@ -45,17 +45,18 @@ class HomeBuildable with _$HomeBuildable {
     /// activities, never the places themselves. Empty until it lands and when
     /// it fails, in which case the shelf is simply not dealt into the feed.
     @Default([]) List<HomBranch> centres,
-    /// Centres Lumi listed from open sources before they signed — the shelf
-    /// under the categories. Its own request; empty until it lands, when it
-    /// fails and while nothing is published, and the shelf is then not drawn.
-    @Default([]) List<UnclaimedCentre> unclaimedCentres,
+    /// Rows of centres Lumi listed from open sources before they signed,
+    /// dealt between the runs of "Near you" in the order the adminka gave
+    /// them. Their own request; empty until it lands, when it fails and while
+    /// the adminka has no row to show, and then none is dealt.
+    @Default([]) List<UnclaimedShelf> unclaimedShelves,
     // Location
     @Default(null) double? lat,
     @Default(null) double? lng,
     // Pagination for new classes
     @Default([]) List<HomClass> newClassesList,
 
-    /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+    /// The coin row — activities a Lumi Coin pack can pay for,
     /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
     ///
     /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the

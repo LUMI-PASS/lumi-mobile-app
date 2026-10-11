@@ -241,3 +241,35 @@ class UnclaimedCentre {
     );
   }
 }
+
+/// One titled row of unclaimed centres on the home feed.
+///
+/// The rows are written in the adminka — their titles, their order and which
+/// centres each holds — so the app draws whatever it is sent and a new row
+/// needs no release. [title] arrives already in the user's language.
+class UnclaimedShelf {
+  const UnclaimedShelf({
+    required this.id,
+    required this.title,
+    required this.centres,
+  });
+
+  final String id;
+  final String title;
+  final List<UnclaimedCentre> centres;
+
+  factory UnclaimedShelf.fromJson(Map<String, dynamic> json) {
+    final centres = json['centres'];
+    return UnclaimedShelf(
+      id: (json['id'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      centres: centres is List
+          ? centres
+              .whereType<Map>()
+              .map((e) => UnclaimedCentre.fromJson(Map<String, dynamic>.from(e)))
+              .where((centre) => centre.id.isNotEmpty)
+              .toList()
+          : const [],
+    );
+  }
+}

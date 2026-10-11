@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lumi_pass/common/widget/sale_notice.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -1524,6 +1525,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               alignment: Alignment.centerLeft,
               child: CashbackChip(preview: _cashback),
             ),
+          ],
+          // The centre's own sale, above the prices it applies to. The rows
+          // below stay at the list price: which lessons are cheaper depends on
+          // the day and the hour, and that is priced where they are picked —
+          // on the booking sheet.
+          if (_full?.sale != null) ...[
+            12.verticalSpace,
+            SaleNotice(sale: _full!.sale!),
           ],
           16.verticalSpace,
           ...List.generate(rows.length, (i) {

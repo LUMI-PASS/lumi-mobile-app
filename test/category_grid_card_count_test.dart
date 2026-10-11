@@ -57,7 +57,8 @@ void main() {
       );
 
   /// Every string the card paints. The first is the artwork fallback's initial
-  /// — this card is given no image — then the title, then the count line.
+  /// — this card is given no image — then the title, then the count line. (The artwork is first because it is
+  /// painted first: it sits in the corner UNDER the text column.)
   List<String> texts(WidgetTester tester) => [
         for (final text in tester.widgetList<Text>(find.byType(Text)))
           text.data ?? '',

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/auth_agreement_text.dart';
@@ -16,6 +15,7 @@ import 'package:lumi_pass/common/widget/auth/auth_scaffold.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/auth/interests/parent_interests_page.dart';
 import 'package:lumi_pass/presentation/auth/verify/cubit/verify_cubit.dart';
 import 'package:lumi_pass/presentation/auth/verify/cubit/verify_state.dart';
 
@@ -55,7 +55,7 @@ class VerifyPage
   @override
   void listener(BuildContext context, VerifyListenable state) {
     if (state.effect == VerifyEffect.success) {
-      context.router.replaceAll(const [MainRoute()]);
+      enterAppAfterSignIn(context);
     }
     super.listener(context, state);
   }

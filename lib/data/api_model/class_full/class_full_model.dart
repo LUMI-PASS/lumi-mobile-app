@@ -1,3 +1,4 @@
+import 'package:lumi_pass/data/api_model/activity_sale/activity_sale.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 
@@ -74,6 +75,18 @@ class ClassFullModel {
   /// So'm per coin the prices above were worked out at.
   final num? newCoinRate;
 
+  /// The centre's own sale to headline on the page — running now or starting
+  /// this week — or null.
+  final ActivitySale? sale;
+
+  /// Every sale on this activity that has not ended. The booking calendar
+  /// prices each date and hour from these; see [saleFor].
+  final List<ActivitySale> sales;
+
+  /// The sale a lesson on [date] starting at [startTime] is on, or null.
+  ActivitySale? saleFor(DateTime date, {String? startTime}) =>
+      ActivitySale.best(sales, date, startTime: startTime);
+
   /// Whether this activity can be quoted in coins at all. Courses never are,
   /// whatever the payload carries.
   bool get hasNewCoinPrices => !isCourse && newCoinRate != null;
@@ -135,6 +148,8 @@ class ClassFullModel {
     this.newCoinPriceMin,
     this.newCoinPriceMax,
     this.newCoinRate,
+    this.sale,
+    this.sales = const [],
   });
 
   /// The configured trial ladder for one group of this course, or the course's
@@ -309,6 +324,8 @@ class ClassFullModel {
       newCoinPriceMin: (json['new_coin_price_min'] as num?)?.toInt(),
       newCoinPriceMax: (json['new_coin_price_max'] as num?)?.toInt(),
       newCoinRate: json['new_coin_rate'] as num?,
+      sale: ActivitySale.tryParse(json['sale']),
+      sales: ActivitySale.listFromJson(json['sales']),
     );
   }
 }

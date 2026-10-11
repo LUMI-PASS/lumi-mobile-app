@@ -15,17 +15,17 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/env/runtime_env.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/profile/widgets/profile_coin_hero.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/styles/theme_mode_notifier.dart';
 import 'package:lumi_pass/common/utils/avatar_notifier.dart';
 import 'package:lumi_pass/common/utils/photo_urls.dart';
+import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/common/widget/theme_transition_overlay.dart';
-import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/common/widget/user_avatar.dart';
-import 'package:lumi_pass/common/widget/control_chip.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
@@ -33,7 +33,6 @@ import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/cubit/profile_state.dart';
-import 'package:lumi_pass/presentation/app/profile/referral/widgets/referral_code_sheet.dart';
 import 'package:lumi_pass/presentation/app/profile/referral/widgets/referral_invite_card.dart';
 
 import '../../../../../common/router/app_router.dart';
@@ -435,17 +434,32 @@ class ProfilePage
                             ? null
                             : () => _openAccountDetails(context, cubit, user),
                       ),
-                    if (!showGuest) ...[
-                      20.kh,
-                      _SectionLabel('my_children'.tr()),
-                      12.kh,
-                      _ChildrenSection(
-                        children: state.children,
-                        onEdit: (child) =>
-                            _openChildDetails(context, cubit, child),
-                        onAdd: () => _openChildDetails(context, cubit, null),
+                    // Lumi Coin — the headline of the screen, straight under
+                    // the name. Not the cashback wallet: coins are bought in
+                    // packs and pay for an activity outright. It exists only
+                    // while packs are on sale (or coins are still held), so
+                    // before the first pack is created nothing here hints at
+                    // it.
+                    //
+                    // Its own Builder so the `watch` belongs to an element
+                    // that is actually building, and only the hero rebuilds
+                    // when the balance moves.
+                    if (!showGuest)
+                      Builder(
+                        builder: (context) {
+                          final newCoins = watchNewCoins(context);
+                          if (!newCoins.isVisible) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: EdgeInsets.only(top: 12.h),
+                            child: ProfileCoinHero(
+                              coins: newCoins,
+                              onTap: () => context.router.push(NewCoinsRoute()),
+                            ),
+                          );
+                        },
                       ),
-                    ],
                     // Services — what the screen is FOR: the bookings, and the
                     // cards that pay for them.
                     //
@@ -457,8 +471,19 @@ class ProfilePage
                     // card against.
                     if (!showGuest) ...[
                       16.kh,
-                      _SectionLabel('services_title'.tr()),
-                      12.kh,
+                      _SectionLabel('my_children'.tr()),
+                      10.kh,
+                      _ChildrenSection(
+                        children: state.children,
+                        onEdit: (child) =>
+                            _openChildDetails(context, cubit, child),
+                        onAdd: () => _openChildDetails(context, cubit, null),
+                      ),
+                    ],
+                    if (!showGuest) ...[
+                      // No "Services" heading: two tiles that say what
+                      // they are do not need a title, and it cost a row.
+                      16.kh,
                       Row(
                         children: [
                           Expanded(
@@ -482,35 +507,6 @@ class ProfilePage
                           ),
                         ],
                       ),
-                      // Lumi Coin — not the cashback wallet: coins are bought
-                      // in packs and pay for an activity outright. The tile exists only while packs
-                      // are on sale (or coins are still held), so before the
-                      // first pack is created nothing here hints at it.
-                      //
-                      // Its own Builder so the `watch` belongs to an element
-                      // that is actually building, and only this tile
-                      // rebuilds when the balance moves.
-                      Builder(
-                        builder: (context) {
-                          final newCoins = watchNewCoins(context);
-                          if (!newCoins.isVisible) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: EdgeInsets.only(top: 12.h),
-                            child: _QuickTile(
-                              iconAsset: _ProfileIcons.newCoins,
-                              label: 'new_coins_title'.tr(),
-                              value: CoinAmount(
-                                amount: newCoins.balance,
-                                style: AppText.semibold16,
-                              ),
-                              onTap: () =>
-                                  context.router.push(NewCoinsRoute()),
-                            ),
-                          );
-                        },
-                      ),
                       // The referral programme: the invite card while it runs,
                       // and the way to enter someone else's code while this
                       // account may still take one. Both vanish with the
@@ -523,25 +519,13 @@ class ProfilePage
                               context.router.push(const ReferralRoute()),
                         ),
                       ],
-                      if (referral != null &&
-                          referral.enabled &&
-                          referral.canApply) ...[
-                        8.kh,
-                        _MenuRow(
-                          iconAsset: _ProfileIcons.referralCode,
-                          label: 'referral_have_code'.tr(),
-                          subtitle: 'referral_have_code_row_subtitle'.tr(),
-                          onTap: () async {
-                            if (await showReferralCodeSheet(context)) {
-                              await cubit.refreshReferral();
-                            }
-                          },
-                        ),
-                      ],
+                      // Entering someone else's code lives on the referral
+                      // screen, one tap behind the row above — not as a
+                      // second referral row here.
                     ],
-                    20.kh,
+                    16.kh,
                     _SectionLabel('settings_title'.tr()),
-                    12.kh,
+                    10.kh,
                     const _ThemeToggleRow(),
                     8.kh,
                     _MenuRow(
@@ -558,9 +542,9 @@ class ProfilePage
                       subtitle: 'share_app_subtitle'.tr(),
                       onTap: () => _shareApp(context),
                     ),
-                    20.kh,
-                    _SectionLabel('help_title'.tr()),
-                    12.kh,
+                    // Help follows straight on, in the same list: three
+                    // rows did not earn a heading of their own.
+                    8.kh,
                     _MenuRow(
                       iconAsset: _ProfileIcons.faq,
                       label: 'faq'.tr(),
@@ -574,7 +558,7 @@ class ProfilePage
                         RemoteConfigService.instance.hasSupportPhone) ...[
                       8.kh,
                       _MenuRow(
-                        iconAsset: _ProfileIcons.support,
+                        iconAsset: _ProfileIcons.supportRow,
                         label: 'contact_support'.tr(),
                         subtitle: 'contact_support_subtitle'.tr(),
                         onTap: () => _showSupportSheet(context),
@@ -749,10 +733,33 @@ class _ChildChip extends StatelessWidget {
     return (f != null && f.isNotEmpty) ? f[0].toUpperCase() : '?';
   }
 
-  Widget get _initialText => Text(
+  /// What fills the circle when there is no photo: the boy or the girl from
+  /// the child form, by the gender picked there. A child added before the
+  /// form asked has none, and keeps the first letter of their name.
+  Widget get _placeholder {
+    final picture = switch ((child.gender ?? '').toUpperCase()) {
+      'MALE' => Assets.images.childBoy,
+      'FEMALE' => Assets.images.childGirl,
+      _ => null,
+    };
+    if (picture == null) {
+      return Text(
         _initial,
         style: AppText.semibold16.copyWith(color: AppColors.brandPurple),
       );
+    }
+    // Head and shoulders: the figure is drawn a little larger than the
+    // circle and hung from its top, so the face is what the circle keeps.
+    return OverflowBox(
+      alignment: Alignment.topCenter,
+      maxWidth: 58.w,
+      maxHeight: 58.w,
+      child: Padding(
+        padding: EdgeInsets.only(top: 4.w),
+        child: picture.image(width: 54.w, height: 54.w),
+      ),
+    );
+  }
 
   /// The uploaded photo, when the child has one — the endpoint 404s otherwise.
   String? get _photoUrl => (child.id != null && child.hasPhoto == true)
@@ -769,6 +776,9 @@ class _ChildChip extends StatelessWidget {
         width: 72.w,
         child: Column(
           children: [
+            // The whole chip is the button; the pencil badge only says so.
+            // It hangs off the corner, outside the circle, so it does not sit
+            // on the child's face.
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -787,13 +797,13 @@ class _ChildChip extends StatelessWidget {
                           width: 48.w,
                           height: 48.w,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _initialText,
+                          errorBuilder: (_, __, ___) => _placeholder,
                         )
-                      : _initialText,
+                      : _placeholder,
                 ),
                 Positioned(
-                  right: -2.w,
-                  bottom: -2.w,
+                  right: -12.w,
+                  bottom: -6.w,
                   child: _EditBadge(onTap: onTap),
                 ),
               ],
@@ -936,15 +946,18 @@ class _DashedCirclePainter extends CustomPainter {
 /// Figma (node 96-1829) Iconsax glyphs used by the profile settings rows.
 class _ProfileIcons {
   static final bookings = Assets.icons.detail.iconsaxAiCalendar;
-  static final newCoins = Assets.icons.dollarRounded;
   static final cards = Assets.icons.icCard;
   static final language = Assets.icons.detail.iconsaxLanguageCircle;
   static final faq = Assets.icons.detail.iconsaxQuestionMark;
   static final share = Assets.icons.detail.iconsaxCircleShare;
   static final support = Assets.icons.call;
+
+  /// The support ROW's mark: a filled headset, cut like the rest of this
+  /// list. [support] is a thin outlined handset — right inside the sheet,
+  /// where it means "call", but the odd one out among filled glyphs here.
+  static final supportRow = Assets.icons.detail.iconsaxHeadphone;
   static final telegram = Assets.icons.telegram;
   static final logout = Assets.icons.icLogout;
-  static final referralCode = Assets.icons.detail.iconsaxTicketDiscount;
 }
 
 /// One way to reach support inside [_showSupportSheet] — the brand glyph, what
@@ -986,8 +999,7 @@ class _SupportOption extends StatelessWidget {
               ),
               child: ShaderMask(
                 blendMode: BlendMode.srcIn,
-                shaderCallback: (rect) =>
-                    AppGradients.brand.createShader(rect),
+                shaderCallback: (rect) => AppGradients.brand.createShader(rect),
                 child: iconAsset.svg(width: 20.sp, height: 20.sp),
               ),
             ),
@@ -1610,8 +1622,7 @@ class _QuickTile extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style:
-                        AppText.semibold14.copyWith(color: c.textPrimary),
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
                   ),
                   2.kh,
                   if (value != null)

@@ -59,7 +59,6 @@ abstract class AuthRepository {
     required String phone,
     required String firstName,
     required String lastName,
-    List<String>? interests,
   });
 
   Future<void> logout();

@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/presentation/auth/interests/parent_interests_page.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/coupon_promo_dialog.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/custom_bottomnavigation.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/onboarding_bottomsheet.dart';
@@ -46,6 +47,10 @@ class _MainPageState extends State<MainPage> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // A new account that closed the app on "what are you looking for?" is
+      // asked again before anything else is put on screen.
+      await askInterestsIfOwed(context.router.root);
+      if (!mounted) return;
       // The two launch popups, in one place and in order, because the screen
       // can only hold one: whichever fires leaves the other for another launch.
       // Stacking them would put an ad on top of a reward and lose both.

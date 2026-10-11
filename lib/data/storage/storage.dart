@@ -64,6 +64,11 @@ class Storage {
 
   BaseStorage<bool> get needsOnboarding => BaseStorage(_box, 'needsOnboarding');
 
+  /// A new account still owes its answer to "what are you looking for?" —
+  /// set when it signs in, cleared when it answers. Kept on disk so closing
+  /// the app on that screen does not let the question go unasked.
+  BaseStorage<bool> get interestsOwed => BaseStorage(_box, 'interestsOwed');
+
   BaseStorage<String> get pendingPhone => BaseStorage(_box, 'pendingPhone');
 
   /// The logged-in user's phone number, persisted for the whole session
@@ -204,6 +209,7 @@ class Storage {
 
     // Once-per-user prompts — the next user hasn't seen them.
     await needsOnboarding.set(null);
+    await interestsOwed.set(null);
     await couponPromoShown.set(null);
     await profilePromptDismissed.set(null);
     await isAdSeen.set(null);

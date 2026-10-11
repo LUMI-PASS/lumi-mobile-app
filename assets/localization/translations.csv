@@ -1312,7 +1312,7 @@ book_packet_after,После брони останется посещений: {
 book_with_packet_cta,Забронировать по пакету,Paket bilan band qilish,Book with my packet
 referral_title,Пригласить друзей,Do'stlarni taklif qilish,Invite friends
 referral_invite_title,Пригласите друзей,Do'stlaringizni taklif qiling,Invite friends
-referral_reward_line,"Получите скидку {}%, когда друг сделает первую покупку",Do'stingiz birinchi xaridini qilganda {}% chegirma oling,Get {}% off when a friend makes their first purchase
+referral_reward_line,"Получите скидку {}%, когда друг купит пакет",Do'stingiz paket sotib olganda {}% chegirma oling,Get {}% off when a friend buys a pack
 referral_copy,Копировать,Nusxalash,Copy
 referral_copied,Скопировано,Nusxa olindi,Copied
 referral_share,Поделиться,Ulashish,Share
@@ -1330,7 +1330,7 @@ referral_you_were_invited_by,Вас пригласил(а) {},Sizni {} taklif qi
 referral_you_were_invited,Вы присоединились по приглашению,Siz taklif orqali qo'shildingiz,You joined by invitation
 referral_how_it_works,Как это работает,Bu qanday ishlaydi,How it works
 referral_step_share,Поделитесь своим кодом или ссылкой с другом,Kodingiz yoki havolangizni do'stingizga yuboring,Share your code or link with a friend
-referral_step_friend_buys,Друг регистрируется по вашему коду и совершает первую покупку,"Do'stingiz kodingiz bilan ro'yxatdan o'tib, birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase
+referral_step_friend_buys,Друг регистрируется по вашему коду и покупает пакет,"Do'stingiz kodingiz bilan ro'yxatdan o'tib, paket sotib oladi",Your friend signs up with your code and buys a pack
 referral_step_friend_buys_min,Друг регистрируется по вашему коду и совершает первую покупку от {},"Do'stingiz kodingiz bilan ro'yxatdan o'tib, {} dan boshlab birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase of {} or more
 referral_step_reward,Вы получаете скидку {}% на следующую запись — она действует {} дн.,Siz keyingi bron uchun {}% chegirma olasiz — u {} kun amal qiladi,"You get {}% off your next booking, valid for {} days"
 referral_your_friends,Ваши друзья,Do'stlaringiz,Your friends
@@ -1340,7 +1340,7 @@ referral_stats_rewarded,Награды,Mukofotlar,Rewarded
 referral_no_invitees,Пока никто не присоединился по вашему коду,Hozircha kodingiz orqali hech kim qo'shilmadi,Nobody has joined with your code yet
 referral_friend,Друг,Do'st,Friend
 referral_status_applied,Присоединился,Qo'shildi,Joined
-referral_status_order_paid,Оплатил заказ,Buyurtma to'landi,Order paid
+referral_status_order_paid,Купил пакет,Paket sotib oldi,Bought a pack
 referral_status_qualified,Подтверждено,Tasdiqlandi,Qualified
 referral_status_queued,В очереди,Navbatda,Queued
 referral_status_rewarded,Награда получена,Mukofot olindi,Rewarded
@@ -1348,7 +1348,7 @@ referral_status_expired,Истекло,Muddati tugagan,Expired
 referral_status_rejected,Отклонено,Rad etildi,Rejected
 referral_status_unknown,В обработке,Ko'rib chiqilmoqda,In progress
 referral_your_vouchers,Ваши скидки,Chegirmalaringiz,Your vouchers
-referral_no_vouchers,"Скидки появятся здесь, когда друзья совершат первую покупку",Do'stlaringiz birinchi xaridini qilganda chegirmalar shu yerda paydo bo'ladi,Vouchers appear here once your friends make their first purchase
+referral_no_vouchers,"Скидки появятся здесь, когда друзья купят пакет",Do'stlaringiz paket sotib olganda chegirmalar shu yerda paydo bo'ladi,Vouchers appear here once your friends buy a pack
 referral_program_off,Программа приглашений сейчас не действует,Taklif dasturi hozir faol emas,The referral programme is not running right now
 referral_voucher_title,"−{}%, до {}","−{}%, ko'pi bilan {}","−{}%, up to {}"
 referral_voucher_min_order,Заказ от {},{} dan boshlab buyurtma,Orders from {}
@@ -1375,6 +1375,7 @@ promo_voucher_unavailable,Эта скидка уже используется в
 promo_voucher_expired,Срок действия скидки истёк,Chegirma muddati tugagan,This voucher has expired
 promo_voucher_min_order,Скидка действует для заказов от {},Chegirma {} dan boshlab buyurtmalar uchun amal qiladi,This voucher is valid for orders from {}
 voucher_chip_title,"−{}%, до {}","−{}%, ko'pi bilan {}","−{}%, max {}"
+voucher_yours,Ваша скидка:,Sizning chegirmangiz:,Your discount:
 voucher_chip_until,до {},{} gacha,until {}
 voucher_reason_min_order,Для заказов от {},{} dan boshlab buyurtmalar uchun,For orders from {}
 voucher_reason_not_applicable,Не действует для этого занятия,Bu mashg'ulot uchun amal qilmaydi,Not valid for this activity
@@ -1401,7 +1402,7 @@ new_coins_amount,{} Lumi Coin,{} Lumi Coin,{} Lumi Coin
 new_coins_about,Lumi Coin покупают пакетами и оплачивают ими занятия целиком — вместо денег. Это не кешбэк-кошелёк.,Lumi Coin paketlab sotib olinadi va mashg‘ulot uchun to‘liq to‘lanadi — pul o‘rniga. Bu keshbek hamyoni emas.,"Lumi Coin is bought in packs and pays for an activity in full, instead of money. It is not the cashback wallet."
 new_coins_balance_label,Ваш баланс Lumi Coin,Lumi Coin balansingiz,Your Lumi Coin balance
 new_coins_balance_line,Баланс: {} Lumi Coin,Balans: {} Lumi Coin,Balance: {} Lumi Coin
-new_coins_expire_on,{} Lumi Coin сгорят {},{} Lumi Coin {} kuni kuyadi,{} Lumi Coin expire on {}
+new_coins_expire_on,Из них {} — до {},Shundan {} tasi {} gacha amal qiladi,{} of them valid until {}
 new_coins_valid_until,Действуют до {},{} gacha amal qiladi,Valid until {}
 new_coins_never_expire,Не сгорают,Muddati cheklanmagan,Never expire
 new_coins_history,История,Tarix,History
@@ -1479,7 +1480,6 @@ new_coins_feat_carry_title,Остаток переходит дальше,Qoldiq
 new_coins_feat_carry_body,Купите новый основной пакет — неиспользованные коины перейдут на его срок,Yangi asosiy paket olsangiz — ishlatilmagan coinlar uning muddatiga o‘tadi,Buy a new main pack and unused coins move to its date
 new_coins_feat_extra_title,Пополнение к основному пакету,Asosiy paketga qo‘shimcha,Top-up for your main pack
 new_coins_feat_extra_body,У этих коинов свой срок действия,Bu coinlarning o‘z muddati bor,These coins keep their own deadline
-included_in_subscription,Входит в подписку,Obunaga kiradi,Included in your plan
 based_on_interests,На основе ваших интересов,Qiziqishlarga asosan,Based on your interests
 today_to_attend,Сегодня нужно посетить,Bugun borilishi kerak,To attend today
 view_all_bookings,Все брони,Barcha bronlar,All bookings
@@ -1490,25 +1490,22 @@ saved_empty_title,Пока ничего не сохранено,Hali hech narsa 
 saved_empty_desc,Нажмите на сердечко у занятия или центра — оно появится здесь,Mashg'ulot yoki markazdagi yurakchani bosing — u shu yerda paydo bo'ladi,Tap the heart on an activity or a centre and it lands here
 activities_count,{} занятий,{} mashg'ulot,{} activities
 child_interests_title,Чем увлекается ваш ребёнок?,Farzandingiz nimaga qiziqadi?,What is your child into?
-parent_needs_title,Что вы ищете?,Siz nimani qidiryapsiz?,What are you looking for?
+parent_needs_title,Что вы ищете для ребёнка?,Farzandingiz uchun nima qidiryapsiz?,What are you looking for for your child?
 child_interests_required,Выберите хотя бы один вариант,Kamida bittasini tanlang,Pick at least one
 for_child,Для {},{} uchun,For {}
 home_discounts_title,Со скидкой,Chegirma bilan,On sale
 home_centres_title,Центры рядом,Yaqin markazlar,Centres nearby
+child_gender_boy,Мальчик,O'g'il,Boy
+child_gender_girl,Девочка,Qiz,Girl
 home_invite_title,Позовите друга,Do‘stingizni chaqiring,Bring a friend
 home_invite_subtitle,Он покупает — вы получаете скидку,U xarid qiladi — siz chegirma olasiz,"They buy, you get a discount"
 home_coins_title,Один пакет — много занятий,Bitta paket — ko‘p mashg‘ulot,"One pack, many activities"
 home_coins_subtitle,Купите Lumi Coin и платите коинами,Lumi Coin oling va coin bilan to‘lang,Get Lumi Coin and pay with coins
 home_saved_title,"Сохраняйте, что понравилось",Yoqqanini saqlab qo‘ying,Save what you like
 home_saved_subtitle,Всё сохранённое — в одном месте,Saqlanganlar bir joyda turadi,"Everything you saved, in one place"
-child_gender_boy,Мальчик,O'g'il,Boy
-child_gender_girl,Девочка,Qiz,Girl
-home_unclaimed_title,Ещё в городе,Shaharda yana,More around the city
 unclaimed_kind_center,Центр,Markaz,Centre
 unclaimed_kind_sports,Спорт,Sport,Sports
 unclaimed_kind_playground,Игровая площадка,O‘yin maydoni,Playground
-unclaimed_unverified_title,Данные не подтверждены центром,Markaz maʼlumotni tasdiqlamagan,Not confirmed by the centre
-unclaimed_unverified_body,Мы собрали их из открытых источников. Уточните по телефону перед визитом.,Maʼlumot ochiq manbalardan olingan. Borishdan oldin qo‘ng‘iroq qilib aniqlang.,We gathered this from open sources. Call to check before you go.
 unclaimed_age,Возраст,Yosh,Age
 unclaimed_price_month,сум в месяц,so‘m / oy,so‘m a month
 unclaimed_price_year,сум в год,so‘m / yil,so‘m a year
@@ -1523,3 +1520,9 @@ unclaimed_programmes,Программы,Dasturlar,Programmes
 unclaimed_contacts,Контакты,Aloqa,Contacts
 unclaimed_call,Позвонить,Qo‘ng‘iroq qilish,Call
 unclaimed_retry,Не удалось загрузить. Повторить,Yuklab bo‘lmadi. Qayta urinish,Could not load. Try again
+sale_until,до {},{} gacha,until {}
+sale_title,Скидка от центра,Markaz chegirmasi,Centre discount
+sale_slot_hint,Скидка действует на занятия в эти дни и часы,Chegirma shu kun va soatlardagi darslarga amal qiladi,The discount applies to lessons on these days and hours
+sale_no_promocode,На занятие со скидкой промокод не действует,Chegirmali darsga promokod qo‘llanmaydi,A promocode cannot be used on a discounted lesson
+sale_line,Скидка центра −{}%,Markaz chegirmasi −{}%,Centre discount −{}%
+sale_not_this_time,Не действует на выбранный день или время,Tanlangan kun yoki vaqtga amal qilmaydi,Does not apply to the day or time picked

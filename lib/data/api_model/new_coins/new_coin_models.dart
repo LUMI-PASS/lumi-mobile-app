@@ -11,6 +11,19 @@ DateTime? _date(Object? v) {
   return DateTime.tryParse(s);
 }
 
+/// Coins left to pay once a referral voucher took [discount] so'm off a
+/// booking that lists at [subtotal] so'm and [coins] coins.
+///
+/// The server's own sum (`coinsAfterDiscount` in `new-coins.rules.ts`): the
+/// voucher's share of the price comes off the coins, rounded DOWN. Kept
+/// identical so the figure on the Pay button is the figure that is spent.
+int newCoinsAfterDiscount(int coins, num subtotal, num discount) {
+  if (coins <= 0 || subtotal <= 0 || discount <= 0) return coins;
+  final capped = discount > subtotal ? subtotal : discount;
+  final off = (coins * capped / subtotal).floor();
+  return off >= coins ? 0 : coins - off;
+}
+
 /// What one ticket costs in coins when the server did not say: `ceil(price /
 /// rate)`. A display fallback only — the server quotes the booking itself at
 /// checkout and its figure is the one that is charged.

@@ -58,10 +58,50 @@ void main() {
       }
     });
 
+    test('numbers a repeated insert, so each one is its own row', () {
+      const shelf = HomeInsert.unclaimedShelf;
+      final slots = layoutNearYou(40, const [
+        shelf,
+        HomeInsert.trialBand,
+        shelf,
+        shelf,
+      ]);
+      final ordinals = [
+        for (final s in slots)
+          if (s is HomeInsertSlot) (s.insert, s.ordinal),
+      ];
+      expect(ordinals, [
+        (shelf, 0),
+        (HomeInsert.trialBand, 0),
+        (shelf, 1),
+        (shelf, 2),
+      ]);
+    });
+
     test('with nothing to deal it is simply the cards', () {
       final slots = layoutNearYou(7, const []);
       expect(slots, hasLength(7));
       expect(slots.every((s) => s is HomeNearSlot), isTrue);
+    });
+  });
+
+  group('weaveShelves', () {
+    const shelf = HomeInsert.unclaimedShelf;
+    const a = HomeInsert.inviteBanner;
+    const b = HomeInsert.categoryTiles;
+    const c = HomeInsert.trialBand;
+
+    test('one after the first insert, then after every second', () {
+      expect(weaveShelves(const [a, b, c], 2), [a, shelf, b, c, shelf]);
+    });
+
+    test('rows left over follow at the end, none dropped', () {
+      expect(weaveShelves(const [a], 3), [a, shelf, shelf, shelf]);
+      expect(weaveShelves(const [], 2), [shelf, shelf]);
+    });
+
+    test('no rows leaves the inserts as they were', () {
+      expect(weaveShelves(const [a, b, c], 0), [a, b, c]);
     });
   });
 }

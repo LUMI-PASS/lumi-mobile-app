@@ -2254,6 +2254,13 @@ mixin _$HomClass {
   /// The cheapest ticket in coins ("Lumi Coin"). Null or absent for a course
   /// — courses are money-only — and on a server that predates coins.
   num? get newCoinPrice => throw _privateConstructorUsedError;
+
+  /// The centre's own sale on this activity — running now or starting this
+  /// week. Null for most cards, for every course, and on a server that
+  /// predates sales. Not to be confused with [discountPercentage], which is
+  /// Lumi's share of the class and only caps coupon-plan discounts.
+  @JsonKey(fromJson: ActivitySale.saleFromJson)
+  ActivitySale? get sale => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
   String? get deletedAt => throw _privateConstructorUsedError;
@@ -2304,6 +2311,7 @@ abstract class $HomClassCopyWith<$Res> {
       int? lessonsCount,
       num? perLessonPrice,
       num? newCoinPrice,
+      @JsonKey(fromJson: ActivitySale.saleFromJson) ActivitySale? sale,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2358,6 +2366,7 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
     Object? lessonsCount = freezed,
     Object? perLessonPrice = freezed,
     Object? newCoinPrice = freezed,
+    Object? sale = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2499,6 +2508,10 @@ class _$HomClassCopyWithImpl<$Res, $Val extends HomClass>
           ? _value.newCoinPrice
           : newCoinPrice // ignore: cast_nullable_to_non_nullable
               as num?,
+      sale: freezed == sale
+          ? _value.sale
+          : sale // ignore: cast_nullable_to_non_nullable
+              as ActivitySale?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2570,6 +2583,7 @@ abstract class _$$HomClassImplCopyWith<$Res>
       int? lessonsCount,
       num? perLessonPrice,
       num? newCoinPrice,
+      @JsonKey(fromJson: ActivitySale.saleFromJson) ActivitySale? sale,
       String? createdAt,
       String? updatedAt,
       String? deletedAt});
@@ -2623,6 +2637,7 @@ class __$$HomClassImplCopyWithImpl<$Res>
     Object? lessonsCount = freezed,
     Object? perLessonPrice = freezed,
     Object? newCoinPrice = freezed,
+    Object? sale = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? deletedAt = freezed,
@@ -2764,6 +2779,10 @@ class __$$HomClassImplCopyWithImpl<$Res>
           ? _value.newCoinPrice
           : newCoinPrice // ignore: cast_nullable_to_non_nullable
               as num?,
+      sale: freezed == sale
+          ? _value.sale
+          : sale // ignore: cast_nullable_to_non_nullable
+              as ActivitySale?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -2819,6 +2838,7 @@ class _$HomClassImpl extends _HomClass {
       this.lessonsCount,
       this.perLessonPrice,
       this.newCoinPrice,
+      @JsonKey(fromJson: ActivitySale.saleFromJson) this.sale,
       this.createdAt,
       this.updatedAt,
       this.deletedAt})
@@ -2939,6 +2959,14 @@ class _$HomClassImpl extends _HomClass {
   /// — courses are money-only — and on a server that predates coins.
   @override
   final num? newCoinPrice;
+
+  /// The centre's own sale on this activity — running now or starting this
+  /// week. Null for most cards, for every course, and on a server that
+  /// predates sales. Not to be confused with [discountPercentage], which is
+  /// Lumi's share of the class and only caps coupon-plan discounts.
+  @override
+  @JsonKey(fromJson: ActivitySale.saleFromJson)
+  final ActivitySale? sale;
   @override
   final String? createdAt;
   @override
@@ -2948,7 +2976,7 @@ class _$HomClassImpl extends _HomClass {
 
   @override
   String toString() {
-    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, forChildName: $forChildName, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, newCoinPrice: $newCoinPrice, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
+    return 'HomClass(id: $id, branch: $branch, category: $category, title: $title, description: $description, duration: $duration, price: $price, trialPrice: $trialPrice, trialEnabled: $trialEnabled, minAge: $minAge, maxAge: $maxAge, gender: $gender, forChildName: $forChildName, isActive: $isActive, isVisible: $isVisible, hasPhoto: $hasPhoto, image: $image, distance: $distance, videoUrl: $videoUrl, videoProvider: $videoProvider, discountPercentage: $discountPercentage, isCourse: $isCourse, trialLessons: $trialLessons, coursePrice: $coursePrice, priceFrom: $priceFrom, subcoursesCount: $subcoursesCount, seats: $seats, priceKind: $priceKind, cardPrice: $cardPrice, trialLessonNo: $trialLessonNo, trialLessonsLeft: $trialLessonsLeft, lessonsCount: $lessonsCount, perLessonPrice: $perLessonPrice, newCoinPrice: $newCoinPrice, sale: $sale, createdAt: $createdAt, updatedAt: $updatedAt, deletedAt: $deletedAt)';
   }
 
   @override
@@ -3015,6 +3043,7 @@ class _$HomClassImpl extends _HomClass {
                 other.perLessonPrice == perLessonPrice) &&
             (identical(other.newCoinPrice, newCoinPrice) ||
                 other.newCoinPrice == newCoinPrice) &&
+            (identical(other.sale, sale) || other.sale == sale) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -3061,6 +3090,7 @@ class _$HomClassImpl extends _HomClass {
         lessonsCount,
         perLessonPrice,
         newCoinPrice,
+        sale,
         createdAt,
         updatedAt,
         deletedAt
@@ -3116,6 +3146,7 @@ abstract class _HomClass extends HomClass {
       final int? lessonsCount,
       final num? perLessonPrice,
       final num? newCoinPrice,
+      @JsonKey(fromJson: ActivitySale.saleFromJson) final ActivitySale? sale,
       final String? createdAt,
       final String? updatedAt,
       final String? deletedAt}) = _$HomClassImpl;
@@ -3235,6 +3266,14 @@ abstract class _HomClass extends HomClass {
   /// The cheapest ticket in coins ("Lumi Coin"). Null or absent for a course
   /// — courses are money-only — and on a server that predates coins.
   num? get newCoinPrice;
+  @override
+
+  /// The centre's own sale on this activity — running now or starting this
+  /// week. Null for most cards, for every course, and on a server that
+  /// predates sales. Not to be confused with [discountPercentage], which is
+  /// Lumi's share of the class and only caps coupon-plan discounts.
+  @JsonKey(fromJson: ActivitySale.saleFromJson)
+  ActivitySale? get sale;
   @override
   String? get createdAt;
   @override

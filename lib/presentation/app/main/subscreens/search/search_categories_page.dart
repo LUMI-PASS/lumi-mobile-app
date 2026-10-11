@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -186,14 +185,9 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
         title: 'all_categories'.tr(),
         count: _counts[_allKey],
         onTap: () => _openCategory(null),
-        icon: Assets.icons.categoryAll.svg(
-          width: 28.w,
-          height: 28.w,
-          colorFilter: const ColorFilter.mode(
-            AppColors.brandPurple,
-            BlendMode.srcIn,
-          ),
-        ),
+        // Its own 3D artwork, in the set's style, so the card sits in the
+        // grid as one of the categories rather than as a glyph among pictures.
+        art: Assets.images.categoryAll.provider(),
       ),
       if (showSkeleton)
         for (var i = 0; i < 5; i++) const CategoryGridCardSkeleton()
@@ -305,10 +299,9 @@ class _SearchCategoriesPageState extends State<SearchCategoriesPage> {
                       itemCount: (cards.length / 2).ceil(),
                       separatorBuilder: (_, __) => 8.verticalSpace,
                       // Two columns on the page's 16pt margin with an 8pt
-                      // gutter, as the results grid. Rows rather than a grid
-                      // delegate, because a grid needs one fixed height and a
-                      // card is as tall as its name: the pair in a row match
-                      // each other, and a two-line name grows only its row.
+                      // gutter, as the results grid. Every card is one fixed
+                      // height (see [CategoryGridCard]); the rows are laid out
+                      // by hand so the last one can hold a single card.
                       itemBuilder: (_, row) {
                         final right = row * 2 + 1;
                         return IntrinsicHeight(

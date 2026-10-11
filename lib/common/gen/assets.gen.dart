@@ -242,6 +242,7 @@ class $AssetsIconsGen {
       const SvgGenImage('assets/icons/search_unselected.svg');
 
   $AssetsIconsShopGen get shop => const $AssetsIconsShopGen();
+  $AssetsIconsSocialGen get social => const $AssetsIconsSocialGen();
 
   /// File path: assets/icons/sucess.svg
   SvgGenImage get sucess => const SvgGenImage('assets/icons/sucess.svg');
@@ -350,6 +351,10 @@ class $AssetsImagesGen {
   AssetGenImage get carousel3 =>
       const AssetGenImage('assets/images/carousel3.png');
 
+  /// File path: assets/images/category_all.png
+  AssetGenImage get categoryAll =>
+      const AssetGenImage('assets/images/category_all.png');
+
   /// File path: assets/images/child_boy.png
   AssetGenImage get childBoy =>
       const AssetGenImage('assets/images/child_boy.png');
@@ -407,6 +412,7 @@ class $AssetsImagesGen {
         carousel1,
         carousel2,
         carousel3,
+        categoryAll,
         childBoy,
         childGirl,
         congrats,
@@ -657,6 +663,10 @@ class $AssetsIconsDetailGen {
   SvgGenImage get iconsaxDiscount =>
       const SvgGenImage('assets/icons/detail/iconsax-discount.svg');
 
+  /// File path: assets/icons/detail/iconsax-headphone.svg
+  SvgGenImage get iconsaxHeadphone =>
+      const SvgGenImage('assets/icons/detail/iconsax-headphone.svg');
+
   /// File path: assets/icons/detail/iconsax-language-circle.svg
   SvgGenImage get iconsaxLanguageCircle =>
       const SvgGenImage('assets/icons/detail/iconsax-language-circle.svg');
@@ -689,6 +699,7 @@ class $AssetsIconsDetailGen {
         iconsaxBaby,
         iconsaxCircleShare,
         iconsaxDiscount,
+        iconsaxHeadphone,
         iconsaxLanguageCircle,
         iconsaxQuestionMark,
         iconsaxReceipt,
@@ -909,6 +920,28 @@ class $AssetsIconsShopGen {
 
   /// List of all assets
   List<SvgGenImage> get values => [bag, cart, mapPin, orders, products];
+}
+
+class $AssetsIconsSocialGen {
+  const $AssetsIconsSocialGen();
+
+  /// File path: assets/icons/social/facebook.svg
+  SvgGenImage get facebook =>
+      const SvgGenImage('assets/icons/social/facebook.svg');
+
+  /// File path: assets/icons/social/instagram.svg
+  SvgGenImage get instagram =>
+      const SvgGenImage('assets/icons/social/instagram.svg');
+
+  /// File path: assets/icons/social/tiktok.svg
+  SvgGenImage get tiktok => const SvgGenImage('assets/icons/social/tiktok.svg');
+
+  /// File path: assets/icons/social/youtube.svg
+  SvgGenImage get youtube =>
+      const SvgGenImage('assets/icons/social/youtube.svg');
+
+  /// List of all assets
+  List<SvgGenImage> get values => [facebook, instagram, tiktok, youtube];
 }
 
 class $AssetsImagesBannerGen {

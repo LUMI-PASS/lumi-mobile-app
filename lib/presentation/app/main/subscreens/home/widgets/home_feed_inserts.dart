@@ -34,7 +34,17 @@ class HomeTicketBanner extends StatelessWidget {
     required this.art,
     required this.onTap,
     this.onColor = Colors.white,
+    this.padding,
+    this.height,
   });
+
+  /// Null is the feed's 132pt. A screen where the ticket is one block among
+  /// rows, rather than a break in a feed of photos, can ask for a shorter one.
+  final double? height;
+
+  /// The gutter around the ticket. Null is the home feed's own 16pt; a screen
+  /// that already pads its list passes [EdgeInsets.zero].
+  final EdgeInsetsGeometry? padding;
 
   final Color color;
 
@@ -51,12 +61,12 @@ class HomeTicketBanner extends StatelessWidget {
     final stub = 116.w;
     final notch = 9.r;
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: padding ?? EdgeInsets.symmetric(horizontal: 16.w),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: SizedBox(
-          height: 132.h,
+          height: height ?? 132.h,
           child: ClipPath(
             clipper: _TicketClipper(
               stub: stub,
