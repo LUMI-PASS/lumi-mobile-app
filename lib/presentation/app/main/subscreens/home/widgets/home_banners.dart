@@ -11,7 +11,6 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_link_opener.dart';
 import 'package:lumi_pass/common/router/deep_link_log.dart';
-import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/interest_source.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
@@ -20,94 +19,12 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/banners/banner_click_reporter.dart';
 import 'package:shimmer/shimmer.dart';
 
-/// "Скидочные купоны" call-to-action — the frosted promo card that opens the
-/// coupon plans screen (Figma `Discount container`). Rides as the first page of
-/// [HomeBannerCarousel], so it sizes itself to whatever height the slide gives.
-class HomeCouponBanner extends StatelessWidget {
-  const HomeCouponBanner({super.key, required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FrostedCard(
-      onTap: onTap,
-      padding: EdgeInsets.all(16.w),
-      borderWidth: 2,
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Green wash behind the ticket, fading out before it reaches the copy.
-          Positioned(
-            top: -40.h,
-            bottom: -40.h,
-            right: -60.w,
-            width: 240.w,
-            child: const DecoratedBox(
-              decoration: BoxDecoration(gradient: AppGradients.greenGlow),
-            ),
-          ),
-          // The ticket artwork is already cropped in the asset — it runs off the
-          // right edge of the PNG. So it is pushed past the card's right border
-          // (`-16` alone would only cancel the padding) for that crop to read as
-          // a bleed; inset even slightly, the cut edge floats mid-card and looks
-          // broken. The extra width compensates for what the card clips away.
-          Positioned(
-            top: -12.h,
-            bottom: -12.h,
-            right: -32.w,
-            child: SizedBox(
-              width: 190.w,
-              child: Assets.images.banner.bannerTicketPercentage.image(
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SizedBox(
-              width: 207.w,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'coupon_plans_title'.tr(),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.bold18
-                        .copyWith(color: context.colors.textPrimary),
-                  ),
-                  6.verticalSpace,
-                  // Flexible: the longer locales must ellipsize, not overflow
-                  // the fixed-height carousel slide.
-                  Flexible(
-                    child: Text(
-                      'coupon_plans_subtitle'.tr(),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 3,
-                      style: AppText.regular14
-                          .copyWith(color: context.colors.textSecondary),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// The **Lumi Start** call-to-action — the packet promo, on the home carousel.
 ///
-/// Deliberately nothing like [HomeCouponBanner] beside it. That one is a frosted
-/// white card with a ticket; two pale cards with a picture on the right and copy
-/// on the left read as the same offer twice, and the reader swipes past both. So
-/// this is a saturated purple slide with white type, its own mascot art and the
-/// price as a pill — different at a glance, before a single word is read.
+/// Deliberately nothing like the picture banners beside it: a flat image reads
+/// as stock art and the reader swipes past it. So this is a saturated purple
+/// slide with white type, its own mascot art and the price as a pill —
+/// different at a glance, before a single word is read.
 ///
 /// **Its layout cannot clip.** The first version stacked a badge, a two-line
 /// title and a subtitle in a `Column` inside a slide fixed at 144dp; the title
@@ -142,7 +59,7 @@ class HomeAksiyaBanner extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      // Same radius as the coupon card beside it. The two are pages of ONE
+      // Same radius as the picture banners beside it. They are pages of ONE
       // carousel, so anything that differs between them — a corner, an inset —
       // reads as a jump when you swipe from one to the other.
       child: ClipRRect(
@@ -307,13 +224,12 @@ class _Disc extends StatelessWidget {
   }
 }
 
-/// Promo banner carousel — the coupon card first, then the API `banners`.
+/// Promo banner carousel — the packet slide first, then the API `banners`.
 /// No dot indicators: the next banner peeking in at the edge marks the swipe.
 class HomeBannerCarousel extends StatefulWidget {
   const HomeBannerCarousel({
     super.key,
     required this.banners,
-    required this.onCouponTap,
     required this.onAksiyaTap,
     this.packet,
   });
@@ -324,9 +240,6 @@ class HomeBannerCarousel extends StatefulWidget {
   /// decides whether the packet slide exists AT ALL, which is the carousel's
   /// business: a page that renders nothing still takes a swipe.
   final PromoCampaign? packet;
-
-  /// Tapping the leading coupon page opens the coupon plans screen.
-  final VoidCallback onCouponTap;
 
   /// Tapping the "аксия" page opens the bundle screen.
   final VoidCallback onAksiyaTap;
@@ -353,7 +266,6 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
       // has loaded, so the carousel never holds a slot for a blank page.
       if (packet != null)
         HomeAksiyaBanner(campaign: packet, onTap: widget.onAksiyaTap),
-      HomeCouponBanner(onTap: widget.onCouponTap),
       ...widget.banners.map((banner) {
         final image = ClipRRect(
           borderRadius: BorderRadius.circular(12.r),

@@ -144,12 +144,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                 child: TodayBookingsShelf(bookings: state.todayBookings),
               ),
             // Full-bleed promo carousel: the Lumi Start packet leads it, then
-            // the coupon card, then the API banners.
+            // the API banners.
             SliverToBoxAdapter(
               child: HomeBannerCarousel(
                 banners: state.homeModel?.data?.banners ?? [],
                 packet: state.packet,
-                onCouponTap: () => context.router.push(const PlansRoute()),
                 onAksiyaTap: () => context.router.push(AksiyaRoute()),
               ),
             ),
