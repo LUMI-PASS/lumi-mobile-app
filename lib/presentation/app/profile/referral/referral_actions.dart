@@ -42,7 +42,8 @@ Future<void> shareReferral(BuildContext context, ReferralMe me) async {
   }
 }
 
-/// "Get 50% off when a friend makes their first purchase".
+/// "Your friend buys a package with your promo code — you get a 50% promo
+/// code".
 ///
 /// The cap (`reward.maxDiscount`) is deliberately NOT in this line. It is a
 /// ceiling on what one voucher can take off, which says nothing to someone who

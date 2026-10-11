@@ -11,8 +11,8 @@ import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/referral/referral_models.dart';
 import 'package:lumi_pass/presentation/app/profile/referral/referral_actions.dart';
 
-/// "Invite friends": the user's code with Copy and Share, and what a friend's
-/// first purchase earns them.
+/// "Invite friends": the user's promo code with Copy and Share, and what a
+/// friend's package purchase earns them.
 ///
 /// Shared by the profile (where tapping the card opens the referral screen)
 /// and the top of the referral screen itself ([onTap] null).

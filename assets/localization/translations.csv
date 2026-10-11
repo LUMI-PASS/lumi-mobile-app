@@ -1314,7 +1314,7 @@ book_packet_after,После брони останется посещений: {
 book_with_packet_cta,Забронировать по пакету,Paket bilan band qilish,Book with my packet
 referral_title,Пригласить друзей,Do'stlarni taklif qilish,Invite friends
 referral_invite_title,Пригласите друзей,Do'stlaringizni taklif qiling,Invite friends
-referral_reward_line,"Получите скидку {}%, когда друг сделает первую покупку",Do'stingiz birinchi xaridini qilganda {}% chegirma oling,Get {}% off when a friend makes their first purchase
+referral_reward_line,Друг покупает пакет по вашему промокоду — вы получаете промокод на {}%,Do'stingiz promokodingiz orqali paket sotib oladi — siz {}% promokod olasiz,Your friend buys a package with your promo code — you get a {}% promo code
 referral_copy,Копировать,Nusxalash,Copy
 referral_copied,Скопировано,Nusxa olindi,Copied
 referral_share,Поделиться,Ulashish,Share
@@ -1331,10 +1331,10 @@ referral_apply,Применить,Qo'llash,Apply
 referral_you_were_invited_by,Вас пригласил(а) {},Sizni {} taklif qilgan,You were invited by {}
 referral_you_were_invited,Вы присоединились по приглашению,Siz taklif orqali qo'shildingiz,You joined by invitation
 referral_how_it_works,Как это работает,Bu qanday ishlaydi,How it works
-referral_step_share,Поделитесь своим кодом или ссылкой с другом,Kodingiz yoki havolangizni do'stingizga yuboring,Share your code or link with a friend
-referral_step_friend_buys,Друг регистрируется по вашему коду и совершает первую покупку,"Do'stingiz kodingiz bilan ro'yxatdan o'tib, birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase
-referral_step_friend_buys_min,Друг регистрируется по вашему коду и совершает первую покупку от {},"Do'stingiz kodingiz bilan ro'yxatdan o'tib, {} dan boshlab birinchi xaridini qiladi",Your friend signs up with your code and makes a first purchase of {} or more
-referral_step_reward,Вы получаете скидку {}% на следующую запись — она действует {} дн.,Siz keyingi bron uchun {}% chegirma olasiz — u {} kun amal qiladi,"You get {}% off your next booking, valid for {} days"
+referral_step_share,Поделитесь своим промокодом или ссылкой с другом,Promokodingiz yoki havolangizni do'stingizga yuboring,Share your promo code or link with a friend
+referral_step_friend_buys,Друг покупает свой пакет по вашему промокоду,Do'stingiz promokodingiz orqali o'z paketini sotib oladi,Your friend buys their own package with your promo code
+referral_step_friend_buys_min,Друг покупает свой пакет от {} по вашему промокоду,Do'stingiz promokodingiz orqali {} dan boshlab o'z paketini sotib oladi,Your friend buys their own package of {} or more with your promo code
+referral_step_reward,Вы получаете промокод на {}% для любой следующей брони — он действует {} дн.,Siz keyingi xohlagan broningiz uchun {}% chegirma beruvchi promokod olasiz — u {} kun amal qiladi,"You get a promo code for {}% off any next booking, valid for {} days"
 referral_your_friends,Ваши друзья,Do'stlaringiz,Your friends
 referral_stats_invited,Приглашено,Taklif qilingan,Invited
 referral_stats_pending,В ожидании,Kutilmoqda,Pending
@@ -1350,7 +1350,7 @@ referral_status_expired,Истекло,Muddati tugagan,Expired
 referral_status_rejected,Отклонено,Rad etildi,Rejected
 referral_status_unknown,В обработке,Ko'rib chiqilmoqda,In progress
 referral_your_vouchers,Ваши скидки,Chegirmalaringiz,Your vouchers
-referral_no_vouchers,"Скидки появятся здесь, когда друзья совершат первую покупку",Do'stlaringiz birinchi xaridini qilganda chegirmalar shu yerda paydo bo'ladi,Vouchers appear here once your friends make their first purchase
+referral_no_vouchers,"Промокоды появятся здесь, когда друзья купят пакет по вашему промокоду",Do'stlaringiz promokodingiz orqali paket sotib olganda promokodlar shu yerda paydo bo'ladi,Promo codes appear here once your friends buy a package with your promo code
 referral_program_off,Программа приглашений сейчас не действует,Taklif dasturi hozir faol emas,The referral programme is not running right now
 referral_voucher_title,"−{}%, до {}","−{}%, ko'pi bilan {}","−{}%, up to {}"
 referral_voucher_min_order,Заказ от {},{} dan boshlab buyurtma,Orders from {}
