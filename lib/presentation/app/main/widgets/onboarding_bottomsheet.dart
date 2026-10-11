@@ -9,17 +9,26 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/common/widget/display/display.dart';
+import 'package:lumi_pass/common/widget/shaker.dart';
+import 'package:lumi_pass/common/widget/topic_chips.dart';
+import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/data/api_model/referral/referral_enums.dart';
 import 'package:lumi_pass/data/service/referral/pending_referral.dart';
 import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/auth/auth_repository.dart';
+import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/referrals/referral_repository.dart';
 import 'package:lumi_pass/presentation/app/profile/referral/referral_actions.dart';
 import 'package:lumi_pass/presentation/app/profile/referral/widgets/referral_code_lookup.dart';
 import 'package:dio/dio.dart';
+
+// The sheet is painted white in both themes, so what sits on it takes the
+// sheet's own ink and field colour rather than the theme's.
+const _sheetInk = Color(0xFF1A1A2E);
+const _sheetFieldFill = Color(0xFFF5F5F7);
 
 Future<void> showOnboardingBottomsheet(BuildContext context) async {
   await showModalBottomSheet<void>(
@@ -62,6 +71,17 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
   /// A code goes to the server at most once per sheet.
   bool _referralSubmitted = false;
 
+  // ─── What the parent is looking for ───────────────────────────────────────
+  /// The words on offer. Empty until loaded, and for good on a server with
+  /// none — the question is then left out and nothing is required.
+  List<InterestTopic> _topics = const [];
+
+  /// Topic ids, in the order they were picked.
+  final List<String> _interests = [];
+
+  /// Shaken when "next" is pressed with the question unanswered.
+  final _interestsShake = GlobalKey<ShakerState>();
+
   int _step = 0;
   bool _loading = false;
   String? _error;
@@ -77,6 +97,27 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
     _openedWithPendingCode = _referralCode.text.isNotEmpty;
     _referralLookup.onChanged(_referralCode.text);
     _loadReferralEligibility();
+    _loadTopics();
+  }
+
+  /// Quiet on failure: without the words the sheet is the name-and-child form
+  /// it always was.
+  Future<void> _loadTopics() async {
+    try {
+      final topics = await getIt<HomeRepository>().getInterestTopics();
+      if (!mounted) return;
+      setState(() {
+        _topics = topics
+            .where((topic) => topic.topicKind == InterestTopicKind.parent)
+            .toList();
+      });
+    } catch (_) {}
+  }
+
+  void _toggleInterest(String id) {
+    setState(() {
+      if (!_interests.remove(id)) _interests.add(id);
+    });
   }
 
   Future<void> _loadReferralEligibility() async {
@@ -141,8 +182,26 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  void _nextStep() {
+  Future<void> _nextStep() async {
     if (!(_formKey0.currentState?.validate() ?? false)) return;
+    // At least one answer, when there is a question. Shown by bringing the
+    // question into view and shaking it — the keyboard is dropped first,
+    // since it is what covers it.
+    if (_topics.isNotEmpty && _interests.isEmpty) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      final target = _interestsShake.currentContext;
+      if (target != null) {
+        await Scrollable.ensureVisible(
+          target,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+      _interestsShake.currentState?.shake();
+      return;
+    }
+    if (!mounted) return;
     _submitReferral();
     FocusScope.of(context).unfocus();
     setState(() {
@@ -168,7 +227,11 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
       if (phone.isNotEmpty) {
         // New user — complete registration with phone
         await _repo.register(
-            phone: phone, firstName: firstName, lastName: lastName);
+          phone: phone,
+          firstName: firstName,
+          lastName: lastName,
+          interests: _topics.isEmpty ? null : _interests,
+        );
         await _storage.pendingPhone.set(null);
       } else {
         // Already authenticated — just update the profile name
@@ -177,6 +240,7 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
           data: {
             'first_name': firstName,
             if (lastName.isNotEmpty) 'last_name': lastName,
+            if (_topics.isNotEmpty) 'interests': _interests,
           },
         );
       }
@@ -298,6 +362,33 @@ class _OnboardingSheetState extends State<_OnboardingSheet> {
               onChanged: _referralLookup.onChanged,
             ),
             ReferralLookupHint(lookup: _referralLookup),
+          ],
+          if (_topics.isNotEmpty) ...[
+            20.kh,
+            Shaker(
+              key: _interestsShake,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'parent_needs_title'.tr(),
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: _sheetInk,
+                    ),
+                  ),
+                  12.kh,
+                  TopicChips(
+                    topics: _topics,
+                    selected: _interests,
+                    onToggle: _toggleInterest,
+                    fill: _sheetFieldFill,
+                    ink: _sheetInk,
+                  ),
+                ],
+              ),
+            ),
           ],
           if (_error != null) ...[10.kh, _ErrorRow(error: _error!)],
           24.kh,

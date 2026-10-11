@@ -628,6 +628,10 @@ mixin _$HomForUser {
   String? get type => throw _privateConstructorUsedError;
   String? get city => throw _privateConstructorUsedError;
   String? get district => throw _privateConstructorUsedError;
+
+  /// Ids of the topics the parent picked for themselves — "what are you
+  /// looking for?". Null from a server that predates the question.
+  List<String>? get interests => throw _privateConstructorUsedError;
   bool? get isVerified => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   String? get updatedAt => throw _privateConstructorUsedError;
@@ -654,6 +658,7 @@ abstract class $HomForUserCopyWith<$Res> {
       String? type,
       String? city,
       String? district,
+      List<String>? interests,
       bool? isVerified,
       String? createdAt,
       String? updatedAt});
@@ -681,6 +686,7 @@ class _$HomForUserCopyWithImpl<$Res, $Val extends HomForUser>
     Object? type = freezed,
     Object? city = freezed,
     Object? district = freezed,
+    Object? interests = freezed,
     Object? isVerified = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -722,6 +728,10 @@ class _$HomForUserCopyWithImpl<$Res, $Val extends HomForUser>
           ? _value.district
           : district // ignore: cast_nullable_to_non_nullable
               as String?,
+      interests: freezed == interests
+          ? _value.interests
+          : interests // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       isVerified: freezed == isVerified
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
@@ -756,6 +766,7 @@ abstract class _$$HomForUserImplCopyWith<$Res>
       String? type,
       String? city,
       String? district,
+      List<String>? interests,
       bool? isVerified,
       String? createdAt,
       String? updatedAt});
@@ -781,6 +792,7 @@ class __$$HomForUserImplCopyWithImpl<$Res>
     Object? type = freezed,
     Object? city = freezed,
     Object? district = freezed,
+    Object? interests = freezed,
     Object? isVerified = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -822,6 +834,10 @@ class __$$HomForUserImplCopyWithImpl<$Res>
           ? _value.district
           : district // ignore: cast_nullable_to_non_nullable
               as String?,
+      interests: freezed == interests
+          ? _value._interests
+          : interests // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       isVerified: freezed == isVerified
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
@@ -852,9 +868,11 @@ class _$HomForUserImpl implements _HomForUser {
       this.type,
       this.city,
       this.district,
+      final List<String>? interests,
       this.isVerified,
       this.createdAt,
-      this.updatedAt});
+      this.updatedAt})
+      : _interests = interests;
 
   factory _$HomForUserImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomForUserImplFromJson(json);
@@ -877,6 +895,22 @@ class _$HomForUserImpl implements _HomForUser {
   final String? city;
   @override
   final String? district;
+
+  /// Ids of the topics the parent picked for themselves — "what are you
+  /// looking for?". Null from a server that predates the question.
+  final List<String>? _interests;
+
+  /// Ids of the topics the parent picked for themselves — "what are you
+  /// looking for?". Null from a server that predates the question.
+  @override
+  List<String>? get interests {
+    final value = _interests;
+    if (value == null) return null;
+    if (_interests is EqualUnmodifiableListView) return _interests;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   final bool? isVerified;
   @override
@@ -886,7 +920,7 @@ class _$HomForUserImpl implements _HomForUser {
 
   @override
   String toString() {
-    return 'HomForUser(id: $id, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, dob: $dob, gender: $gender, type: $type, city: $city, district: $district, isVerified: $isVerified, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'HomForUser(id: $id, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, dob: $dob, gender: $gender, type: $type, city: $city, district: $district, interests: $interests, isVerified: $isVerified, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -907,6 +941,8 @@ class _$HomForUserImpl implements _HomForUser {
             (identical(other.city, city) || other.city == city) &&
             (identical(other.district, district) ||
                 other.district == district) &&
+            const DeepCollectionEquality()
+                .equals(other._interests, _interests) &&
             (identical(other.isVerified, isVerified) ||
                 other.isVerified == isVerified) &&
             (identical(other.createdAt, createdAt) ||
@@ -928,6 +964,7 @@ class _$HomForUserImpl implements _HomForUser {
       type,
       city,
       district,
+      const DeepCollectionEquality().hash(_interests),
       isVerified,
       createdAt,
       updatedAt);
@@ -957,6 +994,7 @@ abstract class _HomForUser implements HomForUser {
       final String? type,
       final String? city,
       final String? district,
+      final List<String>? interests,
       final bool? isVerified,
       final String? createdAt,
       final String? updatedAt}) = _$HomForUserImpl;
@@ -982,6 +1020,11 @@ abstract class _HomForUser implements HomForUser {
   String? get city;
   @override
   String? get district;
+  @override
+
+  /// Ids of the topics the parent picked for themselves — "what are you
+  /// looking for?". Null from a server that predates the question.
+  List<String>? get interests;
   @override
   bool? get isVerified;
   @override

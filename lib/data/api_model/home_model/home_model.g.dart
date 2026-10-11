@@ -74,6 +74,9 @@ _$HomForUserImpl _$$HomForUserImplFromJson(Map<String, dynamic> json) =>
       type: json['type'] as String?,
       city: json['city'] as String?,
       district: json['district'] as String?,
+      interests: (json['interests'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       isVerified: json['is_verified'] as bool?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
@@ -90,6 +93,7 @@ Map<String, dynamic> _$$HomForUserImplToJson(_$HomForUserImpl instance) =>
       'type': instance.type,
       'city': instance.city,
       'district': instance.district,
+      'interests': instance.interests,
       'is_verified': instance.isVerified,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,

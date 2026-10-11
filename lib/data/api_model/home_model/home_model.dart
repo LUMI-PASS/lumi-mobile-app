@@ -55,6 +55,10 @@ class HomForUser with _$HomForUser {
     String? type,
     String? city,
     String? district,
+
+    /// Ids of the topics the parent picked for themselves — "what are you
+    /// looking for?". Null from a server that predates the question.
+    List<String>? interests,
     bool? isVerified,
     String? createdAt,
     String? updatedAt,

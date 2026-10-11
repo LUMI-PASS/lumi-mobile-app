@@ -22,11 +22,15 @@ class AuthApi {
     required String phone,
     required String firstName,
     required String lastName,
+    List<String>? interests,
   }) {
     return _dio.post('auth/register', data: {
       'phone': phone.trim(),
       'first_name': firstName,
       'last_name': lastName,
+      // What the parent is looking for. Left out when nothing was asked; a
+      // server that predates the field drops it.
+      if (interests != null) 'interests': interests,
     });
   }
 

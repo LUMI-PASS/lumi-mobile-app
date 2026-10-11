@@ -19,6 +19,10 @@ mixin _$ProfileDetailBuildable {
   bool get isSelected => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   bool get success => throw _privateConstructorUsedError;
+
+  /// The words the form offers. Empty until loaded — and for good on a
+  /// server that has none, where the form leaves the question out.
+  List<InterestTopic> get interestTopics => throw _privateConstructorUsedError;
   HomForUser? get homeModel => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -33,7 +37,11 @@ abstract class $ProfileDetailBuildableCopyWith<$Res> {
       _$ProfileDetailBuildableCopyWithImpl<$Res, ProfileDetailBuildable>;
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, HomForUser? homeModel});
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      List<InterestTopic> interestTopics,
+      HomForUser? homeModel});
 
   $HomForUserCopyWith<$Res>? get homeModel;
 }
@@ -55,6 +63,7 @@ class _$ProfileDetailBuildableCopyWithImpl<$Res,
     Object? isSelected = null,
     Object? isLoading = null,
     Object? success = null,
+    Object? interestTopics = null,
     Object? homeModel = freezed,
   }) {
     return _then(_value.copyWith(
@@ -70,6 +79,10 @@ class _$ProfileDetailBuildableCopyWithImpl<$Res,
           ? _value.success
           : success // ignore: cast_nullable_to_non_nullable
               as bool,
+      interestTopics: null == interestTopics
+          ? _value.interestTopics
+          : interestTopics // ignore: cast_nullable_to_non_nullable
+              as List<InterestTopic>,
       homeModel: freezed == homeModel
           ? _value.homeModel
           : homeModel // ignore: cast_nullable_to_non_nullable
@@ -100,7 +113,11 @@ abstract class _$$ProfileDetailBuildableImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool isSelected, bool isLoading, bool success, HomForUser? homeModel});
+      {bool isSelected,
+      bool isLoading,
+      bool success,
+      List<InterestTopic> interestTopics,
+      HomForUser? homeModel});
 
   @override
   $HomForUserCopyWith<$Res>? get homeModel;
@@ -122,6 +139,7 @@ class __$$ProfileDetailBuildableImplCopyWithImpl<$Res>
     Object? isSelected = null,
     Object? isLoading = null,
     Object? success = null,
+    Object? interestTopics = null,
     Object? homeModel = freezed,
   }) {
     return _then(_$ProfileDetailBuildableImpl(
@@ -137,6 +155,10 @@ class __$$ProfileDetailBuildableImplCopyWithImpl<$Res>
           ? _value.success
           : success // ignore: cast_nullable_to_non_nullable
               as bool,
+      interestTopics: null == interestTopics
+          ? _value._interestTopics
+          : interestTopics // ignore: cast_nullable_to_non_nullable
+              as List<InterestTopic>,
       homeModel: freezed == homeModel
           ? _value.homeModel
           : homeModel // ignore: cast_nullable_to_non_nullable
@@ -152,7 +174,9 @@ class _$ProfileDetailBuildableImpl implements _ProfileDetailBuildable {
       {this.isSelected = false,
       this.isLoading = false,
       this.success = false,
-      this.homeModel});
+      final List<InterestTopic> interestTopics = const [],
+      this.homeModel})
+      : _interestTopics = interestTopics;
 
   @override
   @JsonKey()
@@ -163,12 +187,27 @@ class _$ProfileDetailBuildableImpl implements _ProfileDetailBuildable {
   @override
   @JsonKey()
   final bool success;
+
+  /// The words the form offers. Empty until loaded — and for good on a
+  /// server that has none, where the form leaves the question out.
+  final List<InterestTopic> _interestTopics;
+
+  /// The words the form offers. Empty until loaded — and for good on a
+  /// server that has none, where the form leaves the question out.
+  @override
+  @JsonKey()
+  List<InterestTopic> get interestTopics {
+    if (_interestTopics is EqualUnmodifiableListView) return _interestTopics;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_interestTopics);
+  }
+
   @override
   final HomForUser? homeModel;
 
   @override
   String toString() {
-    return 'ProfileDetailBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, homeModel: $homeModel)';
+    return 'ProfileDetailBuildable(isSelected: $isSelected, isLoading: $isLoading, success: $success, interestTopics: $interestTopics, homeModel: $homeModel)';
   }
 
   @override
@@ -181,13 +220,15 @@ class _$ProfileDetailBuildableImpl implements _ProfileDetailBuildable {
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
             (identical(other.success, success) || other.success == success) &&
+            const DeepCollectionEquality()
+                .equals(other._interestTopics, _interestTopics) &&
             (identical(other.homeModel, homeModel) ||
                 other.homeModel == homeModel));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isSelected, isLoading, success, homeModel);
+  int get hashCode => Object.hash(runtimeType, isSelected, isLoading, success,
+      const DeepCollectionEquality().hash(_interestTopics), homeModel);
 
   @JsonKey(ignore: true)
   @override
@@ -202,6 +243,7 @@ abstract class _ProfileDetailBuildable implements ProfileDetailBuildable {
       {final bool isSelected,
       final bool isLoading,
       final bool success,
+      final List<InterestTopic> interestTopics,
       final HomForUser? homeModel}) = _$ProfileDetailBuildableImpl;
 
   @override
@@ -210,6 +252,11 @@ abstract class _ProfileDetailBuildable implements ProfileDetailBuildable {
   bool get isLoading;
   @override
   bool get success;
+  @override
+
+  /// The words the form offers. Empty until loaded — and for good on a
+  /// server that has none, where the form leaves the question out.
+  List<InterestTopic> get interestTopics;
   @override
   HomForUser? get homeModel;
   @override

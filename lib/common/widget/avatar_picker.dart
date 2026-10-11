@@ -60,10 +60,14 @@ class AvatarPicker extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () => _pick(context),
+          // A neutral circle, not the brand gradient: the form under it has
+          // its own accent, and the caption already says what a tap does.
           child: UserAvatar(
             file: pickedFile,
             imageUrl: imageUrl,
             size: size,
+            background: colors.control,
+            iconColor: colors.textSecondary,
           ),
         ),
         12.kh,

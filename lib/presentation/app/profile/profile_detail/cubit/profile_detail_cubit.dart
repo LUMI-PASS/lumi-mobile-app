@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
@@ -40,6 +41,18 @@ class ProfileDetailCubit
     );
   }
 
+  /// The words the form offers.
+  ///
+  /// Quiet on failure: with none to offer the form leaves the question out
+  /// and saves the name as it always did.
+  Future<void> loadInterestTopics() async {
+    try {
+      final topics = await _repo.getInterestTopics();
+      if (isClosed) return;
+      build((buildable) => buildable.copyWith(interestTopics: topics));
+    } catch (_) {}
+  }
+
   Future<void> updateProfile(HomForUser user) {
     return callable(
       future: _repo.updateUser(user),
@@ -50,6 +63,9 @@ class ProfileDetailCubit
           displayNameNotifier.value = name;
           getIt<Storage>().parentName.set(name);
         }
+        // The home feed's "for your children" row is built from the topics
+        // just saved, so home re-reads it the next time it is on screen.
+        markCatalogChanged();
         return const ProfileDetailListenable(
             effect: ProfileDetailEffect.verify);
       },

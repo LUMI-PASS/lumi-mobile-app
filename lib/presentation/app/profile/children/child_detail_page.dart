@@ -9,6 +9,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
+import 'package:lumi_pass/common/gen/assets.gen.dart';
+import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -20,6 +22,8 @@ import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
+import 'package:lumi_pass/common/widget/shaker.dart';
+import 'package:lumi_pass/common/widget/topic_chips.dart';
 import 'package:lumi_pass/data/api_model/child_model/child_model.dart';
 import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/presentation/app/profile/children/cubit/children_cubit.dart';
@@ -56,6 +60,9 @@ class ChildDetailPage
   Widget builder(BuildContext context, ChildrenBuildable state) {
     return Scaffold(
       backgroundColor: context.colors.scaffoldBg,
+      // The save button stays where it is and the keyboard covers it, rather
+      // than riding up on top of the keyboard; the form scrolls clear instead.
+      resizeToAvoidBottomInset: false,
       appBar: BaseAppBar(
         title: child == null ? 'add_child'.tr() : 'child_details'.tr(),
         actions: [
@@ -100,8 +107,9 @@ class _ChildForm extends StatefulWidget {
   final ChildModel? child;
   final bool saving;
 
-  /// The words on offer. Empty while loading, and on a server with none —
-  /// in which case the section is left out and nothing is required.
+  /// Every word the adminka offers, of either kind. Empty while loading, and
+  /// on a server with none — in which case the section is left out and
+  /// nothing is required.
   final List<InterestTopic> topics;
 
   @override
@@ -110,9 +118,15 @@ class _ChildForm extends StatefulWidget {
 
 class _ChildFormState extends State<_ChildForm> {
   static const _male = 'MALE';
+  static const _maxAge = 17;
+  static const _maxNameLength = 50;
   static const _female = 'FEMALE';
 
-  final _formKey = GlobalKey<FormState>();
+  // What is still owed is shown by shaking it, never by a line of red text:
+  // one key per thing a save can be refused for.
+  final _nameShake = GlobalKey<ShakerState>();
+  final _ageShake = GlobalKey<ShakerState>();
+  final _interestsShake = GlobalKey<ShakerState>();
 
   late final _firstNameController = TextEditingController(
     text: widget.child?.firstName ?? '',
@@ -126,9 +140,6 @@ class _ChildFormState extends State<_ChildForm> {
   /// Topic ids, in the order they were picked — the order is kept, because
   /// the feed deals its row out in it.
   late final List<String> _interests = [...?widget.child?.interests];
-
-  /// Set by a save attempt with nothing picked; cleared by the next pick.
-  bool _interestsMissing = false;
 
   /// Picked on this screen; uploaded as part of the save.
   File? _photo;
@@ -150,94 +161,144 @@ class _ChildFormState extends State<_ChildForm> {
     super.dispose();
   }
 
-  String? _validateName(String? value) {
-    final v = value?.trim() ?? '';
-    if (v.isEmpty) return 'required'.tr();
-    if (v.length > 50) return 'max_50_chars'.tr(args: ['First name']);
-    return null;
+  /// The age as typed, or null while it is empty. [_AgeInputFormatter] keeps
+  /// anything outside 1–17 from being typed, so the range check here only
+  /// catches a value that arrived from the server.
+  int? get _age {
+    final n = int.tryParse(_ageController.text.trim());
+    return n == null || n < 1 || n > _maxAge ? null : n;
   }
 
-  String? _validateAge(String? value) {
-    final n = int.tryParse(value?.trim() ?? '');
-    if (n == null) return 'required'.tr();
-    if (n <= 0 || n > 17) return 'child_max_age'.tr();
-    return null;
-  }
+  /// What this form asks about: the child's own interests. What the PARENT
+  /// is looking for is asked once, on their profile, not here per child.
+  List<InterestTopic> get _offered => widget.topics
+      .where((topic) => topic.topicKind == InterestTopicKind.child)
+      .toList();
 
   void _toggleInterest(String id) {
     setState(() {
       if (!_interests.remove(id)) _interests.add(id);
-      _interestsMissing = false;
     });
   }
 
   void _save() {
-    final fieldsValid = _formKey.currentState!.validate();
-    // At least one topic — but only of the ones actually offered. A topic the
-    // adminka has since retired stays on the child without counting here, and
-    // with no topics to offer there is nothing to require.
-    final offered = widget.topics.map((t) => t.id).toSet();
-    final interestsMissing =
-        offered.isNotEmpty && !_interests.any(offered.contains);
-    if (interestsMissing != _interestsMissing) {
-      setState(() => _interestsMissing = interestsMissing);
-    }
-    if (!fieldsValid || interestsMissing) return;
-
     final firstName = _firstNameController.text.trim();
-    final dob = dobForAge(int.parse(_ageController.text.trim()));
+    final age = _age;
+
+    // Top of the form first: an empty name and an empty age shake together,
+    // and the questions further down wait until those two are in.
+    final owed = [
+      if (firstName.isEmpty) _nameShake,
+      if (age == null) _ageShake,
+    ];
+    if (owed.isEmpty) {
+      // At least one topic — but only of the ones actually offered. A topic
+      // the adminka has since retired stays on the child without counting
+      // here, and with no topics to offer there is nothing to require.
+      final offered = _offered.map((t) => t.id).toSet();
+      if (offered.isNotEmpty && !_interests.any(offered.contains)) {
+        owed.add(_interestsShake);
+      }
+    }
+    if (owed.isNotEmpty) {
+      _flag(owed);
+      return;
+    }
+
+    final dob = dobForAge(age!);
     final cubit = context.read<ChildrenCubit>();
+
+    // A child saved while this form still asked the parent's question carries
+    // those answers too. They live on the parent now, so they are dropped
+    // here rather than kept where nothing can untick them.
+    final parentTopics = widget.topics
+        .where((topic) => topic.topicKind == InterestTopicKind.parent)
+        .map((topic) => topic.id)
+        .toSet();
+    final interests =
+        _interests.where((id) => !parentTopics.contains(id)).toList();
 
     final child = _isEdit
         ? widget.child!.copyWith(
             firstName: firstName,
             dob: dob,
             gender: _gender,
-            interests: _interests,
+            interests: interests,
           )
         : ChildModel(
             firstName: firstName,
             dob: dob,
             gender: _gender,
-            interests: _interests,
+            interests: interests,
           );
 
     cubit.saveChild(child, _isEdit, _photo);
+  }
+
+  /// Brings the first of [owed] on screen, then shakes all of them at once.
+  /// The keyboard is dropped first — it would be covering the questions.
+  Future<void> _flag(List<GlobalKey<ShakerState>> owed) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final target = owed.first.currentContext;
+    if (target != null) {
+      await Scrollable.ensureVisible(
+        target,
+        alignment: 0.1,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+    for (final key in owed) {
+      key.currentState?.shake();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: AvatarPicker(
-                      pickedFile: _photo,
-                      imageUrl: _serverPhotoUrl,
-                      onPicked: (file) => setState(() => _photo = file),
-                    ),
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              16.w,
+              12.h,
+              16.w,
+              24.h + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: AvatarPicker(
+                    pickedFile: _photo,
+                    imageUrl: _serverPhotoUrl,
+                    size: 88,
+                    onPicked: (file) => setState(() => _photo = file),
                   ),
-                  20.kh,
-                  CommonTextField(
+                ),
+                24.kh,
+                // Neither field has a validator: a wrong value cannot be
+                // typed, and an empty one is shaken on save.
+                Shaker(
+                  key: _nameShake,
+                  child: CommonTextField(
                     controller: _firstNameController,
                     background: colors.surface,
                     hint: 'first_name'.tr(),
                     hintColor: AppColors.textMuted,
                     enabledBorderColor: Colors.transparent,
                     needToCapitalize: true,
-                    validator: (v) => _validateName(v as String?),
+                    inputFormatter: [
+                      LengthLimitingTextInputFormatter(_maxNameLength),
+                    ],
                   ),
-                  12.kh,
-                  CommonTextField(
+                ),
+                12.kh,
+                Shaker(
+                  key: _ageShake,
+                  child: CommonTextField(
                     controller: _ageController,
                     background: colors.surface,
                     hint: 'age'.tr(),
@@ -247,85 +308,100 @@ class _ChildFormState extends State<_ChildForm> {
                     suffixText: 'years_suffix'.tr(),
                     inputFormatter: [
                       FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(2),
+                      const _AgeInputFormatter(_maxAge),
                     ],
-                    validator: (v) => _validateAge(v as String?),
                   ),
-                  12.kh,
-                  Row(
-                    children: [
-                      _PillChip(
-                        label: 'male'.tr(),
+                ),
+                12.kh,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _GenderTile(
+                        label: 'child_gender_boy'.tr(),
+                        image: Assets.images.childBoy,
                         selected: _gender == _male,
                         onTap: () => setState(() => _gender = _male),
                       ),
-                      12.kw,
-                      _PillChip(
-                        label: 'female'.tr(),
+                    ),
+                    12.kw,
+                    Expanded(
+                      child: _GenderTile(
+                        label: 'child_gender_girl'.tr(),
+                        image: Assets.images.childGirl,
                         selected: _gender == _female,
                         onTap: () => setState(() => _gender = _female),
                       ),
-                    ],
-                  ),
-                  ..._topicSection(
-                    'child_interests_title'.tr(),
-                    InterestTopicKind.child,
-                  ),
-                  ..._topicSection(
-                    'parent_needs_title'.tr(),
-                    InterestTopicKind.parent,
-                  ),
-                  if (_interestsMissing) ...[
-                    10.kh,
-                    Text(
-                      'child_interests_required'.tr(),
-                      style: AppText.regular13.copyWith(color: colors.error),
                     ),
                   ],
+                ),
+                if (_offered.isNotEmpty) ...[
+                  16.kh,
+                  Shaker(
+                    key: _interestsShake,
+                    child: _interestsCard(colors),
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
-          BottomBox(
-            child: GradientButton(
-              text: 'save_button'.tr(),
-              loading: widget.saving,
-              onPressed: _save,
-            ),
+        ),
+        BottomBox(
+          child: GradientButton(
+            text: 'save_button'.tr(),
+            gradient: AppGradients.indigo,
+            loading: widget.saving,
+            onPressed: _save,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
+/// Lets an age be typed only while it stays within 1–[max]: "0" and "18" are
+/// refused at the keyboard, so the form never has to explain a range.
+class _AgeInputFormatter extends TextInputFormatter {
+  const _AgeInputFormatter(this.max);
+
+  final int max;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+    final n = int.tryParse(newValue.text);
+    return n == null || n < 1 || n > max ? oldValue : newValue;
+  }
+}
+
 extension on _ChildFormState {
-  /// One question and the words that answer it; nothing at all when the
-  /// adminka has no words of that [kind].
-  List<Widget> _topicSection(String title, InterestTopicKind kind) {
-    final topics =
-        widget.topics.where((topic) => topic.topicKind == kind).toList();
-    if (topics.isEmpty) return const [];
-    return [
-      24.kh,
-      Text(
-        title,
-        style: AppText.semibold16.copyWith(color: context.colors.textPrimary),
+  /// The question and the words that answer it, on a card of their own.
+  Widget _interestsCard(AppColorScheme colors) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20.r),
       ),
-      12.kh,
-      Wrap(
-        spacing: 8.w,
-        runSpacing: 8.h,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final topic in topics)
-            _PillChip(
-              label: topic.name,
-              selected: _interests.contains(topic.id),
-              onTap: () => _toggleInterest(topic.id),
-            ),
+          Text(
+            'child_interests_title'.tr(),
+            style: AppText.semibold16.copyWith(color: colors.textPrimary),
+          ),
+          14.kh,
+          TopicChips(
+            topics: _offered,
+            selected: _interests,
+            onToggle: _toggleInterest,
+          ),
         ],
       ),
-    ];
+    );
   }
 }
 
@@ -403,15 +479,20 @@ class _DeleteChildSheet extends StatelessWidget {
   }
 }
 
-/// Pill toggle — brand gradient when picked, plain white card when not.
-class _PillChip extends StatelessWidget {
-  const _PillChip({
+/// Half of the boy / girl choice: the child's picture over the word. The
+/// picked one is filled with the indigo of the plans screen — the same one
+/// that paints the picked topics and the save button, so the screen has one
+/// accent; the other rests on the card colour with its picture dimmed.
+class _GenderTile extends StatelessWidget {
+  const _GenderTile({
     required this.label,
+    required this.image,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final AssetGenImage image;
   final bool selected;
   final VoidCallback onTap;
 
@@ -422,17 +503,27 @@ class _PillChip extends StatelessWidget {
     return Bouncing(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+        padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
         decoration: BoxDecoration(
           color: selected ? null : colors.surface,
-          gradient: selected ? AppGradients.brand : null,
-          borderRadius: BorderRadius.circular(40.r),
+          gradient: selected ? AppGradients.indigo : null,
+          borderRadius: BorderRadius.circular(20.r),
         ),
-        child: Text(
-          label,
-          style: AppText.semibold12.copyWith(
-            color: selected ? AppColors.onBrand : colors.textPrimary,
-          ),
+        child: Column(
+          children: [
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 160),
+              opacity: selected ? 1 : 0.55,
+              child: image.image(width: 76.w, height: 76.w),
+            ),
+            8.kh,
+            Text(
+              label,
+              style: AppText.semibold14.copyWith(
+                color: selected ? AppColors.onBrand : colors.textPrimary,
+              ),
+            ),
+          ],
         ),
       ),
     );

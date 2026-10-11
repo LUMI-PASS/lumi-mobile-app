@@ -350,6 +350,14 @@ class $AssetsImagesGen {
   AssetGenImage get carousel3 =>
       const AssetGenImage('assets/images/carousel3.png');
 
+  /// File path: assets/images/child_boy.png
+  AssetGenImage get childBoy =>
+      const AssetGenImage('assets/images/child_boy.png');
+
+  /// File path: assets/images/child_girl.png
+  AssetGenImage get childGirl =>
+      const AssetGenImage('assets/images/child_girl.png');
+
   /// File path: assets/images/congrats.png
   AssetGenImage get congrats =>
       const AssetGenImage('assets/images/congrats.png');
@@ -399,6 +407,8 @@ class $AssetsImagesGen {
         carousel1,
         carousel2,
         carousel3,
+        childBoy,
+        childGirl,
         congrats,
         defacultAvatar,
         defaultImage,

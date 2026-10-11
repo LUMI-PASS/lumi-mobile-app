@@ -7,6 +7,7 @@ import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/avatar_notifier.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
@@ -14,7 +15,10 @@ import 'package:lumi_pass/common/widget/avatar_picker.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/common/widget/common_button.dart';
 import 'package:lumi_pass/common/widget/common_text_filed.dart';
+import 'package:lumi_pass/common/widget/shaker.dart';
+import 'package:lumi_pass/common/widget/topic_chips.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/presentation/app/profile/profile_detail/cubit/profile_detail_cubit.dart';
 import 'package:lumi_pass/presentation/app/widgets/bottom_box.dart';
 
@@ -25,8 +29,9 @@ import 'cubit/profile_detail_state.dart';
 /// The profile page has already loaded the parent, so [user] is handed over on
 /// navigation and the screen never refetches it — it only writes.
 ///
-/// Only the first name is editable; the phone stays read-only. The avatar is a
-/// display-only initials circle — there is no photo upload.
+/// The first name is editable and the phone stays read-only. Below them the
+/// parent answers "what are you looking for?" — asked here, once, rather than
+/// again for every child.
 ///
 /// Deleting the account is confirmed here but executed by `ProfileCubit`,
 /// which owns the post-delete navigation. So the screen pops with `true` and
@@ -37,6 +42,11 @@ class ProfileDetailPage extends BasePage<ProfileDetailCubit,
   const ProfileDetailPage({super.key, required this.user});
 
   final HomForUser user;
+
+  @override
+  void init(BuildContext context) {
+    context.read<ProfileDetailCubit>().loadInterestTopics();
+  }
 
   @override
   void listener(BuildContext context, ProfileDetailListenable state) {
@@ -60,7 +70,11 @@ class ProfileDetailPage extends BasePage<ProfileDetailCubit,
           ),
         ],
       ),
-      body: _AccountForm(user: user, saving: state.success),
+      body: _AccountForm(
+        user: user,
+        saving: state.success,
+        topics: state.interestTopics,
+      ),
     );
   }
 }
@@ -78,10 +92,18 @@ Future<void> _confirmDeleteAccount(BuildContext context) async {
 }
 
 class _AccountForm extends StatefulWidget {
-  const _AccountForm({required this.user, required this.saving});
+  const _AccountForm({
+    required this.user,
+    required this.saving,
+    required this.topics,
+  });
 
   final HomForUser user;
   final bool saving;
+
+  /// Every word the adminka offers, of either kind. Empty while loading, and
+  /// on a server with none — in which case the question is left out.
+  final List<InterestTopic> topics;
 
   @override
   State<_AccountForm> createState() => _AccountFormState();
@@ -95,6 +117,20 @@ class _AccountFormState extends State<_AccountForm> {
     text: (widget.user.phoneNumber ?? '').replaceAll('+998', ''),
   );
 
+
+  /// Shaken, never explained in red, when the question is left unanswered.
+  final _interestsShake = GlobalKey<ShakerState>();
+
+  /// Topic ids, in the order they were picked — the feed deals its row out
+  /// in it.
+  late final List<String> _interests = [...?widget.user.interests];
+
+  /// What this form asks about: what the PARENT is looking for. The child's
+  /// own interests are asked on each child.
+  List<InterestTopic> get _offered => widget.topics
+      .where((topic) => topic.topicKind == InterestTopicKind.parent)
+      .toList();
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -102,13 +138,38 @@ class _AccountFormState extends State<_AccountForm> {
     super.dispose();
   }
 
-  void _save() {
+  void _toggleInterest(String id) {
+    setState(() {
+      if (!_interests.remove(id)) _interests.add(id);
+    });
+  }
+
+  Future<void> _save() async {
+    // At least one — of the words actually offered. With none to offer there
+    // is nothing to require, and the name saves as it always did.
+    final offered = _offered.map((topic) => topic.id).toSet();
+    if (offered.isNotEmpty && !_interests.any(offered.contains)) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      final target = _interestsShake.currentContext;
+      if (target != null) {
+        await Scrollable.ensureVisible(
+          target,
+          alignment: 0.1,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+      _interestsShake.currentState?.shake();
+      return;
+    }
+
     context.read<ProfileDetailCubit>().updateProfile(
           HomForUser(
             id: widget.user.id,
             firstName: _firstNameController.text.trim(),
             lastName: widget.user.lastName,
             phoneNumber: widget.user.phoneNumber,
+            interests: _interests,
           ),
         );
   }
@@ -128,6 +189,7 @@ class _AccountFormState extends State<_AccountForm> {
                   valueListenable: parentAvatarNotifier,
                   builder: (_, __, ___) => AvatarPicker(
                     pickedFile: parentAvatarFile(),
+                    size: 88,
                     onPicked: setParentAvatar,
                   ),
                 ),
@@ -157,6 +219,36 @@ class _AccountFormState extends State<_AccountForm> {
                   mask: '##-###-##-##',
                   enabled: false,
                 ),
+                if (_offered.isNotEmpty) ...[
+                  16.kh,
+                  Shaker(
+                    key: _interestsShake,
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'parent_needs_title'.tr(),
+                            style: AppText.semibold16
+                                .copyWith(color: colors.textPrimary),
+                          ),
+                          14.kh,
+                          TopicChips(
+                            topics: _offered,
+                            selected: _interests,
+                            onToggle: _toggleInterest,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -164,6 +256,7 @@ class _AccountFormState extends State<_AccountForm> {
         BottomBox(
           child: GradientButton(
             text: 'save_button'.tr(),
+            gradient: AppGradients.indigo,
             loading: widget.saving,
             onPressed: _save,
           ),

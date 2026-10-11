@@ -26,10 +26,19 @@ enum InterestTopicKind {
 /// categories each word means. The app only shows the words and sends back
 /// the ids that were picked; what they match is the server's business.
 class InterestTopic {
-  const InterestTopic({required this.id, required this.name, this.kind});
+  const InterestTopic({
+    required this.id,
+    required this.name,
+    this.kind,
+    this.emoji,
+  });
 
   final String id;
   final String name;
+
+  /// The picture in front of the word — "⚽". Optional: a topic the adminka
+  /// gave none, or a server that predates the field, shows the word alone.
+  final String? emoji;
 
   /// The raw wire value; read [topicKind].
   final String? kind;
@@ -42,6 +51,12 @@ class InterestTopic {
     final id = json['id']?.toString() ?? '';
     final name = json['name']?.toString().trim() ?? '';
     if (id.isEmpty || name.isEmpty) return null;
-    return InterestTopic(id: id, name: name, kind: json['kind']?.toString());
+    final emoji = json['emoji']?.toString().trim() ?? '';
+    return InterestTopic(
+      id: id,
+      name: name,
+      kind: json['kind']?.toString(),
+      emoji: emoji.isEmpty ? null : emoji,
+    );
   }
 }
