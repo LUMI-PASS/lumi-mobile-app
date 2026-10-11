@@ -351,6 +351,10 @@ class $AssetsImagesGen {
   AssetGenImage get carousel3 =>
       const AssetGenImage('assets/images/carousel3.png');
 
+  /// File path: assets/images/category_all.png
+  AssetGenImage get categoryAll =>
+      const AssetGenImage('assets/images/category_all.png');
+
   /// File path: assets/images/child_boy.png
   AssetGenImage get childBoy =>
       const AssetGenImage('assets/images/child_boy.png');
@@ -408,6 +412,7 @@ class $AssetsImagesGen {
         carousel1,
         carousel2,
         carousel3,
+        categoryAll,
         childBoy,
         childGirl,
         congrats,
@@ -658,6 +663,10 @@ class $AssetsIconsDetailGen {
   SvgGenImage get iconsaxDiscount =>
       const SvgGenImage('assets/icons/detail/iconsax-discount.svg');
 
+  /// File path: assets/icons/detail/iconsax-headphone.svg
+  SvgGenImage get iconsaxHeadphone =>
+      const SvgGenImage('assets/icons/detail/iconsax-headphone.svg');
+
   /// File path: assets/icons/detail/iconsax-language-circle.svg
   SvgGenImage get iconsaxLanguageCircle =>
       const SvgGenImage('assets/icons/detail/iconsax-language-circle.svg');
@@ -690,6 +699,7 @@ class $AssetsIconsDetailGen {
         iconsaxBaby,
         iconsaxCircleShare,
         iconsaxDiscount,
+        iconsaxHeadphone,
         iconsaxLanguageCircle,
         iconsaxQuestionMark,
         iconsaxReceipt,

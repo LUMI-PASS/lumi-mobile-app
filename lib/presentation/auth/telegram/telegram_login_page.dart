@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
@@ -15,6 +14,7 @@ import 'package:lumi_pass/common/widget/auth/auth_fields.dart';
 import 'package:lumi_pass/common/widget/auth/auth_scaffold.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
+import 'package:lumi_pass/presentation/auth/interests/parent_interests_page.dart';
 import 'package:lumi_pass/presentation/auth/telegram/cubit/telegram_login_cubit.dart';
 import 'package:lumi_pass/presentation/auth/telegram/cubit/telegram_login_state.dart';
 
@@ -46,7 +46,7 @@ class TelegramLoginPage extends BasePage<TelegramLoginCubit,
   @override
   void listener(BuildContext context, TelegramLoginListenable state) {
     if (state.effect == TelegramLoginEffect.success) {
-      context.router.replaceAll(const [MainRoute()]);
+      enterAppAfterSignIn(context);
     }
     super.listener(context, state);
   }

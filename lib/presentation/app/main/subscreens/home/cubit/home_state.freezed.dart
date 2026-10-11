@@ -64,7 +64,7 @@ mixin _$HomeBuildable {
       throw _privateConstructorUsedError; // Pagination for new classes
   List<HomClass> get newClassesList => throw _privateConstructorUsedError;
 
-  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// The coin row — activities a Lumi Coin pack can pay for,
   /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
   ///
   /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
@@ -567,7 +567,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
     return EqualUnmodifiableListView(_newClassesList);
   }
 
-  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// The coin row — activities a Lumi Coin pack can pay for,
   /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
   ///
   /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
@@ -576,7 +576,7 @@ class _$HomeBuildableImpl implements _HomeBuildable {
   /// time anything on the screen moved.
   final List<HomClass> _subscriptionList;
 
-  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// The coin row — activities a Lumi Coin pack can pay for,
   /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
   ///
   /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the
@@ -801,7 +801,7 @@ abstract class _HomeBuildable implements HomeBuildable {
   List<HomClass> get newClassesList;
   @override
 
-  /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+  /// The coin row — activities a Lumi Coin pack can pay for,
   /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
   ///
   /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the

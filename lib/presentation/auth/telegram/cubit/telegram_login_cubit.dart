@@ -24,8 +24,7 @@ class TelegramLoginCubit
   /// app release.
   Future<void> start() => callable(
         future: _repo.telegramLoginLink(),
-        buildOnStart: () =>
-            buildable.copyWith(openingBot: true, error: null),
+        buildOnStart: () => buildable.copyWith(openingBot: true, error: null),
         onData: (info) async {
           _info = info;
           await _open(info);
@@ -55,8 +54,7 @@ class TelegramLoginCubit
       return;
     }
     try {
-      final opened =
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened) {
         build((b) => b.copyWith(error: Strings.telegramOpenFailed));
       }
@@ -74,21 +72,34 @@ class TelegramLoginCubit
 
   /// [code] stays a String the whole way down. Parsing it to an int would drop
   /// a leading zero and turn a valid code into one that can never match.
-  Future<void> submit(String code) => callable(
-        future: _repo.telegramLogin(code),
-        buildOnStart: () => buildable.copyWith(loading: true, error: null),
-        onData: (result) async {
-          await applySignedInSession(
-            storage: _storage,
-            result: result,
-            // The user never typed a phone number; the server resolved it from
-            // the code and sent it back on the profile.
-            phone: result.user?.phoneNumber ?? '',
-          );
-          invoke(const TelegramLoginListenable(TelegramLoginEffect.success));
-        },
-        onErrorData: (error) => display.error(error),
-        buildOnError: (_) => buildable.copyWith(error: Strings.invalidCode),
-        buildOnDone: () => buildable.copyWith(loading: false),
-      );
+  Future<void> submit(String code) {
+    // The code is good for one use. Once it has signed the user in, a second
+    // tap while the app is still on its way in must not send it again — the
+    // server would answer "invalid code" to a user who is already in.
+    if (_signedIn) return Future.value();
+    return callable(
+      future: _repo.telegramLogin(code),
+      buildOnStart: () => buildable.copyWith(loading: true, error: null),
+      onData: (result) async {
+        // Set before the first await: `callable` does not wait for this
+        // callback, so its `buildOnDone` runs while the session is still
+        // being set up — the window a second submit used to slip through.
+        _signedIn = true;
+        await applySignedInSession(
+          storage: _storage,
+          result: result,
+          // The user never typed a phone number; the server resolved it from
+          // the code and sent it back on the profile.
+          phone: result.user?.phoneNumber ?? '',
+        );
+        invoke(const TelegramLoginListenable(TelegramLoginEffect.success));
+      },
+      onErrorData: (error) => display.error(error),
+      buildOnError: (_) => buildable.copyWith(error: Strings.invalidCode),
+      // Still busy after a success: the screen is about to be left.
+      buildOnDone: () => buildable.copyWith(loading: _signedIn),
+    );
+  }
+
+  bool _signedIn = false;
 }

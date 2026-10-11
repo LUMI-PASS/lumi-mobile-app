@@ -18,11 +18,11 @@ import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 
 /// Dresses a card sheet in the colours of the screen that opened it.
 ///
-/// The sheets wear the app's theme and the brand gradient, which is right
-/// everywhere but one place: the Lumi Coin checkout is a light stage in both
-/// themes, with every action in the pack's own colour. Opened over it, a dark
-/// sheet with a pink button read as another app. A skin pins the sheet light
-/// and hands it the host's colours.
+/// The sheets wear the brand gradient, which is right everywhere but one
+/// place: on the Lumi Coin checkout every action is in the pack's own colour,
+/// and a pink button opened over it read as another app. A skin hands the
+/// sheet the host's button and link colours; light or dark is still the app's
+/// theme, as it is for the stage underneath.
 ///
 /// A modal sheet is built in the navigator's overlay, so nothing the host
 /// provides is inherited by it: the skin is passed to each `show…Sheet` call,
@@ -32,7 +32,6 @@ class PaymentSheetSkin {
     required this.gradient,
     required this.onGradient,
     required this.accent,
-    required this.background,
   });
 
   /// The primary button's fill, and the ink on it.
@@ -42,21 +41,13 @@ class PaymentSheetSkin {
   /// Text links (resend code).
   final Color accent;
 
-  /// The sheet's own fill.
-  final Color background;
-
   static PaymentSheetSkin? maybeOf(BuildContext context) => context
       .dependOnInheritedWidgetOfExactType<_PaymentSheetSkinScope>()
       ?.skin;
 
-  /// [child] under the light colour table, with this skin in scope.
-  Widget wrap(BuildContext context, Widget child) => Theme(
-        data: Theme.of(context).copyWith(
-          brightness: Brightness.light,
-          extensions: const [AppColorScheme.light],
-        ),
-        child: _PaymentSheetSkinScope(skin: this, child: child),
-      );
+  /// [child] with this skin in scope.
+  Widget wrap(BuildContext context, Widget child) =>
+      _PaymentSheetSkinScope(skin: this, child: child);
 }
 
 class _PaymentSheetSkinScope extends InheritedWidget {
@@ -85,7 +76,7 @@ class PaymentSheetShell extends StatelessWidget {
     return Container(
       constraints: BoxConstraints(maxHeight: 0.9.sh),
       decoration: BoxDecoration(
-        color: PaymentSheetSkin.maybeOf(context)?.background ?? c.scaffoldBg,
+        color: c.scaffoldBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       padding: EdgeInsets.only(
@@ -134,7 +125,8 @@ class PaymentErrorNote extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded, size: 16.sp, color: AppColors.error),
+          Icon(Icons.error_outline_rounded,
+              size: 16.sp, color: AppColors.error),
           8.horizontalSpace,
           Expanded(
             child: Text(message,

@@ -49,25 +49,36 @@ class VerifyCubit extends BaseCubit<VerifyBuildable, VerifyListenable> {
     build((buildable) => buildable.copyWith(error: error));
   }
 
-  Future<void> checkCode(String phoneNumber, String codeHash, bool isReg) =>
-      callable(
-        future: _repo.verifyOtp(phoneNumber.replaceAll("-", ""),
-            (buildable.code ?? 0).toString()),
-        buildOnStart: () => buildable.copyWith(loading: true),
-        onData: (result) async {
-          await applySignedInSession(
-            storage: _storage,
-            result: result,
-            phone: phoneNumber.replaceAll("-", ""),
-          );
-          invoke(const VerifyListenable(VerifyEffect.success));
-        },
-        onErrorData: (error) => display.error(error),
-        buildOnError: (error) {
-          return buildable.copyWith(error: Strings.invalidCode);
-        },
-        buildOnDone: () => buildable.copyWith(loading: false),
-      );
+  Future<void> checkCode(String phoneNumber, String codeHash, bool isReg) {
+    // The code is good for one use. Once it has signed the user in, a second
+    // tap while the app is still on its way in must not send it again.
+    if (_signedIn) return Future.value();
+    return callable(
+      future: _repo.verifyOtp(
+          phoneNumber.replaceAll("-", ""), (buildable.code ?? 0).toString()),
+      buildOnStart: () => buildable.copyWith(loading: true),
+      onData: (result) async {
+        // Set before the first await: `callable` does not wait for this
+        // callback, so its `buildOnDone` runs while the session is still
+        // being set up — the window a second submit used to slip through.
+        _signedIn = true;
+        await applySignedInSession(
+          storage: _storage,
+          result: result,
+          phone: phoneNumber.replaceAll("-", ""),
+        );
+        invoke(const VerifyListenable(VerifyEffect.success));
+      },
+      onErrorData: (error) => display.error(error),
+      buildOnError: (error) {
+        return buildable.copyWith(error: Strings.invalidCode);
+      },
+      // Still busy after a success: the screen is about to be left.
+      buildOnDone: () => buildable.copyWith(loading: _signedIn),
+    );
+  }
+
+  bool _signedIn = false;
 
   Future<void> resendOtp(String phoneNumber) => callable(
         future: _repo.sendOtp(phoneNumber.replaceAll("-", "")),

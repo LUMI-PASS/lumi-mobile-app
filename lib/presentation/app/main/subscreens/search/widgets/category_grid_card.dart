@@ -4,27 +4,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/number_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
-import 'package:lumi_pass/common/widget/frosted_card.dart';
 
-/// Side of the artwork badge in the card's top-left corner.
-const double _kBadgeSize = 52;
+/// Side of the artwork in the card's bottom-right corner.
+const double _kArtSize = 76;
 
-/// A category as a large card in the search screen's two-column grid — artwork
-/// badge in the top-left corner, the name beneath it.
+/// The card's height. Fixed, so the artwork has a corner to sit in whatever
+/// the name's length — and so every card in the grid is the same shape.
+const double _kCardHeight = 104;
+
+/// A category as a large card in the search screen's two-column grid — the
+/// name in the top-left corner, the artwork in the bottom-right, running off
+/// the card's edge.
 ///
-/// The card is as tall as its content: the name sits directly under the badge
-/// and a second line makes the card taller, rather than every card reserving
-/// room for a line most names never use.
+/// The artwork is a cut-out with no background of its own, so it is painted
+/// straight onto the card's surface rather than framed in a white badge: the
+/// same picture then sits on a light card in light mode and a dark one in
+/// dark. It is drawn larger than the corner holds and clipped by the card,
+/// which is what makes it read as part of the card instead of an icon on it.
 ///
-/// The same category Home shows as a small tile (`CategoryItemWidget`), given
-/// room: the surface is the one the "view on map" row above it uses, and the
-/// badge is the tile's frosted artwork, so the grid reads as part of the same
-/// screen rather than a second visual language.
+/// The name keeps to the left of the artwork (its column stops short of it),
+/// so a two-line name wraps beside the picture, never over it.
 class CategoryGridCard extends StatelessWidget {
   const CategoryGridCard({
     super.key,
@@ -32,6 +35,7 @@ class CategoryGridCard extends StatelessWidget {
     required this.onTap,
     this.imageUrl,
     this.icon,
+    this.art,
     this.count,
   });
 
@@ -53,64 +57,87 @@ class CategoryGridCard extends StatelessWidget {
   /// category behind it, so it has no image to load.
   final Widget? icon;
 
+  /// Artwork bundled with the app, shown in the corner exactly as a category's
+  /// own is — the "all categories" card has no category behind it to load a
+  /// picture from, so it brings one. Wins over [imageUrl] and [icon].
+  final ImageProvider? art;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     return Bouncing(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(12.w),
+        height: _kCardHeight.w,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: c.surface,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(color: c.controlBorder),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            FrostedCard(
-              width: _kBadgeSize.w,
-              height: _kBadgeSize.w,
-              padding: EdgeInsets.zero,
-              borderWidth: 1.6,
-              // White in both themes: the artwork has a white background, and
-              // the glyph card gets the same tile so it reads as one of the
-              // set. Its glyph must therefore be a fixed ink (brand purple),
-              // not a themed one that would vanish on white in dark mode.
-              gradient: AppGradients.artworkWhite,
-              borderColor: AppColors.white,
-              alignment: Alignment.center,
-              clipBehavior: Clip.antiAlias,
-              child: icon ?? _artwork(context),
+            // Pushed past the corner, so the card's own edge crops it.
+            Positioned(
+              right: -6.w,
+              bottom: -8.w,
+              width: _kArtSize.w,
+              height: _kArtSize.w,
+              child: art != null
+                  ? Image(image: art!, fit: BoxFit.contain)
+                  : icon != null
+                      ? _glyph()
+                      : _artwork(context),
             ),
-            10.verticalSpace,
-            // Up to two lines: most names fit on one, and the few that don't
-            // wrap instead of being cut short.
-            Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.semibold14.copyWith(color: c.textPrimary),
-            ),
-            // How much is behind the name. Secondary ink and a size down: it
-            // qualifies the category, it is not a second name for it, and a
-            // grid where every card carried two lines of equal weight would
-            // read as a table.
-            if (count != null) ...[
-              2.verticalSpace,
-              Text(
-                'activities_count'.tr(args: [count!.grouped]),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.regular12.copyWith(color: c.textSecondary),
+            Padding(
+              // The right inset is the artwork's width: the name wraps before
+              // it reaches the picture.
+              padding: EdgeInsets.fromLTRB(12.w, 12.w, 62.w, 12.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Up to two lines: most names fit on one, and the few that
+                  // don't wrap instead of being cut short.
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
+                  ),
+                  // How much is behind the name. Secondary ink and a size
+                  // down: it qualifies the category, it is not a second name
+                  // for it, and a grid where every card carried two lines of
+                  // equal weight would read as a table.
+                  if (count != null) ...[
+                    2.verticalSpace,
+                    Text(
+                      'activities_count'.tr(args: [count!.grouped]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          AppText.regular12.copyWith(color: c.textSecondary),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  /// The "all categories" card's glyph, sat in the corner the artwork takes on
+  /// the other cards — inset, since a glyph cropped by the edge would just
+  /// look cut off.
+  Widget _glyph() => Align(
+        alignment: const Alignment(-0.1, -0.2),
+        child: SizedBox(
+          width: 40.w,
+          height: 40.w,
+          child: FittedBox(child: icon),
+        ),
+      );
 
   Widget _artwork(BuildContext context) {
     final url = sanitizeImageUrl(imageUrl);
@@ -118,12 +145,14 @@ class CategoryGridCard extends StatelessWidget {
     // Decoded at the size it is painted, for the reason the Home tile does it:
     // a full-resolution bitmap is evicted as soon as the screen is left.
     final decodeSize =
-        (_kBadgeSize.w * MediaQuery.devicePixelRatioOf(context)).round();
+        (_kArtSize.w * MediaQuery.devicePixelRatioOf(context)).round();
     return CachedNetworkImage(
       imageUrl: url,
-      fit: BoxFit.cover,
-      width: _kBadgeSize.w,
-      height: _kBadgeSize.w,
+      // The whole cut-out, not a crop of it: the card's edge does the
+      // cropping.
+      fit: BoxFit.contain,
+      width: _kArtSize.w,
+      height: _kArtSize.w,
       memCacheWidth: decodeSize,
       memCacheHeight: decodeSize,
       fadeInDuration: Duration.zero,
@@ -133,13 +162,21 @@ class CategoryGridCard extends StatelessWidget {
     );
   }
 
-  /// No artwork: the category's initial on the brand gradient, as on Home.
+  /// No artwork: the category's initial on the brand gradient, as on Home —
+  /// a rounded tile inset in the corner, since it has no shape to crop.
   Widget _fallback() {
     final letter =
         title.isNotEmpty ? title.characters.first.toUpperCase() : '?';
-    return DecoratedBox(
-      decoration: const BoxDecoration(gradient: AppGradients.brand),
-      child: Center(
+    return Align(
+      alignment: const Alignment(-0.1, -0.2),
+      child: Container(
+        width: 40.w,
+        height: 40.w,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: AppGradients.brand,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
         child: Text(
           letter,
           style: AppText.bold18.copyWith(color: Colors.white),
@@ -156,9 +193,7 @@ class CategoryGridCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // A card with a one-line name and its count line: padding, badge, gap,
-      // label, gap, count.
-      height: (12 + _kBadgeSize + 10 + 20 + 2 + 16 + 12).w,
+      height: _kCardHeight.w,
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(16.r),

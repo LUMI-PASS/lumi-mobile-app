@@ -161,9 +161,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             // prices at all — the feature off, or a backend that predates it —
             // the subscription row would be empty and home would be left with
             // no activities shelf whatsoever. It falls back to the row that
-            // used to be here, under its OWN old header: "Входит в подписку"
-            // over activities a pack cannot pay for is a promise the feed
-            // cannot keep.
+            // used to be here. Both carry the same "Популярные занятия"
+            // header; only the coin row is drawn on the violet band.
             if (state.subscriptionList.isNotEmpty)
               SliverToBoxAdapter(child: _buildSubscription(context, state))
             else if (state.newClassesList.isNotEmpty)
@@ -311,7 +310,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return columns;
   }
 
-  /// "Входит в подписку" — a sample of what a Lumi Coin pack pays for.
+  /// The coin row — a sample of what a Lumi Coin pack pays for.
+  ///
+  /// Headed "Популярные занятия", not "Входит в подписку" as it once was:
+  /// every bookable activity has a coin price, so "included" singled out
+  /// nothing, and a coin pack is not a subscription.
   ///
   /// The row is a fixed ten, dealt and shuffled in the cubit (see
   /// `HomeCubit.subscriptionRowSize`), so it is a taste of the catalogue rather
@@ -321,11 +324,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   /// not ask. The categories row above leaves its own off for the same reason.
   ///
   /// It is drawn as a full-width panel of [AppColorScheme.coinBand] — the
-  /// coin's own gold in light, a deep brand purple in dark, where gold only
-  /// comes out brown — because what sets this row apart is that everything in
-  /// it is already paid for, and the block of colour is what says so. The entries are raised cards on that panel (see
+  /// brand violet, pale in light and deep in dark — because what sets this row
+  /// apart is that everything in it is already paid for, and the block of
+  /// colour is what says so. The entries are raised cards on that panel (see
   /// [HomeCourseCard.carded]), so their text sits on a neutral surface rather
-  /// than on the gold.
+  /// than on the tint.
   ///
   /// Edge to edge: the panel is a band across the feed, not one more inset
   /// tile among the rows. Its rounded corners still show against the page, and
@@ -355,7 +358,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeSectionHeader(title: 'included_in_subscription'.tr()),
+          HomeSectionHeader(title: 'popular_activities'.tr()),
           12.verticalSpace,
           NotificationListener<ScrollNotification>(
             onNotification: (scrollInfo) {

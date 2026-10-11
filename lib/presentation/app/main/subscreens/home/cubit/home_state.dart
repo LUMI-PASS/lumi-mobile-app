@@ -56,7 +56,7 @@ class HomeBuildable with _$HomeBuildable {
     // Pagination for new classes
     @Default([]) List<HomClass> newClassesList,
 
-    /// The "Входит в подписку" row — activities a Lumi Coin pack can pay for,
+    /// The coin row — activities a Lumi Coin pack can pay for,
     /// in a shuffled order, at most [HomeCubit.subscriptionRowSize] of them.
     ///
     /// Derived, not fetched: membership is `newCoinPrice > 0` on a card the

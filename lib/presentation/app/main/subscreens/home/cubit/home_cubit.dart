@@ -59,7 +59,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
 
   static const int _pageLimit = 10;
 
-  /// How many cards the "Входит в подписку" row deals. Ten, and ten only —
+  /// How many cards the coin row deals. Ten, and ten only —
   /// the row is a sample of what a pack buys, not a catalogue, so it does not
   /// paginate. [loadMoreNewClasses] still tops it up while it is short, which
   /// is the one case where a deeper page is worth fetching for it.

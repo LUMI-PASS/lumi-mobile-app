@@ -479,9 +479,7 @@ class ReferralVoucherTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'referral_voucher_title'.tr(
-                      args: ['${v.percent}', v.maxDiscount.toRawUzsPrice()],
-                    ),
+                    v.title('referral_voucher_title', (m) => m.toRawUzsPrice()),
                     style: AppText.semibold14.copyWith(color: c.textPrimary),
                   ),
                   2.kh,

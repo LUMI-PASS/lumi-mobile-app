@@ -7,7 +7,6 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/base_app_bar.dart';
@@ -380,9 +379,14 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     final empty = !_catalogue.isOnSale && _balance.balance <= 0;
     // The shelf is both the Тарифы tab and a pushed screen (the profile tile,
     // the home balance pill, a booking that is short). As a tab it is a root
-    // with nothing behind it, so the back pill is left off — the same test
-    // [BaseAppBar] makes for its own leading button.
-    final canPop = context.router.canPop();
+    // with nothing behind it, so the back pill is left off.
+    //
+    // Asked of the router's TYPE, not `canPop()`: from inside a tab that walks
+    // up to the root router, which answers true whenever anything at all sits
+    // above the tabs — a sheet, a dialog, a page still animating out — and the
+    // pill then showed on the tab until the next rebuild.
+    final isTab = context.router is TabsRouter;
+    final canPop = !isTab && context.router.canPop();
 
     // Loading wears the shelf's own stage — the wash, the back pill, the Buy
     // bar's place — so the packs arrive into the screen that was already
@@ -396,7 +400,10 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     if (_failed || empty) {
       return Scaffold(
         backgroundColor: c.pageBg,
-        appBar: BaseAppBar(title: 'new_coins_title'.tr()),
+        appBar: BaseAppBar(
+          title: 'new_coins_title'.tr(),
+          leading: isTab ? const SizedBox.shrink() : null,
+        ),
         body: _NewCoinsUnavailable(onRetry: _load),
       );
     }
@@ -409,180 +416,170 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     final tones = [for (final p in shelf) _toneOf(p)];
     final top = MediaQuery.of(context).viewPadding.top;
 
-    // The shelf is a showcase and is LIGHT in both themes: each pack's colour
-    // is a pale wash off the top edge onto a near-white stage, and the panels
-    // under it have always been white paper. Pinning the light table is what
-    // keeps a buyer in dark mode from getting white ink on that stage. The
-    // payment sheets and "my coins" open from the State's own context, above
-    // this override, so they keep the app's theme.
-    return Theme(
-      data: Theme.of(context).copyWith(
-        brightness: Brightness.light,
-        extensions: const [AppColorScheme.light],
-      ),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark,
-        child: Scaffold(
-          backgroundColor: AppColors.coinStage,
-          body: Stack(
-            children: [
-              // The wash follows the swipe, blending from one pack's colour
-              // into the next rather than snapping when the page settles.
-              if (tones.isNotEmpty)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (_, __) {
-                        final page =
-                            _pageOr(active).clamp(0.0, tones.length - 1.0);
-                        final from = page.floor();
-                        final to = page.ceil();
-                        return NewCoinsBackdrop(
-                          tone: NewCoinTone.lerp(
-                            tones[from],
-                            tones[to],
-                            page - from,
-                          ),
-                        );
-                      },
-                    ),
+    // The shelf is a showcase: each pack's colour washes off the top edge
+    // onto the stage, with paper panels under it. Stage and panels follow the
+    // theme (`coinStage` / `coinPanel`); the pack's tone is the same in both.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: context.colors.overlayStyle,
+      child: Scaffold(
+        backgroundColor: context.colors.coinStage,
+        body: Stack(
+          children: [
+            // The wash follows the swipe, blending from one pack's colour
+            // into the next rather than snapping when the page settles.
+            if (tones.isNotEmpty)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _pageController,
+                    builder: (_, __) {
+                      final page =
+                          _pageOr(active).clamp(0.0, tones.length - 1.0);
+                      final from = page.floor();
+                      final to = page.ceil();
+                      return NewCoinsBackdrop(
+                        tone: NewCoinTone.lerp(
+                          tones[from],
+                          tones[to],
+                          page - from,
+                        ),
+                      );
+                    },
                   ),
                 ),
-              // ONE vertical scroll for the whole shelf, with the pager inside
-              // it — so the pack in front and the neighbours peeking in at
-              // the edges move up and down as a single sheet.
-              Positioned.fill(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.only(
-                    top: top + 52.h,
-                    // Clears the buy bar, so the last row can be scrolled out
-                    // from under it. `padding`, not `viewPadding`: on the
-                    // Тарифы tab the tabs scaffold runs `extendBody: true`,
-                    // which reports the nav pill's height here, so the bar —
-                    // and this inset above it — clear the pill too.
-                    bottom: MediaQuery.of(context).padding.bottom + 150.h,
-                  ),
-                  child: Stack(
-                    children: [
-                      // A PageView has no height of its own. Every page is
-                      // laid out here, unseen, on top of one another, so the
-                      // stack — and the pager filling it — is as tall as the
-                      // tallest pack.
-                      TickerMode(
-                        enabled: false,
-                        child: ExcludeSemantics(
-                          child: IgnorePointer(
-                            child: Opacity(
-                              opacity: 0,
-                              child: Stack(
-                                children: [
-                                  for (var i = 0; i < shelf.length; i++)
-                                    Align(
-                                      alignment: Alignment.topCenter,
-                                      child: FractionallySizedBox(
-                                        widthFactor:
-                                            _pageController.viewportFraction,
-                                        child: _packPage(
-                                          shelf[i],
-                                          i,
-                                          tones[i],
-                                          active,
-                                        ),
+              ),
+            // ONE vertical scroll for the whole shelf, with the pager inside
+            // it — so the pack in front and the neighbours peeking in at
+            // the edges move up and down as a single sheet.
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  top: top + 52.h,
+                  // Clears the buy bar, so the last row can be scrolled out
+                  // from under it. `padding`, not `viewPadding`: on the
+                  // Тарифы tab the tabs scaffold runs `extendBody: true`,
+                  // which reports the nav pill's height here, so the bar —
+                  // and this inset above it — clear the pill too.
+                  bottom: MediaQuery.of(context).padding.bottom + 150.h,
+                ),
+                child: Stack(
+                  children: [
+                    // A PageView has no height of its own. Every page is
+                    // laid out here, unseen, on top of one another, so the
+                    // stack — and the pager filling it — is as tall as the
+                    // tallest pack.
+                    TickerMode(
+                      enabled: false,
+                      child: ExcludeSemantics(
+                        child: IgnorePointer(
+                          child: Opacity(
+                            opacity: 0,
+                            child: Stack(
+                              children: [
+                                for (var i = 0; i < shelf.length; i++)
+                                  Align(
+                                    alignment: Alignment.topCenter,
+                                    child: FractionallySizedBox(
+                                      widthFactor:
+                                          _pageController.viewportFraction,
+                                      child: _packPage(
+                                        shelf[i],
+                                        i,
+                                        tones[i],
+                                        active,
                                       ),
                                     ),
-                                ],
-                              ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                      Positioned.fill(
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: shelf.length,
-                          // Swiping to a pack is choosing it. Locked while a
-                          // purchase is in flight, so the button cannot
-                          // change subject under it.
-                          physics: busy
-                              ? const NeverScrollableScrollPhysics()
-                              : null,
-                          onPageChanged: (i) =>
-                              setState(() => _selectedId = shelf[i].id),
-                          itemBuilder: (_, i) => Align(
-                            alignment: Alignment.topCenter,
-                            child: _packPage(shelf[i], i, tones[i], active),
-                          ),
+                    ),
+                    Positioned.fill(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: shelf.length,
+                        // Swiping to a pack is choosing it. Locked while a
+                        // purchase is in flight, so the button cannot
+                        // change subject under it.
+                        physics:
+                            busy ? const NeverScrollableScrollPhysics() : null,
+                        onPageChanged: (i) =>
+                            setState(() => _selectedId = shelf[i].id),
+                        itemBuilder: (_, i) => Align(
+                          alignment: Alignment.topCenter,
+                          child: _packPage(shelf[i], i, tones[i], active),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // One action: the pack in front and Buy. The rail is asked for
-              // when Buy is pressed, not chosen up here as a second decision.
-              if (pack != null)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: NewCoinsBuyBar(
-                    tone: tones[active],
-                    price: pack.price,
-                    isLoading: _purchasing == pack.id,
-                    onBuy: busy ? null : () => _buy(NewCoinPurchase.pack(pack)),
-                    dots: shelf.length > 1
-                        ? NewCoinsDots(count: shelf.length, active: active)
-                        : null,
-                  ),
-                ),
-              Positioned(
-                top: top + 8.h,
-                left: 16.w,
-                right: 16.w,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (canPop)
-                      _TopPill(
-                        onTap: () => context.router.maybePop(),
-                        child: Icon(
-                          Icons.arrow_back_rounded,
-                          size: 20.w,
-                          color: AppColors.ink,
-                        ),
-                      )
-                    else
-                      // `spaceBetween` still pushes the balance to the right
-                      // edge, where it sits whether or not the pill is there.
-                      const SizedBox.shrink(),
-                    // What the buyer holds, and the way to the deadlines and
-                    // the history behind it — off the shelf, which is for
-                    // choosing a pack and nothing else.
-                    _TopPill(
-                      onTap: _openMine,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CoinAmount(
-                            amount: _balance.balance,
-                            style: AppText.semibold14,
-                            color: AppColors.ink,
-                          ),
-                          2.kw,
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            size: 18.w,
-                            color: AppColors.ink,
-                          ),
-                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+            // One action: the pack in front and Buy. The rail is asked for
+            // when Buy is pressed, not chosen up here as a second decision.
+            if (pack != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: NewCoinsBuyBar(
+                  tone: tones[active],
+                  price: pack.price,
+                  isLoading: _purchasing == pack.id,
+                  onBuy: busy ? null : () => _buy(NewCoinPurchase.pack(pack)),
+                  dots: shelf.length > 1
+                      ? NewCoinsDots(count: shelf.length, active: active)
+                      : null,
+                ),
+              ),
+            Positioned(
+              top: top + 8.h,
+              left: 16.w,
+              right: 16.w,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (canPop)
+                    _TopPill(
+                      onTap: () => context.router.maybePop(),
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        size: 20.w,
+                        color: context.colors.textPrimary,
+                      ),
+                    )
+                  else
+                    // `spaceBetween` still pushes the balance to the right
+                    // edge, where it sits whether or not the pill is there.
+                    const SizedBox.shrink(),
+                  // What the buyer holds, and the way to the deadlines and
+                  // the history behind it — off the shelf, which is for
+                  // choosing a pack and nothing else.
+                  _TopPill(
+                    onTap: _openMine,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CoinAmount(
+                          amount: _balance.balance,
+                          style: AppText.semibold14,
+                          color: context.colors.textPrimary,
+                        ),
+                        2.kw,
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18.w,
+                          color: context.colors.textPrimary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -705,9 +702,9 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
 
 /// A translucent control floating over the wash at the top of the shelf.
 ///
-/// Tinted with the stage's own ink rather than with white: the wash it floats
-/// over is pale, and a white scrim on a pale ground is not a control, it is a
-/// smudge.
+/// Translucent paper with a hairline of the stage's ink, so it holds against
+/// the wash in either theme — a plain white scrim on the pale light wash is
+/// not a control, it is a smudge.
 class _TopPill extends StatelessWidget {
   const _TopPill({required this.child, required this.onTap});
 
@@ -725,9 +722,10 @@ class _TopPill extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 10.w),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.coinPanel.withValues(alpha: 0.72),
+          color: context.colors.coinPanel.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(40.r),
-          border: Border.all(color: AppColors.ink.withValues(alpha: 0.08)),
+          border: Border.all(
+              color: context.colors.textPrimary.withValues(alpha: 0.08)),
         ),
         child: child,
       ),
@@ -780,11 +778,11 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
     // The first main pack leads the shelf, so its tone is the one the loaded
     // screen most often opens on.
     final tone = NewCoinTone.main(0);
-    // Both grounds are light now — the near-white stage and the white panels —
-    // so both ghosts are ink. The stage one is the heavier of the two: it has
-    // to hold against the pack's wash as well as against the stage.
-    final ghost = AppColors.ink.withValues(alpha: 0.14);
-    final ghostOnPanel = AppColors.ink.withValues(alpha: 0.10);
+    // Both ghosts are the theme's own ink, on the stage and on the panels.
+    // The stage one is the heavier of the two: it has to hold against the
+    // pack's wash as well as against the stage.
+    final ghost = context.colors.textPrimary.withValues(alpha: 0.14);
+    final ghostOnPanel = context.colors.textPrimary.withValues(alpha: 0.10);
 
     Widget bar(double width, double height, {Color? color}) => Container(
           width: width.w,
@@ -795,7 +793,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
           ),
         );
 
-    // A feature row's stand-in — always inside a panel, so always dark. The
+    // A feature row's stand-in — always inside a panel. The
     // loaded row is a title, a two-line sentence and, on most rows, a chip
     // with the figure: all three are ghosted, or the card comes out a third
     // shorter than the one that replaces it.
@@ -844,7 +842,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                 decoration: BoxDecoration(
-                  color: AppColors.coinPanel,
+                  color: context.colors.coinPanel,
                   borderRadius: BorderRadius.circular(24.r),
                 ),
                 child: Row(
@@ -875,7 +873,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 14.w),
                 decoration: BoxDecoration(
-                  color: AppColors.coinPanel,
+                  color: context.colors.coinPanel,
                   borderRadius: BorderRadius.circular(24.r),
                 ),
                 child: Column(
@@ -913,12 +911,12 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
         4.kh,
         SizedBox(height: 20.h, child: Center(child: bar(124, 14))),
         14.kh,
-        // The "40 coins · 30 days" pill is white paper on the wash.
+        // The "40 coins · 30 days" pill is paper on the wash.
         Container(
           width: 150.w,
           height: 38.h,
           decoration: BoxDecoration(
-            color: AppColors.coinPanel.withValues(alpha: 0.72),
+            color: context.colors.coinPanel.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(40.r),
           ),
           alignment: Alignment.center,
@@ -930,9 +928,9 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
     final headerHeight = 168.w + 8.h + 38.h + 4.h + 20.h + 14.h + 38.h + 20.h;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: context.colors.overlayStyle,
       child: Scaffold(
-        backgroundColor: AppColors.coinStage,
+        backgroundColor: context.colors.coinStage,
         body: Stack(
           children: [
             Positioned.fill(child: NewCoinsBackdrop(tone: tone)),
@@ -983,9 +981,9 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                     end: Alignment.bottomCenter,
                     stops: const [0, 0.32, 1],
                     colors: [
-                      AppColors.coinStage.withValues(alpha: 0),
-                      AppColors.coinStage.withValues(alpha: 0.94),
-                      AppColors.coinStage,
+                      context.colors.coinStage.withValues(alpha: 0),
+                      context.colors.coinStage.withValues(alpha: 0.94),
+                      context.colors.coinStage,
                     ],
                   ),
                 ),
@@ -1033,10 +1031,11 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                   height: 40.w,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.coinPanel.withValues(alpha: 0.72),
+                    color: context.colors.coinPanel.withValues(alpha: 0.72),
                     borderRadius: BorderRadius.circular(40.r),
                     border: Border.all(
-                        color: AppColors.ink.withValues(alpha: 0.08)),
+                        color:
+                            context.colors.textPrimary.withValues(alpha: 0.08)),
                   ),
                   child: bar(44, 12, color: ghostOnPanel),
                 ),
@@ -1051,7 +1050,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                   child: Icon(
                     Icons.arrow_back_rounded,
                     size: 20.w,
-                    color: AppColors.ink,
+                    color: context.colors.textPrimary,
                   ),
                 ),
               ),

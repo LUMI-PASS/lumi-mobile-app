@@ -860,8 +860,11 @@ class _PriceText extends StatelessWidget {
     final coinPrice = watchNewCoinPriceOf(context, effectivePrice,
         sent: hasFreeAndPaid ? null : hc?.newCoinPrice);
     if (coinPrice != null) {
-      return NewCoinPriceText(
-          amount: coinPrice, from: showFrom, style: baseStyle);
+      // The number and the coin, nothing else — no "dan"/"from", even when
+      // the price varies by age and this is only the lowest one. On a card the
+      // word read as clutter; what the price depends on is the detail page's
+      // to say.
+      return NewCoinPriceText(amount: coinPrice, style: baseStyle);
     }
 
     String label(num v) => showFrom

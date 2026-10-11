@@ -12,6 +12,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.pageBg,
     required this.surface,
     required this.coinBand,
+    required this.coinStage,
+    required this.coinPanel,
     required this.trialBand,
     required this.discountBand,
     required this.bottomBar,
@@ -64,9 +66,19 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   final Color surface;
 
   /// Fill of the Lumi Coin section's container on the home feed — the block
-  /// of colour that says the row is what a coin pack buys. Gold in light, a
-  /// deep purple in dark: see [AppColors.lightCoinBand] and `darkCoinBand`.
+  /// of colour that says the row is what a coin pack buys. The brand violet
+  /// in both themes, pale in light and deep in dark: see
+  /// [AppColors.lightCoinBand].
   final Color coinBand;
+
+  /// Page colour of the Lumi Coin screens — the shelf, its checkout and the
+  /// "coins are yours" page. The pack's own colour washes off the top edge
+  /// onto it, so it is a near-white in light and the deepest ink in dark.
+  final Color coinStage;
+
+  /// The paper panels on [coinStage]: the "what's in the pack" card, the
+  /// receipt, the payment tiles, and — translucent — the pills on the wash.
+  final Color coinPanel;
 
   /// Fill of the home feed's "trial lessons" band — one of the coloured
   /// shelves that break up the "Near you" list. A cool tone, so it cannot be
@@ -158,6 +170,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     pageBg: AppColors.lightCanvas,
     surface: AppColors.white,
     coinBand: AppColors.lightCoinBand,
+    coinStage: AppColors.lightCoinStage,
+    coinPanel: AppColors.white,
     trialBand: AppColors.lightTrialBand,
     discountBand: AppColors.lightDiscountBand,
     bottomBar: AppColors.white,
@@ -192,6 +206,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     pageBg: AppColors.ink,
     surface: AppColors.darkSurface,
     coinBand: AppColors.darkCoinBand,
+    coinStage: AppColors.ink,
+    coinPanel: AppColors.darkSurface,
     trialBand: AppColors.darkTrialBand,
     discountBand: AppColors.darkDiscountBand,
     bottomBar: AppColors.darkSurfaceRaised,
@@ -239,6 +255,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? pageBg,
     Color? surface,
     Color? coinBand,
+    Color? coinStage,
+    Color? coinPanel,
     Color? trialBand,
     Color? discountBand,
     Color? bottomBar,
@@ -272,6 +290,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       pageBg: pageBg ?? this.pageBg,
       surface: surface ?? this.surface,
       coinBand: coinBand ?? this.coinBand,
+      coinStage: coinStage ?? this.coinStage,
+      coinPanel: coinPanel ?? this.coinPanel,
       trialBand: trialBand ?? this.trialBand,
       discountBand: discountBand ?? this.discountBand,
       bottomBar: bottomBar ?? this.bottomBar,
@@ -310,6 +330,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       pageBg: Color.lerp(pageBg, other.pageBg, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
       coinBand: Color.lerp(coinBand, other.coinBand, t)!,
+      coinStage: Color.lerp(coinStage, other.coinStage, t)!,
+      coinPanel: Color.lerp(coinPanel, other.coinPanel, t)!,
       trialBand: Color.lerp(trialBand, other.trialBand, t)!,
       discountBand: Color.lerp(discountBand, other.discountBand, t)!,
       bottomBar: Color.lerp(bottomBar, other.bottomBar, t)!,

@@ -349,12 +349,17 @@ class OrdersApi {
     // Set when the code is for a Lumi Coin pack rather than a booking;
     // [subtotal] is then the pack's price.
     String? coinPackId,
+    // The booking will be paid in Lumi Coin. The server then prices the code
+    // the way a coin checkout does — in full, with no partner-share ceiling —
+    // so the coins shown before Pay are the coins taken by it.
+    bool payWithNewCoins = false,
   }) async {
     final response = await _dio.post('promocodes/validate', data: {
       'code': code.trim().toUpperCase(),
       'subtotal': subtotal,
       if (activityId != null) 'activity_id': activityId,
       if (coinPackId != null) 'coin_pack_id': coinPackId,
+      if (payWithNewCoins) 'pay_with': 'new_coins',
       // Number of tickets selected. Usage limits are counted by tickets, so the
       // server can reject immediately when the code can't cover this many.
       if (count != null) 'count': count,

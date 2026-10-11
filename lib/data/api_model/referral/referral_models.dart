@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lumi_pass/data/api_model/referral/referral_enums.dart';
 
 // Plain immutable models, parsed by hand like `NotificationModel` and
@@ -172,6 +173,22 @@ class ReferralVoucher {
   /// Null when the voucher applies (or nobody asked).
   ReferralVoucherReason? get voucherReason =>
       ReferralVoucherReason.fromKey(reason);
+
+  /// What this voucher takes off an order of [subtotal], in so'm: its percent,
+  /// rounded down, under its cap when it has one (0 means none). The server's
+  /// `voucherDiscount`, repeated so a total can be shown before checkout.
+  num discountOn(num subtotal) {
+    if (subtotal <= 0 || percent <= 0) return 0;
+    num d = (subtotal * percent / 100).floor();
+    if (maxDiscount > 0 && d > maxDiscount) d = maxDiscount;
+    return d > subtotal ? subtotal : d;
+  }
+
+  /// "−50%" — or "−50%, up to 200 000" for a voucher issued while rewards
+  /// still had a cap. [capped] is the localisation key taking both.
+  String title(String capped, String Function(num) money) => maxDiscount > 0
+      ? capped.tr(args: ['$percent', money(maxDiscount)])
+      : '−$percent%';
 
   /// Spendable on the order the list was fetched for. A list fetched without
   /// a subtotal says nothing about any order, so it counts as not applicable

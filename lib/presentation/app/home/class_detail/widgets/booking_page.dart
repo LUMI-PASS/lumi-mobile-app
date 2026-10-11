@@ -37,7 +37,6 @@ import 'package:lumi_pass/common/widget/time_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/common/utils/promo_error_message.dart';
-import 'package:lumi_pass/data/api_model/referral/referral_enums.dart';
 import 'package:lumi_pass/data/api_model/referral/referral_models.dart';
 import 'package:lumi_pass/data/service/referral/referral_coordinator.dart';
 import 'package:lumi_pass/domain/repo/referrals/referral_repository.dart';
@@ -220,7 +219,13 @@ class _BookingPageState extends State<BookingPage> {
   // "we will not have payment methods, and for now we will not have any
   // promocodes". So while coins are available for this activity ([_coinsOnly])
   // the rail row, the chooser and the promocode field are simply not rendered,
-  // and nothing money-shaped is sent. The money UI is gated off, not deleted:
+  // and nothing money-shaped is sent.
+  //
+  // Since 2026-10-11 the promocode field is back on a coin booking: a
+  // promocode, or the buyer's own referral voucher, is typed into it (or a
+  // voucher tapped in under it) exactly as on a money booking, and comes off
+  // the COIN total. The rail row and the chooser are still not rendered —
+  // coins remain the only way to pay here. The money UI is gated off, not deleted:
   // courses and trials still run on it, the backend still accepts money from
   // older builds, and an activity with no coin price falls back to it.
 
@@ -250,10 +255,25 @@ class _BookingPageState extends State<BookingPage> {
       ? newCoinPriceFor(_salePrice(price), widget.clazz.newCoinRate) ?? 0
       : sent ?? newCoinPriceFor(price, widget.clazz.newCoinRate) ?? 0;
 
+  /// Coins the applied code takes off, for the tickets as they stand.
+  ///
+  /// The server prices a code in so'm ([_appliedPromo]); its share of the
+  /// price comes off the coins, rounded down — the checkout's own sum.
+  int get _newCoinDiscount {
+    final promo = _appliedPromo;
+    // A code is not taken on a lesson already on sale — see [_hasSale].
+    if (promo == null || !_coinsOnly || _hasSale) return 0;
+    final list = _newCoinListTotal;
+    return list - newCoinsAfterDiscount(list, _total, promo.discountAmount);
+  }
+
+  /// What Pay will take: the list price, less the applied code.
+  int get _newCoinTotal => _newCoinListTotal - _newCoinDiscount;
+
   /// What the booking as it stands costs in coins — the sum over tickets, at
   /// the LIST price: a coupon plan does not discount a coin price. A preview;
   /// checkout quotes it again and its answer is what is spent.
-  int get _newCoinTotal {
+  int get _newCoinListTotal {
     var sum = 0;
     if (_hasAgeTiers) {
       for (var t = 0; t < _tierCounts.length; t++) {
@@ -477,6 +497,7 @@ class _BookingPageState extends State<BookingPage> {
         subtotal: _total,
         activityId: widget.clazz.id,
         count: _totalTickets,
+        payWithNewCoins: _coinsOnly,
       );
       if (!mounted) return;
       setState(() {
@@ -572,13 +593,14 @@ class _BookingPageState extends State<BookingPage> {
   /// the best voucher is no longer pre-selected on this screen (spec 4.5).
   bool _voucherAutoPickOff = false;
 
+  /// Whether the best voucher is applied without being asked for. See
+  /// [_maybeAutoPickVoucher] for why it is not.
+  static const bool _autoPickVouchers = false;
+
   /// Refetches when the subtotal moved. Called from build, so it only ever
   /// schedules: the fetch itself runs on a short debounce, which also folds a
   /// burst of stepper taps into one request.
   void _maybeReloadVouchers() {
-    // No promocode field in coins-only mode, so no vouchers to list — and none
-    // to pre-select, which would quietly discount a total nobody is charged.
-    if (_coinsOnly) return;
     if (_appliedPromo != null) return;
     final subtotal = _total;
     if (_vouchersSubtotal == subtotal) return;
@@ -592,18 +614,26 @@ class _BookingPageState extends State<BookingPage> {
 
   Future<void> _loadVouchers(num subtotal) async {
     final request = ++_voucherRequest;
+    final coins = _coinsOnly;
     final list = await getIt<ReferralRepository>().getVouchers(
       subtotal: subtotal,
-      activityId: widget.clazz.id,
+      // Not for a coin booking: the activity is only sent so the server can
+      // apply the partner-margin rule, which a coin discount does not touch.
+      activityId: coins ? null : widget.clazz.id,
     );
     if (!mounted || request != _voucherRequest) return;
     setState(() => _vouchers = list);
-    _maybeAutoPickVoucher();
+    if (!coins) _maybeAutoPickVoucher();
   }
 
   /// Pre-selects the best applicable voucher when nothing else is applied or
   /// being typed, until the user takes the choice into their own hands.
   void _maybeAutoPickVoucher() {
+    // Off: a voucher is the buyer's to spend, once, and pre-selecting it took
+    // that choice — someone holding another promocode, or saving the voucher
+    // for a dearer booking, had to notice and undo it first. The vouchers are
+    // listed under the field with an Apply button; nothing more is assumed.
+    if (!_autoPickVouchers) return;
     if (_voucherAutoPickOff || _hasCouponPlan) return;
     if (_appliedPromo != null || _promoLoading) return;
     // Something the user typed is theirs. The field may still hold an earlier
@@ -626,62 +656,45 @@ class _BookingPageState extends State<BookingPage> {
     _applyPromo();
   }
 
-  /// Why a listed voucher can't be spent on this order.
-  String _voucherReasonText(ReferralVoucher v) {
-    final reason = v.voucherReason;
-    if (reason == null) return 'voucher_reason_unknown'.tr();
-    switch (reason) {
-      case ReferralVoucherReason.minOrder:
-        return 'voucher_reason_min_order'
-            .tr(args: [v.minOrderAmount.toRawUzsPrice()]);
-      case ReferralVoucherReason.notApplicable:
-        return 'voucher_reason_not_applicable'.tr();
-      case ReferralVoucherReason.couponPlan:
-        return 'voucher_reason_coupon_plan'.tr();
-      case ReferralVoucherReason.unknown:
-        return 'voucher_reason_unknown'.tr();
-    }
-  }
-
+  /// The buyer's own vouchers, as small tap-to-fill chips under the field.
+  ///
+  /// Chips, not rows: a full-width pill with its own Apply button read as a
+  /// SECOND field under the first. There is one place a code goes; these only
+  /// save typing it. A voucher that cannot be spent on this order is left out
+  /// rather than shown disabled — the field says why if its code is typed.
   Widget _buildVoucherList() {
     final c = context.colors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final v in _vouchers) ...[
-          8.kh,
-          Opacity(
-            opacity: v.isApplicable ? 1 : 0.5,
-            child: PillCard(
-              onTap: v.isApplicable ? () => _applyVoucher(v) : null,
-              leading: PillIconBadge(
+    final usable = _vouchers.where((v) => v.isApplicable).toList();
+    if (usable.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(top: 8.h, left: 8.w),
+      child: Wrap(
+        spacing: 6.w,
+        runSpacing: 6.h,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            'voucher_yours'.tr(),
+            style: AppText.regular12.copyWith(color: c.textSecondary),
+          ),
+          for (final v in usable)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _promoLoading ? null : () => _applyVoucher(v),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: c.control,
+                  borderRadius: BorderRadius.circular(40.r),
+                ),
                 child: Text(
-                  '−${v.percent}%',
-                  style: AppText.semibold12.copyWith(color: c.textPrimary),
+                  '${v.code} · −${v.percent}%',
+                  style: AppText.medium12.copyWith(color: c.textPrimary),
                 ),
               ),
-              trailing: v.isApplicable
-                  ? PillActionChip(
-                      label: 'promo_apply'.tr(),
-                      onTap: _promoLoading ? null : () => _applyVoucher(v),
-                    )
-                  : null,
-              child: PillCaption(
-                title: 'voucher_chip_title'
-                    .tr(args: ['${v.percent}', v.maxDiscount.toRawUzsPrice()]),
-                subtitle: v.isApplicable
-                    ? [
-                        v.code,
-                        if (v.expiresAt != null)
-                          'voucher_chip_until'.tr(
-                              args: [v.expiresAt!.toRussianShortFormat(context)]),
-                      ].join(' · ')
-                    : _voucherReasonText(v),
-              ),
             ),
-          ),
         ],
-      ],
+      ),
     );
   }
 
@@ -698,8 +711,14 @@ class _BookingPageState extends State<BookingPage> {
         ),
         child: PillCaption(
           title: applied.code,
-          subtitle: 'promo_applied_saved'
-              .tr(args: [applied.discountAmount.toRawUzsPrice()]),
+          // In the unit being charged: on a coin booking the saving is
+          // coins, and a so'm figure there is a number nobody is paying.
+          subtitle: _coinsOnly
+              ? '−${'new_coins_amount'.tr(args: [
+                    _newCoinDiscount.toGrouped()
+                  ])}'
+              : 'promo_applied_saved'
+                  .tr(args: [applied.discountAmount.toRawUzsPrice()]),
           subtitleColor: AppColors.tagGreen,
         ),
         trailing: GestureDetector(
@@ -1886,10 +1905,10 @@ class _BookingPageState extends State<BookingPage> {
         // Coupon plan and promocode never stack — only send a code when the
         // user has no coupon plan (the promo field is hidden in that case).
         // …and never alongside coins, which settle the whole booking alone.
-        promoCode:
-            _hasCouponPlan || withNewCoins || _hasSale
-                ? null
-                : _appliedPromo?.code,
+        // The one code coins take is the buyer's referral voucher.
+        promoCode: withNewCoins
+            ? (_hasSale ? null : _appliedPromo?.code)
+            : (_hasCouponPlan || _hasSale ? null : _appliedPromo?.code),
         // A saved-card checkout sends only saved_card_id (no provider): the
         // order is created PENDING and charged via the token afterwards.
         paymentProvider: savedCardId != null ? null : provider,
@@ -2384,12 +2403,13 @@ class _BookingPageState extends State<BookingPage> {
                           // field whose only possible outcome is an error is not
                           // an option, it is a trap.
                           //
-                          // And not rendered at all in coins-only mode: an
-                          // activity takes no promocode for now.
-                          if (!_hasCouponPlan &&
-                              !_paidByPromoPass &&
+                          // A coupon plan locks the field on a money
+                          // booking, where the two would stack. It does not
+                          // discount a coin price, so on a coin booking the
+                          // field is there whatever plan the buyer holds.
+                          if (!_paidByPromoPass &&
                               !_hasSale &&
-                              !_coinsOnly) ...[
+                              (_coinsOnly || !_hasCouponPlan)) ...[
                             20.kh,
                             _promoSection(c),
                           ],
@@ -2975,6 +2995,25 @@ class _BookingPageState extends State<BookingPage> {
                 ),
                 Text(l.value,
                     style: AppText.semibold14.copyWith(color: c.textPrimary)),
+              ],
+            ),
+          ],
+          if (_newCoinDiscount > 0) ...[
+            16.kh,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'book_discount'.tr(),
+                    style: AppText.regular14.copyWith(color: AppColors.green),
+                  ),
+                ),
+                Text('−', style: AppText.semibold14.copyWith(color: AppColors.green)),
+                CoinAmount(
+                  amount: _newCoinDiscount,
+                  style: AppText.semibold14,
+                  color: AppColors.green,
+                ),
               ],
             ),
           ],
@@ -4180,9 +4219,9 @@ class _TariffRow extends StatelessWidget {
                   iconSize: 13,
                 ),
                 // For reference only: what the ticket is worth, not a second
-                // way to pay and not a figure a coupon discounts here.
-                // On a lesson on sale it is the sale price — the coins beside
-                // it were worked out from that.
+                // way to pay and not a figure a coupon discounts here. On a
+                // lesson on sale it is the sale price — the coins beside it
+                // were worked out from that.
                 Text(
                   salePercent > 0 && discounted != null && discounted > 0
                       ? discounted.toRawUzsPrice()
