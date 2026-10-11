@@ -431,6 +431,15 @@ class _ClassInfo extends StatelessWidget {
   /// See [HomeCourseCard.showPrice].
   final bool showPrice;
 
+  /// Whether this card quotes a price in the end.
+  ///
+  /// Never for a CATALOGUE entry — a venue Lumi listed itself from a public
+  /// directory. The figure came from that listing, nothing here is for sale at
+  /// it (there is no contract, so no Book button either), and a price on a card
+  /// reads as an offer. It stays on the DETAIL page, which has the room to say
+  /// the centre is contacted directly; a card has none.
+  bool get _showsPrice => showPrice && hc?.isCatalog != true;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -532,7 +541,7 @@ class _ClassInfo extends StatelessWidget {
         // right on a priced one, so down a list mixing the two the distance
         // jumped from side to side instead of forming a column the eye can
         // run along.
-        final Widget? priceLine = !showPrice
+        final Widget? priceLine = !_showsPrice
             ? (priceDistance == null
                 ? null
                 : Align(

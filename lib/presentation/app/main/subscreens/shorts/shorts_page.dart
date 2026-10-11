@@ -744,6 +744,11 @@ class _ShortSlide extends StatelessWidget {
   // the struck-through original, capped the same way the charge will be —
   // this page was the one place still showing the raw price.
   ({String label, String? discountedLabel, int? coins, bool from})? _priceInfo(BuildContext context) {
+    // A CATALOGUE entry quotes nothing here. Its figure came from the public
+    // directory Lumi listed it from, nothing on it is for sale at that price,
+    // and the pill is the one place a price would read as this clip's offer.
+    // The rail then says "view details" alone — which is all there is to do.
+    if (hc.isCatalog == true) return null;
     final snap = ClassPricingCache.get(hc.id);
     final hasFreeAndPaid =
         snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
