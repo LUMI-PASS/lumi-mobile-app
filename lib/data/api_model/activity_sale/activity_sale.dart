@@ -63,6 +63,18 @@ class ActivitySale {
         startTime.compareTo(endTime!) < 0;
   }
 
+  /// Whether [date] is one of its days at all, whatever the hour — for marking
+  /// a calendar before a time has been picked. A sale with hours may still
+  /// leave some of that day's lessons at the list price.
+  bool coversDay(DateTime date) {
+    if (percent <= 0) return false;
+    final key = dateKey(date);
+    if (key.compareTo(startDate) < 0 || key.compareTo(endDate) > 0) {
+      return false;
+    }
+    return days.isEmpty || days.contains(date.weekday % 7);
+  }
+
   /// [price] with this sale taken off, in whole so'm — rounded to the nearest,
   /// as the server rounds it.
   num priceAfter(num price) => discountedBy(price, percent);
@@ -88,6 +100,15 @@ class ActivitySale {
     for (final sale in sales) {
       if (!sale.covers(date, startTime: startTime)) continue;
       if (best == null || sale.percent > best.percent) best = sale;
+    }
+    return best;
+  }
+
+  /// The most any sale takes off on [date], at some hour of it; 0 for none.
+  static int bestPercentOnDay(List<ActivitySale> sales, DateTime date) {
+    var best = 0;
+    for (final sale in sales) {
+      if (sale.coversDay(date) && sale.percent > best) best = sale.percent;
     }
     return best;
   }

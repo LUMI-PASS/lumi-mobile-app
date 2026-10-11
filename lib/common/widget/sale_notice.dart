@@ -14,13 +14,26 @@ import 'package:lumi_pass/data/api_model/activity_sale/activity_sale.dart';
 /// activity page and the top of the booking sheet. The cards on the feed say
 /// the same thing as two badges (see `_ClassImage`).
 class SaleNotice extends StatelessWidget {
-  const SaleNotice({super.key, required this.sale});
+  const SaleNotice({super.key, required this.sale, this.applies = true});
 
   final ActivitySale sale;
+
+  /// False where the notice sits beside prices the sale is NOT moving — the
+  /// booking sheet with a day or an hour picked that it does not cover. It
+  /// then says so in as many words and steps back, because "−10%" above a
+  /// full price reads as a price that failed to update.
+  final bool applies;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    return Opacity(
+      opacity: applies ? 1 : 0.6,
+      child: _body(c),
+    );
+  }
+
+  Widget _body(AppColorScheme c) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
@@ -33,7 +46,7 @@ class SaleNotice extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
             decoration: BoxDecoration(
-              color: AppColors.error,
+              color: applies ? AppColors.error : c.textMuted,
               borderRadius: BorderRadius.circular(40.r),
             ),
             child: Text(
@@ -55,6 +68,13 @@ class SaleNotice extends StatelessWidget {
                   saleTermsLabel(sale),
                   style: AppText.regular12.copyWith(color: c.textSecondary),
                 ),
+                if (!applies) ...[
+                  2.verticalSpace,
+                  Text(
+                    'sale_not_this_time'.tr(),
+                    style: AppText.medium12.copyWith(color: c.textPrimary),
+                  ),
+                ],
               ],
             ),
           ),

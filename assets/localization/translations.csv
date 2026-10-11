@@ -1524,3 +1524,4 @@ unclaimed_call,Позвонить,Qo‘ng‘iroq qilish,Call
 unclaimed_retry,Не удалось загрузить. Повторить,Yuklab bo‘lmadi. Qayta urinish,Could not load. Try again
 sale_until,до {},{} gacha,until {}
 sale_title,Скидка от центра,Markaz chegirmasi,Centre discount
+sale_not_this_time,Не действует на выбранный день или время,Tanlangan kun yoki vaqtga amal qilmaydi,Does not apply to the day or time picked

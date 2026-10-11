@@ -60,6 +60,14 @@ void main() {
     });
   });
 
+  test('a day is marked whatever the hour, and only on the days it runs', () {
+    expect(weekdays.coversDay(tuesday), isTrue);
+    expect(weekdays.coversDay(saturday), isFalse);
+    expect(weekdays.coversDay(DateTime(2026, 11, 3)), isFalse);
+    expect(ActivitySale.bestPercentOnDay([weekdays], tuesday), 20);
+    expect(ActivitySale.bestPercentOnDay([weekdays], sunday), 0);
+  });
+
   test('best takes the biggest that covers the lesson, never the sum', () {
     const allDay = ActivitySale(
       percent: 10,

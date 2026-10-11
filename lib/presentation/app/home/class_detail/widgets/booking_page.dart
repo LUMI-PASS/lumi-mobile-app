@@ -2291,6 +2291,15 @@ class _BookingPageState extends State<BookingPage> {
                         child: _DateStrip(
                           dates: _availableDates,
                           selected: _selectedDate,
+                          // The days a centre's sale runs on, marked in the
+                          // strip so the cheaper ones can be found without
+                          // tapping through the month.
+                          salePercentOf: (date) => _isCourse
+                              ? 0
+                              : ActivitySale.bestPercentOnDay(
+                                  widget.clazz.sales,
+                                  date,
+                                ),
                           // "Days that DO have a session" — everything else is
                           // greyed. For a course that is its own calendar; for
                           // a required-booking class, the pre-fetched schedule.
@@ -2686,7 +2695,13 @@ class _BookingPageState extends State<BookingPage> {
         // activity is advertising, so the buyer can see which day and hour
         // would get it.
         if ((_sale ?? widget.clazz.sale) != null) ...[
-          SaleNotice(sale: (_sale ?? widget.clazz.sale)!),
+          SaleNotice(
+            sale: (_sale ?? widget.clazz.sale)!,
+            // With a day picked that it does not cover, it says so: the
+            // prices below are then the list prices, and must not look like
+            // discounted ones that failed to update.
+            applies: _hasSale || _selectedDate == null,
+          ),
           8.kh,
         ],
         ...rows,
@@ -3667,7 +3682,11 @@ class _DateStrip extends StatefulWidget {
     required this.onPickDate,
     this.unavailableDates,
     this.inRangeDates = const {},
+    this.salePercentOf,
   });
+
+  /// The centre's sale on a day, in percent; 0 for none. Null marks nothing.
+  final int Function(DateTime date)? salePercentOf;
 
   final List<_AvailableDate> dates;
   final _AvailableDate? selected;
@@ -3762,6 +3781,8 @@ class _DateStripState extends State<_DateStrip> {
               isSelected: widget.selected?.isoKey == widget.dates[i].isoKey,
               isUnavailable: _isDimmed(widget.dates[i], unavailable),
               isInRange: widget.inRangeDates.contains(widget.dates[i].isoKey),
+              salePercent:
+                  widget.salePercentOf?.call(widget.dates[i].date) ?? 0,
               onTap: () => widget.onPickDate(widget.dates[i]),
             ),
           ],
@@ -3947,7 +3968,13 @@ class _DateChip extends StatelessWidget {
     required this.onTap,
     this.isUnavailable = false,
     this.isInRange = false,
+    this.salePercent = 0,
   });
+
+  /// The centre's sale on this day, in percent. Above zero, the month under
+  /// the number gives way to it — "−10%" — which costs the chip no height and
+  /// loses nothing, since every chip beside it still names the month.
+  final int salePercent;
 
   /// Fixed so every chip is the same width whether or not it is selected —
   /// otherwise the strip would jitter as the frosted pill moves between days.
@@ -3988,8 +4015,12 @@ class _DateChip extends StatelessWidget {
         Text('${d.day}',
             style: AppText.bold18.copyWith(color: dayColor, height: 1.0)),
         4.kh,
-        Text('month_short_${d.month}'.tr(),
-            style: AppText.regular12.copyWith(color: mutedColor)),
+        if (salePercent > 0 && !isUnavailable)
+          Text('−$salePercent%',
+              style: AppText.semibold12.copyWith(color: AppColors.error))
+        else
+          Text('month_short_${d.month}'.tr(),
+              style: AppText.regular12.copyWith(color: mutedColor)),
       ],
     );
 
