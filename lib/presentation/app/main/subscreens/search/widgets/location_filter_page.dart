@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/utils/map_marker_bitmap.dart';
 import 'package:lumi_pass/common/utils/user_location_puck.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
@@ -77,6 +78,26 @@ class LocationFilterPage extends StatefulWidget {
 class _LocationFilterPageState extends State<LocationFilterPage> {
   YandexMapController? _controller;
 
+  /// The centre dot's bitmap. Placemarks rather than map circles: a 40 m
+  /// circle shrank to nothing once the slider zoomed out past a few km, so the
+  /// centres vanished exactly when the user was judging a wide radius.
+  MarkerBitmap? _dot;
+
+  /// False until the opening camera is placed — MapKit starts on its own
+  /// default view, which would otherwise flash first.
+  bool _placed = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_dot != null) return;
+    BranchMarkerPainter.buildDot(
+      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+    ).then((dot) {
+      if (mounted) setState(() => _dot = dot);
+    });
+  }
+
   /// Index into [kRadiusStepsKm]; one past the end is "All".
   late int _step = _stepFor(widget.initialRadiusKm);
 
@@ -146,44 +167,68 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
             ),
           ),
           Expanded(
-            child: YandexMap(
-              nightModeEnabled: c.isDark,
-              onUserLocationAdded: (view) => styleUserLocation(
-                view,
-                devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
-              ),
-              onMapCreated: (controller) async {
-                _controller = controller;
-                await controller.toggleUserLayer(visible: true);
-                await _frame(animated: false);
-              },
-              mapObjects: [
-                if (km != null)
-                  CircleMapObject(
-                    mapId: const MapObjectId('radius'),
-                    circle: Circle(center: widget.center, radius: km * 1000),
-                    fillColor: c.primary.withValues(alpha: 0.15),
-                    strokeColor: c.primary,
-                    strokeWidth: 1.5,
-                  ),
-                // Dots rather than the main map's name pills: here the centres
-                // are a reference for the circle, not something to read.
-                for (final b in widget.branches)
-                  if (b.latitude != null && b.longitude != null)
-                    CircleMapObject(
-                      mapId: MapObjectId('dot_${b.id}'),
-                      circle: Circle(
-                        center: Point(
-                          latitude: b.latitude!,
-                          longitude: b.longitude!,
-                        ),
-                        radius: 40,
-                      ),
-                      fillColor: c.primary,
-                      strokeColor: Colors.white,
-                      strokeWidth: 1.5,
-                      zIndex: 1,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: YandexMap(
+                    nightModeEnabled: c.isDark,
+                    onUserLocationAdded: (view) => styleUserLocation(
+                      view,
+                      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
                     ),
+                    onMapCreated: (controller) async {
+                      _controller = controller;
+                      try {
+                        await controller.toggleUserLayer(visible: true);
+                        await _frame(animated: false);
+                      } finally {
+                        if (mounted) setState(() => _placed = true);
+                      }
+                    },
+                    mapObjects: [
+                      if (km != null)
+                        CircleMapObject(
+                          mapId: const MapObjectId('radius'),
+                          circle:
+                              Circle(center: widget.center, radius: km * 1000),
+                          fillColor: c.primary.withValues(alpha: 0.15),
+                          strokeColor: c.primary,
+                          strokeWidth: 1.5,
+                        ),
+                      // Dots rather than the main map's name pills: here the centres
+                      // are a reference for the circle, not something to read.
+                      if (_dot case final dot?)
+                        for (final b in widget.branches)
+                          if (b.latitude != null && b.longitude != null)
+                            PlacemarkMapObject(
+                              mapId: MapObjectId('dot_${b.id}'),
+                              point: Point(
+                                latitude: b.latitude!,
+                                longitude: b.longitude!,
+                              ),
+                              // Defaults to 0.5.
+                              opacity: 1,
+                              zIndex: 1,
+                              icon: PlacemarkIcon.single(
+                                PlacemarkIconStyle(
+                                  image: BitmapDescriptor.fromBytes(dot.bytes),
+                                  anchor: dot.anchor,
+                                  scale: dot.scale,
+                                ),
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: _placed ? 0 : 1,
+                      duration: const Duration(milliseconds: 200),
+                      child: ColoredBox(color: c.surface),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

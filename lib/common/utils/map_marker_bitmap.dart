@@ -148,15 +148,41 @@ class BranchMarkerPainter {
   /// it a fixed on-screen size at every zoom.
   static Future<MarkerBitmap> buildUserPuck({
     required double devicePixelRatio,
+  }) =>
+      _ringDot(
+        name: 'user',
+        diameter: 22,
+        ring: 4,
+        devicePixelRatio: devicePixelRatio,
+      );
+
+  /// A small fixed-size centre dot, for maps where the centres are a
+  /// reference rather than something to read (the radius picker).
+  static Future<MarkerBitmap> buildDot({
+    required double devicePixelRatio,
+  }) =>
+      _ringDot(
+        name: 'dot',
+        diameter: 12,
+        ring: 2,
+        devicePixelRatio: devicePixelRatio,
+      );
+
+  /// A brand dot in a white ring, memoised by [name].
+  static Future<MarkerBitmap> _ringDot({
+    required String name,
+    required double diameter,
+    required double ring,
+    required double devicePixelRatio,
   }) async {
-    final key = 'user|$devicePixelRatio|${1.0.w}';
+    final key = '$name|$devicePixelRatio|${1.0.w}';
     final cached = _cache[key];
     if (cached != null) return cached;
 
-    final diameter = 22.0.w;
-    final ring = 4.0.w;
+    final d = diameter.w;
+    final r = ring.w;
     final bleed = _bleed.w;
-    final size = diameter + bleed * 2;
+    final size = d + bleed * 2;
     final dpr = devicePixelRatio;
 
     final recorder = ui.PictureRecorder();
@@ -164,7 +190,7 @@ class BranchMarkerPainter {
     canvas.scale(dpr);
 
     final center = Offset(size / 2, size / 2);
-    final radius = diameter / 2;
+    final radius = d / 2;
 
     canvas.drawCircle(
       center.translate(0, 3.h),
@@ -175,7 +201,7 @@ class BranchMarkerPainter {
     );
     canvas.drawCircle(center, radius, Paint()..color = AppColors.white);
     canvas.drawCircle(
-        center, radius - ring, Paint()..color = AppColors.brandPurple);
+        center, radius - r, Paint()..color = AppColors.brandPurple);
 
     final image = await recorder.endRecording().toImage(
           (size * dpr).ceil(),

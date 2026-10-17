@@ -243,6 +243,10 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   @override
   void initState() {
     super.initState();
+    // A cubit that has already loaded (the map tab, reopened) is settled from
+    // the start — otherwise the user's first change here would be taken for
+    // setup and never fitted to.
+    _settled = widget.branchesLoaded && !widget.isLoading;
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncMarkers());
   }
 
@@ -292,6 +296,16 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   /// The opening shot: the user, when they are in Tashkent, else the middle
   /// of Tashkent. Placed once — loading the centres never moves it.
   Future<void> _placeOpeningCamera(YandexMapController controller) async {
+    // Opened with a radius already on (List → map, or the tab reopened): the
+    // circle is what the pins answer to, so it is the opening shot.
+    if (_filter.hasRadius) {
+      try {
+        await _fitToRadius(controller);
+      } finally {
+        if (mounted) setState(() => _cameraPlaced = true);
+      }
+      return;
+    }
     final here = await _userInTashkent();
     if (!mounted) return;
     try {
@@ -323,9 +337,15 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     } catch (_) {}
     loc ??= currentUserLocation.value;
     if (loc == null || !loc.isPrecise) return null;
-    final metres = kTashkentCentre.metersTo(loc.lat, loc.lng);
-    if (metres == null || metres > _tashkentRadiusM) return null;
-    return Point(latitude: loc.lat, longitude: loc.lng);
+    final point = Point(latitude: loc.lat, longitude: loc.lng);
+    return _isInTashkent(point) ? point : null;
+  }
+
+  /// Whether [point] is in Tashkent or the suburbs ringing it — see
+  /// [_tashkentRadiusM].
+  static bool _isInTashkent(Point point) {
+    final metres = kTashkentCentre.metersTo(point.latitude, point.longitude);
+    return metres != null && metres <= _tashkentRadiusM;
   }
 
   /// Puts the "you are here" puck on the map from the start when the
@@ -624,11 +644,17 @@ class _BranchesMapViewState extends State<BranchesMapView> {
         .map((b) => Point(latitude: b.latitude!, longitude: b.longitude!))
         .toList();
 
-    final bounds = _boundsOf(points);
-    if (bounds == null) {
-      await _centreOn(controller, _defaultCenter, _minFitZoom);
+    // With a radius on, the circle is the answer's shape: frame it, not the
+    // pins — which may be none, and would then send the camera elsewhere.
+    if (_filter.hasRadius) {
+      await _fitToRadius(controller);
       return;
     }
+
+    // Nothing matched: stay put. Flying off to the city centre would only
+    // lose the user's place, and the count pill already says "nothing found".
+    final bounds = _boundsOf(points);
+    if (bounds == null) return;
 
     final framed = _framed(bounds);
 
@@ -654,6 +680,30 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     final clamped = cam.zoom.clamp(_minFitZoom, _maxFitZoom);
     if (clamped == cam.zoom) return;
     await _centreOn(controller, _medianPoint(points), clamped.toDouble());
+  }
+
+  /// Frames the active radius circle in the visible strip.
+  Future<void> _fitToRadius(YandexMapController controller) async {
+    final f = _filter;
+    final center = Point(latitude: f.nearLat!, longitude: f.nearLng!);
+    // Metres → degrees; a little wider than the circle so its edge is not
+    // flush with the controls.
+    final metres = f.radiusKm! * 1000 * 1.1;
+    final dLat = metres / 111320;
+    final dLng = metres / (111320 * cos(center.latitude * pi / 180).abs());
+    final box = BoundingBox(
+      southWest: Point(
+        latitude: center.latitude - dLat,
+        longitude: center.longitude - dLng,
+      ),
+      northEast: Point(
+        latitude: center.latitude + dLat,
+        longitude: center.longitude + dLng,
+      ),
+    );
+    await controller.moveCamera(
+      CameraUpdate.newGeometry(Geometry.fromBoundingBox(_framed(box) ?? box)),
+    );
   }
 
   /// Zooms in/out by [delta] around the current centre, clamped to the map's
@@ -703,8 +753,12 @@ class _BranchesMapViewState extends State<BranchesMapView> {
         _showMsg('map_location_denied'.tr());
         return null;
       }
-      final pos = await Geolocator.getCurrentPosition();
+      final pos = await _currentPosition();
       if (!mounted) return null;
+      if (pos == null) {
+        _showMsg('map_location_error'.tr());
+        return null;
+      }
       // MapKit's own location layer replaces the hand-drawn dot the
       // `flutter_map` version used — it is the platform-standard puck, and it
       // keeps following the device instead of freezing at the fetched fix.
@@ -717,6 +771,40 @@ class _BranchesMapViewState extends State<BranchesMapView> {
       if (mounted) setState(() => _locating = false);
     }
   }
+
+  /// A position fit to measure a radius from, without hanging.
+  ///
+  /// The unbounded `getCurrentPosition()` this used could wait on a GPS lock
+  /// indefinitely indoors — the locate button span and the location chip did
+  /// nothing until it gave up, if it ever did. Now: a recent fix the OS
+  /// already holds is used outright; else a fresh one gets [_fixTimeout];
+  /// else any older fix beats none.
+  Future<Position?> _currentPosition() async {
+    Position? last;
+    try {
+      last = await Geolocator.getLastKnownPosition();
+    } catch (_) {}
+    if (last != null &&
+        DateTime.now().difference(last.timestamp) < _freshFixAge) {
+      return last;
+    }
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: _fixTimeout,
+        ),
+      );
+    } catch (_) {
+      return last;
+    }
+  }
+
+  /// How old a remembered fix may be and still count as "where I am".
+  static const _freshFixAge = Duration(minutes: 2);
+
+  /// How long a fresh fix may take before the remembered one stands in.
+  static const _fixTimeout = Duration(seconds: 8);
 
   void _showMsg(String msg) {
     if (!mounted) return;
@@ -803,11 +891,14 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     // With a radius already on, its own centre stands in for a fresh fix —
     // otherwise location switched off later would leave the user unable to
     // widen it back to "All".
-    final here = await _locate() ??
+    var here = await _locate() ??
         (filter.hasRadius
             ? Point(latitude: filter.nearLat!, longitude: filter.nearLng!)
             : null);
     if (here == null || !mounted) return;
+    // Every centre is in Tashkent, so a radius around a user elsewhere could
+    // only ever be empty: measure from the city instead.
+    if (!_isInTashkent(here)) here = _defaultCenter;
     final result = await LocationFilterPage.show(
       context,
       center: here,
@@ -826,6 +917,17 @@ class _BranchesMapViewState extends State<BranchesMapView> {
               nearLng: here.longitude,
             ),
     );
+    // Frame the new circle now rather than once its centres have loaded —
+    // the user just picked it and should see it. The fit after loading lands
+    // on the same circle, so nothing moves twice.
+    if (km != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final controller = _mapController;
+        if (mounted && controller != null && _filter.hasRadius) {
+          _fitToRadius(controller);
+        }
+      });
+    }
   }
 
   /// "By time": the time window sheet.
@@ -1054,16 +1156,35 @@ class _BranchesMapViewState extends State<BranchesMapView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // One bottom line: the count on the left, the controls on the
+                // right, both resting on the same edge. The count used to sit
+                // on a row of its own under the controls, which lifted the
+                // whole column a row's height off the bottom.
+                //
                 // A Row, not an `Align`: this column is bottom-anchored in the
                 // Stack, so its children are laid out with an unbounded
                 // height — and an Align with no `heightFactor` tries to fill
-                // that, which asserts. A Row simply takes its child's height.
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 4.w),
-                      child: Column(
+                // that, which asserts. A Row simply takes its children's
+                // height.
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // What the current search actually plots. On a map the
+                      // count is the only honest feedback that a filter did
+                      // anything — pins that vanish off-camera look like a
+                      // map that simply moved.
+                      Flexible(
+                        child: _CountPill(
+                          label: _plottable.isEmpty && !widget.isLoading
+                              ? 'map_no_centres'.tr()
+                              : 'map_centres_count'
+                                  .tr(args: ['${_plottable.length}']),
+                        ),
+                      ),
+                      const Spacer(),
+                      Column(
                         mainAxisSize: MainAxisSize.min,
                         // Right-aligned so the wider List pill lines up on the
                         // buttons' right edge.
@@ -1085,26 +1206,6 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                           _ListButton(onTap: _openList),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                12.verticalSpace,
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w),
-                  child: Row(
-                    children: [
-                      // What the current search actually plots. On a map the
-                      // count is the only honest feedback that a filter did
-                      // anything — pins that vanish off-camera look like a
-                      // map that simply moved.
-                      Flexible(
-                        child: _CountPill(
-                          label: _plottable.isEmpty && !widget.isLoading
-                              ? 'map_no_centres'.tr()
-                              : 'map_centres_count'
-                                  .tr(args: ['${_plottable.length}']),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1114,8 +1215,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                   // the card's height to keep pins out from under it, and it
                   // does that outside build where measuring is allowed.
                   _BranchCard(key: _cardKey, branch: selected),
-                ] else
-                  16.verticalSpace,
+                ],
               ],
             ),
           ),
