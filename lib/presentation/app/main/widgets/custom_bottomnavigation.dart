@@ -10,8 +10,9 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/liquid_pill_nav_bar.dart';
 
-/// Glass bottom navigation with two renderers, both fed the **same Figma tab
-/// SVGs** ([_tabs]):
+/// Glass bottom navigation with two renderers sharing the tab list ([_tabs]).
+/// The pill draws the Figma (Iconsax Bold) SVGs; the native iOS 26 bar draws
+/// a softer bulk cut of the same icons ([_iosIcons]):
 ///
 ///   • **iOS 26+ → the real thing.** A native `UITabBar` ([CNTabBar]) that the
 ///     system paints with genuine liquid glass — the actual UIKit material,
@@ -23,14 +24,9 @@ import 'package:lumi_pass/presentation/app/main/widgets/liquid_pill_nav_bar.dart
 ///     closest a Flutter bar gets to the way the native one behaves.
 ///
 /// We drive [CNTabBar] **directly** rather than going through
-/// `dynamic_glass_glmv`'s [AdaptiveBottomNavigationBar], for one reason: that
-/// wrapper hardcodes `preserveColors: true` on every asset icon, which tells
-/// UIKit to blit the glyph as-is. Our tab SVGs are `fill="white"`, so they'd
-/// come out white-on-glass and would never tint for selection. `CNTabBar`'s own
-/// default is `preserveColors: false`, which templates the glyph — UIKit then
-/// tints it with [CNTabBar.tint] when selected and system grey when not, which
-/// is exactly the behaviour we want. `CNTabBar` already pre-renders SVG asset
-/// paths to PNG, so it takes our `Assets.icons.home.*` paths as they are.
+/// `dynamic_glass_glmv`'s [AdaptiveBottomNavigationBar] so UIKit templates
+/// and tints each glyph itself — [CNTabBar.tint] when selected, the system
+/// colour when not.
 ///
 /// The blur only frosts because `MainPage`'s `AutoTabsScaffold` sets
 /// `extendBody: true`, letting the tab content scroll behind the bar.
@@ -89,6 +85,20 @@ class CustomBottomBar extends StatelessWidget {
     (Assets.icons.home.profile, 'tab_profile'),
   ];
 
+  /// Glyphs for the iOS 26 liquid-glass bar, index-aligned with [_tabs]:
+  /// Iconsax in a "bulk" cut — the Linear outline at full strength over the
+  /// Bold silhouette at 15% opacity. The pill's solid Bold glyphs read as
+  /// heavy blobs on the native glass; bare outlines looked out of place in an
+  /// app whose icons are filled everywhere else. UIKit templates by alpha, so
+  /// the translucent body survives the tint in both states.
+  static final List<SvgGenImage> _iosIcons = [
+    Assets.icons.home.tabHome,
+    Assets.icons.home.tabSearch,
+    Assets.icons.home.tabShorts,
+    Assets.icons.home.tabTariffs,
+    Assets.icons.home.tabProfile,
+  ];
+
   /// Gap between the pill and the bottom of the screen when nothing of the
   /// system's own lives down there (iOS home indicator included — it floats
   /// over the glass rather than covering it).
@@ -102,17 +112,22 @@ class CustomBottomBar extends StatelessWidget {
     // Unselected icon + label — Figma grey per theme.
     final unselectedColor = c.isDark ? _figmaGrey : _charcoalGray;
 
-    // iOS 26: the system liquid-glass UITabBar, carrying our own tab SVGs.
-    // `preserveColors` is left at its default (false) so UIKit templates each
-    // glyph and tints it — brand purple when selected, system grey when not.
+    // iOS 26: the system liquid-glass UITabBar, with bulk Iconsax glyphs
+    // ([_iosIcons]). `preserveColors` stays false so UIKit templates and
+    // tints them — brand purple when selected, the system colour when not.
     if (PlatformInfo.isIOS26OrHigher()) {
       if (hidden) return const SizedBox.shrink();
       return CNTabBar(
+        // A fresh State whenever the icon set changes: `CNTabBar` caches the
+        // PNGs it pre-renders from SVG assets, and hot-reloading a new icon
+        // set into the old State draws the stale glyphs. Bump the key when
+        // [_iosIcons] changes.
+        key: const ValueKey('cn-tab-bar-iconsax-bulk-15'),
         items: [
-          for (final (icon, labelKey) in _tabs)
+          for (var i = 0; i < _tabs.length; i++)
             CNTabBarItem(
-              label: labelKey.tr(),
-              assetImage: icon.path,
+              label: _tabs[i].$2.tr(),
+              assetImage: _iosIcons[i].path,
               // Apple's tab-bar icon metric; without it the pre-rendered PNG
               // would draw at its own size.
               assetSize: 25,

@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lumi_pass/common/widget/segmented_slider_track.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
@@ -265,7 +266,12 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                     overlayColor: c.primary.withValues(alpha: 0.12),
                     tickMarkShape:
                         const RoundSliderTickMarkShape(tickMarkRadius: 0),
-                    thumbColor: c.primary,
+                    // One piece per radius step, the same broken line the time
+                    // filter draws.
+                    trackShape: SegmentedSliderTrackShape(
+                      segments: kRadiusStepsKm.length,
+                    ),
+                    thumbShape: RingedSliderThumb(color: c.primary),
                     showValueIndicator: ShowValueIndicator.never,
                   ),
                   child: Slider(

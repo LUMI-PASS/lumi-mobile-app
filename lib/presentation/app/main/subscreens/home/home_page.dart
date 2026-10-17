@@ -353,11 +353,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // flick to the end stops asking.
     final wantsMore =
         row.length < HomeCubit.subscriptionRowSize && state.hasMoreNewClasses;
+    void openAll() => context.router.push(SearchDiscoveryRoute());
     return GestureDetector(
       // Cards and the scroll claim their own gestures first, so this only
       // fires on the panel around them — the header and the margins.
       behavior: HitTestBehavior.opaque,
-      onTap: () => context.router.push(SearchDiscoveryRoute()),
+      onTap: openAll,
       child: Container(
         // The gap below is the next row's header room: that row adds none of
         // its own, and a title pressed against the panel's rounded corners
@@ -396,18 +397,21 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                       // The feed's own inset: 8 here plus the card's 8 puts the
                       // first card on the page's 16pt margin, under the header.
                       padding: EdgeInsets.only(left: 8.w, right: 16.w),
-                      itemCount: row.length,
-                      itemBuilder: (context, index) => HomeCourseCard(
-                        key: ValueKey('sub-${row[index].id ?? index}'),
-                        homClass: row[index],
-                        margin: EdgeInsets.only(left: 8.w),
-                        carded: true,
-                        // A browsing shelf, not a comparison — see
-                        // [HomeCourseCard.showDistance].
-                        showDistance: false,
-                        showPrice: _showsPrice(row[index]),
-                        onViewAsReels: () => _openShorts(context, row, index),
-                      ),
+                      itemCount: row.length + 1,
+                      itemBuilder: (context, index) => index == row.length
+                          ? HomeSeeAllTile(onTap: openAll)
+                          : HomeCourseCard(
+                              key: ValueKey('sub-${row[index].id ?? index}'),
+                              homClass: row[index],
+                              margin: EdgeInsets.only(left: 8.w),
+                              carded: true,
+                              // A browsing shelf, not a comparison — see
+                              // [HomeCourseCard.showDistance].
+                              showDistance: false,
+                              showPrice: _showsPrice(row[index]),
+                              onViewAsReels: () =>
+                                  _openShorts(context, row, index),
+                            ),
                     ),
                     if (state.isLoadingNewClasses && wantsMore)
                       Positioned(
@@ -508,6 +512,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final priceBlock = strikesPrice ? 118.0 : 102.0;
     final textBlock = (list.any(_showsPrice) ? priceBlock : 84.0) * textScale;
     final rowH = cardImgH + 14.h + textBlock.h;
+    void openAll() => context.router.push(
+          forChildren
+              ? InterestsGridRoute(title: 'based_on_interests'.tr())
+              : SearchDiscoveryRoute(initialKind: ActivityKind.courses),
+        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -523,11 +532,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           // it named a type, so "see all" honours it. It lands as a visible
           // filter rather than a mode, so the user can widen back to
           // everything from the filter sheet.
-          onViewAll: () => context.router.push(
-            forChildren
-                ? InterestsGridRoute(title: 'based_on_interests'.tr())
-                : SearchDiscoveryRoute(initialKind: ActivityKind.courses),
-          ),
+          onViewAll: openAll,
           viewAllLabel: forChildren ? 'view_all'.tr() : 'view_all_courses'.tr(),
         ),
         10.verticalSpace,
@@ -536,18 +541,20 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.only(left: 8.w, right: 16.w),
-            itemCount: list.length,
-            itemBuilder: (context, index) => HomeCourseCard(
-              key: ValueKey('c2-${list[index].id ?? index}'),
-              homClass: list[index],
-              width: cardW,
-              imageHeight: cardImgH,
-              margin: EdgeInsets.only(left: 8.w),
-              // Same shelf treatment as the activities row above it.
-              showDistance: false,
-              showPrice: _showsPrice(list[index]),
-              onViewAsReels: () => _openShorts(context, list, index),
-            ),
+            itemCount: list.length + 1,
+            itemBuilder: (context, index) => index == list.length
+                ? HomeSeeAllTile(onTap: openAll)
+                : HomeCourseCard(
+                    key: ValueKey('c2-${list[index].id ?? index}'),
+                    homClass: list[index],
+                    width: cardW,
+                    imageHeight: cardImgH,
+                    margin: EdgeInsets.only(left: 8.w),
+                    // Same shelf treatment as the activities row above it.
+                    showDistance: false,
+                    showPrice: _showsPrice(list[index]),
+                    onViewAsReels: () => _openShorts(context, list, index),
+                  ),
           ),
         ),
       ],
@@ -790,7 +797,10 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               viewAllLabel: 'centers_on_map'.tr(),
             ),
             12.verticalSpace,
-            HomeCentresShelf(branches: state.centres),
+            HomeCentresShelf(
+              branches: state.centres,
+              onSeeAll: () => context.router.push(BranchesMapRoute()),
+            ),
           ],
         );
       case HomeInsert.unclaimedShelf:

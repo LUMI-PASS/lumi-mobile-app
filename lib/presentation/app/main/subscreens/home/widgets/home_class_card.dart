@@ -102,7 +102,8 @@ class HomeCourseCard extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () {
         onOpen?.call();
-        context.router.push(ClassDetailRoute(classModel: hc ?? const HomClass()));
+        context.router
+            .push(ClassDetailRoute(classModel: hc ?? const HomClass()));
       },
       child: carded
           ? FrostedCard(

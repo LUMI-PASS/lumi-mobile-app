@@ -783,6 +783,26 @@ class $AssetsIconsHomeGen {
   SvgGenImage get shortcutSaved =>
       const SvgGenImage('assets/icons/home/shortcut_saved.svg');
 
+  /// File path: assets/icons/home/tab_home.svg
+  SvgGenImage get tabHome =>
+      const SvgGenImage('assets/icons/home/tab_home.svg');
+
+  /// File path: assets/icons/home/tab_profile.svg
+  SvgGenImage get tabProfile =>
+      const SvgGenImage('assets/icons/home/tab_profile.svg');
+
+  /// File path: assets/icons/home/tab_search.svg
+  SvgGenImage get tabSearch =>
+      const SvgGenImage('assets/icons/home/tab_search.svg');
+
+  /// File path: assets/icons/home/tab_shorts.svg
+  SvgGenImage get tabShorts =>
+      const SvgGenImage('assets/icons/home/tab_shorts.svg');
+
+  /// File path: assets/icons/home/tab_tariffs.svg
+  SvgGenImage get tabTariffs =>
+      const SvgGenImage('assets/icons/home/tab_tariffs.svg');
+
   /// File path: assets/icons/home/user.svg
   SvgGenImage get user => const SvgGenImage('assets/icons/home/user.svg');
 
@@ -815,6 +835,11 @@ class $AssetsIconsHomeGen {
         shortcutActivities,
         shortcutMap,
         shortcutSaved,
+        tabHome,
+        tabProfile,
+        tabSearch,
+        tabShorts,
+        tabTariffs,
         user,
         users,
         video

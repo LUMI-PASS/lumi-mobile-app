@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -159,8 +160,7 @@ class _TicketClipper extends CustomClipper<Path> {
     final x = size.width - stub;
     final bites = Path()
       ..addOval(Rect.fromCircle(center: Offset(x, 0), radius: notch))
-      ..addOval(
-          Rect.fromCircle(center: Offset(x, size.height), radius: notch));
+      ..addOval(Rect.fromCircle(center: Offset(x, size.height), radius: notch));
     return Path.combine(PathOperation.difference, body, bites);
   }
 
@@ -222,9 +222,8 @@ class HomeCategoryTiles extends StatelessWidget {
             category: categories[i],
             // Alternated on the diagonal, so the grid reads as four tiles
             // rather than as one purple slab.
-            gradient: (i == 0 || i == 3)
-                ? AppGradients.brand
-                : AppGradients.indigo,
+            gradient:
+                (i == 0 || i == 3) ? AppGradients.brand : AppGradients.indigo,
             onTap: () => onTap(categories[i]),
           ),
         );
@@ -310,9 +309,17 @@ class _CategoryTile extends StatelessWidget {
 /// Every other shelf on the feed sells an activity; this one sells the place,
 /// and the round frame is what says so before the header is read.
 class HomeCentresShelf extends StatelessWidget {
-  const HomeCentresShelf({super.key, required this.branches});
+  const HomeCentresShelf({
+    super.key,
+    required this.branches,
+    this.onSeeAll,
+  });
 
   final List<HomBranch> branches;
+
+  /// The last entry, a round "›" in the row's own shape — see
+  /// `HomeSeeAllTile`, which the card rows end with instead.
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -323,15 +330,15 @@ class HomeCentresShelf extends StatelessWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.only(left: 8.w, right: 16.w),
-        itemCount: branches.length,
+        itemCount: branches.length + (onSeeAll == null ? 0 : 1),
         itemBuilder: (context, index) {
+          if (index == branches.length) return _seeAll(context, photo);
           final branch = branches[index];
           final url = sanitizeImageUrl(branch.image);
           return GestureDetector(
             key: ValueKey('centre-${branch.id ?? index}'),
             behavior: HitTestBehavior.opaque,
-            onTap: () =>
-                context.router.push(BranchDetailRoute(branch: branch)),
+            onTap: () => context.router.push(BranchDetailRoute(branch: branch)),
             child: Padding(
               padding: EdgeInsets.only(left: 8.w),
               child: SizedBox(
@@ -369,6 +376,46 @@ class HomeCentresShelf extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _seeAll(BuildContext context, double photo) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onSeeAll,
+      child: Padding(
+        padding: EdgeInsets.only(left: 8.w),
+        child: SizedBox(
+          width: 76.w,
+          child: Column(
+            children: [
+              Container(
+                width: photo,
+                height: photo,
+                decoration: BoxDecoration(
+                  color: c.control,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.controlBorder),
+                ),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 28.sp,
+                  color: c.textPrimary,
+                ),
+              ),
+              8.verticalSpace,
+              Text(
+                'view_all'.tr(),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.medium12.copyWith(color: c.textPrimary),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

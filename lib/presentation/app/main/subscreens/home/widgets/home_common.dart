@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/frosted_card.dart';
 
 /// Section header used across the home feed — a bold title on the left and a
 /// muted "View all" affordance on the right (Figma `Category header`).
@@ -74,6 +75,61 @@ class HomeSectionHeader extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The last card of a horizontal row: a round "›" over "Посмотреть все".
+///
+/// Someone who has scrolled a row to its end has shown they want more of it,
+/// and the header's "see all" is a screen's width behind them by then. This is
+/// the same tap, waiting where their thumb already is.
+///
+/// Only on a row that HAS somewhere to go — a tile that opened the wrong list
+/// would be worse than none.
+class HomeSeeAllTile extends StatelessWidget {
+  const HomeSeeAllTile({super.key, required this.onTap, this.width});
+
+  final VoidCallback onTap;
+
+  /// Null is narrower than a card: it is an affordance, not an entry.
+  final double? width;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return FrostedCard(
+      onTap: onTap,
+      width: width ?? 132.w,
+      // The row's own gap, the same as every card before it.
+      margin: EdgeInsets.only(left: 8.w),
+      borderRadius: BorderRadius.circular(16.r),
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 44.w,
+            height: 44.w,
+            decoration: BoxDecoration(
+              color: c.control,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.chevron_right_rounded,
+              size: 26.sp,
+              color: c.textPrimary,
+            ),
+          ),
+          10.verticalSpace,
+          Text(
+            'view_all'.tr(),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: AppText.semibold14.copyWith(color: c.textPrimary),
+          ),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/widget/segmented_slider_track.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 
 /// A window of the day, in minutes past midnight — what the "By time" filter
@@ -103,8 +104,10 @@ class TimeRangeField extends StatelessWidget {
             activeTrackColor: c.primary,
             inactiveTrackColor: c.progressTrack,
             overlayColor: c.primary.withValues(alpha: 0.12),
-            rangeThumbShape: FilterRangeThumb(color: c.primary),
-            rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
+            rangeThumbShape: RingedRangeSliderThumb(color: c.primary),
+            // Four quarters of the day, broken at 06:00, 12:00 and 18:00 so
+            // the labels under the line have a mark to sit under.
+            rangeTrackShape: const SegmentedRangeSliderTrackShape(segments: 4),
             rangeTickMarkShape:
                 const RoundRangeSliderTickMarkShape(tickMarkRadius: 0),
             showValueIndicator: ShowValueIndicator.never,
