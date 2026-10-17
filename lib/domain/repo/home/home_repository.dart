@@ -113,6 +113,7 @@ abstract class HomeRepository {
     int page = 1,
     int limit = 10,
     String? topicId,
+    String? search,
     double? lat,
     double? lng,
   });

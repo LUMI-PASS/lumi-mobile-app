@@ -120,7 +120,6 @@ class HomeCourseCard extends StatelessWidget {
                     category: hc?.category,
                     discountPercentage: hc?.discountPercentage ?? 0,
                     onViewAsReels: onViewAsReels,
-                    forChildName: hc?.forChildName,
                     sale: hc?.sale,
                     // Flush with the card — see [HomeNearbyCard].
                     borderRadius:
@@ -152,7 +151,6 @@ class HomeCourseCard extends StatelessWidget {
                     category: hc?.category,
                     discountPercentage: hc?.discountPercentage ?? 0,
                     onViewAsReels: onViewAsReels,
-                    forChildName: hc?.forChildName,
                     sale: hc?.sale,
                   ),
                   14.verticalSpace,
@@ -249,15 +247,9 @@ class _ClassImage extends StatelessWidget {
     required this.discountPercentage,
     required this.onViewAsReels,
     this.sale,
-    this.forChildName,
     this.fit = BoxFit.cover,
     this.borderRadius,
   });
-
-  /// The child this card was picked for, on home's "for your children" row.
-  /// Drawn as a second badge on the photo, so the card's text block — and
-  /// with it the row's height — is the same with or without it.
-  final String? forChildName;
 
   final String? imageUrl;
   final double height;
@@ -337,11 +329,6 @@ class _ClassImage extends StatelessWidget {
                       leading: HomeIcon(Assets.icons.home.book,
                           size: 12, color: Colors.white),
                       gradient: AppGradients.indigo,
-                    ),
-                  if ((forChildName ?? '').isNotEmpty)
-                    HomePillTag(
-                      label: 'for_child'.tr(args: [forChildName!]),
-                      gradient: AppGradients.brand,
                     ),
                   if (sale != null) ...[
                     HomePillTag(

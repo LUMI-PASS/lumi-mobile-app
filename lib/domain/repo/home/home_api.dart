@@ -282,11 +282,13 @@ class HomeApi {
 
   /// "See all" for home's "Based on your interests" row — the feed's
   /// `for_children` without its cap of ten, a page at a time. [topicId]
-  /// narrows it to one of the topics the response lists.
+  /// narrows it to one of the topics the response lists; [search] to the
+  /// matches whose name contains it.
   Future<Response> discoveryForChildren({
     int page = 1,
     int limit = 10,
     String? topicId,
+    String? search,
     double? lat,
     double? lng,
   }) {
@@ -294,6 +296,7 @@ class HomeApi {
       'page': page,
       'limit': limit,
       if (topicId != null) 'topic_id': topicId,
+      if (search != null && search.isNotEmpty) 'search': search,
       if (lat != null && lng != null) ...{'lat': lat, 'lng': lng},
     });
   }

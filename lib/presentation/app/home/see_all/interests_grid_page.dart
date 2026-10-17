@@ -1,13 +1,12 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/utils/catalog_revision.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
-import 'package:lumi_pass/common/widget/pill_filter_chip.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
-import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_class_card.dart';
@@ -17,12 +16,13 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search
 ///
 /// The same matching the row is dealt from — the family's topics, each card
 /// checked against the child it is for — without the row's cap of ten, paged
-/// as you scroll. A chip per topic narrows it to that topic; "All" is the
-/// row's own order.
+/// as you scroll. The search field narrows it to the matches whose name
+/// contains the term.
 ///
 /// Not the search screen: the matching goes by the words in an activity's
 /// name and by each child's age and gender, none of which a search filter can
-/// express, so search would only ever be close to what the row showed.
+/// express, so the search screen would only ever be close to what the row
+/// showed. The field here searches within the matches instead.
 @RoutePage()
 class InterestsGridPage extends StatefulWidget {
   const InterestsGridPage({super.key, required this.title});
@@ -35,22 +35,19 @@ class InterestsGridPage extends StatefulWidget {
 
 class _InterestsGridPageState extends State<InterestsGridPage> {
   static const int _limit = 10;
+  static const Duration _debounceDelay = Duration(milliseconds: 500);
 
   final _scrollController = ScrollController();
   final List<HomClass> _classes = [];
 
-  /// Kept from the first page: the server sends the same list on every page,
-  /// and a chip row that rebuilt itself mid-scroll would jump.
-  List<InterestTopic> _topics = const [];
-
-  /// Null is "All".
-  String? _topicId;
+  String _search = '';
+  Timer? _debounce;
 
   int _page = 1;
   bool _isLoading = false;
   bool _hasMore = true;
 
-  /// Bumped on every reset, so a page that lands after the chip changed is
+  /// Bumped on every reset, so a page that lands after the term changed is
   /// dropped instead of appended to a list it does not belong to.
   int _requestId = 0;
 
@@ -65,6 +62,7 @@ class _InterestsGridPageState extends State<InterestsGridPage> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     catalogRevision.removeListener(_restart);
     _scrollController.dispose();
     super.dispose();
@@ -77,11 +75,16 @@ class _InterestsGridPageState extends State<InterestsGridPage> {
     }
   }
 
-  void _selectTopic(String? id) {
-    if (id == _topicId) return;
-    _topicId = id;
-    _restart();
-    if (_scrollController.hasClients) _scrollController.jumpTo(0);
+  void _onSearchChanged(String term) {
+    final trimmed = term.trim();
+    if (trimmed == _search) return;
+    _search = trimmed;
+
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDelay, () {
+      _restart();
+      if (_scrollController.hasClients) _scrollController.jumpTo(0);
+    });
   }
 
   void _restart() {
@@ -108,14 +111,13 @@ class _InterestsGridPageState extends State<InterestsGridPage> {
       final result = await getIt<HomeRepository>().getForChildren(
         page: page,
         limit: _limit,
-        topicId: _topicId,
+        search: _search,
         lat: here?.lat,
         lng: here?.lng,
       );
       if (!mounted || requestId != _requestId) return;
 
       setState(() {
-        if (_topics.isEmpty) _topics = result.topics;
         final seen = _classes.map((c) => c.id).toSet();
         _classes.addAll(result.classes.where((c) => !seen.contains(c.id)));
         _page = page + 1;
@@ -156,35 +158,11 @@ class _InterestsGridPageState extends State<InterestsGridPage> {
               onBack: () => context.router.maybePop(),
             ),
             12.verticalSpace,
-            // One topic needs no chips: "All" and it would be the same list.
-            if (_topics.length > 1) ...[
-              SizedBox(
-                height: 30.h,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  children: [
-                    PillFilterChip(
-                      label: 'filter_all'.tr(),
-                      selected: _topicId == null,
-                      onTap: () => _selectTopic(null),
-                    ),
-                    for (final topic in _topics) ...[
-                      8.horizontalSpace,
-                      PillFilterChip(
-                        label: [
-                          if (topic.emoji != null) topic.emoji!,
-                          topic.name,
-                        ].join(' '),
-                        selected: _topicId == topic.id,
-                        onTap: () => _selectTopic(topic.id),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              12.verticalSpace,
-            ],
+            SearchBarRow(
+              initialTerm: _search,
+              onChanged: _onSearchChanged,
+            ),
+            12.verticalSpace,
             Expanded(
               child: showEmpty
                   ? const SearchEmptyView()
