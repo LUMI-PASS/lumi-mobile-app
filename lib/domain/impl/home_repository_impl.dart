@@ -278,6 +278,36 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
+  Future<ForChildrenPage> getForChildren({
+    int page = 1,
+    int limit = 10,
+    String? topicId,
+    double? lat,
+    double? lng,
+  }) async {
+    final response = await _api.discoveryForChildren(
+      page: page,
+      limit: limit,
+      topicId: topicId,
+      lat: lat,
+      lng: lng,
+    );
+    final data = response.data is Map ? response.data['data'] : null;
+    if (data is! Map) {
+      return const ForChildrenPage(topics: [], classes: [], totalPages: 0);
+    }
+    final list = data['data'] is List ? data['data'] as List : const [];
+    ClassPricingCache.mergeFromList(list);
+    final topics = data['topics'] is List ? data['topics'] as List : const [];
+    final pages = data['pages'];
+    return ForChildrenPage(
+      topics: topics.map(InterestTopic.tryFromJson).whereType<InterestTopic>().toList(),
+      classes: list.map((e) => HomClass.fromJson(e)).toList(),
+      totalPages: pages is int ? pages : int.tryParse('$pages') ?? 0,
+    );
+  }
+
+  @override
   Future<ClassesPage> getDiscoveryCourses({
     int page = 1,
     int limit = 10,

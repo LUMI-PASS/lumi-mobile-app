@@ -56,6 +56,18 @@ Future<void> askInterestsIfOwed(StackRouter router) async {
   await router.pushWidget(ParentInterestsPage(topics: topics));
 }
 
+/// The same question, asked from home's banner to an account that predates
+/// it. Unlike sign-up it can be closed unanswered. Returns whether an answer
+/// was saved, so home knows to reload the row it feeds.
+Future<bool> askInterestsFromHome(StackRouter router) async {
+  final topics = await _parentTopics();
+  if (topics.isEmpty) return false;
+  final saved = await router.pushWidget<bool>(
+    ParentInterestsPage(topics: topics, canClose: true),
+  );
+  return saved == true;
+}
+
 Future<List<InterestTopic>> _parentTopics() async {
   try {
     final topics = await getIt<HomeRepository>().getInterestTopics();
@@ -75,10 +87,18 @@ Future<List<InterestTopic>> _parentTopics() async {
 /// app only postpones it (see [askInterestsIfOwed]). The same question stays
 /// editable afterwards on "edit my info".
 class ParentInterestsPage extends StatefulWidget {
-  const ParentInterestsPage({super.key, required this.topics});
+  const ParentInterestsPage({
+    super.key,
+    required this.topics,
+    this.canClose = false,
+  });
 
   /// The words on offer — never empty; see [enterAppAfterSignIn].
   final List<InterestTopic> topics;
+
+  /// Off for sign-up, where answering is the only way in. On when home's
+  /// banner opens it: there the parent chose to come, and may choose to go.
+  final bool canClose;
 
   @override
   State<ParentInterestsPage> createState() => _ParentInterestsPageState();
@@ -105,11 +125,13 @@ class _ParentInterestsPageState extends State<ParentInterestsPage> {
       return;
     }
     setState(() => _saving = true);
+    var saved = false;
     try {
       await getIt<Dio>().patch(
         'users/parents/profile',
         data: {'interests': _interests},
       );
+      saved = true;
     } catch (_) {
       // A failed save must not strand a new user on the doorstep. They go in
       // without it, and the question is still there on "edit my info".
@@ -117,7 +139,7 @@ class _ParentInterestsPageState extends State<ParentInterestsPage> {
     // Answered, as far as the app is concerned — even when the save failed,
     // so a server fault cannot bring the screen back on every launch.
     await getIt<Storage>().interestsOwed.set(null);
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) Navigator.of(context).pop(saved);
   }
 
   @override
@@ -125,7 +147,7 @@ class _ParentInterestsPageState extends State<ParentInterestsPage> {
     final colors = context.colors;
 
     return PopScope(
-      canPop: false,
+      canPop: widget.canClose,
       child: Scaffold(
         backgroundColor: colors.scaffoldBg,
         body: SafeArea(
@@ -138,6 +160,15 @@ class _ParentInterestsPageState extends State<ParentInterestsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (widget.canClose)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: 'close'.tr(),
+                            icon: Icon(Icons.close, color: colors.textPrimary),
+                            onPressed: () => Navigator.of(context).pop(false),
+                          ),
+                        ),
                       // The mascot asks the question, rather than a heading
                       // sitting over a list: it pops in, and what it says
                       // is the speech bubble beside it.

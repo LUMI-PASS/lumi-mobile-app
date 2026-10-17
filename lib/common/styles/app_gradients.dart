@@ -19,6 +19,15 @@ class AppGradients {
     colors: [Color(0xFF6F5ED0), Color(0xFF1326B1)],
   );
 
+  /// Home's slim promo strip — indigo through violet into orange, the loud
+  /// marketplace-style bar that reads as an offer rather than a feed card.
+  static const LinearGradient promoStrip = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [AppColors.link, AppColors.brandPurple, AppColors.coinOrange],
+    stops: [0, 0.55, 1],
+  );
+
   /// Frosted light control — hero back/share/heart buttons and the carousel
   /// dots pill. Top→bottom pale-lavender → off-white (Figma `#f2f4ff` →
   /// `#f8f8f8`). Reads as a raised light chip over the hero image.

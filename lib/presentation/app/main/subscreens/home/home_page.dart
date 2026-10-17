@@ -33,11 +33,13 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_cla
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_header.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_interests_strip.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_skeletons.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_unclaimed_shelf.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/today_bookings.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
+import 'package:lumi_pass/presentation/auth/interests/parent_interests_page.dart';
 
 // Tab index of the Shorts tab inside the main AutoTabsScaffold.
 const int _kShortsTabIndex = 2;
@@ -51,7 +53,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // Seed the header name from storage so it shows immediately before the API loads.
     final storage = getIt<Storage>();
     final stored = storage.parentName.call();
-    if (stored != null && stored.isNotEmpty && displayNameNotifier.value == null) {
+    if (stored != null &&
+        stored.isNotEmpty &&
+        displayNameNotifier.value == null) {
       displayNameNotifier.value = stored;
     }
     context.read<HomeCubit>().initWithLocation();
@@ -167,6 +171,19 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               SliverToBoxAdapter(child: _buildSubscription(context, state))
             else if (state.newClassesList.isNotEmpty)
               SliverToBoxAdapter(child: _buildPopular(context, state)),
+            // An account from before the interests question has never been
+            // asked it, and without an answer the row below can only be the
+            // generic courses. Asked here, where the answer shows up.
+            if (state.homeModel?.data?.interestsPicked == false)
+              SliverToBoxAdapter(
+                child: Padding(
+                  // Room above for the artwork, which stands out of the strip.
+                  padding: EdgeInsets.only(top: 12.h, bottom: 18.h),
+                  child: HomeInterestsStrip(
+                    onTap: () => _askInterests(context),
+                  ),
+                ),
+              ),
             // REAL courses — the backend keeps these out of the class lists, so
             // this row is the only place they appear. Ordered to walk across
             // categories rather than to sit in whatever order the feed sent.
@@ -174,14 +191,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               SliverToBoxAdapter(
                 child: _buildCoursesRow(
                   context,
-                  'based_on_interests'.tr(),
                   // Picked for this parent's children when they have chosen
                   // topics, otherwise the generic spread — decided in the
                   // cubit, where the feed lands.
                   state.coursesList,
-                  forChildren:
-                      (state.homeModel?.data?.forChildren?.data ?? const [])
-                          .isNotEmpty,
+                  forChildren: _hasForChildren(state),
                 ),
               ),
             if (state.nearClassesList.isNotEmpty)
@@ -201,9 +215,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 24.h +
-                    64.0 +
-                    MediaQuery.of(context).viewPadding.bottom,
+                height: 24.h + 64.0 + MediaQuery.of(context).viewPadding.bottom,
               ),
             ),
           ],
@@ -299,10 +311,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   /// one.
   static List<List<int>> categoryGridColumns(int count) {
     const perRow = _categoryColumns;
-    if (count <= perRow) return [for (var i = 0; i < count; i++) [i]];
+    if (count <= perRow)
+      return [
+        for (var i = 0; i < count; i++) [i]
+      ];
     final columns = <List<int>>[
-      for (var c = 0; c < perRow; c++)
-        [c, if (c + perRow < count) c + perRow],
+      for (var c = 0; c < perRow; c++) [c, if (c + perRow < count) c + perRow],
     ];
     for (var i = perRow * 2; i < count; i += 2) {
       columns.add([i, if (i + 1 < count) i + 1]);
@@ -318,10 +332,10 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   ///
   /// The row is a fixed ten, dealt and shuffled in the cubit (see
   /// `HomeCubit.subscriptionRowSize`), so it is a taste of the catalogue rather
-  /// than a list to get to the end of. It carries NO "see all": there is no
-  /// catalogue filter for "coins accepted", so the only screen a tap could
-  /// open is the unfiltered one — which would answer a question the header did
-  /// not ask. The categories row above leaves its own off for the same reason.
+  /// than a list to get to the end of. The panel itself is the way on: a tap
+  /// on it anywhere but a card opens the whole catalogue, and the "›" after
+  /// the title says so. Not a "see all" link — there is no catalogue filter
+  /// for "coins accepted", so "all of these" is not a screen that exists.
   ///
   /// It is drawn as a full-width panel of [AppColorScheme.coinBand] — the
   /// brand violet, pale in light and deep in dark — because what sets this row
@@ -345,68 +359,74 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // flick to the end stops asking.
     final wantsMore =
         row.length < HomeCubit.subscriptionRowSize && state.hasMoreNewClasses;
-    return Container(
-      // The gap below is the next row's header room: that row adds none of
-      // its own, and a title pressed against the panel's rounded corners
-      // reads as belonging to it.
-      margin: EdgeInsets.only(bottom: 14.h),
-      padding: EdgeInsets.symmetric(vertical: 16.h),
-      decoration: BoxDecoration(
-        color: c.coinBand,
-        borderRadius: BorderRadius.circular(24.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HomeSectionHeader(title: 'popular_activities'.tr()),
-          12.verticalSpace,
-          NotificationListener<ScrollNotification>(
-            onNotification: (scrollInfo) {
-              if (wantsMore &&
-                  scrollInfo.metrics.axis == Axis.horizontal &&
-                  scrollInfo.metrics.pixels >=
-                      scrollInfo.metrics.maxScrollExtent - 8) {
-                context.read<HomeCubit>().loadMoreNewClasses();
-              }
-              return scrollInfo.metrics.axis == Axis.horizontal;
-            },
-            child: SizedBox(
-              height: rowH,
-              child: Stack(
-                children: [
-                  ListView.builder(
-                    key: const PageStorageKey('subscription-list'),
-                    scrollDirection: Axis.horizontal,
-                    // The feed's own inset: 8 here plus the card's 8 puts the
-                    // first card on the page's 16pt margin, under the header.
-                    padding: EdgeInsets.only(left: 8.w, right: 16.w),
-                    itemCount: row.length,
-                    itemBuilder: (context, index) => HomeCourseCard(
-                      key: ValueKey('sub-${row[index].id ?? index}'),
-                      homClass: row[index],
-                      margin: EdgeInsets.only(left: 8.w),
-                      carded: true,
-                      // A browsing shelf, not a comparison — see
-                      // [HomeCourseCard.showDistance].
-                      showDistance: false,
-                      showPrice: _showsPrice(row[index]),
-                      onViewAsReels: () => _openShorts(context, row, index),
-                    ),
-                  ),
-                  if (state.isLoadingNewClasses && wantsMore)
-                    Positioned(
-                      right: 16.w,
-                      top: 0,
-                      bottom: 8.h,
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
+    return GestureDetector(
+      // Cards and the scroll claim their own gestures first, so this only
+      // fires on the panel around them — the header and the margins.
+      behavior: HitTestBehavior.opaque,
+      onTap: () => context.router.push(SearchDiscoveryRoute()),
+      child: Container(
+        // The gap below is the next row's header room: that row adds none of
+        // its own, and a title pressed against the panel's rounded corners
+        // reads as belonging to it.
+        margin: EdgeInsets.only(bottom: 14.h),
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        decoration: BoxDecoration(
+          color: c.coinBand,
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            HomeSectionHeader(title: 'popular_activities'.tr(), chevron: true),
+            12.verticalSpace,
+            NotificationListener<ScrollNotification>(
+              onNotification: (scrollInfo) {
+                if (wantsMore &&
+                    scrollInfo.metrics.axis == Axis.horizontal &&
+                    scrollInfo.metrics.pixels >=
+                        scrollInfo.metrics.maxScrollExtent - 8) {
+                  context.read<HomeCubit>().loadMoreNewClasses();
+                }
+                return scrollInfo.metrics.axis == Axis.horizontal;
+              },
+              child: SizedBox(
+                height: rowH,
+                child: Stack(
+                  children: [
+                    ListView.builder(
+                      key: const PageStorageKey('subscription-list'),
+                      scrollDirection: Axis.horizontal,
+                      // The feed's own inset: 8 here plus the card's 8 puts the
+                      // first card on the page's 16pt margin, under the header.
+                      padding: EdgeInsets.only(left: 8.w, right: 16.w),
+                      itemCount: row.length,
+                      itemBuilder: (context, index) => HomeCourseCard(
+                        key: ValueKey('sub-${row[index].id ?? index}'),
+                        homClass: row[index],
+                        margin: EdgeInsets.only(left: 8.w),
+                        carded: true,
+                        // A browsing shelf, not a comparison — see
+                        // [HomeCourseCard.showDistance].
+                        showDistance: false,
+                        showPrice: _showsPrice(row[index]),
+                        onViewAsReels: () => _openShorts(context, row, index),
                       ),
                     ),
-                ],
+                    if (state.isLoadingNewClasses && wantsMore)
+                      Positioned(
+                        right: 16.w,
+                        top: 0,
+                        bottom: 8.h,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -465,8 +485,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
                     // [HomeCourseCard.showDistance].
                     showDistance: false,
                     showPrice: _showsPrice(popular[index]),
-                    onViewAsReels: () =>
-                        _openShorts(context, popular, index),
+                    onViewAsReels: () => _openShorts(context, popular, index),
                   ),
                 ),
                 if (state.isLoadingNewClasses)
@@ -486,15 +505,27 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     );
   }
 
+  bool _hasForChildren(HomeBuildable state) =>
+      (state.homeModel?.data?.forChildren?.data ?? const []).isNotEmpty;
+
+  /// The banner's tap: the sign-up question, then the row it feeds, reloaded
+  /// so the answer is on screen when the parent comes back.
+  Future<void> _askInterests(BuildContext context) async {
+    final cubit = context.read<HomeCubit>();
+    if (await askInterestsFromHome(context.router.root)) {
+      await cubit.refreshSilently();
+    }
+  }
+
   /// A generic horizontal course row, reusing whichever list is passed in.
   ///
-  /// Carries the feed's "На основе ваших интересов" row. With [forChildren]
-  /// the list is what the server picked for this parent's children —
-  /// activities and courses together, each card naming the child it is for.
-  /// Without it, the generic courses in a category spread.
+  /// With [forChildren] it is "На основе ваших интересов": what the server
+  /// picked for this parent's children — activities and courses together,
+  /// each card naming the child it is for. Without it, the generic courses in
+  /// a category spread, headed as what they are: nothing in it was picked
+  /// from anyone's interests.
   Widget _buildCoursesRow(
     BuildContext context,
-    String title,
     List<HomClass> list, {
     bool forChildren = false,
   }) {
@@ -537,8 +568,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // Scaled by the device's text size, so a large-font setting makes the row
     // taller instead of cutting the address off the bottom. Clamped, because
     // past 1.6 the row would be taller than the photo it belongs to.
-    final textScale =
-        MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6);
+    final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6);
     //
     // The 118 is for a price that runs to TWO lines, and only one kind does:
     // a so'm figure struck out over the coupon plan's discounted one. A coin
@@ -561,23 +591,21 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         // No leading gap of its own: this row follows the coin panel, which
         // carries the space between them as its bottom margin.
         HomeSectionHeader(
-          title: title,
-          // The same discovery screen the activities row opens, narrowed to
-          // courses — this row named a type, so "see all" honours it. It lands
-          // as a visible filter rather than a mode, so the user can widen back
-          // to everything from the filter sheet.
+          title: forChildren ? 'based_on_interests'.tr() : 'courses'.tr(),
+          // The children's row opens the rest of its own matches — the same
+          // matching, uncapped, with a chip per topic. The whole catalog
+          // would answer a question the header did not ask.
           //
-          // The children's row is activities and courses both, so it opens
-          // the whole catalog rather than promising "all courses".
+          // The generic row opens the discovery screen narrowed to courses —
+          // it named a type, so "see all" honours it. It lands as a visible
+          // filter rather than a mode, so the user can widen back to
+          // everything from the filter sheet.
           onViewAll: () => context.router.push(
             forChildren
-                ? SearchDiscoveryRoute()
+                ? InterestsGridRoute(title: 'based_on_interests'.tr())
                 : SearchDiscoveryRoute(initialKind: ActivityKind.courses),
           ),
-          // Named rather than generic, because the tap is narrowed.
-          viewAllLabel: forChildren
-              ? 'view_all_activities'.tr()
-              : 'view_all_courses'.tr(),
+          viewAllLabel: forChildren ? 'view_all'.tr() : 'view_all_courses'.tr(),
         ),
         10.verticalSpace,
         SizedBox(
@@ -647,10 +675,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
       .take(_bandMaximum)
       .toList();
 
-  List<HomClass> _discounted(HomeBuildable state) => _loaded(state)
-      .where((c) => c.sale != null)
-      .take(_bandMaximum)
-      .toList();
+  List<HomClass> _discounted(HomeBuildable state) =>
+      _loaded(state).where((c) => c.sale != null).take(_bandMaximum).toList();
 
   /// What may interrupt "Near you" on THIS feed, in dealing order.
   ///
@@ -769,7 +795,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 12.h),
-            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            child:
+                const Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
         ),
     ];

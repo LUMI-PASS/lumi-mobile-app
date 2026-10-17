@@ -1525,3 +1525,6 @@ unclaimed_retry,Не удалось загрузить. Повторить,Yukla
 sale_until,до {},{} gacha,until {}
 sale_title,Скидка от центра,Markaz chegirmasi,Centre discount
 sale_not_this_time,Не действует на выбранный день или время,Tanlangan kun yoki vaqtga amal qilmaydi,Does not apply to the day or time picked
+home_interests_strip_lead,Подберём занятия,Qiziqishlarga mos,Activities picked
+home_interests_strip_highlight,по интересам,mashg'ulotlar,for your child
+home_interests_strip_tail,"Расскажите, что нравится ребёнку",Farzandingizga nima yoqishini ayting,Tell us what they love

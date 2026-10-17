@@ -108,6 +108,15 @@ abstract class HomeRepository {
     String? search,
   });
 
+  /// See [ForChildrenPage].
+  Future<ForChildrenPage> getForChildren({
+    int page = 1,
+    int limit = 10,
+    String? topicId,
+    double? lat,
+    double? lng,
+  });
+
   Future<BranchesPage> getDiscoveryBranches({
     int page = 1,
     int limit = 10,

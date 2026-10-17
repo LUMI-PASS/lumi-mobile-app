@@ -280,6 +280,24 @@ class HomeApi {
     });
   }
 
+  /// "See all" for home's "Based on your interests" row — the feed's
+  /// `for_children` without its cap of ten, a page at a time. [topicId]
+  /// narrows it to one of the topics the response lists.
+  Future<Response> discoveryForChildren({
+    int page = 1,
+    int limit = 10,
+    String? topicId,
+    double? lat,
+    double? lng,
+  }) {
+    return _dio.get('discovery/for-children', queryParameters: {
+      'page': page,
+      'limit': limit,
+      if (topicId != null) 'topic_id': topicId,
+      if (lat != null && lng != null) ...{'lat': lat, 'lng': lng},
+    });
+  }
+
   Future<Response> discoveryBranches({
     int page = 1,
     int limit = 10,

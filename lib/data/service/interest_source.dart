@@ -37,6 +37,7 @@ class InterestSource {
 const _sourceByRoute = <String, String>{
   'HomeRoute': InterestSource.home,
   'ClassesGridRoute': InterestSource.category,
+  'InterestsGridRoute': InterestSource.home,
   'SearchRoute': InterestSource.search,
   'SearchDiscoveryRoute': InterestSource.search,
   'SearchCategoriesRoute': InterestSource.search,

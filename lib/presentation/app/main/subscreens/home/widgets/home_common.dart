@@ -13,6 +13,7 @@ class HomeSectionHeader extends StatelessWidget {
     required this.title,
     this.onViewAll,
     this.viewAllLabel,
+    this.chevron = false,
   });
 
   final String title;
@@ -25,6 +26,10 @@ class HomeSectionHeader extends StatelessWidget {
   /// tap lands before you take it.
   final String? viewAllLabel;
 
+  /// A "›" straight after the title, for a row whose whole panel is the tap
+  /// target and so carries no "view all" of its own.
+  final bool chevron;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -33,11 +38,23 @@ class HomeSectionHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.bold18.copyWith(color: c.textPrimary),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bold18.copyWith(color: c.textPrimary),
+                  ),
+                ),
+                if (chevron)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 24.sp,
+                    color: c.textPrimary,
+                  ),
+              ],
             ),
           ),
           if (onViewAll != null)
@@ -48,7 +65,8 @@ class HomeSectionHeader extends StatelessWidget {
                 padding: EdgeInsets.only(left: 8.w),
                 child: Text(
                   viewAllLabel ?? 'view_all'.tr(),
-                  style: AppText.medium13.copyWith(color: AppColors.brandPurple),
+                  style:
+                      AppText.medium13.copyWith(color: AppColors.brandPurple),
                 ),
               ),
             ),

@@ -49,6 +49,7 @@ _$HomDataImpl _$$HomDataImplFromJson(Map<String, dynamic> json) =>
       forChildren: json['for_children'] == null
           ? null
           : HomClassPage.fromJson(json['for_children'] as Map<String, dynamic>),
+      interestsPicked: json['interests_picked'] as bool?,
     );
 
 Map<String, dynamic> _$$HomDataImplToJson(_$HomDataImpl instance) =>
@@ -61,6 +62,7 @@ Map<String, dynamic> _$$HomDataImplToJson(_$HomDataImpl instance) =>
       'near_classes': instance.nearClasses,
       'courses': instance.courses,
       'for_children': instance.forChildren,
+      'interests_picked': instance.interestsPicked,
     };
 
 _$HomForUserImpl _$$HomForUserImplFromJson(Map<String, dynamic> json) =>

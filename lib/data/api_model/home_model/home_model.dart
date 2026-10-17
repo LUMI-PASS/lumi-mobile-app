@@ -2,6 +2,7 @@ import 'package:lumi_pass/data/api_model/activity_sale/activity_sale.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lumi_pass/data/api_model/socials/centre_socials.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
+import 'package:lumi_pass/data/api_model/interest_topic/interest_topic.dart';
 
 part 'home_model.freezed.dart';
 
@@ -38,6 +39,11 @@ class HomData with _$HomData {
     /// there is a child with topics picked and something matched; absent on a
     /// server that predates it. Home draws it in place of [courses].
     HomClassPage? forChildren,
+
+    /// Whether anyone in the family has picked a topic yet. Most accounts
+    /// predate the question, and home asks them while this is false. Null for
+    /// a signed-out viewer, and on a server that predates the field.
+    bool? interestsPicked,
   }) = _HomData;
 
   factory HomData.fromJson(Map<String, dynamic> json) =>
@@ -337,6 +343,21 @@ class HomRelatedBooking with _$HomRelatedBooking {
 
   factory HomRelatedBooking.fromJson(Map<String, dynamic> json) =>
       _$HomRelatedBookingFromJson(json);
+}
+
+/// One page of `discovery/for-children` — see `HomeRepository.getForChildren`.
+class ForChildrenPage {
+  const ForChildrenPage({
+    required this.topics,
+    required this.classes,
+    required this.totalPages,
+  });
+
+  /// The topics the family picked that match anything, in the order they were
+  /// picked — the screen's chips. The same on every page.
+  final List<InterestTopic> topics;
+  final List<HomClass> classes;
+  final int totalPages;
 }
 
 class ClassesPage {

@@ -216,6 +216,16 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const HomePage(),
       );
     },
+    InterestsGridRoute.name: (routeData) {
+      final args = routeData.argsAs<InterestsGridRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: InterestsGridPage(
+          key: args.key,
+          title: args.title,
+        ),
+      );
+    },
     LanguageRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -1177,6 +1187,44 @@ class HomeRoute extends PageRouteInfo<void> {
   static const String name = 'HomeRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [InterestsGridPage]
+class InterestsGridRoute extends PageRouteInfo<InterestsGridRouteArgs> {
+  InterestsGridRoute({
+    Key? key,
+    required String title,
+    List<PageRouteInfo>? children,
+  }) : super(
+          InterestsGridRoute.name,
+          args: InterestsGridRouteArgs(
+            key: key,
+            title: title,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'InterestsGridRoute';
+
+  static const PageInfo<InterestsGridRouteArgs> page =
+      PageInfo<InterestsGridRouteArgs>(name);
+}
+
+class InterestsGridRouteArgs {
+  const InterestsGridRouteArgs({
+    this.key,
+    required this.title,
+  });
+
+  final Key? key;
+
+  final String title;
+
+  @override
+  String toString() {
+    return 'InterestsGridRouteArgs{key: $key, title: $title}';
+  }
 }
 
 /// generated route for

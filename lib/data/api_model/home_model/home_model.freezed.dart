@@ -206,6 +206,11 @@ mixin _$HomData {
   /// server that predates it. Home draws it in place of [courses].
   HomClassPage? get forChildren => throw _privateConstructorUsedError;
 
+  /// Whether anyone in the family has picked a topic yet. Most accounts
+  /// predate the question, and home asks them while this is false. Null for
+  /// a signed-out viewer, and on a server that predates the field.
+  bool? get interestsPicked => throw _privateConstructorUsedError;
+
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $HomDataCopyWith<HomData> get copyWith => throw _privateConstructorUsedError;
@@ -224,7 +229,8 @@ abstract class $HomDataCopyWith<$Res> {
       HomClassPage? newClasses,
       HomNearClasses? nearClasses,
       HomClassPage? courses,
-      HomClassPage? forChildren});
+      HomClassPage? forChildren,
+      bool? interestsPicked});
 
   $HomForUserCopyWith<$Res>? get forUser;
   $HomUpcomingClassCopyWith<$Res>? get upcomingClass;
@@ -256,6 +262,7 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
     Object? nearClasses = freezed,
     Object? courses = freezed,
     Object? forChildren = freezed,
+    Object? interestsPicked = freezed,
   }) {
     return _then(_value.copyWith(
       forUser: freezed == forUser
@@ -290,6 +297,10 @@ class _$HomDataCopyWithImpl<$Res, $Val extends HomData>
           ? _value.forChildren
           : forChildren // ignore: cast_nullable_to_non_nullable
               as HomClassPage?,
+      interestsPicked: freezed == interestsPicked
+          ? _value.interestsPicked
+          : interestsPicked // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 
@@ -393,7 +404,8 @@ abstract class _$$HomDataImplCopyWith<$Res> implements $HomDataCopyWith<$Res> {
       HomClassPage? newClasses,
       HomNearClasses? nearClasses,
       HomClassPage? courses,
-      HomClassPage? forChildren});
+      HomClassPage? forChildren,
+      bool? interestsPicked});
 
   @override
   $HomForUserCopyWith<$Res>? get forUser;
@@ -430,6 +442,7 @@ class __$$HomDataImplCopyWithImpl<$Res>
     Object? nearClasses = freezed,
     Object? courses = freezed,
     Object? forChildren = freezed,
+    Object? interestsPicked = freezed,
   }) {
     return _then(_$HomDataImpl(
       forUser: freezed == forUser
@@ -464,6 +477,10 @@ class __$$HomDataImplCopyWithImpl<$Res>
           ? _value.forChildren
           : forChildren // ignore: cast_nullable_to_non_nullable
               as HomClassPage?,
+      interestsPicked: freezed == interestsPicked
+          ? _value.interestsPicked
+          : interestsPicked // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -480,7 +497,8 @@ class _$HomDataImpl implements _HomData {
       this.newClasses,
       this.nearClasses,
       this.courses,
-      this.forChildren})
+      this.forChildren,
+      this.interestsPicked})
       : _banners = banners;
 
   factory _$HomDataImpl.fromJson(Map<String, dynamic> json) =>
@@ -519,9 +537,15 @@ class _$HomDataImpl implements _HomData {
   @override
   final HomClassPage? forChildren;
 
+  /// Whether anyone in the family has picked a topic yet. Most accounts
+  /// predate the question, and home asks them while this is false. Null for
+  /// a signed-out viewer, and on a server that predates the field.
+  @override
+  final bool? interestsPicked;
+
   @override
   String toString() {
-    return 'HomData(forUser: $forUser, upcomingClass: $upcomingClass, banners: $banners, categories: $categories, newClasses: $newClasses, nearClasses: $nearClasses, courses: $courses, forChildren: $forChildren)';
+    return 'HomData(forUser: $forUser, upcomingClass: $upcomingClass, banners: $banners, categories: $categories, newClasses: $newClasses, nearClasses: $nearClasses, courses: $courses, forChildren: $forChildren, interestsPicked: $interestsPicked)';
   }
 
   @override
@@ -541,7 +565,9 @@ class _$HomDataImpl implements _HomData {
                 other.nearClasses == nearClasses) &&
             (identical(other.courses, courses) || other.courses == courses) &&
             (identical(other.forChildren, forChildren) ||
-                other.forChildren == forChildren));
+                other.forChildren == forChildren) &&
+            (identical(other.interestsPicked, interestsPicked) ||
+                other.interestsPicked == interestsPicked));
   }
 
   @JsonKey(ignore: true)
@@ -555,7 +581,8 @@ class _$HomDataImpl implements _HomData {
       newClasses,
       nearClasses,
       courses,
-      forChildren);
+      forChildren,
+      interestsPicked);
 
   @JsonKey(ignore: true)
   @override
@@ -580,7 +607,8 @@ abstract class _HomData implements HomData {
       final HomClassPage? newClasses,
       final HomNearClasses? nearClasses,
       final HomClassPage? courses,
-      final HomClassPage? forChildren}) = _$HomDataImpl;
+      final HomClassPage? forChildren,
+      final bool? interestsPicked}) = _$HomDataImpl;
 
   factory _HomData.fromJson(Map<String, dynamic> json) = _$HomDataImpl.fromJson;
 
@@ -607,6 +635,12 @@ abstract class _HomData implements HomData {
   /// there is a child with topics picked and something matched; absent on a
   /// server that predates it. Home draws it in place of [courses].
   HomClassPage? get forChildren;
+  @override
+
+  /// Whether anyone in the family has picked a topic yet. Most accounts
+  /// predate the question, and home asks them while this is false. Null for
+  /// a signed-out viewer, and on a server that predates the field.
+  bool? get interestsPicked;
   @override
   @JsonKey(ignore: true)
   _$$HomDataImplCopyWith<_$HomDataImpl> get copyWith =>

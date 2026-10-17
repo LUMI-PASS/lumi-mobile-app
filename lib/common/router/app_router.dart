@@ -21,6 +21,7 @@ import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/payment_history_page.dart';
 import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
 import 'package:lumi_pass/presentation/app/home/see_all/classes_grid_page.dart';
+import 'package:lumi_pass/presentation/app/home/see_all/interests_grid_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/calendar/calendar_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
@@ -166,6 +167,7 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: ReferralRoute.page),
     AutoRoute(page: MyCardsRoute.page),
     AutoRoute(page: ClassesGridRoute.page),
+    AutoRoute(page: InterestsGridRoute.page),
     AutoRoute(page: CouponsRoute.page),
     AutoRoute(page: AksiyaRoute.page),
     AutoRoute(page: NewCoinsRoute.page),

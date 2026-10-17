@@ -969,8 +969,13 @@ class $AssetsImagesBannerGen {
       const AssetGenImage('assets/images/banner/banner_ticket_percentage.png');
 
   /// List of all assets
-  List<AssetGenImage> get values =>
-      [bannerCoins, bannerInvite, bannerSaved, bannerTicketPercentage];
+  List<AssetGenImage> get values => [
+        bannerCoins,
+        bannerInterests,
+        bannerInvite,
+        bannerSaved,
+        bannerTicketPercentage
+      ];
 }
 
 class $AssetsImagesMascotGen {
@@ -981,6 +986,10 @@ class $AssetsImagesMascotGen {
       const AssetGenImage('assets/images/mascot/mascot_calendar.webp');
 
   /// File path: assets/images/mascot/mascot_categories.webp
+  /// File path: assets/images/banner/banner_interests.png
+  AssetGenImage get bannerInterests =>
+      const AssetGenImage('assets/images/banner/banner_interests.png');
+
   AssetGenImage get mascotCategories =>
       const AssetGenImage('assets/images/mascot/mascot_categories.webp');
 
