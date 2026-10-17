@@ -220,8 +220,15 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   /// The centres this screen should be showing right now.
   List<HomBranch> get _source {
     if (widget.branchesLoaded) return widget.branches;
-    return _everLoaded ? widget.branches : widget.seed;
+    if (!_everLoaded) return widget.seed;
+    // A new search clears the list the moment it starts, so without this
+    // every pin vanished ("Центров: 0") until its first page landed. The
+    // last answer stays up until the new one starts arriving.
+    return widget.isLoading ? _lastLoaded : widget.branches;
   }
+
+  /// The last list a finished page delivered — see [_source].
+  List<HomBranch> _lastLoaded = const [];
 
   List<HomBranch> get _plottable => _source.where((b) {
         final lat = b.latitude;
@@ -253,7 +260,10 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   @override
   void didUpdateWidget(covariant BranchesMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.branchesLoaded) _everLoaded = true;
+    if (widget.branchesLoaded) {
+      _everLoaded = true;
+      _lastLoaded = widget.branches;
+    }
     if (_sig != _markerSig) {
       _markerSig = _sig;
       // Map mode streams the centres in page by page, so a set change is not
@@ -266,7 +276,15 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     }
     // The filter by identity: the cubit swaps in a new one only when the user
     // changes it, and rebuilds otherwise reuse the object.
+    //
+    // Except when a radius was just taken off: the user was looking at their
+    // circle, and "All" only widens what is around it. Fitting every centre
+    // in the city once they had loaded flew the camera away from where they
+    // were, a second after the tap.
+    final radiusCleared = (oldWidget.filter?.hasRadius ?? false) &&
+        !(widget.filter?.hasRadius ?? false);
     if (_settled &&
+        !radiusCleared &&
         (!identical(widget.filter, oldWidget.filter) ||
             _categoryKey(widget.selectedCategories) !=
                 _categoryKey(oldWidget.selectedCategories) ||
