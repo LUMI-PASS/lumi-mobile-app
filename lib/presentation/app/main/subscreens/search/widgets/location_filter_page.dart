@@ -5,6 +5,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/utils/user_location_puck.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
@@ -138,6 +139,10 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
           Expanded(
             child: YandexMap(
               nightModeEnabled: c.isDark,
+              onUserLocationAdded: (view) => styleUserLocation(
+                view,
+                devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+              ),
               onMapCreated: (controller) async {
                 _controller = controller;
                 await controller.toggleUserLayer(visible: true);

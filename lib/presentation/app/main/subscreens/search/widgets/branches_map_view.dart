@@ -16,6 +16,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/map_marker_bitmap.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
+import 'package:lumi_pass/common/utils/user_location_puck.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
@@ -759,6 +760,18 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     );
   }
 
+  /// Whether Reset has anything to clear: a filter (the chips' radius and
+  /// time included) or a category. The search term is the field's own, with
+  /// its own clear button.
+  bool get _hasAnythingToReset =>
+      widget.filterCount > 0 || widget.selectedCategories.isNotEmpty;
+
+  /// Reset: every filter and category off, in one request.
+  void _reset() {
+    _clearSelection();
+    context.read<SearchCubit>().applyFilter(null, categories: const []);
+  }
+
   /// The list view of this same search — categories, filter and term carried
   /// over, so switching view never changes the answer.
   void _openList() {
@@ -796,6 +809,10 @@ class _BranchesMapViewState extends State<BranchesMapView> {
             child: YandexMap(
               onMapCreated: _onMapCreated,
               onMapTap: (_) => _clearSelection(),
+              onUserLocationAdded: (view) => styleUserLocation(
+                view,
+                devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+              ),
               // Replaces the light/dark CartoDB tile URLs the `flutter_map`
               // version switched between.
               nightModeEnabled: c.isDark,
@@ -881,6 +898,11 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                       SearchTopBar(
                         title: 'map_title'.tr(),
                         onBack: widget.onBack,
+                        close: true,
+                        trailing: _ResetButton(
+                          enabled: _hasAnythingToReset,
+                          onTap: _reset,
+                        ),
                       ),
                     ],
                     12.verticalSpace,
@@ -1105,6 +1127,32 @@ class _DropdownChip extends StatelessWidget {
                 colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Reset" on the top bar, greyed while there is nothing to clear.
+class _ResetButton extends StatelessWidget {
+  const _ResetButton({required this.enabled, required this.onTap});
+
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: enabled ? onTap : null,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 6.h),
+        child: Text(
+          'map_reset'.tr(),
+          style: AppText.semibold14.copyWith(
+            color: enabled ? c.primary : c.textSecondary,
           ),
         ),
       ),

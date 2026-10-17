@@ -139,6 +139,61 @@ class BranchMarkerPainter {
     return bitmap;
   }
 
+  /// Rasterises the "you are here" puck: a brand dot in a white ring.
+  ///
+  /// Like a cluster's, MapKit's user-location placemarks arrive with **no
+  /// icon** and 0.5 opacity once the plugin hands them to Dart — all that was
+  /// left on screen was the accuracy circle, a few dozen metres wide, so the
+  /// user's own position only showed up zoomed in to the street. This gives
+  /// it a fixed on-screen size at every zoom.
+  static Future<MarkerBitmap> buildUserPuck({
+    required double devicePixelRatio,
+  }) async {
+    final key = 'user|$devicePixelRatio|${1.0.w}';
+    final cached = _cache[key];
+    if (cached != null) return cached;
+
+    final diameter = 22.0.w;
+    final ring = 4.0.w;
+    final bleed = _bleed.w;
+    final size = diameter + bleed * 2;
+    final dpr = devicePixelRatio;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.scale(dpr);
+
+    final center = Offset(size / 2, size / 2);
+    final radius = diameter / 2;
+
+    canvas.drawCircle(
+      center.translate(0, 3.h),
+      radius,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.25)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawCircle(center, radius, Paint()..color = AppColors.white);
+    canvas.drawCircle(
+        center, radius - ring, Paint()..color = AppColors.brandPurple);
+
+    final image = await recorder.endRecording().toImage(
+          (size * dpr).ceil(),
+          (size * dpr).ceil(),
+        );
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+
+    final bitmap = MarkerBitmap(
+      bytes: data!.buffer.asUint8List(),
+      anchor: const Offset(0.5, 0.5),
+      scale: _iconScale,
+    );
+    if (_cache.length >= _maxCacheEntries) _cache.clear();
+    _cache[key] = bitmap;
+    return bitmap;
+  }
+
   /// Bubbles grow with the order of magnitude of the count so a three-digit
   /// cluster doesn't overflow a circle sized for two.
   static double _clusterDiameter(int count) {
@@ -246,8 +301,7 @@ class BranchMarkerPainter {
     final pillRadius = _pillRadius.r;
     final iconRadius = _iconRadius.r;
 
-    final maxTextWidth =
-        _maxWidth.w - padLeft - iconBox - gap - padRight;
+    final maxTextWidth = _maxWidth.w - padLeft - iconBox - gap - padRight;
 
     final label = TextPainter(
       text: TextSpan(
@@ -283,14 +337,12 @@ class BranchMarkerPainter {
         ..color = isSelected
             ? AppColors.brandPurple.withValues(alpha: 0.40)
             : Colors.black.withValues(alpha: 0.10)
-        ..maskFilter =
-            const MaskFilter.blur(BlurStyle.normal, _shadowSigma),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _shadowSigma),
     );
 
     canvas.drawRRect(
       pill,
-      Paint()
-        ..color = isSelected ? AppColors.brandPurple : AppColors.chipGrey,
+      Paint()..color = isSelected ? AppColors.brandPurple : AppColors.chipGrey,
     );
 
     if (isSelected) {

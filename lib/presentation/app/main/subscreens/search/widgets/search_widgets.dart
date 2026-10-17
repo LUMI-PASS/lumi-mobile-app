@@ -36,7 +36,13 @@ class _SearchIcon extends StatelessWidget {
 
 /// Top bar — back button on the left, centered title (Figma `Header`).
 class SearchTopBar extends StatelessWidget {
-  const SearchTopBar({super.key, this.title, this.onBack});
+  const SearchTopBar({
+    super.key,
+    this.title,
+    this.onBack,
+    this.close = false,
+    this.trailing,
+  });
 
   /// Omit on a screen there is nothing to go back to — a root bottom-nav tab.
   /// The bar then shows the title alone, with no back affordance.
@@ -45,6 +51,13 @@ class SearchTopBar extends StatelessWidget {
   /// Omit to show the back button alone. A pushed screen carries the title of
   /// whatever the user was doing, not the tab's name.
   final String? title;
+
+  /// Draws [onBack] as an ✕ rather than an arrow — for a screen the user
+  /// dismisses rather than steps back out of (the map).
+  final bool close;
+
+  /// Sits on the right edge, opposite the back button.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -73,11 +86,16 @@ class SearchTopBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(color: c.controlBorder),
                     ),
-                    child: _SearchIcon(Assets.icons.arrowLeft,
-                        size: 16, color: c.textPrimary),
+                    child: close
+                        ? Icon(Icons.close_rounded,
+                            size: 18.w, color: c.textPrimary)
+                        : _SearchIcon(Assets.icons.arrowLeft,
+                            size: 16, color: c.textPrimary),
                   ),
                 ),
               ),
+            if (trailing != null)
+              Align(alignment: Alignment.centerRight, child: trailing),
             if (title != null)
               Text(
                 title,
@@ -335,16 +353,14 @@ class SearchMapCard extends StatelessWidget {
                       'branch_view_on_maps'.tr(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          AppText.semibold14.copyWith(color: c.textPrimary),
+                      style: AppText.semibold14.copyWith(color: c.textPrimary),
                     ),
                     2.verticalSpace,
                     Text(
                       'view_on_map_subtitle'.tr(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          AppText.regular12.copyWith(color: c.textSecondary),
+                      style: AppText.regular12.copyWith(color: c.textSecondary),
                     ),
                   ],
                 ),
