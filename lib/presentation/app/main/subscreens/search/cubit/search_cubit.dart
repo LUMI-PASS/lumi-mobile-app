@@ -6,6 +6,7 @@ import 'package:lumi_pass/common/base/base_cubit.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/utils/catalog_revision.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/recent_search_store.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
@@ -513,7 +514,13 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
         // floor and plot the same pins as before. The honest answer to "which
         // centres match this filter" is "the ones running a class that does",
         // so the pins are derived from the filtered classes instead.
-        if (_allBranches && activeFilterCount > 0) {
+        //
+        // Not for the radius on its own: it describes where a CENTRE is, and
+        // deriving the pins from classes dropped every catalog centre — the
+        // listings with nothing bookable, most of the map — so 11 centres
+        // inside the circle came back as 3. A radius alone keeps the centre
+        // list and is applied to it below.
+        if (_allBranches && _hasClassFilter) {
           if (append) return;
           await _fetchBranchesFromClasses();
           return;
@@ -533,13 +540,18 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           lng: _lng,
         );
 
+        // The map walks every page, so the radius can be applied here and the
+        // answer is complete. (The paged centres list is left alone — cutting
+        // pages short client-side would make its paging lie.)
+        final pageBranches =
+            _allBranches ? _withinRadius(result.branches) : result.branches;
+
         _branchesTotal = result.total;
 
         if (append) {
           final existingIds = buildable.branches.map((b) => b.id).toSet();
-          final unique = result.branches
-              .where((br) => !existingIds.contains(br.id))
-              .toList();
+          final unique =
+              pageBranches.where((br) => !existingIds.contains(br.id)).toList();
           build((b) => b.copyWith(
                 branches: [...b.branches, ...unique],
                 branchesPage: page + 1,
@@ -548,7 +560,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
               ));
         } else {
           build((b) => b.copyWith(
-                branches: result.branches,
+                branches: pageBranches,
                 branchesPage: 2,
                 branchesTotalPages: result.totalPages,
                 branchesLoaded: true,
@@ -665,6 +677,24 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
 
   static String _categoryIds(List<HomCategory> categories) =>
       categories.map((c) => c.id ?? '').join(',');
+
+  /// Whether a filter describing a CLASS is on — anything but the radius,
+  /// which describes where a centre is. See [_fetchTab].
+  bool get _hasClassFilter =>
+      activeFilterCount - ((buildable.filter?.hasRadius ?? false) ? 1 : 0) > 0;
+
+  /// [branches] inside the filter's radius, or all of them without one. The
+  /// same haversine distance the server's `radius_km` uses.
+  List<HomBranch> _withinRadius(List<HomBranch> branches) {
+    final f = buildable.filter;
+    if (f == null || !f.hasRadius) return branches;
+    final centre = UserLocation(f.nearLat!, f.nearLng!, isPrecise: true);
+    final metres = f.radiusKm! * 1000;
+    return branches.where((b) {
+      final d = centre.metersTo(b.latitude, b.longitude);
+      return d != null && d <= metres;
+    }).toList();
+  }
 
   int get activeFilterCount {
     final f = buildable.filter;
