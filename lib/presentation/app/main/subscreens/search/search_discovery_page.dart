@@ -19,7 +19,17 @@ class SearchDiscoveryPage
     this.initialCategory,
     this.initialKind = ActivityKind.any,
     this.autofocusSearch = false,
+    this.initialCategories = const [],
+    this.initialFilter,
+    this.initialSearchTerm = '',
   });
+
+  /// The map's "List" button opens this screen on exactly the search the map
+  /// was showing — its categories, its filter (radius and time included) and
+  /// its term — so switching view never changes the answer.
+  final List<HomCategory> initialCategories;
+  final FilterResult? initialFilter;
+  final String initialSearchTerm;
 
   final HomCategory? initialCategory;
 
@@ -45,13 +55,19 @@ class SearchDiscoveryPage
 
   @override
   void init(BuildContext context) {
-    final filter =
-        initialKind == ActivityKind.any ? null : FilterResult(kind: initialKind);
+    final filter = initialFilter ??
+        (initialKind == ActivityKind.any
+            ? null
+            : FilterResult(kind: initialKind));
     context.read<SearchCubit>().init(
-          categories: initialCategory == null ? const [] : [initialCategory!],
+          categories:
+              initialCategory == null ? initialCategories : [initialCategory!],
           filter: filter,
-          recentsOnly:
-              autofocusSearch && initialCategory == null && filter == null,
+          searchTerm: initialSearchTerm,
+          recentsOnly: autofocusSearch &&
+              initialCategory == null &&
+              initialCategories.isEmpty &&
+              filter == null,
         );
     super.init(context);
   }

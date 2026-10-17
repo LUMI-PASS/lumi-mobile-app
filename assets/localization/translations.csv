@@ -1529,3 +1529,14 @@ home_interests_strip_lead,Подберём занятия,Qiziqishlarga mos,Acti
 home_interests_strip_highlight,по интересам,mashg'ulotlar,for your child
 home_interests_strip_tail,"Расскажите, что нравится ребёнку",Farzandingizga nima yoqishini ayting,Tell us what they love
 included_in_subscription,Входит в подписку,Obunaga kiradi,Included in your plan
+map_by_location,По расположению,Joylashuv bo'yicha,By location
+map_by_time,По времени,Vaqt bo'yicha,By time
+map_within,В радиусе:,Radiusda:,Within:
+map_radius_all,Все,Hammasi,All
+map_radius_m,{} м,{} m,{} m
+map_radius_km,{} км,{} km,{} km
+filter_class_time,Время занятия,Mashg'ulot vaqti,Class time
+time_morning,Утро,Ertalab,Morning
+time_afternoon,День,Kunduzi,Afternoon
+time_evening,Вечер,Kechqurun,Evening
+map_list,Списком,Ro'yxat,List

@@ -12,6 +12,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/date_range_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/time_filter.dart';
 
 enum DatePreset { none, today, tomorrow, thisWeek, custom }
 
@@ -80,6 +81,19 @@ class FilterResult {
   /// category list in, which leaves its grid section unbuilt and this empty.
   final List<HomCategory> categories;
 
+  /// "By time": the window a lesson has to START in, as minutes past midnight.
+  /// The whole day ([dayStart]–[dayEnd]) is no filter — see [hasTime].
+  final int fromMinute;
+  final int toMinute;
+
+  /// "By location": only centres within this many km of ([nearLat],
+  /// [nearLng]) — the user's position when the radius was picked. Null = any
+  /// distance. Set from the map's location chip only; the sheet carries it
+  /// through untouched.
+  final double? radiusKm;
+  final double? nearLat;
+  final double? nearLng;
+
   const FilterResult({
     this.datePreset = DatePreset.none,
     this.fromDate,
@@ -92,10 +106,40 @@ class FilterResult {
     this.priceRange = const RangeValues(minPrice, maxPrice),
     this.districts = const {},
     this.categories = const [],
+    this.fromMinute = dayStart,
+    this.toMinute = dayEnd,
+    this.radiusKm,
+    this.nearLat,
+    this.nearLng,
   });
 
   static const double minPrice = 10000;
   static const double maxPrice = 400000;
+
+  static const int dayStart = 0;
+  static const int dayEnd = 23 * 60 + 59;
+
+  bool get hasTime => fromMinute > dayStart || toMinute < dayEnd;
+
+  bool get hasRadius => radiusKm != null && nearLat != null && nearLng != null;
+
+  /// The radius dropped — "All" on the location screen. A separate method
+  /// because [copyWith] reads null as "keep".
+  FilterResult withoutRadius() => FilterResult(
+        datePreset: datePreset,
+        fromDate: fromDate,
+        toDate: toDate,
+        kind: kind,
+        ageYears: ageYears,
+        ageToYears: ageToYears,
+        gender: gender,
+        pricePreset: pricePreset,
+        priceRange: priceRange,
+        districts: districts,
+        categories: categories,
+        fromMinute: fromMinute,
+        toMinute: toMinute,
+      );
 
   // Keep backward compat
   DateTime? get customDate => fromDate;
@@ -112,6 +156,11 @@ class FilterResult {
     RangeValues? priceRange,
     Set<String>? districts,
     List<HomCategory>? categories,
+    int? fromMinute,
+    int? toMinute,
+    double? radiusKm,
+    double? nearLat,
+    double? nearLng,
   }) {
     return FilterResult(
       datePreset: datePreset ?? this.datePreset,
@@ -125,6 +174,11 @@ class FilterResult {
       priceRange: priceRange ?? this.priceRange,
       districts: districts ?? this.districts,
       categories: categories ?? this.categories,
+      fromMinute: fromMinute ?? this.fromMinute,
+      toMinute: toMinute ?? this.toMinute,
+      radiusKm: radiusKm ?? this.radiusKm,
+      nearLat: nearLat ?? this.nearLat,
+      nearLng: nearLng ?? this.nearLng,
     );
   }
 }
@@ -177,6 +231,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   Set<String> _districts = <String>{};
   RangeValues _range =
       const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
+  DayWindow _time = DayWindow.all;
+
+  /// Whether the map's radius survives this sheet. It cannot be edited here,
+  /// only kept or cleared — otherwise Clear on the list screen would leave a
+  /// filter on that nothing there can take off.
+  bool _keepRadius = false;
 
   /// The ticked categories, by id. Ids rather than objects so a tick survives
   /// the catalogue being re-fetched underneath the sheet.
@@ -233,6 +293,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         if (cat.id != null) cat.id!,
     };
     _range = init.priceRange;
+    _time = DayWindow(init.fromMinute, init.toMinute);
+    _keepRadius = init.hasRadius;
     if (init.ageYears != null) _ageFromController.text = '${init.ageYears}';
     if (init.ageToYears != null) _ageToController.text = '${init.ageToYears}';
     _ageFieldsEmpty = _ageFieldsAreEmpty;
@@ -282,6 +344,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _kind != ActivityKind.any ||
       _districts.isNotEmpty ||
       _categoryIds.isNotEmpty ||
+      !_time.isAll ||
+      _keepRadius ||
       _isPriceChanged;
 
   /// Resets every control back to its default. Stays in the sheet on purpose:
@@ -301,6 +365,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _districts = <String>{};
       _categoryIds = <String>{};
       _range = const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
+      _time = DayWindow.all;
+      _keepRadius = false;
     });
   }
 
@@ -321,6 +387,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           for (final id in _categoryIds)
             if (_knownCategories[id] != null) _knownCategories[id]!,
         ],
+        fromMinute: _time.from,
+        toMinute: _time.to,
+        // Not edited here — the map's location chip owns it — so it rides
+        // through unless Clear dropped it.
+        radiusKm: _keepRadius ? widget.initial?.radiusKm : null,
+        nearLat: _keepRadius ? widget.initial?.nearLat : null,
+        nearLng: _keepRadius ? widget.initial?.nearLng : null,
       );
 
   void _selectDatePreset(DatePreset preset) {
@@ -403,7 +476,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       runSpacing: 8.h,
                       children: [
                         for (final kind in ActivityKind.values)
-                          _FilterChip(
+                          FilterPill(
                             label: kind.label,
                             selected: _kind == kind,
                             onTap: () => setState(() => _kind = kind),
@@ -447,27 +520,35 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       spacing: 8.w,
                       runSpacing: 8.h,
                       children: [
-                        _FilterChip(
+                        FilterPill(
                           label: 'today'.tr(),
                           selected: _datePreset == DatePreset.today,
                           onTap: () => _selectDatePreset(DatePreset.today),
                         ),
-                        _FilterChip(
+                        FilterPill(
                           label: 'tomorrow'.tr(),
                           selected: _datePreset == DatePreset.tomorrow,
                           onTap: () => _selectDatePreset(DatePreset.tomorrow),
                         ),
-                        _FilterChip(
+                        FilterPill(
                           label: 'this_week'.tr(),
                           selected: _datePreset == DatePreset.thisWeek,
                           onTap: () => _selectDatePreset(DatePreset.thisWeek),
                         ),
-                        _FilterChip(
+                        FilterPill(
                           label: _calendarChipLabel,
                           selected: _datePreset == DatePreset.custom,
                           onTap: _pickDateRange,
                         ),
                       ],
+                    ),
+                  ),
+                  16.kh,
+                  _Section(
+                    label: 'filter_class_time'.tr(),
+                    child: TimeRangeField(
+                      value: _time,
+                      onChanged: (v) => setState(() => _time = v),
                     ),
                   ),
                   16.kh,
@@ -499,7 +580,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       runSpacing: 8.h,
                       children: [
                         for (final d in kTashkentDistricts)
-                          _FilterChip(
+                          FilterPill(
                             label: d.label,
                             selected: _districts.contains(d.key),
                             // Multi-select: each chip toggles on its own, so a
@@ -521,17 +602,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       spacing: 8.w,
                       runSpacing: 8.h,
                       children: [
-                        _FilterChip(
+                        FilterPill(
                           label: 'gender_all'.tr(),
                           selected: _gender == Gender.any,
                           onTap: () => setState(() => _gender = Gender.any),
                         ),
-                        _FilterChip(
+                        FilterPill(
                           label: 'filter_for_boys'.tr(),
                           selected: _gender == Gender.boy,
                           onTap: () => setState(() => _gender = Gender.boy),
                         ),
-                        _FilterChip(
+                        FilterPill(
                           label: 'filter_for_girls'.tr(),
                           selected: _gender == Gender.girl,
                           onTap: () => setState(() => _gender = Gender.girl),
@@ -567,7 +648,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             activeTrackColor: c.primary,
                             inactiveTrackColor: c.progressTrack,
                             overlayColor: c.primary.withValues(alpha: 0.12),
-                            rangeThumbShape: _RoundThumbShape(color: c.primary),
+                            rangeThumbShape: FilterRangeThumb(color: c.primary),
                             rangeTrackShape:
                                 const RoundedRectRangeSliderTrackShape(),
                             showValueIndicator: ShowValueIndicator.never,
@@ -599,7 +680,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             child: Row(
               children: [
                 Expanded(
-                  child: _SheetButton(
+                  child: FilterSheetButton(
                     label: 'clear_button'.tr(),
                     enabled: _hasAnyFilter,
                     onTap: _clearAll,
@@ -607,7 +688,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 ),
                 8.kw,
                 Expanded(
-                  child: _SheetButton(
+                  child: FilterSheetButton(
                     label: 'apply_button'.tr(),
                     gradient: AppGradients.brand,
                     onTap: () => Navigator.of(context).pop(_buildResult()),
@@ -654,8 +735,9 @@ class _Section extends StatelessWidget {
 }
 
 /// Pill chip — indigo gradient when selected, flat control fill otherwise.
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
+class FilterPill extends StatelessWidget {
+  const FilterPill({
+    super.key,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -681,7 +763,8 @@ class _FilterChip extends StatelessWidget {
           gradient: selected ? AppGradients.indigo : null,
           borderRadius: BorderRadius.circular(40.r),
         ),
-        child: Text(label, style: AppText.semibold12.copyWith(color: textColor)),
+        child:
+            Text(label, style: AppText.semibold12.copyWith(color: textColor)),
       ),
     );
   }
@@ -794,7 +877,8 @@ class _CategoryTile extends StatelessWidget {
               ),
               if (selected) ...[
                 4.kw,
-                Icon(Icons.check_rounded, size: 16.sp, color: AppColors.onBrand),
+                Icon(Icons.check_rounded,
+                    size: 16.sp, color: AppColors.onBrand),
               ],
             ],
           ),
@@ -855,8 +939,9 @@ class _AgeField extends StatelessWidget {
 
 /// Pill action button sized like the app's primary [GradientButton] (50h /
 /// 44r) — [gradient] makes it the primary one.
-class _SheetButton extends StatelessWidget {
-  const _SheetButton({
+class FilterSheetButton extends StatelessWidget {
+  const FilterSheetButton({
+    super.key,
     required this.label,
     required this.onTap,
     this.gradient,
@@ -905,8 +990,8 @@ class _SheetButton extends StatelessWidget {
 }
 
 /// Flat 20px round thumb — a filled brand dot with a thin light ring.
-class _RoundThumbShape extends RangeSliderThumbShape {
-  const _RoundThumbShape({required this.color});
+class FilterRangeThumb extends RangeSliderThumbShape {
+  const FilterRangeThumb({required this.color});
 
   final Color color;
 

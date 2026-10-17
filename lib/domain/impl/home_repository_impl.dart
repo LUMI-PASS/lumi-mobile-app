@@ -227,6 +227,9 @@ class HomeRepositoryImpl extends HomeRepository {
     List<String>? districts,
     String? kind,
     bool centres = false,
+    double? radiusKm,
+    String? fromTime,
+    String? toTime,
   }) {
     return _api
         .discoveryClasses(
@@ -247,6 +250,9 @@ class HomeRepositoryImpl extends HomeRepository {
           districts: districts,
           kind: kind,
           centres: centres,
+          radiusKm: radiusKm,
+          fromTime: fromTime,
+          toTime: toTime,
         )
         .then((value) {
       final data = value.data['data'] ?? value.data;

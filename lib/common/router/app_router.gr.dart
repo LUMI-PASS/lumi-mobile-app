@@ -359,6 +359,9 @@ abstract class _$AppRouter extends RootStackRouter {
           initialCategory: args.initialCategory,
           initialKind: args.initialKind,
           autofocusSearch: args.autofocusSearch,
+          initialCategories: args.initialCategories,
+          initialFilter: args.initialFilter,
+          initialSearchTerm: args.initialSearchTerm,
         ),
       );
     },
@@ -1599,6 +1602,9 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
     HomCategory? initialCategory,
     ActivityKind initialKind = ActivityKind.any,
     bool autofocusSearch = false,
+    List<HomCategory> initialCategories = const [],
+    FilterResult? initialFilter,
+    String initialSearchTerm = '',
     List<PageRouteInfo>? children,
   }) : super(
           SearchDiscoveryRoute.name,
@@ -1607,6 +1613,9 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
             initialCategory: initialCategory,
             initialKind: initialKind,
             autofocusSearch: autofocusSearch,
+            initialCategories: initialCategories,
+            initialFilter: initialFilter,
+            initialSearchTerm: initialSearchTerm,
           ),
           initialChildren: children,
         );
@@ -1623,6 +1632,9 @@ class SearchDiscoveryRouteArgs {
     this.initialCategory,
     this.initialKind = ActivityKind.any,
     this.autofocusSearch = false,
+    this.initialCategories = const [],
+    this.initialFilter,
+    this.initialSearchTerm = '',
   });
 
   final Key? key;
@@ -1633,9 +1645,15 @@ class SearchDiscoveryRouteArgs {
 
   final bool autofocusSearch;
 
+  final List<HomCategory> initialCategories;
+
+  final FilterResult? initialFilter;
+
+  final String initialSearchTerm;
+
   @override
   String toString() {
-    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, initialKind: $initialKind, autofocusSearch: $autofocusSearch}';
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, initialKind: $initialKind, autofocusSearch: $autofocusSearch, initialCategories: $initialCategories, initialFilter: $initialFilter, initialSearchTerm: $initialSearchTerm}';
   }
 }
 

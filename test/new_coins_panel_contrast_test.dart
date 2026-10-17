@@ -6,14 +6,11 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_widgets.dart';
 
-/// The shelf is a LIGHT screen in both themes: a near-white stage, a pale wash
-/// of the pack's colour off the top edge, and white panels inside the tone
-/// frame. Everything drawn on it therefore takes a fixed DARK ink, and
-/// white-on-white is the failure mode throughout — invisible to the analyzer,
-/// so asserted here rather than eyeballed.
-///
-/// These cover both of the screen's grounds: the panels, and the stage the
-/// pack's own header sits out on.
+/// The coin screens follow the theme: a near-white stage with white panels in
+/// light, the deepest ink with dark-surface panels in dark, and `textPrimary`
+/// on both. Text the colour of its own ground is the failure mode — invisible
+/// to the analyzer — so contrast is asserted here, in BOTH themes, against the
+/// `coinStage` / `coinPanel` roles the widgets actually paint.
 void main() {
   final features = [
     const NewCoinFeature(
@@ -24,16 +21,23 @@ void main() {
     ),
   ];
 
-  Widget host() => ScreenUtilInit(
+  const themes = {
+    'light': (Brightness.light, AppColorScheme.light),
+    'dark': (Brightness.dark, AppColorScheme.dark),
+  };
+
+  double contrast(Color a, Color b) {
+    final la = a.computeLuminance();
+    final lb = b.computeLuminance();
+    return la > lb ? (la + 0.05) / (lb + 0.05) : (lb + 0.05) / (la + 0.05);
+  }
+
+  Widget host(Brightness brightness, AppColorScheme scheme) => ScreenUtilInit(
         designSize: const Size(390, 844),
         builder: (_, __) => MaterialApp(
-          // The shelf's own override: the page is LIGHT whatever the app is.
-          theme: ThemeData(
-            brightness: Brightness.light,
-            extensions: const [AppColorScheme.light],
-          ),
+          theme: ThemeData(brightness: brightness, extensions: [scheme]),
           home: Scaffold(
-            backgroundColor: AppColors.coinStage,
+            backgroundColor: scheme.coinStage,
             body: SingleChildScrollView(
               child: NewCoinPackFeatures(
                 tone: NewCoinTone.main(0),
@@ -47,53 +51,56 @@ void main() {
       );
 
   /// Every `Text` the panel draws, with the colour it is painted in.
+  ///
+  /// Bare separators ("·") are left out: they are decoration, deliberately
+  /// muted, and WCAG's text contrast does not apply to them.
   List<Color?> inkOf(WidgetTester tester) => tester
       .widgetList<Text>(find.byType(Text))
+      .where((t) => (t.data ?? '').trim() != '·')
       .map((t) => t.style?.color)
       .toList();
 
-  testWidgets('the panels are a light surface', (tester) async {
-    await tester.pumpWidget(host());
-    await tester.pump();
+  for (final MapEntry(key: name, value: (brightness, scheme))
+      in themes.entries) {
+    testWidgets('$name: the panels are painted coinPanel', (tester) async {
+      await tester.pumpWidget(host(brightness, scheme));
+      await tester.pump();
 
-    final panels = tester
-        .widgetList<Container>(find.byType(Container))
-        .where((c) => (c.decoration as BoxDecoration?)?.color != null)
-        .map((c) => (c.decoration as BoxDecoration).color!)
-        .toList();
+      final panels = tester
+          .widgetList<Container>(find.byType(Container))
+          .where((c) => (c.decoration as BoxDecoration?)?.color != null)
+          .map((c) => (c.decoration as BoxDecoration).color!)
+          .toList();
 
-    // The two cards inside the tone frame.
-    expect(
-      panels.where((c) => c == AppColors.coinPanel),
-      hasLength(2),
-      reason: 'the header card and the feature list',
-    );
-    // Whatever `coinPanel` is set to, it has to be a light surface — this is
-    // the thing the ink below is chosen against.
-    expect(AppColors.coinPanel.computeLuminance(), greaterThan(0.8));
-  });
+      // The two cards inside the tone frame.
+      expect(
+        panels.where((c) => c == scheme.coinPanel),
+        hasLength(2),
+        reason: 'the header card and the feature list',
+      );
+    });
 
-  testWidgets('every label on a panel is dark enough to read', (tester) async {
-    await tester.pumpWidget(host());
-    await tester.pump();
+    testWidgets('$name: every label on a panel is readable', (tester) async {
+      await tester.pumpWidget(host(brightness, scheme));
+      await tester.pump();
 
-    final inks = inkOf(tester);
-    expect(inks, isNotEmpty);
-
-    for (final ink in inks) {
-      expect(ink, isNotNull);
-      // Contrast against the panel, per WCAG. 4.5:1 is the floor for body
-      // text; every label here clears it by a wide margin.
-      final a = AppColors.coinPanel.computeLuminance();
-      final b = ink!.computeLuminance();
-      final ratio = (a > b) ? (a + 0.05) / (b + 0.05) : (b + 0.05) / (a + 0.05);
-      expect(ratio, greaterThan(4.5), reason: 'ink $ink on the white panel');
-    }
-  });
+      final inks = inkOf(tester);
+      expect(inks, isNotEmpty);
+      for (final ink in inks) {
+        expect(ink, isNotNull);
+        // WCAG's 4.5:1 floor for body text, against the panel it sits on.
+        expect(
+          contrast(scheme.coinPanel, ink!),
+          greaterThan(4.5),
+          reason: 'ink $ink on the $name panel ${scheme.coinPanel}',
+        );
+      }
+    });
+  }
 
   testWidgets('the figure chip does not vanish into the panel',
       (tester) async {
-    await tester.pumpWidget(host());
+    await tester.pumpWidget(host(Brightness.light, AppColorScheme.light));
     await tester.pump();
 
     // The chip is the one rounded fill that is neither panel nor tone frame.
@@ -121,15 +128,17 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
-  Widget stageHost(NewCoinTone tone) => ScreenUtilInit(
+  Widget stageHost(
+    NewCoinTone tone,
+    Brightness brightness,
+    AppColorScheme scheme,
+  ) =>
+      ScreenUtilInit(
         designSize: const Size(390, 844),
         builder: (_, __) => MaterialApp(
-          theme: ThemeData(
-            brightness: Brightness.light,
-            extensions: const [AppColorScheme.light],
-          ),
+          theme: ThemeData(brightness: brightness, extensions: [scheme]),
           home: Scaffold(
-            backgroundColor: AppColors.coinStage,
+            backgroundColor: scheme.coinStage,
             body: Stack(
               children: [
                 Positioned.fill(child: NewCoinsBackdrop(tone: tone)),
@@ -154,19 +163,18 @@ void main() {
         ),
       );
 
-  testWidgets('the stage is a light ground', (tester) async {
-    expect(
-      AppColors.coinStage.computeLuminance(),
-      greaterThan(0.8),
-      reason: 'the header ink below is chosen against this',
-    );
-    asPhone(tester);
-    await tester.pumpWidget(stageHost(NewCoinTone.main(0)));
-    await tester.pump();
+  for (final MapEntry(key: name, value: (brightness, scheme))
+      in themes.entries) {
+    testWidgets('$name: the stage is painted coinStage', (tester) async {
+      asPhone(tester);
+      await tester
+          .pumpWidget(stageHost(NewCoinTone.main(0), brightness, scheme));
+      await tester.pump();
 
-    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-    expect(scaffold.backgroundColor, AppColors.coinStage);
-  });
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, scheme.coinStage);
+    });
+  }
 
   testWidgets('every pack tone keeps the top of the wash light enough for '
       'dark ink', (tester) async {
@@ -187,20 +195,27 @@ void main() {
     }
   });
 
-  testWidgets('no label on the stage is painted white', (tester) async {
-    asPhone(tester);
-    await tester.pumpWidget(stageHost(NewCoinTone.main(0)));
-    await tester.pump();
+  for (final MapEntry(key: name, value: (brightness, scheme))
+      in themes.entries) {
+    testWidgets('$name: no label on the stage is its own ground colour',
+        (tester) async {
+      asPhone(tester);
+      await tester
+          .pumpWidget(stageHost(NewCoinTone.main(0), brightness, scheme));
+      await tester.pump();
 
-    final inks = inkOf(tester);
-    expect(inks, isNotEmpty);
-    for (final ink in inks) {
-      expect(ink, isNotNull);
-      expect(
-        ink!.computeLuminance(),
-        lessThan(0.5),
-        reason: 'label painted $ink out on the light stage',
-      );
-    }
-  });
+      final inks = inkOf(tester);
+      expect(inks, isNotEmpty);
+      for (final ink in inks) {
+        expect(ink, isNotNull);
+        // Labels out on the stage may sit on the panel pills or straight on
+        // the page, so they have to read on the page itself.
+        expect(
+          contrast(scheme.coinStage, ink!),
+          greaterThan(3),
+          reason: 'label painted $ink on the $name stage ${scheme.coinStage}',
+        );
+      }
+    });
+  }
 }

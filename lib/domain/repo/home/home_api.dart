@@ -225,6 +225,9 @@ class HomeApi {
     List<String>? districts,
     String? kind,
     bool centres = false,
+    double? radiusKm,
+    String? fromTime,
+    String? toTime,
   }) {
     return _dio.get('discovery/classes', queryParameters: {
       'page': page,
@@ -250,6 +253,11 @@ class HomeApi {
       // Asks for the matching centres in the same response (`branches`), so a
       // search that shows both costs one request.
       if (centres) 'centres': 1,
+      // The map's "By location": centres within this many km of [lat]/[lng].
+      if (radiusKm != null) 'radius_km': radiusKm,
+      // The "By time" window, HH:mm, matched on when a lesson starts.
+      if (fromTime != null) 'from_time': fromTime,
+      if (toTime != null) 'to_time': toTime,
     });
   }
 

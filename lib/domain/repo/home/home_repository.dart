@@ -94,6 +94,12 @@ abstract class HomeRepository {
     /// Also return the centres matching [search] and [categoryIds], as
     /// [ClassesPage.branches] — one request for a search that shows both.
     bool centres = false,
+    /// Only centres within this many km of [lat]/[lng] — the map's
+    /// "By location".
+    double? radiusKm,
+    /// Only activities with a lesson starting in this window, as HH:mm.
+    String? fromTime,
+    String? toTime,
   });
 
   Future<ClassesPage> getDiscoveryShorts({

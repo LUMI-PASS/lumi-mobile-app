@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
+import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
@@ -20,7 +21,9 @@ import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/category_picker_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/location_filter_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/time_filter.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 /// The map itself — a full-bleed map of the centres the current search
@@ -157,6 +160,9 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   static const _pillHalfHeight = 24.0;
   static const _edgeMargin = 12.0;
 
+  /// The count pill and "List" button, which span the bottom edge.
+  static const _bottomRowHeight = 56.0;
+
   /// Gap between the selected centre's card and whatever is below it — the
   /// nav pill on the tab, the screen edge on the pushed screen.
   double get _cardGap => 8.h;
@@ -233,7 +239,23 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   void _onMapCreated(YandexMapController controller) {
     _mapController = controller;
     _mapReady = true;
+    _showUserIfAllowed();
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitToBranches());
+  }
+
+  /// Puts the "you are here" puck on the map from the start when the
+  /// permission is already granted — without prompting, and without moving
+  /// the camera off the centres. Asking is left to a tap that needs the
+  /// position: locate, or the location chip.
+  Future<void> _showUserIfAllowed() async {
+    try {
+      final perm = await Geolocator.checkPermission();
+      if (perm != LocationPermission.always &&
+          perm != LocationPermission.whileInUse) {
+        return;
+      }
+      await _mapController?.toggleUserLayer(visible: true);
+    } catch (_) {}
   }
 
   /// Rasterises a pill per plotted centre and swaps them onto the map.
@@ -374,8 +396,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   // version, and it is exact.)
 
   /// The map view's own size. Falls back to the window before first layout.
-  Size get _viewport =>
-      context.size ?? MediaQuery.sizeOf(context);
+  Size get _viewport => context.size ?? MediaQuery.sizeOf(context);
 
   /// Height of the controls floating over the top edge.
   double get _topObstruction =>
@@ -384,10 +405,12 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   /// Height of everything floating over the bottom edge: the host's own
   /// furniture, plus the selected centre's card when one is up.
   double get _bottomObstruction {
-    final card = _selected == null
-        ? 0.0
-        : (_cardKey.currentContext?.size?.height ?? 0);
-    return _bottomBase + (card > 0 ? card + _cardGap : 0) + _edgeMargin.h;
+    final card =
+        _selected == null ? 0.0 : (_cardKey.currentContext?.size?.height ?? 0);
+    return _bottomBase +
+        _bottomRowHeight.h +
+        (card > 0 ? card + _cardGap : 0) +
+        _edgeMargin.h;
   }
 
   /// Longitude degrees per horizontal pixel at [zoom]: the projection is Web
@@ -569,12 +592,23 @@ class _BranchesMapViewState extends State<BranchesMapView> {
 
   /// Centres the map on the device's location, requesting permission first.
   Future<void> _goToMyLocation() async {
-    if (_locating) return;
+    final here = await _locate();
+    final controller = _mapController;
+    if (here == null || controller == null || !mounted) return;
+    // Same framing as everything else: the puck lands in the strip between
+    // the controls, not underneath the search bar.
+    await _centreOn(controller, here, _maxFitZoom);
+  }
+
+  /// The device's position, requesting permission first, with the puck
+  /// switched on. Null — after saying why — when it cannot be had.
+  Future<Point?> _locate() async {
+    if (_locating) return null;
     setState(() => _locating = true);
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
         _showMsg('map_location_off'.tr());
-        return;
+        return null;
       }
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
@@ -583,22 +617,18 @@ class _BranchesMapViewState extends State<BranchesMapView> {
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
         _showMsg('map_location_denied'.tr());
-        return;
+        return null;
       }
       final pos = await Geolocator.getCurrentPosition();
-      if (!mounted) return;
-      final here = Point(latitude: pos.latitude, longitude: pos.longitude);
+      if (!mounted) return null;
       // MapKit's own location layer replaces the hand-drawn dot the
       // `flutter_map` version used — it is the platform-standard puck, and it
       // keeps following the device instead of freezing at the fetched fix.
       await _mapController?.toggleUserLayer(visible: true);
-      final controller = _mapController;
-      if (controller == null) return;
-      // Same framing as everything else: the puck lands in the strip between
-      // the controls, not underneath the search bar.
-      await _centreOn(controller, here, _maxFitZoom);
+      return Point(latitude: pos.latitude, longitude: pos.longitude);
     } catch (_) {
       _showMsg('map_location_error'.tr());
+      return null;
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -674,7 +704,69 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     );
     // Null = dismissed without choosing; leave the current filter alone.
     if (result == null || !mounted) return;
+    _clearSelection();
     cubit.setCategories(result.categories);
+  }
+
+  FilterResult get _filter => widget.filter ?? const FilterResult();
+
+  /// "By location": the radius screen, centred on the user. Without a
+  /// position there is nothing to measure from, so the chip asks for one
+  /// first and does nothing more if it is refused.
+  Future<void> _pickRadius() async {
+    final cubit = context.read<SearchCubit>();
+    final filter = _filter;
+    // With a radius already on, its own centre stands in for a fresh fix —
+    // otherwise location switched off later would leave the user unable to
+    // widen it back to "All".
+    final here = await _locate() ??
+        (filter.hasRadius
+            ? Point(latitude: filter.nearLat!, longitude: filter.nearLng!)
+            : null);
+    if (here == null || !mounted) return;
+    final result = await LocationFilterPage.show(
+      context,
+      center: here,
+      branches: _plottable,
+      initialRadiusKm: filter.hasRadius ? filter.radiusKm : null,
+    );
+    if (result == null || !mounted) return;
+    final km = result.radiusKm;
+    _clearSelection();
+    cubit.applyFilter(
+      km == null
+          ? filter.withoutRadius()
+          : filter.copyWith(
+              radiusKm: km,
+              nearLat: here.latitude,
+              nearLng: here.longitude,
+            ),
+    );
+  }
+
+  /// "By time": the time window sheet.
+  Future<void> _pickTime() async {
+    final cubit = context.read<SearchCubit>();
+    final filter = _filter;
+    final result = await TimeFilterSheet.show(
+      context,
+      initial: DayWindow(filter.fromMinute, filter.toMinute),
+    );
+    if (result == null || !mounted) return;
+    _clearSelection();
+    cubit.applyFilter(
+      filter.copyWith(fromMinute: result.from, toMinute: result.to),
+    );
+  }
+
+  /// The list view of this same search — categories, filter and term carried
+  /// over, so switching view never changes the answer.
+  void _openList() {
+    context.router.push(SearchDiscoveryRoute(
+      initialCategories: widget.selectedCategories,
+      initialFilter: widget.filter,
+      initialSearchTerm: widget.searchTerm,
+    ));
   }
 
   @override
@@ -716,6 +808,23 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                   onClusterAdded: _onClusterAdded,
                   onClusterTap: _onClusterTap,
                 ),
+                // The active radius, so the user can see why pins outside it
+                // are gone.
+                if (_filter.hasRadius)
+                  CircleMapObject(
+                    mapId: const MapObjectId('radius'),
+                    circle: Circle(
+                      center: Point(
+                        latitude: _filter.nearLat!,
+                        longitude: _filter.nearLng!,
+                      ),
+                      radius: _filter.radiusKm! * 1000,
+                    ),
+                    fillColor: c.primary.withValues(alpha: 0.12),
+                    strokeColor: c.primary,
+                    strokeWidth: 1.5,
+                    zIndex: -1,
+                  ),
               ],
               cameraBounds: const CameraBounds(
                 minZoom: _minZoom,
@@ -766,28 +875,37 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                     filterCount: widget.filterCount,
                   ),
                   12.verticalSpace,
-                  Padding(
+                  // The three filters people reach for on a map, one tap each
+                  // — the rest stay in the sheet behind the filter button,
+                  // which edits the same filter, so the two never disagree.
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Row(
                       children: [
-                        if (widget.categories.isNotEmpty)
-                          Flexible(
-                            child: _CategoryDropdown(
-                              label: _categoryLabel,
-                              isActive: widget.selectedCategories.isNotEmpty,
-                              onTap: _pickCategory,
-                            ),
+                        _DropdownChip(
+                          label: _filter.hasRadius
+                              ? radiusLabel(_filter.radiusKm!)
+                              : 'map_by_location'.tr(),
+                          isActive: _filter.hasRadius,
+                          onTap: _pickRadius,
+                        ),
+                        if (widget.categories.isNotEmpty) ...[
+                          8.horizontalSpace,
+                          _DropdownChip(
+                            label: _categoryLabel,
+                            isActive: widget.selectedCategories.isNotEmpty,
+                            onTap: _pickCategory,
                           ),
-                        const Spacer(),
-                        // What the current search actually plots. On a map the
-                        // count is the only honest feedback that a filter did
-                        // anything — pins that vanish off-camera look like a
-                        // map that simply moved.
-                        _CountPill(
-                          label: _plottable.isEmpty && !widget.isLoading
-                              ? 'map_no_centres'.tr()
-                              : 'map_centres_count'
-                                  .tr(args: ['${_plottable.length}']),
+                        ],
+                        8.horizontalSpace,
+                        _DropdownChip(
+                          label: _filter.hasTime
+                              ? DayWindow(_filter.fromMinute, _filter.toMinute)
+                                  .label
+                              : 'map_by_time'.tr(),
+                          isActive: _filter.hasTime,
+                          onTap: _pickTime,
                         ),
                       ],
                     ),
@@ -824,7 +942,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(right: 12.w),
+                      padding: EdgeInsets.only(right: 4.w),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -844,6 +962,28 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                       ),
                     ),
                   ],
+                ),
+                12.verticalSpace,
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  child: Row(
+                    children: [
+                      // What the current search actually plots. On a map the
+                      // count is the only honest feedback that a filter did
+                      // anything — pins that vanish off-camera look like a
+                      // map that simply moved.
+                      Flexible(
+                        child: _CountPill(
+                          label: _plottable.isEmpty && !widget.isLoading
+                              ? 'map_no_centres'.tr()
+                              : 'map_centres_count'
+                                  .tr(args: ['${_plottable.length}']),
+                        ),
+                      ),
+                      const Spacer(),
+                      _ListButton(onTap: _openList),
+                    ],
+                  ),
                 ),
                 if (selected != null) ...[
                   12.verticalSpace,
@@ -888,15 +1028,11 @@ class _CountPill extends StatelessWidget {
   }
 }
 
-/// The map's category filter — a dropdown pill stating the active category.
-///
-/// A dropdown rather than the old chip strip: the categories list is long, and
-/// a horizontally scrolling strip hid most of it behind a swipe the user had no
-/// reason to suspect. Category is the map's only filter, so this is a single
-/// pill hugging its label, not a row of controls. The list itself lives in
-/// [CategoryPickerSheet].
-class _CategoryDropdown extends StatelessWidget {
-  const _CategoryDropdown({
+/// One of the map's quick filters — a dropdown pill stating what is picked,
+/// filled once something is. Each opens its own picker: [LocationFilterPage],
+/// [CategoryPickerSheet] or [TimeFilterSheet].
+class _DropdownChip extends StatelessWidget {
+  const _DropdownChip({
     required this.label,
     required this.isActive,
     required this.onTap,
@@ -949,6 +1085,47 @@ class _CategoryDropdown extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "List" — the results of this same search as the list screen.
+class _ListButton extends StatelessWidget {
+  const _ListButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          gradient: AppGradients.brand,
+          borderRadius: BorderRadius.circular(48.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.format_list_bulleted_rounded,
+                size: 20.sp, color: AppColors.onBrand),
+            8.horizontalSpace,
+            Text(
+              'map_list'.tr(),
+              style: AppText.semibold14.copyWith(color: AppColors.onBrand),
+            ),
+          ],
         ),
       ),
     );

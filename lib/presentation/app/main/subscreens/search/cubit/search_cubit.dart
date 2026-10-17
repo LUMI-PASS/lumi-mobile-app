@@ -10,6 +10,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/recent_search_store.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/time_filter.dart';
 
 import 'search_state.dart';
 
@@ -110,6 +111,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     int tab = kSearchTabClasses,
     List<HomCategory> categories = const [],
     FilterResult? filter,
+    String searchTerm = '',
     bool allBranches = false,
     bool recentsOnly = false,
   }) async {
@@ -124,6 +126,7 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           activeTab: tab,
           selectedCategories: categories,
           filter: filter,
+          searchTerm: searchTerm,
           recentClasses: recents,
           showRecents: openOnRecents,
         ));
@@ -183,8 +186,6 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     cachedCategories = [];
     await Future.wait([_fetchCategories(), refresh()]);
   }
-
-
 
   Future<void> _fetchCategories() async {
     if (cachedCategories.isNotEmpty) {
@@ -403,6 +404,15 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
       maxPrice: maxPrice,
       districts: filter?.districts.toList(),
       kind: (filter?.kind ?? ActivityKind.any).queryValue,
+      radiusKm: filter != null && filter.hasRadius ? filter.radiusKm : null,
+      nearLat: filter != null && filter.hasRadius ? filter.nearLat : null,
+      nearLng: filter != null && filter.hasRadius ? filter.nearLng : null,
+      fromTime: filter != null && filter.hasTime
+          ? DayWindow.hhmm(filter.fromMinute)
+          : null,
+      toTime: filter != null && filter.hasTime
+          ? DayWindow.hhmm(filter.toMinute)
+          : null,
     );
   }
 
@@ -429,10 +439,15 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           classGender: q.classGender,
           minPrice: q.minPrice,
           maxPrice: q.maxPrice,
-          lat: _lat,
-          lng: _lng,
+          // The radius is measured from where the user stood when they picked
+          // it, so that point wins over the ordering location.
+          lat: q.nearLat ?? _lat,
+          lng: q.nearLng ?? _lng,
           districts: q.districts,
           kind: q.kind,
+          radiusKm: q.radiusKm,
+          fromTime: q.fromTime,
+          toTime: q.toTime,
           // First page only: the row is not paged, so a "load more" has no
           // use for them.
           centres: !append && _listsCentres,
@@ -555,10 +570,13 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
         classGender: q.classGender,
         minPrice: q.minPrice,
         maxPrice: q.maxPrice,
-        lat: _lat,
-        lng: _lng,
+        lat: q.nearLat ?? _lat,
+        lng: q.nearLng ?? _lng,
         districts: q.districts,
         kind: q.kind,
+        radiusKm: q.radiusKm,
+        fromTime: q.fromTime,
+        toTime: q.toTime,
       );
 
       for (final item in result.classes) {
@@ -599,6 +617,8 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
     // badge has to say so — otherwise "see all courses" lands on a filtered
     // screen showing no sign that anything is filtered.
     if (f.kind != ActivityKind.any) count++;
+    if (f.hasTime) count++;
+    if (f.hasRadius) count++;
     return count;
   }
 
@@ -625,6 +645,11 @@ class _ClassQuery {
     this.maxPrice,
     this.districts,
     this.kind,
+    this.radiusKm,
+    this.nearLat,
+    this.nearLng,
+    this.fromTime,
+    this.toTime,
   });
 
   final String? search;
@@ -637,4 +662,9 @@ class _ClassQuery {
   final num? maxPrice;
   final List<String>? districts;
   final String? kind;
+  final double? radiusKm;
+  final double? nearLat;
+  final double? nearLng;
+  final String? fromTime;
+  final String? toTime;
 }
