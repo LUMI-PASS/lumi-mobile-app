@@ -6,6 +6,7 @@ import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
+import 'package:lumi_pass/common/utils/map_camera.dart';
 import 'package:lumi_pass/common/utils/map_marker_bitmap.dart';
 import 'package:lumi_pass/common/utils/user_location_puck.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
@@ -118,25 +119,28 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
     final controller = _controller;
     if (controller == null) return;
     final km = _radiusKm;
-    final animation = animated ? const MapAnimation(duration: 0.25) : null;
-    if (km == null) {
+    final update = km == null
+        ? CameraUpdate.newCameraPosition(
+            CameraPosition(target: widget.center, zoom: 11),
+          )
+        // A little wider than the circle, so its edge is not flush with the
+        // view.
+        : CameraUpdate.newGeometry(
+            Geometry.fromCircle(
+              Circle(center: widget.center, radius: km * 1000 * 1.15),
+            ),
+          );
+    if (animated) {
       await controller.moveCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: widget.center, zoom: 11),
-        ),
-        animation: animation,
+        update,
+        animation: const MapAnimation(duration: 0.25),
       );
       return;
     }
-    // A little wider than the circle, so its edge is not flush with the view.
-    await controller.moveCamera(
-      CameraUpdate.newGeometry(
-        Geometry.fromCircle(
-          Circle(center: widget.center, radius: km * 1000 * 1.15),
-        ),
-      ),
-      animation: animation,
-    );
+    // The opening frame, from onMapCreated — which can fire before the map
+    // has a size, when MapKit drops the move and the page opened on the
+    // whole world. Retried until it lands; see [moveCameraWhenSized].
+    await moveCameraWhenSized(controller, update, isActive: () => mounted);
   }
 
   @override
@@ -190,8 +194,10 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                       if (km != null)
                         CircleMapObject(
                           mapId: const MapObjectId('radius'),
-                          circle:
-                              Circle(center: widget.center, radius: km * 1000),
+                          circle: Circle(
+                            center: widget.center,
+                            radius: km * 1000,
+                          ),
                           fillColor: c.primary.withValues(alpha: 0.15),
                           strokeColor: c.primary,
                           strokeWidth: 1.5,
@@ -264,8 +270,9 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                     activeTrackColor: c.primary,
                     inactiveTrackColor: c.progressTrack,
                     overlayColor: c.primary.withValues(alpha: 0.12),
-                    tickMarkShape:
-                        const RoundSliderTickMarkShape(tickMarkRadius: 0),
+                    tickMarkShape: const RoundSliderTickMarkShape(
+                      tickMarkRadius: 0,
+                    ),
                     // One piece per radius step, the same broken line the time
                     // filter draws.
                     trackShape: SegmentedSliderTrackShape(
@@ -294,13 +301,15 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                     children: [
                       Text(
                         radiusLabel(kRadiusStepsKm.first),
-                        style:
-                            AppText.regular12.copyWith(color: c.textSecondary),
+                        style: AppText.regular12.copyWith(
+                          color: c.textSecondary,
+                        ),
                       ),
                       Text(
                         'map_radius_all'.tr(),
-                        style:
-                            AppText.regular12.copyWith(color: c.textSecondary),
+                        style: AppText.regular12.copyWith(
+                          color: c.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -309,8 +318,9 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                 FilterSheetButton(
                   label: 'apply_button'.tr(),
                   gradient: AppGradients.brand,
-                  onTap: () => Navigator.of(context)
-                      .pop(LocationFilterResult(_radiusKm)),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).pop(LocationFilterResult(_radiusKm)),
                 ),
               ],
             ),
