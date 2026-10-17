@@ -847,70 +847,91 @@ class _BranchesMapViewState extends State<BranchesMapView> {
           // Filtering lives at the TOP of the screen: the map is what the user
           // is reading, and a strip of controls over its bottom edge covered
           // the very pins the camera had just fitted to.
+          //
+          // On a solid panel, as 1fit does: chips floating straight on the
+          // tiles were hard to read over streets and labels. The panel runs up
+          // under the status bar, and the key sits on it so the camera keeps
+          // pins clear of the whole panel, inset included.
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                key: _topControlsKey,
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.onBack != null) ...[
-                    8.verticalSpace,
-                    SearchTopBar(
-                      title: 'map_title'.tr(),
-                      onBack: widget.onBack,
-                    ),
-                  ],
-                  12.verticalSpace,
-                  // The search screen's own bar, filter badge and all: a map
-                  // the user cannot narrow is a wall of pins.
-                  SearchBarRow(
-                    initialTerm: widget.searchTerm,
-                    onChanged: context.read<SearchCubit>().setSearchTerm,
-                    onFilterTap: _openFilter,
-                    filterCount: widget.filterCount,
-                  ),
-                  12.verticalSpace,
-                  // The three filters people reach for on a map, one tap each
-                  // — the rest stay in the sheet behind the filter button,
-                  // which edits the same filter, so the two never disagree.
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      children: [
-                        _DropdownChip(
-                          label: _filter.hasRadius
-                              ? radiusLabel(_filter.radiusKm!)
-                              : 'map_by_location'.tr(),
-                          isActive: _filter.hasRadius,
-                          onTap: _pickRadius,
-                        ),
-                        if (widget.categories.isNotEmpty) ...[
-                          8.horizontalSpace,
-                          _DropdownChip(
-                            label: _categoryLabel,
-                            isActive: widget.selectedCategories.isNotEmpty,
-                            onTap: _pickCategory,
-                          ),
-                        ],
-                        8.horizontalSpace,
-                        _DropdownChip(
-                          label: _filter.hasTime
-                              ? DayWindow(_filter.fromMinute, _filter.toMinute)
-                                  .label
-                              : 'map_by_time'.tr(),
-                          isActive: _filter.hasTime,
-                          onTap: _pickTime,
-                        ),
-                      ],
-                    ),
+            child: DecoratedBox(
+              key: _topControlsKey,
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(20.r)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.onBack != null) ...[
+                      8.verticalSpace,
+                      SearchTopBar(
+                        title: 'map_title'.tr(),
+                        onBack: widget.onBack,
+                      ),
+                    ],
+                    12.verticalSpace,
+                    // The search screen's own bar, filter badge and all: a map
+                    // the user cannot narrow is a wall of pins.
+                    SearchBarRow(
+                      initialTerm: widget.searchTerm,
+                      onChanged: context.read<SearchCubit>().setSearchTerm,
+                      onFilterTap: _openFilter,
+                      filterCount: widget.filterCount,
+                    ),
+                    12.verticalSpace,
+                    // The three filters people reach for on a map, one tap each
+                    // — the rest stay in the sheet behind the filter button,
+                    // which edits the same filter, so the two never disagree.
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Row(
+                        children: [
+                          _DropdownChip(
+                            label: _filter.hasRadius
+                                ? radiusLabel(_filter.radiusKm!)
+                                : 'map_by_location'.tr(),
+                            isActive: _filter.hasRadius,
+                            onTap: _pickRadius,
+                          ),
+                          if (widget.categories.isNotEmpty) ...[
+                            8.horizontalSpace,
+                            _DropdownChip(
+                              label: _categoryLabel,
+                              isActive: widget.selectedCategories.isNotEmpty,
+                              onTap: _pickCategory,
+                            ),
+                          ],
+                          8.horizontalSpace,
+                          _DropdownChip(
+                            label: _filter.hasTime
+                                ? DayWindow(
+                                        _filter.fromMinute, _filter.toMinute)
+                                    .label
+                                : 'map_by_time'.tr(),
+                            isActive: _filter.hasTime,
+                            onTap: _pickTime,
+                          ),
+                        ],
+                      ),
+                    ),
+                    12.verticalSpace,
+                  ],
+                ),
               ),
             ),
           ),
