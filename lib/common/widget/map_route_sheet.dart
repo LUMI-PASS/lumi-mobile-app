@@ -238,6 +238,7 @@ class RouteIconButton extends StatelessWidget {
     required this.lng,
     this.title,
     this.subtitle,
+    this.onOpen,
   });
 
   final double lat;
@@ -245,19 +246,26 @@ class RouteIconButton extends StatelessWidget {
   final String? title;
   final String? subtitle;
 
+  /// Called as the route chooser opens — what a centre's statistics count a
+  /// route tap by. Null counts nothing.
+  final VoidCallback? onOpen;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => MapRouteSheet.show(
-        context,
-        lat: lat,
-        lng: lng,
-        title: title,
-        subtitle: subtitle,
-      ),
+      onTap: () {
+        onOpen?.call();
+        MapRouteSheet.show(
+          context,
+          lat: lat,
+          lng: lng,
+          title: title,
+          subtitle: subtitle,
+        );
+      },
       child: Container(
         width: 32.w,
         height: 32.w,

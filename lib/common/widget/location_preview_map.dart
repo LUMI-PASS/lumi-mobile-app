@@ -49,6 +49,7 @@ class LocationPreviewMap extends StatelessWidget {
     this.title,
     this.subtitle,
     this.height,
+    this.onOpen,
   });
 
   final double lat;
@@ -64,13 +65,20 @@ class LocationPreviewMap extends StatelessWidget {
   /// Strip height. Deliberately short: it is a signpost, not a map screen.
   final double? height;
 
-  void _openRouteSheet(BuildContext context) => MapRouteSheet.show(
-        context,
-        lat: lat,
-        lng: lng,
-        title: title,
-        subtitle: subtitle,
-      );
+  /// Called as the route chooser opens, from the strip or its arrow. See
+  /// [RouteIconButton.onOpen].
+  final VoidCallback? onOpen;
+
+  void _openRouteSheet(BuildContext context) {
+    onOpen?.call();
+    MapRouteSheet.show(
+      context,
+      lat: lat,
+      lng: lng,
+      title: title,
+      subtitle: subtitle,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +118,7 @@ class LocationPreviewMap extends StatelessWidget {
                   lng: lng,
                   title: title,
                   subtitle: subtitle,
+                  onOpen: onOpen,
                 ),
               ),
             ],

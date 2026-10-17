@@ -5,15 +5,23 @@ import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/saved_card.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
+import 'package:lumi_pass/data/service/listing_event_reporter.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 
 @injectable
 class OrdersApi {
   final Dio _dio;
+  final Storage _storage;
 
-  OrdersApi(this._dio);
+  OrdersApi(this._dio, this._storage);
 
+  /// Carries the install id, so a guest opening this class is counted once in
+  /// the centre's statistics — see [listingDeviceHeader].
   Future<ClassFullModel> getClassFull(String id) async {
-    final response = await _dio.get('classes/$id');
+    final response = await _dio.get(
+      'classes/$id',
+      options: Options(headers: listingDeviceHeader(_storage)),
+    );
     final raw = response.data;
     final data = raw is Map && raw['data'] is Map
         ? Map<String, dynamic>.from(raw['data'] as Map)

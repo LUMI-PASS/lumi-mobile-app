@@ -15,17 +15,20 @@ import 'package:url_launcher/url_launcher.dart';
 /// card, shared by the activity and the branch page so a catalogue centre
 /// reads the same on both.
 ///
-/// Only a CATALOGUE centre has any: a venue Lumi listed from a public
-/// directory, with no contract behind it, nothing on it to book and so no
-/// Book button on its pages (see `is_catalog`). These rows are what a parent
-/// is given instead, which is why the card carries [hint] — a page with no
-/// call to action and no word about why is just a dead end.
+/// Two kinds of centre have any. A CATALOGUE centre: a venue Lumi listed from
+/// a public directory, with no contract behind it, nothing on it to book and
+/// so no Book button on its pages (see `is_catalog`). These rows are what a
+/// parent is given instead, which is why the card can carry [hint] — a page
+/// with no call to action and no word about why is just a dead end. And a
+/// centre on Lumi's `courses` plan, on its courses (`contact_socials`): it pays
+/// to be found, so reaching it is the point, and no hint is shown.
 class CentreSocialsCard extends StatelessWidget {
   const CentreSocialsCard({
     super.key,
     required this.c,
     required this.socials,
     this.hint,
+    this.onOpen,
   });
 
   final AppColorScheme c;
@@ -34,6 +37,10 @@ class CentreSocialsCard extends StatelessWidget {
   /// One line above the rows, saying why there is nothing to book here. Null
   /// leaves it out.
   final String? hint;
+
+  /// Called as a row is tapped, before the link opens — what the centre's
+  /// statistics count the tap by. Null counts nothing.
+  final void Function(SocialLink link)? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +71,7 @@ class CentreSocialsCard extends StatelessWidget {
           ...List.generate(links.length, (i) {
             return Padding(
               padding: EdgeInsets.only(bottom: i == links.length - 1 ? 0 : 8.h),
-              child: _SocialRow(c: c, link: links[i]),
+              child: _SocialRow(c: c, link: links[i], onOpen: onOpen),
             );
           }),
         ],
@@ -75,10 +82,11 @@ class CentreSocialsCard extends StatelessWidget {
 
 /// One tappable account row — the same pill the venue's phone numbers use.
 class _SocialRow extends StatelessWidget {
-  const _SocialRow({required this.c, required this.link});
+  const _SocialRow({required this.c, required this.link, this.onOpen});
 
   final AppColorScheme c;
   final SocialLink link;
+  final void Function(SocialLink link)? onOpen;
 
   /// The glyph for a network. Telegram's already exists at the top of the icon
   /// set (the sign-in screen uses it), so it is reused rather than duplicated
@@ -113,6 +121,7 @@ class _SocialRow extends StatelessWidget {
     if (url == null) return;
     final uri = Uri.tryParse(url);
     if (uri == null) return;
+    onOpen?.call(link);
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 

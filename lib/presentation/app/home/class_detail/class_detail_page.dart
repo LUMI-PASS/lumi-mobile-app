@@ -36,6 +36,7 @@ import 'package:lumi_pass/common/widget/route_video_tile.dart';
 import 'package:lumi_pass/common/widget/stretchy_hero.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/socials/centre_socials.dart';
+import 'package:lumi_pass/data/service/listing_event_reporter.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/wallet/cashback_preview.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
@@ -234,6 +235,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// it lands — and empty for a real partner, always.
   CentreSocials get _socials => _full?.socials ?? CentreSocials.empty;
 
+  /// A courses-plan centre's accounts on its course — see
+  /// [ClassFullModel.contactSocials]. Never on a catalogue row, which has
+  /// [_socials] instead.
+  CentreSocials get _contactSocials => _isCatalog
+      ? CentreSocials.empty
+      : (_full?.contactSocials ?? CentreSocials.empty);
+
+  /// Counts a tap that leaves the app on this class, for the centre's
+  /// statistics. Fire-and-forget — see [ListingEventReporter].
+  void _reportTap(ListingAction action, {SocialNetwork? network}) =>
+      getIt<ListingEventReporter>()
+          .report(widget.classModel.id ?? _full?.id, action, network: network);
+
   // ─── Venue coordinates ────────────────────────────────────────────────────
   /// Where the class actually takes place, for the route sheet. The list model
   /// carries flat `latitude`/`longitude`; the detail's `branch_id` nests them
@@ -351,6 +365,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   Future<void> _callVenue(String phone) async {
     final digits = phone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (digits.isEmpty) return;
+    _reportTap(ListingAction.callClick);
     await launchUrl(Uri.parse('tel:$digits'));
   }
 
@@ -741,6 +756,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       final box = context.findRenderObject() as RenderBox?;
       final origin =
           box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+      _reportTap(ListingAction.shareClick);
       await Share.share(
         text,
         subject: title.isNotEmpty ? title : 'Lumi',
@@ -980,6 +996,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             c: c,
             socials: _socials,
             hint: 'detail_socials_hint'.tr(),
+            onOpen: (link) =>
+                _reportTap(ListingAction.socialClick, network: link.network),
+          ),
+        )
+      // A courses-plan centre's own accounts, on its course. No hint: unlike a
+      // catalogue venue, this centre is a real partner, and nothing here needs
+      // explaining.
+      else if (_contactSocials.openable.isNotEmpty)
+        _detailSection(
+          'class-detail-contact-socials',
+          CentreSocialsCard(
+            c: c,
+            socials: _contactSocials,
+            onOpen: (link) =>
+                _reportTap(ListingAction.socialClick, network: link.network),
           ),
         ),
       // The "Guruhlar" card is gone: a course is no longer presented as the
@@ -1456,6 +1487,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       lng: _venueLng!,
                       title: branchTitle,
                       subtitle: _venueAddress,
+                      onOpen: () => _reportTap(ListingAction.routeClick),
                     ),
                   ],
                 ],
@@ -1643,6 +1675,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         title: branchTitle,
                         subtitle: address,
                         height: _kVenueStripHeight.h,
+                        onOpen: () => _reportTap(ListingAction.routeClick),
                       ),
                     ),
                   if (venue != null && hasVideo) 8.horizontalSpace,

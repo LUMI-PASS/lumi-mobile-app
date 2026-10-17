@@ -168,4 +168,25 @@ void main() {
       expect(activity.isBookable, isTrue);
     });
   });
+
+  group('a courses-plan centre\'s course', () {
+    test('carries the centre\'s accounts apart from the catalogue field', () {
+      final course = ClassFullModel.fromJson({
+        '_id': 'c1',
+        'is_course': true,
+        'contact_socials': {'telegram': '@centre', 'website': 'centre.uz'},
+      });
+      expect(course.contactSocials.openable.map((l) => l.network),
+          [SocialNetwork.telegram, SocialNetwork.website]);
+      // Not `socials`: that one means "catalogue venue, nothing to book".
+      expect(course.socials.isEmpty, isTrue);
+      expect(course.isCatalog, isFalse);
+      expect(course.isBookable, isTrue);
+    });
+
+    test('an older payload without the field has none', () {
+      final course = ClassFullModel.fromJson({'_id': 'c1', 'is_course': true});
+      expect(course.contactSocials.isEmpty, isTrue);
+    });
+  });
 }

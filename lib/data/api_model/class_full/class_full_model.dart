@@ -49,6 +49,14 @@ class ClassFullModel {
   /// Empty for a real partner — whose accounts are deliberately not published
   /// here, because a bookable centre is booked in the app.
   final CentreSocials socials;
+
+  /// A COURSE's centre's accounts, sent only when the centre is on Lumi's
+  /// `courses` plan (`contact_socials`): it pays to be found rather than to be
+  /// sold through, so a parent reaching it is the point. Empty otherwise.
+  ///
+  /// A field of its own because [socials] means "catalogue venue, nothing to
+  /// book here" to every released build, and this centre is neither.
+  final CentreSocials contactSocials;
   final num priceMin;
   final num priceMax;
   final bool hasMultiplePrices;
@@ -147,6 +155,7 @@ class ClassFullModel {
     this.status,
     this.isCatalog = false,
     this.socials = CentreSocials.empty,
+    this.contactSocials = CentreSocials.empty,
     required this.priceMin,
     required this.priceMax,
     required this.hasMultiplePrices,
@@ -323,6 +332,10 @@ class ClassFullModel {
       socials: json['socials'] is Map
           ? CentreSocials.fromJson(
               Map<String, dynamic>.from(json['socials'] as Map))
+          : CentreSocials.empty,
+      contactSocials: json['contact_socials'] is Map
+          ? CentreSocials.fromJson(
+              Map<String, dynamic>.from(json['contact_socials'] as Map))
           : CentreSocials.empty,
       priceMin: priceMin,
       priceMax: priceMax,

@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
+import 'package:lumi_pass/data/service/listing_event_reporter.dart';
+import 'package:lumi_pass/data/storage/storage.dart';
 
 /// What a user holds on one course (or one level of it).
 enum CourseEnrollmentStatus {
@@ -561,14 +563,18 @@ class CourseDetail {
 /// though, so the existing Paycom / Paylov / saved-card flow is reused as-is.
 @injectable
 class CoursesApi {
-  CoursesApi(this._dio);
+  CoursesApi(this._dio, this._storage);
 
   final Dio _dio;
+  final Storage _storage;
 
+  /// Carries the install id, like `OrdersApi.getClassFull` — the backend folds
+  /// the two requests of one course visit into one open.
   Future<CourseDetail> detail(String activityId, {String? lang}) async {
     final res = await _dio.get(
       'courses/$activityId',
       queryParameters: {if (lang != null) 'lang': lang},
+      options: Options(headers: listingDeviceHeader(_storage)),
     );
     return CourseDetail.fromJson(_unwrap(res.data));
   }
