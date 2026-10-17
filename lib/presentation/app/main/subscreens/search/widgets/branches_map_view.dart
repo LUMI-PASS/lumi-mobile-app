@@ -1065,6 +1065,9 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                       padding: EdgeInsets.only(right: 4.w),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        // Right-aligned so the wider List pill lines up on the
+                        // buttons' right edge.
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           _MapButton(
                               icon: Icons.add_rounded, onTap: () => _zoomBy(1)),
@@ -1078,6 +1081,8 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                             onTap: _goToMyLocation,
                             busy: _locating,
                           ),
+                          12.verticalSpace,
+                          _ListButton(onTap: _openList),
                         ],
                       ),
                     ),
@@ -1100,8 +1105,6 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                                   .tr(args: ['${_plottable.length}']),
                         ),
                       ),
-                      const Spacer(),
-                      _ListButton(onTap: _openList),
                     ],
                   ),
                 ),
@@ -1223,7 +1226,7 @@ class _ListButton extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
           gradient: AppGradients.brand,
           borderRadius: BorderRadius.circular(48.r),
@@ -1239,11 +1242,11 @@ class _ListButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.format_list_bulleted_rounded,
-                size: 20.sp, color: AppColors.onBrand),
-            8.horizontalSpace,
+                size: 16.sp, color: AppColors.onBrand),
+            4.horizontalSpace,
             Text(
               'map_list'.tr(),
-              style: AppText.semibold14.copyWith(color: AppColors.onBrand),
+              style: AppText.semibold12.copyWith(color: AppColors.onBrand),
             ),
           ],
         ),
