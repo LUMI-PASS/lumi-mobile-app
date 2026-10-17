@@ -113,6 +113,9 @@ abstract class _$AppRouter extends RootStackRouter {
           branches: args.branches,
           categories: args.categories,
           selectedCategories: args.selectedCategories,
+          initialFilter: args.initialFilter,
+          initialSearchTerm: args.initialSearchTerm,
+          handoff: args.handoff,
         ),
       );
     },
@@ -362,6 +365,7 @@ abstract class _$AppRouter extends RootStackRouter {
           initialCategories: args.initialCategories,
           initialFilter: args.initialFilter,
           initialSearchTerm: args.initialSearchTerm,
+          handoff: args.handoff,
         ),
       );
     },
@@ -829,6 +833,9 @@ class BranchesMapRoute extends PageRouteInfo<BranchesMapRouteArgs> {
     List<HomBranch> branches = const [],
     List<HomCategory> categories = const [],
     List<HomCategory> selectedCategories = const [],
+    FilterResult? initialFilter,
+    String initialSearchTerm = '',
+    SearchHandoff? handoff,
     List<PageRouteInfo>? children,
   }) : super(
           BranchesMapRoute.name,
@@ -837,6 +844,9 @@ class BranchesMapRoute extends PageRouteInfo<BranchesMapRouteArgs> {
             branches: branches,
             categories: categories,
             selectedCategories: selectedCategories,
+            initialFilter: initialFilter,
+            initialSearchTerm: initialSearchTerm,
+            handoff: handoff,
           ),
           initialChildren: children,
         );
@@ -853,6 +863,9 @@ class BranchesMapRouteArgs {
     this.branches = const [],
     this.categories = const [],
     this.selectedCategories = const [],
+    this.initialFilter,
+    this.initialSearchTerm = '',
+    this.handoff,
   });
 
   final Key? key;
@@ -863,9 +876,15 @@ class BranchesMapRouteArgs {
 
   final List<HomCategory> selectedCategories;
 
+  final FilterResult? initialFilter;
+
+  final String initialSearchTerm;
+
+  final SearchHandoff? handoff;
+
   @override
   String toString() {
-    return 'BranchesMapRouteArgs{key: $key, branches: $branches, categories: $categories, selectedCategories: $selectedCategories}';
+    return 'BranchesMapRouteArgs{key: $key, branches: $branches, categories: $categories, selectedCategories: $selectedCategories, initialFilter: $initialFilter, initialSearchTerm: $initialSearchTerm, handoff: $handoff}';
   }
 }
 
@@ -1605,6 +1624,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
     List<HomCategory> initialCategories = const [],
     FilterResult? initialFilter,
     String initialSearchTerm = '',
+    SearchHandoff? handoff,
     List<PageRouteInfo>? children,
   }) : super(
           SearchDiscoveryRoute.name,
@@ -1616,6 +1636,7 @@ class SearchDiscoveryRoute extends PageRouteInfo<SearchDiscoveryRouteArgs> {
             initialCategories: initialCategories,
             initialFilter: initialFilter,
             initialSearchTerm: initialSearchTerm,
+            handoff: handoff,
           ),
           initialChildren: children,
         );
@@ -1635,6 +1656,7 @@ class SearchDiscoveryRouteArgs {
     this.initialCategories = const [],
     this.initialFilter,
     this.initialSearchTerm = '',
+    this.handoff,
   });
 
   final Key? key;
@@ -1651,9 +1673,11 @@ class SearchDiscoveryRouteArgs {
 
   final String initialSearchTerm;
 
+  final SearchHandoff? handoff;
+
   @override
   String toString() {
-    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, initialKind: $initialKind, autofocusSearch: $autofocusSearch, initialCategories: $initialCategories, initialFilter: $initialFilter, initialSearchTerm: $initialSearchTerm}';
+    return 'SearchDiscoveryRouteArgs{key: $key, initialCategory: $initialCategory, initialKind: $initialKind, autofocusSearch: $autofocusSearch, initialCategories: $initialCategories, initialFilter: $initialFilter, initialSearchTerm: $initialSearchTerm, handoff: $handoff}';
   }
 }
 

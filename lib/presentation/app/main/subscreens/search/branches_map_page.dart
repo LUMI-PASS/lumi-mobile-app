@@ -6,6 +6,7 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/branches_map_view.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 
 /// "На карте" — the centres of the current search plotted on a map (Figma
 /// `На карте`), PUSHED from the search results.
@@ -21,6 +22,9 @@ class BranchesMapPage
     this.branches = const [],
     this.categories = const [],
     this.selectedCategories = const [],
+    this.initialFilter,
+    this.initialSearchTerm = '',
+    this.handoff,
   });
 
   /// Results already loaded by the search screen — shown immediately so the
@@ -29,6 +33,14 @@ class BranchesMapPage
   final List<HomCategory> categories;
   final List<HomCategory> selectedCategories;
 
+  /// The list's "Карта" button opens this map on exactly the search the list
+  /// was showing, filter and term included.
+  final FilterResult? initialFilter;
+  final String initialSearchTerm;
+
+  /// Set when the list opened this map — see [SearchHandoff].
+  final SearchHandoff? handoff;
+
   @override
   void init(BuildContext context) {
     // `allBranches` — the map plots pins, so it needs every centre, not the
@@ -36,6 +48,8 @@ class BranchesMapPage
     context.read<SearchCubit>().init(
           tab: kSearchTabBranches,
           categories: selectedCategories,
+          filter: initialFilter,
+          searchTerm: initialSearchTerm,
           allBranches: true,
         );
     super.init(context);
@@ -45,6 +59,8 @@ class BranchesMapPage
   Widget builder(BuildContext context, SearchBuildable state) {
     final categories =
         state.categories.isEmpty ? this.categories : state.categories;
+    // Kept current for the list underneath — see [SearchHandoff].
+    handoff?.latest = context.read<SearchCubit>().snapshot;
 
     return BranchesMapView(
       branches: state.branches,
@@ -57,6 +73,9 @@ class BranchesMapPage
       filter: state.filter,
       filterCount: context.read<SearchCubit>().activeFilterCount,
       onBack: () => context.router.maybePop(),
+      // Opened from the list: "Списком" goes back to it rather than opening
+      // another one on top.
+      onList: handoff == null ? null : () => context.router.maybePop(),
     );
   }
 }

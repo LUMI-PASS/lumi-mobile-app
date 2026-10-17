@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lumi_pass/common/base/base_page.dart';
+import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
@@ -22,6 +23,7 @@ class SearchDiscoveryPage
     this.initialCategories = const [],
     this.initialFilter,
     this.initialSearchTerm = '',
+    this.handoff,
   });
 
   /// The map's "List" button opens this screen on exactly the search the map
@@ -30,6 +32,9 @@ class SearchDiscoveryPage
   final List<HomCategory> initialCategories;
   final FilterResult? initialFilter;
   final String initialSearchTerm;
+
+  /// Set when the map opened this list — see [SearchHandoff].
+  final SearchHandoff? handoff;
 
   final HomCategory? initialCategory;
 
@@ -74,10 +79,36 @@ class SearchDiscoveryPage
 
   @override
   Widget builder(BuildContext context, SearchBuildable state) {
+    final cubit = context.read<SearchCubit>();
+    // Kept current for the map underneath — see [SearchHandoff].
+    handoff?.latest = cubit.snapshot;
     return SearchView(
       state: state,
       onBack: () => context.router.maybePop(),
       autofocusSearch: autofocusSearch,
+      onMap: () => _openMap(context, cubit),
     );
+  }
+
+  /// "Карта": this same search on the map. Back to it when the map opened this
+  /// list; otherwise the map opens on top, and what it is left on comes back
+  /// here when it closes.
+  Future<void> _openMap(BuildContext context, SearchCubit cubit) async {
+    if (handoff != null) {
+      await context.router.maybePop();
+      return;
+    }
+    final search = cubit.snapshot;
+    final back = SearchHandoff();
+    await context.router.push(BranchesMapRoute(
+      branches: cubit.buildable.branches,
+      categories: cubit.buildable.categories,
+      selectedCategories: search.categories,
+      initialFilter: search.filter,
+      initialSearchTerm: search.searchTerm,
+      handoff: back,
+    ));
+    final latest = back.latest;
+    if (latest != null) cubit.adoptSearch(latest);
   }
 }

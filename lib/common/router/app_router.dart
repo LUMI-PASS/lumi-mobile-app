@@ -28,6 +28,9 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/home_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/map/map_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/profile/profile_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/branches_map_page.dart';
+// The map and list routes take a SearchHandoff — named by the generated part
+// file, which imports nothing of its own.
+import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/saved_activities_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_categories_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/search_discovery_page.dart';

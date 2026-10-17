@@ -14,6 +14,35 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/time_f
 
 import 'search_state.dart';
 
+/// What a search IS, as the map and the list share it: the categories, the
+/// filter and the typed term. Not the tab or the results — each view loads
+/// its own answer to the same question.
+class SearchSnapshot {
+  const SearchSnapshot({
+    required this.categories,
+    required this.filter,
+    required this.searchTerm,
+  });
+
+  final List<HomCategory> categories;
+  final FilterResult? filter;
+  final String searchTerm;
+}
+
+/// How the map and the list keep one search between them.
+///
+/// The screen that opens the other passes one of these along. The opened
+/// screen keeps [latest] current as its search changes, and when it closes —
+/// by its own button, the back arrow or the swipe — the screen underneath
+/// takes [latest] over (see [SearchCubit.adoptSearch]). A pop result would
+/// miss the swipe-back gesture, which pops without one.
+///
+/// A screen opened WITH a handoff also goes back rather than opening the other
+/// view again, so map → list → map never stacks up.
+class SearchHandoff {
+  SearchSnapshot? latest;
+}
+
 @injectable
 class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   SearchCubit(this._repo, this._recents) : super(const SearchBuildable());
@@ -38,8 +67,9 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
   /// One number for the classes tab however the type filter is set: activities
   /// and courses come back from ONE query, so the server's total already counts
   /// exactly what the grid is showing.
-  int get resultCount =>
-      buildable.activeTab == kSearchTabBranches ? _branchesTotal : _classesTotal;
+  int get resultCount => buildable.activeTab == kSearchTabBranches
+      ? _branchesTotal
+      : _classesTotal;
 
   /// Total matching centres, for the centres row above the activities grid.
   int get centresCount => _branchesTotal;
@@ -459,9 +489,8 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
 
         if (append) {
           final existingIds = buildable.classes.map((c) => c.id).toSet();
-          final unique = result.classes
-              .where((c) => !existingIds.contains(c.id))
-              .toList();
+          final unique =
+              result.classes.where((c) => !existingIds.contains(c.id)).toList();
           build((b) => b.copyWith(
                 classes: [...b.classes, ...unique],
                 classesPage: page + 1,
@@ -600,6 +629,42 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
       if (page >= result.totalPages) break;
     }
   }
+
+  /// The search this screen is showing — see [SearchSnapshot].
+  SearchSnapshot get snapshot => SearchSnapshot(
+        categories: buildable.selectedCategories,
+        filter: buildable.filter,
+        searchTerm: buildable.searchTerm,
+      );
+
+  /// Takes over the search the other view was left on, in ONE request.
+  ///
+  /// Does nothing when it is the search already on screen: the map loads every
+  /// centre, and coming back from a list that changed nothing must not make it
+  /// fetch them all again. The returning screen hands back the very objects it
+  /// was given when nothing was touched, so identity is the test for the
+  /// filter.
+  void adoptSearch(SearchSnapshot search) {
+    final current = buildable;
+    final sameCategories = _categoryIds(search.categories) ==
+        _categoryIds(current.selectedCategories);
+    if (identical(search.filter, current.filter) &&
+        sameCategories &&
+        search.searchTerm == current.searchTerm) {
+      return;
+    }
+    _debounce?.cancel();
+    _leaveRecents();
+    build((b) => b.copyWith(
+          selectedCategories: search.categories,
+          filter: search.filter,
+          searchTerm: search.searchTerm,
+        ));
+    refresh();
+  }
+
+  static String _categoryIds(List<HomCategory> categories) =>
+      categories.map((c) => c.id ?? '').join(',');
 
   int get activeFilterCount {
     final f = buildable.filter;

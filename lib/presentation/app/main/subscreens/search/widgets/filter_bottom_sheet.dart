@@ -12,7 +12,9 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/date_range_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/location_filter_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/time_filter.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 enum DatePreset { none, today, tomorrow, thisWeek, custom }
 
@@ -191,16 +193,22 @@ class FilterBottomSheet extends StatefulWidget {
   /// (the map screen, which has its own picker) gets the sheet it always had.
   final List<HomCategory> categories;
 
+  /// Centres to dot the radius page's map with — whatever the caller has
+  /// loaded. Only a preview: the page works the same with none.
+  final List<HomBranch> branches;
+
   const FilterBottomSheet({
     super.key,
     this.initial,
     this.categories = const [],
+    this.branches = const [],
   });
 
   static Future<FilterResult?> show(
     BuildContext context, {
     FilterResult? initial,
     List<HomCategory> categories = const [],
+    List<HomBranch> branches = const [],
   }) {
     return showModalBottomSheet<FilterResult>(
       context: context,
@@ -211,8 +219,11 @@ class FilterBottomSheet extends StatefulWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
-      builder: (_) =>
-          FilterBottomSheet(initial: initial, categories: categories),
+      builder: (_) => FilterBottomSheet(
+        initial: initial,
+        categories: categories,
+        branches: branches,
+      ),
     );
   }
 
@@ -233,10 +244,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
   DayWindow _time = DayWindow.all;
 
-  /// Whether the map's radius survives this sheet. It cannot be edited here,
-  /// only kept or cleared — otherwise Clear on the list screen would leave a
-  /// filter on that nothing there can take off.
-  bool _keepRadius = false;
+  /// "По расположению" — the same radius the map's location chip sets, so a
+  /// distance picked on either view is on both. Null = any distance; the
+  /// centre is where it was measured from.
+  double? _radiusKm;
+  double? _nearLat;
+  double? _nearLng;
 
   /// The ticked categories, by id. Ids rather than objects so a tick survives
   /// the catalogue being re-fetched underneath the sheet.
@@ -294,7 +307,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     };
     _range = init.priceRange;
     _time = DayWindow(init.fromMinute, init.toMinute);
-    _keepRadius = init.hasRadius;
+    if (init.hasRadius) {
+      _radiusKm = init.radiusKm;
+      _nearLat = init.nearLat;
+      _nearLng = init.nearLng;
+    }
     if (init.ageYears != null) _ageFromController.text = '${init.ageYears}';
     if (init.ageToYears != null) _ageToController.text = '${init.ageToYears}';
     _ageFieldsEmpty = _ageFieldsAreEmpty;
@@ -345,7 +362,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _districts.isNotEmpty ||
       _categoryIds.isNotEmpty ||
       !_time.isAll ||
-      _keepRadius ||
+      _radiusKm != null ||
       _isPriceChanged;
 
   /// Resets every control back to its default. Stays in the sheet on purpose:
@@ -366,7 +383,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _categoryIds = <String>{};
       _range = const RangeValues(FilterResult.minPrice, FilterResult.maxPrice);
       _time = DayWindow.all;
-      _keepRadius = false;
+      _radiusKm = null;
+      _nearLat = null;
+      _nearLng = null;
     });
   }
 
@@ -389,12 +408,31 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ],
         fromMinute: _time.from,
         toMinute: _time.to,
-        // Not edited here — the map's location chip owns it — so it rides
-        // through unless Clear dropped it.
-        radiusKm: _keepRadius ? widget.initial?.radiusKm : null,
-        nearLat: _keepRadius ? widget.initial?.nearLat : null,
-        nearLng: _keepRadius ? widget.initial?.nearLng : null,
+        radiusKm: _radiusKm,
+        nearLat: _nearLat,
+        nearLng: _nearLng,
       );
+
+  /// The map's own radius page, over this sheet. Measured from the centre
+  /// already in use when there is a radius, so widening it does not move it.
+  Future<void> _pickRadius() async {
+    final centre = _radiusKm != null
+        ? Point(latitude: _nearLat!, longitude: _nearLng!)
+        : await radiusCentre();
+    if (!mounted) return;
+    final result = await LocationFilterPage.show(
+      context,
+      center: centre,
+      branches: widget.branches,
+      initialRadiusKm: _radiusKm,
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _radiusKm = result.radiusKm;
+      _nearLat = result.radiusKm == null ? null : centre.latitude;
+      _nearLng = result.radiusKm == null ? null : centre.longitude;
+    });
+  }
 
   void _selectDatePreset(DatePreset preset) {
     setState(() {
@@ -574,6 +612,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   ),
                   16.kh,
                   _Section(
+                    label: 'map_by_location'.tr(),
+                    child: _RadiusRow(
+                      label: _radiusKm == null
+                          ? 'map_radius_all'.tr()
+                          : radiusLabel(_radiusKm!),
+                      active: _radiusKm != null,
+                      onTap: _pickRadius,
+                    ),
+                  ),
+                  16.kh,
+                  _Section(
                     label: 'filter_district'.tr(),
                     child: Wrap(
                       spacing: 8.w,
@@ -730,6 +779,54 @@ class _Section extends StatelessWidget {
         8.kh,
         child,
       ],
+    );
+  }
+}
+
+/// "По расположению" in the sheet: the radius in force, or "Все", and a "›"
+/// to the page that changes it.
+class _RadiusRow extends StatelessWidget {
+  const _RadiusRow({
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: c.control,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: c.controlBorder),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: AppText.medium14.copyWith(
+                  color: active ? c.primary : c.textPrimary,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20.sp,
+              color: c.textSecondary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

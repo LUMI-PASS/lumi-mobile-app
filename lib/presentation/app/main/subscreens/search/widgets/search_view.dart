@@ -9,6 +9,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_c
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/view_switch_button.dart';
 
 /// Discovery / search screen (Figma `Поиск`).
 ///
@@ -24,6 +25,7 @@ class SearchView extends StatefulWidget {
     required this.state,
     this.onBack,
     this.autofocusSearch = false,
+    this.onMap,
   });
 
   final SearchBuildable state;
@@ -34,6 +36,10 @@ class SearchView extends StatefulWidget {
 
   /// Omit on the root tab — there is nothing behind it to go back to.
   final VoidCallback? onBack;
+
+  /// "Карта", bottom right: this same search on the map. Omit on the search
+  /// tab, whose own "На карте" shortcut is the way there.
+  final VoidCallback? onMap;
 
   @override
   State<SearchView> createState() => _SearchViewState();
@@ -105,6 +111,7 @@ class _SearchViewState extends State<SearchView> {
       initial: (state.filter ?? const FilterResult())
           .copyWith(categories: state.selectedCategories),
       categories: state.categories,
+      branches: state.branches,
     );
     if (result == null) return;
     cubit.applyFilter(result, categories: result.categories);
@@ -134,8 +141,15 @@ class _SearchViewState extends State<SearchView> {
     // Two columns with a 16pt page margin and an 8pt gutter (Figma).
     final columnWidth = (1.sw - 32.w - 8.w) / 2;
 
+    final onMap = widget.onMap;
     return Scaffold(
       backgroundColor: c.scaffoldBg,
+      // Where the map's "Списком" sits, so the switch is in the same place
+      // from either side. Not on the recents screen: there is no search yet to
+      // put on a map.
+      floatingActionButton: onMap == null || showRecents
+          ? null
+          : ViewSwitchButton.map(onTap: onMap),
       body: SafeArea(
         bottom: false,
         child: Column(

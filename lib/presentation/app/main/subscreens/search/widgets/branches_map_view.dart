@@ -10,7 +10,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
-import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
@@ -26,6 +25,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/location_filter_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/time_filter.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/view_switch_button.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 /// The map itself — a full-bleed map of the centres the current search
@@ -55,6 +55,7 @@ class BranchesMapView extends StatefulWidget {
     required this.filter,
     required this.filterCount,
     this.onBack,
+    this.onList,
   });
 
   final List<HomBranch> branches;
@@ -78,6 +79,10 @@ class BranchesMapView extends StatefulWidget {
 
   /// Omit on the tab — there is nothing behind it to go back to.
   final VoidCallback? onBack;
+
+  /// What "Списком" does when this map was itself opened from the list: go
+  /// back to it (see [SearchHandoff]). Null opens the list on top.
+  final VoidCallback? onList;
 
   @override
   State<BranchesMapView> createState() => _BranchesMapViewState();
@@ -232,11 +237,14 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   List<HomBranch> _lastLoaded = const [];
 
   List<HomBranch> get _plottable => _source.where((b) {
-    final lat = b.latitude;
-    final lng = b.longitude;
-    if (lat == null || lng == null) return false;
-    return lat >= _minLat && lat <= _maxLat && lng >= _minLng && lng <= _maxLng;
-  }).toList();
+        final lat = b.latitude;
+        final lng = b.longitude;
+        if (lat == null || lng == null) return false;
+        return lat >= _minLat &&
+            lat <= _maxLat &&
+            lng >= _minLng &&
+            lng <= _maxLng;
+      }).toList();
 
   /// Stable signature of the current plottable set, so we only re-fit when the
   /// centres actually change (not on every rebuild).
@@ -279,8 +287,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     // circle, and "All" only widens what is around it. Fitting every centre
     // in the city once they had loaded flew the camera away from where they
     // were, a second after the tap.
-    final radiusCleared =
-        (oldWidget.filter?.hasRadius ?? false) &&
+    final radiusCleared = (oldWidget.filter?.hasRadius ?? false) &&
         !(widget.filter?.hasRadius ?? false);
     if (_settled &&
         !radiusCleared &&
@@ -350,9 +357,8 @@ class _BranchesMapViewState extends State<BranchesMapView> {
       final perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.always ||
           perm == LocationPermission.whileInUse) {
-        final last = await Geolocator.getLastKnownPosition().timeout(
-          const Duration(milliseconds: 600),
-        );
+        final last = await Geolocator.getLastKnownPosition()
+            .timeout(const Duration(milliseconds: 600));
         if (last != null) {
           loc = UserLocation.precise(last.latitude, last.longitude);
         }
@@ -533,9 +539,8 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   /// Height of everything floating over the bottom edge: the host's own
   /// furniture, plus the selected centre's card when one is up.
   double get _bottomObstruction {
-    final card = _selected == null
-        ? 0.0
-        : (_cardKey.currentContext?.size?.height ?? 0);
+    final card =
+        _selected == null ? 0.0 : (_cardKey.currentContext?.size?.height ?? 0);
     return _bottomBase +
         _bottomRowHeight.h +
         (card > 0 ? card + _cardGap : 0) +
@@ -883,6 +888,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     final result = await FilterBottomSheet.show(
       context,
       initial: widget.filter,
+      branches: widget.branches,
     );
     if (result == null || !mounted) return;
     _clearSelection();
@@ -924,8 +930,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     // With a radius already on, its own centre stands in for a fresh fix —
     // otherwise location switched off later would leave the user unable to
     // widen it back to "All".
-    var here =
-        await _locate() ??
+    var here = await _locate() ??
         (filter.hasRadius
             ? Point(latitude: filter.nearLat!, longitude: filter.nearLng!)
             : null);
@@ -980,15 +985,23 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   }
 
   /// The list view of this same search — categories, filter and term carried
-  /// over, so switching view never changes the answer.
-  void _openList() {
-    context.router.push(
-      SearchDiscoveryRoute(
-        initialCategories: widget.selectedCategories,
-        initialFilter: widget.filter,
-        initialSearchTerm: widget.searchTerm,
-      ),
-    );
+  /// over, so switching view never changes the answer. Whatever the list is
+  /// left on comes back here when it closes, so the two stay one search.
+  Future<void> _openList() async {
+    final onList = widget.onList;
+    if (onList != null) return onList();
+    final cubit = context.read<SearchCubit>();
+    final handoff = SearchHandoff();
+    await context.router.push(SearchDiscoveryRoute(
+      initialCategories: widget.selectedCategories,
+      initialFilter: widget.filter,
+      initialSearchTerm: widget.searchTerm,
+      handoff: handoff,
+    ));
+    final latest = handoff.latest;
+    if (latest == null || !mounted) return;
+    _clearSelection();
+    cubit.adoptSearch(latest);
   }
 
   /// The map widget, rebuilt only when what it shows changes.
@@ -1049,7 +1062,10 @@ class _BranchesMapViewState extends State<BranchesMapView> {
             zIndex: -1,
           ),
       ],
-      cameraBounds: const CameraBounds(minZoom: _minZoom, maxZoom: _maxZoom),
+      cameraBounds: const CameraBounds(
+        minZoom: _minZoom,
+        maxZoom: _maxZoom,
+      ),
       // Yandex's terms require the logo to stay visible, so it is
       // moved clear of the zoom controls and the bottom card rather
       // than hidden.
@@ -1090,7 +1106,9 @@ class _BranchesMapViewState extends State<BranchesMapView> {
       // what was left.
       body: Stack(
         children: [
-          Positioned.fill(child: _mapWidget(c, bottomBase)),
+          Positioned.fill(
+            child: _mapWidget(c, bottomBase),
+          ),
 
           // Hides MapKit's default view until the opening camera is placed.
           Positioned.fill(
@@ -1119,9 +1137,8 @@ class _BranchesMapViewState extends State<BranchesMapView> {
               key: _topControlsKey,
               decoration: BoxDecoration(
                 color: c.surface,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(20.r),
-                ),
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(20.r)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.12),
@@ -1180,9 +1197,8 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                           _DropdownChip(
                             label: _filter.hasTime
                                 ? DayWindow(
-                                    _filter.fromMinute,
-                                    _filter.toMinute,
-                                  ).label
+                                        _filter.fromMinute, _filter.toMinute)
+                                    .label
                                 : 'map_by_time'.tr(),
                             isActive: _filter.hasTime,
                             onTap: _pickTime,
@@ -1246,9 +1262,8 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                         child: _CountPill(
                           label: _plottable.isEmpty && !widget.isLoading
                               ? 'map_no_centres'.tr()
-                              : 'map_centres_count'.tr(
-                                  args: ['${_plottable.length}'],
-                                ),
+                              : 'map_centres_count'
+                                  .tr(args: ['${_plottable.length}']),
                         ),
                       ),
                       Column(
@@ -1258,14 +1273,11 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           _MapButton(
-                            icon: Icons.add_rounded,
-                            onTap: () => _zoomBy(1),
-                          ),
+                              icon: Icons.add_rounded, onTap: () => _zoomBy(1)),
                           8.verticalSpace,
                           _MapButton(
-                            icon: Icons.remove_rounded,
-                            onTap: () => _zoomBy(-1),
-                          ),
+                              icon: Icons.remove_rounded,
+                              onTap: () => _zoomBy(-1)),
                           12.verticalSpace,
                           _MapButton(
                             icon: Icons.my_location_rounded,
@@ -1273,7 +1285,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                             busy: _locating,
                           ),
                           12.verticalSpace,
-                          _ListButton(onTap: _openList),
+                          ViewSwitchButton.list(onTap: _openList),
                         ],
                       ),
                     ],
@@ -1385,49 +1397,6 @@ class _DropdownChip extends StatelessWidget {
 }
 
 /// "List" — the results of this same search as the list screen.
-class _ListButton extends StatelessWidget {
-  const _ListButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          gradient: AppGradients.brand,
-          borderRadius: BorderRadius.circular(48.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.format_list_bulleted_rounded,
-              size: 16.sp,
-              color: AppColors.onBrand,
-            ),
-            4.horizontalSpace,
-            Text(
-              'map_list'.tr(),
-              style: AppText.semibold12.copyWith(color: AppColors.onBrand),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// A round, theme-aware map control (zoom / locate).
 class _MapButton extends StatelessWidget {
   const _MapButton({
@@ -1520,22 +1489,16 @@ class _BranchCard extends StatelessWidget {
                 child: imageUrl == null
                     ? Container(
                         color: c.control,
-                        child: Icon(
-                          Icons.business_rounded,
-                          size: 20.w,
-                          color: c.textPlaceholder,
-                        ),
+                        child: Icon(Icons.business_rounded,
+                            size: 20.w, color: c.textPlaceholder),
                       )
                     : CachedNetworkImage(
                         imageUrl: imageUrl,
                         fit: BoxFit.cover,
                         errorWidget: (_, __, ___) => Container(
                           color: c.control,
-                          child: Icon(
-                            Icons.business_rounded,
-                            size: 20.w,
-                            color: c.textPlaceholder,
-                          ),
+                          child: Icon(Icons.business_rounded,
+                              size: 20.w, color: c.textPlaceholder),
                         ),
                       ),
               ),
@@ -1575,10 +1538,8 @@ class _BranchCard extends StatelessWidget {
                 child: Assets.icons.arrowRight.svg(
                   width: 24.w,
                   height: 24.w,
-                  colorFilter: ColorFilter.mode(
-                    c.textSecondary,
-                    BlendMode.srcIn,
-                  ),
+                  colorFilter:
+                      ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
                 ),
               ),
             ),

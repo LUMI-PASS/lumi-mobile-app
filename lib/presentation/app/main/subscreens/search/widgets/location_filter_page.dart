@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:lumi_pass/common/widget/segmented_slider_track.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
@@ -8,6 +9,7 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/map_camera.dart';
 import 'package:lumi_pass/common/utils/map_marker_bitmap.dart';
+import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/utils/user_location_puck.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
@@ -25,6 +27,42 @@ class LocationFilterResult {
 
 /// The radius stops, in km. The slider's last stop beyond these is "All".
 const kRadiusStepsKm = <double>[0.25, 0.5, 1, 1.5, 2, 3, 5, 10];
+
+/// Where a radius picked away from the map is measured from — the filter
+/// sheet's "По расположению" row: the device when it can say and is in
+/// Tashkent, else the middle of Tashkent, as the map does.
+///
+/// Asks for the permission when it was never asked: a parent picking "within
+/// 1.5 km" is asking to be located. A refusal still lands on the city centre,
+/// so the row is never a dead end.
+Future<Point> radiusCentre() async {
+  const cityRadiusM = 30000.0;
+  final city = Point(
+    latitude: kTashkentCentre.lat,
+    longitude: kTashkentCentre.lng,
+  );
+  try {
+    var perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (perm != LocationPermission.always &&
+        perm != LocationPermission.whileInUse) {
+      return city;
+    }
+    final pos = await Geolocator.getLastKnownPosition() ??
+        await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            timeLimit: Duration(seconds: 8),
+          ),
+        );
+    final metres = kTashkentCentre.metersTo(pos.latitude, pos.longitude);
+    if (metres == null || metres > cityRadiusM) return city;
+    return Point(latitude: pos.latitude, longitude: pos.longitude);
+  } catch (_) {
+    return city;
+  }
+}
 
 /// "250 m", "1.5 km" — what the chip and the page both say for a radius.
 String radiusLabel(double km) {
@@ -194,10 +232,8 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                       if (km != null)
                         CircleMapObject(
                           mapId: const MapObjectId('radius'),
-                          circle: Circle(
-                            center: widget.center,
-                            radius: km * 1000,
-                          ),
+                          circle:
+                              Circle(center: widget.center, radius: km * 1000),
                           fillColor: c.primary.withValues(alpha: 0.15),
                           strokeColor: c.primary,
                           strokeWidth: 1.5,
@@ -270,9 +306,8 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                     activeTrackColor: c.primary,
                     inactiveTrackColor: c.progressTrack,
                     overlayColor: c.primary.withValues(alpha: 0.12),
-                    tickMarkShape: const RoundSliderTickMarkShape(
-                      tickMarkRadius: 0,
-                    ),
+                    tickMarkShape:
+                        const RoundSliderTickMarkShape(tickMarkRadius: 0),
                     // One piece per radius step, the same broken line the time
                     // filter draws.
                     trackShape: SegmentedSliderTrackShape(
@@ -301,15 +336,13 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                     children: [
                       Text(
                         radiusLabel(kRadiusStepsKm.first),
-                        style: AppText.regular12.copyWith(
-                          color: c.textSecondary,
-                        ),
+                        style:
+                            AppText.regular12.copyWith(color: c.textSecondary),
                       ),
                       Text(
                         'map_radius_all'.tr(),
-                        style: AppText.regular12.copyWith(
-                          color: c.textSecondary,
-                        ),
+                        style:
+                            AppText.regular12.copyWith(color: c.textSecondary),
                       ),
                     ],
                   ),
@@ -318,9 +351,8 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                 FilterSheetButton(
                   label: 'apply_button'.tr(),
                   gradient: AppGradients.brand,
-                  onTap: () => Navigator.of(
-                    context,
-                  ).pop(LocationFilterResult(_radiusKm)),
+                  onTap: () => Navigator.of(context)
+                      .pop(LocationFilterResult(_radiusKm)),
                 ),
               ],
             ),
