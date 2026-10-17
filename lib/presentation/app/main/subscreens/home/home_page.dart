@@ -11,6 +11,7 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/common/utils/display_name_notifier.dart';
+import 'package:lumi_pass/common/utils/home_scroll_to_top.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/constants/constants.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -139,64 +140,68 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           }
           return false;
         },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: 4.verticalSpace),
-            // "Bugun borilishi kerak" — today's visits, above everything the
-            // feed is selling. Somewhere to be in two hours beats an offer, so
-            // it takes the top of the page whenever there is one; it collapses
-            // to nothing on the days there isn't, which is most of them, and
-            // the carousel is then the first thing again.
-            if (state.todayBookings.isNotEmpty)
+        child: _ScrollsToTop(
+          builder: (controller) => CustomScrollView(
+            controller: controller,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(child: 4.verticalSpace),
+              // "Bugun borilishi kerak" — today's visits, above everything the
+              // feed is selling. Somewhere to be in two hours beats an offer, so
+              // it takes the top of the page whenever there is one; it collapses
+              // to nothing on the days there isn't, which is most of them, and
+              // the carousel is then the first thing again.
+              if (state.todayBookings.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: TodayBookingsShelf(bookings: state.todayBookings),
+                ),
+              // Full-bleed promo carousel: the Lumi Start packet leads it, then
+              // the API banners.
               SliverToBoxAdapter(
-                child: TodayBookingsShelf(bookings: state.todayBookings),
-              ),
-            // Full-bleed promo carousel: the Lumi Start packet leads it, then
-            // the API banners.
-            SliverToBoxAdapter(
-              child: HomeBannerCarousel(
-                banners: state.homeModel?.data?.banners ?? [],
-                packet: state.packet,
-                onAksiyaTap: () => context.router.push(AksiyaRoute()),
-              ),
-            ),
-            if (_categories(state).isNotEmpty)
-              SliverToBoxAdapter(child: _buildCategories(context, state)),
-            // What a Lumi Coin pack buys, then the courses row.
-            //
-            // No fallback: with no coin activities to show — the feature off,
-            // or a server that predates it — there is no panel at all. Any
-            // other row under "Входит в подписку" would claim the pack buys
-            // things it does not.
-            if (state.subscriptionList.isNotEmpty)
-              SliverToBoxAdapter(child: _buildSubscription(context, state)),
-            // The interests row is dealt into "Near you" after its first
-            // three cards (see [_inserts]). It keeps this slot only on a feed
-            // too short to have dealt it.
-            if (!interestsDealt && _hasInterestsRow(state))
-              SliverToBoxAdapter(child: _buildInterestsRow(context, state)),
-            if (state.nearClassesList.isNotEmpty)
-              ..._buildNearYou(context, state, slots),
-            // "Реклама" — normally dealt INTO the near list (see
-            // [_inserts]), where it is actually seen: that list paginates
-            // without end, so a card placed after it was a card nobody
-            // reached. It keeps this slot only on a feed too short to have
-            // dealt it — no near list, or fewer cards than it takes to get to
-            // its turn.
-            if (!adDealt && _adSlot(context, state) != null)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 8.h),
-                  child: _adSlot(context, state),
+                child: HomeBannerCarousel(
+                  banners: state.homeModel?.data?.banners ?? [],
+                  packet: state.packet,
+                  onAksiyaTap: () => context.router.push(AksiyaRoute()),
                 ),
               ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 24.h + 64.0 + MediaQuery.of(context).viewPadding.bottom,
+              if (_categories(state).isNotEmpty)
+                SliverToBoxAdapter(child: _buildCategories(context, state)),
+              // What a Lumi Coin pack buys, then the courses row.
+              //
+              // No fallback: with no coin activities to show — the feature off,
+              // or a server that predates it — there is no panel at all. Any
+              // other row under "Входит в подписку" would claim the pack buys
+              // things it does not.
+              if (state.subscriptionList.isNotEmpty)
+                SliverToBoxAdapter(child: _buildSubscription(context, state)),
+              // The interests row is dealt into "Near you" after its first
+              // three cards (see [_inserts]). It keeps this slot only on a feed
+              // too short to have dealt it.
+              if (!interestsDealt && _hasInterestsRow(state))
+                SliverToBoxAdapter(child: _buildInterestsRow(context, state)),
+              if (state.nearClassesList.isNotEmpty)
+                ..._buildNearYou(context, state, slots),
+              // "Реклама" — normally dealt INTO the near list (see
+              // [_inserts]), where it is actually seen: that list paginates
+              // without end, so a card placed after it was a card nobody
+              // reached. It keeps this slot only on a feed too short to have
+              // dealt it — no near list, or fewer cards than it takes to get to
+              // its turn.
+              if (!adDealt && _adSlot(context, state) != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 8.h),
+                    child: _adSlot(context, state),
+                  ),
+                ),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height:
+                      24.h + 64.0 + MediaQuery.of(context).viewPadding.bottom,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -956,4 +961,49 @@ class _ConnectionErrorView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Owns the feed's scroll controller so the Home tab can send it back to the
+/// top — see [homeScrollToTop]. [HomePage] is a stateless [BasePage], so the
+/// controller needs a State of its own to live and be disposed in.
+class _ScrollsToTop extends StatefulWidget {
+  const _ScrollsToTop({required this.builder});
+
+  final Widget Function(ScrollController controller) builder;
+
+  @override
+  State<_ScrollsToTop> createState() => _ScrollsToTopState();
+}
+
+class _ScrollsToTopState extends State<_ScrollsToTop> {
+  final _controller = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    homeScrollToTop.addListener(_toTop);
+  }
+
+  @override
+  void dispose() {
+    homeScrollToTop.removeListener(_toTop);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toTop() {
+    if (!_controller.hasClients || _controller.offset <= 0) return;
+    // A long feed jumps most of the way first: animating ten screens of
+    // cards reads as a slow slide rather than "back to the top".
+    final screen = _controller.position.viewportDimension;
+    if (_controller.offset > screen * 3) _controller.jumpTo(screen * 3);
+    _controller.animateTo(
+      0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(_controller);
 }

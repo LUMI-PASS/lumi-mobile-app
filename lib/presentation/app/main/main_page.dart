@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/utils/home_scroll_to_top.dart';
 import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
@@ -164,7 +165,13 @@ class _MainPageState extends State<MainPage> {
               ),
             CustomBottomBar(
               selectedIndex: tabsRouter.activeIndex,
-              onItemSelected: tabsRouter.setActiveIndex,
+              onItemSelected: (index) {
+                // Home again while on Home: back to the top of the feed.
+                if (index == 0 && tabsRouter.activeIndex == 0) {
+                  homeScrollToTop.value++;
+                }
+                tabsRouter.setActiveIndex(index);
+              },
             ),
           ],
         );
