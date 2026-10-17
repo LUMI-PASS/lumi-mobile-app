@@ -956,6 +956,10 @@ class $AssetsImagesBannerGen {
   AssetGenImage get bannerCoins =>
       const AssetGenImage('assets/images/banner/banner_coins.png');
 
+  /// File path: assets/images/banner/banner_interests.png
+  AssetGenImage get bannerInterests =>
+      const AssetGenImage('assets/images/banner/banner_interests.png');
+
   /// File path: assets/images/banner/banner_invite.png
   AssetGenImage get bannerInvite =>
       const AssetGenImage('assets/images/banner/banner_invite.png');
@@ -986,10 +990,6 @@ class $AssetsImagesMascotGen {
       const AssetGenImage('assets/images/mascot/mascot_calendar.webp');
 
   /// File path: assets/images/mascot/mascot_categories.webp
-  /// File path: assets/images/banner/banner_interests.png
-  AssetGenImage get bannerInterests =>
-      const AssetGenImage('assets/images/banner/banner_interests.png');
-
   AssetGenImage get mascotCategories =>
       const AssetGenImage('assets/images/mascot/mascot_categories.webp');
 

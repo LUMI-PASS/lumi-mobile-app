@@ -102,10 +102,17 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
         : 'uncategorised:${course.id}';
   }
 
-  /// An activity a Lumi Coin pack can pay for. The coin price is the whole
-  /// test: the server sends it only on what coins are accepted for, and never
-  /// on a course — courses are money-only, so they can never be in this row.
-  static bool _paidWithCoins(HomClass c) => (c.newCoinPrice ?? 0) > 0;
+  /// What "Входит в подписку" may show: a one-time activity a Lumi Coin pack
+  /// pays for, and nothing else.
+  ///
+  /// The server already sends a coin price only on such activities — never on
+  /// a course or an intake (both `is_course`), never on a catalogue listing,
+  /// which cannot be booked at all. The other two checks say so here as well,
+  /// so a server that got it wrong could not put one in the pack's row.
+  static bool _inThePack(HomClass c) =>
+      !(c.isCourse ?? false) &&
+      !(c.isCatalog ?? false) &&
+      (c.newCoinPrice ?? 0) > 0;
 
   /// The row, dealt from everything the feed sent: the featured activities and
   /// the nearby ones, deduplicated, narrowed to what coins buy, shuffled, cut
@@ -117,7 +124,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     final seen = <String>{};
     final pool = <HomClass>[];
     for (final c in [...newClasses, ...nearClasses]) {
-      if (!_paidWithCoins(c)) continue;
+      if (!_inThePack(c)) continue;
       // A nearby activity is very often a featured one as well; without this
       // the row can deal the same card twice.
       final id = c.id;
@@ -181,7 +188,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     if (row.length >= subscriptionRowSize) return row;
     final have = row.map((c) => c.id).toSet();
     final fresh = incoming
-        .where((c) => _paidWithCoins(c) && !have.contains(c.id))
+        .where((c) => _inThePack(c) && !have.contains(c.id))
         .toList()
       ..shuffle(Random(_shuffleSeed));
     if (fresh.isEmpty) return row;
@@ -407,10 +414,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // the trial just bought is no longer the one on offer.
     final catalogChanged = _lastCatalogRevision != catalogRevision.value;
 
-    if (!langChanged &&
-        !couponChanged &&
-        !locationChanged &&
-        !catalogChanged) {
+    if (!langChanged && !couponChanged && !locationChanged && !catalogChanged) {
       return;
     }
     _lastCatalogRevision = catalogRevision.value;
@@ -515,7 +519,9 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   }
 
   Future<void> loadMoreNewClasses() async {
-    if (_newLoadLock || buildable.isLoadingNewClasses || !buildable.hasMoreNewClasses) return;
+    if (_newLoadLock ||
+        buildable.isLoadingNewClasses ||
+        !buildable.hasMoreNewClasses) return;
     _newLoadLock = true;
     build((b) => b.copyWith(isLoadingNewClasses: true));
 
@@ -546,7 +552,9 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   }
 
   Future<void> loadMoreNearClasses() async {
-    if (_nearLoadLock || buildable.isLoadingNearClasses || !buildable.hasMoreNearClasses) return;
+    if (_nearLoadLock ||
+        buildable.isLoadingNearClasses ||
+        !buildable.hasMoreNearClasses) return;
     _nearLoadLock = true;
     build((b) => b.copyWith(isLoadingNearClasses: true));
 

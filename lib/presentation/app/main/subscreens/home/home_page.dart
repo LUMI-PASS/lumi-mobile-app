@@ -161,16 +161,12 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               SliverToBoxAdapter(child: _buildCategories(context, state)),
             // What a Lumi Coin pack buys, then the courses row.
             //
-            // The fallback is not cosmetic: on a server that sends no coin
-            // prices at all — the feature off, or a backend that predates it —
-            // the subscription row would be empty and home would be left with
-            // no activities shelf whatsoever. It falls back to the row that
-            // used to be here. Both carry the same "Популярные занятия"
-            // header; only the coin row is drawn on the violet band.
+            // No fallback: with no coin activities to show — the feature off,
+            // or a server that predates it — there is no panel at all. Any
+            // other row under "Входит в подписку" would claim the pack buys
+            // things it does not.
             if (state.subscriptionList.isNotEmpty)
-              SliverToBoxAdapter(child: _buildSubscription(context, state))
-            else if (state.newClassesList.isNotEmpty)
-              SliverToBoxAdapter(child: _buildPopular(context, state)),
+              SliverToBoxAdapter(child: _buildSubscription(context, state)),
             // An account from before the interests question has never been
             // asked it, and without an answer the row below can only be the
             // generic courses. Asked here, where the answer shows up.
@@ -324,11 +320,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     return columns;
   }
 
-  /// The coin row — a sample of what a Lumi Coin pack pays for.
-  ///
-  /// Headed "Популярные занятия", not "Входит в подписку" as it once was:
-  /// every bookable activity has a coin price, so "included" singled out
-  /// nothing, and a coin pack is not a subscription.
+  /// The coin row — "Входит в подписку": one-time activities a Lumi Coin
+  /// pack pays for, and nothing else. No courses, no catalogue listings — see
+  /// `HomeCubit._inThePack`.
   ///
   /// The row is a fixed ten, dealt and shuffled in the cubit (see
   /// `HomeCubit.subscriptionRowSize`), so it is a taste of the catalogue rather
@@ -377,7 +371,10 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            HomeSectionHeader(title: 'popular_activities'.tr(), chevron: true),
+            HomeSectionHeader(
+              title: 'included_in_subscription'.tr(),
+              chevron: true,
+            ),
             12.verticalSpace,
             NotificationListener<ScrollNotification>(
               onNotification: (scrollInfo) {
@@ -428,80 +425,6 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
           ],
         ),
       ),
-    );
-  }
-
-  /// The row this feed used to lead with: "Mashhur mashg'ulotlar", whatever
-  /// the adminka featured, paginating as it is scrolled.
-  ///
-  /// Kept only as [_buildSubscription]'s fallback — see the feed above.
-  Widget _buildPopular(BuildContext context, HomeBuildable state) {
-    final rowH = 126.h + 14.h + 118.h;
-    // Whatever the adminka has FEATURED, course or class alike. The row is the
-    // centre's own pick, and a course it picked is as much that as a class is —
-    // the card prices each its own way off `is_course`, the same as "Near you",
-    // which has always carried both.
-    final popular = state.newClassesList;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        8.verticalSpace,
-        HomeSectionHeader(
-          title: 'popular_activities'.tr(),
-          // Everything on offer, searchable and filterable. This row is a
-          // popularity row rather than a type, so it narrows to nothing.
-          onViewAll: () => context.router.push(
-            SearchDiscoveryRoute(),
-          ),
-          // Names what the tap lands on, the same way the courses row below
-          // does. Its own key rather than the generic `view_all`, which the
-          // schedule screen also uses and which must stay put.
-          viewAllLabel: 'view_all_activities'.tr(),
-        ),
-        10.verticalSpace,
-        NotificationListener<ScrollNotification>(
-          onNotification: (scrollInfo) {
-            if (scrollInfo.metrics.axis == Axis.horizontal &&
-                scrollInfo.metrics.pixels >=
-                    scrollInfo.metrics.maxScrollExtent - 8) {
-              context.read<HomeCubit>().loadMoreNewClasses();
-            }
-            return scrollInfo.metrics.axis == Axis.horizontal;
-          },
-          child: SizedBox(
-            height: rowH,
-            child: Stack(
-              children: [
-                ListView.builder(
-                  key: const PageStorageKey('new-classes-list'),
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.only(left: 8.w, right: 16.w),
-                  itemCount: popular.length,
-                  itemBuilder: (context, index) => HomeCourseCard(
-                    key: ValueKey(popular[index].id ?? index),
-                    homClass: popular[index],
-                    margin: EdgeInsets.only(left: 8.w),
-                    // A browsing shelf, not a comparison — see
-                    // [HomeCourseCard.showDistance].
-                    showDistance: false,
-                    showPrice: _showsPrice(popular[index]),
-                    onViewAsReels: () => _openShorts(context, popular, index),
-                  ),
-                ),
-                if (state.isLoadingNewClasses)
-                  Positioned(
-                    right: 16.w,
-                    top: 0,
-                    bottom: 8.h,
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 

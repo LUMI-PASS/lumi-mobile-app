@@ -38,23 +38,27 @@ class HomeSectionHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.bold18.copyWith(color: c.textPrimary),
-                  ),
-                ),
-                if (chevron)
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 24.sp,
-                    color: c.textPrimary,
-                  ),
-              ],
+            // One run of text, so the "›" is centred on the title's own line
+            // rather than on the Row, where the line's descender room pushed it
+            // visibly high.
+            child: Text.rich(
+              TextSpan(
+                text: title,
+                children: [
+                  if (chevron)
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 24.sp,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.bold18.copyWith(color: c.textPrimary),
             ),
           ),
           if (onViewAll != null)
