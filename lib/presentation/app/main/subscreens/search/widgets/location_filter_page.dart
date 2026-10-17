@@ -133,6 +133,15 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
               child: SearchTopBar(
                 title: 'map_by_location'.tr(),
                 onBack: () => Navigator.of(context).pop(),
+                close: true,
+                // Back to "All". Apply still commits it, like the slider.
+                trailing: _ResetButton(
+                  enabled: !_isAll,
+                  onTap: () {
+                    setState(() => _step = kRadiusStepsKm.length);
+                    _frame();
+                  },
+                ),
               ),
             ),
           ),
@@ -256,6 +265,32 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "Reset" on the top bar, greyed while the radius is already "All".
+class _ResetButton extends StatelessWidget {
+  const _ResetButton({required this.enabled, required this.onTap});
+
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: enabled ? onTap : null,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 6.h),
+        child: Text(
+          'map_reset'.tr(),
+          style: AppText.semibold14.copyWith(
+            color: enabled ? c.primary : c.textSecondary,
+          ),
+        ),
       ),
     );
   }

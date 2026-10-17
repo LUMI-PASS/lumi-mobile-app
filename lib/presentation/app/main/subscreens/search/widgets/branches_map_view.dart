@@ -112,10 +112,37 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   /// putting stale pills back on the map.
   int _markerSync = 0;
 
-  /// Signature (sorted ids) of the branch set the camera last fitted to. Guards
-  /// against re-fitting on every cubit emit (loading toggles etc.) — the camera
-  /// only re-fits when the actual set of centres changes.
-  String? _fittedSig;
+  /// Signature (sorted ids) of the branch set the markers were last built
+  /// for, so spurious cubit emits (loading toggles etc.) don't rebuild them.
+  String? _markerSig;
+
+  /// Set when the user changes the search (term, category, filter) and
+  /// cleared once its results have finished loading, which is when the camera
+  /// fits to them.
+  ///
+  /// The camera deliberately does NOT follow the centres as they arrive. The
+  /// map streams them in page by page, and fitting after each page — after
+  /// the search screen's seed, then page 1, then page 2 — swung the camera
+  /// across the city two or three times as the screen opened.
+  bool _fitPending = false;
+
+  /// Flips once the screen's opening search has fully loaded. Changes before
+  /// that are the page setting itself up (the categories it was opened with),
+  /// not the user searching, and must not move the camera either.
+  bool _settled = false;
+
+  /// False until the opening camera is placed. MapKit starts on its own
+  /// default view (Moscow), so the map is covered until then rather than
+  /// flashing that and jumping.
+  bool _cameraPlaced = false;
+
+  /// How close to Tashkent counts as "in Tashkent" for the opening shot —
+  /// the city plus the suburbs ringing it. Every centre is in Tashkent, so a
+  /// user further out than this opens on the city, not on themselves.
+  static const _tashkentRadiusM = 30000.0;
+
+  /// The opening zoom on the user: a walk's worth of neighbourhood.
+  static const _userZoom = 14.0;
 
   static const _minZoom = 4.0;
   static const _maxZoom = 18.0;
@@ -223,9 +250,8 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   void didUpdateWidget(covariant BranchesMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.branchesLoaded) _everLoaded = true;
-    // Re-fit only when the actual set of centres changed (e.g. category
-    // switched) — not on spurious cubit emits, which caused the camera to jump.
-    if (_sig != _fittedSig) {
+    if (_sig != _markerSig) {
+      _markerSig = _sig;
       // Map mode streams the centres in page by page, so a set change is not
       // necessarily a new search — keep the user's pick if it's still plotted.
       final selectedId = _selected?.id;
@@ -233,20 +259,78 @@ class _BranchesMapViewState extends State<BranchesMapView> {
         _selected = null;
       }
       _syncMarkers();
+    }
+    // The filter by identity: the cubit swaps in a new one only when the user
+    // changes it, and rebuilds otherwise reuse the object.
+    if (_settled &&
+        (!identical(widget.filter, oldWidget.filter) ||
+            _categoryKey(widget.selectedCategories) !=
+                _categoryKey(oldWidget.selectedCategories) ||
+            widget.searchTerm != oldWidget.searchTerm)) {
+      _fitPending = true;
+    }
+    if (!_settled && widget.branchesLoaded && !widget.isLoading) {
+      _settled = true;
+    }
+    // Fit once the new search has fully landed — every page of it.
+    if (_fitPending && oldWidget.isLoading && !widget.isLoading) {
+      _fitPending = false;
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitToBranches());
     }
   }
+
+  static String _categoryKey(List<HomCategory> categories) =>
+      categories.map((c) => c.id ?? '').join(',');
 
   void _onMapCreated(YandexMapController controller) {
     _mapController = controller;
     _mapReady = true;
     _showUserIfAllowed();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fitToBranches());
+    _placeOpeningCamera(controller);
+  }
+
+  /// The opening shot: the user, when they are in Tashkent, else the middle
+  /// of Tashkent. Placed once — loading the centres never moves it.
+  Future<void> _placeOpeningCamera(YandexMapController controller) async {
+    final here = await _userInTashkent();
+    if (!mounted) return;
+    try {
+      await _centreOn(
+        controller,
+        here ?? _defaultCenter,
+        here == null ? _minFitZoom : _userZoom,
+      );
+    } finally {
+      if (mounted) setState(() => _cameraPlaced = true);
+    }
+  }
+
+  /// Where the user is, if that is in Tashkent and known WITHOUT waiting:
+  /// the OS's last fix, else the one the home feed resolved. Never prompts,
+  /// and never holds the map back for a cold GPS lock.
+  Future<Point?> _userInTashkent() async {
+    UserLocation? loc;
+    try {
+      final perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.always ||
+          perm == LocationPermission.whileInUse) {
+        final last = await Geolocator.getLastKnownPosition()
+            .timeout(const Duration(milliseconds: 600));
+        if (last != null) {
+          loc = UserLocation.precise(last.latitude, last.longitude);
+        }
+      }
+    } catch (_) {}
+    loc ??= currentUserLocation.value;
+    if (loc == null || !loc.isPrecise) return null;
+    final metres = kTashkentCentre.metersTo(loc.lat, loc.lng);
+    if (metres == null || metres > _tashkentRadiusM) return null;
+    return Point(latitude: loc.lat, longitude: loc.lng);
   }
 
   /// Puts the "you are here" puck on the map from the start when the
   /// permission is already granted — without prompting, and without moving
-  /// the camera off the centres. Asking is left to a tap that needs the
+  /// the camera. Asking is left to a tap that needs the
   /// position: locate, or the location chip.
   Future<void> _showUserIfAllowed() async {
     try {
@@ -535,7 +619,6 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   Future<void> _fitToBranches() async {
     final controller = _mapController;
     if (!_mapReady || controller == null || !mounted) return;
-    _fittedSig = _sig;
 
     final points = _plottable
         .map((b) => Point(latitude: b.latitude!, longitude: b.longitude!))
@@ -760,18 +843,6 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     );
   }
 
-  /// Whether Reset has anything to clear: a filter (the chips' radius and
-  /// time included) or a category. The search term is the field's own, with
-  /// its own clear button.
-  bool get _hasAnythingToReset =>
-      widget.filterCount > 0 || widget.selectedCategories.isNotEmpty;
-
-  /// Reset: every filter and category off, in one request.
-  void _reset() {
-    _clearSelection();
-    context.read<SearchCubit>().applyFilter(null, categories: const []);
-  }
-
   /// The list view of this same search — categories, filter and term carried
   /// over, so switching view never changes the answer.
   void _openList() {
@@ -861,6 +932,17 @@ class _BranchesMapViewState extends State<BranchesMapView> {
             ),
           ),
 
+          // Hides MapKit's default view until the opening camera is placed.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _cameraPlaced ? 0 : 1,
+                duration: const Duration(milliseconds: 200),
+                child: ColoredBox(color: c.scaffoldBg),
+              ),
+            ),
+          ),
+
           // Filtering lives at the TOP of the screen: the map is what the user
           // is reading, and a strip of controls over its bottom edge covered
           // the very pins the camera had just fitted to.
@@ -898,11 +980,6 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                       SearchTopBar(
                         title: 'map_title'.tr(),
                         onBack: widget.onBack,
-                        close: true,
-                        trailing: _ResetButton(
-                          enabled: _hasAnythingToReset,
-                          onTap: _reset,
-                        ),
                       ),
                     ],
                     12.verticalSpace,
@@ -1127,32 +1204,6 @@ class _DropdownChip extends StatelessWidget {
                 colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// "Reset" on the top bar, greyed while there is nothing to clear.
-class _ResetButton extends StatelessWidget {
-  const _ResetButton({required this.enabled, required this.onTap});
-
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: enabled ? onTap : null,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 6.h),
-        child: Text(
-          'map_reset'.tr(),
-          style: AppText.semibold14.copyWith(
-            color: enabled ? c.primary : c.textSecondary,
           ),
         ),
       ),
