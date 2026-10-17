@@ -2,6 +2,9 @@
 ///
 /// The order here is the order they are dealt in — see [layoutNearYou].
 enum HomeInsert {
+  /// "По вашим интересам" — first, so it lands right after the opening run
+  /// of three cards.
+  interestsRow,
   inviteBanner,
   categoryTiles,
   trialBand,

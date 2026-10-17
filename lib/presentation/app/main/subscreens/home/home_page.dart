@@ -122,6 +122,10 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final adDealt = slots.any(
       (slot) => slot is HomeInsertSlot && slot.insert == HomeInsert.ad,
     );
+    final interestsDealt = slots.any(
+      (slot) =>
+          slot is HomeInsertSlot && slot.insert == HomeInsert.interestsRow,
+    );
 
     return RefreshIndicator(
       color: AppColors.brandPurple,
@@ -167,33 +171,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
             // things it does not.
             if (state.subscriptionList.isNotEmpty)
               SliverToBoxAdapter(child: _buildSubscription(context, state)),
-            // An account from before the interests question has never been
-            // asked it, and without an answer the row below can only be the
-            // generic courses. Asked here, where the answer shows up.
-            if (state.homeModel?.data?.interestsPicked == false)
-              SliverToBoxAdapter(
-                child: Padding(
-                  // Room above for the artwork, which stands out of the strip.
-                  padding: EdgeInsets.only(top: 12.h, bottom: 18.h),
-                  child: HomeInterestsStrip(
-                    onTap: () => _askInterests(context),
-                  ),
-                ),
-              ),
-            // REAL courses — the backend keeps these out of the class lists, so
-            // this row is the only place they appear. Ordered to walk across
-            // categories rather than to sit in whatever order the feed sent.
-            if (state.coursesList.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _buildCoursesRow(
-                  context,
-                  // Picked for this parent's children when they have chosen
-                  // topics, otherwise the generic spread — decided in the
-                  // cubit, where the feed lands.
-                  state.coursesList,
-                  forChildren: _hasForChildren(state),
-                ),
-              ),
+            // The interests row is dealt into "Near you" after its first
+            // three cards (see [_inserts]). It keeps this slot only on a feed
+            // too short to have dealt it.
+            if (!interestsDealt && _hasInterestsRow(state))
+              SliverToBoxAdapter(child: _buildInterestsRow(context, state)),
             if (state.nearClassesList.isNotEmpty)
               ..._buildNearYou(context, state, slots),
             // "Реклама" — normally dealt INTO the near list (see
@@ -437,6 +419,41 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   /// The banner's tap: the sign-up question, then the row it feeds, reloaded
   /// so the answer is on screen when the parent comes back.
+  bool _hasInterestsRow(HomeBuildable state) =>
+      state.coursesList.isNotEmpty ||
+      state.homeModel?.data?.interestsPicked == false;
+
+  /// The interests question (for an account that was never asked it), then
+  /// the row it feeds.
+  Widget _buildInterestsRow(BuildContext context, HomeBuildable state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // An account from before the interests question has never been
+        // asked it, and without an answer the row below can only be the
+        // generic courses. Asked here, where the answer shows up.
+        if (state.homeModel?.data?.interestsPicked == false)
+          Padding(
+            // Room above for the artwork, which stands out of the strip.
+            padding: EdgeInsets.only(top: 12.h, bottom: 18.h),
+            child: HomeInterestsStrip(onTap: () => _askInterests(context)),
+          ),
+        // REAL courses — the backend keeps these out of the class lists, so
+        // this row is the only place they appear. Ordered to walk across
+        // categories rather than to sit in whatever order the feed sent.
+        if (state.coursesList.isNotEmpty)
+          _buildCoursesRow(
+            context,
+            // Picked for this parent's children when they have chosen
+            // topics, otherwise the generic spread — decided in the
+            // cubit, where the feed lands.
+            state.coursesList,
+            forChildren: _hasForChildren(state),
+          ),
+      ],
+    );
+  }
+
   Future<void> _askInterests(BuildContext context) async {
     final cubit = context.read<HomeCubit>();
     if (await askInterestsFromHome(context.router.root)) {
@@ -621,6 +638,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final fixed = [
       for (final insert in HomeInsert.values)
         if (switch (insert) {
+          HomeInsert.interestsRow => _hasInterestsRow(state),
           HomeInsert.inviteBanner => signedIn,
           HomeInsert.categoryTiles => _categories(state).length >= 4,
           HomeInsert.trialBand => _trials(state).length >= _bandMinimum,
@@ -738,6 +756,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     HomeInsertSlot slot,
   ) {
     switch (slot.insert) {
+      case HomeInsert.interestsRow:
+        return _buildInterestsRow(context, state);
       case HomeInsert.inviteBanner:
         return HomeTicketBanner(
           color: AppColors.brandPurple,
