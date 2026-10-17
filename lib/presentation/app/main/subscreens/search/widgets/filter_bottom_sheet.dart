@@ -30,26 +30,38 @@ enum PricePreset { any, custom }
 /// is on for my child" — so narrowing is a FILTER here next to age and price,
 /// not a separate screen.
 ///
-/// Only two choices, deliberately: everything, or courses alone. There is no
-/// "activities only" option because nobody shops that way — a parent looks for
-/// what is on, and sometimes specifically for a course to enrol in. A third
-/// chip excluding courses would only ever hide things from someone who never
-/// asked for them to be hidden.
+/// Only two choices a parent picks, deliberately: everything, or courses
+/// alone. There is no plain "activities only" option because nobody shops
+/// that way — a parent looks for what is on, and sometimes specifically for a
+/// course to enrol in. [coins] is not a choice either: Home's coin panel opens
+/// on it.
 enum ActivityKind {
   /// Both. The default, and what the screen opens on.
   any,
 
   /// Courses alone. What Home's "see all courses" arrives with.
-  courses;
+  courses,
+
+  /// Only what a Lumi Coin pack buys — one-time, priced activities of a
+  /// partner whose plan sells them. What Home's "Входит в подписку" arrives
+  /// with; the server narrows the centres and the map the same way. Not
+  /// offered as a pill: it is reached from that panel, and Clear removes it.
+  coins;
 
   /// The `kind` query param. [any] sends `all` explicitly, because the
   /// endpoint's own default — what an older client gets by sending nothing —
   /// is activities only, and this screen wants both.
-  String get queryValue => this == ActivityKind.courses ? 'courses' : 'all';
+  String get queryValue => switch (this) {
+        ActivityKind.courses => 'courses',
+        ActivityKind.coins => 'coins',
+        ActivityKind.any => 'all',
+      };
 
-  String get label => this == ActivityKind.courses
-      ? 'filter_kind_courses'.tr()
-      : 'filter_kind_all'.tr();
+  String get label => switch (this) {
+        ActivityKind.courses => 'filter_kind_courses'.tr(),
+        ActivityKind.coins => 'included_in_subscription'.tr(),
+        ActivityKind.any => 'filter_kind_all'.tr(),
+      };
 }
 
 class FilterResult {

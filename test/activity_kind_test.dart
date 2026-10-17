@@ -18,10 +18,18 @@ void main() {
       expect(ActivityKind.courses.queryValue, 'courses');
     });
 
-    test('offers exactly two choices — everything, or courses', () {
-      // No "activities only": excluding courses is not something a parent asks
-      // for, and a chip for it would only hide things from people who didn't.
-      expect(ActivityKind.values, [ActivityKind.any, ActivityKind.courses]);
+    test('offers no plain "activities only" — everything, courses, or the pack',
+        () {
+      // Excluding courses is not something a parent asks for, and a chip for
+      // it would only hide things from people who didn't. `coins` is not a
+      // chip: Home's "Входит в подписку" opens on it.
+      expect(ActivityKind.values,
+          [ActivityKind.any, ActivityKind.courses, ActivityKind.coins]);
+    });
+
+    test('the coin pack asks the server for "coins"', () {
+      // The server alone knows a centre's Lumi plan, so the narrowing is its.
+      expect(ActivityKind.coins.queryValue, 'coins');
     });
   });
 

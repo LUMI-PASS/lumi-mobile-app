@@ -114,13 +114,23 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       !(c.isCatalog ?? false) &&
       (c.newCoinPrice ?? 0) > 0;
 
+  /// What the server listed for `kind=coins`, once it answered — see
+  /// [_loadPackRow]. Null until then, and on a server that predates it.
+  List<HomClass>? _serverPackRow;
+
   /// The row, dealt from everything the feed sent: the featured activities and
   /// the nearby ones, deduplicated, narrowed to what coins buy, shuffled, cut
   /// to [subscriptionRowSize].
+  ///
+  /// Once [_loadPackRow] has the server's own list, that wins: only the server
+  /// knows a centre's Lumi plan, so only it can leave out a courses-only
+  /// partner. The feed deal stays as the first paint and the fallback.
   List<HomClass> _dealSubscriptionRow(
     List<HomClass> newClasses,
     List<HomClass> nearClasses,
   ) {
+    final server = _serverPackRow;
+    if (server != null) return server;
     final seen = <String>{};
     final pool = <HomClass>[];
     for (final c in [...newClasses, ...nearClasses]) {
@@ -181,6 +191,12 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   /// [subscriptionRowSize]. APPENDS rather than re-deals: the cards already on
   /// screen keep their places while a later page fills the row out behind
   /// them.
+  List<HomClass> _growSubscriptionRow(
+    List<HomClass> row,
+    List<HomClass> incoming,
+  ) =>
+      _serverPackRow != null ? row : growSubscriptionRow(row, incoming);
+
   static List<HomClass> growSubscriptionRow(
     List<HomClass> row,
     List<HomClass> incoming,
@@ -306,6 +322,31 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
         lng: _lng,
       );
       build((b) => b.copyWith(centres: page.branches));
+    } catch (_) {}
+  }
+
+  /// "Входит в подписку" from the server's `kind=coins` list: one-time,
+  /// priced activities of real partners whose plan sells them for coins.
+  ///
+  /// Asked for twice the row and shuffled, as the feed deal is, so the row is
+  /// not always the same nearest ten. An empty or failed answer keeps whatever
+  /// the feed dealt — an older server ignores the kind and lists plain
+  /// activities, which [_inThePack] then narrows exactly as before.
+  Future<void> _loadPackRow() async {
+    try {
+      final page = await _repo.getDiscoveryClasses(
+        page: 1,
+        limit: subscriptionRowSize * 2,
+        kind: 'coins',
+        lat: _lat,
+        lng: _lng,
+      );
+      final pool = page.classes.where(_inThePack).toList()
+        ..shuffle(Random(_shuffleSeed));
+      if (pool.isEmpty) return;
+      final row = pool.take(subscriptionRowSize).toList();
+      _serverPackRow = row;
+      build((b) => b.copyWith(subscriptionList: row));
     } catch (_) {}
   }
 
@@ -435,6 +476,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // Here rather than at start-up only, so a pull-to-refresh picks up a
     // centre that was published a minute ago.
     unawaited(_loadUnclaimedShelves());
+    unawaited(_loadPackRow());
     return callable(
       future: _repo.getHome(
         newClassesPage: 1,
@@ -489,6 +531,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     unawaited(_loadTodayBookings());
     unawaited(_loadCentres());
     unawaited(_loadUnclaimedShelves());
+    unawaited(_loadPackRow());
     try {
       final data = await _repo.getHome(
         newClassesPage: 1,
@@ -539,7 +582,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
 
       build((b) => b.copyWith(
             newClassesList: [...b.newClassesList, ...unique],
-            subscriptionList: growSubscriptionRow(b.subscriptionList, unique),
+            subscriptionList: _growSubscriptionRow(b.subscriptionList, unique),
             newClassesPage: b.newClassesPage + 1,
             isLoadingNewClasses: false,
             hasMoreNewClasses: incoming.length >= _pageLimit,

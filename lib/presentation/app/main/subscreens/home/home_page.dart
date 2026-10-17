@@ -335,7 +335,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // flick to the end stops asking.
     final wantsMore =
         row.length < HomeCubit.subscriptionRowSize && state.hasMoreNewClasses;
-    void openAll() => context.router.push(SearchDiscoveryRoute());
+    // Only what the pack buys — the same server rule the row is dealt from.
+    void openAll() => context.router
+        .push(SearchDiscoveryRoute(initialKind: ActivityKind.coins));
     return GestureDetector(
       // Cards and the scroll claim their own gestures first, so this only
       // fires on the panel around them — the header and the margins.
