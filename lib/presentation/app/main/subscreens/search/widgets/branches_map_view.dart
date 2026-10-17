@@ -955,6 +955,85 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     ));
   }
 
+  /// The map widget, rebuilt only when what it shows changes.
+  ///
+  /// Every rebuild of a `YandexMap` makes the plugin diff its map objects,
+  /// and that diff HASHES the whole collection — every placemark down to the
+  /// bytes of its PNG. With ~150 centre pills that is a few MB walked byte by
+  /// byte, tens of milliseconds per rebuild, and this screen rebuilds on every
+  /// keystroke in the search field, every page of centres streamed in and
+  /// every spinner. Handing Flutter the same widget instance back skips the
+  /// map's update entirely.
+  Widget _mapWidget(AppColorScheme c, double bottomBase) {
+    final f = _filter;
+    final key = (
+      _markers,
+      f.hasRadius ? (f.nearLat, f.nearLng, f.radiusKm) : null,
+      c.isDark,
+      c.primary,
+      bottomBase,
+    );
+    final cached = _map;
+    if (cached != null && key == _mapKey) return cached;
+    _mapKey = key;
+    return _map = YandexMap(
+      onMapCreated: _onMapCreated,
+      onMapTap: (_) => _clearSelection(),
+      onUserLocationAdded: (view) => styleUserLocation(
+        view,
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      ),
+      // Replaces the light/dark CartoDB tile URLs the `flutter_map`
+      // version switched between.
+      nightModeEnabled: c.isDark,
+      mapObjects: [
+        ClusterizedPlacemarkCollection(
+          mapId: const MapObjectId('branches'),
+          placemarks: _markers,
+          radius: _clusterRadius,
+          minZoom: _clusterMinZoom,
+          onClusterAdded: _onClusterAdded,
+          onClusterTap: _onClusterTap,
+        ),
+        // The active radius, so the user can see why pins outside it
+        // are gone.
+        if (_filter.hasRadius)
+          CircleMapObject(
+            mapId: const MapObjectId('radius'),
+            circle: Circle(
+              center: Point(
+                latitude: _filter.nearLat!,
+                longitude: _filter.nearLng!,
+              ),
+              radius: _filter.radiusKm! * 1000,
+            ),
+            fillColor: c.primary.withValues(alpha: 0.12),
+            strokeColor: c.primary,
+            strokeWidth: 1.5,
+            zIndex: -1,
+          ),
+      ],
+      cameraBounds: const CameraBounds(
+        minZoom: _minZoom,
+        maxZoom: _maxZoom,
+      ),
+      // Yandex's terms require the logo to stay visible, so it is
+      // moved clear of the zoom controls and the bottom card rather
+      // than hidden.
+      logoAlignment: const MapAlignment(
+        horizontal: HorizontalAlignment.left,
+        vertical: VerticalAlignment.bottom,
+      ),
+      logoPadding: MapPadding(
+        horizontal: 8.w.round(),
+        vertical: (bottomBase + _cardGap).round(),
+      ),
+    );
+  }
+
+  Widget? _map;
+  Object? _mapKey;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -979,59 +1058,7 @@ class _BranchesMapViewState extends State<BranchesMapView> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: YandexMap(
-              onMapCreated: _onMapCreated,
-              onMapTap: (_) => _clearSelection(),
-              onUserLocationAdded: (view) => styleUserLocation(
-                view,
-                devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
-              ),
-              // Replaces the light/dark CartoDB tile URLs the `flutter_map`
-              // version switched between.
-              nightModeEnabled: c.isDark,
-              mapObjects: [
-                ClusterizedPlacemarkCollection(
-                  mapId: const MapObjectId('branches'),
-                  placemarks: _markers,
-                  radius: _clusterRadius,
-                  minZoom: _clusterMinZoom,
-                  onClusterAdded: _onClusterAdded,
-                  onClusterTap: _onClusterTap,
-                ),
-                // The active radius, so the user can see why pins outside it
-                // are gone.
-                if (_filter.hasRadius)
-                  CircleMapObject(
-                    mapId: const MapObjectId('radius'),
-                    circle: Circle(
-                      center: Point(
-                        latitude: _filter.nearLat!,
-                        longitude: _filter.nearLng!,
-                      ),
-                      radius: _filter.radiusKm! * 1000,
-                    ),
-                    fillColor: c.primary.withValues(alpha: 0.12),
-                    strokeColor: c.primary,
-                    strokeWidth: 1.5,
-                    zIndex: -1,
-                  ),
-              ],
-              cameraBounds: const CameraBounds(
-                minZoom: _minZoom,
-                maxZoom: _maxZoom,
-              ),
-              // Yandex's terms require the logo to stay visible, so it is
-              // moved clear of the zoom controls and the bottom card rather
-              // than hidden.
-              logoAlignment: const MapAlignment(
-                horizontal: HorizontalAlignment.left,
-                vertical: VerticalAlignment.bottom,
-              ),
-              logoPadding: MapPadding(
-                horizontal: 8.w.round(),
-                vertical: (bottomBase + _cardGap).round(),
-              ),
-            ),
+            child: _mapWidget(c, bottomBase),
           ),
 
           // Hides MapKit's default view until the opening camera is placed.
@@ -1167,8 +1194,15 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                 // that, which asserts. A Row simply takes its children's
                 // height.
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  // With the Positioned's 8, the same 16 the search bar keeps
+                  // from the screen edge.
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
                   child: Row(
+                    // spaceBetween, not a Spacer: a Flexible next to a Spacer
+                    // splits the free width between them, and the half the
+                    // short count pill did not use was left as a gap on the
+                    // RIGHT, pushing the buttons ~22pt off the edge.
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       // What the current search actually plots. On a map the
@@ -1183,7 +1217,6 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                                   .tr(args: ['${_plottable.length}']),
                         ),
                       ),
-                      const Spacer(),
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         // Right-aligned so the wider List pill lines up on the
