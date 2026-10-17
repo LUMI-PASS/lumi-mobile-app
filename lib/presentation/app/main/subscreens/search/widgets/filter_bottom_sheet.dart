@@ -2,7 +2,8 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lumi_pass/common/constants/districts.dart';
+// Only the hidden "Район" section uses it — restore with that section.
+// import 'package:lumi_pass/common/constants/districts.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
@@ -12,6 +13,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/date_range_picker_sheet.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/category_picker_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/location_filter_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/time_filter.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
@@ -188,9 +190,9 @@ class FilterResult {
 class FilterBottomSheet extends StatefulWidget {
   final FilterResult? initial;
 
-  /// Every category there is to offer — the grid section is built only when
-  /// this is non-empty, so a caller that filters categories some other way
-  /// (the map screen, which has its own picker) gets the sheet it always had.
+  /// Every category there is to offer. The "Категории" row is built only when
+  /// there is something to offer — this, or a category already picked. The
+  /// map and the list both pass it, so the sheet is the same on either.
   final List<HomCategory> categories;
 
   /// Centres to dot the radius page's map with — whatever the caller has
@@ -413,6 +415,40 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         nearLng: _nearLng,
       );
 
+  /// What the "Категории" row says: "Выбрать" with nothing ticked, the one title
+  /// with a single pick, and the first title plus "+N" with several — the
+  /// map's category chip says it the same way.
+  String get _categoryLabel {
+    final picked = [
+      for (final id in _categoryIds)
+        if ((_knownCategories[id]?.title ?? '').isNotEmpty)
+          _knownCategories[id]!.title!,
+    ];
+    if (picked.isEmpty) return 'select'.tr();
+    if (picked.length == 1) return picked.first;
+    return '${picked.first} +${picked.length - 1}';
+  }
+
+  /// The categories page, over this sheet. Its pick replaces the ticks here
+  /// and is committed with everything else on Apply.
+  Future<void> _pickCategories() async {
+    final result = await CategoryPickerPage.show(
+      context,
+      categories: _offeredCategories,
+      selected: [
+        for (final id in _categoryIds)
+          if (_knownCategories[id] != null) _knownCategories[id]!,
+      ],
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _categoryIds = {
+        for (final cat in result.categories)
+          if (cat.id != null) cat.id!,
+      };
+    });
+  }
+
   /// The map's own radius page, over this sheet. Measured from the centre
   /// already in use when there is a radius, so widening it does not move it.
   Future<void> _pickRadius() async {
@@ -505,53 +541,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     ),
                   ),
                   8.kh,
-                  // First, because it decides WHAT the other filters are
-                  // narrowing — a one-off class or a course you enrol in.
-                  _Section(
-                    label: 'filter_kind'.tr(),
-                    child: Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: [
-                        for (final kind in ActivityKind.values)
-                          FilterPill(
-                            label: kind.label,
-                            selected: _kind == kind,
-                            onTap: () => setState(() => _kind = kind),
-                          ),
-                      ],
-                    ),
-                  ),
-                  16.kh,
-                  // Categories, as a two-column grid.
-                  //
-                  // NOT the pill Wrap every other section uses: there are two
-                  // dozen of these and their titles are long, so wrapped pills
-                  // came out as ragged rows of wildly different widths that
-                  // read as a paragraph rather than a list to pick from. Two
-                  // even columns give every category the same target and the
-                  // same place to start reading.
-                  //
-                  // Multi-select, and no "all categories" tile: nothing ticked
-                  // already means every category, which is the same rule the
-                  // district section below runs on, and Clear empties it.
-                  if (_offeredCategories.isNotEmpty) ...[
-                    _Section(
-                      // "Категории" — the bare noun, like "Тип" and "Район"
-                      // beside it. `all_categories` is the Home row's own
-                      // heading and reads as a destination rather than as a
-                      // label over a pick list.
-                      label: 'categories'.tr(),
-                      child: _CategoryGrid(
-                        categories: _offeredCategories,
-                        selectedIds: _categoryIds,
-                        onToggle: (id) => setState(() {
-                          if (!_categoryIds.remove(id)) _categoryIds.add(id);
-                        }),
-                      ),
-                    ),
-                    16.kh,
-                  ],
+                  // "Тип" (all / courses) is hidden for now: the app is not
+                  // selling courses at the moment, so a "Курсы" pill offered a
+                  // filter nobody needs. The kind filter itself still works —
+                  // Home's "Все курсы" still opens on it, and Clear removes it.
                   _Section(
                     label: 'filter_date'.tr(),
                     child: Wrap(
@@ -611,39 +604,35 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     ),
                   ),
                   16.kh,
-                  _Section(
-                    label: 'map_by_location'.tr(),
-                    child: _RadiusRow(
-                      label: _radiusKm == null
-                          ? 'map_radius_all'.tr()
-                          : radiusLabel(_radiusKm!),
-                      active: _radiusKm != null,
-                      onTap: _pickRadius,
-                    ),
-                  ),
-                  16.kh,
-                  _Section(
-                    label: 'filter_district'.tr(),
-                    child: Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: [
-                        for (final d in kTashkentDistricts)
-                          FilterPill(
-                            label: d.label,
-                            selected: _districts.contains(d.key),
-                            // Multi-select: each chip toggles on its own, so a
-                            // parent can pick the two districts they'd actually
-                            // travel to. No chip selected = anywhere.
-                            onTap: () => setState(() {
-                              if (!_districts.remove(d.key)) {
-                                _districts.add(d.key);
-                              }
-                            }),
-                          ),
-                      ],
-                    ),
-                  ),
+                  // "Район" is hidden for now: "По расположению" at the bottom
+                  // picks a radius around the user, which answers the same
+                  // question.
+                  // The district filter itself still works — a value already
+                  // set is kept and Clear removes it — so this can come back
+                  // by uncommenting it.
+                  // _Section(
+                  //   label: 'filter_district'.tr(),
+                  //   child: Wrap(
+                  //     spacing: 8.w,
+                  //     runSpacing: 8.h,
+                  //     children: [
+                  //       for (final d in kTashkentDistricts)
+                  //         FilterPill(
+                  //           label: d.label,
+                  //           selected: _districts.contains(d.key),
+                  //           // Multi-select: each chip toggles on its own, so a
+                  //           // parent can pick the two districts they'd actually
+                  //           // travel to. No chip selected = anywhere.
+                  //           onTap: () => setState(() {
+                  //             if (!_districts.remove(d.key)) {
+                  //               _districts.add(d.key);
+                  //             }
+                  //           }),
+                  //         ),
+                  //     ],
+                  //   ),
+                  // ),
+                  // 16.kh,
                   16.kh,
                   _Section(
                     label: 'gender'.tr(),
@@ -711,6 +700,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         ),
                       ],
                     ),
+                  ),
+                  // The two filters with a page of their own come last, as
+                  // one-line rows — "Категории … Выбрать ›" — the way 1fit
+                  // closes its sheet. Each opens its full-screen page, and
+                  // what is picked there is committed with the rest on Apply.
+                  if (_offeredCategories.isNotEmpty)
+                    _PickerRow(
+                      title: 'categories'.tr(),
+                      value:
+                          _categoryIds.isEmpty ? 'select'.tr() : _categoryLabel,
+                      onTap: _pickCategories,
+                    ),
+                  _PickerRow(
+                    title: 'map_by_location'.tr(),
+                    value: _radiusKm == null
+                        ? 'select'.tr()
+                        : radiusLabel(_radiusKm!),
+                    onTap: _pickRadius,
                   ),
                   16.kh,
                 ],
@@ -783,17 +790,18 @@ class _Section extends StatelessWidget {
   }
 }
 
-/// "По расположению" in the sheet: the radius in force, or "Все", and a "›"
-/// to the page that changes it.
-class _RadiusRow extends StatelessWidget {
-  const _RadiusRow({
-    required this.label,
-    required this.active,
+/// A filter that has a page of its own — "Категории", "По расположению" — as
+/// one line: the filter's name on the left, what is picked (or "Выбрать") on
+/// the right, and a "›" to the page that changes it.
+class _PickerRow extends StatelessWidget {
+  const _PickerRow({
+    required this.title,
+    required this.value,
     required this.onTap,
   });
 
-  final String label;
-  final bool active;
+  final String title;
+  final String value;
   final VoidCallback onTap;
 
   @override
@@ -803,22 +811,27 @@ class _RadiusRow extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(vertical: 14.h),
         decoration: BoxDecoration(
-          color: c.control,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: c.controlBorder),
+          border: Border(bottom: BorderSide(color: c.controlBorder)),
         ),
         child: Row(
           children: [
+            Text(
+              title,
+              style: AppText.medium16.copyWith(color: c.textPrimary),
+            ),
+            12.kw,
             Expanded(
               child: Text(
-                label,
-                style: AppText.medium14.copyWith(
-                  color: active ? c.primary : c.textPrimary,
-                ),
+                value,
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.medium14.copyWith(color: c.primary),
               ),
             ),
+            4.kw,
             Icon(
               Icons.chevron_right_rounded,
               size: 20.sp,
@@ -862,124 +875,6 @@ class FilterPill extends StatelessWidget {
         ),
         child:
             Text(label, style: AppText.semibold12.copyWith(color: textColor)),
-      ),
-    );
-  }
-}
-
-/// The category picks, two to a row.
-///
-/// Laid out by hand rather than with a [GridView]: the sheet is already one
-/// scroll view, so a nested one would have to be shrink-wrapped and given a
-/// fixed `childAspectRatio` — and a fixed ratio is exactly what clips a
-/// two-line category title. [IntrinsicHeight] instead lets a row grow to its
-/// taller tile and keeps the pair the same height, which is what makes the
-/// columns read as columns.
-class _CategoryGrid extends StatelessWidget {
-  const _CategoryGrid({
-    required this.categories,
-    required this.selectedIds,
-    required this.onToggle,
-  });
-
-  final List<HomCategory> categories;
-  final Set<String> selectedIds;
-  final ValueChanged<String> onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < categories.length; i += 2) ...[
-          if (i > 0) 8.kh,
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _tile(categories[i])),
-                8.kw,
-                // The last tile of an odd list keeps its column rather than
-                // stretching across both — a lone double-width tile reads as a
-                // different kind of control from the ones above it.
-                Expanded(
-                  child: i + 1 < categories.length
-                      ? _tile(categories[i + 1])
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _tile(HomCategory category) {
-    final id = category.id;
-    return _CategoryTile(
-      label: category.title ?? '',
-      selected: id != null && selectedIds.contains(id),
-      // A category the server sent without an id cannot be filtered on; it is
-      // shown, inert, rather than dropped out of a grid the user is reading
-      // against the catalogue they saw on Home.
-      onTap: id == null ? null : () => onToggle(id),
-    );
-  }
-}
-
-/// One cell of [_CategoryGrid] — the sheet's selected/unselected treatment at
-/// tile size, with a tick in the corner once it is on.
-class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final textColor = selected ? AppColors.onBrand : c.textPrimary;
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Opacity(
-        opacity: onTap == null ? 0.45 : 1,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-          decoration: BoxDecoration(
-            color: selected ? null : c.control,
-            gradient: selected ? AppGradients.indigo : null,
-            borderRadius: BorderRadius.circular(14.r),
-            border: selected ? null : Border.all(color: c.controlBorder),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  // Two lines, because a tile is half the sheet wide and the
-                  // longer category names do not fit on one.
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.semibold12.copyWith(color: textColor),
-                ),
-              ),
-              if (selected) ...[
-                4.kw,
-                Icon(Icons.check_rounded,
-                    size: 16.sp, color: AppColors.onBrand),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }

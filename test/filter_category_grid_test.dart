@@ -3,16 +3,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/category_picker_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 
-/// The filter sheet's category grid.
+/// The filter sheet's categories: a "Категории" row that opens the full-screen
+/// [CategoryPickerPage].
 ///
-/// Two things are worth pinning down and neither is visible to the analyzer:
-/// that the tiles really come out TWO to a row (the layout is hand-rolled, so
-/// a stray `Expanded` would silently give one tile the whole width), and that a
-/// tick survives Apply as a resolved [HomCategory] — including a category that
-/// arrived already ticked but is absent from the catalogue the sheet was given,
-/// which is the case that quietly dropped a live filter.
+/// Worth pinning down because the analyzer cannot see it: that the page lists
+/// the catalogue in order, and that a tick survives the page's Apply AND the
+/// sheet's as a resolved [HomCategory] — including a category that arrived
+/// already ticked but is absent from the catalogue the sheet was given, which
+/// is the case that quietly dropped a live filter.
 void main() {
   // The sheet is laid out with ScreenUtil against a 390x844 design. The
   // default 800x600 test surface scales every `.w`/`.h` by ~2 and overflows
@@ -97,41 +98,31 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// The centre-x of every rendered tile carrying [titles], grouped by row.
-  List<List<String>> rows(WidgetTester tester, List<String> titles) {
-    final byTop = <double, List<(double, String)>>{};
-    for (final title in titles) {
-      final finder = find.text(title);
-      if (!finder.evaluate().isNotEmpty) continue;
-      final rect = tester.getRect(finder);
-      // Rounded, because two tiles in a row can differ by a sub-pixel when one
-      // of them wraps to a second line.
-      final key = rect.top.roundToDouble();
-      byTop.putIfAbsent(key, () => []).add((rect.left, title));
-    }
-    final tops = byTop.keys.toList()..sort();
-    return [
-      for (final top in tops)
-        [
-          for (final entry in byTop[top]!..sort((a, b) => a.$1.compareTo(b.$1)))
-            entry.$2,
-        ],
-    ];
+  /// The "Категории" row's "Выбрать". With no translations loaded it reads as
+  /// the key, and the location row under it says the same, so the first one
+  /// is ours.
+  Finder categoriesRow() => find.text('select').first;
+
+  /// Scrolls the sheet to the row — it sits at the bottom — and opens the page.
+  Future<void> openCategories(WidgetTester tester) async {
+    await tester.ensureVisible(categoriesRow());
+    await tester.pumpAndSettle();
+    await tester.tap(categoriesRow());
   }
 
-  testWidgets('tiles come out two to a row, in catalogue order',
-      (tester) async {
+  testWidgets('the row opens the whole catalogue, in order', (tester) async {
     await tester.pumpWidget(host(categories: catalogue));
     await openSheet(tester);
 
-    expect(
-      rows(tester, ['Shaxmat', 'Suzish', 'Raqs']),
-      [
-        ['Shaxmat', 'Suzish'],
-        // The odd one out keeps its own column rather than spanning both.
-        ['Raqs'],
-      ],
-    );
+    await openCategories(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CategoryPickerPage), findsOneWidget);
+    final tops = [
+      for (final title in ['Shaxmat', 'Suzish', 'Raqs'])
+        tester.getRect(find.text(title)).top,
+    ];
+    expect(tops, orderedEquals([...tops]..sort()));
   });
 
   testWidgets('a ticked category comes back off Apply', (tester) async {
@@ -141,8 +132,15 @@ void main() {
     );
     await openSheet(tester);
 
+    await openCategories(tester);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Suzish'));
     await tester.pumpAndSettle();
+    // The page's Apply, back to the sheet, which now names the pick …
+    await tester.tap(find.text('apply_button'));
+    await tester.pumpAndSettle();
+    expect(find.text('Suzish'), findsOneWidget);
+    // … then the sheet's own.
     await tester.tap(find.text('apply_button'));
     await tester.pumpAndSettle();
 

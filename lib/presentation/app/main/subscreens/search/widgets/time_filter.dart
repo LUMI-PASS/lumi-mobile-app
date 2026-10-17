@@ -38,26 +38,9 @@ class DayWindow {
   int get hashCode => Object.hash(from, to);
 }
 
-/// The three one-tap windows under the slider.
-enum DayPart {
-  morning(DayWindow(6 * 60, 12 * 60)),
-  afternoon(DayWindow(12 * 60, 18 * 60)),
-  evening(DayWindow(18 * 60, FilterResult.dayEnd));
-
-  const DayPart(this.window);
-
-  final DayWindow window;
-
-  String get label => switch (this) {
-        DayPart.morning => 'time_morning'.tr(),
-        DayPart.afternoon => 'time_afternoon'.tr(),
-        DayPart.evening => 'time_evening'.tr(),
-      };
-}
-
-/// The time window control: the picked range in large type, a two-thumb
-/// slider over the day in half-hour steps, and Morning / Afternoon / Evening
-/// presets.
+/// The time window control: the picked range in large type over a two-thumb
+/// slider across the day, in half-hour steps. No Morning / Afternoon / Evening
+/// presets: the slider alone says it, and the three pills only repeated it.
 ///
 /// Shared by the map's "By time" sheet ([TimeFilterSheet]) and the full
 /// [FilterBottomSheet], so both edit the same value with the same control.
@@ -143,63 +126,7 @@ class TimeRangeField extends StatelessWidget {
             ],
           ),
         ),
-        16.kh,
-        Row(
-          children: [
-            for (final part in DayPart.values) ...[
-              if (part != DayPart.values.first) 8.kw,
-              Expanded(
-                child: _DayPartChip(
-                  label: part.label,
-                  selected: value == part.window,
-                  // A second tap on the active preset widens back to the day.
-                  onTap: () => onChanged(
-                      value == part.window ? DayWindow.all : part.window),
-                ),
-              ),
-            ],
-          ],
-        ),
       ],
-    );
-  }
-}
-
-/// A preset under the slider — [FilterPill]'s look, stretched to a third of
-/// the row so the three line up.
-class _DayPartChip extends StatelessWidget {
-  const _DayPartChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(vertical: 8.h),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? null : c.control,
-          gradient: selected ? AppGradients.indigo : null,
-          borderRadius: BorderRadius.circular(40.r),
-        ),
-        child: Text(
-          label,
-          style: AppText.semibold12.copyWith(
-            color: selected ? AppColors.onBrand : c.textPrimary,
-          ),
-        ),
-      ),
     );
   }
 }

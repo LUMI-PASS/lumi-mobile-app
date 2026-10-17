@@ -199,7 +199,7 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                 onBack: () => Navigator.of(context).pop(),
                 close: true,
                 // Back to "All". Apply still commits it, like the slider.
-                trailing: _ResetButton(
+                trailing: FilterResetButton(
                   enabled: !_isAll,
                   onTap: () {
                     setState(() => _step = kRadiusStepsKm.length);
@@ -363,9 +363,14 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
   }
 }
 
-/// "Reset" on the top bar, greyed while the radius is already "All".
-class _ResetButton extends StatelessWidget {
-  const _ResetButton({required this.enabled, required this.onTap});
+/// "Сбросить" on a filter page's top bar — the radius page and the
+/// categories page — greyed while there is nothing to reset.
+class FilterResetButton extends StatelessWidget {
+  const FilterResetButton({
+    super.key,
+    required this.enabled,
+    required this.onTap,
+  });
 
   final bool enabled;
   final VoidCallback onTap;

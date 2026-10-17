@@ -20,7 +20,7 @@ import 'package:lumi_pass/common/utils/user_location_puck.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
-import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/category_picker_sheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/category_picker_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/location_filter_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
@@ -881,18 +881,23 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     _syncMarkers();
   }
 
-  /// Opens the same filter sheet the results grid uses and applies what comes
-  /// back. The pins are re-derived from it — see [BranchesMapView].
+  /// Opens the same filter sheet the list opens, the same way: the categories
+  /// ride in on the filter and come back out on the result, so the sheet's
+  /// "Категории" row is the one the list shows, and the chip above the map
+  /// and the row in the sheet are two doors onto one selection. The pins are
+  /// re-derived from it — see [BranchesMapView].
   Future<void> _openFilter() async {
     final cubit = context.read<SearchCubit>();
     final result = await FilterBottomSheet.show(
       context,
-      initial: widget.filter,
+      initial: (widget.filter ?? const FilterResult())
+          .copyWith(categories: widget.selectedCategories),
+      categories: widget.categories,
       branches: widget.branches,
     );
     if (result == null || !mounted) return;
     _clearSelection();
-    cubit.applyFilter(result);
+    cubit.applyFilter(result, categories: result.categories);
   }
 
   /// What the dropdown pill says: the generic label with nothing picked, the
@@ -905,10 +910,10 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     return '${selected.first.title ?? ''} +${selected.length - 1}';
   }
 
-  /// Opens the categories list as a bottom sheet and applies what comes back.
+  /// Opens the categories page and applies what comes back.
   Future<void> _pickCategory() async {
     final cubit = context.read<SearchCubit>();
-    final result = await CategoryPickerSheet.show(
+    final result = await CategoryPickerPage.show(
       context,
       categories: widget.categories,
       selected: widget.selectedCategories,
@@ -1335,7 +1340,7 @@ class _CountPill extends StatelessWidget {
 
 /// One of the map's quick filters — a dropdown pill stating what is picked,
 /// filled once something is. Each opens its own picker: [LocationFilterPage],
-/// [CategoryPickerSheet] or [TimeFilterSheet].
+/// [CategoryPickerPage] or [TimeFilterSheet].
 class _DropdownChip extends StatelessWidget {
   const _DropdownChip({
     required this.label,

@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
@@ -8,15 +8,17 @@ import 'package:lumi_pass/common/styles/app_colors.dart';
 import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
-import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/location_filter_page.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
 
-/// What the user picked in [CategoryPickerSheet].
+/// What the user picked in [CategoryPickerPage].
 ///
 /// A wrapper rather than a bare `List<HomCategory>`, because "cleared to all
-/// categories" and "dismissed the sheet" are different answers and both would
-/// otherwise be an empty list: the sheet returns `null` on dismissal and a
+/// categories" and "closed the page" are different answers and both would
+/// otherwise be an empty list: the page returns `null` when closed and a
 /// result carrying an empty [categories] when the filter was cleared.
 class CategoryPickerResult {
   const CategoryPickerResult(this.categories);
@@ -25,16 +27,16 @@ class CategoryPickerResult {
   final List<HomCategory> categories;
 }
 
-/// The categories list as a bottom sheet — what the map screen's "category"
-/// dropdown opens.
+/// The categories as a full-screen page — opened by the map's "Категории"
+/// chip and by the filter sheet's "Категории" row, the way "По расположению"
+/// opens its own page from both.
 ///
 /// Multi-select. There is no "all categories" row: nothing ticked already
-/// means every category, so the row would only repeat it. Each row toggles on
-/// its own — like the
-/// district chips in [FilterBottomSheet] — and the picks only take effect on
-/// Apply, so a parent can tick several before the sheet narrows anything.
-class CategoryPickerSheet extends StatefulWidget {
-  const CategoryPickerSheet({
+/// means every category, and "Сбросить" in the top bar clears the ticks. Each
+/// row toggles on its own, and the picks only take effect on Apply, so a
+/// parent can tick several before anything narrows.
+class CategoryPickerPage extends StatefulWidget {
+  const CategoryPickerPage({
     super.key,
     required this.categories,
     this.selected = const [],
@@ -48,27 +50,22 @@ class CategoryPickerSheet extends StatefulWidget {
     required List<HomCategory> categories,
     List<HomCategory> selected = const [],
   }) {
-    return showModalBottomSheet<CategoryPickerResult>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: context.colors.surface,
-      barrierColor: AppColors.ink.withValues(alpha: 0.8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (_) => CategoryPickerSheet(
-        categories: categories,
-        selected: selected,
+    return Navigator.of(context).push<CategoryPickerResult>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => CategoryPickerPage(
+          categories: categories,
+          selected: selected,
+        ),
       ),
     );
   }
 
   @override
-  State<CategoryPickerSheet> createState() => _CategoryPickerSheetState();
+  State<CategoryPickerPage> createState() => _CategoryPickerPageState();
 }
 
-class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
+class _CategoryPickerPageState extends State<CategoryPickerPage> {
   late final Set<String> _selectedIds = {
     for (final c in widget.selected)
       if (c.id != null) c.id!,
@@ -78,31 +75,30 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
   Widget build(BuildContext context) {
     final c = context.colors;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return Scaffold(
+      backgroundColor: c.surface,
+      body: Column(
         children: [
-          12.kh,
-          Container(
-            width: 32.w,
-            height: 4.h,
-            decoration: BoxDecoration(
-              color: c.textSecondary.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(12.r),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              child: SearchTopBar(
+                title: 'categories'.tr(),
+                onBack: () => Navigator.of(context).pop(),
+                close: true,
+                // Clears the ticks. Apply still commits it, as on the radius
+                // page.
+                trailing: FilterResetButton(
+                  enabled: _selectedIds.isNotEmpty,
+                  onTap: () => setState(_selectedIds.clear),
+                ),
+              ),
             ),
           ),
-          12.kh,
-          Text(
-            'pick_category'.tr(),
-            style: AppText.heading20.copyWith(color: c.textPrimary),
-          ),
-          12.kh,
-          Flexible(
+          Expanded(
             child: ListView.separated(
-              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 16.h),
+              padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 16.h),
               physics: const BouncingScrollPhysics(),
               itemCount: widget.categories.length,
               separatorBuilder: (_, __) => 8.kh,
@@ -125,12 +121,12 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(
-              14.w,
+              16.w,
               4.h,
-              14.w,
+              16.w,
               16.h + MediaQuery.of(context).padding.bottom,
             ),
-            child: _SheetButton(
+            child: FilterSheetButton(
               label: 'apply_button'.tr(),
               gradient: AppGradients.brand,
               onTap: () => Navigator.of(context).pop(
@@ -231,43 +227,6 @@ class _CategoryRow extends StatelessWidget {
             if (selected)
               Icon(Icons.check_rounded, size: 20.sp, color: Colors.white),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Same button the filter sheet's Apply uses (kept local — that one is
-/// library-private to `filter_bottom_sheet.dart`).
-class _SheetButton extends StatelessWidget {
-  const _SheetButton({
-    required this.label,
-    required this.onTap,
-    this.gradient,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-  final Gradient? gradient;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Bouncing(
-      onTap: onTap,
-      child: Container(
-        height: 50.h,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: gradient == null ? c.control : null,
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(44.r),
-        ),
-        child: Text(
-          label,
-          style: AppText.medium16.copyWith(
-            color: gradient == null ? c.textPrimary : AppColors.onBrand,
-          ),
         ),
       ),
     );
