@@ -975,6 +975,18 @@ class _BranchesMapViewState extends State<BranchesMapView> {
   }
 
   /// "By time": the time window sheet.
+  /// Only what a Lumi Coin pack buys, or everything again.
+  void _toggleCoins() {
+    final cubit = context.read<SearchCubit>();
+    final filter = _filter;
+    _clearSelection();
+    cubit.applyFilter(filter.copyWith(
+      kind: filter.kind == ActivityKind.coins
+          ? ActivityKind.any
+          : ActivityKind.coins,
+    ));
+  }
+
   Future<void> _pickTime() async {
     final cubit = context.read<SearchCubit>();
     final filter = _filter;
@@ -1199,6 +1211,15 @@ class _BranchesMapViewState extends State<BranchesMapView> {
                             ),
                           ],
                           8.horizontalSpace,
+                          // One tap, no sheet: on or off. Home's "Входит в
+                          // подписку" opens the map with it on.
+                          _DropdownChip(
+                            label: ActivityKind.coins.label,
+                            isActive: _filter.kind == ActivityKind.coins,
+                            toggle: true,
+                            onTap: _toggleCoins,
+                          ),
+                          8.horizontalSpace,
                           _DropdownChip(
                             label: _filter.hasTime
                                 ? DayWindow(
@@ -1346,11 +1367,16 @@ class _DropdownChip extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.toggle = false,
   });
 
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+
+  /// An on/off chip rather than one that opens a picker: no arrow, and a
+  /// cross while it is on.
+  final bool toggle;
 
   @override
   Widget build(BuildContext context) {
@@ -1387,12 +1413,17 @@ class _DropdownChip extends StatelessWidget {
                   style: AppText.medium13.copyWith(color: fg),
                 ),
               ),
-              6.horizontalSpace,
-              Assets.icons.arrowDown.svg(
-                width: 16.w,
-                height: 16.w,
-                colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
-              ),
+              if (!toggle) ...[
+                6.horizontalSpace,
+                Assets.icons.arrowDown.svg(
+                  width: 16.w,
+                  height: 16.w,
+                  colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
+                ),
+              ] else if (isActive) ...[
+                6.horizontalSpace,
+                Icon(Icons.close_rounded, size: 14.sp, color: fg),
+              ],
             ],
           ),
         ),

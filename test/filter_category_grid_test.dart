@@ -197,4 +197,26 @@ void main() {
     // the one it always had.
     expect(find.text('categories'), findsNothing);
   });
+
+  testWidgets('a coin-pack filter shows as "Тип" and can be lifted',
+      (tester) async {
+    FilterResult? applied;
+    await tester.pumpWidget(
+      host(
+        categories: catalogue,
+        // What Home's "Входит в подписку" opens search with.
+        initial: const FilterResult(kind: ActivityKind.coins),
+        onApplied: (r) => applied = r,
+      ),
+    );
+    await openSheet(tester);
+
+    expect(find.text('included_in_subscription'), findsOneWidget);
+    await tester.tap(find.text('filter_kind_all'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('apply_button'));
+    await tester.pumpAndSettle();
+
+    expect(applied?.kind, ActivityKind.any);
+  });
 }

@@ -30,11 +30,10 @@ enum PricePreset { any, custom }
 /// is on for my child" — so narrowing is a FILTER here next to age and price,
 /// not a separate screen.
 ///
-/// Only two choices a parent picks, deliberately: everything, or courses
-/// alone. There is no plain "activities only" option because nobody shops
-/// that way — a parent looks for what is on, and sometimes specifically for a
-/// course to enrol in. [coins] is not a choice either: Home's coin panel opens
-/// on it.
+/// No plain "activities only" option, because nobody shops that way — a
+/// parent looks for what is on. The sheet offers everything or [coins] (what
+/// the parent's Lumi Coin pack buys); [courses] is shown only while Home's
+/// "Все курсы" has it on.
 enum ActivityKind {
   /// Both. The default, and what the screen opens on.
   any,
@@ -44,8 +43,7 @@ enum ActivityKind {
 
   /// Only what a Lumi Coin pack buys — one-time, priced activities of a
   /// partner whose plan sells them. What Home's "Входит в подписку" arrives
-  /// with; the server narrows the centres and the map the same way. Not
-  /// offered as a pill: it is reached from that panel, and Clear removes it.
+  /// with; the server narrows the centres and the map the same way.
   coins;
 
   /// The `kind` query param. [any] sends `all` explicitly, because the
@@ -553,10 +551,33 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     ),
                   ),
                   8.kh,
-                  // "Тип" (all / courses) is hidden for now: the app is not
-                  // selling courses at the moment, so a "Курсы" pill offered a
-                  // filter nobody needs. The kind filter itself still works —
-                  // Home's "Все курсы" still opens on it, and Clear removes it.
+                  // "Тип": everything, or only what a Lumi Coin pack buys —
+                  // what Home's "Входит в подписку" opens on, so the filter it
+                  // set is visible here and can be lifted. No "Курсы" pill:
+                  // the app is not selling courses now. A courses filter
+                  // that arrives from Home's "Все курсы" still shows, so it is
+                  // never on without being seen.
+                  _Section(
+                    label: 'filter_kind'.tr(),
+                    child: Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: [
+                        for (final kind in [
+                          ActivityKind.any,
+                          ActivityKind.coins,
+                          if (_kind == ActivityKind.courses)
+                            ActivityKind.courses,
+                        ])
+                          FilterPill(
+                            label: kind.label,
+                            selected: _kind == kind,
+                            onTap: () => setState(() => _kind = kind),
+                          ),
+                      ],
+                    ),
+                  ),
+                  16.kh,
                   _Section(
                     label: 'filter_date'.tr(),
                     child: Wrap(

@@ -137,6 +137,7 @@ class _SearchViewState extends State<SearchView> {
     final selectedCategories = state.selectedCategories
         .where((c) => (c.title ?? '').isNotEmpty)
         .toList();
+    final kind = state.filter?.kind ?? ActivityKind.any;
 
     // Two columns with a 16pt page margin and an 8pt gutter (Figma).
     final columnWidth = (1.sw - 32.w - 8.w) / 2;
@@ -178,7 +179,11 @@ class _SearchViewState extends State<SearchView> {
               // map, one row below. The cubit still knows both tabs — the map
               // loads the centres one — so the list simply never leaves the
               // first.
-              if (selectedCategories.isNotEmpty) ...[
+              // The kind rides in the same row as the categories: opened from
+              // Home's "Входит в подписку", the list must say it is narrowed
+              // to what the pack buys, and one tap lifts it.
+              if (selectedCategories.isNotEmpty ||
+                  kind != ActivityKind.any) ...[
                 16.verticalSpace,
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -186,6 +191,13 @@ class _SearchViewState extends State<SearchView> {
                     spacing: 8.w,
                     runSpacing: 8.h,
                     children: [
+                      if (kind != ActivityKind.any)
+                        SearchCategoryChip(
+                          label: kind.label,
+                          onRemove: () => cubit.applyFilter(
+                            state.filter?.copyWith(kind: ActivityKind.any),
+                          ),
+                        ),
                       for (final cat in selectedCategories)
                         SearchCategoryChip(
                           label: cat.title ?? '',
