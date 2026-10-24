@@ -191,12 +191,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     return best?.id;
   }
 
-  /// Whether paying for the pack in front BY CARD brings the first-pack gift:
-  /// it is still on offer, and the pack is a main one.
-  bool get _bonusOnCard =>
-      _catalogue.firstPackBonus > 0 &&
-      _catalogue.main.any((p) => p.id == _selectedId);
-
   /// A booking that came up short sent the buyer here: extras lead.
   bool get _extrasFirst => widget.topUpFor != null && _extras.isNotEmpty;
 
@@ -224,19 +218,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     return null;
   }
 
-  /// How much cheaper a coin is in [pack] than in the dearest main pack, as a
-  /// whole percent. 0 for that dearest pack itself and for extras.
-  int _savingPercent(NewCoinPack pack) {
-    num dearest = 0;
-    for (final p in _catalogue.main) {
-      final perCoin = p.pricePerCoin ?? 0;
-      if (perCoin > dearest) dearest = perCoin;
-    }
-    final perCoin = pack.pricePerCoin ?? 0;
-    if (dearest <= 0 || perCoin <= 0 || perCoin >= dearest) return 0;
-    return ((dearest - perCoin) / dearest * 100).round();
-  }
-
   bool get _canBuySingle =>
       _catalogue.canBuyExtras && _catalogue.singleCoinPrice > 0;
 
@@ -244,13 +225,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       NewCoinPurchase.single(_singleQuantity, _catalogue.singleCoinPrice);
 
   // ── Buying ─────────────────────────────────────────────────────────────────
-
-  /// The perk to show on the card rail of the payment sheet: the first-pack
-  /// gift is for a main pack paid by card, and it is said there because that
-  /// is where the method is being chosen.
-  String? get _cardBadge => _bonusOnCard
-      ? 'new_coins_amount'.tr(args: ['+${_catalogue.firstPackBonus}'])
-      : null;
 
   /// Loose coins are paid for right here, through the chooser sheet. A pack
   /// opens its own checkout page, which is where a promocode goes; the page
@@ -263,7 +237,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
         builder: (_) => NewCoinsCheckoutPage(
           pack: pack,
           tone: _toneOf(pack),
-          cardBadge: _cardBadge,
           // The pack lapsed or was withdrawn while it was being checked out.
           onShelfStale: _load,
         ),
@@ -325,15 +298,15 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     return fallback.toDouble();
   }
 
-  /// What buying [pack] gives, row by row. Only what is true of this pack for
-  /// this buyer: the gift row goes once the gift has been had, and a figure
-  /// the server did not send is a row left out.
+  /// What buying [pack] gives, row by row. A figure the server did not send
+  /// is a row left out.
+  ///
+  /// No first-pack gift row: the "+N Lumi Coin" gift is no longer advertised
+  /// anywhere in the app, whatever `first_pack_bonus` the server sends.
   List<NewCoinFeature> _featuresOf(NewCoinPack pack) {
     final isMain = _catalogue.main.any((p) => p.id == pack.id);
-    final bonus = isMain ? _catalogue.firstPackBonus : 0;
 
-    // The price of one coin is not a row here: the pack is sold as a pack, and
-    // what it saves is already the badge on its header.
+    // The price of one coin is not a row here: the pack is sold as a pack.
     return [
       NewCoinFeature(
         icon: Icons.toll_rounded,
@@ -341,13 +314,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
         body: 'new_coins_step3'.tr(),
         chip: 'new_coins_amount'.tr(args: [pack.coins.toGrouped()]),
       ),
-      if (bonus > 0)
-        NewCoinFeature(
-          icon: Icons.card_giftcard_rounded,
-          title: 'new_coins_feat_bonus_title'.tr(),
-          body: 'new_coins_feat_bonus_body'.tr(),
-          chip: 'new_coins_amount'.tr(args: ['+${bonus.toGrouped()}']),
-        ),
       if (pack.validDays > 0)
         NewCoinFeature(
           icon: Icons.schedule_rounded,
@@ -594,7 +560,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     int active,
   ) {
     final busy = _purchasing != null;
-    final isMain = _catalogue.main.any((p) => p.id == pack.id);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 6.w),
       child: Column(
@@ -615,7 +580,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
               pack: pack,
               tone: tone,
               isBestOffer: pack.id == _bestOfferId,
-              savingPercent: isMain ? _savingPercent(pack) : 0,
             ),
           ),
           20.kh,

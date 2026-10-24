@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 
 /// A rasterised map marker: the PNG bytes MapKit draws, plus the anchor and
@@ -29,15 +30,23 @@ class MarkerBitmap {
   final double scale;
 }
 
-/// Paints the branch pill that used to be the `_BranchLabel` widget.
+/// Paints the branch pins on the map.
 ///
 /// `flutter_map` took an arbitrary widget per marker. Yandex placemarks take a
-/// **bitmap**, so the pill is painted onto a canvas and handed to MapKit as PNG
-/// bytes. This is therefore the only place the marker's appearance lives — if
-/// the Figma `Tag` styling changes, it changes here.
+/// **bitmap**, so the pin is painted onto a canvas and handed to MapKit as PNG
+/// bytes. This is therefore the only place the marker's appearance lives.
 ///
-/// Every colour is one of the theme-invariant statics (`chipGrey`,
-/// `brandPurple`, `link`, `white`) exactly as the widget used, which is why the
+/// Both kinds of centre share the one pill — a building glyph in a square
+/// badge, then the name — and are told apart by colour alone:
+///
+/// * a **Lumi partner** — a centre that signed up and sells through the app —
+///   wears the brand gradient (the map's "Ro'yxat" button) with a white
+///   badge;
+/// * a **catalogue** centre (`is_catalog`: listed from the public directory,
+///   nothing bookable) is white with a grey hairline and a grey badge, so it
+///   reads as present for reference and never competes with a partner.
+///
+/// Every colour is one of the theme-invariant statics, which is why the
 /// bitmaps don't need re-rendering when the app theme flips.
 class BranchMarkerPainter {
   BranchMarkerPainter._();
@@ -94,15 +103,18 @@ class BranchMarkerPainter {
   /// bubble to a third of its size on a 3× phone.
   static const double _iconScale = 1.0;
 
-  /// Rasterises the pill for [title], memoised.
+  /// Rasterises the pin for [title], memoised. [isPartner] picks the style —
+  /// see the class doc.
   static Future<MarkerBitmap> build({
     required String title,
     required bool isSelected,
     required double devicePixelRatio,
+    bool isPartner = true,
   }) async {
     // ScreenUtil's scale factor is part of the geometry, so it belongs in the
     // key — a tablet/phone split or an orientation change changes the output.
-    final key = '$title|$isSelected|$devicePixelRatio|${1.0.w}';
+    final key =
+        'pill2|$title|$isSelected|$isPartner|$devicePixelRatio|${1.0.w}';
     final cached = _cache[key];
     if (cached != null) return cached;
 
@@ -110,6 +122,7 @@ class BranchMarkerPainter {
     final bitmap = await _paint(
       title: title,
       isSelected: isSelected,
+      isPartner: isPartner,
       dpr: devicePixelRatio,
     );
 
@@ -316,6 +329,7 @@ class BranchMarkerPainter {
   static Future<MarkerBitmap> _paint({
     required String title,
     required bool isSelected,
+    required bool isPartner,
     required double dpr,
   }) async {
     final padLeft = _padLeft.w;
@@ -327,12 +341,28 @@ class BranchMarkerPainter {
     final pillRadius = _pillRadius.r;
     final iconRadius = _iconRadius.r;
 
+    // A catalogue pill goes dark when selected; a partner keeps its gradient
+    // and takes a white ring instead.
+    final darkCatalog = !isPartner && isSelected;
+    final fillColor = darkCatalog ? AppColors.ink : AppColors.white;
+    final textColor = isPartner || darkCatalog ? AppColors.white : AppColors.ink;
+    final badgeColor = isPartner
+        ? AppColors.white
+        : darkCatalog
+            ? AppColors.white.withValues(alpha: 0.16)
+            : AppColors.inkChip;
+    final glyphColor = isPartner
+        ? AppColors.brandPurple
+        : darkCatalog
+            ? AppColors.white
+            : AppColors.chipGrey;
+
     final maxTextWidth = _maxWidth.w - padLeft - iconBox - gap - padRight;
 
     final label = TextPainter(
       text: TextSpan(
         text: title,
-        style: AppText.semibold12.copyWith(color: AppColors.white),
+        style: AppText.semibold12.copyWith(color: textColor),
       ),
       textDirection: TextDirection.ltr,
       maxLines: 1,
@@ -360,25 +390,29 @@ class BranchMarkerPainter {
     canvas.drawRRect(
       pill.shift(Offset(0, _shadowDy.h)),
       Paint()
-        ..color = isSelected
-            ? AppColors.brandPurple.withValues(alpha: 0.40)
-            : Colors.black.withValues(alpha: 0.10)
+        ..color = isPartner
+            ? AppColors.brandPurple.withValues(alpha: isSelected ? 0.55 : 0.30)
+            : Colors.black.withValues(alpha: isSelected ? 0.25 : 0.10)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _shadowSigma),
     );
 
     canvas.drawRRect(
       pill,
-      Paint()..color = isSelected ? AppColors.brandPurple : AppColors.chipGrey,
+      isPartner
+          ? (Paint()..shader = AppGradients.brand.createShader(pill.outerRect))
+          : (Paint()..color = fillColor),
     );
 
-    if (isSelected) {
-      final stroke = _selectedBorder.w;
+    // A white ring marks the selected partner; a grey hairline keeps an
+    // unselected white pill from melting into a pale map.
+    if (isPartner ? isSelected : !isSelected) {
+      final stroke = isPartner ? _selectedBorder.w : 1.0.w;
       canvas.drawRRect(
         pill.deflate(stroke / 2),
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = stroke
-          ..color = AppColors.white,
+          ..color = isPartner ? AppColors.white : AppColors.lightBorder,
       );
     }
 
@@ -386,27 +420,9 @@ class BranchMarkerPainter {
         Rect.fromLTWH(bleed + padLeft, bleed + padY, iconBox, iconBox);
     canvas.drawRRect(
       RRect.fromRectAndRadius(iconRect, Radius.circular(iconRadius)),
-      Paint()..color = AppColors.link,
+      Paint()..color = badgeColor,
     );
-
-    final picture = _iconPicture;
-    final iconSize = _iconSize;
-    if (picture != null &&
-        iconSize != null &&
-        iconSize.width > 0 &&
-        iconSize.height > 0) {
-      canvas.save();
-      canvas.translate(
-        iconRect.left + (iconBox - iconGlyph) / 2,
-        iconRect.top + (iconBox - iconGlyph) / 2,
-      );
-      canvas.scale(
-        iconGlyph / iconSize.width,
-        iconGlyph / iconSize.height,
-      );
-      canvas.drawPicture(picture);
-      canvas.restore();
-    }
+    _paintBuilding(canvas, iconRect, glyph: iconGlyph, color: glyphColor);
 
     label.paint(
       canvas,
@@ -425,12 +441,38 @@ class BranchMarkerPainter {
     label.dispose();
 
     return MarkerBitmap(
-      // The widget was `alignment: Alignment.centerLeft`, i.e. the coordinate
-      // sat at the pill's left edge, vertically centred. The bleed is uniform,
-      // so that is `bleed/width` across and dead centre down.
+      // The coordinate sits at the pill's left edge, vertically centred. The
+      // bleed is uniform, so that is `bleed/width` across and dead centre down.
       bytes: data!.buffer.asUint8List(),
       anchor: Offset(bleed / width, 0.5),
       scale: _iconScale,
     );
+  }
+
+  /// The building glyph, tinted [color] and centred in [box] at [glyph] size.
+  /// The SVG is drawn white, so it is recoloured through a layer.
+  static void _paintBuilding(
+    Canvas canvas,
+    Rect box, {
+    required double glyph,
+    required Color color,
+  }) {
+    final picture = _iconPicture;
+    final iconSize = _iconSize;
+    if (picture == null ||
+        iconSize == null ||
+        iconSize.width <= 0 ||
+        iconSize.height <= 0) {
+      return;
+    }
+    final dst = Rect.fromCenter(center: box.center, width: glyph, height: glyph);
+    canvas.saveLayer(
+      dst,
+      Paint()..colorFilter = ColorFilter.mode(color, BlendMode.srcIn),
+    );
+    canvas.translate(dst.left, dst.top);
+    canvas.scale(glyph / iconSize.width, glyph / iconSize.height);
+    canvas.drawPicture(picture);
+    canvas.restore();
   }
 }

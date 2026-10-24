@@ -409,9 +409,11 @@ class _BranchesMapViewState extends State<BranchesMapView> {
     for (var i = 0; i < branches.length; i++) {
       final branch = branches[i];
       final isSelected = branch.id != null && branch.id == selectedId;
+      final isPartner = branch.isCatalog != true;
       final bitmap = await BranchMarkerPainter.build(
         title: branch.title ?? '',
         isSelected: isSelected,
+        isPartner: isPartner,
         devicePixelRatio: dpr,
       );
       built.add(
@@ -423,9 +425,13 @@ class _BranchesMapViewState extends State<BranchesMapView> {
           ),
           // Defaults to 0.5 — without this every pill is half transparent.
           opacity: 1,
-          // The selected pill draws over any neighbour it overlaps, which is
-          // what the old code achieved by emitting it last.
-          zIndex: isSelected ? 1 : 0,
+          // The selected pin draws over any neighbour it overlaps, and a
+          // partner over a catalogue centre it collides with.
+          zIndex: isSelected
+              ? 2
+              : isPartner
+                  ? 1
+                  : 0,
           consumeTapEvents: true,
           icon: PlacemarkIcon.single(
             PlacemarkIconStyle(

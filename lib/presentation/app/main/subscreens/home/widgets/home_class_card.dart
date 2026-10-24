@@ -20,6 +20,7 @@ import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
+import 'package:lumi_pass/common/widget/corner_ribbon.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
@@ -120,7 +121,7 @@ class HomeCourseCard extends StatelessWidget {
                     height: imageHeight ?? 126.h,
                     category: hc?.category,
                     discountPercentage: hc?.discountPercentage ?? 0,
-                    onViewAsReels: onViewAsReels,
+                    coinRibbon: _coinPriceOf(context, hc) != null,
                     sale: hc?.sale,
                     // Flush with the card — see [HomeNearbyCard].
                     borderRadius:
@@ -151,7 +152,7 @@ class HomeCourseCard extends StatelessWidget {
                     height: imageHeight ?? 126.h,
                     category: hc?.category,
                     discountPercentage: hc?.discountPercentage ?? 0,
-                    onViewAsReels: onViewAsReels,
+                    coinRibbon: _coinPriceOf(context, hc) != null,
                     sale: hc?.sale,
                   ),
                   14.verticalSpace,
@@ -213,7 +214,7 @@ class HomeNearbyCard extends StatelessWidget {
             category: hc?.category,
             discountPercentage: hc?.discountPercentage ?? 0,
             sale: hc?.sale,
-            onViewAsReels: onViewAsReels,
+            coinRibbon: _coinPriceOf(context, hc) != null,
             fit: BoxFit.cover,
             // Flush with the card, so the photo takes the card's own top
             // corners instead of leaving the fill showing through at 12.
@@ -246,7 +247,7 @@ class _ClassImage extends StatelessWidget {
     required this.height,
     required this.category,
     required this.discountPercentage,
-    required this.onViewAsReels,
+    this.coinRibbon = false,
     this.sale,
     this.fit = BoxFit.cover,
     this.borderRadius,
@@ -256,7 +257,11 @@ class _ClassImage extends StatelessWidget {
   final double height;
   final String? category;
   final int discountPercentage;
-  final VoidCallback? onViewAsReels;
+
+  /// Draws the "subscription" [CornerRibbon] — for a card bought with Lumi
+  /// Coin, which is what the subscription pays in. It took the place of the
+  /// reels shortcut that used to sit in this corner.
+  final bool coinRibbon;
 
   /// The centre's own sale, drawn as a badge on the photo — and, when it only
   /// holds on some days or hours, a second badge saying which, so the
@@ -345,26 +350,7 @@ class _ClassImage extends StatelessWidget {
                 ],
               ),
             ),
-            // Reels shortcut, top-right.
-            if (onViewAsReels != null)
-              Positioned(
-                right: 8.w,
-                top: 8.h,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onViewAsReels,
-                  child: Container(
-                    width: 28.w,
-                    height: 28.w,
-                    decoration: const BoxDecoration(
-                      gradient: AppGradients.brand,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.play_arrow_rounded,
-                        color: Colors.white, size: 18.sp),
-                  ),
-                ),
-              ),
+            if (coinRibbon) CornerRibbon(label: 'subscription_ribbon'.tr()),
           ],
         ),
       ),
@@ -810,6 +796,36 @@ class _CoursePriceText extends StatelessWidget {
 
 /// Price line — mirrors the effective-price + coupon-discount logic used
 /// elsewhere, rendered in the redesigned typography.
+/// The so'm figure an activity card quotes: the cheapest PAID ticket when the
+/// cheapest one is free, else the cheapest one, else the card's own price.
+num _effectivePriceOf(HomClass? hc) {
+  final snap = ClassPricingCache.get(hc?.id);
+  final hasFreeAndPaid =
+      snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
+  return hasFreeAndPaid
+      ? snap.priceMinPaid
+      : (snap != null && snap.priceMin > 0)
+          ? snap.priceMin
+          : (hc?.price ?? 0);
+}
+
+/// What the card quotes in Lumi Coin, or null where it keeps a so'm price (or
+/// none): a course, a catalogue centre, a free activity, or coins not on sale.
+/// One answer for both the price line and the corner ribbon, so the two can
+/// never disagree about whether a card is bought with coins.
+int? _coinPriceOf(BuildContext context, HomClass? hc) {
+  if (hc == null || hc.isCourse == true || hc.isCatalog == true) return null;
+  final effectivePrice = _effectivePriceOf(hc);
+  if (effectivePrice < 100) return null;
+  final snap = ClassPricingCache.get(hc.id);
+  final hasFreeAndPaid =
+      snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
+  // The server's figure is for the cheapest ticket, so it is only the one to
+  // print while that is the ticket being quoted.
+  return watchNewCoinPriceOf(context, effectivePrice,
+      sent: hasFreeAndPaid ? null : hc.newCoinPrice);
+}
+
 class _PriceText extends StatelessWidget {
   const _PriceText({required this.hc});
 
@@ -824,14 +840,10 @@ class _PriceText extends StatelessWidget {
     if (hc?.isCourse == true) return _CoursePriceText(hc: hc!);
 
     final snap = ClassPricingCache.get(hc?.id);
-    final hasFreeAndPaid =
-        snap != null && snap.priceMin == 0 && snap.priceMinPaid > 0;
-    final effectivePrice = hasFreeAndPaid
-        ? snap.priceMinPaid
-        : (snap != null && snap.priceMin > 0)
-            ? snap.priceMin
-            : (hc?.price ?? 0);
-    final showFrom = hasFreeAndPaid ||
+    final effectivePrice = _effectivePriceOf(hc);
+    final showFrom = (snap != null &&
+            snap.priceMin == 0 &&
+            snap.priceMinPaid > 0) ||
         (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
 
     final baseStyle = AppText.semibold14.copyWith(color: c.textPrimary);
@@ -843,10 +855,7 @@ class _PriceText extends StatelessWidget {
     // An activity is paid in Lumi Coin, so that is what the card quotes — in
     // place of the so'm figure, and with no coupon preview: a coupon plan does
     // not discount a coin price.
-    // The server's figure is for the cheapest ticket, so it is only the one to
-    // print while that is the ticket being quoted.
-    final coinPrice = watchNewCoinPriceOf(context, effectivePrice,
-        sent: hasFreeAndPaid ? null : hc?.newCoinPrice);
+    final coinPrice = _coinPriceOf(context, hc);
     if (coinPrice != null) {
       // The number and the coin, nothing else — no "dan"/"from", even when
       // the price varies by age and this is only the lowest one. On a card the

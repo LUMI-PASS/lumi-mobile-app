@@ -416,15 +416,11 @@ class NewCoinPackHeader extends StatelessWidget {
     required this.pack,
     required this.tone,
     this.isBestOffer = false,
-    this.savingPercent = 0,
   });
 
   final NewCoinPack pack;
   final NewCoinTone tone;
   final bool isBestOffer;
-
-  /// How much cheaper a coin is here than in the dearest main pack. 0 hides it.
-  final int savingPercent;
 
   @override
   Widget build(BuildContext context) {
@@ -491,12 +487,6 @@ class NewCoinPackHeader extends StatelessWidget {
                     style: AppText.semibold14
                         .copyWith(color: context.colors.textPrimary),
                   ),
-                ),
-              ],
-              if (savingPercent > 0) ...[
-                8.kw,
-                _ValueChip(
-                  label: 'new_coins_save_badge'.tr(args: ['$savingPercent']),
                 ),
               ],
             ],

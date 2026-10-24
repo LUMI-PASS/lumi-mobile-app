@@ -7,6 +7,7 @@ import 'package:lumi_pass/common/base/base_page.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/styles/app_colors.dart';
+import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/auth_agreement_text.dart';
 import 'package:lumi_pass/common/widget/auth/auth_badges.dart';
@@ -144,7 +145,8 @@ class TelegramLoginPage extends BasePage<TelegramLoginCubit,
   }
 }
 
-/// Entry point from the phone-number screen.
+/// Entry point from the phone-number screen — the primary action there, so it
+/// wears the brand gradient rather than the outline the SMS button now has.
 class TelegramLoginButton extends StatelessWidget {
   const TelegramLoginButton({super.key, this.onPressed});
 
@@ -152,7 +154,6 @@ class TelegramLoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     return Bouncing(
       onTap: () => onPressed?.call(),
       child: Container(
@@ -160,7 +161,7 @@ class TelegramLoginButton extends StatelessWidget {
         width: double.infinity,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          border: Border.all(color: colors.border),
+          gradient: AppGradients.brand,
           borderRadius: BorderRadius.circular(44.r),
         ),
         child: Row(
@@ -169,15 +170,15 @@ class TelegramLoginButton extends StatelessWidget {
             Assets.icons.telegram.svg(
               width: 20.r,
               height: 20.r,
-              colorFilter: ColorFilter.mode(
-                colors.textPrimary,
+              colorFilter: const ColorFilter.mode(
+                AppColors.onBrand,
                 BlendMode.srcIn,
               ),
             ),
             SizedBox(width: 8.w),
             Text(
               'telegram_login_button'.tr(),
-              style: AppText.medium16.copyWith(color: colors.textPrimary),
+              style: AppText.medium16.copyWith(color: AppColors.onBrand),
             ),
           ],
         ),

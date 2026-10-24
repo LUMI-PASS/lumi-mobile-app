@@ -97,11 +97,14 @@ class LoginPage extends BasePage<LoginCubit, LoginBuildable, LoginListenable> {
               children: [
                 GradientButton(
                   text: 'sms_code_button'.tr(),
+                  outlined: true,
                   loading: state.isLoading,
                   enabled: state.isSelected,
                   onPressed: () => context.read<LoginCubit>().login(_phone),
                 ),
                 SizedBox(height: 12.h),
+                // Still the primary action: it needs no phone number and does
+                // not depend on an SMS arriving.
                 TelegramLoginButton(
                   onPressed: () =>
                       context.router.push(TelegramLoginRoute()),

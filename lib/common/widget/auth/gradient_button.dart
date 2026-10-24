@@ -17,7 +17,12 @@ class GradientButton extends StatelessWidget {
     this.loading = false,
     this.gradient,
     this.foreground,
+    this.outlined = false,
   });
+
+  /// The secondary look: a bordered pill with no fill — the SMS button on the
+  /// login screen, under Telegram.
+  final bool outlined;
 
   /// Overrides the brand gradient — for a sheet reskinned to its host screen
   /// (see `PaymentSheetSkin`). Null is the brand pink→purple.
@@ -34,6 +39,9 @@ class GradientButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = enabled && !loading;
+    final ink = outlined
+        ? context.colors.textPrimary
+        : foreground ?? AppColors.onBrand;
     return Opacity(
       opacity: enabled ? 1 : 0.45,
       child: Bouncing(
@@ -45,7 +53,8 @@ class GradientButton extends StatelessWidget {
           width: double.infinity,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: gradient ?? AppGradients.brand,
+            gradient: outlined ? null : gradient ?? AppGradients.brand,
+            border: outlined ? Border.all(color: context.colors.border) : null,
             borderRadius: BorderRadius.circular(44.r),
           ),
           child: Stack(
@@ -57,15 +66,13 @@ class GradientButton extends StatelessWidget {
                   height: 22.r,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.4,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        foreground ?? AppColors.onBrand),
+                    valueColor: AlwaysStoppedAnimation<Color>(ink),
                   ),
                 )
               else
                 Text(
                   text,
-                  style: AppText.medium16
-                      .copyWith(color: foreground ?? AppColors.onBrand),
+                  style: AppText.medium16.copyWith(color: ink),
                 ),
             ],
           ),
