@@ -793,7 +793,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         );
       case HomeInsert.categoryTiles:
         return HomeCategoryTiles(
-          categories: _categories(state).take(4).toList(),
+          categories:
+              context.read<HomeCubit>().categoryTiles(_categories(state)),
           onTap: (category) => context.router.push(
             SearchDiscoveryRoute(initialCategory: category),
           ),

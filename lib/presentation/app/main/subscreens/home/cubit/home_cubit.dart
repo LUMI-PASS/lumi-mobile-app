@@ -80,6 +80,13 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   /// each shuffle would leave its state advanced.)
   int _dealSeed = Random().nextInt(1 << 32);
 
+  /// The four category tiles on the home feed: four of [categories] at
+  /// random, dealt from [_dealSeed] — so a new four on every load and
+  /// pull-to-refresh, and the same four across rebuilds and silent refreshes
+  /// in between.
+  List<HomCategory> categoryTiles(List<HomCategory> categories) =>
+      ([...categories]..shuffle(Random(_dealSeed))).take(4).toList();
+
   /// What [coursesAcrossCategories] buckets a course by: its FIRST category,
   /// lowercased.
   ///
