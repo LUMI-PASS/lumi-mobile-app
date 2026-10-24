@@ -191,13 +191,32 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     return best?.id;
   }
 
+  /// The main pack the buyer holds right now — their tariff — when it is
+  /// still on the shelf.
+  NewCoinPack? get _currentPack {
+    final id = _balance.activeMainPackId;
+    if (id == null) return null;
+    for (final p in _catalogue.main) {
+      if (p.id == id) return p;
+    }
+    return null;
+  }
+
+  /// With a live tariff another main pack is a change of tariff, not a
+  /// second purchase — the server carries the unspent coins over onto it.
+  bool _isChange(NewCoinPack pack) =>
+      _balance.hasActiveMain &&
+      pack.id != _balance.activeMainPackId &&
+      _catalogue.main.any((p) => p.id == pack.id);
+
   /// A booking that came up short sent the buyer here: extras lead.
   bool get _extrasFirst => widget.topUpFor != null && _extras.isNotEmpty;
 
   /// The pack the Buy button starts on. For a top-up, the cheapest pack that
   /// covers the gap — extras before main packs — so the default purchase is
   /// the smallest one that lets the booking go through. Otherwise the first
-  /// main pack.
+  /// main pack — or, with a live tariff, the next one up in price, since
+  /// buying the same tariff again is not what the shelf offers.
   NewCoinPack? _defaultPick() {
     final missing = widget.topUpFor;
     if (missing != null) {
@@ -207,6 +226,14 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
         if (covering.isNotEmpty) return covering.first;
       }
       if (_extras.isNotEmpty) return _extras.last;
+    }
+    final current = _currentPack;
+    if (current != null) {
+      final higher = _catalogue.main
+          .where((p) => p.price > current.price)
+          .toList()
+        ..sort((a, b) => a.price.compareTo(b.price));
+      return higher.isNotEmpty ? higher.first : current;
     }
     return _catalogue.main.isEmpty ? null : _catalogue.main.first;
   }
@@ -269,6 +296,9 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       context.router.maybePop(true);
       return;
     }
+    // The tariff just bought is now the current one: let the reload open on
+    // the next one up instead of keeping it in front.
+    _selectedId = null;
     await _load();
   }
 
@@ -493,6 +523,8 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                 child: NewCoinsBuyBar(
                   tone: tones[active],
                   price: pack.price,
+                  isCurrent: pack.id == _currentPack?.id,
+                  label: _isChange(pack) ? 'new_coins_change_btn'.tr() : null,
                   isLoading: _purchasing == pack.id,
                   onBuy: busy ? null : () => _buy(NewCoinPurchase.pack(pack)),
                   dots: shelf.length > 1
@@ -580,6 +612,7 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
               pack: pack,
               tone: tone,
               isBestOffer: pack.id == _bestOfferId,
+              isCurrent: pack.id == _currentPack?.id,
             ),
           ),
           20.kh,

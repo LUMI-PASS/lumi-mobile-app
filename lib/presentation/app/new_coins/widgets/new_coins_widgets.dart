@@ -416,11 +416,16 @@ class NewCoinPackHeader extends StatelessWidget {
     required this.pack,
     required this.tone,
     this.isBestOffer = false,
+    this.isCurrent = false,
   });
 
   final NewCoinPack pack;
   final NewCoinTone tone;
   final bool isBestOffer;
+
+  /// The buyer's live tariff. Its badge takes the place of "best offer":
+  /// the two side by side do not fit beside the name.
+  final bool isCurrent;
 
   @override
   Widget build(BuildContext context) {
@@ -443,7 +448,13 @@ class NewCoinPackHeader extends StatelessWidget {
                 ),
               ),
             ),
-            if (isBestOffer) ...[8.kw, const _BestOfferBadge()],
+            if (isCurrent) ...[
+              8.kw,
+              _CurrentPlanBadge(tone: tone)
+            ] else if (isBestOffer) ...[
+              8.kw,
+              const _BestOfferBadge()
+            ],
           ],
         ),
         4.kh,
@@ -684,9 +695,18 @@ class NewCoinsBuyBar extends StatelessWidget {
     required this.onBuy,
     this.price,
     this.dots,
+    this.label,
+    this.isCurrent = false,
   });
 
   final NewCoinTone tone;
+
+  /// The button's word. Null is "Buy".
+  final String? label;
+
+  /// The pack in front is the buyer's live tariff: the button says so, is
+  /// dimmed, and does nothing.
+  final bool isCurrent;
 
   /// Shown on a chip beside the label. Null leaves the label alone — the
   /// checkout page states the sum just above the bar and need not repeat it.
@@ -729,60 +749,95 @@ class NewCoinsBuyBar extends StatelessWidget {
         children: [
           if (dots != null) ...[dots, 14.kh],
           GestureDetector(
-            onTap: isLoading ? null : onBuy,
-            child: AnimatedContainer(
+            onTap: isLoading || isCurrent ? null : onBuy,
+            child: AnimatedOpacity(
               duration: const Duration(milliseconds: 220),
-              height: 58.h,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                gradient: tone.button,
-                borderRadius: BorderRadius.circular(18.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: tone.accent.withValues(alpha: 0.5),
-                    blurRadius: 24.r,
-                    offset: Offset(0, 8.h),
-                  ),
-                ],
-              ),
-              child: isLoading
-                  ? SizedBox(
-                      width: 20.w,
-                      height: 20.w,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation(tone.onAccent),
-                      ),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'new_coins_buy_btn'.tr(),
-                          style:
-                              AppText.semibold16.copyWith(color: tone.onAccent),
-                        ),
-                        if (price != null) ...[
-                          10.kw,
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 9.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: tone.onAccent.withValues(alpha: 0.16),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              price.toRawUzsPrice(),
-                              style: AppText.semibold14
-                                  .copyWith(color: tone.onAccent),
-                            ),
-                          ),
-                        ],
-                      ],
+              opacity: isCurrent ? 0.55 : 1,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                height: 58.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: tone.button,
+                  borderRadius: BorderRadius.circular(18.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: tone.accent.withValues(alpha: 0.5),
+                      blurRadius: 24.r,
+                      offset: Offset(0, 8.h),
                     ),
+                  ],
+                ),
+                child: isLoading
+                    ? SizedBox(
+                        width: 20.w,
+                        height: 20.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(tone.onAccent),
+                        ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isCurrent
+                                ? 'new_coins_current_plan'.tr()
+                                : label ?? 'new_coins_buy_btn'.tr(),
+                            style: AppText.semibold16
+                                .copyWith(color: tone.onAccent),
+                          ),
+                          if (price != null && !isCurrent) ...[
+                            10.kw,
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 9.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: tone.onAccent.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Text(
+                                price.toRawUzsPrice(),
+                                style: AppText.semibold14
+                                    .copyWith(color: tone.onAccent),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Current plan" — on the pack the buyer holds now, in that pack's colour.
+class _CurrentPlanBadge extends StatelessWidget {
+  const _CurrentPlanBadge({required this.tone});
+
+  final NewCoinTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(6.w, 2.h, 9.w, 2.h),
+      decoration: BoxDecoration(
+        gradient: tone.button,
+        borderRadius: BorderRadius.circular(100.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_rounded, size: 12.w, color: tone.onAccent),
+          4.kw,
+          Text(
+            'new_coins_current_badge'.tr(),
+            style: AppText.bold10.copyWith(color: tone.onAccent),
           ),
         ],
       ),

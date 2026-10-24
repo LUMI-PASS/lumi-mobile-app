@@ -1467,6 +1467,9 @@ new_coins_step2,Оплатите — коины сразу на балансе,T
 new_coins_step3,Оплачивайте занятия коинами вместо денег,Mashg‘ulotlar uchun pul o‘rniga coin bilan to‘lang,Pay for activities with coins instead of money
 new_coins_price_label,Цена пакета,Paket narxi,Pack price
 new_coins_buy_btn,Купить,Sotib olish,Buy
+new_coins_change_btn,Сменить тариф,Tarifni o'zgartirish,Change plan
+new_coins_current_plan,Ваш текущий тариф,Joriy tarifingiz,Your current plan
+new_coins_current_badge,Текущий,Joriy,Current
 new_coins_history_more,Показать ещё,Yana ko‘rsatish,Show more
 new_coins_tx_refund,Возврат за отменённую бронь,Bekor qilingan bron uchun qaytarildi,Refund for a cancelled booking
 new_coins_bonus_card_chip,+{} при оплате картой,+{} karta orqali,+{} with card

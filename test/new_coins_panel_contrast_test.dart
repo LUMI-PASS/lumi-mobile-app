@@ -154,7 +154,6 @@ void main() {
                       pricePerCoin: 3725,
                     ),
                     tone: tone,
-                    savingPercent: 12,
                   ),
                 ),
               ],
