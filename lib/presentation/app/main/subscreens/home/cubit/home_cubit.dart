@@ -65,16 +65,20 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   /// is the one case where a deeper page is worth fetching for it.
   static const int subscriptionRowSize = 10;
 
-  /// The row is shuffled from this FIXED seed, and from a FRESH [Random] each
-  /// time, so the deal is a pure function of the feed: the same activities
-  /// always come out in the same order.
-  ///
-  /// Both halves matter. A clock- or entropy-seeded shuffle would re-deal on
-  /// every silent refresh, reordering the row under a parent who was
-  /// mid-scroll and had changed nothing. A single long-lived [Random] would do
-  /// the same more quietly — each deal would leave its state advanced, so the
-  /// next refresh would shuffle the identical feed differently.
+  /// What [growSubscriptionRow] shuffles a later page's arrivals with. Fixed,
+  /// so topping the row up is a pure function of the page it was handed.
   static const int _shuffleSeed = 0x10C01;
+
+  /// The seed the row is dealt from, drawn afresh by [getHome] only — the first
+  /// load, a pull-to-refresh, and so every app start — so each of those deals a
+  /// different ten in a different order.
+  ///
+  /// [refreshSilently] keeps it, and every deal uses a FRESH [Random] from it:
+  /// a silent refresh of an unchanged feed then comes out exactly as before,
+  /// rather than reordering the row under a parent who was mid-scroll and had
+  /// changed nothing. (A single long-lived [Random] would re-deal quietly —
+  /// each shuffle would leave its state advanced.)
+  int _dealSeed = Random().nextInt(1 << 32);
 
   /// What [coursesAcrossCategories] buckets a course by: its FIRST category,
   /// lowercased.
@@ -141,7 +145,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
       if (id != null && !seen.add(id)) continue;
       pool.add(c);
     }
-    pool.shuffle(Random(_shuffleSeed));
+    pool.shuffle(Random(_dealSeed));
     return pool.take(subscriptionRowSize).toList();
   }
 
@@ -342,7 +346,7 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
         lng: _lng,
       );
       final pool = page.classes.where(_inThePack).toList()
-        ..shuffle(Random(_shuffleSeed));
+        ..shuffle(Random(_dealSeed));
       if (pool.isEmpty) return;
       final row = pool.take(subscriptionRowSize).toList();
       _serverPackRow = row;
@@ -468,6 +472,9 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   }
 
   Future<void> getHome() async {
+    // A new deal of "Входит в подписку" on every load the parent asked for —
+    // see [_dealSeed].
+    _dealSeed = Random().nextInt(1 << 32);
     // Alongside the feed, not inside it: a different endpoint, and the shelf
     // must not hold up the first paint of the page. This covers both the first
     // load and pull-to-refresh, which is the gesture someone makes when they
