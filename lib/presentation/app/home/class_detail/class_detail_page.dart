@@ -25,6 +25,7 @@ import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/detail/socials_card.dart';
+import 'package:lumi_pass/common/widget/detail/support_card.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/utils/promo_pass_coverage.dart';
@@ -43,6 +44,8 @@ import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/data/service/interest_reporter.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/app/home/course_detail/intake_waitlist_sheet.dart';
+import 'package:lumi_pass/presentation/app/home/course_detail/trial_groups_card.dart';
+import 'package:lumi_pass/presentation/app/home/course_detail/trial_request_sheet.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_widgets.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/rating_sheet.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/reviews_sheet.dart';
@@ -180,6 +183,32 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// bottom bar at all, which is what an ordinary course now shows anyway, so
   /// nothing flickers in or out as the detail arrives.
   bool get _isIntake => _course?.isIntake ?? false;
+
+  /// A running course that takes FREE trial requests — the one thing a course
+  /// page may still offer, since nothing on it is sold. Null on an intake, on
+  /// a course whose centre sells one-time activities only, and until the
+  /// course detail lands.
+  CourseTrialRequest? get _trialRequest =>
+      _isIntake ? null : _course?.trialRequest;
+
+  /// The rows of the "Sinov darsi" card: every group that still takes a
+  /// request, or that this user already asked for (it then says so). Empty —
+  /// and the card absent — on a course with no trial lessons set up.
+  List<TrialGroupItem> get _trialItems {
+    final tr = _trialRequest;
+    if (tr == null) return const [];
+    final levels = _courseGroups;
+    return [
+      for (final group in tr.groups)
+        if (group.requested || group.canRequest)
+          TrialGroupItem(
+            group: group,
+            level: levels
+                .where((l) => l.id == group.subcourseId)
+                .firstOrNull,
+          ),
+    ];
+  }
 
   /// Set once this user holds a place for the group on screen. Read only as a
   /// yes/no — the app cannot take a place back, so the id itself is never used
@@ -819,6 +848,25 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return detail.levels.isNotEmpty ? detail.levels.first : detail.flat;
   }
 
+  /// Ask the centre for a trial lesson in one group. Not a purchase either —
+  /// the price is only quoted, paid at the centre; no order, no seat — so,
+  /// like the waitlist, it stays clear of the booking flow. The group is the
+  /// row that was tapped; the sheet only asks which child.
+  Future<void> _onRequestTrialTapped(TrialGroupItem item) async {
+    final id = _full?.id ?? widget.classModel.id;
+    if (id == null) return;
+    final sent = await TrialRequestSheet.show(
+      context,
+      activityId: id,
+      group: item.group,
+      courseTitle: widget.classModel.title,
+      price: item.price,
+    );
+    // Reload rather than patching state by hand: the requested flag lives on
+    // the course detail, per group, and that is what the CTA reads.
+    if (sent && mounted) await _loadCourse(id);
+  }
+
   /// Put a child down for an INTAKE. Not a purchase — no order, no money, no
   /// seat — so it deliberately does not go anywhere near the booking flow.
   Future<void> _onJoinWaitlistTapped() async {
@@ -970,7 +1018,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     // is nothing to sell. Not even the inert "booking available soon" bar —
     // that promises a sale that is never coming. The centre's own accounts
     // take its place in the cards below.
+    //
+    // A running course keeps none: its free trial lesson is requested per
+    // group, from the "Sinov darsi" card in the page body.
     final hasBottomBar = (!_isCourse || _isIntake) && !_isCatalog;
+    final trialItems = _trialItems;
     final notes =
         full == null ? const <String>[] : _bullets(full.importantNotes);
     final requiredItems =
@@ -1028,6 +1080,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           'class-detail-prices',
           _pricesCard(c, priceRows),
         ),
+      // The free trial lesson, group by group, each with its own button.
+      if (trialItems.isNotEmpty && !_isCatalog)
+        _detailSection(
+          'class-detail-trial',
+          TrialGroupsCard(
+            c: c,
+            items: trialItems,
+            onRequest: _onRequestTrialTapped,
+          ),
+        ),
       if (description.isNotEmpty)
         _detailSection(
           'class-detail-description',
@@ -1075,6 +1137,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         _detailSection(
           'class-detail-languages',
           _languageCard(c, languages),
+        ),
+      // Lumi's own support, last. Not on a catalogue listing: nothing there is
+      // sold through Lumi, so a call to us about it has no answer — the
+      // centre's own accounts above are the way to reach it.
+      if (!_isCatalog && SupportContactCard.isAvailable)
+        _detailSection(
+          'class-detail-support',
+          SupportContactCard(c: c),
         ),
     ];
 

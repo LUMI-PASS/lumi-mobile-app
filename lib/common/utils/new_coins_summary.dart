@@ -17,6 +17,9 @@ class NewCoinsSummary {
     this.canBuyExtras = false,
     this.singleCoinPrice = 0,
     this.activityRate = 0,
+    this.mainPacks = const [],
+    this.activeMainPackId,
+    this.activeMainExpiresAt,
   });
 
   /// At least one main pack is on sale.
@@ -34,6 +37,25 @@ class NewCoinsSummary {
 
   /// So'm per coin when paying for an activity.
   final num activityRate;
+
+  /// The main packs on sale, in shelf order — what [currentPack] is looked
+  /// up in, and what gives it its colour.
+  final List<NewCoinPack> mainPacks;
+
+  /// The pack the live tariff was bought as, and when it runs out.
+  final String? activeMainPackId;
+  final DateTime? activeMainExpiresAt;
+
+  /// The buyer's tariff, when they hold one and it is still on the shelf.
+  NewCoinPack? get currentPack {
+    final i = currentPackIndex;
+    return i < 0 ? null : mainPacks[i];
+  }
+
+  /// Where [currentPack] sits on the shelf, or -1.
+  int get currentPackIndex => activeMainPackId == null
+      ? -1
+      : mainPacks.indexWhere((p) => p.id == activeMainPackId);
 
   /// The gate on every coin surface in the app.
   ///
@@ -56,6 +78,9 @@ class NewCoinsSummary {
         canBuyExtras: catalogue.canBuyExtras,
         singleCoinPrice: catalogue.singleCoinPrice,
         activityRate: catalogue.activityRate,
+        mainPacks: catalogue.main,
+        activeMainPackId: activeMainPackId,
+        activeMainExpiresAt: activeMainExpiresAt,
       );
 
   NewCoinsSummary withBalance(NewCoinBalance held) => NewCoinsSummary(
@@ -67,6 +92,9 @@ class NewCoinsSummary {
         canBuyExtras: canBuyExtras,
         singleCoinPrice: singleCoinPrice,
         activityRate: activityRate,
+        mainPacks: mainPacks,
+        activeMainPackId: held.activeMainPackId,
+        activeMainExpiresAt: held.activeMainExpiresAt,
       );
 
   /// What is left once the account signs out: the shelf, with nobody's coins
@@ -75,6 +103,7 @@ class NewCoinsSummary {
         onSale: onSale,
         singleCoinPrice: singleCoinPrice,
         activityRate: activityRate,
+        mainPacks: mainPacks,
       );
 
   @override
@@ -87,7 +116,14 @@ class NewCoinsSummary {
       other.nearestExpiryCoins == nearestExpiryCoins &&
       other.canBuyExtras == canBuyExtras &&
       other.singleCoinPrice == singleCoinPrice &&
-      other.activityRate == activityRate;
+      other.activityRate == activityRate &&
+      other.activeMainPackId == activeMainPackId &&
+      other.activeMainExpiresAt == activeMainExpiresAt &&
+      _packsKey(other.mainPacks) == _packsKey(mainPacks);
+
+  /// What of the shelf this summary shows: which packs, under which names.
+  static String _packsKey(List<NewCoinPack> packs) =>
+      packs.map((p) => '${p.id}:${p.name}').join('|');
 
   @override
   int get hashCode => Object.hash(
@@ -99,5 +135,8 @@ class NewCoinsSummary {
         canBuyExtras,
         singleCoinPrice,
         activityRate,
+        activeMainPackId,
+        activeMainExpiresAt,
+        _packsKey(mainPacks),
       );
 }

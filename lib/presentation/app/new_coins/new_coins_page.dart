@@ -178,6 +178,20 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     });
   }
 
+  /// Where "change subscription" on the live tariff's card takes the shelf:
+  /// the next main pack after it, or the one before when it is the last.
+  /// Null when there is no other main pack to change to.
+  int? _otherPlanIndex(List<NewCoinPack> shelf, int active) {
+    bool isMain(int i) => _catalogue.main.any((p) => p.id == shelf[i].id);
+    for (var i = active + 1; i < shelf.length; i++) {
+      if (isMain(i)) return i;
+    }
+    for (var i = active - 1; i >= 0; i--) {
+      if (isMain(i)) return i;
+    }
+    return null;
+  }
+
   /// The main pack whose coin is cheapest — the one worth a badge. Null when
   /// there is nothing to compare it with.
   String? get _bestOfferId {
@@ -214,9 +228,10 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
 
   /// The pack the Buy button starts on. For a top-up, the cheapest pack that
   /// covers the gap — extras before main packs — so the default purchase is
-  /// the smallest one that lets the booking go through. Otherwise the first
-  /// main pack — or, with a live tariff, the next one up in price, since
-  /// buying the same tariff again is not what the shelf offers.
+  /// the smallest one that lets the booking go through. Otherwise the buyer's
+  /// own live tariff, so the screen opens on what they have — its card says
+  /// "current" and the next one up is a swipe away — or, with none, the first
+  /// main pack.
   NewCoinPack? _defaultPick() {
     final missing = widget.topUpFor;
     if (missing != null) {
@@ -228,13 +243,7 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       if (_extras.isNotEmpty) return _extras.last;
     }
     final current = _currentPack;
-    if (current != null) {
-      final higher = _catalogue.main
-          .where((p) => p.price > current.price)
-          .toList()
-        ..sort((a, b) => a.price.compareTo(b.price));
-      return higher.isNotEmpty ? higher.first : current;
-    }
+    if (current != null) return current;
     return _catalogue.main.isEmpty ? null : _catalogue.main.first;
   }
 
@@ -524,6 +533,13 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                   tone: tones[active],
                   price: pack.price,
                   isCurrent: pack.id == _currentPack?.id,
+                  onChangePlan: _otherPlanIndex(shelf, active) == null
+                      ? null
+                      : () => _pageController.animateToPage(
+                            _otherPlanIndex(shelf, active)!,
+                            duration: const Duration(milliseconds: 320),
+                            curve: Curves.easeOutCubic,
+                          ),
                   label: _isChange(pack) ? 'new_coins_change_btn'.tr() : null,
                   isLoading: _purchasing == pack.id,
                   onBuy: busy ? null : () => _buy(NewCoinPurchase.pack(pack)),

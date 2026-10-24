@@ -10,6 +10,9 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
+/// Longest response body the debug log prints before cutting it off.
+const _maxLoggedBody = 4000;
+
 @module
 abstract class NetworkModule {
   Dio dio(
@@ -25,9 +28,18 @@ abstract class NetworkModule {
     // Strip U+FFFD (replacement character) at the raw-bytes level — before
     // JSON parsing and before PrettyDioLogger touches the string, so Flutter's
     // debug stdout never encounters the character that crashes it.
-    dio.options.responseDecoder = (bytes, _, __) {
-      final raw = utf8.decode(bytes, allowMalformed: true);
-      return raw.replaceAll('�', '');
+    dio.options.responseDecoder = (bytes, options, __) {
+      final raw = utf8.decode(bytes, allowMalformed: true).replaceAll('�', '');
+      // PrettyDioLogger's responseBody is off (see below), so the body is
+      // logged here instead, in debug only: the raw string is already in hand,
+      // and capping it costs nothing, unlike pretty-printing the parsed map.
+      if (kDebugMode) {
+        final body = raw.length > _maxLoggedBody
+            ? '${raw.substring(0, _maxLoggedBody)}… (${raw.length} chars)'
+            : raw;
+        debugPrint('[HTTP body] ${options.method} ${options.uri}\n$body');
+      }
+      return raw;
     };
 
     // Order matters: errors this one forwards (e.g. a 401 on a retried

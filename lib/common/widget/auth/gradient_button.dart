@@ -18,7 +18,12 @@ class GradientButton extends StatelessWidget {
     this.gradient,
     this.foreground,
     this.outlined = false,
+    this.height,
   });
+
+  /// Null is the standard 50 — a smaller button among several on a card
+  /// passes less.
+  final double? height;
 
   /// The secondary look: a bordered pill with no fill — the SMS button on the
   /// login screen, under Telegram.
@@ -49,7 +54,7 @@ class GradientButton extends StatelessWidget {
           if (active) onPressed?.call();
         },
         child: Container(
-          height: 50.h,
+          height: height ?? 50.h,
           width: double.infinity,
           alignment: Alignment.center,
           decoration: BoxDecoration(

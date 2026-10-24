@@ -175,8 +175,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
               if (state.subscriptionList.isNotEmpty)
                 SliverToBoxAdapter(child: _buildSubscription(context, state)),
               // The interests row is dealt into "Near you" after its first
-              // three cards (see [_inserts]). It keeps this slot only on a feed
-              // too short to have dealt it.
+              // three cards (see [_inserts]). It keeps this slot on a feed too
+              // short to have dealt it, and whenever the interests question is
+              // still unanswered — the strip asking it belongs up here.
               if (!interestsDealt && _hasInterestsRow(state))
                 SliverToBoxAdapter(child: _buildInterestsRow(context, state)),
               if (state.nearClassesList.isNotEmpty)
@@ -535,53 +536,67 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
         !watchNewCoins(context).isVisible;
     final priceBlock = strikesPrice ? 118.0 : 102.0;
     final textBlock = (list.any(_showsPrice) ? priceBlock : 84.0) * textScale;
-    final rowH = cardImgH + 14.h + textBlock.h;
+    // Carded on a coloured panel, like "Obunaga kiradi", so the card adds its
+    // own frame around the photo and text.
+    final rowH = cardImgH + 14.h + textBlock.h + HomeCourseCard.cardedExtraHeight;
     void openAll() => context.router.push(
           forChildren
               ? InterestsGridRoute(title: 'based_on_interests'.tr())
               : SearchDiscoveryRoute(initialKind: ActivityKind.courses),
         );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // No leading gap of its own: this row follows the coin panel, which
-        // carries the space between them as its bottom margin.
-        HomeSectionHeader(
-          title: forChildren ? 'based_on_interests'.tr() : 'courses'.tr(),
-          // The children's row opens the rest of its own matches — the same
-          // matching, uncapped, with a chip per topic. The whole catalog
-          // would answer a question the header did not ask.
-          //
-          // The generic row opens the discovery screen narrowed to courses —
-          // it named a type, so "see all" honours it. It lands as a visible
-          // filter rather than a mode, so the user can widen back to
-          // everything from the filter sheet.
-          onViewAll: openAll,
-          viewAllLabel: forChildren ? 'view_all'.tr() : 'view_all_courses'.tr(),
+    // The same panel as "Obunaga kiradi" — the coin band's colour and shape —
+    // so the two horizontal shelves on the feed read as one family, distinct
+    // from the plain "Sizga yaqin" list around them.
+    //
+    // The children's row opens the rest of its own matches — the same
+    // matching, uncapped, with a chip per topic. The whole catalog would
+    // answer a question the header did not ask. The generic row opens the
+    // discovery screen narrowed to courses — it named a type, so "see all"
+    // honours it.
+    return GestureDetector(
+      // As on "Obunaga kiradi": a chevron on the title, and the whole panel
+      // around the cards is the tap. The cards claim their own taps first.
+      behavior: HitTestBehavior.opaque,
+      onTap: openAll,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        decoration: BoxDecoration(
+          color: context.colors.coinBand,
+          borderRadius: BorderRadius.circular(24.r),
         ),
-        10.verticalSpace,
-        SizedBox(
-          height: rowH,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(left: 8.w, right: 16.w),
-            itemCount: list.length + 1,
-            itemBuilder: (context, index) => index == list.length
-                ? HomeSeeAllTile(onTap: openAll)
-                : HomeCourseCard(
-                    key: ValueKey('c2-${list[index].id ?? index}'),
-                    homClass: list[index],
-                    width: cardW,
-                    imageHeight: cardImgH,
-                    margin: EdgeInsets.only(left: 8.w),
-                    // Same shelf treatment as the activities row above it.
-                    showDistance: false,
-                    showPrice: _showsPrice(list[index]),
-                    onViewAsReels: () => _openShorts(context, list, index),
-                  ),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            HomeSectionHeader(
+              title: forChildren ? 'based_on_interests'.tr() : 'courses'.tr(),
+              chevron: true,
+            ),
+            12.verticalSpace,
+            SizedBox(
+              height: rowH,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.only(left: 8.w, right: 16.w),
+                itemCount: list.length + 1,
+                itemBuilder: (context, index) => index == list.length
+                    ? HomeSeeAllTile(onTap: openAll)
+                    : HomeCourseCard(
+                        key: ValueKey('c2-${list[index].id ?? index}'),
+                        homClass: list[index],
+                        width: cardW,
+                        imageHeight: cardImgH,
+                        margin: EdgeInsets.only(left: 8.w),
+                        carded: true,
+                        // Same shelf treatment as the activities row above it.
+                        showDistance: false,
+                        showPrice: _showsPrice(list[index]),
+                        onViewAsReels: () => _openShorts(context, list, index),
+                      ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -645,7 +660,11 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final fixed = [
       for (final insert in HomeInsert.values)
         if (switch (insert) {
-          HomeInsert.interestsRow => _hasInterestsRow(state),
+          // Not while the interests question is still unanswered: the strip
+          // that asks it then keeps its fixed slot under the coin row, where
+          // it is seen before the near list starts.
+          HomeInsert.interestsRow => _hasInterestsRow(state) &&
+              state.homeModel?.data?.interestsPicked != false,
           HomeInsert.inviteBanner => signedIn,
           HomeInsert.categoryTiles => _categories(state).length >= 4,
           HomeInsert.trialBand => _trials(state).length >= _bandMinimum,

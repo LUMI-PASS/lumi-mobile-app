@@ -1557,6 +1557,13 @@ class _BranchCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppText.semibold16.copyWith(color: c.textPrimary),
                   ),
+                  // A centre that signed up with Lumi, as opposed to a
+                  // catalogue listing — the same split the pins make, where
+                  // only partners wear the brand colour.
+                  if (branch.isCatalog != true) ...[
+                    6.verticalSpace,
+                    const _PartnerBadge(),
+                  ],
                   if (address.isNotEmpty) ...[
                     6.verticalSpace,
                     Text(
@@ -1587,6 +1594,43 @@ class _BranchCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "Our partner" — on the map's centre card, for a centre that signed up with
+/// Lumi. In the brand gradient, the colour the partner pins wear.
+class _PartnerBadge extends StatelessWidget {
+  const _PartnerBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(6.w, 3.h, 8.w, 3.h),
+      decoration: BoxDecoration(
+        gradient: AppGradients.brand,
+        borderRadius: BorderRadius.circular(100.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.verified_rounded, size: 12.w, color: Colors.white),
+          4.horizontalSpace,
+          Text(
+            'map_partner_badge'.tr(),
+            // Trimmed line box, so the word centres on the icon.
+            style: AppText.bold10.copyWith(
+              color: Colors.white,
+              height: 1.0,
+              leadingDistribution: TextLeadingDistribution.even,
+            ),
+            textHeightBehavior: const TextHeightBehavior(
+              applyHeightToFirstAscent: false,
+              applyHeightToLastDescent: false,
+            ),
+          ),
+        ],
       ),
     );
   }

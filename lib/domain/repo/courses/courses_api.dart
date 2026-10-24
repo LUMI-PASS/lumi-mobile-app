@@ -504,6 +504,83 @@ class CourseIntake {
   }
 }
 
+/// One group of a running course, and whether a free trial lesson may be
+/// requested for it.
+class CourseTrialRequestGroup {
+  const CourseTrialRequestGroup({
+    this.subcourseId,
+    this.name,
+    this.canRequest = false,
+    this.blockedReason,
+    this.requested = false,
+    this.entryId,
+  });
+
+  /// Null for a course that is not split into groups.
+  final String? subcourseId;
+  final String? name;
+
+  /// The server's verdict: the centre set trial lessons up, one is still
+  /// ahead, and this user is not already enrolled.
+  final bool canRequest;
+
+  /// Why not, when [canRequest] is false.
+  final CourseBlockedReason? blockedReason;
+
+  /// This user already has an open request (or waitlist place) here.
+  final bool requested;
+  final String? entryId;
+
+  factory CourseTrialRequestGroup.fromJson(Map<String, dynamic> j) =>
+      CourseTrialRequestGroup(
+        subcourseId: j['subcourse_id'] as String?,
+        name: j['name'] as String?,
+        canRequest: j['can_request'] as bool? ?? false,
+        blockedReason:
+            CourseBlockedReason.fromKey(j['blocked_reason'] as String?),
+        requested: j['requested'] as bool? ?? false,
+        entryId: j['entry_id'] as String?,
+      );
+}
+
+/// A FREE trial-lesson request on a course that is already running.
+///
+/// Not a purchase, exactly like an intake's waitlist: no order, no money, no
+/// seat. The centre is told and calls the parent to agree the date. Absent
+/// on an intake, on a course of a centre that only sells one-time
+/// activities, and on an older server.
+class CourseTrialRequest {
+  const CourseTrialRequest({
+    this.canRequest = false,
+    this.requested = false,
+    this.entryId,
+    this.groups = const [],
+  });
+
+  /// True when at least one group takes a request.
+  final bool canRequest;
+
+  /// True when this user already has an open request on this course.
+  final bool requested;
+  final String? entryId;
+  final List<CourseTrialRequestGroup> groups;
+
+  /// The groups a parent may still pick from in the sheet.
+  List<CourseTrialRequestGroup> get openGroups =>
+      groups.where((g) => g.canRequest && !g.requested).toList();
+
+  factory CourseTrialRequest.fromJson(Map<String, dynamic> j) =>
+      CourseTrialRequest(
+        canRequest: j['can_request'] as bool? ?? false,
+        requested: j['requested'] as bool? ?? false,
+        entryId: j['entry_id'] as String?,
+        groups: ((j['groups'] as List?) ?? [])
+            .map((e) => CourseTrialRequestGroup.fromJson(
+                Map<String, dynamic>.from(e as Map)))
+            .toList(),
+      );
+}
+
 class CourseDetail {
   const CourseDetail({
     required this.activityId,
@@ -513,6 +590,7 @@ class CourseDetail {
     this.defaultLevelId,
     this.type,
     this.intake,
+    this.trialRequest,
   });
 
   final String activityId;
@@ -529,6 +607,9 @@ class CourseDetail {
 
   /// Present only on an intake; null on a normal course.
   final CourseIntake? intake;
+
+  /// Present on a running course that takes free trial requests.
+  final CourseTrialRequest? trialRequest;
 
   /// The ONLY test for an intake. A course that merely has no schedule is a
   /// misconfigured course, not an intake.
@@ -550,6 +631,10 @@ class CourseDetail {
       type: j['type'] as String?,
       intake: j['intake'] is Map
           ? CourseIntake.fromJson(Map<String, dynamic>.from(j['intake'] as Map))
+          : null,
+      trialRequest: j['trial_request'] is Map
+          ? CourseTrialRequest.fromJson(
+              Map<String, dynamic>.from(j['trial_request'] as Map))
           : null,
     );
   }
@@ -717,6 +802,29 @@ class CoursesApi {
         if (subcourseId != null) 'subcourse_id': subcourseId,
         if (childId != null) 'child_id': childId,
         if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
+    return _unwrap(res.data)['entry_id'] as String? ?? '';
+  }
+
+  /// Ask a running course for a FREE trial lesson.
+  ///
+  /// NOT a purchase: no order, no money, no seat. The centre is told and rings
+  /// the parent to agree the date. [subcourseId] is required when the course
+  /// is split into groups. Like the waitlist, there is no way to withdraw from
+  /// the app — the parent says so when the centre calls.
+  Future<String> requestTrial({
+    required String activityId,
+    String? subcourseId,
+    String? childId,
+    String? note,
+  }) async {
+    final res = await _dio.post(
+      'courses/$activityId/trial-request',
+      data: {
+        if (subcourseId != null) 'subcourse_id': subcourseId,
+        if (childId != null) 'child_id': childId,
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
       },
     );

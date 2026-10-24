@@ -180,6 +180,7 @@ class NewCoinBalance {
     this.balance = 0,
     this.hasActiveMain = false,
     this.activeMainPackId,
+    this.activeMainExpiresAt,
     this.nearestExpiry,
     this.nearestExpiryCoins = 0,
     this.lots = const [],
@@ -194,6 +195,9 @@ class NewCoinBalance {
   /// without one, or from a server that does not send it yet.
   final String? activeMainPackId;
 
+  /// When the current tariff runs out. Null without one.
+  final DateTime? activeMainExpiresAt;
+
   /// The soonest deadline among the coins still held, and how many it takes.
   final DateTime? nearestExpiry;
   final int nearestExpiryCoins;
@@ -207,6 +211,7 @@ class NewCoinBalance {
         activeMainPackId: json['has_active_main'] == true
             ? json['active_main_pack_id']?.toString()
             : null,
+        activeMainExpiresAt: _date(json['active_main_expires_at']),
         nearestExpiry: _date(json['nearest_expiry']),
         nearestExpiryCoins: _int(json['nearest_expiry_coins']),
         lots: ((json['lots'] as List?) ?? const [])

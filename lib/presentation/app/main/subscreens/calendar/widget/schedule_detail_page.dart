@@ -21,6 +21,7 @@ import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/bouncing_button.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
+import 'package:lumi_pass/common/widget/detail/support_card.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/map_route_sheet.dart';
@@ -403,6 +404,12 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                       ],
                       6.verticalSpace,
                       _paymentCard(c, order, showReceipt),
+                      // A problem with this booking is the commonest reason
+                      // to reach support, so the contacts sit on it.
+                      if (SupportContactCard.isAvailable) ...[
+                        6.verticalSpace,
+                        SupportContactCard(c: c),
+                      ],
                     ],
                   ),
                 ),

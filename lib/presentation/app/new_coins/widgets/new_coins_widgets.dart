@@ -450,7 +450,7 @@ class NewCoinPackHeader extends StatelessWidget {
             ),
             if (isCurrent) ...[
               8.kw,
-              _CurrentPlanBadge(tone: tone)
+              const _CurrentPlanBadge()
             ] else if (isBestOffer) ...[
               8.kw,
               const _BestOfferBadge()
@@ -697,6 +697,7 @@ class NewCoinsBuyBar extends StatelessWidget {
     this.dots,
     this.label,
     this.isCurrent = false,
+    this.onChangePlan,
   });
 
   final NewCoinTone tone;
@@ -704,9 +705,14 @@ class NewCoinsBuyBar extends StatelessWidget {
   /// The button's word. Null is "Buy".
   final String? label;
 
-  /// The pack in front is the buyer's live tariff: the button says so, is
-  /// dimmed, and does nothing.
+  /// The pack in front is the buyer's live tariff. With [onChangePlan] the
+  /// button offers to change it; without, it says so, is dimmed, and does
+  /// nothing.
   final bool isCurrent;
+
+  /// What "change subscription" does on the live tariff — the shelf brings
+  /// another pack forward, where the real change-of-tariff button is.
+  final VoidCallback? onChangePlan;
 
   /// Shown on a chip beside the label. Null leaves the label alone — the
   /// checkout page states the sum just above the bar and need not repeat it.
@@ -749,10 +755,14 @@ class NewCoinsBuyBar extends StatelessWidget {
         children: [
           if (dots != null) ...[dots, 14.kh],
           GestureDetector(
-            onTap: isLoading || isCurrent ? null : onBuy,
+            onTap: isLoading
+                ? null
+                : isCurrent
+                    ? onChangePlan
+                    : onBuy,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 220),
-              opacity: isCurrent ? 0.55 : 1,
+              opacity: isCurrent && onChangePlan == null ? 0.55 : 1,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 height: 58.h,
@@ -782,7 +792,9 @@ class NewCoinsBuyBar extends StatelessWidget {
                         children: [
                           Text(
                             isCurrent
-                                ? 'new_coins_current_plan'.tr()
+                                ? (onChangePlan != null
+                                    ? 'new_coins_change_subscription'.tr()
+                                    : 'new_coins_current_plan'.tr())
                                 : label ?? 'new_coins_buy_btn'.tr(),
                             style: AppText.semibold16
                                 .copyWith(color: tone.onAccent),
@@ -817,27 +829,39 @@ class NewCoinsBuyBar extends StatelessWidget {
 }
 
 /// "Current plan" — on the pack the buyer holds now, in that pack's colour.
+/// "Current" — on the buyer's live tariff. Dressed exactly like
+/// [_BestOfferBadge], whose place it takes: the pack's own tone washed into
+/// the card behind it, so a badge in that tone all but disappeared.
 class _CurrentPlanBadge extends StatelessWidget {
-  const _CurrentPlanBadge({required this.tone});
-
-  final NewCoinTone tone;
+  const _CurrentPlanBadge();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(6.w, 2.h, 9.w, 2.h),
       decoration: BoxDecoration(
-        gradient: tone.button,
+        gradient: AppGradients.indigo,
         borderRadius: BorderRadius.circular(100.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_rounded, size: 12.w, color: tone.onAccent),
+          Icon(Icons.check_rounded, size: 12.w, color: AppColors.white),
           4.kw,
           Text(
             'new_coins_current_badge'.tr(),
-            style: AppText.bold10.copyWith(color: tone.onAccent),
+            // Line box trimmed to the glyphs, split evenly above and below,
+            // so the word centres on the icon beside it instead of riding
+            // low under the font's default leading.
+            style: AppText.bold10.copyWith(
+              color: AppColors.white,
+              height: 1.0,
+              leadingDistribution: TextLeadingDistribution.even,
+            ),
+            textHeightBehavior: const TextHeightBehavior(
+              applyHeightToFirstAscent: false,
+              applyHeightToLastDescent: false,
+            ),
           ),
         ],
       ),
@@ -865,7 +889,18 @@ class _BestOfferBadge extends StatelessWidget {
           4.kw,
           Text(
             'coupon_best_offer'.tr(),
-            style: AppText.bold10.copyWith(color: AppColors.white),
+            // Line box trimmed to the glyphs, split evenly above and below,
+            // so the word centres on the icon beside it instead of riding
+            // low under the font's default leading.
+            style: AppText.bold10.copyWith(
+              color: AppColors.white,
+              height: 1.0,
+              leadingDistribution: TextLeadingDistribution.even,
+            ),
+            textHeightBehavior: const TextHeightBehavior(
+              applyHeightToFirstAscent: false,
+              applyHeightToLastDescent: false,
+            ),
           ),
         ],
       ),

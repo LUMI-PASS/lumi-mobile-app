@@ -16,6 +16,7 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/widget/detail/detail_card.dart';
 import 'package:lumi_pass/common/widget/detail/socials_card.dart';
+import 'package:lumi_pass/common/widget/detail/support_card.dart';
 import 'package:lumi_pass/common/widget/expandable_description.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/common/widget/location_preview_map.dart';
@@ -346,6 +347,13 @@ class _BranchDetailPageState extends State<BranchDetailPage> {
                           socials: _socials,
                           hint: 'detail_socials_hint'.tr(),
                         ),
+                      ],
+                      // Lumi's own support — except on a catalogue centre,
+                      // which Lumi does not sell and so cannot help with.
+                      if (widget.branch.isCatalog != true &&
+                          SupportContactCard.isAvailable) ...[
+                        6.verticalSpace,
+                        SupportContactCard(c: c),
                       ],
                       20.verticalSpace,
                     ],

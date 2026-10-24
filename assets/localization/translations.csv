@@ -41,6 +41,8 @@ support_sheet_subtitle,Выберите удобный способ связи,Q
 support_via_telegram,Написать в Telegram,Telegram orqali yozish,Message us on Telegram
 support_via_phone,Позвонить,Qo‘ng‘iroq qilish,Call us
 support_open_failed,Не удалось открыть,Ochib bo‘lmadi,Could not open
+detail_support,Поддержка Lumi,Lumi qo‘llab-quvvatlash,Lumi support
+detail_support_hint,Возникли вопросы или проблемы? Мы на связи.,Savol yoki muammo bormi? Biz aloqadamiz.,Questions or a problem? We're here to help.
 tiktok,TikTok,TikTok,TikTok
 youtube,YouTube,YouTube,YouTube
 volume_unit,м³,m³,m³
@@ -121,6 +123,7 @@ centers,Центры,Markazlar,Centers
 classes,Занятия,Darslar,Classes
 categories,Категории,Kategoriyalar,Categories
 centers_on_map,Центры на карте,Xaritadagi markazlar,Centers on Map
+map_partner_badge,Наш партнёр,Bizning hamkor,Lumi partner
 open_in_map,Открыть на карте,Xaritada ochish,Open in Map
 filter_by_category,Фильтр по категории,Kategoriya bo'yicha filtr,Filter by category
 pick_category,Выберите категорию,Kategoriyani tanlang,Pick a Category
@@ -1229,6 +1232,21 @@ intake_join_child,Для кого?,Kim uchun?,Who is it for?
 intake_child_unnamed,Ребёнок,Bola,Child
 intake_joined_toast,Вы в списке — центр свяжется с вами,Siz ro‘yxatdasiz — markaz bog‘lanadi,You're on the list — the centre will call
 intake_join_failed,Не удалось записаться. Попробуйте ещё раз.,Yozilib bo‘lmadi. Qayta urinib ko‘ring.,Could not join the waitlist. Try again.
+trial_request_title,Пробный урок,Sinov darsi,Trial lesson
+trial_request_hint,"Это бесплатно. Оставьте заявку — центр позвонит и договорится с вами о дате пробного урока.","Bu bepul. Ariza qoldiring — markaz qo‘ng‘iroq qilib, sinov darsi sanasini siz bilan kelishadi.","It's free. Send a request and the centre will call you to agree a date for the trial lesson."
+trial_request_group_unnamed,Группа,Guruh,Group
+trial_request_send,Отправить заявку,Ariza yuborish,Send request
+trial_request_sent_toast,"Заявка отправлена — центр свяжется с вами","Ariza yuborildi — markaz siz bilan bog‘lanadi","Request sent — the centre will call you"
+trial_request_already,Заявка уже отправлена,Ariza allaqachon yuborilgan,You've already sent a request
+trial_request_failed,Не удалось отправить заявку. Попробуйте ещё раз.,Arizani yuborib bo‘lmadi. Qayta urinib ko‘ring.,Could not send the request. Try again.
+trial_request_book,Записаться,Yozilish,Book
+trial_request_next_lesson,Ближайший урок: {},Eng yaqin dars: {},Next lesson: {}
+trial_request_sent_short,Заявка отправлена,Ariza yuborildi,Request sent
+trial_request_price,Цена пробного урока: {},Sinov darsi narxi: {},Trial lesson price: {}
+trial_request_hint_paid,"Пробный урок стоит {}, оплата — в центре. Оставьте заявку — центр позвонит и договорится с вами о дате.","Sinov darsi narxi — {}, to‘lov markazda. Ariza qoldiring — markaz qo‘ng‘iroq qilib, sanani siz bilan kelishadi.","The trial lesson costs {}, paid at the centre. Send a request and the centre will call you to agree a date."
+trial_request_hint_unpriced,"Оставьте заявку — центр позвонит и договорится с вами о дате пробного урока.","Ariza qoldiring — markaz qo‘ng‘iroq qilib, sinov darsi sanasini siz bilan kelishadi.","Send a request and the centre will call you to agree a date for the trial lesson."
+trial_request_who,Для кого урок?,Dars kim uchun?,Who is the lesson for?
+trial_request_no_children,"Детей в профиле пока нет — центр уточнит по телефону.","Profilda hali bola yo‘q — markaz telefon orqali aniqlaydi.","No children in your profile yet — the centre will ask on the phone."
 profile_greeting,"Добро пожаловать, {}!","Xush kelibsiz, {}!","Welcome, {}!"
 services_title,Сервисы,Xizmatlar,Services
 help_title,Помощь,Yordam,Help
@@ -1406,6 +1424,7 @@ new_coins_balance_label,Ваш баланс Lumi Coin,Lumi Coin balansingiz,Your
 new_coins_balance_line,Баланс: {} Lumi Coin,Balans: {} Lumi Coin,Balance: {} Lumi Coin
 new_coins_expire_on,Из них {} — до {},Shundan {} tasi {} gacha amal qiladi,{} of them valid until {}
 new_coins_valid_until,Действуют до {},{} gacha amal qiladi,Valid until {}
+new_coins_plan_subtitle,{} · до {},{} · {} gacha,{} · until {}
 new_coins_never_expire,Не сгорают,Muddati cheklanmagan,Never expire
 new_coins_history,История,Tarix,History
 new_coins_history_empty,Здесь появятся покупки и списания Lumi Coin.,Bu yerda Lumi Coin xaridlari va sarflari ko‘rinadi.,Your Lumi Coin purchases and spends will appear here.
@@ -1470,6 +1489,7 @@ new_coins_buy_btn,Купить,Sotib olish,Buy
 new_coins_change_btn,Сменить тариф,Tarifni o'zgartirish,Change plan
 new_coins_current_plan,Ваш текущий тариф,Joriy tarifingiz,Your current plan
 new_coins_current_badge,Текущий,Joriy,Current
+new_coins_change_subscription,Сменить подписку,Obunani o'zgartirish,Change subscription
 new_coins_history_more,Показать ещё,Yana ko‘rsatish,Show more
 new_coins_tx_refund,Возврат за отменённую бронь,Bekor qilingan bron uchun qaytarildi,Refund for a cancelled booking
 new_coins_bonus_card_chip,+{} при оплате картой,+{} karta orqali,+{} with card
@@ -1544,4 +1564,4 @@ time_afternoon,День,Kunduzi,Afternoon
 time_evening,Вечер,Kechqurun,Evening
 map_list,Списком,Ro'yxat,List
 map_reset,Сбросить,Tozalash,Reset
-subscription_ribbon,Подписка,Obuna,Plan
+subscription_ribbon,В подписке,Obunada,In plan
