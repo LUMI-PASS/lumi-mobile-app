@@ -10,6 +10,7 @@ import YandexMapsMobile
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     configureYandexMapKit()
+    configureTabBarLabels()
     UNUserNotificationCenter.current().delegate = self
     application.registerForRemoteNotifications()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -17,6 +18,18 @@ import YandexMapsMobile
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+  }
+
+  /// The iOS 26 tab bar (cupertino_native's `CNTabBar`) tints icon AND label
+  /// with its one `tint`. The labels stay the primary text colour instead —
+  /// black in light mode, white in dark — and only the icon takes the brand
+  /// purple. Set through the appearance proxy because the plugin exposes no
+  /// label colour of its own; it applies to every tab bar created after this.
+  private func configureTabBarLabels() {
+    let label: [NSAttributedString.Key: Any] = [.foregroundColor: UIColor.label]
+    let item = UITabBarItem.appearance()
+    item.setTitleTextAttributes(label, for: .normal)
+    item.setTitleTextAttributes(label, for: .selected)
   }
 
   /// MapKit needs its key and locale before any map exists. Both are set once

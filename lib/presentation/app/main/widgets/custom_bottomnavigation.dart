@@ -193,7 +193,9 @@ class CustomBottomBar extends StatelessWidget {
             height: 1.0,
             fontWeight:
                 FontWeight.lerp(FontWeight.w400, FontWeight.w500, progress),
-            color: Color.lerp(unselectedColor, selectedColor, progress),
+            // The label stays the primary text colour whichever tab is
+            // picked; only the icon lights up.
+            color: selectedColor,
           ),
         );
 

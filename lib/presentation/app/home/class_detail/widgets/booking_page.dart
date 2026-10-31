@@ -4138,9 +4138,9 @@ class _TariffRow extends StatelessWidget {
   /// coins not on offer.
   final int? newCoinPrice;
 
-  /// Coins are what this booking is paid in, so the coin price leads and the
-  /// so'm price follows it, muted — it is no longer what the buyer pays.
-  /// False keeps the so'm price first with the coins as a pill after it.
+  /// Coins are what this booking is paid in, so the coin price replaces the
+  /// so'm price — it is no longer what the buyer pays. False keeps the so'm
+  /// price first with the coins as a pill after it.
   final bool coinPrimary;
 
   /// Non-null while a packet pays for this booking — the row then shows the
@@ -4211,25 +4211,14 @@ class _TariffRow extends StatelessWidget {
                         .copyWith(color: context.colors.textSecondary)),
               if (promoPass != null && price > 0)
                 PromoIncludedLabel(pass: promoPass!)
-              else if (coinPrimary && (newCoinPrice ?? 0) > 0) ...[
+              else if (coinPrimary && (newCoinPrice ?? 0) > 0)
                 CoinAmount(
                   amount: newCoinPrice!,
                   style: AppText.semibold12,
                   color: context.colors.textPrimary,
                   iconSize: 13,
-                ),
-                // For reference only: what the ticket is worth, not a second
-                // way to pay and not a figure a coupon discounts here. On a
-                // lesson on sale it is the sale price — the coins beside it
-                // were worked out from that.
-                Text(
-                  salePercent > 0 && discounted != null && discounted > 0
-                      ? discounted.toRawUzsPrice()
-                      : priceText,
-                  style: AppText.regular12
-                      .copyWith(color: context.colors.textMuted),
-                ),
-              ] else
+                )
+              else
                 Text(
                 priceText,
                 style: AppText.regular12.copyWith(
