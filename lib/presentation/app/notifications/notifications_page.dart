@@ -136,7 +136,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     if (date == today) return Strings.notificationToday;
     if (date == yesterday) return Strings.notificationYesterday;
-    return DateFormat('MMMM d, yyyy').format(dt);
+    return DateFormat('d MMMM y', context.locale.languageCode).format(dt);
   }
 
   @override
@@ -506,7 +506,7 @@ class _NotificationCard extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        DateFormat('d MMM, HH:mm')
+                        DateFormat('d MMM, HH:mm', context.locale.languageCode)
                             .format(notification.createdAt),
                         style:
                             AppText.medium10.copyWith(color: c.textSecondary),

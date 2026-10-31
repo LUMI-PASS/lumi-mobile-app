@@ -40,7 +40,9 @@ class NotificationModel {
       type: json['type'] as String?,
       isRead: json['is_read'] as bool? ?? false,
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          // The server sends UTC; the list and its day headers read device time.
+          ? DateTime.tryParse(json['created_at'].toString())?.toLocal() ??
+              DateTime.now()
           : DateTime.now(),
       data: _readData(json['data']),
     );
