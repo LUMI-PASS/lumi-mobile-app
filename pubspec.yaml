@@ -3,7 +3,7 @@ description: "Lumi project"
 
 publish_to: 'none'
 
-version: 2.0.12+31
+version: 2.1.14+32
 
 environment:
   # The lower bound here also picks the Dart language version: raising it to
