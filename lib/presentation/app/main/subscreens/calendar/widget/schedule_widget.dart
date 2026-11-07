@@ -326,7 +326,7 @@ class BookingCard extends StatelessWidget {
               icon: Assets.icons.detail.iconsaxReceipt,
               label: 'order_sum'.tr(),
               accent: _accentMoney,
-              // A coupon or a wallet balance that covered the whole order
+              // A promocode or a wallet balance that covered the whole order
               // leaves nothing to charge, and "0 so'm" reads like a bug beside
               // a real booking. Name it for what it is.
               //

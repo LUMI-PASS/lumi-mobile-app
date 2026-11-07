@@ -49,12 +49,12 @@ class TicketReceiptPage extends StatefulWidget {
   /// once and not per lesson, so the caller passes the order's own subtotal.
   final num? price;
 
-  /// Per-ticket amount the user actually paid after coupon discount.
+  /// Per-ticket amount the user actually paid after a discount.
   /// Null when no discount was applied — falls back to [price].
   final num? paidPrice;
 
-  /// True when the discount came from a promocode (vs an auto coupon plan) —
-  /// selects the "Promokod chegirmasi" vs "Kupon chegirmasi" label.
+  /// True when the discount came from a promocode (vs the centre's sale) —
+  /// selects the "Promokod chegirmasi" vs "Chegirma" label.
   final bool fromPromocode;
 
   @override
@@ -370,7 +370,7 @@ class _TicketCard extends StatelessWidget {
                     child: Text(
                       (fromPromocode
                               ? 'booking_promocode_discount'
-                              : 'booking_coupon_discount')
+                              : 'book_discount')
                           .tr(),
                       style:
                           AppText.semibold12.copyWith(color: AppColors.green),

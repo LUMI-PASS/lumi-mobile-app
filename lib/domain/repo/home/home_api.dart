@@ -92,13 +92,6 @@ class HomeApi {
     return _dio.get('users/children/');
   }
 
-  Future<Response> getPremiumPlans({int page = 1, int limit = 12}) {
-    return _dio.get(
-      'tariffs/',
-      queryParameters: {'page': page, 'limit': limit},
-    );
-  }
-
   Future<Response> getCategories() {
     return _dio.get('categories/');
   }
@@ -341,14 +334,5 @@ class HomeApi {
 
   Future<Response> unclaimedCentre(String id) {
     return _dio.get('unclaimed-centres/$id');
-  }
-
-  /// Returns the count of activities that have a discount_percentage >= [minDiscount].
-  /// Used on the coupon success screen to tell the user how many activities
-  /// their plan applies to.
-  Future<Response> getEligibleCount(int minDiscount) {
-    return _dio.get('discovery/eligible-count', queryParameters: {
-      'min_discount': minDiscount,
-    });
   }
 }

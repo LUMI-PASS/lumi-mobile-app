@@ -20,8 +20,6 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/cubit/home_state.dart';
@@ -65,7 +63,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   @override
   void onFocusGained(BuildContext context) {
-    // Handles language changes AND post-coupon-purchase discount refresh.
+    // Handles language changes, a moved location and a finished purchase.
     context.read<HomeCubit>().refreshOnFocusGained();
     super.onFocusGained(context);
   }
@@ -506,15 +504,15 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final cardImgH = 150.w;
     // The text block under the photo: a provider pill, a one-line title and an
     // address. NOT a price — a course on the feed carries none (see
-    // [_showsPrice]) — which is why this is no longer the 118 the priced rows
-    // reserve. Holding on to that figure left ~35pt of nothing at the bottom of
+    // [_showsPrice]) — which is why it reserves less than a priced row.
+    // Holding on to the old 118 figure left ~35pt of nothing at the bottom of
     // every card, which the eye read as a gap between this row and "Sizga
     // yaqin" under it rather than as part of the cards.
     //
     // Measured rather than estimated — see `home_courses_row_height_test.dart`,
     // which fails if a card outgrows this or if the slack creeps back.
     //
-    // The 118 branch stands for the day something priced lands in this list:
+    // The priced branch stands for the day something priced lands in this list:
     // the row would otherwise clip the price line off it.
     //
     // Scaled by the device's text size, so a large-font setting makes the row
@@ -522,19 +520,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     // past 1.6 the row would be taller than the photo it belongs to.
     final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6);
     //
-    // The 118 is for a price that runs to TWO lines, and only one kind does:
-    // a so'm figure struck out over the coupon plan's discounted one. A coin
-    // price is a single line, and so is a so'm price with no plan — and on
-    // those the second line's worth of room sat empty under every card,
-    // where it read as a hole in the feed before "Sizga yaqin". So the full
-    // allowance is kept for the case that fills it, and the rest get one
-    // line's less.
-    final app =
-        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
-    final strikesPrice = app.hasPremium &&
-        app.planDiscountPercentage > 0 &&
-        !watchNewCoins(context).isVisible;
-    final priceBlock = strikesPrice ? 118.0 : 102.0;
+    // A priced card's price is a single line — a coin price, or a so'm price —
+    // so the priced allowance is one line more than the address-only one.
+    const priceBlock = 102.0;
     final textBlock = (list.any(_showsPrice) ? priceBlock : 84.0) * textScale;
     // Carded on a coloured panel, like "Obunaga kiradi", so the card adds its
     // own frame around the photo and text.
@@ -716,7 +704,7 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   /// It used to be one unbroken list: a screen and a half of identical cards,
   /// then another, without end. The cards are the same and in the same order;
   /// what changed is that the eye gets a different shape every few rows — a
-  /// coupon, a band of colour, a grid of tiles — which is also the only place
+  /// band of colour, a grid of tiles — which is also the only place
   /// on the feed the app's own features are ever mentioned.
   List<Widget> _buildNearYou(
     BuildContext context,

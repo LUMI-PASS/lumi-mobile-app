@@ -1413,10 +1413,10 @@ class _TicketRow extends StatelessWidget {
   final bool isCancelled;
   final VoidCallback? onCanceled;
 
-  /// True when the discount came from a promocode (vs an auto coupon plan).
+  /// True when the discount came from a promocode.
   final bool fromPromocode;
 
-  /// Per-ticket amount actually paid (after coupon discount). Null = no discount.
+  /// Per-ticket amount actually paid (after a discount). Null = no discount.
   final num? paidPrice;
 
   /// What this seat cost, before any discount.
@@ -1475,7 +1475,7 @@ class _TicketRow extends StatelessWidget {
               // The amount used to float unlabelled beside the ticket number,
               // where it could be read as the order total rather than what
               // this one seat cost. It says which it is now, and keeps the
-              // struck-through original above it when a coupon moved it.
+              // struck-through original above it when a discount moved it.
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,

@@ -31,9 +31,6 @@ export 'package:lumi_pass/common/widget/payment_sheet_chrome.dart'
 /// soon" badge, so the buyer sees the rail is on the way but can't pick it.
 /// That is the switch to reach for if the gateway starts refusing cards —
 /// nothing else needs to change.
-///
-/// It does NOT gate the subscriptions screen, which pins the card row off for
-/// its own reason (see `plans_page.dart`).
 const bool kCardPaymentsEnabled = true;
 
 /// Confirms the OTP for a Paylov card payment.

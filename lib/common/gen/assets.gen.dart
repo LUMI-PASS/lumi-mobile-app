@@ -438,16 +438,6 @@ class $AssetsLocalizationGen {
   List<String> get values => [translations];
 }
 
-class $AssetsLottiesGen {
-  const $AssetsLottiesGen();
-
-  /// File path: assets/lotties/premium.json
-  String get premium => 'assets/lotties/premium.json';
-
-  /// List of all assets
-  List<String> get values => [premium];
-}
-
 class $AssetsIconsAuthGen {
   const $AssetsIconsAuthGen();
 
@@ -543,10 +533,6 @@ class $AssetsIconsBackgroundGen {
   SvgGenImage get phoneNumberMisc =>
       const SvgGenImage('assets/icons/background/phone_number_misc.svg');
 
-  /// File path: assets/icons/background/premium_misc.svg
-  SvgGenImage get premiumMisc =>
-      const SvgGenImage('assets/icons/background/premium_misc.svg');
-
   /// File path: assets/icons/background/registration_misc.svg
   SvgGenImage get registrationMisc =>
       const SvgGenImage('assets/icons/background/registration_misc.svg');
@@ -561,21 +547,12 @@ class $AssetsIconsBackgroundGen {
         paymentMisc,
         paymentSuccesMisc,
         phoneNumberMisc,
-        premiumMisc,
         registrationMisc
       ];
 }
 
 class $AssetsIconsCouponsGen {
   const $AssetsIconsCouponsGen();
-
-  /// File path: assets/icons/coupons/ic_add_invoice.svg
-  SvgGenImage get icAddInvoice =>
-      const SvgGenImage('assets/icons/coupons/ic_add_invoice.svg');
-
-  /// File path: assets/icons/coupons/ic_coupon.svg
-  SvgGenImage get icCoupon =>
-      const SvgGenImage('assets/icons/coupons/ic_coupon.svg');
 
   /// File path: assets/icons/coupons/ic_files.svg
   SvgGenImage get icFiles =>
@@ -585,14 +562,6 @@ class $AssetsIconsCouponsGen {
   SvgGenImage get icLightning =>
       const SvgGenImage('assets/icons/coupons/ic_lightning.svg');
 
-  /// File path: assets/icons/coupons/ic_magic_selection.svg
-  SvgGenImage get icMagicSelection =>
-      const SvgGenImage('assets/icons/coupons/ic_magic_selection.svg');
-
-  /// File path: assets/icons/coupons/ic_rocket.svg
-  SvgGenImage get icRocket =>
-      const SvgGenImage('assets/icons/coupons/ic_rocket.svg');
-
   /// File path: assets/icons/coupons/ic_ticket_delete.svg
   SvgGenImage get icTicketDelete =>
       const SvgGenImage('assets/icons/coupons/ic_ticket_delete.svg');
@@ -601,21 +570,9 @@ class $AssetsIconsCouponsGen {
   SvgGenImage get icTicketTitle =>
       const SvgGenImage('assets/icons/coupons/ic_ticket_title.svg');
 
-  /// File path: assets/icons/coupons/star4.svg
-  SvgGenImage get star4 => const SvgGenImage('assets/icons/coupons/star4.svg');
-
   /// List of all assets
-  List<SvgGenImage> get values => [
-        icAddInvoice,
-        icCoupon,
-        icFiles,
-        icLightning,
-        icMagicSelection,
-        icRocket,
-        icTicketDelete,
-        icTicketTitle,
-        star4
-      ];
+  List<SvgGenImage> get values =>
+      [icFiles, icLightning, icTicketDelete, icTicketTitle];
 }
 
 class $AssetsIconsDetailGen {
@@ -1111,7 +1068,6 @@ class Assets {
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
   static const $AssetsLocalizationGen localization = $AssetsLocalizationGen();
-  static const $AssetsLottiesGen lotties = $AssetsLottiesGen();
 }
 
 class AssetGenImage {

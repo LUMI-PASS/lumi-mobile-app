@@ -4,7 +4,6 @@ import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/api_model/order/saved_card.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
-import 'package:lumi_pass/data/api_model/subscription/subscription_record.dart';
 import 'package:lumi_pass/data/service/listing_event_reporter.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 
@@ -339,8 +338,8 @@ class OrdersApi {
   }
 
   /// Previews a promocode against an order subtotal without committing it.
-  /// Backend re-runs every check (active window, scope, per-user limit, and
-  /// the "no coupon plan" rule) and returns the discount + new total. Throws a
+  /// Backend re-runs every check (active window, scope, per-user limit) and
+  /// returns the discount + new total. Throws a
   /// [DioException] carrying the server's message when the code is invalid or
   /// not allowed for this user.
   Future<PromocodePreview> validatePromocode({
@@ -389,90 +388,5 @@ class OrdersApi {
     final data = raw is Map && raw['data'] is Map ? raw['data'] as Map : null;
     final refund = data?['refund'];
     return refund is String && refund.isNotEmpty ? refund : null;
-  }
-
-  /// Returns the current user's active subscription (including
-  /// [discount_percentage]) so the app can sync premium status across devices
-  /// on startup. Returns null when no subscription is active (server answered
-  /// with `data: null`). Throws on network / auth errors — callers should
-  /// catch and keep the existing local state.
-  Future<Map<String, dynamic>?> getActiveSubscription() async {
-    final response = await _dio.get('transaction/subscriptions/active');
-    final raw = response.data;
-    if (raw is Map && raw['data'] is Map) {
-      return Map<String, dynamic>.from(raw['data'] as Map);
-    }
-    return null;
-  }
-
-  /// Returns all of the authenticated user's subscription purchases, newest
-  /// first. Each entry includes [usedCount] — the number of discounted activity
-  /// bookings made during that subscription's validity window.
-  Future<List<SubscriptionRecord>> getSubscriptionHistory() async {
-    final response = await _dio.get('transaction/subscriptions');
-    final raw = response.data;
-    final List list;
-    if (raw is Map && raw['data'] is List) {
-      list = raw['data'] as List;
-    } else if (raw is List) {
-      list = raw;
-    } else {
-      list = const [];
-    }
-    return list
-        .whereType<Map>()
-        .map((e) => SubscriptionRecord.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
-  }
-
-  /// Kicks off a subscription purchase. Creates a PENDING order on the
-  /// backend and returns a checkout URL. Subscription becomes active
-  /// (expiring at now + tariff.duration_days) only after the user pays and the
-  /// gateway calls back our webhook.
-  /// [paymentProvider] is a [PaymentRail.providerKey] — `payme` / `click` /
-  /// `uzum` return a [CheckoutResult.checkoutUrl] to redirect to, while `card`
-  /// returns the Paylov OTP fields instead (see [paylovConfirmCard]). Omitting
-  /// it keeps the legacy direct-Payme body. [returnUrl] is where the redirect
-  /// rails bounce the buyer back to after paying — same as [checkout].
-  ///
-  /// [savedCardId] pays with a card the buyer already saved, and replaces
-  /// [paymentProvider] rather than accompanying it: the server answers with the
-  /// PENDING order and no gateway call, to be charged through
-  /// [payOrderWithSavedCard]. Exactly as [checkout] behaves.
-  Future<CheckoutResult> checkoutSubscription({
-    required String tariffId,
-    String? lang,
-    String? paymentProvider,
-    String? returnUrl,
-    String? cardNumber,
-    String? expireDate,
-    String? savedCardId,
-    bool test = false,
-  }) async {
-    final saved = savedCardId?.trim();
-    final hasSaved = saved != null && saved.isNotEmpty;
-    final body = {
-      'tariff_id': tariffId,
-      if (hasSaved) 'saved_card_id': saved,
-      if (paymentProvider != null && !hasSaved)
-        'payment_provider': paymentProvider
-      // The legacy body means "direct Payme"; sending it alongside a saved card
-      // would name a second way to pay the same order.
-      else if (!hasSaved)
-        'payment_method': 'PAYME',
-      if (returnUrl != null) 'return_url': returnUrl,
-      if (cardNumber != null && cardNumber.trim().isNotEmpty)
-        'card_number': cardNumber.replaceAll(RegExp(r'\s'), ''),
-      if (expireDate != null && expireDate.trim().isNotEmpty)
-        'expire_date': expireDate.replaceAll(RegExp(r'[^0-9]'), ''),
-      if (lang != null) 'lang': lang,
-    };
-    final response =
-        await _dio.post('transaction/subscriptions', data: body);
-    final raw = response.data;
-    final data = raw is Map && raw['data'] is Map
-        ? Map<String, dynamic>.from(raw['data'] as Map)
-        : Map<String, dynamic>.from(raw as Map);
-    return CheckoutResult.fromJson(data);
   }
 }

@@ -6,7 +6,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
@@ -17,7 +16,6 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
-import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/common/widget/cashback_badge.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
@@ -54,8 +52,6 @@ import 'package:lumi_pass/data/service/saved_activity_store.dart';
 import 'package:lumi_pass/domain/repo/courses/courses_api.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
 import 'package:lumi_pass/domain/repo/wallet/wallet_repository.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -398,35 +394,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     await launchUrl(Uri.parse('tel:$digits'));
   }
 
-  // ─── Coupon discount helpers ──────────────────────────────────────────────
-  /// The coupon's percentage on THIS class — the plan's percentage capped at
-  /// Lumi's share of the class, which is what checkout will actually charge.
-  ///
-  /// Reads the plan's percentage from `AppCubit`'s Cubit state (watched, not
-  /// a one-off `Storage` read) so this rebuilds the instant a purchase
-  /// completes or a subscription is synced, instead of showing whatever was
-  /// true the last time this page happened to build.
-  num _couponPercent({required bool isWholeCourse}) {
-    final app =
-        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
-    final plan = app.hasPremium ? app.planDiscountPercentage : 0;
-    return effectiveCouponPercent(
-      plan,
-      _full?.discountPercentage ?? widget.classModel.discountPercentage,
-      isWholeCourse: isWholeCourse,
-    );
-  }
-
-  /// The coupon on the price this page's ACTIVITY rows show. Zero on a course:
-  /// what a course page prices there is the enrolment, and a coupon never
-  /// discounts that.
-  num get _couponPct => _couponPercent(isWholeCourse: _isCourse);
-
   /// The "Lumi Start" packet covering THIS activity, or null.
   ///
   /// Resolved here — the one place that knows which activity the screen is —
-  /// and threaded down the same channel `couponPct` already travels, so the
-  /// price rows need no idea the packet exists beyond rendering its label.
+  /// and threaded down to the price rows, so they need no idea the packet exists beyond rendering its label.
   ///
   /// `price: 0` deliberately: a screen shows several tiers at once and the
   /// ceiling applies per booking, so it is tested per ROW rather than here. The
@@ -1683,7 +1654,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               child: _PriceRow(
                 c: c,
                 row: r,
-                couponPct: _couponPct,
                 promoPass: _promoPassFor(isWholeCourse: _isCourse),
                 showNewCoinPrice: showCoins,
               ),
@@ -2035,15 +2005,13 @@ class _PriceRow extends StatelessWidget {
   const _PriceRow(
       {required this.c,
       required this.row,
-      required this.couponPct,
       this.promoPass,
       this.showNewCoinPrice = false});
   final AppColorScheme c;
   final _PriceRowData row;
-  final num couponPct;
 
   /// Non-null while a packet pays for this activity — the price is then
-  /// replaced by the included badge rather than quoted or discounted.
+  /// replaced by the included badge rather than quoted.
   final PromoPassCoverage? promoPass;
 
   /// Whether to quote [_PriceRowData.newCoinPrice] in place of the so'm price.
@@ -2121,9 +2089,6 @@ class _PriceRow extends StatelessWidget {
   /// rather than the end of the line it belongs to. Nothing needs a container
   /// to be findable at the right edge of its own row.
   Widget _priceText() {
-    // Outranks the coupon: there is nothing left to discount once the visit is
-    // paid for.
-    //
     // `_promoPassFor` already settled everything that is true of the ACTIVITY —
     // scope, distinctness, courses. The per-visit ceiling is the one rule that
     // belongs to a single booking, and a class lists several tiers at once, so
@@ -2135,28 +2100,9 @@ class _PriceRow extends StatelessWidget {
         (ceiling == null || row.price <= ceiling)) {
       return PromoIncludedLabel(pass: pass, compact: false);
     }
-    if (couponPct <= 0 || row.price <= 0) {
-      return Text(
-        row.price <= 0 ? 'price_free'.tr() : row.price.toRawUzsPrice(),
-        style: AppText.semibold14.copyWith(color: c.textPrimary),
-      );
-    }
-    final discounted = (row.price * (100 - couponPct) / 100).round();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          row.price.toRawUzsPrice(),
-          style: AppText.regular12.copyWith(
-            color: c.textMuted,
-            decoration: TextDecoration.lineThrough,
-            decorationColor: c.textMuted,
-          ),
-        ),
-        Text(discounted.toRawUzsPrice(),
-            style: AppText.semibold14.copyWith(color: AppColors.green)),
-      ],
+    return Text(
+      row.price <= 0 ? 'price_free'.tr() : row.price.toRawUzsPrice(),
+      style: AppText.semibold14.copyWith(color: c.textPrimary),
     );
   }
 }

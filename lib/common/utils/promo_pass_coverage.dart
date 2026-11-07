@@ -107,8 +107,7 @@ class PromoPassCoverage {
   ///
   /// [isWholeCourse] must be true whenever the figure being priced is a course
   /// ENROLMENT rather than a trial lesson — a visit buys the trial, never the
-  /// term. Every caller passes it rather than assuming, exactly as
-  /// [effectiveCouponPercent] requires.
+  /// term. Every caller passes it rather than assuming.
   bool covers({
     required String? activityId,
     required num price,

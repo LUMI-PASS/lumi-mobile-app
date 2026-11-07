@@ -7,7 +7,7 @@ import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_she
 ///
 /// Everything that charges money in this app pre-selects whatever was used
 /// last, so paying a second time is one tap rather than a trip through the
-/// chooser. The booking, course and coupon screens each grew their own copy of
+/// chooser. The booking, course and packet screens each grew their own copy of
 /// this; the shop's is this one, shared, so a fifth screen does not have to
 /// write a fifth.
 ///

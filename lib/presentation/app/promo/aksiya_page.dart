@@ -32,12 +32,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// The "аксия" screen: the bundle, what it costs, and how to buy it.
 ///
-/// Its own screen rather than a card on the tariffs page, because it is a
-/// different product with a different promise — a prepaid set of visits with a
-/// deadline, not a standing discount — and the deadline has to be stated before
-/// the money is taken, not discovered afterwards.
+/// Its own screen, because it is a prepaid set of visits with a deadline, and
+/// the deadline has to be stated before the money is taken, not discovered
+/// afterwards.
 ///
-/// The payment half is deliberately the same code the tariffs screen runs:
+/// The payment half is deliberately the same code the booking sheet runs:
 /// `showPaymentChooser` for the rail, `showCardOtpSheet` for a card, and a poll
 /// on app-resume for the redirect rails. A second implementation of any of those
 /// is a second set of payment bugs.
@@ -136,9 +135,8 @@ class _AksiyaPageState extends State<AksiyaPage> with WidgetsBindingObserver {
   /// Opens the rail chooser and remembers what the buyer picked.
   ///
   /// **Picking alone never charges.** A card typed into the sheet is bound and
-  /// saved there; the bundle is paid for from the Buy bar. The tariffs screen
-  /// learned this the hard way — paying on pick meant "Change" charged the plan
-  /// before the buyer ever pressed Buy.
+  /// saved there; the bundle is paid for from the Buy bar. Paying on pick would
+  /// mean "Change" charged the buyer before they ever pressed Buy.
   Future<PaymentSelection?> _choosePayment() async {
     if (_purchasing) return null;
     final picked = await showPaymentChooser(
@@ -507,7 +505,7 @@ class _AksiyaPageState extends State<AksiyaPage> with WidgetsBindingObserver {
               captionFirst: true,
               subtitle: 'book_pay_method_label'.tr(),
               // The card rail has no wordmark — the card itself is its name, as
-              // in the booking and tariffs rows.
+              // in the booking rows.
               title: _payment == null
                   ? 'book_pick_payment'.tr()
                   : _payment!.rail == PaymentRail.card

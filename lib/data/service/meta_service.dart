@@ -182,8 +182,6 @@ class MetaService {
     AnalyticsEvent.branchDetailViewed: MetaEvent.contentView,
     AnalyticsEvent.bookButtonTapped: MetaEvent.addToCart,
     AnalyticsEvent.bookingCheckoutStarted: MetaEvent.initiatedCheckout,
-    AnalyticsEvent.planPurchaseStarted: MetaEvent.initiatedCheckout,
-    AnalyticsEvent.subscriptionPurchaseStarted: MetaEvent.initiatedCheckout,
     AnalyticsEvent.checkoutPageOpened: MetaEvent.initiatedCheckout,
     AnalyticsEvent.paymentSucceeded: MetaEvent.purchase,
   };

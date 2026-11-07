@@ -28,9 +28,6 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
   final OrdersApi _orders;
 
   String _lastLang = '';
-  // Track premium/coupon state so we can detect changes on focus regain.
-  bool _lastKnownHasPremium = false;
-  int _lastKnownCouponPct = 0;
 
   // Where the "Near you" list is measured from. Held as instance fields so
   // every fetch below — first load, refresh, load-more — asks from the same
@@ -229,8 +226,6 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // long as the platform takes to answer.
     build((b) => b.copyWith(isLoading: true));
     _lastLang = currentLang;
-    _lastKnownHasPremium = _storage.hasPremium() == true;
-    _lastKnownCouponPct = _storage.planDiscountPercentage() ?? 0;
 
     // Already-granted permission costs one silent platform call, so the first
     // paint can be ordered from the real position. Anything else (never asked,
@@ -436,9 +431,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     await refreshSilently();
   }
 
-  /// Called when the home tab regains focus. Silently refreshes when language
-  /// OR coupon/premium status has changed since the last load, so discount
-  /// badges and prices update immediately after a plan purchase.
+  /// Called when the home tab regains focus. Silently refreshes when the
+  /// language, the location or the catalogue has changed since the last load.
   Future<void> refreshOnFocusGained() async {
     // Ahead of the change checks below, and deliberately not gated by them:
     // buying the packet turns its card from an offer into "2 visits left", and
@@ -451,12 +445,8 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     unawaited(_loadTodayBookings());
 
     final lang = currentLang;
-    final hasPremium = _storage.hasPremium() == true;
-    final couponPct = _storage.planDiscountPercentage() ?? 0;
 
     final langChanged = _lastLang != lang;
-    final couponChanged =
-        _lastKnownHasPremium != hasPremium || _lastKnownCouponPct != couponPct;
     // Someone who refused the prompt and then turned the permission on in
     // Settings comes back to a feed that would otherwise stay ordered from the
     // city centre for the rest of the session. Nothing else notices that
@@ -466,14 +456,12 @@ class HomeCubit extends BaseCubit<HomeBuildable, HomeListenable> {
     // the trial just bought is no longer the one on offer.
     final catalogChanged = _lastCatalogRevision != catalogRevision.value;
 
-    if (!langChanged && !couponChanged && !locationChanged && !catalogChanged) {
+    if (!langChanged && !locationChanged && !catalogChanged) {
       return;
     }
     _lastCatalogRevision = catalogRevision.value;
 
     _lastLang = lang;
-    _lastKnownHasPremium = hasPremium;
-    _lastKnownCouponPct = couponPct;
 
     await refreshSilently();
   }

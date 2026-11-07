@@ -151,7 +151,7 @@ void main() {
   });
 
   group('a code that equals a route key is still just a code', () {
-    for (final key in ['plans', 'home', 'class', 'wallet', 'referral']) {
+    for (final key in ['cards', 'home', 'class', 'wallet', 'referral']) {
       test('"$key"', () {
         expect(DeepLinkRoutes.lookup(key), isNotNull);
         expectStores(classify('lumi://referral?code=$key'), key.toUpperCase());
@@ -169,9 +169,9 @@ void main() {
 
   group('every other deep link is unchanged', () {
     test('a registered destination still opens', () {
-      final intent = classify('lumi://plans');
+      final intent = classify('lumi://cards');
       expect(intent, isA<OpenDestination>());
-      expect((intent as OpenDestination).target.key, 'plans');
+      expect((intent as OpenDestination).target.key, 'cards');
     });
 
     test('an AppsFlyer class link still resolves to lumi://class/<id>', () {

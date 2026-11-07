@@ -150,7 +150,6 @@ flutter:
     - assets/images/mascot/
     - assets/images/pay/
     - assets/localization/
-    - assets/lotties/
 
 flutter_gen:
   output: lib/common/gen

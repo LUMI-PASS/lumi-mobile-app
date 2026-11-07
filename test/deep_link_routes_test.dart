@@ -17,8 +17,8 @@ void main() {
     });
 
     test('a destination with no id resolves with no id', () {
-      final t = resolve('lumi://plans');
-      expect(t?.key, 'plans');
+      final t = resolve('lumi://cards');
+      expect(t?.key, 'cards');
       expect(t?.id, isNull);
     });
 
@@ -33,7 +33,7 @@ void main() {
     });
 
     test('is case-insensitive about the destination', () {
-      expect(resolve('lumi://Plans')?.key, 'plans');
+      expect(resolve('lumi://Cards')?.key, 'cards');
     });
   });
 
@@ -52,7 +52,7 @@ void main() {
     });
 
     test('serves every destination, not just class', () {
-      expect(resolve('https://mobile-api.lumipass.uz/share/plans')?.key, 'plans');
+      expect(resolve('https://mobile-api.lumipass.uz/share/cards')?.key, 'cards');
     });
   });
 
@@ -73,7 +73,7 @@ void main() {
 
   test('every registry key is exposed for the adminka picker', () {
     expect(DeepLinkRoutes.keys, contains('class'));
-    expect(DeepLinkRoutes.keys, contains('plans'));
+    expect(DeepLinkRoutes.keys, contains('cards'));
     for (final key in DeepLinkRoutes.keys) {
       expect(DeepLinkRoutes.lookup(key), isNotNull, reason: key);
     }

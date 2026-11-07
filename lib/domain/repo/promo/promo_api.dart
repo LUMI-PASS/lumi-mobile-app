@@ -4,8 +4,8 @@ import 'package:injectable/injectable.dart';
 /// Raw calls to the "аксия" (promo bundle) endpoints.
 ///
 /// The payment half of [purchase] is deliberately shaped like
-/// `OrdersApi.checkoutSubscription`'s: the same provider keys, the same
-/// saved-card and card fields, the same response. That is what lets the app's
+/// `OrdersApi.checkout`'s: the same provider keys, the same saved-card and
+/// card fields, the same response. That is what lets the app's
 /// existing payment chooser, card OTP sheet and redirect handling drive a
 /// bundle purchase with no second implementation of any of them.
 @injectable
@@ -26,8 +26,8 @@ class PromoApi {
   ///
   /// [savedCardId] replaces [paymentProvider] rather than accompanying it: the
   /// server answers with the PENDING order and no gateway call, to be charged
-  /// through `OrdersApi.payOrderWithSavedCard`. Exactly as the subscription and
-  /// booking checkouts behave.
+  /// through `OrdersApi.payOrderWithSavedCard`. Exactly as the booking checkout
+  /// behaves.
   Future<Response> purchase(
     String idOrSlug, {
     String? lang,

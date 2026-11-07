@@ -129,7 +129,7 @@ class ProfileCubit extends BaseCubit<ProfileBuildable, ProfileListenable> {
     // AppCubit outlives the session, so the plan has to be dropped from its
     // state too — clearing the box alone would leave the next account signed
     // in on this run showing the previous buyer's discounted prices.
-    getIt<AppCubit>().clearSubscription();
+    getIt<AppCubit>().clearSession();
   }
 
   Future<void> logout() => callable(

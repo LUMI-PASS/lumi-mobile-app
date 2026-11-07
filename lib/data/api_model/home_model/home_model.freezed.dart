@@ -2303,7 +2303,7 @@ mixin _$HomClass {
   /// The centre's own sale on this activity — running now or starting this
   /// week. Null for most cards, for every course, and on a server that
   /// predates sales. Not to be confused with [discountPercentage], which is
-  /// Lumi's share of the class and only caps coupon-plan discounts.
+  /// Lumi's share of the class.
   @JsonKey(fromJson: ActivitySale.saleFromJson)
   ActivitySale? get sale => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
@@ -3033,7 +3033,7 @@ class _$HomClassImpl extends _HomClass {
   /// The centre's own sale on this activity — running now or starting this
   /// week. Null for most cards, for every course, and on a server that
   /// predates sales. Not to be confused with [discountPercentage], which is
-  /// Lumi's share of the class and only caps coupon-plan discounts.
+  /// Lumi's share of the class.
   @override
   @JsonKey(fromJson: ActivitySale.saleFromJson)
   final ActivitySale? sale;
@@ -3357,7 +3357,7 @@ abstract class _HomClass extends HomClass {
   /// The centre's own sale on this activity — running now or starting this
   /// week. Null for most cards, for every course, and on a server that
   /// predates sales. Not to be confused with [discountPercentage], which is
-  /// Lumi's share of the class and only caps coupon-plan discounts.
+  /// Lumi's share of the class.
   @JsonKey(fromJson: ActivitySale.saleFromJson)
   ActivitySale? get sale;
   @override

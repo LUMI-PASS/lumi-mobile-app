@@ -15,9 +15,8 @@ import 'package:lumi_pass/data/api_model/wallet/wallet_balance.dart';
 /// Renders nothing when there is nothing to spend, so every caller can drop it
 /// into a column unconditionally.
 ///
-/// **Not subject to the promocode/coupon rules.** The promocode field is hidden
-/// for a buyer who holds a coupon plan, because those two are alternative
-/// discounts and never stack. The wallet is neither — it is a payment method,
+/// **Not subject to the promocode rules.** The wallet is not a discount — it is
+/// a payment method,
 /// so it sits alongside whichever discount already applied and reduces what the
 /// card is charged rather than what the order costs.
 class UseBalanceRow extends StatelessWidget {

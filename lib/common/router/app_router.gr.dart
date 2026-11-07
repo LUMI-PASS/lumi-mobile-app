@@ -170,12 +170,6 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const ConnectionErrorPage(),
       );
     },
-    CouponsRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const CouponsPage(),
-      );
-    },
     EmptyRouterRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -278,18 +272,6 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: OnboardingPage(key: args.key),
-      );
-    },
-    PaymentHistoryRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const PaymentHistoryPage(),
-      );
-    },
-    PlansRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const PlansPage(),
       );
     },
     ProfileDetailRoute.name: (routeData) {
@@ -1041,20 +1023,6 @@ class ConnectionErrorRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [CouponsPage]
-class CouponsRoute extends PageRouteInfo<void> {
-  const CouponsRoute({List<PageRouteInfo>? children})
-      : super(
-          CouponsRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'CouponsRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
 /// [EmptyRouterPage]
 class EmptyRouterRoute extends PageRouteInfo<void> {
   const EmptyRouterRoute({List<PageRouteInfo>? children})
@@ -1364,34 +1332,6 @@ class OnboardingRouteArgs {
   String toString() {
     return 'OnboardingRouteArgs{key: $key}';
   }
-}
-
-/// generated route for
-/// [PaymentHistoryPage]
-class PaymentHistoryRoute extends PageRouteInfo<void> {
-  const PaymentHistoryRoute({List<PageRouteInfo>? children})
-      : super(
-          PaymentHistoryRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'PaymentHistoryRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
-/// [PlansPage]
-class PlansRoute extends PageRouteInfo<void> {
-  const PlansRoute({List<PageRouteInfo>? children})
-      : super(
-          PlansRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'PlansRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

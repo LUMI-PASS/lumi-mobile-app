@@ -31,7 +31,7 @@ class CheckoutResult {
   final String orderId;
   final num totalAmount;
   // Order subtotal before any discount, and the discount actually applied
-  // (from a coupon plan or a promocode). Both 0 when nothing was discounted.
+  // (from the centre's sale or a promocode). Both 0 when nothing was discounted.
   final num subtotalAmount;
   final num discountAmount;
   // The promocode that was applied to this order, if any.

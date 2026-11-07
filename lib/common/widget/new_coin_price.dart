@@ -49,8 +49,6 @@ int? watchNewCoinPriceOf(BuildContext context, num price, {num? sent}) {
 ///
 /// This REPLACES the so'm price rather than sitting beside it — an activity is
 /// paid in coins, so a so'm figure on its card is a price nobody is charged.
-/// No coupon strike-through either: a coupon plan does not discount a coin
-/// price.
 class NewCoinPriceText extends StatelessWidget {
   const NewCoinPriceText({
     super.key,

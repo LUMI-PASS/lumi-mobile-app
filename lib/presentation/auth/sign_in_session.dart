@@ -49,9 +49,9 @@ Future<void> applySignedInSession({
     await storage.needsOnboarding.set(false);
   }
 
-  // Pull this account's plan now. AppCubit lives for the whole run and synced
-  // at cold start — when that happened before sign-in it found no session, so
-  // without this the buyer's coupon prices wouldn't appear until the next launch.
+  // Pull this account's packet and coins now. AppCubit lives for the whole run
+  // and synced at cold start — when that happened before sign-in it found no
+  // session, so without this they wouldn't appear until the next launch.
   await getIt<AppCubit>().onSignedIn();
 
   // An invite clicked before this sign-in (often before the install) is

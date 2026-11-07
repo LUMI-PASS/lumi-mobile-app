@@ -215,14 +215,6 @@ abstract final class DeepLinkRoutes {
     ),
 
     // ── Money ──────────────────────────────────────────────────────────────
-    'plans': DeepLinkRoute(
-      mode: DeepLinkNavMode.root,
-      build: (_) => const PlansRoute(),
-    ),
-    'coupons': DeepLinkRoute(
-      mode: DeepLinkNavMode.root,
-      build: (_) => const CouponsRoute(),
-    ),
     // The Lumi Start packet. Bare opens the best packet on sale;
     // `lumi://packet/<slug>` opens a named one, so a campaign can be advertised
     // by its own link.
@@ -252,10 +244,6 @@ abstract final class DeepLinkRoutes {
     'cards': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
       build: (_) => const MyCardsRoute(),
-    ),
-    'payment-history': DeepLinkRoute(
-      mode: DeepLinkNavMode.root,
-      build: (_) => const PaymentHistoryRoute(),
     ),
 
     // ── Shop ───────────────────────────────────────────────────────────────

@@ -162,14 +162,11 @@ class _HeroDeadlineChip extends StatelessWidget {
 
 /// The **Lumi Start** packet, as a thing you pick and buy.
 ///
-/// Its own shape rather than the coupon card's: a coupon is a percentage that
-/// follows you around, and its card is built to shout a number. A packet is a
-/// countable thing with a clock on it, so this card is built around the two
+/// A packet is a countable thing with a clock on it, so this card is built around the two
 /// counts that define it — how many visits, how many days — with the price
 /// underneath as the ask rather than the headline.
 ///
-/// Selectable for the same reason the coupon cards are: it is the object the Buy
-/// bar acts on, and a bar that acts on something invisible reads as a guess. A
+/// Selectable because it is the object the Buy bar acts on, and a bar that acts on something invisible reads as a guess. A
 /// lone packet starts selected, because there is nothing to choose between.
 class LumiStartPacketCard extends StatelessWidget {
   const LumiStartPacketCard({

@@ -27,8 +27,6 @@ class AnalyticsEvent {
   static const bookingCheckoutStarted = 'booking_checkout_started';
   static const bookingCheckoutFailed = 'booking_checkout_failed';
   static const bookingRequested = 'booking_requested';
-  static const planPurchaseStarted = 'plan_purchase_started';
-  static const subscriptionPurchaseStarted = 'subscription_purchase_started';
 
   /// The "аксия" bundle: the buyer pressed Buy and a rail was picked.
   /// `payment_succeeded` still fires on completion, carrying `product: aksiya`.

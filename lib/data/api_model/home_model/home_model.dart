@@ -255,7 +255,7 @@ class HomClass with _$HomClass {
     /// The centre's own sale on this activity — running now or starting this
     /// week. Null for most cards, for every course, and on a server that
     /// predates sales. Not to be confused with [discountPercentage], which is
-    /// Lumi's share of the class and only caps coupon-plan discounts.
+    /// Lumi's share of the class.
     @JsonKey(fromJson: ActivitySale.saleFromJson) ActivitySale? sale,
     String? createdAt,
     String? updatedAt,
@@ -270,11 +270,10 @@ class HomClass with _$HomClass {
   CoursePriceKind get coursePriceKind => CoursePriceKind.fromKey(priceKind);
 
   /// Whether the figure this card is showing is a WHOLE-COURSE enrolment —
-  /// the one purchase a coupon plan never discounts (see
-  /// `effectiveCouponPercent`).
+  /// the one purchase a "Lumi Start" packet never covers.
   ///
   /// A course still offering a trial is showing that trial lesson's price, and
-  /// a coupon does discount that — so "is a course" is the wrong question to
+  /// a packet does cover that — so "is a course" is the wrong question to
   /// ask here, and this is what every price line must ask instead.
   bool get showsWholeCoursePrice =>
       (isCourse ?? false) && !coursePriceKind.isTrial;

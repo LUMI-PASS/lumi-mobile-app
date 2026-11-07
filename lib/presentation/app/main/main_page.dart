@@ -7,7 +7,6 @@ import 'package:lumi_pass/data/service/deeplink_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/presentation/auth/interests/parent_interests_page.dart';
-import 'package:lumi_pass/presentation/app/main/widgets/coupon_promo_dialog.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/custom_bottomnavigation.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/onboarding_bottomsheet.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/packet_ad_screen.dart';
@@ -52,41 +51,13 @@ class _MainPageState extends State<MainPage> {
       // asked again before anything else is put on screen.
       await askInterestsIfOwed(context.router.root);
       if (!mounted) return;
-      // The two launch popups, in one place and in order, because the screen
-      // can only hold one: whichever fires leaves the other for another launch.
-      // Stacking them would put an ad on top of a reward and lose both.
-      //
-      // The PACKET AD GOES FIRST, and the order matters on the launch that
-      // matters most. A freshly registered user has `needsOnboarding` set, so
-      // with the coupon popup first the ad lost every first launch — the one
-      // launch a campaign with a deadline on it is actually aimed at. Deferring
-      // the coupon popup instead costs nothing: it is evergreen, and returning
-      // early here leaves `needsOnboarding` unconsumed, so it fires on the next
-      // launch exactly as it always did.
-      if (await _showPacketAdIfDue()) return;
-      await _showCouponPromoIfDue();
+      // A new account's first launch is over once it gets here; nothing
+      // reads `needsOnboarding` after this point.
+      if (_storage.needsOnboarding.call() == true) {
+        _storage.needsOnboarding.set(false);
+      }
+      await _showPacketAdIfDue();
     });
-  }
-
-  /// The one-time premium "get coupon" reward popup, for the users who came in
-  /// registering. Returns whether it was shown.
-  ///
-  /// A new user is no longer stopped at the door for their name and child — the
-  /// banner above the nav asks for those, whenever they feel like it. The
-  /// `needsOnboarding` flag is still consumed here so this fires once.
-  Future<bool> _showCouponPromoIfDue() async {
-    if (_storage.needsOnboarding.call() != true) return false;
-    _storage.needsOnboarding.set(false);
-    if (_storage.couponPromoShown.call() == true) return false;
-
-    _storage.couponPromoShown.set(true);
-    await Future.delayed(const Duration(milliseconds: 350));
-    if (!mounted) return false;
-    showCouponPromoDialog(
-      context,
-      onGetCoupon: () => context.router.push(const PlansRoute()),
-    );
-    return true;
   }
 
   /// The full-screen packet ad, gated on Remote Config, `is_ad_seen`, and a

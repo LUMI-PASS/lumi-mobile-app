@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 /// price on every card for that course — including the ones already rendered on
 /// the home feed and in search.
 ///
-/// Nothing else notices that. Home only reloads on a language or coupon change,
+/// Nothing else notices that. Home only reloads on a language or location change,
 /// so a buyer came back from a successful purchase to cards still offering the
 /// lesson they had just bought. Screens that show course prices watch this and
 /// refetch when it moves.

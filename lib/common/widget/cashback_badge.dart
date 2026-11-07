@@ -56,7 +56,7 @@ class CashbackChip extends StatelessWidget {
 /// "You'll earn ~12 000 🪙" — the line under the total in a booking summary.
 ///
 /// [orderAmount] is what the buyer pays with money, i.e. the total after any
-/// promocode or coupon discount. The amount is computed locally from the
+/// promocode or sale discount. The amount is computed locally from the
 /// server's rate ([cashbackFor]) so it re-prices as tickets are added without a
 /// request per tap; it is deliberately approximate ("~"), because the credit is
 /// re-derived server-side when the payment lands.

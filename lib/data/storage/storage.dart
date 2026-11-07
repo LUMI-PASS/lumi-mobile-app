@@ -125,14 +125,6 @@ class Storage {
 
   BaseStorage<int> get childAge => BaseStorage(_box, 'childAge');
 
-  BaseStorage<bool> get hasPremium => BaseStorage(_box, 'hasPremium');
-
-  BaseStorage<int> get planDiscountPercentage => BaseStorage(_box, 'planDiscountPercentage');
-
-  /// Whether the one-time "get coupon" reward promo has been shown on home.
-  BaseStorage<bool> get couponPromoShown =>
-      BaseStorage(_box, 'couponPromoShown');
-
   /// Whether the full-screen packet ad has already been shown.
   ///
   /// An interstitial earns at most one showing. Set the moment we decide to
@@ -200,8 +192,6 @@ class Storage {
     await avatarPath.set(null);
 
     // What they'd bought.
-    await hasPremium.set(null);
-    await planDiscountPercentage.set(null);
     await lastPaymentRail.set(null);
     await lastSavedCardId.set(null);
     await savedActivityIds.set(null);
@@ -210,7 +200,6 @@ class Storage {
     // Once-per-user prompts — the next user hasn't seen them.
     await needsOnboarding.set(null);
     await interestsOwed.set(null);
-    await couponPromoShown.set(null);
     await profilePromptDismissed.set(null);
     await isAdSeen.set(null);
 

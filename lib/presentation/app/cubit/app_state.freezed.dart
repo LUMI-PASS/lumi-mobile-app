@@ -16,13 +16,9 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$AppBuildable {
-  bool get hasPremium => throw _privateConstructorUsedError;
-  int get planDiscountPercentage => throw _privateConstructorUsedError;
-
   /// The live "Lumi Start" packet, or null when the user holds none.
   ///
-  /// Here for the same reason the coupon plan is: it decides what every price
-  /// in the catalogue RENDERS — a covered activity shows an included badge
+  /// It decides what every price in the catalogue RENDERS — a covered activity shows an included badge
   /// instead of a figure — so it has to be one value every card watches, not
   /// a fetch per screen. Null the moment it is spent or expires, which is
   /// what brings the prices back.
@@ -45,11 +41,7 @@ abstract class $AppBuildableCopyWith<$Res> {
           AppBuildable value, $Res Function(AppBuildable) then) =
       _$AppBuildableCopyWithImpl<$Res, AppBuildable>;
   @useResult
-  $Res call(
-      {bool hasPremium,
-      int planDiscountPercentage,
-      PromoPassCoverage? promoPass,
-      NewCoinsSummary? newCoins});
+  $Res call({PromoPassCoverage? promoPass, NewCoinsSummary? newCoins});
 }
 
 /// @nodoc
@@ -65,20 +57,10 @@ class _$AppBuildableCopyWithImpl<$Res, $Val extends AppBuildable>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? hasPremium = null,
-    Object? planDiscountPercentage = null,
     Object? promoPass = freezed,
     Object? newCoins = freezed,
   }) {
     return _then(_value.copyWith(
-      hasPremium: null == hasPremium
-          ? _value.hasPremium
-          : hasPremium // ignore: cast_nullable_to_non_nullable
-              as bool,
-      planDiscountPercentage: null == planDiscountPercentage
-          ? _value.planDiscountPercentage
-          : planDiscountPercentage // ignore: cast_nullable_to_non_nullable
-              as int,
       promoPass: freezed == promoPass
           ? _value.promoPass
           : promoPass // ignore: cast_nullable_to_non_nullable
@@ -99,11 +81,7 @@ abstract class _$$AppBuildableImplCopyWith<$Res>
       __$$AppBuildableImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {bool hasPremium,
-      int planDiscountPercentage,
-      PromoPassCoverage? promoPass,
-      NewCoinsSummary? newCoins});
+  $Res call({PromoPassCoverage? promoPass, NewCoinsSummary? newCoins});
 }
 
 /// @nodoc
@@ -117,20 +95,10 @@ class __$$AppBuildableImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? hasPremium = null,
-    Object? planDiscountPercentage = null,
     Object? promoPass = freezed,
     Object? newCoins = freezed,
   }) {
     return _then(_$AppBuildableImpl(
-      hasPremium: null == hasPremium
-          ? _value.hasPremium
-          : hasPremium // ignore: cast_nullable_to_non_nullable
-              as bool,
-      planDiscountPercentage: null == planDiscountPercentage
-          ? _value.planDiscountPercentage
-          : planDiscountPercentage // ignore: cast_nullable_to_non_nullable
-              as int,
       promoPass: freezed == promoPass
           ? _value.promoPass
           : promoPass // ignore: cast_nullable_to_non_nullable
@@ -146,23 +114,11 @@ class __$$AppBuildableImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AppBuildableImpl implements _AppBuildable {
-  const _$AppBuildableImpl(
-      {this.hasPremium = false,
-      this.planDiscountPercentage = 0,
-      this.promoPass,
-      this.newCoins});
-
-  @override
-  @JsonKey()
-  final bool hasPremium;
-  @override
-  @JsonKey()
-  final int planDiscountPercentage;
+  const _$AppBuildableImpl({this.promoPass, this.newCoins});
 
   /// The live "Lumi Start" packet, or null when the user holds none.
   ///
-  /// Here for the same reason the coupon plan is: it decides what every price
-  /// in the catalogue RENDERS — a covered activity shows an included badge
+  /// It decides what every price in the catalogue RENDERS — a covered activity shows an included badge
   /// instead of a figure — so it has to be one value every card watches, not
   /// a fetch per screen. Null the moment it is spent or expires, which is
   /// what brings the prices back.
@@ -178,7 +134,7 @@ class _$AppBuildableImpl implements _AppBuildable {
 
   @override
   String toString() {
-    return 'AppBuildable(hasPremium: $hasPremium, planDiscountPercentage: $planDiscountPercentage, promoPass: $promoPass, newCoins: $newCoins)';
+    return 'AppBuildable(promoPass: $promoPass, newCoins: $newCoins)';
   }
 
   @override
@@ -186,10 +142,6 @@ class _$AppBuildableImpl implements _AppBuildable {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$AppBuildableImpl &&
-            (identical(other.hasPremium, hasPremium) ||
-                other.hasPremium == hasPremium) &&
-            (identical(other.planDiscountPercentage, planDiscountPercentage) ||
-                other.planDiscountPercentage == planDiscountPercentage) &&
             (identical(other.promoPass, promoPass) ||
                 other.promoPass == promoPass) &&
             (identical(other.newCoins, newCoins) ||
@@ -197,8 +149,7 @@ class _$AppBuildableImpl implements _AppBuildable {
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, hasPremium, planDiscountPercentage, promoPass, newCoins);
+  int get hashCode => Object.hash(runtimeType, promoPass, newCoins);
 
   @JsonKey(ignore: true)
   @override
@@ -209,21 +160,14 @@ class _$AppBuildableImpl implements _AppBuildable {
 
 abstract class _AppBuildable implements AppBuildable {
   const factory _AppBuildable(
-      {final bool hasPremium,
-      final int planDiscountPercentage,
-      final PromoPassCoverage? promoPass,
+      {final PromoPassCoverage? promoPass,
       final NewCoinsSummary? newCoins}) = _$AppBuildableImpl;
 
-  @override
-  bool get hasPremium;
-  @override
-  int get planDiscountPercentage;
   @override
 
   /// The live "Lumi Start" packet, or null when the user holds none.
   ///
-  /// Here for the same reason the coupon plan is: it decides what every price
-  /// in the catalogue RENDERS — a covered activity shows an included badge
+  /// It decides what every price in the catalogue RENDERS — a covered activity shows an included badge
   /// instead of a figure — so it has to be one value every card watches, not
   /// a fetch per screen. Null the moment it is spent or expires, which is
   /// what brings the prices back.

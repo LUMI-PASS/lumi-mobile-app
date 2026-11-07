@@ -869,8 +869,7 @@ class _CurrentPlanBadge extends StatelessWidget {
   }
 }
 
-/// "BEST OFFER" — the coupons screen's badge, on the pack whose coin is
-/// cheapest.
+/// "BEST OFFER" — the badge on the pack whose coin is cheapest.
 class _BestOfferBadge extends StatelessWidget {
   const _BestOfferBadge();
 

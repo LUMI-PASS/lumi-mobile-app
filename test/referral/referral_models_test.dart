@@ -44,8 +44,6 @@ void main() {
       expect(ReferralVoucherReason.fromKey(''), isNull);
       expect(ReferralVoucherReason.fromKey('min_order'),
           ReferralVoucherReason.minOrder);
-      expect(ReferralVoucherReason.fromKey('coupon_plan'),
-          ReferralVoucherReason.couponPlan);
       expect(ReferralVoucherReason.fromKey('weekend_only'),
           ReferralVoucherReason.unknown);
     });

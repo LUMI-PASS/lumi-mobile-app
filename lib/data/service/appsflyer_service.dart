@@ -193,8 +193,6 @@ class AppsFlyerService {
     AnalyticsEvent.branchDetailViewed: AfEvent.contentView,
     AnalyticsEvent.bookButtonTapped: AfEvent.addToCart,
     AnalyticsEvent.bookingCheckoutStarted: AfEvent.initiatedCheckout,
-    AnalyticsEvent.planPurchaseStarted: AfEvent.initiatedCheckout,
-    AnalyticsEvent.subscriptionPurchaseStarted: AfEvent.initiatedCheckout,
     AnalyticsEvent.checkoutPageOpened: AfEvent.initiatedCheckout,
     AnalyticsEvent.paymentSucceeded: AfEvent.purchase,
   };

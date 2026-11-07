@@ -59,7 +59,7 @@ void main() {
 
     test('covers a course TRIAL lesson but never the enrolment', () {
       // A visit buys one lesson, not a term — the line the backend's `assess`
-      // and the coupon plan both draw.
+      // draws.
       expect(covers(pass(), isWholeCourse: false), isTrue);
       expect(covers(pass(), isWholeCourse: true), isFalse);
       expect(covers(pass(allowCourses: true), isWholeCourse: true), isTrue);

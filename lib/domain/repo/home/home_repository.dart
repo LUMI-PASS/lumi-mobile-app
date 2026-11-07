@@ -8,7 +8,6 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
-import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
 
 class ParentProfileResult {
   final List<ChildModel> children;
@@ -61,8 +60,6 @@ abstract class HomeRepository {
   Future<HomForUser> getProfileData();
 
   Future<List<ScheduleItem>> getScheduleList();
-
-  Future<List<PremiumPlan>> getPremiumPlans();
 
   Future<bool> updateUser(HomForUser user);
 

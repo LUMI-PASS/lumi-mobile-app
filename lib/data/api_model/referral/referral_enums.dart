@@ -108,9 +108,6 @@ enum ReferralVoucherReason {
 
   /// This activity cannot carry a voucher discount.
   notApplicable('not_applicable'),
-
-  /// The buyer has an active coupon plan — the two never stack.
-  couponPlan('coupon_plan'),
   unknown('');
 
   const ReferralVoucherReason(this.key);

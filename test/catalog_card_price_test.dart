@@ -15,8 +15,8 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_cla
 /// exercises — the home rows, "Near you", the see-all grid, search results,
 /// saved activities and a centre's own class list.
 ///
-/// Only the negative case is rendered here. The price widget previews the
-/// buyer's coupon discount, so drawing one needs an `AppCubit` above it, and a
+/// Only the negative case is rendered here. The price widget reads the
+/// buyer's packet and Lumi Coin, so drawing one needs an `AppCubit` above it, and a
 /// card that is supposed to draw NO price needs no such thing. That is what
 /// makes the check below sharp: if the catalogue gate goes, the card reaches
 /// for the price widget, which cannot build without that provider — so the

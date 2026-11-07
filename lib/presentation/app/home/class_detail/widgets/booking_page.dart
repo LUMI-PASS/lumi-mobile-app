@@ -4,7 +4,6 @@ import 'package:lumi_pass/common/widget/sale_notice.dart';
 import 'package:lumi_pass/data/api_model/activity_sale/activity_sale.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:lumi_pass/common/utils/cashback.dart';
-import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/course_period.dart';
 import 'package:lumi_pass/common/utils/course_timetable.dart';
 import 'package:lumi_pass/common/utils/payment_error.dart';
@@ -28,7 +27,6 @@ import 'package:lumi_pass/common/utils/new_coins_summary.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
-import 'package:lumi_pass/presentation/app/new_coins/new_coins_purchase_controller.dart';
 import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_shortfall_sheet.dart';
 import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
@@ -230,7 +228,7 @@ class _BookingPageState extends State<BookingPage> {
   // older builds, and an activity with no coin price falls back to it.
 
   /// "Lumi Coin" as the app knows it: on sale or not, and the balance. `read`
-  /// for the reason [_hasCouponPlan] is — [_pay] reaches it too.
+  /// for the reason [_appState] is — [_pay] reaches it too.
   NewCoinsSummary get _newCoins => _appState.newCoins ?? const NewCoinsSummary();
 
   /// Whether this booking can be paid with coins at all: an activity (a course
@@ -271,7 +269,7 @@ class _BookingPageState extends State<BookingPage> {
   int get _newCoinTotal => _newCoinListTotal - _newCoinDiscount;
 
   /// What the booking as it stands costs in coins — the sum over tickets, at
-  /// the LIST price: a coupon plan does not discount a coin price. A preview;
+  /// the LIST price. A preview;
   /// checkout quotes it again and its answer is what is spent.
   int get _newCoinListTotal {
     var sum = 0;
@@ -307,42 +305,14 @@ class _BookingPageState extends State<BookingPage> {
   /// Coalesces stepper taps — see [_schedulePromoRefresh].
   Timer? _promoDebounce;
 
-  // ─── Coupon discount ──────────────────────────────────────────────────────
-  /// Whether the buyer owns an active coupon plan at all. Distinct from
-  /// [_hasCoupon]: owning a plan is what locks promocodes out, even on a class
-  /// the plan can't discount.
+  /// `AppCubit`'s live state: the packet and the coins.
   ///
-  /// Reads `AppCubit`'s live Cubit state, not a one-off `Storage` read, so this
-  /// answers correctly the instant a purchase completes or a sync resolves.
-  ///
-  /// `read`, not `watch`: this getter is reached from [_pay] as well as from
-  /// build, and `watch` outside a build throws
-  /// ("Tried to listen to a value exposed with provider, from outside of the
-  /// widget tree"). The rebuild is subscribed once in [build] instead.
-  bool get _hasCouponPlan {
-    final app = _appState;
-    return app.hasPremium && app.planDiscountPercentage > 0;
-  }
-
+  /// `read`, not `watch`: this is reached from [_pay] as well as from build,
+  /// and `watch` outside a build throws ("Tried to listen to a value exposed
+  /// with provider, from outside of the widget tree"). The rebuild is
+  /// subscribed once in [build] instead.
   AppBuildable get _appState =>
       context.read<AppCubit>().state.buildable ?? const AppBuildable();
-
-  /// The coupon's percentage on THIS class. A coupon is funded from Lumi's
-  /// share of the booking, so it is capped at that share (and is 0 on a class
-  /// whose share is too thin to carry one) — exactly what checkout charges.
-  num get _couponPct {
-    final app = _appState;
-    final plan = app.hasPremium ? app.planDiscountPercentage : 0;
-    return effectiveCouponPercent(
-      plan,
-      widget.clazz.discountPercentage,
-      // A TRIAL bought through this sheet is one lesson bought one at a time —
-      // the shape a coupon plan is sold against — so it carries the coupon
-      // exactly as a class booking does. Enrolling in the whole course does
-      // not, which is the one case this flag turns off.
-      isWholeCourse: _isCourse && !_isTrial,
-    );
-  }
 
   // ─── The centre's own sale ─────────────────────────────────────────────────
   // A percentage the centre takes off lessons on some dates, weekdays and
@@ -351,8 +321,7 @@ class _BookingPageState extends State<BookingPage> {
   // below drops, move to Saturday and they go back.
   //
   // It is the centre's discount, not Lumi's, and nothing of Lumi's stacks on
-  // it — while a lesson is on sale the coupon plan stands down and the
-  // promocode field is not offered. Checkout enforces the same and prices the
+  // it — while a lesson is on sale the promocode field is not offered. Checkout enforces the same and prices the
   // order itself; what is shown here is that sum repeated.
 
   /// The start time checkout will judge this booking by: the slot picked, or
@@ -401,27 +370,7 @@ class _BookingPageState extends State<BookingPage> {
     return sum;
   }
 
-  /// Whether a ticket's price is cut on this booking — by the centre's sale,
-  /// or by the buyer's coupon plan. Never both: the sale comes first.
-  bool get _hasCoupon => _hasSale || _couponPct > 0;
-
-  /// Whether the buyer's COUPON PLAN is what cut the price — for the things
-  /// that are about the plan itself (its uses, the analytics), which a
-  /// centre's sale must not be counted as.
-  bool get _usedCouponPlan => !_hasSale && _couponPct > 0;
-  num _applyDiscount(num price) {
-    if (_hasSale) return _salePrice(price);
-    return _couponPct > 0
-        ? (price * (100 - _couponPct) / 100).round()
-        : price;
-  }
-
-  num get _discountedTotal => _hasSale ? _saleTotal : _applyDiscount(_total);
-
   // ─── Promocode ─────────────────────────────────────────────────────────────
-  // Coupon plans and promocodes never stack, so this whole block is hidden
-  // (and never sent) whenever [_hasCouponPlan] is true. Only customers without
-  // an active coupon plan can enter a promocode.
   final TextEditingController _promoCtrl = TextEditingController();
   PromocodePreview? _appliedPromo;
   bool _promoLoading = false;
@@ -432,12 +381,10 @@ class _BookingPageState extends State<BookingPage> {
   num get _promoDiscount =>
       _hasSale ? 0 : (_appliedPromo?.discountAmount ?? 0);
 
-  /// The amount the user actually pays. A coupon plan and a promocode are
-  /// mutually exclusive: the coupon plan auto-discounts (and hides the promo
-  /// field); otherwise an applied promocode reduces the total.
+  /// The amount the user actually pays: the sale price while the lesson is on
+  /// sale, otherwise the total less an applied promocode.
   num get _payableTotal {
     if (_hasSale) return _saleTotal;
-    if (_hasCouponPlan) return _discountedTotal;
     final t = _total - _promoDiscount;
     return t < 0 ? 0 : t;
   }
@@ -445,15 +392,12 @@ class _BookingPageState extends State<BookingPage> {
   /// A 100%-off order: a promocode reduced the payable total to zero for an
   /// order that actually has tickets. There's nothing to charge, so the order is
   /// still created but we skip payment-method selection and the checkout
-  /// redirect — it goes straight to the success screen. Restricted to
-  /// promocodes: a coupon plan that happens to hit 100% still runs the normal
-  /// pay flow.
+  /// redirect — it goes straight to the success screen.
   /// A course has no tickets to count — a free trial IS the whole order — so
   /// the ticket test would keep the payment picker on screen while asking the
   /// buyer to choose a card for a lesson that costs nothing. What makes an
   /// order free is simply that there is nothing left to charge.
   bool get _isFree =>
-      !_hasCouponPlan &&
       (_hasSomethingToBuy || _totalTickets > 0) &&
       _payableTotal == 0;
 
@@ -577,9 +521,7 @@ class _BookingPageState extends State<BookingPage> {
   // A voucher is a personal promocode (`R-XXXXXX`). It is offered under the
   // promo field and spent THROUGH it — a tap fills the code and runs the
   // ordinary [_applyPromo] — so the preview, the discount line, the total and
-  // checkout's `promocode` are exactly the promocode path's. Like promocodes,
-  // vouchers never meet a coupon plan: this block lives inside the promo
-  // section, which [_hasCouponPlan] hides.
+  // checkout's `promocode` are exactly the promocode path's.
 
   /// Unspent vouchers for the current subtotal, best first (server order).
   List<ReferralVoucher> _vouchers = const [];
@@ -634,7 +576,7 @@ class _BookingPageState extends State<BookingPage> {
     // for a dearer booking, had to notice and undo it first. The vouchers are
     // listed under the field with an Apply button; nothing more is assumed.
     if (!_autoPickVouchers) return;
-    if (_voucherAutoPickOff || _hasCouponPlan) return;
+    if (_voucherAutoPickOff) return;
     if (_appliedPromo != null || _promoLoading) return;
     // Something the user typed is theirs. The field may still hold an earlier
     // pre-selected voucher, though — a ticket change drops the applied code
@@ -1064,7 +1006,6 @@ class _BookingPageState extends State<BookingPage> {
   @override
   void initState() {
     super.initState();
-    _coinBuyer.attach();
     if (_hasAgeTiers) {
       _tierCounts = widget.clazz.ageTiers
           .map((t) => List<int>.filled(t.durations.length.clamp(1, 999), 0))
@@ -1122,7 +1063,6 @@ class _BookingPageState extends State<BookingPage> {
 
   @override
   void dispose() {
-    _coinBuyer.dispose();
     _promoCtrl.dispose();
     _promoDebounce?.cancel();
     _voucherDebounce?.cancel();
@@ -1877,8 +1817,7 @@ class _BookingPageState extends State<BookingPage> {
               _isTrial && _selectedDate != null ? [_selectedDate!.isoKey] : null,
           // Whole course: the day picked above is when the enrolment starts.
           startsAt: !_isTrial ? _selectedDate?.isoKey : null,
-          promocode:
-              _hasCouponPlan || _hasSale ? null : _appliedPromo?.code,
+          promocode: _hasSale ? null : _appliedPromo?.code,
           lang: context.locale.languageCode,
           paymentProvider: savedCardId != null ? null : provider,
           returnUrl: isRedirect ? '${RuntimeEnv.baseUrl}paylov/return' : null,
@@ -1902,13 +1841,8 @@ class _BookingPageState extends State<BookingPage> {
         activityId: id,
         items: items,
         ticketDate: _selectedDate!.isoKey,
-        // Coupon plan and promocode never stack — only send a code when the
-        // user has no coupon plan (the promo field is hidden in that case).
-        // …and never alongside coins, which settle the whole booking alone.
-        // The one code coins take is the buyer's referral voucher.
-        promoCode: withNewCoins
-            ? (_hasSale ? null : _appliedPromo?.code)
-            : (_hasCouponPlan || _hasSale ? null : _appliedPromo?.code),
+        // No code on a lesson already on sale.
+        promoCode: _hasSale ? null : _appliedPromo?.code,
         // A saved-card checkout sends only saved_card_id (no provider): the
         // order is created PENDING and charged via the token afterwards.
         paymentProvider: savedCardId != null ? null : provider,
@@ -1935,7 +1869,6 @@ class _BookingPageState extends State<BookingPage> {
           'activity_id': id,
           'ticket_count': _totalTickets,
           'ticket_date': _selectedDate!.isoKey,
-          'used_coupon': _usedCouponPlan.toString(),
           'requires_booking_slot': _requiresBookingSlot.toString(),
           'provider': withNewCoins ? 'new_coins' : (provider ?? 'payme'),
         },
@@ -2030,8 +1963,6 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Future<void> _completeRedirect(CheckoutResult result) async {
-    // Snapshot before we close: was a coupon slot consumed for this order?
-    final usedCoupon = _usedCouponPlan;
     final requiresSlot = _requiresBookingSlot;
     final id = widget.clazz.id;
     markCatalogChanged();
@@ -2052,12 +1983,7 @@ class _BookingPageState extends State<BookingPage> {
         ),
       );
     }
-    // Re-sync premium status so the discount badge disappears immediately when
-    // the last coupon activity slot was consumed (coins hit 0 at checkout time).
-    if (usedCoupon) {
-      getIt<AppCubit>().syncSubscription();
-    }
-    // And the packet, for the same reason on a bigger surface: a visit just went
+    // Re-sync the packet: a visit just went
     // off it, and the THIRD one brings every hidden price in the catalogue back.
     // Re-pulled rather than decremented locally — the server owns the count.
     if (_usePromoPass) {
@@ -2106,7 +2032,7 @@ class _BookingPageState extends State<BookingPage> {
       int newCoinPrice = 0,
     }) {
       if (count <= 0) return;
-      final sub = (_hasCoupon ? _applyDiscount(price) : price) * count;
+      final sub = (_hasSale ? _salePrice(price) : price) * count;
       out.add(_SummaryLine(
         icon: ageFrom >= 6 || ageTo == null
             ? Assets.icons.detail.iconsaxAiUsers
@@ -2182,24 +2108,11 @@ class _BookingPageState extends State<BookingPage> {
     // Courses included: a referral voucher can discount a course, and the
     // package line above would otherwise leave the smaller total unexplained.
     // (Plain promocodes are refused on courses, so for them nothing changes.)
-    if (!_hasCouponPlan && _promoDiscount > 0 && !_paysWithNewCoins) {
+    if (_promoDiscount > 0 && !_paysWithNewCoins) {
       out.add(_SummaryLine(
         icon: Assets.icons.detail.iconsaxTicketDiscount,
         label: 'promo_discount'.tr(),
         value: '−${_promoDiscount.toRawUzsPrice()}',
-        negative: true,
-      ));
-    }
-    // A course leads with ONE package line at its list price, so a coupon has
-    // nowhere to show itself there — without this row the grand total is simply
-    // smaller than the only figure above it, with nothing saying why. (A class
-    // needs no such row: its ticket lines are already priced net of the
-    // coupon.)
-    if (_isCourse && _hasCoupon) {
-      out.add(_SummaryLine(
-        icon: Assets.icons.detail.iconsaxTicketDiscount,
-        label: 'book_discount'.tr(),
-        value: '−${(_total - _discountedTotal).toRawUzsPrice()}',
         negative: true,
       ));
     }
@@ -2219,7 +2132,6 @@ class _BookingPageState extends State<BookingPage> {
   /// Card rail: the OTP was confirmed and the order is already paid — go
   /// straight to the success screen (no external checkout redirect needed).
   void _completeCardPaid(CheckoutResult result) {
-    final usedCoupon = _usedCouponPlan;
     final requiresSlot = _requiresBookingSlot;
     final id = widget.clazz.id;
     final lines = _orderLines();
@@ -2263,9 +2175,6 @@ class _BookingPageState extends State<BookingPage> {
           ),
         );
       }
-      if (usedCoupon) {
-        getIt<AppCubit>().syncSubscription();
-      }
       if (_usePromoPass) {
         getIt<AppCubit>().syncPromoPass();
       }
@@ -2282,10 +2191,10 @@ class _BookingPageState extends State<BookingPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    // The one subscription to the coupon plan. The getters that read it
-    // ([_hasCouponPlan], [_couponPct]) use `read`, because [_pay] reaches them
-    // too and `watch` may only be called during a build — so the dependency is
-    // registered here, once, and the page still rebuilds when a plan lands.
+    // The one subscription to AppCubit. The getters that read it ([_appState])
+    // use `read`, because [_pay] reaches them too and `watch` may only be
+    // called during a build — so the dependency is registered here, once, and
+    // the page still rebuilds when the packet or the coins change.
     context.watch<AppCubit>();
     return Scaffold(
       backgroundColor: c.canvas,
@@ -2402,21 +2311,13 @@ class _BookingPageState extends State<BookingPage> {
                           // and the server refuses the combination outright. A
                           // field whose only possible outcome is an error is not
                           // an option, it is a trap.
-                          //
-                          // A coupon plan locks the field on a money
-                          // booking, where the two would stack. It does not
-                          // discount a coin price, so on a coin booking the
-                          // field is there whatever plan the buyer holds.
-                          if (!_paidByPromoPass &&
-                              !_hasSale &&
-                              (_coinsOnly || !_hasCouponPlan)) ...[
+                          if (!_paidByPromoPass && !_hasSale) ...[
                             20.kh,
                             _promoSection(c),
                           ],
-                          // Above the wallet, and outside the `!_hasCouponPlan`
-                          // guard for the same reason it is: an "аксия" visit is
-                          // a payment method the buyer already owns, not a
-                          // competing discount. It renders nothing when there is
+                          // Above the wallet: an "аксия" visit is a payment
+                          // method the buyer already owns, not a competing
+                          // discount. It renders nothing when there is
                           // no pass, so it costs an empty box at worst.
                           //
                           // Kept in coins-only mode for exactly that reason: a
@@ -2430,12 +2331,7 @@ class _BookingPageState extends State<BookingPage> {
                               onChanged: _onPromoPassToggled,
                             ),
                           ],
-                          // Deliberately OUTSIDE the `!_hasCouponPlan` guard
-                          // above. That guard exists because a promocode and a
-                          // coupon plan are alternative discounts that never
-                          // stack — the wallet is neither, so it is offered to
-                          // coupon holders too.
-                          // …but not when the packet has already covered the
+                          // Not when the packet has already covered the
                           // whole order. The wallet would contribute zero, and a
                           // switch that moves no money reads as broken.
                           //
@@ -2553,7 +2449,7 @@ class _BookingPageState extends State<BookingPage> {
             // What the CARD is charged, after the wallet — the buyer is about
             // to authorise this number, not the order total.
             : 'book_pay_cta'.tr(args: [_gatewayTotal.toRawUzsPrice()]),
-        loading: _submitting || _coinBuyer.purchasing != null,
+        loading: _submitting,
         onPressed: _pay,
       ),
     );
@@ -2633,7 +2529,7 @@ class _BookingPageState extends State<BookingPage> {
         label: label,
         durationLabel: durationLabel,
         price: price,
-        discountedPrice: _hasCoupon ? _applyDiscount(price) : null,
+        discountedPrice: _hasSale ? _salePrice(price) : null,
         salePercent: _salePct,
         promoPass: _rowPromoPass(price),
         // Null for a course or a trial, and whenever coins are not on offer —
@@ -3424,53 +3320,17 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-  /// Buys coins without leaving the booking — the same purchase flow the Lumi
-  /// Coin screen runs, hosted here. While it is in flight the Pay button is
-  /// held, and once the money lands the balance has already been re-read, so
-  /// the button is back to "Pay" with nothing else to do.
-  late final NewCoinsPurchaseController _coinBuyer = NewCoinsPurchaseController(
-    host: this,
-    notify: () => setState(() {}),
-    onPaid: (purchase, _) async {
-      if (!mounted) return;
-      setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('new_coins_success_title'.tr())),
-      );
-    },
-    onError: (message) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message, maxLines: 3),
-          backgroundColor: context.colors.error,
-        ),
-      );
-    },
-  );
-
-  /// "You are N coins short" — and the two ways to fix it: buy exactly the
-  /// missing coins as loose ones (only with a live main pack), or open the
-  /// Lumi Coin screen for a pack. Either purchase comes straight back here
-  /// with the balance refreshed, the booking untouched and ready to pay.
+  /// "You are N coins short", and the one way to fix it: a pack, bought on
+  /// the Lumi Coin screen. That screen shows only the packs that cover the
+  /// gap — main packs without a live main pack, extras with one. A purchase
+  /// comes straight back here with the balance refreshed, the booking
+  /// untouched and ready to pay. Coins are never sold one by one any more.
   Future<void> _offerNewCoinsTopUp(NewCoinShortfall shortfall) async {
-    final coins = _newCoins;
-    final action = await showNewCoinsShortfallSheet(
+    final choosePack = await showNewCoinsShortfallSheet(
       context,
       shortfall: shortfall,
-      canBuySingle: coins.canBuySingle,
-      singleCoinPrice: coins.singleCoinPrice,
     );
-    if (action == null || !mounted) return;
-    // "Buy the missing coins" is paid for right here: the payment sheet opens
-    // over the booking and the buyer never leaves it. Only choosing a pack —
-    // a different decision, with a shelf to look at — opens the coin screen.
-    if (action == NewCoinsShortfallAction.buyMissing) {
-      await _coinBuyer.buy(
-        NewCoinPurchase.single(shortfall.missing, coins.singleCoinPrice),
-      );
-      return;
-    }
+    if (choosePack != true || !mounted) return;
     await context.router.push(
       NewCoinsRoute(topUpFor: shortfall.missing, returnOnPurchase: true),
     );
@@ -3480,10 +3340,37 @@ class _BookingPageState extends State<BookingPage> {
     if (mounted) setState(() {});
   }
 
+  /// "Top up Lumi Coin" on the Pay button: the balance is short of the
+  /// booking as it stands. Buying coins does not need a day or a slot — an
+  /// activity with no schedule yet must still let the buyer top up — so this
+  /// runs before [_validateForPayment], not after it.
+  ///
+  /// The balance is re-read once first: coins may have been bought on
+  /// another device, and then the button simply turns back into "Pay".
+  Future<void> _topUpShortBalance() async {
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    await getIt<AppCubit>().syncNewCoins();
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    final required = _newCoinTotal;
+    final available = _newCoins.balance;
+    if (available >= required) return;
+    await _offerNewCoinsTopUp(
+      NewCoinShortfall.of(required: required, available: available),
+    );
+  }
+
   /// Pay CTA: create the order and charge it on the chosen rail. Card payments
   /// confirm an OTP in a sheet; the other rails hand off to the checkout page.
   Future<void> _pay() async {
     if (_submitting) return;
+    if (_newCoinsShort) {
+      await _topUpShortBalance();
+      return;
+    }
     if (!_validateForPayment()) return;
 
     // Coins cover it all: no rail to pick and no gateway to open. The server
@@ -3687,7 +3574,7 @@ class _SummaryLine {
   final String label;
   final String value;
 
-  /// Renders the value in [AppColors.error] — used by the coupon discount.
+  /// Renders the value in [AppColors.error] — used by the discount lines.
   final bool negative;
 }
 
@@ -4157,7 +4044,7 @@ class _TariffRow extends StatelessWidget {
   final num price;
 
   /// When non-null the original [price] is struck through and this is shown
-  /// next to it — an active coupon plan.
+  /// next to it — the centre's sale.
   final num? discountedPrice;
 
   final int count;
@@ -4229,8 +4116,8 @@ class _TariffRow extends StatelessWidget {
               ),
               if (promoPass == null && discounted != null && !coinPrimary)
                 Text(
-                  // Same as above: a coupon that takes the row to nothing has
-                  // made it free, not unpriced.
+                  // Same as above: a discount that takes the row to nothing
+                  // has made it free, not unpriced.
                   discounted > 0
                       ? discounted.toRawUzsPrice()
                       : 'price_free'.tr(),

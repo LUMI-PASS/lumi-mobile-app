@@ -21,10 +21,10 @@ class UserOrder {
   final String? paymentProvider;
   final num totalAmount;
   final num paidAmount;
-  /// Original subtotal before any coupon/promocode discount. Equals
+  /// Original subtotal before any discount. Equals
   /// [totalAmount] when no discount was applied.
   final num subtotalAmount;
-  /// Amount saved via coupon or promocode. 0 when no discount was applied.
+  /// Amount saved by a discount. 0 when no discount was applied.
   final num discountAmount;
   final String? activityId;
   final String? activityName;
@@ -39,7 +39,7 @@ class UserOrder {
   final String? updatedAt;
 
   /// The promocode applied to this order, if any. Null when the discount came
-  /// from a coupon plan (or when there was no discount).
+  /// from elsewhere (or when there was no discount).
   final String? promocodeCode;
 
   /// What this order bought: a trial lesson, a whole course, or (the common
@@ -321,10 +321,10 @@ class UserOrder {
     this.activitySchedule = const [],
   });
 
-  /// True when a coupon or promocode discount was applied to this order.
+  /// True when a discount was applied to this order.
   bool get hasDiscount => discountAmount > 0;
 
-  /// True when the discount came from a promocode (vs an auto coupon plan).
+  /// True when the discount came from a promocode.
   bool get isPromocodeDiscount =>
       promocodeCode != null && promocodeCode!.isNotEmpty;
 

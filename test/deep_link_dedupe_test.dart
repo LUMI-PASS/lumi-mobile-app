@@ -25,8 +25,8 @@ void main() {
       // auto_route keys both entries identically.
       expect(
         isDuplicate(
-          incoming: 'lumi://plans',
-          lastLink: 'lumi://plans',
+          incoming: 'lumi://cards',
+          lastLink: 'lumi://cards',
           since: const Duration(milliseconds: 40),
         ),
         isTrue,
@@ -36,8 +36,8 @@ void main() {
     test('a different link is never dropped', () {
       expect(
         isDuplicate(
-          incoming: 'lumi://coupons',
-          lastLink: 'lumi://plans',
+          incoming: 'lumi://cards',
+          lastLink: 'lumi://coins',
           since: const Duration(milliseconds: 40),
         ),
         isFalse,
@@ -58,8 +58,8 @@ void main() {
     test('re-opening the same link later still works', () {
       expect(
         isDuplicate(
-          incoming: 'lumi://plans',
-          lastLink: 'lumi://plans',
+          incoming: 'lumi://cards',
+          lastLink: 'lumi://cards',
           since: const Duration(seconds: 10),
         ),
         isFalse,
@@ -68,7 +68,7 @@ void main() {
 
     test('the first link of the session is never a duplicate', () {
       expect(
-        isDuplicate(incoming: 'lumi://plans', lastLink: null, since: null),
+        isDuplicate(incoming: 'lumi://cards', lastLink: null, since: null),
         isFalse,
       );
     });

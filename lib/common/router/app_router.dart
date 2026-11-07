@@ -16,9 +16,6 @@ import 'package:lumi_pass/presentation/app/home/unclaimed_centre/unclaimed_centr
 import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/class_detail_page.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/booking_page.dart';
-import 'package:lumi_pass/presentation/app/home/coupons/coupons_page.dart';
-import 'package:lumi_pass/presentation/app/home/plans/payment_history_page.dart';
-import 'package:lumi_pass/presentation/app/home/plans/plans_page.dart';
 import 'package:lumi_pass/presentation/app/home/see_all/classes_grid_page.dart';
 import 'package:lumi_pass/presentation/app/home/see_all/interests_grid_page.dart';
 import 'package:lumi_pass/presentation/app/main/main_page.dart';
@@ -162,14 +159,11 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: TicketReceiptRoute.page),
     AutoRoute(page: FiscalReceiptRoute.page),
     AutoRoute(page: MyBookingsRoute.page),
-    AutoRoute(page: PlansRoute.page),
-    AutoRoute(page: PaymentHistoryRoute.page),
     AutoRoute(page: WalletRoute.page),
     AutoRoute(page: ReferralRoute.page),
     AutoRoute(page: MyCardsRoute.page),
     AutoRoute(page: ClassesGridRoute.page),
     AutoRoute(page: InterestsGridRoute.page),
-    AutoRoute(page: CouponsRoute.page),
     AutoRoute(page: AksiyaRoute.page),
     AutoRoute(page: NewCoinsRoute.page),
     AutoRoute(page: ShopRoute.page),

@@ -5,13 +5,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:focus_detector/focus_detector.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
-import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
@@ -19,8 +17,6 @@ import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/common/widget/promo_included_label.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import 'shorts_feed.dart';
@@ -738,12 +734,7 @@ class _ShortSlide extends StatelessWidget {
   // exist, show the lowest paid price; show a "from" price when there are
   // multiple tiers. Falls back to the flat price. Returns null when there's
   // nothing meaningful to show.
-  //
-  // Also mirrors the home cards' coupon preview: when the buyer has an active
-  // plan, [discountedLabel] carries the discounted price to show alongside
-  // the struck-through original, capped the same way the charge will be —
-  // this page was the one place still showing the raw price.
-  ({String label, String? discountedLabel, int? coins, bool from})? _priceInfo(BuildContext context) {
+  ({String label, int? coins, bool from})? _priceInfo(BuildContext context) {
     // A CATALOGUE entry quotes nothing here. Its figure came from the public
     // directory Lumi listed it from, nothing on it is for sale at that price,
     // and the pill is the one place a price would read as this clip's offer.
@@ -760,7 +751,7 @@ class _ShortSlide extends StatelessWidget {
     final showFrom = hasFreeAndPaid ||
         (snap != null && (snap.hasMultiplePrices || snap.rangeCount > 1));
     if (effectivePrice < 100) {
-      return (label: 'price_free'.tr(), discountedLabel: null, coins: null, from: false);
+      return (label: 'price_free'.tr(), coins: null, from: false);
     }
 
     String fmt(num v) =>
@@ -779,15 +770,13 @@ class _ShortSlide extends StatelessWidget {
         )) {
       return (
         label: 'promo_included_in'.tr(namedArgs: {'packet': pass.title}),
-        discountedLabel: null,
         coins: null,
         from: false,
       );
     }
 
     // An activity is paid in Lumi Coin, so that is what the overlay quotes —
-    // in place of the so'm figure, and with no coupon preview: a coupon plan
-    // does not discount a coin price. A course stays on money.
+    // in place of the so'm figure. A course stays on money.
     if (hc.isCourse != true) {
       // The server's figure is for the cheapest ticket, so it is only the one
       // to print while that is the ticket being quoted.
@@ -796,28 +785,13 @@ class _ShortSlide extends StatelessWidget {
       if (coinPrice != null) {
         return (
           label: fmt(effectivePrice),
-          discountedLabel: null,
           coins: coinPrice,
           from: showFrom,
         );
       }
     }
 
-    final app = context.watch<AppCubit>().state.buildable ?? const AppBuildable();
-    final planPct = effectiveCouponPercent(
-      app.hasPremium ? app.planDiscountPercentage : 0,
-      hc.discountPercentage,
-      isWholeCourse: hc.showsWholeCoursePrice,
-    );
-    if (planPct <= 0) return (label: fmt(effectivePrice), discountedLabel: null, coins: null, from: false);
-
-    final discounted = effectivePrice * (1 - planPct / 100);
-    return (
-      label: fmt(effectivePrice),
-      discountedLabel: fmt(discounted),
-      coins: null,
-      from: false,
-    );
+    return (label: fmt(effectivePrice), coins: null, from: false);
   }
 
   @override
@@ -989,7 +963,7 @@ class _DetailsCta extends StatelessWidget {
   const _DetailsCta({required this.hc, required this.price});
 
   final HomClass hc;
-  final ({String label, String? discountedLabel, int? coins, bool from})? price;
+  final ({String label, int? coins, bool from})? price;
 
   @override
   Widget build(BuildContext context) {
@@ -1046,29 +1020,7 @@ class _DetailsCta extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   )
-                else if (p.discountedLabel != null) ...[
-                  Text(
-                    p.label,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.72),
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w600,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: Colors.white.withOpacity(0.72),
-                    ),
-                  ),
-                  5.kw,
-                  Text(
-                    p.discountedLabel!,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ] else
+                else
                   Text(
                     p.label,
                     maxLines: 1,

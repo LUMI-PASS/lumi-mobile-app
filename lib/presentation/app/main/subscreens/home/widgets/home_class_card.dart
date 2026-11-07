@@ -7,7 +7,6 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -16,7 +15,6 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_shadows.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
-import 'package:lumi_pass/common/utils/coupon_discount.dart';
 import 'package:lumi_pass/common/utils/image_url.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/widget/distance_label.dart';
@@ -27,8 +25,6 @@ import 'package:lumi_pass/data/api_model/home_model/course_price_kind.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/common/widget/new_coin_price.dart';
 import 'package:lumi_pass/common/widget/promo_included_label.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_common.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_icons.dart';
 import 'package:shimmer/shimmer.dart';
@@ -120,7 +116,6 @@ class HomeCourseCard extends StatelessWidget {
                     imageUrl: sanitizeImageUrl(hc?.image),
                     height: imageHeight ?? 126.h,
                     category: hc?.category,
-                    discountPercentage: hc?.discountPercentage ?? 0,
                     coinRibbon: _coinPriceOf(context, hc) != null,
                     sale: hc?.sale,
                     // Flush with the card — see [HomeNearbyCard].
@@ -151,7 +146,6 @@ class HomeCourseCard extends StatelessWidget {
                     imageUrl: sanitizeImageUrl(hc?.image),
                     height: imageHeight ?? 126.h,
                     category: hc?.category,
-                    discountPercentage: hc?.discountPercentage ?? 0,
                     coinRibbon: _coinPriceOf(context, hc) != null,
                     sale: hc?.sale,
                   ),
@@ -212,7 +206,6 @@ class HomeNearbyCard extends StatelessWidget {
             imageUrl: sanitizeImageUrl(hc?.image),
             height: 160.h,
             category: hc?.category,
-            discountPercentage: hc?.discountPercentage ?? 0,
             sale: hc?.sale,
             coinRibbon: _coinPriceOf(context, hc) != null,
             fit: BoxFit.cover,
@@ -246,7 +239,6 @@ class _ClassImage extends StatelessWidget {
     required this.imageUrl,
     required this.height,
     required this.category,
-    required this.discountPercentage,
     this.coinRibbon = false,
     this.sale,
     this.fit = BoxFit.cover,
@@ -256,7 +248,6 @@ class _ClassImage extends StatelessWidget {
   final String? imageUrl;
   final double height;
   final String? category;
-  final int discountPercentage;
 
   /// Draws the "subscription" [CornerRibbon] — for a card bought with Lumi
   /// Coin, which is what the subscription pays in. It took the place of the
@@ -487,8 +478,8 @@ class _ClassInfo extends StatelessWidget {
         //
         // The 168pt compact card keeps it on the address line: its price line
         // is the narrowest thing on the card and can already run to two lines
-        // (a struck original over a couponed figure), so a distance beside it
-        // would be squeezed against a moving target.
+        // (a course's per-lesson breakdown), so a distance beside it would be
+        // squeezed against a moving target.
         final Widget? whereDistance = branchInline ? null : distance;
         final Widget? priceDistance = branchInline ? distance : null;
 
@@ -521,10 +512,9 @@ class _ClassInfo extends StatelessWidget {
 
         // The price, with the distance pinned to the card's right edge beside
         // it. Centred rather than baseline-aligned: the price block is one
-        // line most of the time but two when a coupon struck a figure out, or
-        // when a course prints its per-lesson breakdown — and neither of those
-        // second lines is the one the distance should pair with, so it sits
-        // against the block as a whole.
+        // line most of the time but two when a course prints its per-lesson
+        // breakdown — and that second line is not the one the distance should
+        // pair with, so it sits against the block as a whole.
         // With no price to carry, the row is the distance alone — which is
         // why the distance is NOT simply moved up to the where-line: on the
         // full-width card that line is already the centre pill plus the street
@@ -634,9 +624,8 @@ class _ClassInfo extends StatelessWidget {
 /// `coursePrice` is read instead. Quoting `cardPrice` with whole-course
 /// wording would print a term's enrolment at one lesson's price.
 ///
-/// It also means neither a coupon plan nor a "Lumi Start" packet discounts
-/// this line: both are sold against one lesson bought at a time, never a whole
-/// term. See `effectiveCouponPercent`.
+/// It also means a "Lumi Start" packet never covers this line: it is sold
+/// against one lesson bought at a time, never a whole term.
 class _CoursePriceText extends StatelessWidget {
   const _CoursePriceText({required this.hc});
 
@@ -655,7 +644,7 @@ class _CoursePriceText extends StatelessWidget {
         ? (hc.coursePrice ?? 0)
         : (hc.cardPrice ?? hc.coursePrice ?? 0);
     // The card is quoting a whole term either way now, which is what the
-    // coupon and the packet below are gated on. Not `hc.showsWholeCoursePrice`:
+    // packet below is gated on. Not `hc.showsWholeCoursePrice`:
     // that reports what the SERVER offered, and checkout still needs it to mean
     // that.
     const isWholeCourse = true;
@@ -701,8 +690,7 @@ class _CoursePriceText extends StatelessWidget {
 
     // A "Lumi Start" packet pays for a course's TRIAL lesson — one lesson, one
     // day, the shape the packet is sold against — and never its whole term.
-    // `showsWholeCoursePrice` is what draws that line, the same line the coupon
-    // below is held to.
+    // `showsWholeCoursePrice` is what draws that line.
     //
     // Skipped when the figure is already zero: a free first lesson has nothing
     // for a packet to cover, and "included in Lumi Start" would claim a visit
@@ -718,21 +706,7 @@ class _CoursePriceText extends StatelessWidget {
       return PromoIncludedLabel(pass: pass);
     }
 
-    // Only a trial headline can carry one — `showsWholeCoursePrice` is what
-    // keeps the whole-course price out of it, and the cap is Lumi's share of
-    // this course, so the card previews what checkout will charge.
-    final app =
-        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
-    final couponPct = effectiveCouponPercent(
-      app.hasPremium ? app.planDiscountPercentage : 0,
-      hc.discountPercentage,
-      isWholeCourse: isWholeCourse,
-    );
-    // A free first lesson has nothing left to discount.
-    final num? discounted = couponPct > 0 && price > 0
-        ? (price * (100 - couponPct) / 100).round()
-        : null;
-    final label = labelFor(discounted ?? price);
+    final label = labelFor(price);
 
     // The figure the headline ISN'T showing.
     //
@@ -755,27 +729,13 @@ class _CoursePriceText extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // What the coupon took off, above the offer it changed — the same
-        // struck-original-then-green-figure shape a class card uses.
-        if (discounted != null)
-          Text(
-            price.toRawUzsPrice(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.regular12.copyWith(
-              color: c.textMuted,
-              decoration: TextDecoration.lineThrough,
-              decorationColor: c.textMuted,
-            ),
-          ),
         Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppText.semibold14.copyWith(
-            // A free lesson is the one thing on this card worth a colour — and
-            // so is a couponed one, for the same reason.
-            color: kind == CoursePriceKind.trialFree || discounted != null
+            // A free lesson is the one thing on this card worth a colour.
+            color: kind == CoursePriceKind.trialFree
                 ? AppColors.green
                 : c.textPrimary,
           ),
@@ -794,8 +754,8 @@ class _CoursePriceText extends StatelessWidget {
   }
 }
 
-/// Price line — mirrors the effective-price + coupon-discount logic used
-/// elsewhere, rendered in the redesigned typography.
+/// Price line — mirrors the effective-price logic used elsewhere, rendered in
+/// the redesigned typography.
 /// The so'm figure an activity card quotes: the cheapest PAID ticket when the
 /// cheapest one is free, else the cheapest one, else the card's own price.
 num _effectivePriceOf(HomClass? hc) {
@@ -853,8 +813,7 @@ class _PriceText extends StatelessWidget {
     }
 
     // An activity is paid in Lumi Coin, so that is what the card quotes — in
-    // place of the so'm figure, and with no coupon preview: a coupon plan does
-    // not discount a coin price.
+    // place of the so'm figure.
     final coinPrice = _coinPriceOf(context, hc);
     if (coinPrice != null) {
       // The number and the coin, nothing else — no "dan"/"from", even when
@@ -868,37 +827,6 @@ class _PriceText extends StatelessWidget {
         ? 'price_from'.tr(args: [v.toRawUzsPrice()])
         : v.toRawUzsPrice();
 
-    final app =
-        context.watch<AppCubit>().state.buildable ?? const AppBuildable();
-    // The coupon can't cut deeper than Lumi's share of this class, so the
-    // preview is capped the same way the charge will be.
-    final planPct = effectiveCouponPercent(
-      app.hasPremium ? app.planDiscountPercentage : 0,
-      hc?.discountPercentage,
-      isWholeCourse: hc?.showsWholeCoursePrice ?? false,
-    );
-    if (planPct <= 0) {
-      return Text(label(effectivePrice), style: baseStyle);
-    }
-
-    final discounted = effectivePrice * (1 - planPct / 100);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label(effectivePrice),
-          style: AppText.regular12.copyWith(
-            color: c.textMuted,
-            decoration: TextDecoration.lineThrough,
-            decorationColor: c.textMuted,
-          ),
-        ),
-        Text(
-          label(discounted),
-          style: AppText.semibold14.copyWith(color: AppColors.green),
-        ),
-      ],
-    );
+    return Text(label(effectivePrice), style: baseStyle);
   }
 }

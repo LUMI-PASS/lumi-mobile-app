@@ -9,7 +9,6 @@ import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/api_model/unclaimed_centre/unclaimed_centre.dart';
 import 'package:lumi_pass/data/api_model/schedule_class/schedule_class_model.dart';
 import 'package:lumi_pass/data/api_model/schedule_model/schedule_model.dart';
-import 'package:lumi_pass/data/api_model/premium_plan/premium_plan_model.dart';
 import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 
 import '../../data/storage/storage.dart';
@@ -158,15 +157,6 @@ class HomeRepositoryImpl extends HomeRepository {
   @override
   Future<void> deleteChild(String childId) {
     return _api.deleteChild(childId);
-  }
-
-  @override
-  Future<List<PremiumPlan>> getPremiumPlans() {
-    return _api.getPremiumPlans().then((value) {
-      final list = value.data['data'];
-      if (list is! List) return [];
-      return list.map((e) => PremiumPlan.fromJson(e as Map<String, dynamic>)).toList();
-    });
   }
 
   @override

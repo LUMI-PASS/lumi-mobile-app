@@ -838,7 +838,7 @@ class _CoinOption extends StatelessWidget {
 
 /// The rail picker — and, by being picked, the choice to pay with money.
 ///
-/// Deliberately the same [PillCard] the booking and coupon screens use: it is
+/// Deliberately the same [PillCard] the booking and packet screens use: it is
 /// the same decision about the same rails, and three different-looking
 /// versions of one choice teach the buyer they are three different things.
 class _PaymentRailRow extends StatelessWidget {
