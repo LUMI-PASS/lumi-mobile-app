@@ -15,7 +15,6 @@ class NewCoinsSummary {
     this.nearestExpiry,
     this.nearestExpiryCoins = 0,
     this.canBuyExtras = false,
-    this.singleCoinPrice = 0,
     this.activityRate = 0,
     this.mainPacks = const [],
     this.activeMainPackId,
@@ -29,11 +28,8 @@ class NewCoinsSummary {
   final DateTime? nearestExpiry;
   final int nearestExpiryCoins;
 
-  /// Extras and loose coins are sold only on top of a live main pack.
+  /// Extras are sold only on top of a live main pack.
   final bool canBuyExtras;
-
-  /// Unit price of one loose coin, in so'm.
-  final num singleCoinPrice;
 
   /// So'm per coin when paying for an activity.
   final num activityRate;
@@ -65,10 +61,6 @@ class NewCoinsSummary {
   /// sale must not strand a balance that was paid for.
   bool get isVisible => onSale || balance > 0;
 
-  /// Loose coins can be bought right now: they are priced, and this user holds
-  /// the main pack they are sold on top of.
-  bool get canBuySingle => canBuyExtras && singleCoinPrice > 0;
-
   NewCoinsSummary withCatalogue(NewCoinCatalogue catalogue) => NewCoinsSummary(
         onSale: catalogue.isOnSale,
         balance: balance,
@@ -76,7 +68,6 @@ class NewCoinsSummary {
         nearestExpiry: nearestExpiry,
         nearestExpiryCoins: nearestExpiryCoins,
         canBuyExtras: catalogue.canBuyExtras,
-        singleCoinPrice: catalogue.singleCoinPrice,
         activityRate: catalogue.activityRate,
         mainPacks: catalogue.main,
         activeMainPackId: activeMainPackId,
@@ -90,7 +81,6 @@ class NewCoinsSummary {
         nearestExpiry: held.nearestExpiry,
         nearestExpiryCoins: held.nearestExpiryCoins,
         canBuyExtras: canBuyExtras,
-        singleCoinPrice: singleCoinPrice,
         activityRate: activityRate,
         mainPacks: mainPacks,
         activeMainPackId: held.activeMainPackId,
@@ -101,7 +91,6 @@ class NewCoinsSummary {
   /// on it.
   NewCoinsSummary signedOut() => NewCoinsSummary(
         onSale: onSale,
-        singleCoinPrice: singleCoinPrice,
         activityRate: activityRate,
         mainPacks: mainPacks,
       );
@@ -115,7 +104,6 @@ class NewCoinsSummary {
       other.nearestExpiry == nearestExpiry &&
       other.nearestExpiryCoins == nearestExpiryCoins &&
       other.canBuyExtras == canBuyExtras &&
-      other.singleCoinPrice == singleCoinPrice &&
       other.activityRate == activityRate &&
       other.activeMainPackId == activeMainPackId &&
       other.activeMainExpiresAt == activeMainExpiresAt &&
@@ -133,7 +121,6 @@ class NewCoinsSummary {
         nearestExpiry,
         nearestExpiryCoins,
         canBuyExtras,
-        singleCoinPrice,
         activityRate,
         activeMainPackId,
         activeMainExpiresAt,

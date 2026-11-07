@@ -74,29 +74,4 @@ class NewCoinsRepositoryImpl extends NewCoinsRepository {
         )
         .then((res) => NewCoinPurchaseResult.fromJson(_unwrap(res.data)));
   }
-
-  @override
-  Future<NewCoinPurchaseResult> purchaseSingle({
-    required int quantity,
-    String? lang,
-    String? paymentProvider,
-    String? returnUrl,
-    String? cardNumber,
-    String? expireDate,
-    String? savedCardId,
-    bool test = false,
-  }) {
-    return _api
-        .purchaseSingle(
-          quantity: quantity,
-          lang: lang,
-          paymentProvider: paymentProvider,
-          returnUrl: returnUrl,
-          cardNumber: cardNumber,
-          expireDate: expireDate,
-          savedCardId: savedCardId,
-          test: test,
-        )
-        .then((res) => NewCoinPurchaseResult.fromJson(_unwrap(res.data)));
-  }
 }

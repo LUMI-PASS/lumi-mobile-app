@@ -30,16 +30,4 @@ abstract class NewCoinsRepository {
     String? promocode,
     bool test = false,
   });
-
-  /// Buys [quantity] loose coins at the unit price.
-  Future<NewCoinPurchaseResult> purchaseSingle({
-    required int quantity,
-    String? lang,
-    String? paymentProvider,
-    String? returnUrl,
-    String? cardNumber,
-    String? expireDate,
-    String? savedCardId,
-    bool test = false,
-  });
 }

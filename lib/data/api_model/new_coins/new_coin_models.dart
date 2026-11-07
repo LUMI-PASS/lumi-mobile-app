@@ -92,7 +92,6 @@ class NewCoinCatalogue {
   const NewCoinCatalogue({
     this.main = const [],
     this.extra = const [],
-    this.singleCoinPrice = 0,
     this.activityRate = 0,
     this.canBuyExtras = false,
     this.firstPackBonus = 0,
@@ -103,13 +102,11 @@ class NewCoinCatalogue {
   final List<NewCoinPack> main;
   final List<NewCoinPack> extra;
 
-  /// Unit price of one loose coin, in so'm. 0 when loose coins are not sold.
-  final num singleCoinPrice;
-
   /// So'm per coin when paying for an activity (`ceil(price / rate)`).
   final num activityRate;
 
-  /// Extras and loose coins are sold only on top of a live main pack.
+  /// Extras are sold only on top of a live main pack — one BOUGHT and not
+  /// yet expired, by the server's own rule.
   final bool canBuyExtras;
 
   /// Coins added to the buyer's FIRST main pack. 0 means there is nothing
@@ -120,6 +117,21 @@ class NewCoinCatalogue {
   /// no way into the system, so nothing about it is shown anywhere.
   bool get isOnSale => main.isNotEmpty;
 
+  /// The packs a booking [missing] coins short may be topped up with,
+  /// cheapest first. Coins are always bought as a whole pack, so:
+  ///
+  /// * of ONE kind — extras with a live main pack ([canBuyExtras]), main
+  ///   packs without one (never bought, or expired);
+  /// * only packs holding at least [missing] coins — one that would leave the
+  ///   booking short is not offered.
+  ///
+  /// Empty when no pack of that kind is big enough.
+  List<NewCoinPack> topUpPacks(int missing) {
+    final kind = canBuyExtras ? extra : main;
+    return kind.where((p) => p.coins >= missing).toList()
+      ..sort((a, b) => a.price.compareTo(b.price));
+  }
+
   factory NewCoinCatalogue.fromJson(Map<String, dynamic> json) {
     List<NewCoinPack> packs(Object? raw) => ((raw as List?) ?? const [])
         .whereType<Map>()
@@ -129,7 +141,6 @@ class NewCoinCatalogue {
     return NewCoinCatalogue(
       main: packs(json['main']),
       extra: packs(json['extra']),
-      singleCoinPrice: _num(json['single_coin_price']),
       activityRate: _num(json['activity_rate']),
       canBuyExtras: json['can_buy_extras'] == true,
       firstPackBonus: _int(json['first_pack_bonus']),

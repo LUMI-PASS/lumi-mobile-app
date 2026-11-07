@@ -36,20 +36,18 @@ import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_widgets.d
 class NewCoinsPage extends StatefulWidget {
   const NewCoinsPage({
     super.key,
-    this.buySingle,
     this.topUpFor,
     this.returnOnPurchase = false,
   });
 
-  /// Opened to buy exactly this many loose coins — the booking screen's "you
-  /// are N short" sheet. The stepper is preset and the purchase starts as soon
-  /// as the shelf has loaded, provided this buyer may buy loose coins at all.
-  final int? buySingle;
-
-  /// Opened because a booking is this many coins short. The shelf then leads
-  /// with the extra packs — a top-up is what the buyer came for — and opens
-  /// on the cheapest pack that covers the gap. Extras are sold only on top of
-  /// a live main pack, so without one the main packs still lead.
+  /// Opened because a booking is this many coins short. The shelf then holds
+  /// only the packs that cover the gap, from the cheapest up — coins are
+  /// always bought as a whole pack, never the exact few missing:
+  ///
+  /// * no live main pack (never bought one, or it has expired): main packs;
+  /// * a live main pack: extra packs, which are sold only on top of one.
+  ///
+  /// When no pack of that kind is big enough the screen says so instead.
   final int? topUpFor;
 
   /// Close the screen once a purchase succeeds, instead of staying on the
@@ -85,8 +83,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
   /// every other buy button is inert while it is set.
   String? get _purchasing => _buyer.purchasing;
 
-  int _singleQuantity = 1;
-
   /// Id of the pack the buy bar pays for — whichever card of the carousel is
   /// in front.
   String? _selectedId;
@@ -94,18 +90,10 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
   /// Narrower than the screen, so the neighbouring packs' cards peek in.
   final PageController _pageController = PageController(viewportFraction: 0.86);
 
-  /// The [NewCoinsPage.buySingle] hand-off has run. It fires once — a reload
-  /// after a failed payment must not restart a purchase nobody re-asked for.
-  bool _autoBuyDone = false;
-
   @override
   void initState() {
     super.initState();
     _buyer.attach();
-    final preset = widget.buySingle;
-    if (preset != null && preset > 0) {
-      _singleQuantity = preset.clamp(1, NewCoinSingleCard.maxQuantity);
-    }
     _load();
   }
 
@@ -140,7 +128,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
         if (_selectedPack == null) _selectedId = _defaultPick()?.id;
       });
       _showSelectedCard();
-      _maybeAutoBuy();
     } catch (_) {
       if (mounted) setState(() => _failed = true);
     } finally {
@@ -148,24 +135,15 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     }
   }
 
-  /// Starts the loose-coin purchase the screen was opened for.
-  void _maybeAutoBuy() {
-    if (_autoBuyDone || widget.buySingle == null) return;
-    _autoBuyDone = true;
-    if (!_canBuySingle) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _buy(_singlePurchase);
-    });
-  }
-
   /// Extra packs are shown only to someone who may buy them — a locked shelf
   /// is a row of things the buyer cannot have.
   List<NewCoinPack> get _extras =>
       _catalogue.canBuyExtras ? _catalogue.extra : const [];
 
-  /// Every pack on offer, in carousel order.
-  List<NewCoinPack> get _shelf => _extrasFirst
-      ? [..._extras, ..._catalogue.main]
+  /// Every pack on offer, in carousel order. For a top-up, only the packs
+  /// that cover the gap — see [NewCoinCatalogue.topUpPacks].
+  List<NewCoinPack> get _shelf => widget.topUpFor != null
+      ? _catalogue.topUpPacks(widget.topUpFor!)
       : [..._catalogue.main, ..._extras];
 
   /// Brings the carousel to the selected pack once it has been laid out — the
@@ -223,11 +201,8 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       pack.id != _balance.activeMainPackId &&
       _catalogue.main.any((p) => p.id == pack.id);
 
-  /// A booking that came up short sent the buyer here: extras lead.
-  bool get _extrasFirst => widget.topUpFor != null && _extras.isNotEmpty;
-
   /// The pack the Buy button starts on. For a top-up, the cheapest pack that
-  /// covers the gap — extras before main packs — so the default purchase is
+  /// covers the gap — the first of [NewCoinCatalogue.topUpPacks] — so the default purchase is
   /// the smallest one that lets the booking go through. Otherwise the buyer's
   /// own live tariff, so the screen opens on what they have — its card says
   /// "current" and the next one up is a swipe away — or, with none, the first
@@ -235,12 +210,8 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
   NewCoinPack? _defaultPick() {
     final missing = widget.topUpFor;
     if (missing != null) {
-      for (final shelf in [_extras, _catalogue.main]) {
-        final covering = shelf.where((p) => p.coins >= missing).toList()
-          ..sort((a, b) => a.price.compareTo(b.price));
-        if (covering.isNotEmpty) return covering.first;
-      }
-      if (_extras.isNotEmpty) return _extras.last;
+      final covering = _catalogue.topUpPacks(missing);
+      return covering.isEmpty ? null : covering.first;
     }
     final current = _currentPack;
     if (current != null) return current;
@@ -248,26 +219,18 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
   }
 
   NewCoinPack? get _selectedPack {
-    for (final pack in [..._catalogue.main, ..._extras]) {
+    for (final pack in _shelf) {
       if (pack.id == _selectedId) return pack;
     }
     return null;
   }
 
-  bool get _canBuySingle =>
-      _catalogue.canBuyExtras && _catalogue.singleCoinPrice > 0;
-
-  NewCoinPurchase get _singlePurchase =>
-      NewCoinPurchase.single(_singleQuantity, _catalogue.singleCoinPrice);
-
   // ── Buying ─────────────────────────────────────────────────────────────────
 
-  /// Loose coins are paid for right here, through the chooser sheet. A pack
-  /// opens its own checkout page, which is where a promocode goes; the page
-  /// comes back with the paid order, and the success screen follows as before.
+  /// A pack opens its own checkout page, which is where a promocode goes; the
+  /// page comes back with the paid order, and the success screen follows.
   Future<void> _buy(NewCoinPurchase purchase) async {
     final pack = purchase.pack;
-    if (pack == null) return _buyer.buy(purchase);
     final paid = await Navigator.of(context).push<NewCoinsCheckoutResult>(
       MaterialPageRoute(
         builder: (_) => NewCoinsCheckoutPage(
@@ -294,9 +257,7 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       MaterialPageRoute(
         builder: (_) => NewCoinsSuccessPage(
           coins: purchase.coins,
-          tone: purchase.pack == null
-              ? NewCoinTone.extra
-              : _toneOf(purchase.pack!),
+          tone: _toneOf(purchase.pack),
         ),
       ),
     );
@@ -414,6 +375,15 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     }
 
     final shelf = _shelf;
+    // A top-up with no pack of the right kind big enough for the gap: say so,
+    // rather than a shelf of packs that would still leave the booking short.
+    if (shelf.isEmpty && widget.topUpFor != null) {
+      return Scaffold(
+        backgroundColor: c.pageBg,
+        appBar: BaseAppBar(title: 'new_coins_title'.tr()),
+        body: const _NoFittingPack(),
+      );
+    }
     final pack = _selectedPack;
     final busy = _purchasing != null;
     final selected = shelf.indexWhere((p) => p.id == _selectedId);
@@ -607,7 +577,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     NewCoinTone tone,
     int active,
   ) {
-    final busy = _purchasing != null;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 6.w),
       child: Column(
@@ -632,20 +601,6 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
             ),
           ),
           20.kh,
-          // Loose coins have no place on the shelf. The one way to them is the
-          // booking screen's "you are N short" hand-off, which opens this
-          // screen to buy exactly that many — and only then is the card shown.
-          if (widget.buySingle != null && _canBuySingle) ...[
-            NewCoinSingleCard(
-              unitPrice: _catalogue.singleCoinPrice,
-              quantity: _singleQuantity,
-              isLoading: _purchasing == NewCoinPurchase.singleKey,
-              enabled: !busy,
-              onChanged: (q) => setState(() => _singleQuantity = q),
-              onBuy: () => _buy(_singlePurchase),
-            ),
-            12.kh,
-          ],
           NewCoinPackFeatures(
             tone: tone,
             title: 'new_coins_pack_includes'.tr(),
@@ -1117,6 +1072,40 @@ class _NewCoinsUnavailable extends StatelessWidget {
                   style: AppText.medium14.copyWith(color: c.onPrimary),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A booking is short by more coins than any pack it may be topped up with
+/// holds. Nothing to buy here — the buyer goes back and books fewer tickets.
+class _NoFittingPack extends StatelessWidget {
+  const _NoFittingPack();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 32.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Assets.images.empty.image(width: 140.w),
+            16.kh,
+            Text(
+              'new_coins_no_fitting_pack_title'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.semibold16.copyWith(color: c.textPrimary),
+            ),
+            8.kh,
+            Text(
+              'new_coins_no_fitting_pack_body'.tr(),
+              textAlign: TextAlign.center,
+              style: AppText.regular14.copyWith(color: c.textSecondary),
             ),
           ],
         ),

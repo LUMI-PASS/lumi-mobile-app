@@ -91,29 +91,4 @@ class NewCoinsApi {
       },
     );
   }
-
-  /// Loose coins at the unit price — for the one or two a booking is short.
-  Future<Response> purchaseSingle({
-    required int quantity,
-    String? lang,
-    String? paymentProvider,
-    String? returnUrl,
-    String? cardNumber,
-    String? expireDate,
-    String? savedCardId,
-    bool test = false,
-  }) {
-    return _dio.post('new-coins/single/purchase', data: {
-      'quantity': quantity,
-      ..._paymentBody(
-        lang: lang,
-        paymentProvider: paymentProvider,
-        returnUrl: returnUrl,
-        cardNumber: cardNumber,
-        expireDate: expireDate,
-        savedCardId: savedCardId,
-        test: test,
-      ),
-    });
-  }
 }

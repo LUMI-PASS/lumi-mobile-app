@@ -97,7 +97,6 @@ void main() {
             'price_per_coin': 5000,
           },
         ],
-        'single_coin_price': 6000,
         'activity_rate': 4500,
         'can_buy_extras': true,
         'first_pack_bonus': 5,
@@ -111,7 +110,6 @@ void main() {
       expect(c.main.single.description, isNull);
       expect(c.extra.single.kind, NewCoinPackKind.extra);
       expect(c.extra.single.description, 'Ten more');
-      expect(c.singleCoinPrice, 6000);
       expect(c.activityRate, 4500);
       expect(c.canBuyExtras, isTrue);
       expect(c.firstPackBonus, 5);
@@ -122,7 +120,6 @@ void main() {
       expect(c.isOnSale, isFalse);
       expect(c.main, isEmpty);
       expect(c.extra, isEmpty);
-      expect(c.singleCoinPrice, 0);
       expect(c.canBuyExtras, isFalse);
       expect(c.firstPackBonus, 0);
     });
@@ -435,6 +432,51 @@ void main() {
     });
   });
 
+  group('NewCoinCatalogue.topUpPacks', () {
+    Map<String, dynamic> pack(String id, String kind, int coins, int price) =>
+        {'id': id, 'kind': kind, 'coins': coins, 'price': price};
+
+    NewCoinCatalogue shelf({required bool liveMain}) =>
+        NewCoinCatalogue.fromJson({
+          'main': [
+            pack('m40', 'main', 40, 159000),
+            pack('m90', 'main', 90, 349000),
+            pack('m150', 'main', 150, 579000),
+          ],
+          'extra': [
+            pack('e20', 'extra', 20, 85000),
+            pack('e10', 'extra', 10, 45000),
+            pack('e15', 'extra', 15, 65000),
+          ],
+          'can_buy_extras': liveMain,
+        });
+
+    List<String> ids(List<NewCoinPack> packs) =>
+        packs.map((p) => p.id).toList();
+
+    test('a live main pack is topped up with extras only, big enough ones', () {
+      // 13 short: never the exact 13 — the 15 pack and up, cheapest first.
+      expect(ids(shelf(liveMain: true).topUpPacks(13)), ['e15', 'e20']);
+    });
+
+    test('no live main pack (never bought, or expired): main packs only', () {
+      expect(
+        ids(shelf(liveMain: false).topUpPacks(13)),
+        ['m40', 'm90', 'm150'],
+      );
+      expect(ids(shelf(liveMain: false).topUpPacks(41)), ['m90', 'm150']);
+    });
+
+    test('a pack holding exactly the gap counts as big enough', () {
+      expect(ids(shelf(liveMain: true).topUpPacks(15)), ['e15', 'e20']);
+    });
+
+    test('nothing big enough is an empty shelf, not a smaller pack', () {
+      expect(shelf(liveMain: true).topUpPacks(21), isEmpty);
+      expect(shelf(liveMain: false).topUpPacks(151), isEmpty);
+    });
+  });
+
   group('NewCoinsSummary', () {
     test('invisible until a main pack is on sale', () {
       expect(const NewCoinsSummary().isVisible, isFalse);
@@ -443,7 +485,6 @@ void main() {
           'extra': [
             {'id': 'p', 'kind': 'extra'},
           ],
-          'single_coin_price': 6000,
         }),
       );
       expect(extrasOnly.isVisible, isFalse);
@@ -463,21 +504,6 @@ void main() {
           .withBalance(NewCoinBalance.fromJson({'balance': 3}));
       expect(held.onSale, isFalse);
       expect(held.isVisible, isTrue);
-    });
-
-    test('loose coins need a live main pack and a price', () {
-      NewCoinsSummary of(Map<String, dynamic> json) => const NewCoinsSummary()
-          .withCatalogue(NewCoinCatalogue.fromJson(json));
-
-      expect(
-        of({'can_buy_extras': true, 'single_coin_price': 6000}).canBuySingle,
-        isTrue,
-      );
-      expect(
-        of({'can_buy_extras': false, 'single_coin_price': 6000}).canBuySingle,
-        isFalse,
-      );
-      expect(of({'can_buy_extras': true}).canBuySingle, isFalse);
     });
 
     test('signing out keeps the shelf and drops the coins', () {

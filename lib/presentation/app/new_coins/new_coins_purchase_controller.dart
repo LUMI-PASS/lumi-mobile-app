@@ -19,25 +19,18 @@ import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/class_detail/widgets/payment_sheets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// What is being bought: a pack off the shelf, or [quantity] loose coins.
+/// What is being bought: a pack off the shelf. Coins are sold only as whole
+/// packs — the loose-coin purchase is gone, in the app and on the server.
 class NewCoinPurchase {
-  const NewCoinPurchase.pack(NewCoinPack this.pack)
-      : quantity = 0,
-        singlePrice = 0;
+  const NewCoinPurchase.pack(this.pack);
 
-  const NewCoinPurchase.single(this.quantity, this.singlePrice) : pack = null;
-
-  final NewCoinPack? pack;
-  final int quantity;
-  final num singlePrice;
+  final NewCoinPack pack;
 
   /// Marks which control shows the spinner while the purchase runs.
-  String get key => pack?.id ?? singleKey;
+  String get key => pack.id;
 
-  int get coins => pack?.coins ?? quantity;
-  num get price => pack?.price ?? singlePrice * quantity;
-
-  static const singleKey = 'single';
+  int get coins => pack.coins;
+  num get price => pack.price;
 }
 
 /// One coin purchase, from Buy to coins on the balance, on whichever screen
@@ -103,7 +96,7 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
   PromocodePreview? _promoFor(NewCoinPurchase purchase) {
     final pack = purchase.pack;
     final held = _packPromo;
-    return pack != null && held != null && held.packId == pack.id
+    return held != null && held.packId == pack.id
         ? held.preview
         : null;
   }
@@ -213,27 +206,15 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
     String? savedCardId,
   }) {
     final lang = _context.locale.languageCode;
-    final pack = purchase.pack;
-    if (pack != null) {
-      return _repo.purchasePack(
-        pack.id,
-        lang: lang,
-        paymentProvider: paymentProvider,
-        returnUrl: returnUrl,
-        cardNumber: cardNumber,
-        expireDate: expireDate,
-        savedCardId: savedCardId,
-        promocode: _promoFor(purchase)?.code,
-      );
-    }
-    return _repo.purchaseSingle(
-      quantity: purchase.quantity,
+    return _repo.purchasePack(
+      purchase.pack.id,
       lang: lang,
       paymentProvider: paymentProvider,
       returnUrl: returnUrl,
       cardNumber: cardNumber,
       expireDate: expireDate,
       savedCardId: savedCardId,
+      promocode: _promoFor(purchase)?.code,
     );
   }
 
@@ -242,8 +223,8 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
     getIt<AnalyticsService>().logEvent(
       AnalyticsEvent.newCoinsPurchaseStarted,
       params: {
-        'pack_id': purchase.pack?.id ?? '',
-        'kind': purchase.pack?.kindKey ?? 'single',
+        'pack_id': purchase.pack.id,
+        'kind': purchase.pack.kindKey,
         'coins': purchase.coins,
         'payment_provider': payment.rail.providerKey,
         'amount': _payable(purchase),
@@ -424,7 +405,7 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
       AnalyticsEvent.paymentSucceeded,
       params: {
         'product': 'new_coins',
-        'pack_id': purchase.pack?.id ?? '',
+        'pack_id': purchase.pack.id,
         // What was actually charged. AppsFlyer maps this onto af_revenue —
         // without it the purchase lands in the dashboard as a zero-value
         // conversion.

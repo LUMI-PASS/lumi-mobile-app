@@ -10,52 +10,31 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/auth/gradient_button.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
 
-/// What the buyer chose on the shortfall sheet.
-enum NewCoinsShortfallAction {
-  /// Buy exactly the missing coins as loose ones.
-  buyMissing,
-
-  /// Open the Lumi Coin screen to pick a pack.
-  openStore,
-}
-
 /// "You are N coins short" — shown when a booking costs more coins than the
 /// buyer holds, whether the app worked that out or the server answered
 /// `insufficient_new_coins`.
 ///
-/// Offers the two ways to fix it and resolves to the one picked, or null when
-/// the buyer backs out. [canBuySingle] gates the first: loose coins are sold
-/// only on top of a live main pack, and offering a purchase the server
-/// would refuse is worse than not offering it.
-Future<NewCoinsShortfallAction?> showNewCoinsShortfallSheet(
+/// One way to fix it: choose a pack. Coins are not sold one by one — the
+/// buyer always buys a whole pack, and the Lumi Coin screen shows only the
+/// packs big enough for the gap. Resolves to true when "Choose a pack" was
+/// tapped, null when the buyer backs out.
+Future<bool?> showNewCoinsShortfallSheet(
   BuildContext context, {
   required NewCoinShortfall shortfall,
-  required bool canBuySingle,
-  required num singleCoinPrice,
 }) {
-  return showModalBottomSheet<NewCoinsShortfallAction>(
+  return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.8),
-    builder: (_) => _ShortfallSheet(
-      shortfall: shortfall,
-      canBuySingle: canBuySingle,
-      singleCoinPrice: singleCoinPrice,
-    ),
+    builder: (_) => _ShortfallSheet(shortfall: shortfall),
   );
 }
 
 class _ShortfallSheet extends StatelessWidget {
-  const _ShortfallSheet({
-    required this.shortfall,
-    required this.canBuySingle,
-    required this.singleCoinPrice,
-  });
+  const _ShortfallSheet({required this.shortfall});
 
   final NewCoinShortfall shortfall;
-  final bool canBuySingle;
-  final num singleCoinPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -108,34 +87,9 @@ class _ShortfallSheet extends StatelessWidget {
             style: AppText.regular14.copyWith(color: c.textSecondary),
           ),
           24.kh,
-          if (canBuySingle && missing > 0) ...[
-            GradientButton(
-              text: 'new_coins_shortfall_buy_missing'.tr(args: [
-                missing.toGrouped(),
-                (singleCoinPrice * missing).toRawUzsPrice(),
-              ]),
-              onPressed: () =>
-                  Navigator.of(context).pop(NewCoinsShortfallAction.buyMissing),
-            ),
-            8.kh,
-          ],
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () =>
-                Navigator.of(context).pop(NewCoinsShortfallAction.openStore),
-            child: Container(
-              height: 50.h,
-              width: double.infinity,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: c.surface,
-                borderRadius: BorderRadius.circular(44.r),
-              ),
-              child: Text(
-                'new_coins_shortfall_open_store'.tr(),
-                style: AppText.medium16.copyWith(color: c.textPrimary),
-              ),
-            ),
+          GradientButton(
+            text: 'new_coins_shortfall_open_store'.tr(),
+            onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
       ),

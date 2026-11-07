@@ -11,7 +11,6 @@ import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/widget/coin_amount.dart';
 import 'package:lumi_pass/common/widget/frosted_card.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
-import 'package:lumi_pass/presentation/app/shop/widgets/shop_quantity_stepper.dart';
 
 /// The balance, and the clock on it.
 ///
@@ -931,114 +930,6 @@ class NewCoinsDots extends StatelessWidget {
           ),
         );
       }),
-    );
-  }
-}
-
-/// Loose coins: a stepper, and the sum it comes to at the unit price.
-///
-/// For the one or two a booking is short. They never expire, which is why they
-/// cost more per coin than a pack — and why they are sold only on top of a
-/// live main pack ([lockedNote] says so when there is none).
-class NewCoinSingleCard extends StatelessWidget {
-  const NewCoinSingleCard({
-    super.key,
-    required this.unitPrice,
-    required this.quantity,
-    required this.onChanged,
-    required this.onBuy,
-    this.isLoading = false,
-    this.enabled = true,
-    this.lockedNote,
-  });
-
-  /// The server refuses more than this in one purchase.
-  static const maxQuantity = 1000;
-
-  final num unitPrice;
-  final int quantity;
-  final ValueChanged<int> onChanged;
-  final VoidCallback onBuy;
-  final bool isLoading;
-  final bool enabled;
-  final String? lockedNote;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final locked = lockedNote != null;
-    final live = enabled && !locked && !isLoading;
-
-    return FrostedCard(
-      padding: EdgeInsets.all(16.w),
-      borderRadius: BorderRadius.circular(20.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Opacity(
-            opacity: locked ? 0.55 : 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'new_coins_single_title'.tr(),
-                            style: AppText.semibold16
-                                .copyWith(color: c.textPrimary),
-                          ),
-                          4.kh,
-                          Text(
-                            // Unit price × quantity, spelled out: the total on
-                            // the button should never be a number the buyer
-                            // has to take on trust.
-                            '${unitPrice.toRawUzsPrice()} × $quantity',
-                            style: AppText.regular13
-                                .copyWith(color: c.textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ShopQuantityStepper(
-                      count: quantity,
-                      onDecrease: live && quantity > 1
-                          ? () => onChanged(quantity - 1)
-                          : null,
-                      onIncrease: live && quantity < maxQuantity
-                          ? () => onChanged(quantity + 1)
-                          : null,
-                    ),
-                  ],
-                ),
-                6.kh,
-                Text(
-                  'new_coins_single_hint'.tr(),
-                  style: AppText.regular13.copyWith(color: c.textSecondary),
-                ),
-                14.kh,
-                NewCoinsBuyButton(
-                  label: 'new_coins_buy_for'
-                      .tr(args: [(unitPrice * quantity).toRawUzsPrice()]),
-                  onTap: onBuy,
-                  isLoading: isLoading,
-                  enabled: enabled && !locked,
-                ),
-              ],
-            ),
-          ),
-          if (locked) ...[
-            8.kh,
-            Text(
-              lockedNote!,
-              style: AppText.regular12.copyWith(color: c.textSecondary),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

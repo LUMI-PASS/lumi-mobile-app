@@ -254,7 +254,6 @@ abstract class _$AppRouter extends RootStackRouter {
         routeData: routeData,
         child: NewCoinsPage(
           key: args.key,
-          buySingle: args.buySingle,
           topUpFor: args.topUpFor,
           returnOnPurchase: args.returnOnPurchase,
         ),
@@ -1248,7 +1247,6 @@ class MyCardsRoute extends PageRouteInfo<void> {
 class NewCoinsRoute extends PageRouteInfo<NewCoinsRouteArgs> {
   NewCoinsRoute({
     Key? key,
-    int? buySingle,
     int? topUpFor,
     bool returnOnPurchase = false,
     List<PageRouteInfo>? children,
@@ -1256,7 +1254,6 @@ class NewCoinsRoute extends PageRouteInfo<NewCoinsRouteArgs> {
           NewCoinsRoute.name,
           args: NewCoinsRouteArgs(
             key: key,
-            buySingle: buySingle,
             topUpFor: topUpFor,
             returnOnPurchase: returnOnPurchase,
           ),
@@ -1272,14 +1269,11 @@ class NewCoinsRoute extends PageRouteInfo<NewCoinsRouteArgs> {
 class NewCoinsRouteArgs {
   const NewCoinsRouteArgs({
     this.key,
-    this.buySingle,
     this.topUpFor,
     this.returnOnPurchase = false,
   });
 
   final Key? key;
-
-  final int? buySingle;
 
   final int? topUpFor;
 
@@ -1287,7 +1281,7 @@ class NewCoinsRouteArgs {
 
   @override
   String toString() {
-    return 'NewCoinsRouteArgs{key: $key, buySingle: $buySingle, topUpFor: $topUpFor, returnOnPurchase: $returnOnPurchase}';
+    return 'NewCoinsRouteArgs{key: $key, topUpFor: $topUpFor, returnOnPurchase: $returnOnPurchase}';
   }
 }
 
