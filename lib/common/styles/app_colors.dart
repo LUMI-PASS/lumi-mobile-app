@@ -117,4 +117,25 @@ abstract final class AppColors {
   static const darkBorder = Color(0xFF3D3D46);
   static const darkDivider = Color(0xFF2D2E33);
   static const textMuted = Color(0xFF85848C);
+
+  // ── Onboarding (fixed inks) ────────────────────────────────────────────
+  // The onboarding carousel is always the purple brand stage, in light and
+  // dark mode alike, so these are used directly rather than through a role.
+  static const onboardMagenta = Color(0xFFDE59ED);
+  static const onboardViolet = Color(0xFF7A22DE);
+  static const onboardPurple = Color(0xFF6E1CDA);
+  static const onboardIndigo = Color(0xFF2C0E87);
+  static const onboardYellow = Color(0xFFF7D247);
+  static const onboardNavy = Color(0xFF1F1047);
+  static const onboardPink = Color(0xFFEC6BA9);
+  static const onboardSky = Color(0xFFC9DAEC);
+  static const onboardPinkTint = Color(0xFFFAE4EF);
+  static const onboardPinkInk = Color(0xFFC53576);
+  static const onboardYellowTint = Color(0xFFFDF5C6);
+  static const onboardYellowInk = Color(0xFF8A6D10);
+  static const onboardBlueTint = Color(0xFFE0ECFD);
+  static const onboardBlueInk = Color(0xFF2F5C9A);
+  static const onboardLilacTint = Color(0xFFEEE3FC);
+  static const onboardLilacInk = Color(0xFF7A3FD1);
+  static const onboardDivider = Color(0xFFECE9F2);
 }

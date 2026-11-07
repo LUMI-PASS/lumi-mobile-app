@@ -92,4 +92,25 @@ class AppGradients {
     radius: 0.65,
     colors: [Color(0x8FB4E882), Color(0x00B4E882)],
   );
+
+  /// Onboarding stage — magenta corner bleeding into the brand violet and
+  /// settling to deep indigo at the bottom right.
+  static const LinearGradient onboarding = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      AppColors.onboardMagenta,
+      AppColors.onboardViolet,
+      AppColors.onboardPurple,
+      AppColors.onboardIndigo,
+    ],
+    stops: [0, 0.3, 0.72, 1],
+  );
+
+  /// Soft light pooled behind the onboarding hero.
+  static const RadialGradient onboardingGlow = RadialGradient(
+    center: Alignment(0, -0.35),
+    radius: 0.7,
+    colors: [Color(0x40B07CFF), Color(0x00B07CFF)],
+  );
 }

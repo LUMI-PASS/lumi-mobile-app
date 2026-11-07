@@ -209,12 +209,6 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
-    LanguageRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const LanguagePage(),
-      );
-    },
     LoginRoute.name: (routeData) {
       final args = routeData.argsAs<LoginRouteArgs>(
           orElse: () => const LoginRouteArgs());
@@ -1142,20 +1136,6 @@ class InterestsGridRouteArgs {
   String toString() {
     return 'InterestsGridRouteArgs{key: $key, title: $title}';
   }
-}
-
-/// generated route for
-/// [LanguagePage]
-class LanguageRoute extends PageRouteInfo<void> {
-  const LanguageRoute({List<PageRouteInfo>? children})
-      : super(
-          LanguageRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'LanguageRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

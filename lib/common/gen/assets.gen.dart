@@ -187,6 +187,14 @@ class $AssetsIconsGen {
   AssetGenImage get logoTransparent =>
       const AssetGenImage('assets/icons/logo_transparent.png');
 
+  /// File path: assets/icons/logo_white.png
+  AssetGenImage get logoWhite =>
+      const AssetGenImage('assets/icons/logo_white.png');
+
+  /// File path: assets/icons/logo_wordmark.png
+  AssetGenImage get logoWordmark =>
+      const AssetGenImage('assets/icons/logo_wordmark.png');
+
   /// File path: assets/icons/lumi_logo.png
   AssetGenImage get lumiLogo =>
       const AssetGenImage('assets/icons/lumi_logo.png');
@@ -309,6 +317,8 @@ class $AssetsIconsGen {
         location,
         locationPrimary,
         logoTransparent,
+        logoWhite,
+        logoWordmark,
         lumiLogo,
         map,
         mastercard,
@@ -392,6 +402,8 @@ class $AssetsImagesGen {
   AssetGenImage get notFound =>
       const AssetGenImage('assets/images/not_found.png');
 
+  $AssetsImagesOnboardingGen get onboarding =>
+      const $AssetsImagesOnboardingGen();
   $AssetsImagesPayGen get pay => const $AssetsImagesPayGen();
 
   /// File path: assets/images/payment_loading.png
@@ -987,6 +999,10 @@ class $AssetsImagesMascotGen {
   AssetGenImage get mascotHello =>
       const AssetGenImage('assets/images/mascot/mascot_hello.webp');
 
+  /// File path: assets/images/mascot/mascot_hello_clean.webp
+  AssetGenImage get mascotHelloClean =>
+      const AssetGenImage('assets/images/mascot/mascot_hello_clean.webp');
+
   /// File path: assets/images/mascot/mascot_info.webp
   AssetGenImage get mascotInfo =>
       const AssetGenImage('assets/images/mascot/mascot_info.webp');
@@ -995,6 +1011,14 @@ class $AssetsImagesMascotGen {
   AssetGenImage get mascotPartners =>
       const AssetGenImage('assets/images/mascot/mascot_partners.webp');
 
+  /// File path: assets/images/mascot/mascot_search.webp
+  AssetGenImage get mascotSearch =>
+      const AssetGenImage('assets/images/mascot/mascot_search.webp');
+
+  /// File path: assets/images/mascot/mascot_wave.webp
+  AssetGenImage get mascotWave =>
+      const AssetGenImage('assets/images/mascot/mascot_wave.webp');
+
   /// List of all assets
   List<AssetGenImage> get values => [
         mascotCalendar,
@@ -1002,8 +1026,84 @@ class $AssetsImagesMascotGen {
         mascotDownload,
         mascotFaq,
         mascotHello,
+        mascotHelloClean,
         mascotInfo,
-        mascotPartners
+        mascotPartners,
+        mascotSearch,
+        mascotWave
+      ];
+}
+
+class $AssetsImagesOnboardingGen {
+  const $AssetsImagesOnboardingGen();
+
+  /// File path: assets/images/onboarding/icon_age.webp
+  AssetGenImage get iconAge =>
+      const AssetGenImage('assets/images/onboarding/icon_age.webp');
+
+  /// File path: assets/images/onboarding/icon_chess.webp
+  AssetGenImage get iconChess =>
+      const AssetGenImage('assets/images/onboarding/icon_chess.webp');
+
+  /// File path: assets/images/onboarding/icon_dance.webp
+  AssetGenImage get iconDance =>
+      const AssetGenImage('assets/images/onboarding/icon_dance.webp');
+
+  /// File path: assets/images/onboarding/icon_drawing.webp
+  AssetGenImage get iconDrawing =>
+      const AssetGenImage('assets/images/onboarding/icon_drawing.webp');
+
+  /// File path: assets/images/onboarding/icon_family.webp
+  AssetGenImage get iconFamily =>
+      const AssetGenImage('assets/images/onboarding/icon_family.webp');
+
+  /// File path: assets/images/onboarding/icon_fast.webp
+  AssetGenImage get iconFast =>
+      const AssetGenImage('assets/images/onboarding/icon_fast.webp');
+
+  /// File path: assets/images/onboarding/icon_football.webp
+  AssetGenImage get iconFootball =>
+      const AssetGenImage('assets/images/onboarding/icon_football.webp');
+
+  /// File path: assets/images/onboarding/icon_heart.webp
+  AssetGenImage get iconHeart =>
+      const AssetGenImage('assets/images/onboarding/icon_heart.webp');
+
+  /// File path: assets/images/onboarding/icon_location.webp
+  AssetGenImage get iconLocation =>
+      const AssetGenImage('assets/images/onboarding/icon_location.webp');
+
+  /// File path: assets/images/onboarding/icon_more.webp
+  AssetGenImage get iconMore =>
+      const AssetGenImage('assets/images/onboarding/icon_more.webp');
+
+  /// File path: assets/images/onboarding/icon_no_cash.webp
+  AssetGenImage get iconNoCash =>
+      const AssetGenImage('assets/images/onboarding/icon_no_cash.webp');
+
+  /// File path: assets/images/onboarding/icon_phone.webp
+  AssetGenImage get iconPhone =>
+      const AssetGenImage('assets/images/onboarding/icon_phone.webp');
+
+  /// File path: assets/images/onboarding/icon_swimming.webp
+  AssetGenImage get iconSwimming =>
+      const AssetGenImage('assets/images/onboarding/icon_swimming.webp');
+
+  /// List of all assets
+  List<AssetGenImage> get values => [
+        iconAge,
+        iconChess,
+        iconDance,
+        iconDrawing,
+        iconFamily,
+        iconFast,
+        iconFootball,
+        iconHeart,
+        iconLocation,
+        iconMore,
+        iconNoCash,
+        iconPhone,
+        iconSwimming
       ];
 }
 

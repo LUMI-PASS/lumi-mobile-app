@@ -909,3 +909,36 @@ filter_class_time,Время занятия,Mashg'ulot vaqti,Class time
 map_list,Списком,Ro'yxat,List
 map_reset,Сбросить,Tozalash,Reset
 subscription_ribbon,В подписке,Obunada,In plan
+onb_chip_sport,Спорт,Sport,Sports
+onb_chip_arts,Творчество,Ijod,Arts
+onb_chip_workshops,Мастер-классы,Master-klass,Workshops
+onb_chip_science,Наука,Ilm-fan,Science
+onb_chip_playgrounds,Игровые площадки,Oʻyin maydonchalari,Playgrounds
+onb_chip_more,+ многое другое,+ yana koʻplab,+ much more
+onb1_title,ОДИН АБОНЕМЕНТ,BIR ABONEMENT,ONE PASS
+onb1_accent,сотни АКТИВНОСТЕЙ!,yuzlab MASHGʻULOTLAR!,hundreds of ACTIVITIES!
+onb1_body,Lumi — единый абонемент на активности для всех ваших детей.,Lumi — barcha farzandlaringiz mashgʻulotlari uchun yagona abonement.,Lumi — one simple pass for all your kids' favourite activities.
+onb2_card_label,АБОНЕМЕНТ,ABONEMENT,PASS
+onb2_card_title,Всё включено,Hammasi ichida,All included
+onb2_benefit1,Без отдельных оплат,Alohida toʻlovlarsiz,No separate payments
+onb2_benefit2,Запись в пару касаний,Bir necha bosishda yozilish,Book in a few taps
+onb2_benefit3,Вся информация в приложении,Hamma maʼlumotlar bitta ilovada,All the info in one app
+onb2_benefit4,Общий для всех детей,Barcha farzandlarga umumiy,Shared by all your kids
+onb2_title,ВЫГОДНО И УДОБНО,FOYDALI VA QULAY,SMART AND EASY
+onb2_accent,без лишних хлопот,ortiqcha tashvishlarsiz,no extra hassle
+onb2_body,"Касса, чеки и отдельные оплаты в каждом месте — больше не нужны.","Har joyda kassa, chek va alohida toʻlov — endi kerak emas.",No more paying separately at every place.
+onb3_swimming,Плавание,Suzish,Swimming
+onb3_dance,Танцы,Raqs,Dance
+onb3_chess,Шахматы,Shaxmat,Chess
+onb3_drawing,Рисунок,Rasm,Drawing
+onb3_football,Футбол,Futbol,Football
+onb3_more,и многое другое,va yana koʻplab,and much more
+onb3_title,ПУСТЬ ХОДИТ,HAMMASIGA,LET THEM
+onb3_accent,НА ВСЁ!,QATNASIN!,TRY IT ALL!
+onb3_body,"Сегодня плавание, завтра робототехника, в выходные — игровая площадка. Выбор за ребёнком.","Bugun suzish, ertaga robototexnika, dam olishda — oʻyin maydonchasi. Bolangiz oʻziga yoqqanini tanlaydi va rivojlanadi.","Swimming today, robotics tomorrow, the playground at weekends. Your child picks what they love."
+onb4_title,ПОЕХАЛИ!,"QANI, KETDIK!",LET'S GO!
+onb4_accent,"Найдём активность, которая подойдёт вашему ребёнку",Farzandingizga mos mashgʻulotni birga topamiz,Let's find the right activity for your child
+onb4_point1,Рядом с домом,Uyingizga yaqin,Close to home
+onb4_point2,По возрасту,Yoshiga mos,Right for their age
+onb4_point3,По интересам,Qiziqishiga koʻra,Based on interests
+onb4_start,Начали!,Boshladik!,Let's start!

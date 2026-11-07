@@ -53,7 +53,6 @@ import 'package:lumi_pass/presentation/auth/telegram/telegram_login_page.dart';
 import 'package:lumi_pass/presentation/auth/verify/verify_page.dart';
 import 'package:lumi_pass/presentation/start/onboard/onboard_page.dart';
 import 'package:lumi_pass/presentation/start/welcome/welcome_page.dart';
-import 'package:lumi_pass/presentation/start/language/language_page.dart';
 
 import '../../data/api_model/child_model/child_model.dart';
 import '../../data/api_model/order/user_order.dart';
@@ -114,7 +113,6 @@ class AppRouter extends _$AppRouter {
 
     /// Start
     AutoRoute(page: WelcomeRoute.page),
-    AutoRoute(page: LanguageRoute.page),
     AutoRoute(page: OnboardingRoute.page),
 
     /// Main
@@ -149,7 +147,6 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: ProfileDetailRoute.page),
     AutoRoute(page: ChildDetailRoute.page),
     AutoRoute(page: AddChildRoute.page),
-    AutoRoute(page: ChangeLanguageRoute.page),
     AutoRoute(page: SearchDiscoveryRoute.page),
     AutoRoute(page: BranchesMapRoute.page),
     AutoRoute(page: AttendanceHistoryRoute.page),

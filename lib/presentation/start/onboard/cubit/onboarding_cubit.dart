@@ -1,5 +1,4 @@
 import 'package:lumi_pass/common/base/base_cubit.dart';
-import 'package:lumi_pass/common/gen/strings.dart';
 import 'package:lumi_pass/data/service/remote_config_service.dart';
 import 'package:lumi_pass/data/storage/storage.dart';
 import 'package:lumi_pass/presentation/start/onboard/cubit/onboarding_state.dart';
@@ -12,21 +11,16 @@ class OnboardingCubit
 
   final Storage _storage;
 
-  void changeIndex(int index) async {
-    if (index == 3) {
-      await _storage.showOnboard.set(false);
-      final tokens = _storage.tokens.call();
-      if (tokens == null && !RemoteConfigService.instance.isInReview) {
-        invoke(const OnboardingListenable(effect: OnboardEffect.login));
-        return;
-      }
-      invoke(const OnboardingListenable(effect: OnboardEffect.home));
-      return;
-    }
+  /// Number of slides in the onboarding carousel.
+  static const pageCount = 4;
+
+  void changeIndex(int index) {
     build((buildable) => buildable.copyWith(index: index));
   }
 
-  void skipAll() async {
+  /// Leaves onboarding for good — reached from "Skip" and from the last
+  /// slide's button alike.
+  Future<void> finish() async {
     await _storage.showOnboard.set(false);
     final tokens = _storage.tokens.call();
     if (tokens == null && !RemoteConfigService.instance.isInReview) {
@@ -34,36 +28,5 @@ class OnboardingCubit
       return;
     }
     invoke(const OnboardingListenable(effect: OnboardEffect.home));
-    return;
-  }
-}
-
-enum Onboard {
-  first,
-  second,
-  third,
-}
-
-extension LanguageExtensions on Onboard {
-  String get title {
-    switch (this) {
-      case Onboard.first:
-        return Strings.onboard1Title;
-      case Onboard.second:
-        return Strings.onboard2Title;
-      case Onboard.third:
-        return Strings.onboard3Title;
-    }
-  }
-
-  String get description {
-    switch (this) {
-      case Onboard.first:
-        return Strings.onboard1Subtitle;
-      case Onboard.second:
-        return Strings.onboard2Subtitle;
-      case Onboard.third:
-        return Strings.onboard3Subtitle;
-    }
   }
 }

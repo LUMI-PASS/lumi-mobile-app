@@ -148,6 +148,7 @@ flutter:
     - assets/images/
     - assets/images/banner/
     - assets/images/mascot/
+    - assets/images/onboarding/
     - assets/images/pay/
     - assets/localization/
 
