@@ -27,7 +27,6 @@ import 'package:lumi_pass/common/utils/new_coins_summary.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_models.dart';
-import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_shortfall_sheet.dart';
 import 'package:lumi_pass/common/widget/use_balance_row.dart';
 import 'package:lumi_pass/common/widget/pill_card.dart';
 import 'package:lumi_pass/common/widget/shaker.dart';
@@ -3320,17 +3319,13 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-  /// "You are N coins short", and the one way to fix it: a pack, bought on
-  /// the Lumi Coin screen. That screen shows only the packs that cover the
-  /// gap — main packs without a live main pack, extras with one. A purchase
-  /// comes straight back here with the balance refreshed, the booking
-  /// untouched and ready to pay. Coins are never sold one by one any more.
+  /// The balance is short: straight to the Lumi Coin screen to choose a pack
+  /// — no sheet in between, there is only one thing to do. That screen shows
+  /// only the packs that cover the gap — main packs without a live main pack,
+  /// extras with one. A purchase comes straight back here with the balance
+  /// refreshed, the booking untouched and ready to pay. Coins are never sold
+  /// one by one any more.
   Future<void> _offerNewCoinsTopUp(NewCoinShortfall shortfall) async {
-    final choosePack = await showNewCoinsShortfallSheet(
-      context,
-      shortfall: shortfall,
-    );
-    if (choosePack != true || !mounted) return;
     await context.router.push(
       NewCoinsRoute(topUpFor: shortfall.missing, returnOnPurchase: true),
     );

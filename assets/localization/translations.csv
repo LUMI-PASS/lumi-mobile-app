@@ -813,9 +813,6 @@ new_coins_short,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi,{} Lumi C
 new_coins_left_after,Останется после оплаты,To‘lovdan keyin qoladi,Left after payment
 new_coins_paid_with,Оплачено: {} Lumi Coin,To‘landi: {} Lumi Coin,Paid with {} Lumi Coin
 new_coins_not_cancelable,"Бронь, оплаченную Lumi Coin, отменить нельзя.",Lumi Coin bilan to‘langan bronni bekor qilib bo‘lmaydi.,Bookings paid with Lumi Coin cannot be cancelled.
-new_coins_shortfall_title,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi,You are {} Lumi Coin short
-new_coins_shortfall_body,"Нужно {} Lumi Coin, а у вас {}.","{} Lumi Coin kerak, sizda esa {}.",This booking needs {} Lumi Coin and you have {}.
-new_coins_shortfall_open_store,Выбрать пакет,Paket tanlash,Choose a pack
 new_coins_no_fitting_pack_title,Нет подходящего пакета,Mos paket yo‘q,No pack is big enough
 new_coins_no_fitting_pack_body,"Ни в одном пакете не хватает Lumi Coin для этой записи. Уменьшите количество билетов.",Hech bir paketda bu bron uchun yetarli Lumi Coin yo‘q. Chiptalar sonini kamaytiring.,None of the packs has enough Lumi Coin for this booking. Try fewer tickets.
 new_coins_lot_main,Основной пакет,Asosiy paket,Main pack
