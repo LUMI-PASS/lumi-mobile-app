@@ -164,12 +164,6 @@ class OrdersApi {
     await _dio.post('children', data: {'name': name, 'age': age, 'gender': 'any'});
   }
 
-  /// Dev-only: flips a PENDING order to PAID without going through Paycom.
-  /// Kept for QA flows on the booking detail screen.
-  Future<void> mockPayOrder(String orderId) async {
-    await _dio.patch('orders/$orderId/mock-pay');
-  }
-
   /// Creates a PENDING order and returns how to pay for it.
   ///
   /// When [paymentProvider] is null the backend keeps the default direct Payme
