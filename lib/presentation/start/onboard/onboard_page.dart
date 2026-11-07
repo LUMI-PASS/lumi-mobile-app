@@ -219,6 +219,10 @@ class _LanguageToggleState extends State<_LanguageToggle> {
   ];
   static const _slide = Duration(milliseconds: 260);
 
+  /// Spoken by VoiceOver/TalkBack — each language in its own name, since the
+  /// reader may not understand the currently selected one.
+  static const _names = ['Oʻzbekcha', 'Русский', 'English'];
+
   int? _selected;
 
   int _indexOf(String code) {
@@ -270,23 +274,30 @@ class _LanguageToggleState extends State<_LanguageToggle> {
             Row(
               children: [
                 for (var i = 0; i < _locales.length; i++)
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
+                  Semantics(
+                    button: true,
+                    selected: i == selected,
+                    label: _names[i],
+                    excludeSemantics: true,
                     onTap: () => _select(i),
-                    child: SizedBox(
-                      width: segment,
-                      height: height,
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: _slide,
-                          curve: Curves.easeOutCubic,
-                          style: AppText.semibold14.copyWith(
-                            color: i == selected
-                                ? AppColors.onboardNavy
-                                : AppColors.white.withValues(alpha: 0.8),
-                          ),
-                          child: Text(
-                            _locales[i].languageCode.toUpperCase(),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _select(i),
+                      child: SizedBox(
+                        width: segment,
+                        height: height,
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: _slide,
+                            curve: Curves.easeOutCubic,
+                            style: AppText.semibold14.copyWith(
+                              color: i == selected
+                                  ? AppColors.onboardNavy
+                                  : AppColors.white.withValues(alpha: 0.8),
+                            ),
+                            child: Text(
+                              _locales[i].languageCode.toUpperCase(),
+                            ),
                           ),
                         ),
                       ),

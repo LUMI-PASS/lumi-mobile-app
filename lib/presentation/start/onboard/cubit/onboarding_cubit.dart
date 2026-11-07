@@ -18,9 +18,15 @@ class OnboardingCubit
     build((buildable) => buildable.copyWith(index: index));
   }
 
+  /// Set once [finish] starts, so a double tap (or Skip tapped while the last
+  /// slide's button is also pressed) navigates away only once.
+  bool _finishing = false;
+
   /// Leaves onboarding for good — reached from "Skip" and from the last
   /// slide's button alike.
   Future<void> finish() async {
+    if (_finishing) return;
+    _finishing = true;
     await _storage.showOnboard.set(false);
     final tokens = _storage.tokens.call();
     if (tokens == null && !RemoteConfigService.instance.isInReview) {
