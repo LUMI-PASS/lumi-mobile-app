@@ -325,12 +325,18 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   /// calls to ask about their booking. Already trimmed of blanks by
   /// [BranchSummary.fromJson].
   ///
-  /// Buyers only, unlike the clip above: these are for questions about a
-  /// booking that exists. Published on a browse page they would route every
-  /// pre-sales question past Lumi, to a centre with no record of the caller.
-  List<String> get _venuePhones => _full?.viewerPurchased == true
-      ? (_full?.branch?.supportPhones ?? const <String>[])
-      : const <String>[];
+  /// On an ACTIVITY, buyers only, unlike the clip above: these are for
+  /// questions about a booking that exists. Published on a browse page they
+  /// would route every pre-sales question past Lumi, to a centre with no
+  /// record of the caller.
+  ///
+  /// On a COURSE, everyone: courses are not sold in the app, they are listed,
+  /// and a parent ringing the centre is the point of the listing — the call
+  /// is counted in the centre's statistics ([ListingAction.callClick]).
+  List<String> get _venuePhones =>
+      (_isCourse && !_isCatalog) || _full?.viewerPurchased == true
+          ? (_full?.branch?.supportPhones ?? const <String>[])
+          : const <String>[];
 
   /// The rating as last answered by `PUT /classes/:id/rating`, once this viewer
   /// has rated on this page — newer than what [_full] was loaded with.
@@ -1747,8 +1753,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               style: AppText.regular13.copyWith(color: c.textSecondary),
             ),
           ],
-          // The centre's own lines, under the address they belong to — only
-          // once this parent has bought; see [_venuePhones].
+          // The centre's own lines, under the address they belong to — on a
+          // course for everyone, on an activity once this parent has bought;
+          // see [_venuePhones].
           if (phones.isNotEmpty) ...[
             14.verticalSpace,
             Text(
