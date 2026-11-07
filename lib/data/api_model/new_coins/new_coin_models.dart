@@ -118,18 +118,25 @@ class NewCoinCatalogue {
   bool get isOnSale => main.isNotEmpty;
 
   /// The packs a booking [missing] coins short may be topped up with,
-  /// cheapest first. Coins are always bought as a whole pack, so:
+  /// cheapest first. Coins are always bought as a whole pack, and only packs
+  /// holding at least [missing] coins are offered — one that would leave the
+  /// booking short is not:
   ///
-  /// * of ONE kind — extras with a live main pack ([canBuyExtras]), main
-  ///   packs without one (never bought, or expired);
-  /// * only packs holding at least [missing] coins — one that would leave the
-  ///   booking short is not offered.
+  /// * without a live main pack (never bought, or expired): main packs;
+  /// * with one ([canBuyExtras]): extra packs — or, when no extra is big
+  ///   enough, the main packs that are (a tariff change, which carries the
+  ///   unspent coins over).
   ///
-  /// Empty when no pack of that kind is big enough.
+  /// Empty only when no pack at all is big enough.
   List<NewCoinPack> topUpPacks(int missing) {
-    final kind = canBuyExtras ? extra : main;
-    return kind.where((p) => p.coins >= missing).toList()
-      ..sort((a, b) => a.price.compareTo(b.price));
+    List<NewCoinPack> fitting(List<NewCoinPack> packs) =>
+        packs.where((p) => p.coins >= missing).toList()
+          ..sort((a, b) => a.price.compareTo(b.price));
+    if (canBuyExtras) {
+      final extras = fitting(extra);
+      if (extras.isNotEmpty) return extras;
+    }
+    return fitting(main);
   }
 
   factory NewCoinCatalogue.fromJson(Map<String, dynamic> json) {

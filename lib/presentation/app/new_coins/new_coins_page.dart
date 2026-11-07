@@ -45,9 +45,10 @@ class NewCoinsPage extends StatefulWidget {
   /// always bought as a whole pack, never the exact few missing:
   ///
   /// * no live main pack (never bought one, or it has expired): main packs;
-  /// * a live main pack: extra packs, which are sold only on top of one.
+  /// * a live main pack: extra packs, or the main packs when no extra is big
+  ///   enough.
   ///
-  /// When no pack of that kind is big enough the screen says so instead.
+  /// When no pack at all is big enough the screen says so instead.
   final int? topUpFor;
 
   /// Close the screen once a purchase succeeds, instead of staying on the
@@ -375,7 +376,7 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     }
 
     final shelf = _shelf;
-    // A top-up with no pack of the right kind big enough for the gap: say so,
+    // A top-up with no pack at all big enough for the gap: say so,
     // rather than a shelf of packs that would still leave the booking short.
     if (shelf.isEmpty && widget.topUpFor != null) {
       return Scaffold(

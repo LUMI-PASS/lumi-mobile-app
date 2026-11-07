@@ -471,8 +471,13 @@ void main() {
       expect(ids(shelf(liveMain: true).topUpPacks(15)), ['e15', 'e20']);
     });
 
+    test('a live main pack falls back to main packs when no extra fits', () {
+      expect(ids(shelf(liveMain: true).topUpPacks(21)), ['m40', 'm90', 'm150']);
+      expect(ids(shelf(liveMain: true).topUpPacks(91)), ['m150']);
+    });
+
     test('nothing big enough is an empty shelf, not a smaller pack', () {
-      expect(shelf(liveMain: true).topUpPacks(21), isEmpty);
+      expect(shelf(liveMain: true).topUpPacks(151), isEmpty);
       expect(shelf(liveMain: false).topUpPacks(151), isEmpty);
     });
   });
