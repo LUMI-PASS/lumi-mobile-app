@@ -176,20 +176,6 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const CouponsPage(),
       );
     },
-    CourseBookingRoute.name: (routeData) {
-      final args = routeData.argsAs<CourseBookingRouteArgs>();
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: CourseBookingPage(
-          key: args.key,
-          activityId: args.activityId,
-          level: args.level,
-          courseTitle: args.courseTitle,
-          branchTitle: args.branchTitle,
-          trialLesson: args.trialLesson,
-        ),
-      );
-    },
     EmptyRouterRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -1066,64 +1052,6 @@ class CouponsRoute extends PageRouteInfo<void> {
   static const String name = 'CouponsRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
-}
-
-/// generated route for
-/// [CourseBookingPage]
-class CourseBookingRoute extends PageRouteInfo<CourseBookingRouteArgs> {
-  CourseBookingRoute({
-    Key? key,
-    required String activityId,
-    required CourseLevel level,
-    required String courseTitle,
-    String? branchTitle,
-    CourseLesson? trialLesson,
-    List<PageRouteInfo>? children,
-  }) : super(
-          CourseBookingRoute.name,
-          args: CourseBookingRouteArgs(
-            key: key,
-            activityId: activityId,
-            level: level,
-            courseTitle: courseTitle,
-            branchTitle: branchTitle,
-            trialLesson: trialLesson,
-          ),
-          initialChildren: children,
-        );
-
-  static const String name = 'CourseBookingRoute';
-
-  static const PageInfo<CourseBookingRouteArgs> page =
-      PageInfo<CourseBookingRouteArgs>(name);
-}
-
-class CourseBookingRouteArgs {
-  const CourseBookingRouteArgs({
-    this.key,
-    required this.activityId,
-    required this.level,
-    required this.courseTitle,
-    this.branchTitle,
-    this.trialLesson,
-  });
-
-  final Key? key;
-
-  final String activityId;
-
-  final CourseLevel level;
-
-  final String courseTitle;
-
-  final String? branchTitle;
-
-  final CourseLesson? trialLesson;
-
-  @override
-  String toString() {
-    return 'CourseBookingRouteArgs{key: $key, activityId: $activityId, level: $level, courseTitle: $courseTitle, branchTitle: $branchTitle, trialLesson: $trialLesson}';
-  }
 }
 
 /// generated route for

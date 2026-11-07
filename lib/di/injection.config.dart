@@ -133,14 +133,18 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i707.InterestSourceInterceptor>(),
           gh<_i400.LangInterceptor>(),
         ));
+    gh.lazySingleton<_i789.RecentSearchStore>(
+        () => _i789.RecentSearchStore(gh<_i279.Storage>()));
     gh.lazySingleton<_i260.AppsFlyerService>(
         () => _i260.AppsFlyerService(gh<_i279.Storage>()));
     gh.lazySingleton<_i295.MetaService>(
         () => _i295.MetaService(gh<_i279.Storage>()));
-    gh.lazySingleton<_i789.RecentSearchStore>(
-        () => _i789.RecentSearchStore(gh<_i279.Storage>()));
     gh.factory<_i484.OnboardingCubit>(
         () => _i484.OnboardingCubit(gh<_i279.Storage>()));
+    gh.factory<_i538.ReferralsApi>(() => _i538.ReferralsApi(
+          gh<_i361.Dio>(),
+          gh<_i279.Storage>(),
+        ));
     gh.factory<_i298.CoursesApi>(() => _i298.CoursesApi(
           gh<_i361.Dio>(),
           gh<_i279.Storage>(),
@@ -149,12 +153,13 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i361.Dio>(),
           gh<_i279.Storage>(),
         ));
-    gh.factory<_i538.ReferralsApi>(() => _i538.ReferralsApi(
-          gh<_i361.Dio>(),
-          gh<_i279.Storage>(),
-        ));
     gh.lazySingleton<_i361.PushNotificationService>(
         () => _i361.PushNotificationService(
+              gh<_i361.Dio>(),
+              gh<_i279.Storage>(),
+            ));
+    gh.lazySingleton<_i617.ListingEventReporter>(
+        () => _i617.ListingEventReporter(
               gh<_i361.Dio>(),
               gh<_i279.Storage>(),
             ));
@@ -162,23 +167,18 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i361.Dio>(),
           gh<_i279.Storage>(),
         ));
-    gh.lazySingleton<_i617.ListingEventReporter>(
-        () => _i617.ListingEventReporter(
-              gh<_i361.Dio>(),
-              gh<_i279.Storage>(),
-            ));
     gh.factory<_i571.MyCardsCubit>(
         () => _i571.MyCardsCubit(gh<_i748.OrdersApi>()));
     gh.factory<_i433.HomeApi>(() => _i433.HomeApi(gh<_i361.Dio>()));
     gh.factory<_i79.AuthApi>(() => _i79.AuthApi(gh<_i361.Dio>()));
+    gh.factory<_i109.FavoritesApi>(() => _i109.FavoritesApi(gh<_i361.Dio>()));
     gh.factory<_i323.ShopApi>(() => _i323.ShopApi(gh<_i361.Dio>()));
     gh.factory<_i605.WalletApi>(() => _i605.WalletApi(gh<_i361.Dio>()));
+    gh.factory<_i259.NewCoinsApi>(() => _i259.NewCoinsApi(gh<_i361.Dio>()));
     gh.factory<_i1041.InterestsApi>(() => _i1041.InterestsApi(gh<_i361.Dio>()));
     gh.factory<_i376.NotificationsApi>(
         () => _i376.NotificationsApi(gh<_i361.Dio>()));
     gh.factory<_i582.PromoApi>(() => _i582.PromoApi(gh<_i361.Dio>()));
-    gh.factory<_i259.NewCoinsApi>(() => _i259.NewCoinsApi(gh<_i361.Dio>()));
-    gh.factory<_i109.FavoritesApi>(() => _i109.FavoritesApi(gh<_i361.Dio>()));
     gh.factory<_i256.ScheduleCubit>(
         () => _i256.ScheduleCubit(gh<_i748.OrdersApi>()));
     gh.lazySingleton<_i966.SavedActivityStore>(() => _i966.SavedActivityStore(
@@ -246,6 +246,12 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i526.HomeRepository>(),
           gh<_i789.RecentSearchStore>(),
         ));
+    gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
+          gh<_i279.Storage>(),
+          gh<_i526.HomeRepository>(),
+          gh<_i57.ReferralRepository>(),
+          gh<_i422.ReferralCoordinator>(),
+        ));
     gh.lazySingleton<_i915.AppCubit>(() => _i915.AppCubit(
           gh<_i652.AuthRepository>(),
           gh<_i361.PushNotificationService>(),
@@ -256,13 +262,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i279.Storage>(),
           gh<_i789.PromoRepository>(),
           gh<_i748.OrdersApi>(),
-        ));
-    gh.factory<_i868.ProfileCubit>(() => _i868.ProfileCubit(
-          gh<_i279.Storage>(),
-          gh<_i526.HomeRepository>(),
-          gh<_i890.WalletRepository>(),
-          gh<_i57.ReferralRepository>(),
-          gh<_i422.ReferralCoordinator>(),
         ));
     gh.factory<_i189.ShopCubit>(() => _i189.ShopCubit(
           gh<_i1070.ShopRepository>(),

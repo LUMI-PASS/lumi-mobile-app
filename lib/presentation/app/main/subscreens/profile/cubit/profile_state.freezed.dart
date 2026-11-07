@@ -21,17 +21,6 @@ mixin _$ProfileBuildable {
   List<ChildModel> get children => throw _privateConstructorUsedError;
   ParentTrialSummary? get trialSummary => throw _privateConstructorUsedError;
 
-  /// Null until the wallet has loaded, or when the fetch failed in a release
-  /// build. The section stays hidden in both cases rather than rendering a
-  /// misleading zero balance — a failed request must not look like "you have
-  /// no money".
-  WalletBalance? get wallet => throw _privateConstructorUsedError;
-
-  /// Debug-only: why the wallet fetch failed. Set alongside an empty [wallet]
-  /// so the section still renders during development instead of vanishing —
-  /// see ProfileCubit._loadWallet. Always null in release.
-  String? get walletError => throw _privateConstructorUsedError;
-
   /// `GET /referrals/me`. Null until it lands or when it failed — the invite
   /// card and the "Have a referral code?" row then simply don't show.
   ReferralMe? get referral => throw _privateConstructorUsedError;
@@ -52,13 +41,10 @@ abstract class $ProfileBuildableCopyWith<$Res> {
       HomForUser? user,
       List<ChildModel> children,
       ParentTrialSummary? trialSummary,
-      WalletBalance? wallet,
-      String? walletError,
       ReferralMe? referral});
 
   $HomForUserCopyWith<$Res>? get user;
   $ParentTrialSummaryCopyWith<$Res>? get trialSummary;
-  $WalletBalanceCopyWith<$Res>? get wallet;
 }
 
 /// @nodoc
@@ -78,8 +64,6 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
     Object? user = freezed,
     Object? children = null,
     Object? trialSummary = freezed,
-    Object? wallet = freezed,
-    Object? walletError = freezed,
     Object? referral = freezed,
   }) {
     return _then(_value.copyWith(
@@ -99,14 +83,6 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
           ? _value.trialSummary
           : trialSummary // ignore: cast_nullable_to_non_nullable
               as ParentTrialSummary?,
-      wallet: freezed == wallet
-          ? _value.wallet
-          : wallet // ignore: cast_nullable_to_non_nullable
-              as WalletBalance?,
-      walletError: freezed == walletError
-          ? _value.walletError
-          : walletError // ignore: cast_nullable_to_non_nullable
-              as String?,
       referral: freezed == referral
           ? _value.referral
           : referral // ignore: cast_nullable_to_non_nullable
@@ -137,18 +113,6 @@ class _$ProfileBuildableCopyWithImpl<$Res, $Val extends ProfileBuildable>
       return _then(_value.copyWith(trialSummary: value) as $Val);
     });
   }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $WalletBalanceCopyWith<$Res>? get wallet {
-    if (_value.wallet == null) {
-      return null;
-    }
-
-    return $WalletBalanceCopyWith<$Res>(_value.wallet!, (value) {
-      return _then(_value.copyWith(wallet: value) as $Val);
-    });
-  }
 }
 
 /// @nodoc
@@ -164,16 +128,12 @@ abstract class _$$ProfileBuildableImplCopyWith<$Res>
       HomForUser? user,
       List<ChildModel> children,
       ParentTrialSummary? trialSummary,
-      WalletBalance? wallet,
-      String? walletError,
       ReferralMe? referral});
 
   @override
   $HomForUserCopyWith<$Res>? get user;
   @override
   $ParentTrialSummaryCopyWith<$Res>? get trialSummary;
-  @override
-  $WalletBalanceCopyWith<$Res>? get wallet;
 }
 
 /// @nodoc
@@ -191,8 +151,6 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
     Object? user = freezed,
     Object? children = null,
     Object? trialSummary = freezed,
-    Object? wallet = freezed,
-    Object? walletError = freezed,
     Object? referral = freezed,
   }) {
     return _then(_$ProfileBuildableImpl(
@@ -212,14 +170,6 @@ class __$$ProfileBuildableImplCopyWithImpl<$Res>
           ? _value.trialSummary
           : trialSummary // ignore: cast_nullable_to_non_nullable
               as ParentTrialSummary?,
-      wallet: freezed == wallet
-          ? _value.wallet
-          : wallet // ignore: cast_nullable_to_non_nullable
-              as WalletBalance?,
-      walletError: freezed == walletError
-          ? _value.walletError
-          : walletError // ignore: cast_nullable_to_non_nullable
-              as String?,
       referral: freezed == referral
           ? _value.referral
           : referral // ignore: cast_nullable_to_non_nullable
@@ -236,8 +186,6 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
       this.user,
       final List<ChildModel> children = const [],
       this.trialSummary,
-      this.wallet,
-      this.walletError,
       this.referral})
       : _children = children;
 
@@ -258,19 +206,6 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
   @override
   final ParentTrialSummary? trialSummary;
 
-  /// Null until the wallet has loaded, or when the fetch failed in a release
-  /// build. The section stays hidden in both cases rather than rendering a
-  /// misleading zero balance — a failed request must not look like "you have
-  /// no money".
-  @override
-  final WalletBalance? wallet;
-
-  /// Debug-only: why the wallet fetch failed. Set alongside an empty [wallet]
-  /// so the section still renders during development instead of vanishing —
-  /// see ProfileCubit._loadWallet. Always null in release.
-  @override
-  final String? walletError;
-
   /// `GET /referrals/me`. Null until it lands or when it failed — the invite
   /// card and the "Have a referral code?" row then simply don't show.
   @override
@@ -278,7 +213,7 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
 
   @override
   String toString() {
-    return 'ProfileBuildable(isLoading: $isLoading, user: $user, children: $children, trialSummary: $trialSummary, wallet: $wallet, walletError: $walletError, referral: $referral)';
+    return 'ProfileBuildable(isLoading: $isLoading, user: $user, children: $children, trialSummary: $trialSummary, referral: $referral)';
   }
 
   @override
@@ -292,23 +227,13 @@ class _$ProfileBuildableImpl implements _ProfileBuildable {
             const DeepCollectionEquality().equals(other._children, _children) &&
             (identical(other.trialSummary, trialSummary) ||
                 other.trialSummary == trialSummary) &&
-            (identical(other.wallet, wallet) || other.wallet == wallet) &&
-            (identical(other.walletError, walletError) ||
-                other.walletError == walletError) &&
             (identical(other.referral, referral) ||
                 other.referral == referral));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isLoading,
-      user,
-      const DeepCollectionEquality().hash(_children),
-      trialSummary,
-      wallet,
-      walletError,
-      referral);
+  int get hashCode => Object.hash(runtimeType, isLoading, user,
+      const DeepCollectionEquality().hash(_children), trialSummary, referral);
 
   @JsonKey(ignore: true)
   @override
@@ -324,8 +249,6 @@ abstract class _ProfileBuildable implements ProfileBuildable {
       final HomForUser? user,
       final List<ChildModel> children,
       final ParentTrialSummary? trialSummary,
-      final WalletBalance? wallet,
-      final String? walletError,
       final ReferralMe? referral}) = _$ProfileBuildableImpl;
 
   @override
@@ -336,19 +259,6 @@ abstract class _ProfileBuildable implements ProfileBuildable {
   List<ChildModel> get children;
   @override
   ParentTrialSummary? get trialSummary;
-  @override
-
-  /// Null until the wallet has loaded, or when the fetch failed in a release
-  /// build. The section stays hidden in both cases rather than rendering a
-  /// misleading zero balance — a failed request must not look like "you have
-  /// no money".
-  WalletBalance? get wallet;
-  @override
-
-  /// Debug-only: why the wallet fetch failed. Set alongside an empty [wallet]
-  /// so the section still renders during development instead of vanishing —
-  /// see ProfileCubit._loadWallet. Always null in release.
-  String? get walletError;
   @override
 
   /// `GET /referrals/me`. Null until it lands or when it failed — the invite

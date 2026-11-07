@@ -16,18 +16,13 @@ import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/data/service/analytics_service.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
-import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/home/booking_complete/booking_complete_page.dart';
-import 'package:lumi_pass/presentation/app/home/plans/coupon_success_page.dart';
-import 'package:lumi_pass/presentation/app/home/plans/premium_success_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PaycomCheckoutPage extends StatefulWidget {
   const PaycomCheckoutPage({
     super.key,
     required this.result,
-    this.isSubscription = false,
-    this.planDiscountPercentage,
     this.provider,
     this.cashbackEarned = 0,
     this.walletApplied = 0,
@@ -35,8 +30,6 @@ class PaycomCheckoutPage extends StatefulWidget {
   });
 
   final CheckoutResult result;
-  final bool isSubscription;
-  final int? planDiscountPercentage;
 
   /// Cashback the order earns, carried through to the success screen. Passed
   /// down rather than re-fetched here: this page owns a webview and a poll
@@ -54,8 +47,8 @@ class PaycomCheckoutPage extends StatefulWidget {
   /// screen.
   ///
   /// For callers whose order is not a booking — merch, for one, which has its
-  /// own orders tab and no tickets to show. Off by default so the booking and
-  /// subscription flows keep the screens they already had.
+  /// own orders tab and no tickets to show. Off by default so the booking flow
+  /// keeps the screen it already had.
   final bool popOnSuccess;
 
   /// Human display name for the gateway the buyer is being sent to.
@@ -106,9 +99,10 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
   static const _pollInterval = Duration(seconds: 2);
 
   /// Common funnel params attached to every checkout/payment event so the
-  /// booking and subscription flows can be segmented in one funnel.
+  /// booking flow can be segmented in one funnel. `checkout_type` stays so
+  /// the funnel keeps its existing shape in analytics.
   Map<String, Object?> get _funnelParams => {
-        'checkout_type': widget.isSubscription ? 'subscription' : 'booking',
+        'checkout_type': 'booking',
         'order_id': widget.result.orderId,
         'amount': widget.result.totalAmount,
         'currency': widget.result.currency,
@@ -177,31 +171,6 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
     _pollTimer?.cancel();
     getIt<AnalyticsService>()
         .logEvent(AnalyticsEvent.paymentSucceeded, params: _funnelParams);
-    if (widget.isSubscription) {
-      // Through the cubit, not a raw Storage write: the cards and the detail
-      // page watch AppCubit's state, and a write to Hive alone leaves every one
-      // of them showing undiscounted prices until the next cold start.
-      await getIt<AppCubit>()
-          .applyPurchasedPlan(widget.planDiscountPercentage ?? 0);
-      if (!mounted) return;
-      // If the plan carries a coupon discount, show the coupon success screen
-      // (which also fetches and displays the eligible activity count).
-      // For plans without a discount, fall back to the generic premium success.
-      if (widget.planDiscountPercentage != null && widget.planDiscountPercentage! > 0) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => CouponSuccessPage(
-              discountPercentage: widget.planDiscountPercentage!,
-            ),
-          ),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const PremiumSuccessPage()),
-        );
-      }
-      return;
-    }
     if (!mounted) return;
     // Merch and anything else that is not a booking: hand the verdict back and
     // let the caller decide where to land. Pushing BookingCompletePage here
@@ -287,7 +256,6 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final isSub = widget.isSubscription;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: c.overlayStyle,
       child: Scaffold(
@@ -318,7 +286,7 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
                     ),
                     Expanded(
                       child: Text(
-                        isSub ? 'plans_title'.tr() : 'payment_title'.tr(),
+                        'payment_title'.tr(),
                         textAlign: TextAlign.center,
                         style: AppText.bold18.copyWith(color: c.textPrimary),
                       ),
@@ -327,7 +295,7 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
                   ],
                 ),
                 24.kh,
-                _SummaryCard(result: widget.result, isSubscription: isSub),
+                _SummaryCard(result: widget.result),
                 if (_error != null) ...[
                   16.kh,
                   Container(
@@ -355,9 +323,7 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
                 const Spacer(),
                 if (_launched) ...[
                   _StatusIndicator(
-                    message: isSub
-                        ? 'pay_wait_subscription'.tr()
-                        : 'pay_wait_booking'.tr(),
+                    message: 'pay_wait_booking'.tr(),
                   ),
                   16.kh,
                 ],
@@ -386,10 +352,9 @@ class _PaycomCheckoutPageState extends State<PaycomCheckoutPage>
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.result, required this.isSubscription});
+  const _SummaryCard({required this.result});
 
   final CheckoutResult result;
-  final bool isSubscription;
 
   @override
   Widget build(BuildContext context) {
@@ -423,9 +388,7 @@ class _SummaryCard extends StatelessWidget {
                   border: Border.all(color: Colors.white.withOpacity(0.35)),
                 ),
                 child: Text(
-                  isSubscription
-                      ? 'plans_title'.tr().toUpperCase()
-                      : '${'order_details'.tr()} #$orderTail',
+                  '${'order_details'.tr()} #$orderTail',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 10.sp,
@@ -436,9 +399,7 @@ class _SummaryCard extends StatelessWidget {
               ),
               const Spacer(),
               Icon(
-                isSubscription
-                    ? Icons.workspace_premium_rounded
-                    : Icons.confirmation_number_rounded,
+                Icons.confirmation_number_rounded,
                 color: Colors.white,
                 size: 22.sp,
               ),
@@ -464,7 +425,7 @@ class _SummaryCard extends StatelessWidget {
               letterSpacing: -0.5,
             ),
           ),
-          if (!isSubscription && result.ticketNumbers.isNotEmpty) ...[
+          if (result.ticketNumbers.isNotEmpty) ...[
             16.kh,
             Divider(color: Colors.white.withOpacity(0.25), height: 1),
             14.kh,

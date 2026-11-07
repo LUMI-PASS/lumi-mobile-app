@@ -6,7 +6,6 @@ booking_date,Бронь создана,Bron yaratildi,Booking created
 order_date,Дата,Sana,Date
 order_time,Время,Vaqt,Time
 order_sum,Сумма,Summa,Amount
-status_completed,Завершена,Yakunlangan,Completed
 status_canceled,Отменено вами,Bekor qilingan,Canceled
 status_visited,Посещено,Tashrif buyurilgan,Visited
 status_missed,Пропущено,O‘tkazib yuborilgan,Missed
@@ -17,25 +16,11 @@ age_years_suffix,лет,yosh,yrs
 profile_title,Профиль,Profil,Profile
 add_child_short,Добавить,Qo‘shish,Add
 edit_profile,Изменить,Tahrirlash,Edit
-privacy_policy,Политика конфиденциальности,Maxfiylik siyosati,Privacy policy
 favorites,Избранное,Sevimlilar,Favorites
 logout_account,Выйти из аккаунта,Akkauntdan chiqish,Log out
-onboard1_title,Активности и события для детей,Bolalar uchun faoliyat va tadbirlar,Activities & Events for Kids
-onboard1_subtitle,Всё лучшее для вашего ребёнка в одном месте,Farzandingiz uchun hamma narsa bir joyda,Everything for your child in one place
-onboard2_title,Найдите идеальное занятие,Mukammal mashg’ulot toping,Find the Perfect Activity
-onboard2_subtitle,Подбор занятий по возрасту и интересам ребёнка,Yosh va qiziqishlar bo’yicha mashg’ulot tanlang,Activities matched to your child’s age and interests
-onboard3_title,Бронируйте в пару касаний,Bir necha qadamda bron qiling,Book in Just a Few Clicks
-onboard3_subtitle,Управляйте записями и не пропустите занятие,Darslarni boshqaring va hech birini o’tkazib yubormang,Manage bookings and never miss a session
 save_button,Сохранить,Saqlash,Save
-payment_label,Оплата,To'lov,Payment
 cancel_button,Отменить,Bekor qilish,Cancel
-delete_button,Удалить,O‘chirish,Delete
-cannot_be_undone,Это действие не может быть отменено.,Bu harakatni tiklab bo'lmaydi,This action cannot be undone
 select_language,Выберите язык,Tilni tanlang,Select language
-without_nds,Без НДС,QQS siz,VAT Not Included
-notification_title,Уведомления,Xabarnomalar,Notifcations
-duplicate_title,Дубликат,Duplikat,Duplicate
-telegram_channel,Telegram канал,Telegram kanali,Telegram channel
 contact_support,Связаться с поддержкой,Qo‘llab-quvvatlash bilan bog‘lanish,Contact support
 support_sheet_subtitle,Выберите удобный способ связи,Qulay bog‘lanish usulini tanlang,Pick how you would like to reach us
 support_via_telegram,Написать в Telegram,Telegram orqali yozish,Message us on Telegram
@@ -45,10 +30,7 @@ detail_support,Поддержка Lumi,Lumi qo‘llab-quvvatlash,Lumi support
 detail_support_hint,Возникли вопросы или проблемы? Мы на связи.,Savol yoki muammo bormi? Biz aloqadamiz.,Questions or a problem? We're here to help.
 tiktok,TikTok,TikTok,TikTok
 youtube,YouTube,YouTube,YouTube
-volume_unit,м³,m³,m³
-session_expired,"Учетная запись пользователя удалена, пожалуйста, войдите снова!",Foydalanuvchi akkounti o'chirilgan qayta login qiling!,"User account has been deleted, please log in again!"
 tab_home,Главная,Bosh sahifa,Home
-tab_map,Карта,Xarita,Map
 tab_shorts,Видео,Videolar,Shorts
 tab_bookings,Брони,Bronlar,Bookings
 tab_tariffs,Тарифы,Tariflar,Tariffs
@@ -57,16 +39,9 @@ tab_profile,Профиль,Profil,Profile
 coming_soon,Скоро,Tez orada,Coming soon
 coming_soon_desc,Мы уже готовим этот раздел. Загляните чуть позже.,Bu bo'lim tayyorlanmoqda. Birozdan so'ng qayting.,We're getting this section ready. Check back soon.
 booking_available_soon,Бронирование скоро будет доступно,Bron tez orada mavjud bo‘ladi,Booking will be available soon
-hello,ПРИВЕТ,SALOM,HELLO
 all_categories,Все категории,Barcha kategoriyalar,All Categories
-newly_added_classes,Новые занятия,Yangi mashg'ulotlar,New Activities
-popular_activities,Популярные занятия,Mashhur mashg'ulotlar,Popular Activities
 near_you,Рядом с вами,Sizga yaqin,Near you
 my_account,Мой аккаунт,Mening akkauntim,My Account
-account_info,Информация аккаунта,Akkaunt ma'lumotlari,Account Information
-change_account_info,Изменить данные аккаунта,Hisob ma'lumotlarini o'zgartirish,Change account details
-your_children,Ваши дети,Farzandlaringiz,Your Children
-change_children_info,Изменить информацию о детях,Bolalar ma'lumotini o'zgartirish,Change children info
 faq,Часто задаваемые вопросы,Ko'p beriladigan savollar,FAQ
 faq_subtitle,Вопросы и ответы,Savol va javoblar,Question and Answers
 faqs_title,Вопросы,Savollar,Questions
@@ -96,12 +71,8 @@ pay_now,Оплатить,To'lash,Pay Now
 amount_due,Сумма к оплате,To'lanadigan summa,Amount Due
 amount_paid,Оплачено,To'langan,Amount Paid
 booking_id,ID бронирования,Buyurtma ID,Booking ID
-ticket_id,ID билета,Chipta ID,Ticket ID
 add_child,Добавить ребенка,Bola qo'shish,Add Child
 update_child,Обновить данные,Ma'lumotni yangilash,Update Child
-add_first_child,Добавить первого ребенка,Birinchi bolani qo'shish,Add First Child
-no_children_yet,Детей еще нет,Hozircha bolalar yo'q,No children yet
-no_children_add_first,У вас еще нет детей. Добавьте первого,Sizda hali bolalar yo'q. Birinchisini qo'shing,You have no children yet. Add the first one
 children,детей,bola,children
 first_name,Имя,Ism,First Name
 enter_first_name,Введите имя,Ismni kiriting,Enter first name
@@ -112,64 +83,25 @@ child_max_age,Ребенок должен быть от 1 до 17 лет,Bola 1 
 gender,Пол,Jinsi,Gender
 male,Мужской,Erkak,Male
 female,Женский,Ayol,Female
-boys,Мальчики,O'g'il bolalar,Boys
-girls,Девочки,Qiz bolalar,Girls
-free_trials,Бесплатные пробные,Bepul sinov darslari,Free trials
 required,Обязательно,Majburiy,Required
 save,Сохранить,Saqlash,Save
 cancel,Отмена,Bekor qilish,Cancel
-explore,Поиск,Qidirish,Explore
-centers,Центры,Markazlar,Centers
 classes,Занятия,Darslar,Classes
 categories,Категории,Kategoriyalar,Categories
 centers_on_map,Центры на карте,Xaritadagi markazlar,Centers on Map
 map_partner_badge,Наш партнёр,Bizning hamkor,Lumi partner
-open_in_map,Открыть на карте,Xaritada ochish,Open in Map
-filter_by_category,Фильтр по категории,Kategoriya bo'yicha filtr,Filter by category
-pick_category,Выберите категорию,Kategoriyani tanlang,Pick a Category
-clear,Очистить,Tozalash,Clear
-no_data,Нет данных,Ma'lumot yo'q,No data
 today,Сегодня,Bugun,Today
 tomorrow,Завтра,Ertaga,Tomorrow
 this_week,На этой неделе,Bu hafta,This Week
-custom,Другое,Boshqa,Custom
-open_branch,Открыть филиал,Filialni ochish,Open Branch
-location_not_specified,Местоположение не указано,Manzil ko'rsatilmagan,Location not specified
-get_a_ticket,Получить билет,Chipta olish,Get a Ticket
-book,Забронировать,Band qilish,Book
-booking_loading,Бронирование...,Band qilinmoqda...,Booking...
-select_child,Выбрать ребенка,Bolani tanlang,Select Child
-choose_your_child,Выберите вашего ребенка,Farzandingizni tanlang,Choose Your Child
-could_not_check_eligibility,Не удалось проверить доступность,Mumkinligini tekshira olmadik,Could not check eligibility
 trial_lessons,Пробные уроки,Sinov darslari,Trial Lessons
-earn_trials,Получить пробные,Sinov darslarini olish,Earn Trials
 total_remaining_trials,Всего осталось пробных,Jami qolgan sinov darslari,Total Remaining Trials
-expected_charge,Ожидаемая плата,Kutilayotgan to'lov,Expected Charge
-uses_trial,Использует пробный,Sinovdan foydalanadi,Uses trial
-uses_full,Полная оплата,To'liq to'lov,Uses full
-uses_trial_price,Цена пробного,Sinov narxi,Uses trial price
-uses_full_price,Полная цена,To'liq narx,Uses full price
-unlock_progress,Открыть прогресс,Muvaffaqiyatni ochish,Unlock Progress
 insufficient,Недостаточно,Yetarli emas,Insufficient
-insufficient_balance,Недостаточно средств,Balans yetarli emas,Insufficient balance
-no_coins_warning,Недостаточно монет,Tangalar yetarli emas,Not enough coins
-low_balance_warning,У вас низкий баланс,Balansingiz past,Your balance is low
-not_enough_coins,Недостаточно монет,Yetarli tangalar yo'q,Not enough coins
-your_balance,Ваш баланс,Balansingiz,Your Balance
 next,Далее,Keyingi,Next
-no_slots_for_date,Нет доступных слотов на эту дату,Bu sanada bo'sh joy yo'q,No slots available for this date
 full,Занято,To'la,Full
-na,Н/Д,Mavjud emas,N/A
-plans_title,Тарифы,Tariflar,Plans
-plans_subtitle,Выберите подходящий тариф,Mos tarifni tanlang,Choose your plan
-choose_plan,Выбрать тариф,Tarifni tanlash,Choose Plan
-popular,ПОПУЛЯРНЫЙ,MASHHUR,POPULAR
 days,дней,kun,days
 no_plans_yet,Тарифов пока нет,Hozircha tariflar yo'q,No plans yet
 no_plans_hint,Скоро появятся,Tez orada paydo bo'ladi,Check back soon
 premium_badge,ПРЕМИУМ,PREMIUM,PREMIUM
-onboarding_title,Добро пожаловать в Lumi!,Lumi'ga xush kelibsiz!,Welcome to Lumi!
-onboarding_subtitle,Настройте профиль за несколько секунд,Profilingizni bir necha soniyada sozlang,Set up your profile in seconds
 onboarding_step1_title,Как вас зовут?,Ismingiz nima?,What's your name?
 onboarding_step2_title,Расскажите о вашем ребёнке,Farzandingiz haqida ayting,Tell us about your child
 onboarding_parent_name,Ваше полное имя,To'liq ismingiz,Your full name
@@ -182,46 +114,25 @@ continue,Продолжить,Davom etish,Continue
 get_started,Начать,Boshlash,Get Started
 shorts_empty_title,Видео нет,Videolar yo'q,No shorts
 shorts_empty_subtitle,Возвращайтесь позже,Keyinroq qayting,Check back later
-swipe_up_for_next,Смахните вверх для следующего,Keyingisi uchun yuqoriga suring,Swipe up for next
 view_details,Подробнее,Batafsil,View Details
-sms_code_title,SMS код,SMS kod,SMS Code
-verification_subtitle,Мы отправили код для подтверждения,Tasdiqlash uchun kod yubordik,We sent a code to verify
 verify_button,Подтвердить,Tasdiqlash,Verify
 book_select_tickets,Выберите билеты,Chiptalarni tanlang,Select tickets
-book_age_tier_subtitle,Подберите возраст и продолжительность,Yosh va davomiylikni tanlang,Pick the age tier and duration
-book_flat_subtitle,Подберите количество билетов по возрастной группе,Yosh guruhi bo‘yicha chiptalar sonini tanlang,Pick the number of tickets per age group
 book_add_ticket,Добавьте хотя бы один билет,Kamida bitta chipta qo‘shing,Add at least one ticket
-book_at_least_one,Выберите хотя бы один билет,Kamida bitta chipta tanlang,Select at least one ticket
 book_pick_date,Выберите дату,Sana tanlang,Pick a date
 book_pick_slot,Выберите время,Vaqtni tanlang,Pick a time
-book_select_date,Выберите дату,Sana tanlang,Select date
 book_loading_slots,Загрузка времени...,Vaqtlar yuklanmoqda...,Loading times...
-book_loading_prices,"Цены загружаются, подождите","Narxlar yuklanmoqda, iltimos kuting","Loading prices, please wait"
 book_no_slots_for_day,На выбранный день расписание отсутствует,Tanlangan kunda jadval mavjud emas,No schedule for the selected day
-book_no_schedule,Нет расписания,Jadval mavjud emas,No schedule
-book_day_unavailable,В этот день занятий нет,Bu kuni mashg'ulot yo‘q,No activities on this day
 book_available_times,Доступное время,Mavjud vaqtlar,Available times
 book_select_time,Выберите время,Vaqtni tanlang,Select time
 time_picker_range,Доступно с {} до {},{} dan {} gacha mavjud,Available from {} to {}
 book_available_window,Открыто: {},Ochiq: {},Open: {}
 book_ticket_index,Билет №{},Chipta №{},Ticket #{}
-book_tickets,Билеты,Chiptalar,Tickets
-book_tickets_count,Количество билетов: {},Chiptalar soni: {},Tickets: {}
 book_grand_total,Итого,Jami,Total
-book_continue,Продолжить,Davom etish,Continue
-book_go_back,Назад,Orqaga,Back
-book_confirm_order,Подтвердить бронирование,Bronni tasdiqlash,Confirm booking
-book_secure_paycom,Безопасная оплата через Payme,Payme orqali xavfsiz to‘lov,Secure payment via Payme
 book_network_error,Ошибка сети,Tarmoq xatosi,Network error
-booking_about,Об активности,Mashg‘ulot haqida,About the activity
 booking_id,ID бронирования,Buyurtma IDsi,Booking ID
-booking_seats,Количество мест,Joylar soni,Seats
 booking_status,Статус,Holati,Status
-booking_loading,Загрузка...,Yuklanmoqda...,Loading...
 booking_location,Локация,Manzil,Location
 booking_duration,Длительность,Davomiyligi,Duration
-booking_gender_age,Пол и возраст,Jins va yosh,Gender & age
-booking_age_years_old,От {} до {} лет,{} dan {} yoshgacha,{}–{} years old
 booking_cancel_title,Отменить бронирование,Bronni bekor qilish,Cancel booking
 booking_cancel_confirm,"Вы уверены, что хотите отменить бронирование?",Bronni bekor qilishga ishonchingiz komilmi?,Are you sure you want to cancel this booking?
 booking_keep,Оставить,Qoldirish,Keep
@@ -235,9 +146,7 @@ booking_cancel_window_closed,Отмена возможна не позднее �
 booking_could_not_load,Не удалось загрузить бронирование,Bronni yuklab bo‘lmadi,Could not load booking
 booking_retry,Повторить,Qayta urinish,Retry
 amount_due,К оплате,To‘lov uchun,Amount due
-amount_due_short,К оплате,To‘lov,Due
 amount_paid,Оплачено,To‘langan,Paid
-order_total,Итого по заказу,Jami buyurtma,Order total
 order_id,Номер заказа,Buyurtma raqami,Order ID
 order_paid,Оплачен,To’langan,Paid
 order_pending,В ожидании,Kutilmoqda,Pending
@@ -245,24 +154,18 @@ order_cancelled,Отменён,Bekor qilingan,Cancelled
 status_active,Активна,Faol,Active
 status_visited,Посещено,Tashrif buyurilgan,Visited
 status_missed,Пропущено,O’tkazib yuborilgan,Missed
-status_cancelled,Отменена,Bekor qilingan,Cancelled
 status_in_process,В обработке,Ko'rib chiqilmoqda,In Process
 status_canceled_by_centre,Отменено центром,Markaz tomonidan bekor qilingan,Cancelled by Centre
 status_pending,Ожидание,Kutilmoqda,Pending
 your_tickets,Ваши билеты,Chiptalaringiz,Your tickets
 tickets_count,{} билет(ов),{} chipta,{} tickets
-seats_count_one,{} место,{} joy,{} seat
-seats_count_many,{} мест,{} joy,{} seats
-ticket_label,БИЛЕТ,CHIPTA,TICKET
 ticket_class,Занятие,Mashg‘ulot,Activity
 ticket_venue,Место,Manzil,Venue
 ticket_age_label,Возраст,Yosh,Age
 ticket_age_value,От {} до {} лет,{} dan {} yoshgacha,{}–{} years
-ticket_id,ID,ID,ID
 ticket_no,Номер билета,Chipta raqami,Ticket number
 ticket_numbers,Номера билетов,Chipta raqamlari,Ticket numbers
 ticket_date,Дата,Sana,Date
-ticket_receipt,Билет,Chipta,Ticket
 ticket_present_at_venue,Покажите этот билет на входе,Ushbu chiptani kirishda ko‘rsating,Show this ticket at the venue
 ticket_confirmed,Подтверждён,Tasdiqlangan,Confirmed
 ticket_pending,Ожидает,Kutilmoqda,Pending
@@ -272,10 +175,8 @@ time_to,До,Gacha,To
 duration_unbounded,Не ограничено,Cheklanmagan,Unlimited
 duration_h_unit,ч,soat,h
 duration_min_unit,мин,daq,min
-empty_value_dash,—,—,—
 opening_payment,Открываем оплату...,To‘lov ochilmoqda...,Opening payment...
 pay_now,Оплатить,To‘lash,Pay now
-plans_title,Тарифы,Tariflar,Plans
 my_bookings,Мои бронирования,Bronlarim,My bookings
 no_bookings_yet,Бронирований пока нет,Hali bronlar yo‘q,No bookings yet
 active_bookings,Активные,Faol,Active
@@ -283,13 +184,6 @@ past_bookings,Прошедшие,Tugagan,Past
 booked,Забронировано,Band qilingan,Booked
 booked_classes_appear_here,Здесь появятся забронированные активности,Band qilingan mashg'ulotlar shu yerda ko‘rinadi,Booked activities will appear here
 view_details,Подробнее,Batafsil,View details
-weekday_full_1,Понедельник,Dushanba,Monday
-weekday_full_2,Вторник,Seshanba,Tuesday
-weekday_full_3,Среда,Chorshanba,Wednesday
-weekday_full_4,Четверг,Payshanba,Thursday
-weekday_full_5,Пятница,Juma,Friday
-weekday_full_6,Суббота,Shanba,Saturday
-weekday_full_7,Воскресенье,Yakshanba,Sunday
 weekday_short_1,Пн,Du,Mon
 weekday_short_2,Вт,Se,Tue
 weekday_short_3,Ср,Cho,Wed
@@ -339,372 +233,49 @@ share_app_text,Попробуй Lumi — бронируй занятия для 
 seats_left,Осталось мест,Joylar qoldi,Seats left
 max_50_chars,Не более 50 символов,Eng ko‘pi 50 ta belgi,Max 50 characters
 coins_to_next_unlock,Ещё {} монет до следующей разблокировки,Keyingi ochilishgacha yana {} tanga,{} more coins until next unlock
-spend_coins_unlock,"Потратьте {} монет, чтобы разблокировать",Ochish uchun {} tanga sarflang,Spend {} coins to unlock
-book_slots_left,Осталось: {} мест,Qoldi: {} joy,{} spots left
-book_slot_full,Мест нет,Joy yo'q,Full
 book_max_capacity_reached,Максимум {} мест для этого слота,Bu slot uchun maksimum {} joy,Max {} spots for this slot
 book_pay_cta,Оплатить {},To'lash {},Pay {}
 book_free_cta,Оформить бесплатно,Bepul rasmiylashtirish,Get for free
-back_button,Назад,Orqaga,Back
 oferta_agree_prefix,Я соглашаюсь с ,Men ,I agree with the 
 oferta_link_text,публичной офертой,ommaviy offerta,public offer
 oferta_agree_suffix, , shartlariga roziman,
-login_title,Авторизация,Avtorizatsiya,Authorization
-login_subtitle,Войдите в свой аккаунт для продолжения работы,Hisobingizga kirish uchun login qiling,Log in to your account to continue
-phone_hint,Номер телефона,Telefon raqami,Phone number
-password_hint,Пароль,Parol,Password
-forgot_password,Забыли пароль?,Parolni unutdingizmi?,Forgot password?
 login_button,Войти,Kirish,Log in
-no_account,У вас нет учетной записи?,Hisobingiz yo‘qmi?,Don’t have an account?
 register,Зарегистрироваться,Ro‘yxatdan o‘tish,Sign up
-reset_password_title,Восстановление пароля,Parolni tiklash,Password recovery
-reset_password_subtitle,Введите зарегистрированный адрес электронной почты или номер телефона,Parolni tiklash uchun ro‘yxatdan o‘tgan telefon raqami yoki email kiriting,Enter your registered email or phone number to reset your password
-email_or_phone_hint,Почта или номер телефона,Email yoki telefon raqami,Email or phone number
 continue_button,Далее,Davom etish,Continue
-verification_title,Верификация,Tasdiqlash,Verification
 resend_code,Отправить повторно,Qaytadan yuborish,Resend code
-new_password_title,Новый пароль,Yangi parol,New password
-new_password_subtitle,Пароль должен быть длиной не менее 8 символов,Parol kamida 8 ta belgidan iborat bo‘lishi kerak,Password must be at least 8 characters long
-new_password_hint,Новый пароль,Yangi parol,New password
-confirm_password_hint,Подтвердить пароль,Parolni tasdiqlang,Confirm password
 save_button,Сохранить,Saqlash,Save
 registration_title,Регистрация,Ro‘yxatdan o‘tish,Registration
 registration_subtitle,Создайте аккаунт и получите полный доступ ко всем возможностям,Hisob yarating va barcha imkoniyatlarga to‘liq ega bo‘ling,Create an account and get full access to all features
-full_name_hint,Введите Ф.И.О,F.I.Sh. ni kiriting,Enter full name
-email_hint,Введите почту,Email kiriting,Enter email
-phone_hint,Введите номер телефона,Telefon raqamini kiriting,Enter phone number
-password_hint,Введите пароль,Parol kiriting,Enter password
-confirm_password_hint,Подтвердите пароль,Parolni tasdiqlang,Confirm password
-next_button,Далее,Davom etish,Next
-already_have_account,У вас уже есть аккаунт?,Hisobingiz bormi?,Already have an account?
-login_link,Войти,Kirish,Log in
 filter_title,Фильтр,Filtr,Filter
 price_label,Цена,Narx,Price
-cargo_weight_label,Вес груза,Yuk og'irligi,Cargo Weight
-truck_type_label,Тип грузовика,Yuk mashinasi turi,Truck Type
-loading_type_label,Тип загрузки,Yuklash turi,Loading Type
-loading_full_truck,Отдельной машиной,To'liq yuk mashinasi,Full Truck Load
-loading_partial,Попутно,Qisman yuk,Partial Load
-cargo_type_label,Тип груза,Yuk turi,Cargo Type
-unloading_type_label,Тип разгрузки,Tushirish turi,Unloading Type
-adr_label,ADR,ADR,ADR
-select_adr,Выберите ADR,ADR tanlang,Select ADR
-permissions_label,Разрешения,Ruxsatnomalar,Permits
-tir_permit,ТИР,TIR,TIR
-cmr_permit,СМР,CMR,CMR
 map_view,Карта,Xarita,Map
-types_label,Типы,Turlar,Types
-absent_filter,Отсутв,Yo'q,Absent
-presence_required,Присутствие действие,Mavjudligi talab qilinadi,Presence Required
-trailer_count_label,Ремней,Tirkama soni,Trailer Count
 clear_button,Очистить,Tozalash,Clear
 apply_button,Применить,Qo'llash,Apply
-welcome_message,Добро пожаловать,Xush kelibsiz,Welcome
-search_start_button,Начать поиск,Qidiruvni boshlash,Start Search
-hide_button,Убрать,Yashirish,Hide
-average_price_route,Средняя цена по маршруту,O'rtacha narx yo'nalish bo'yicha,Average Price Per Route
-looking_for_label,Я ищу,Qidiryapman,Searching
-cargo_tab,Грузы,Yuklar,Cargo
 filter_title,Фильтр,Filtr,Filter
 price_label,Цена,Narx,Price
-cargo_weight_label,Вес груза,Yuk og'irligi,Cargo Weight
-truck_type_label,Тип грузовика,Yuk mashinasi turi,Truck Type
-body_type_label,Тип кузова,Kuzov turi,Body Type
-body_type_placeholder,Тип кузова,Kuzov turi,Body Type
-loading_type_label,Тип загрузки,Yuklash turi,Loading Type
-loading_type_placeholder,Тип загрузки,Yuklash turi,Loading Type
-loading_full_truck,Отдельной машиной,To'liq yuk mashinasi,Full Truck Load
-loading_partial,Попутно,Qisman yuk,Partial Load
-cargo_type_label,Тип груза,Yuk turi,Cargo Type
-unloading_type_label,Тип разгрузки,Tushirish turi,Unloading Type
-unloading_type_placeholder,Тип разгрузки,Tushirish turi,Unloading Type
-volume_label,Объем,Hajm,Volume
-volume_placeholder,Объем,Hajm,Volume
-adr_label,ADR,ADR,ADR
-select_adr,Выберите ADR,ADR tanlang,Select ADR
-permissions_label,Разрешения,Ruxsatnomalar,Permits
-tir_permit,ТИР,TIR,TIR
-cmr_permit,СМР,CMR,CMR
 map_view,Карта,Xarita,Map
-medical_card,Мед. карта,Tibbiy guvohnoma,Medical Card
-types_label,Типы,Turlar,Types
-absent_filter,Отсутв,Yo'q,Absent
-presence_required,Присутствие действие,Mavjudligi talab qilinadi,Presence Required
-trailer_count_label,Ремней,Tirkama soni,Trailer Count
-dimensions_label,Габариты,O'lchamlar,Dimensions
-length_label,Длина,Uzunlik,Length
-width_label,Ширина,Kenglik,Width
-height_label,Высота,Balandlik,Height
 clear_button,Очистить,Tozalash,Clear
 apply_button,Применить,Qo'llash,Apply
-welcome_message,Добро пожаловать,Xush kelibsiz,Welcome
-search_start_button,Начать поиск,Qidiruvni boshlash,Start Search
-hide_button,Убрать,Yashirish,Hide
-average_price_route,Средняя цена по маршруту,O'rtacha narx yo'nalish bo'yicha,Average Price Per Route
-cargo_tab,Грузы,Yuklar,Cargo
-trucks_tab,Транспорт,Transportlar,Transports
-cargo_info_title,Информация о грузе,Yuk haqida ma'lumot,Cargo Information
-truck_info_title,Информация о грузовике,Yuk mashinasi haqida ma'lumot,Truck Information
-vat_exclusive,VAT EXLUSIVE,QQS hisobga olinmagan,VAT EXCLUSIVE
-free_road_label,Бесплатная дорога,Bepul yo'l,Free Road
-paid_road_label,Платная дорога,Pullik yo'l,Paid Road
-cargo_direction_label,Направление груза,Yuk yo'nalishi,Cargo Direction
-truck_direction_label,Направление,Yo'nalish,Direction
-cargo_info_section,Информация о грузе,Yuk haqida ma'lumot,Cargo Information
-cargo_type_info,Тип груза,Yuk turi,Cargo Type
-cargo_weight_info,Вес груза,Yuk og'irligi,Cargo Weight
-price_per_km,Цена (за км),Narx (km uchun),Price (per km)
-transport_requirements,Требования к транспортировке,Transport talablari,Transportation Requirements
-body_type_info,Кузов,Kuzov,Body Type
-loading_info,Загрузка,Yuklash,Loading
-rate_payment,Ставка и оплата,Stavka va to'lov,Rate and Payment
-rate_info,Ставка,Stavka,Rate
-other_info,Другие информации,Boshqa ma'lumotlar,Other Information
-truck_type_info,Тип кузова,Yuk mashinasi turi,Truck Type
-machine_type,Тип машины,Mashina turi,Machine Type
-loading_type_info,Тип загрузки,Yuklash turi,Loading Type
-load_capacity,Грузоподъемность,Yuk ko'tarish qobiliyati,Load Capacity
-loading_method,Загрузки,Yuklash usuli,Loading Method
-volume_info,Объем,Hajm,Volume
-permits_section,Разрешения,Ruxsatnomalar,Permits
-medical_certificate,Медкнижка,Tibbiy guvohnoma,Medical Certificate
-cmr_document,CMR,CMR,CMR
-adr_class,ADR Класс,ADR Klass,ADR Class
-rate_payment_section,Ставка и оплата,Stavka va to'lov,Rate and Payment
 total_amount,Общее,Jami,Total
-distance_info,Дистанция,Masofa,Distance
-price_per_km_info,$/км,Narx/km,Price/km
-payment_info,Оплата,To'lov,Payment
-cash_payment,Наличными,Naqd pul,Cash
-other_info_section,Другие информации,Boshqa ma'lumotlar,Other Information
-ready_for_loading,Готов к загрузке,Yuklashga tayyor,Ready for Loading
-days_count,дней,kun,days
-wood_materials,Древесные материалы,Yog'och materiallari,Wood Materials
-tent_covered,Тентованный,Tentovanniy,Tent Covered
-full_truck_loading,Отдельной машиной (FTL),Alohida mashina (FTL),Full Truck Load (FTL)
-request_quote,Запрос,So'rov,Request Quote
-semi_trailer,Полуприцеп,Yarim tirkama,Semi-trailer
-rear_loading,Задняя,Orqadan yuklash,Rear Loading
-tons_unit,т,t,t
-add_title,Добавить,Qo'shish,Add
-add_truck_title,Добавить машину,Mashina qo'shish,Add Truck
-cargo_tab,Грузы,Yuklar,Cargo
-trucks_tab,Грузовики,Yuk mashinalari,Trucks
-select_transport,Выберите транспорт,Transport tanlang,Select Transport
-select_option,Выбрать,Tanlang,Select
-add_truck_button,Добавить грузовик,Yuk mashinasi qo'shish,Add Truck
-route_label,Маршрут,Marshrut,Route
-loading_point,Загрузка,Yuklash,Loading
-loading_radius,Радиус загрузки,Yuklash radiusi,Loading Radius
-km_unit,Км,Km,Km
-unloading_point,Разгрузка,Tushirish,Unloading
-unloading_radius,Радиус разгрузки,Tushirish radiusi,Unloading Radius
-route_section,Маршрут,Marshrut,Route
-ready_for_loading_today,Готов к загрузке с сегодняшнего,Bugun yuklashga tayyor,Ready for loading from today
-from_today,С того дня,Bugundan,From today
-date_label,Дата,Sana,Date
-waiting_days,Дни ожидания,Kutish kunlari,Waiting Days
-back_button,Назад,Orqaga,Back
-next_button,Следующий,Keyingi,Next
-truck_license_number,Гос. номер автомобиля,Avtomobil davlat raqami,Vehicle License Number
-license_placeholder,Гос. номер автомобиля,Avtomobil raqamini kiriting,Enter vehicle license number
-body_type_section,Кузов,Kuzov,Body Type
-select_body_type,Выберите тип кузова,Kuzov turini tanlang,Select Body Type
-semi_trailer_option,Полуприцеп,Fura,Semi-truck
-truck_option,Грузовик,Yuk mashinasi,Truck
-stage_option,Сцепка,Sahna,Stage
-loading_unloading_type,Тип загрузки / Выгрузки,Yuklash / Tushirish turi,Loading / Unloading Type
-select_loading_type,Выберите тип загрузки,Yuklash turini tanlang,Select Loading Type
-rear_option,Догруз,Orqadan,Rear
-hydraulic_option,Гидролифт,Gidrolift,Hydraulic
-side_option,Юбочки,Yondan,Side
-load_capacity_label,Грузоподъемность,Yuk ko'tarish qobiliyati,Load Capacity
-trailer_volume,Объем прицепа,Tirkama hajmi,Trailer Volume
-dimensions_section,Габариты,Gabaritlar,Dimensions
-length_dimension,Длина,Uzunlik,Length
-width_dimension,Ширина,Kenglik,Width
-height_dimension,Высота,Balandlik,Height
-meter_unit,м,m,m
-additional_data,Дополнительные данные,Qo'shimcha ma'lumotlar,Additional Data
-select_permits,Выберите разрешения,Ruxsatnoma tanlang,Select Permits
-select_adr_option,Выберите ADR,ADR tanlang,Select ADR
-min_rate,Мин. ставка,Minimal stavka,Min. Rate
-possible_bargain,Возможен торг,Kelishish mumkin,Negotiable
-usd_currency,USD,USD,USD
 uzs_currency,UZS,UZS,UZS
-rub_currency,RUB,RUB,RUB
-payment_type_label,Тип оплаты,To'lov turi,Payment Type
-bank_transfer,Банковский перевод,Bank o'tkazmasi,Bank Transfer
-nds_option,НДС,QQS,VAT
 card_payment,Оплата картой,Karta to'lovi,Card Payment
-cash_payment_option,Наличные,Naqd pul,Cash
-notes_label,Примечание,Izohlar,Notes
-notes_placeholder,Введите примечание,Izoh kiriting,Enter notes
-publish_button,Опубликовать,Nashr qilish,Publish
-contact_center_title,Контактный центр,Kontakt markazi,Contact Center
 phone_number_label,Телефон номер,Telefon raqami,Phone number
-instagram_label,Instagram,Instagram,Instagram
-facebook_label,Facebook,Facebook,Facebook
 profile_title,Профиль,Profil,Profile
-my_garage,Мой гараж,Mening garajim,My garage
-my_trips,Мои путешествия,Sayohatlarim,My trips
-settings,Настройки,Sozlamalar,Settings
-my_cargo,Мои грузы,Yuklarim,My cargo
-language,Язык,Til,Language
-contact_center,Контактный центр,Kontakt markazi,Contact center
-from_hint,Откуда,Qayerdan,From
-to_hint,Куда,Qayerga,To
-when_hint,Когда,Qachon,When
-my_updates,Мои объявления,Mening e'lonlarim,My ads
-email_or_phone_label,Почта или номер телефона,Elektron pochta yoki telefon raqami,Email or phone number
-invalid_phone_format,Телефон указан в неправильном формате.,Telefon noto‘g‘ri formatda kiritilgan.,Phone number is in an invalid format.
-invalid_input_format,Ввод имеет неправильный формат.,Kiritilgan ma’lumot noto‘g‘ri formatda.,Input has an invalid format.
-reset_password_instructions,Введите зарегистрированный адрес электронной почты или номер телефона для восстановления пароля.,Parolni tiklash uchun ro‘yxatdan o‘tgan elektron pochta manzilingizni yoki telefon raqamingizni kiriting.,Enter the registered email address or phone number to reset your password.
-generic_invalid_format,Неправильный формат ввода,Noto‘g‘ri formatdagi kiritish,Invalid input format
-password_min_length,Пароль должен содержать не менее 6 символов,Parol kamida 6 belgidan iborat bo‘lishi kerak,Password must be at least 6 characters long.
-invalid_credentials,Неверный логин или пароль,Login yoki parol noto‘g‘ri.,Invalid login or password.
-full_name_abbr,Ф.И.О,F.I.Sh.,Full Name (abbr.)
-sms_code_sent_phone,Мы отправили 6-значный код на ваш номер телефона,Sizning telefon raqamingizga 6 xonali kod yubordik.,We’ve sent a 6-digit code to your phone number.
-postal_address_label,почтовый адрес,pochta manzili,postal address
-ftl_or_ltl_label,FTL или догруз (LTL),FTL yoki LTL,FTL or LTL
-dimensions_dwh,Габариты (Д х Ш х В),Gabaritlar (U x E x B),Dimensions (L × W × H)
-payment_cash,Наличные,Naqd pul,Cash
-payment_credit_card,Кредитная карта,Kredit karta,Credit Card
-payment_with_vat,С НДС,QQS bilan,VAT Included
-payment_bank_transfer,Банковский перевод,Bank o'tkazmasi,Bank Transfer
-payment_unknown,Неизвестно,Nomalum,Unknown
-chat_section_unavailable,Чат-раздел пока не запущен,Chat bo‘limi hozircha ishga tushirilmagan.,Chat section is not yet launched.
-chat_section_future_updates,Этот раздел будет доступен в следующих обновлениях.,Ushbu bo‘lim keyingi yangilanishlarda mavjud bo‘ladi.,This section will be available in future updates.
-logout_title,Выйти,Chiqish,Log out
-logout_confirmation,Вы действительно хотите выйти?,Haqiqatan ham chiqmoqchimisiz?,Are you sure you want to log out?
 filter_all,Все,Barchasi,All
-filter_in_transit,В пути,Yo‘lda,In transit
-filter_customs,Таможня,Bojxona,Customs
-filter_delivered,Доставлено,Yetkazib berildi,Delivered
-new_status,Новый,Yangi,New
-when_start,Когда начинаем,Qachon boshlaymiz,When we start
-field_error,Поле не должно быть пустым,Maydonni to'ldiring,Field cannot be empty
-trck_cargo,Маршрут и груз,Transport va yuk,Cargo and truck
-count_transports,Количество машин,Mashinalar soni,Count of transports
-vehicle_count,Кол-во машин,Mashinalar soni,Number of vehicles
-straps,Ремней,Kamarlari,Straps
-coupling_only,Сцепка,Ulanma,Coupling
-pneumatic_drive,Пневмопривод,Pnevmodrayver,Pneumatic drive
-stakes,Коники,Qoniqlar,Stakes (support posts)
-prepayment,Передоплата,Oldindan to‘lov,Prepayment
-payment_on_unloading,Оплата на выгрузке,Tushirishda to‘lov,Payment on unloading
-payment_after_x_days,Оплата через х банковских дней,x bank kunidan so‘ng to‘lov,Payment after x banking days
-banking_days,Банковских дней,Bank ish kunlari,Banking days
-ready_to_load_plus_2,Готова к загрузке с сегодняшнего +2 дня,Yuklashga +2 kundan tayyor,Ready to load from today +2 days
-sms_code_sent_email,Мы отправили 6-значный код на вашу электронную почту,Biz sizning elektron pochtangizga 6 xonali kod yubordik,We have sent a 6-digit code to your email
 description,Комментарии владельца,Egasining fikri,Owner comment
-car_description,Государственный номер автомобиля,Avtomobil davlat raqami,Vehicle license plate
-select_volume_tr,Введите объем груза,Yuk hajmini tanlang,Select cargo volume
-trailer,Полуприцеп,Yarim tirkama,Semi-trailer
 truck,Грузовик,Yuk mashinasi,Truck
-coupling,Сцепка,Avtopoyezd,Auto-train
-partial_load,Догруз,Qisman yuk,Partial load
-hydraulic_lift,Гидролифт,Gidrolift,Hydraulic lift
-stanchions,Коники,Qoniqlar,Stanchions
-no_title,Нет,Yo'q,No
-user_already_exists,Пользователь с такими учетными данными уже существует,Bunday foydalanuvchi allaqachon mavjud,A user with these credentials already exists
-user_not_found,Пользователь с такими учетными данными не найден,Bunday foydalanuvchi topilmadi,A user with these credentials was not found
-confirmation_code,Ваш код подтверждения:,Sizning tasdiqlash kodingiz:,Your confirmation code:
-invalid_code,Неверный код подтверждения,Noto'g'ri tasdiqlash kodi,Incorrect code confirmation
 not_found,Ничего не найдено,Hech narsa topilmadi,Nothing found
-unavaialble,Hедоступно,Mavjud emas,Unavailable
-check_internet_connection,Проверьте подключение к интернету!,Internetga ulanishni tekshiring!,Check your internet connection!
-server_not_responding_or_timeout,Сервер не отвечает или отвечает слишком долго. Попробуйте позже.,Server javob bermayapti yoki juda sekin javob bermoqda. Keyinroq urinib ko‘ring.,Server is not responding or taking too long. Try again later.
-server_error_try_later,На сервере произошла ошибка. Попробуйте позже.,Serverda xatolik yuz berdi. Keyinroq urinib ko‘ring.,A server error occurred. Try again later.
-unknown_error,Произошла ошибка,"Nimadir xato ketdi, keyinroq urinib ko'ring",Something went wrong
-negotiatable,Торг уместен,Savdolashiladi,Bargaining is appropriate
-unnegotiable,Торг не уместен,Savdolashilmaydi,Bargaining is not appropriate
-select_body_type_error,"Пожалуйста, выберите тип кузова",Kuzov turini tanlang,Please select body type
-select_loading_type_error,"Пожалуйста, выберите тип загрузки",Yuklash turini tanlang,Please select loading type
-select_unloading_type_error,"Пожалуйста, выберите тип выгрузки",Tushirish turini tanlang,Please select unloading type
-edit_title,Изменить,Tahrirlash,Update
-invalid_number,Неверный формат,Noto'g'ri format,Invalid format
-delete_load_title,Вы действительно хотите удалить эту загрузку?,Siz rostdan ham bu yukni o‘chirib tashlamoqchimisiz?,Are you sure you want to delete this load?
-delete_truck_title,Вы действительно хотите удалить этот грузовик?,Siz rostdan ham bu yuk mashinasini o‘chirib tashlamoqchimisiz?,Are you sure you want to delete this truck?
-delete_transport_title,"Вы уверены, что хотите удалить этот транспорт?",Siz rostan ham bu transportni o'chirishni xohlaysizmi?,You really want to delete this transport?
-select_currency,Выберите валюту,Valyutani tanlang,Select currency
-payment_term,Уcловия оплаты,To'lov shartlari,Payent terms
-sort_title,Выберите тип сортировок,Saralash turini tanlang,Choose sort type
-sort_distance,По удаленности,Masofa bo‘yicha,By distance
-sort_price,Стоимость,Narxi,Price
-sort_price_per_km,Стоимость за KM,KM uchun narxi,Price per KM
-sort_rating,По рейтингу,Reyting bo‘yicha,By rating
-sort_upload_date,Дата загрузки,Yuklash sanasi bo‘yicha,By upload date
-plate_number,Гос. Номер,Davlat raqami,Plate number
-kg_unit,Кг,Kg,Kg
-not_clear_yet,Пока не ясно,Hali aniq emas,Not clear yet
-downloads,Загрузки,Yuklashlar,Downloads
-day_title,день,kun,days
-valid_number_error,"Пожалуйста, введите правильное число","Iltimos, to‘g‘ri raqam kiriting",Please enter a valid number
-min_amount_error,Минимальная сумма {currency} – {min},Minimal miqdor {currency} – {min},Minimum amount for {currency} is {min}
-max_amount_error,Максимальная сумма {currency} – {max},Maksimal miqdor {currency} – {max},Maximum amount for {currency} is {max}
-currency_range_hint,Диапазон: {min} - {max} {code},Oralig‘i: {min} - {max} {code},Range: {min} - {max} {code}
-currency_min_hint,Минимум: {min} {code},Minimum: {min} {code},Minimum: {min} {code}
-currency_max_hint,Максимум: {max} {code},Maximum: {max} {code},Maximum: {max} {code}
-request_price,Запросить цену,Narxni so‘rash,Request price
-applications,Заявки,Arizalar,Applications
-request,Запросить,So‘rash,Request
-truck_question,На каком грузовике вы собираетесь везти груз?,Qaysi yuk mashinasida yukni tashimoqchisiz?,Which truck are you going to use to transport the cargo?
-cargo_question,Какой груз вы планируете перевозить на этом грузовике?,Ushbu yuk mashinasida qanday yuk tashimoqchisiz?,What cargo are you planning to transport on this truck?
-proposal_sent,Ваше предложение отправлено!,Taklifingiz yuborildi!,Your proposal has been sent!
-leave_request,"Оставьте запрос, и мы отправим вам точную стоимость.","So‘rov qoldiring, biz sizga aniq narxni yuboramiz.",Leave a request and we will send you the exact price.
-price_on_request,Цена по запросу,So‘rov bo‘yicha narx,Price on request
-fixed_price,Фиксированная цена,Belgilangan narx,Fixed price
-negotiable_price,Оговариваемая цена,Kelishiladigan narx,Negotiable price
-leave_application,Оставить заявку,Ariza qoldirish,Leave an application
-select_delivery_date,Выберите дату подачи машины,Mashina yetkaziladigan sanani tanlang,Select delivery date
-suggest_price,Предложите цену,Narx taklif qiling,Suggest a price
-bid,Ставка,Taklif,Bid
-send,Отправть,Yuborish,Send
-make_counter_offer,Сделать предложение,Narx taklif qilish,Make an offer
-accept_price,Принять цену,Narxni qabul qilish,Accept the price
-negotiable_price,Оговариваемая цена,Kelishiladigan narx,Negotiable price
 select,Выбрать,Tanlash,Select
-reject,Отклонить,Rad etish,Reject
-approve,Одобрить,Maqbullashtirish,Approve
-provide_price,Предоставить цену,Narxni taqdim etish,Provide a price
-requester,Запрашивающий,So‘rov yuboruvchi,Requester
-request_received_date,Дата получения запроса,So‘rov olingan sana,Request received date
-truck_ready_date,Дата готовности машины,Mashina tayyor bo‘lish sanasi,Truck readiness date
-incoming_requests,Поступившие запросы,Kelgan so‘rovlar,Incoming requests
-bid_title,Заявка,Taklif,Bid
-through_banking,Через {banking_days} банковских дня,{banking_days} bank ish kunida,Through {banking_days} banking days
-connect_with,Связаться,Bog'lanish,Contact 
-server_502_error,Сервер временно недоступен (502). Попробуйте позже.,"Server vaqtincha mavjud emas (502). Iltimos, keyinroq urinib ko‘ring.",Server is temporarily unavailable (502). Please try again later.
-connection_timeout,Время ожидания соединения истекло. Проверьте интернет.,"Ulanish vaqti tugadi. Iltimos, internetingizni tekshiring.",Connection timed out. Please check your internet connection.
-connection_error,Нет подключения к интернету. Попробуйте снова.,"Internetga ulanish yo‘q. Iltimos, qayta urinib ko‘ring.",No internet connection. Please try again.
-unexpected_error,Произошла непредвиденная ошибка. Попробуйте снова.,"Kutilmagan xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.",Unexpected error occurred. Please try again.
-generic_error,Что-то пошло не так. Попробуйте снова.,"Nimadir noto‘g‘ri ketdi. Iltimos, qayta urinib ko‘ring.",Something went wrong. Please try again.
-sort,Сортировать,Saralash,Sort
 close,Закрыть,Yopish,Close
-chats,Чаты,Chatlar,Chats
 message,Сообщение,Xabar,Message
 search,Поиск,Izlash,Search
 status,Статус,Status,Status
 booking_requested,Бронирование было запрошено,Buyurtma so‘rovi yuborildi,Booking was requested
-price_requested,Цена была запрошена,Narx so‘rovi yuborildi,Price was requested
-booking_accepted,Бронирование было принято,Buyurtma qabul qilindi,Booking was accepted
 booking_rejected,Бронирование было отклонено,Buyurtma rad etildi,Booking was rejected
-accepted,Принято,Qabul qilindi,Accepted
 rejected,Отклонено,Rad etildi,Rejected
-owner_post,Владелец поста,Post muallifi,Post owner
-view_chat,Просмотреть чат,Chatni ko'rish,View chat
-you_offered,Вы предложили,Siz taklif qildingiz,You offered
-to_you_offered,Вам предложили,Sizga taklif qilindi,You were offered
 booked,Забронировано,Band qilingan,Booked
-truck_new_tab,Транспорт,Transport,Transport
-no_loads,"Вы еще не добавили груз. Пожалуйста, добавьте груз, чтобы оставить заявку.","Siz hali yuk qo‘shmagansiz. Iltimos, ariza yuborish uchun yuk qo‘shing.",You have not added any loads yet. Please add a load to leave a request.
-no_transports,"Вы еще не добавили транспорт. Пожалуйста, добавьте транспорт, чтобы оставить заявку.","Siz hali transport qo‘shmagansiz. Iltimos, ariza yuborish uchun transport qo‘shing.",You have not added any transports yet. Please add a transport to leave a request.
-input_car_desc,Введите номер автомобиля,Avtomobil davlat raqamini kiriting,Enter car license plate
-newly_added_classes,Новые занятия,Yangi qo'shilgan mashg'ulotlar,Newly Added Activities
 near_you,Рядом с вами,Sizga yaqin,Near you
 my_account,Мой аккаунт,Mening hisobim,My Account
-account_info,Информация аккаунта,Hisob ma'lumotlari,Account Information
 faq_subtitle,Вопросы и ответы,Savollar va javoblar,Frequently asked questions
 faqs_title,Вопросы,Savollar,FAQ
 filter_title,Фильтры,Filtrlar,Filters
@@ -715,37 +286,21 @@ select_period_hint,Нажмите на дату начала,Boshlanish sanasini
 filter_start_date,Дата начала,Boshlanish sanasi,Start date
 filter_end_date,Дата окончания,Tugash sanasi,End date
 filter_years_label,лет,yosh,years
-filter_age_hint,1-16 только,Faqat 1-16,1-16 only
-filter_price_range,Диапазон цен,Narx diapazoni,Price Range
-filter_apply,ПРИМЕНИТЬ,QOLLASH,APPLY
-filter_both,Все,Hammasi,Both
-filter_filtering,Фильтрация...,Filtrlanmoqda...,Filtering...
 price_from,от {},{} dan,from {}
 price_free,Бесплатно,Bepul,Free
 gender_male_only,Только для мальчиков,Faqat o'g'il bolalar,Boys only
 gender_female_only,Только для девочек,Faqat qizlar,Girls only
 gender_all,Для всех,Hamma uchun,For everyone
-detail_prices_by_age,Цены по возрасту,Yoshga qarab narxlar,Prices by age
 detail_prices,Цены,Narxlar,Prices
-detail_duration_label,Длительность,Davomiylik,Duration
-detail_about,О занятии,Tadbir haqida,About
 detail_notes,Важные заметки,Muhim eslatmalar,Important notes
 detail_bring,Что взять с собой,Nima olib kelish kerak,What to bring
 detail_language,Язык обучения,Ta'lim tili,Language
-detail_hours,Часы работы,Ish vaqti,Working hours
 cta_loading,Загрузка...,Yuklanmoqda...,Loading...
 cta_buy_ticket,Купить билет,Chipta sotib olish,Buy ticket
-video_watch,Смотреть видео,Video ko'rish,Watch video
-video_shorts_cta,Смотреть в Shorts,Shorts sifatida tomosha qiling,Watch as Shorts
 delete_account,Удалить аккаунт,Akkauntni o'chirish,Delete account
 delete_account_subtitle,Это действие необратимо. Все ваши данные будут удалены навсегда.,Bu amalni qaytarib bo'lmaydi. Barcha ma'lumotlaringiz butunlay o'chiriladi.,This action is irreversible. All your data will be permanently deleted.
 login_to_view_bookings,Войдите чтобы увидеть бронирования,Bronlashlaringizni ko'rish uchun tizimga kiring,Log in to view your bookings
 account_deleted_info,Аккаунт удалён. Вы вошли как гость.,Akkaunt o'chirildi. Siz mehmon sifatida kiryapsiz.,Account deleted. You're browsing as a guest.
-notifications_title,Уведомления,Bildirishnomalar,Notifications
-notifications_empty,Нет уведомлений,Bildirishnomalar yo'q,No notifications
-notifications_mark_all_read,Прочитать все,Barchasini o'qish,Mark all read
-notification_today,Сегодня,Bugun,Today
-notification_yesterday,Вчера,Kecha,Yesterday
 retry,Повторить,Qayta urinish,Retry
 notifications_empty_sub,"У вас пока нет уведомлений, они появятся здесь скоро","Sizda hozircha bildirishnomalar yo'q, ular tez orada shu yerda paydo bo'ladi","You have no notifications yet, they will appear here soon"
 coupons_title,Купоны,Kuponlar,Coupons
@@ -765,13 +320,7 @@ coupon_step3,При бронировании введите код для пол
 promo_hint,Введите промокод,Promokodni kiriting,Enter promo code
 promo_apply,Применить,Qo'llash,Apply
 promo_applied_saved,Сэкономлено {},Tejadingiz {},You saved {}
-promo_title,Промокод,Promokod,Promo code
-promo_remove,Убрать,Olib tashlash,Remove
-promo_applied,Промокод применён: −{amount},Promokod qo‘llandi: −{amount},Promo applied: −{amount}
 book_discount,Скидка,Chegirma,Discount
-course_quantity_title,Сколько детей,Nechta bola,How many children
-course_quantity_label,Мест,Joylar,Places
-course_quantity_max,Больше мест нет: максимум {count},Ko‘proq joy yo‘q: eng ko‘pi {count},No more places: {count} maximum
 promo_invalid,Промокод недействителен,Promokod yaroqsiz,Invalid promo code
 promo_max_order,Промокод действует только для заказов до {},Promokod faqat {} gacha buyurtmalar uchun amal qiladi,This promocode is valid only for orders up to {}
 promo_not_applicable,Этот промокод не действует для этого занятия,Bu promokod ushbu mashg'ulot uchun ishlamaydi,This promo code does not work for this activity
@@ -790,7 +339,6 @@ plan_how_title,Как это работает,Bu qanday ishlaydi,How it works
 plan_step1,Выберите подходящий купон,O'zingizga mos kuponni tanlang,Choose the coupon that fits you
 plan_step2,Оплатите купон и активируйте его,Kuponni to'lang va faollashtiring,Pay for the coupon and activate it
 plan_step3,Получайте скидку при бронировании занятий,Mashg'ulotlarni bron qilishda chegirma oling,Get a discount when booking activities
-discount_on_activities,Скидка на занятия,Mashg'ulotlarga chegirma,Discount on activities
 activities_limit,Лимит занятий,Mashg'ulotlar limiti,Activities limit
 coupon_plans_title,Купоны со скидками,Chegirmali kuponlar,Discount Coupons
 coupon_plans_subtitle,Купите купон и получайте скидку при бронировании занятий,Kupon sotib oling va mashg'ulotlarni bron qilishda chegirma oling,Buy a coupon and save on activity bookings
@@ -806,11 +354,9 @@ coupon_eligible_count,Доступно для {count} занятий,{count} ta 
 booking_coupon_saved,Сэкономлено,Tejadi,Saved
 booking_coupon_discount,Скидка по купону,Kupon chegirmasi,Coupon discount
 booking_promocode_discount,Скидка по промокоду,Promokod chegirmasi,Promo code discount
-booking_original_price,Цена без скидки,Chegirmasiz narx,Original price
 coupon_eligible_loading,Считаем занятия...,Mashg'ulotlar hisoblanmoqda...,Counting activities...
 coupon_start_exploring,Начать поиск,Qidiruvni boshlash,Start Exploring
 coupon_activated_subtitle,Ваш план активирован. Бронируйте занятия со скидкой до {percent}%.,Rejangiz faollashtirildi. {percent}% gacha chegirma bilan mashg'ulotlarni bron qiling.,Your plan is active. Book activities with up to {percent}% off.
-coupon_tab_plans,Тарифы,Tariflar,Plans
 coupon_tab_info,Информация,Ma'lumot,Info
 coupon_tab_history,История,Tarix,History
 sub_history_empty,Покупок пока нет,Xaridlar yo'q hali,No purchases yet
@@ -818,14 +364,6 @@ sub_history_empty_hint,Купите тариф — здесь появится �
 sub_status_active,Активен,Faol,Active
 sub_status_expired,Истёк,Tugagan,Expired
 sub_status_canceled,Отменён,Bekor qilingan,Canceled
-sub_paid,Оплачено,To'langan,Paid
-sub_activities_used,использовано,ishlatildi,used
-sub_activities_of,из,dan,of
-sub_activities_label,занятий,mashg'ulot,activities
-sub_valid_from,с,dan,from
-sub_valid_until,до,gacha,until
-sub_activities_remaining,осталось,qoldi,left
-sub_activities_progress,Использовано {used} из {total},Ishlatildi {used}/{total},Used {used} of {total}
 fiscal_receipt,Фискальный чек,Fiskal chek,Fiscal Receipt
 fiscal_receipt_subtitle,Чек ОФД (Soliq),OFD cheki (Soliq),OFD receipt (Soliq)
 fiscal_receipt_error,Не удалось загрузить чек,Chekni yuklab bo‘lmadi,Couldn’t load the receipt
@@ -839,9 +377,6 @@ confirm_code_sent_prefix,Код подтверждения отправлен н
 confirm_code_sent_suffix,, raqamiga yuborildi,
 greeting,Добро пожаловать,Xush kelibsiz,Welcome
 view_all,Посмотреть все,Barchasini ko'rish,View all
-view_all_courses,Все курсы,Barcha kurslar,All courses
-view_all_activities,Все занятия,Barcha mashg'ulotlar,All activities
-watch,Смотреть,Ko'rish,View
 courses,Курсы,Kurslar,Courses
 no_internet_title,Ошибка подключения к интернету,Internetga ulanishda xatolik,Internet connection error
 no_internet_desc,Проверьте подключение к интернету и попробуйте снова.,Internet aloqasini tekshiring va qayta urinib ko'ring.,Check your internet connection and try again.
@@ -860,7 +395,6 @@ price_tier_all,Дети и взрослые,Bolalar va kattalar,Children & adult
 search_hint,Искать...,Qidirish...,Search...
 search_title,Поиск,Qidiruv,Search
 all_count,Все • {},Barchasi • {},All • {}
-all_label,Все,Barchasi,All
 view_on_map_subtitle,Просмотрите расположение на карте,Joylashuvni xaritada ko'ring,See the location on the map
 results_not_found,Результаты не найдены,Natijalar topilmadi,No results found
 results_not_found_desc,Попробуйте изменить параметры поиска или выбрать другую категорию,Qidiruv shartlarini o'zgartiring yoki boshqa toifani tanlang,Try changing your search parameters or choosing another category
@@ -869,7 +403,6 @@ payment_title,Оплата,To'lov,Payment
 pay_total_amount,Сумма к оплате,To'lov summasi,Total amount
 pay_tickets,Билеты,Chiptalar,Tickets
 pay_wait_booking,Ожидаем подтверждение оплаты. Бронь появится автоматически.,To'lov tasdiqlanishini kutyapmiz. Bron avtomatik paydo bo'ladi.,Waiting for payment confirmation. Your booking will appear automatically.
-pay_wait_subscription,Ожидаем подтверждение оплаты. Подписка активируется автоматически.,To'lov tasdiqlanishini kutyapmiz. Obuna avtomatik faollashadi.,Waiting for payment confirmation. Your subscription will activate automatically.
 order_paid_title,Оплата успешно выполнена,To'lov muvaffaqiyatli amalga oshirildi,Payment successful
 order_paid_desc,"Оплата за бронирование успешно произведена. Бронирование подтверждено, а безопасность платежа гарантирована","Bron uchun to'lov muvaffaqiyatli amalga oshirildi. Bron tasdiqlandi, to'lov xavfsizligi kafolatlanadi",Your booking payment went through. The booking is confirmed and the payment is secure
 order_pending_title,Ожидается оплата,To'lov kutilmoqda,Awaiting payment
@@ -881,7 +414,6 @@ pay_choose_type,Выберите тип оплаты,To'lov turini tanlang,Choos
 pay_choose_card,Выберите карту,Kartani tanlang,Choose card
 pay_with_card,Оплата с картой,Karta bilan to'lov,Pay with card
 pay_add_card,Добавить карту,Karta qo'shish,Add card
-pay_send_sms,Отправить смс,SMS yuborish,Send SMS
 pay_confirm,Подтверждение,Tasdiqlash,Confirmation
 pay_code_sent,Код подтверждения отправлен на ваш номер телефона,Tasdiqlash kodi telefon raqamingizga yuborildi,A confirmation code was sent to your phone
 pay_resend,Отправить снова,Qayta yuborish,Resend
@@ -896,8 +428,6 @@ pay_card_number_hint,Номер карты,Karta raqami,Card number
 pay_card_expiry_hint,мм/гг,oo/yy,mm/yy
 ad_label,Реклама,Reklama,Ad
 dark_mode,Тёмная тема,Tungi rejim,Dark mode
-dark_mode_on,Включена,Yoqilgan,On
-dark_mode_off,Выключена,O'chirilgan,Off
 book_payment_method,Оплата,To'lov,Payment
 book_pay_method_label,Способ оплаты,To'lov usuli,Payment method
 book_change,Изменить,O'zgartirish,Change
@@ -912,14 +442,10 @@ pay_open_failed,Не удалось открыть {}.,{} ochib bo'lmadi.,Couldn
 book_pick_payment,Выберите способ оплаты,To'lov turini tanlang,Choose a payment method
 book_choose,Выбрать,Tanlash,Choose
 pay_select,Выбрать,Tanlash,Select
-coupon_offers_title,Спецпредложения по купонам,Kupon bo'yicha maxsus takliflar,Coupon special offers
 coupon_up_to,До {percent}%,{percent}% gacha,Up to {percent}%
 coupon_history_title,История платежей,To'lovlar tarixi,Payment history
-coupon_history_subtitle,Все ваши платежи собраны в одном месте,Barcha to'lovlaringiz bir joyda,All your payments in one place
 coupon_best_offer,ЛУЧШЕЕ,ENG YAXSHI,BEST OFFER
 coupon_cond_discount,Скидка до {percent}% на занятия,Mashg'ulotlarga {percent}% gacha chegirma,Up to {percent}% off activities
-coupon_cond_activities,Действует на {count} занятий,{count} ta mashg'ulotga amal qiladi,Valid for {count} activities
-coupon_cond_duration,Действует в течение {days} дней,{days} kun davomida amal qiladi,Valid for {days} days
 coupon_price_label,Цена за купон,Kupon narxi,Price per coupon
 coupon_buy_btn,Купить купон,Kupon sotib olish,Buy coupon
 my_info,Мои информации,Mening ma'lumotlarim,My information
@@ -943,10 +469,7 @@ ticket_number,Билет №{},Chipta №{},Ticket #{}
 ticket_date_label,Дата:,Sana:,Date:
 ticket_time_label,Время:,Vaqt:,Time:
 ticket_details,Детали билета,Chipta tafsilotlari,Ticket details
-card_your_cards,Ваши карты,Kartalaringiz,Your cards
-card_swipe_hint,Пролистайте сохранённые карты или добавьте новую,Saqlangan kartalarni ko'ring yoki yangisini qo'shing,Swipe through your saved cards or add a new one
 card_add_new,Добавить карту,Yangi karta qo'shish,Add a new card
-card_add_new_sub,Сохраните карту для быстрой оплаты,Tez to'lov uchun kartani saqlang,Save a card for faster checkout
 card_none,Сохранённых карт пока нет,Saqlangan kartalar hali yo'q,No saved cards yet
 card_load_error,Не удалось загрузить карты,Kartalarni yuklab bo'lmadi,Could not load your cards
 card_delete_error,Не удалось удалить карту,Kartani o'chirib bo'lmadi,Could not delete the card
@@ -954,18 +477,8 @@ card_delete_title,Удалить карту,Kartani o'chirish,Delete card
 card_delete_confirm,Удалить {}?,{} o'chirilsinmi?,Remove {}?
 card_delete_action,Удалить,O'chirish,Delete
 card_retry,Повторить,Qayta urinish,Retry
-card_choose_title,Выбор карты,Karta tanlash,Choose card
 card_add_title,Новая карта,Yangi karta,Add new card
-card_details,Данные карты,Karta ma'lumotlari,Card details
-card_details_sub,Заполните данные карты чтобы сохранить её,Saqlash uchun karta ma'lumotlarini kiriting,Fill in your card info to save it
-card_number_label,Номер карты,Karta raqami,Card number
-card_holder_label,Владелец карты,Karta egasi,Cardholder name
-card_holder_hint,Полное имя,To'liq ism,Full name
-card_expiration_label,Срок действия,Amal muddati,Expiration
-card_secure_note,Данные карты зашифрованы и не хранятся на устройстве,Karta ma'lumotlari shifrlangan va qurilmada saqlanmaydi,Your card details are encrypted and never stored on the device
-card_save,Сохранить карту,Kartani saqlash,Save card
 card_confirm_title,Подтверждение карты,Kartani tasdiqlash,Confirm card
-card_sms_hint,SMS-код,SMS kod,SMS code
 card_confirm_action,Подтвердить,Tasdiqlash,Confirm
 card_save_error,Не удалось сохранить карту,Kartani saqlab bo'lmadi,Card could not be saved
 card_save_unavailable,Сохранение карт пока недоступно — оплатите картой при бронировании.,Kartani saqlash hozircha mavjud emas — bron qilishda karta bilan to'lang.,Saving cards isn't available yet — pay by card at checkout instead.
@@ -973,15 +486,12 @@ age_from,от,dan,from
 age_to,до,gacha,to
 filter_for_boys,Для мальчиков,O'g'il bolalar uchun,For boys
 filter_for_girls,Для девочек,Qiz bolalar uchun,For girls
-search_tab_classes,Занятия,Mashg'ulotlar,Activities
 search_tab_centers,Центры,Markazlar,Centres
 recent_searches,Недавние поиски,Oxirgi qidiruvlar,Recent searches
 recent_clear,Очистить,Tozalash,Clear
-map_search_hint,Поиск центров,Markazlarni qidirish,Search centres
 map_centres_count,Центров: {},Markazlar: {},Centres: {}
 map_no_centres,Ничего не найдено,Hech narsa topilmadi,Nothing found
 map_title,На карте,Xaritada,On the map
-filter_child,Ребёнок,Bola,Child
 all_activities,Все занятия,Hamma mashg'ulotlar,All activities
 map_location_off,Геолокация выключена,Joylashuv o'chirilgan,Location is turned off
 map_location_denied,Нет доступа к геолокации,Joylashuvga ruxsat yo'q,Location permission denied
@@ -991,59 +501,27 @@ coupon_lessons_short,{count} занятий,{count} mashg'ulot,{count} lessons
 coupon_valid_days_short,{days} дней,{days} kun,{days} days
 profile_prompt_title,Улучшите рекомендации,Tavsiyalarni yaxshilang,Improve your recommendations
 profile_prompt_sub,Добавьте своё имя и ребёнка — подберём занятия точнее,Ismingiz va bolangizni qo'shing — mashg'ulotlarni aniqroq tanlaymiz,Add your name and child so we can filter and recommend better
-profile_prompt_action,Добавить,Qo'shish,Add
 coupon_discount_word,,gacha chegirma,off
 coupon_up_to_prefix,скидка до,,up to
 coupon_for_word,на,,for
-courses_section,Курсы,Kurslar,Courses
-course_trial_title,Пробные уроки ({count}),Sinov darslari ({count}),Trial lessons ({count})
-course_trial_subtitle,Попробуйте курс — оплата за каждый урок отдельно,Kursni sinab ko‘ring — har bir dars alohida to‘lanadi,Try the course — each lesson priced separately
-course_trial_total,Итого за пробные,Sinov uchun jami,Trial total
-course_buy_trial,Купить пробные уроки,Sinov darslarini sotib olish,Buy trial lessons
 course_trial_bought,Пробные уроки куплены,Sinov darslari sotib olingan,Trial lessons purchased
 course_full_title,Весь курс,Butun kurs,Whole course
 course_choose_age_title,Выберите возраст,Yoshni tanlang,Choose age
 course_choose_age_sub,Отметьте возраст каждого ребёнка — цена сложится,Har bir bolaning yoshini belgilang — narx qo‘shiladi,Tick each child’s age — the prices add up
 course_select_age,Укажите возраст хотя бы одного ребёнка,Kamida bitta bolaning yoshini belgilang,Pick at least one child's age
-course_age_total,Итого за {count} детей,{count} bola uchun jami,Total for {count} children
-course_run_dates,С {from} по {to},{from} — {to},{from} — {to}
-course_lessons_count,{count} уроков,{count} ta dars,{count} lessons
-course_more_lessons,и ещё {count} уроков,yana {count} ta dars,and {count} more lessons
-course_full_price,Цена курса,Kurs narxi,Course price
-course_buy_full,Купить весь курс,Butun kursni sotib olish,Buy the whole course
 course_seats_left,Осталось мест: {count},Qolgan joylar: {count},{count} seats left
 course_full_no_seats,Мест нет,Joy qolmadi,No seats left
-course_already_enrolled,Вы записаны на этот курс,Siz ushbu kursga yozilgansiz,You are enrolled in this course
 course_already_enrolled_short,Вы уже записаны,Siz allaqachon yozilgansiz,Already enrolled
-course_upsell_title,Продолжить весь курс?,Butun kursni davom ettirasizmi?,Continue with the whole course?
-course_upsell_body,Вы прошли пробные уроки. Весь курс — {price}.,Siz sinov darslarini oldingiz. Butun kurs — {price}.,You have taken the trial lessons. The whole course is {price}.
 course_buy_cta,Купить курс,Kursni sotib olish,Buy the course
-course_schedule_title,Расписание курса,Kurs jadvali,Course schedule
-course_until_date,До {date},{date} gacha,Until {date}
 course_card_try_free,Попробовать бесплатно,Bepulga sinab ko‘rish,Try for free
 course_card_try_next_free,Следующий урок бесплатно,Keyingi dars bepul,Next lesson free
 course_card_try_for,Попробовать за {price},{price} ga sinab ko‘ring,Try for {price}
 course_card_next_lesson,от {price},{price} dan boshlab,from {price}
-course_card_whole_course,Весь курс — {price},Butun kurs — {price},Whole course {price}
 course_card_per_lesson,{price} за урок,Darsiga {price},{price} per lesson
-course_upsell_body_short,Стоимость пробных уроков не вычитается,Sinov darslari narxi ayirilmaydi,The trial fee is not credited
-search_tab_courses,Курсы,Kurslar,Courses
 filter_kind,Тип,Turi,Type
 filter_kind_all,Все,Hammasi,All
 filter_kind_courses,Курсы,Kurslar,Courses
 filter_district,Район,Tuman,District
-district_bektemir,Бектемир,Bektemir,Bektemir
-district_chilonzor,Чиланзар,Chilonzor,Chilonzor
-district_mirobod,Мирабад,Mirobod,Mirobod
-district_mirzo_ulugbek,Мирзо-Улугбек,Mirzo Ulug'bek,Mirzo Ulugbek
-district_olmazor,Алмазар,Olmazor,Olmazor
-district_sergeli,Сергели,Sergeli,Sergeli
-district_shayxontohur,Шайхантахур,Shayxontohur,Shaykhantakhur
-district_uchtepa,Учтепа,Uchtepa,Uchtepa
-district_yakkasaroy,Яккасарай,Yakkasaroy,Yakkasaroy
-district_yangihayot,Янгихаёт,Yangihayot,Yangihayot
-district_yashnobod,Яшнабад,Yashnobod,Yashnobod
-district_yunusobod,Юнусабад,Yunusobod,Yunusobod
 pay_err_card_not_found,Данные карты неверны. Проверьте номер и срок действия.,Karta ma'lumotlari noto'g'ri. Raqam va amal qilish muddatini tekshiring.,The card details are incorrect. Check the number and expiry date.
 pay_err_insufficient_funds,Недостаточно средств на карте.,Kartada mablag' yetarli emas.,Insufficient funds on the card.
 pay_err_card_expired,Срок действия карты истёк.,Karta amal qilish muddati tugagan.,The card has expired.
@@ -1052,41 +530,17 @@ pay_err_otp_invalid,Неверный код из SMS. Попробуйте ещ�
 pay_err_otp_expired,Срок действия кода истёк. Запросите новый.,Kod muddati tugagan. Yangisini so'rang.,The code has expired. Request a new one.
 pay_err_limit_exceeded,Превышен лимит по карте.,Karta limiti oshib ketdi.,The card limit has been exceeded.
 payment_method,Способ оплаты,To'lov usuli,Payment method
-course_levels_title,Группы,Guruhlar,Groups
-course_group_default_name,Группа 1,1-guruh,Group 1
-course_level_enrolled,Вы записаны,Yozilgansiz,Enrolled
-course_level_trial,Пробные куплены,Sinov olingan,Trial bought
-course_lessons_remaining,Осталось {left} из {total} уроков,{total} darsdan {left} tasi qoldi,{left} of {total} lessons left
-course_upcoming_lessons,Впереди уроков: {count},Oldinda {count} ta dars,{count} lessons ahead
 course_blocked_not_configured,Пока недоступно для покупки,Hozircha sotib olib bo'lmaydi,Not available to buy yet
 course_blocked_ended,Занятия уже прошли,Darslar allaqachon o'tgan,These lessons have already passed
 course_blocked_unavailable,Сейчас недоступно,Hozir mavjud emas,Not available right now
-course_trial_count,{count} пробных,{count} ta sinov,{count} trial
-course_show_less,Свернуть,Yig'ish,Show less
-course_buy_level,Купить подкурс, Kursni sotib olish,Buy subcourse
-course_pick_level_cta,Выберите группу,Guruhni tanlang,Choose a group
 course_trial_lesson_one,Пробный урок,Sinov darsi,Trial lesson
 course_month_schedule,Расписание на месяц,Bir oylik jadval,Monthly schedule
 course_no_lesson_that_day,В этот день занятий нет,Bu kuni dars yo‘q,No lesson on this day
 see_centre,Посмотреть центр,Markazni ko‘rish,See centre
-course_trial_required_note,Обязательных пробных уроков: {count}. Записаться на курс можно только после них.,Majburiy sinov darslari: {count}. Kursga faqat ulardan keyin yozilish mumkin.,{count} trial lesson(s) are required — you can only enrol after them.
-course_trial_mandatory,Обязательный,Majburiy,Required
 course_blocked_trial_required,Сначала купите обязательные пробные уроки.,Avval majburiy sinov darslarini sotib oling.,Buy the required trial lessons first.
 course_blocked_trial_pending,Записаться на курс можно после обязательного пробного занятия.,Kursga majburiy sinov darsidan keyin yozilishingiz mumkin.,You can enrol after your required trial lesson.
-course_blocked_trial_pending_date,Записаться на курс можно после обязательного занятия — {date}.,Kursga majburiy darsdan keyin yozilishingiz mumkin — {date}.,You can enrol after your required trial lesson on {date}.
 course_blocked_trial_in_progress,"Следующий пробный урок можно купить после того, как пройдёт текущий.",Keyingi sinov darsini joriy dars o'tgandan keyin sotib olishingiz mumkin.,You can book the next trial lesson after your current one has taken place.
-course_blocked_trial_in_progress_date,Следующий пробный урок можно купить после {date}.,Keyingi sinov darsini {date} dan keyin sotib olishingiz mumkin.,You can book the next trial lesson after {date}.
-course_trial_pick_hint,"Выберите уроки, которые хотите посетить",Bormoqchi bo'lgan darslarni tanlang .,Pick the lessons you want to attend.
-course_trial_pick_date_hint,Выберите дату пробного урока,Sinov darsi sanasini tanlang,Choose a date for your trial lesson
-course_trial_selected,Выбрано: {count},Tanlandi: {count},{count} selected
-course_trial_bought_one,Куплено,Sotib olingan,Bought
-course_trial_lesson_no,{n}-е пробное занятие,{n}-sinov dars,Trial lesson {n}
-course_trial_pick_lesson_hint,Выберите пробное занятие,Sinov darsini tanlang,Pick a trial lesson
-course_unavailable_title,Записаться пока нельзя,Hozircha yozilib bo'lmaydi,Booking isn't open yet
 course_blocked_no_schedule_long,"У этого курса ещё нет расписания — центр не добавил дни занятий. Запись откроется, как только они появятся.",Bu kursda hali jadval yo'q — markaz dars kunlarini qo'shmagan. Ular paydo bo'lishi bilan yozilish ochiladi.,This course has no schedule yet — the centre hasn't added its lesson days. Booking opens as soon as it does.
-course_book_trial_cta,Забронировать пробное занятие,Sinov darsini bron qilish,Book the trial lesson
-course_trial_passed,Прошло,O‘tib ketdi,Passed
-course_trial_locked,Сначала пройдите предыдущее занятие,Avval oldingi darsni o‘ting,Take the previous lesson first
 course_trial_book_title,Пробное занятие,Sinov darsi,Trial lesson
 wallet_title,Кошелек,Hamyon,Wallet
 wallet_available_label,Доступно,Mavjud,Available
@@ -1129,8 +583,6 @@ telegram_login_button,Войти через Telegram,Telegram orqali kirish,Sign
 telegram_login_title,Вход через Telegram,Telegram orqali kirish,Sign in with Telegram
 telegram_login_step2,Бот пришлёт код — введите его ниже,Bot kod yuboradi — uni quyida kiriting,The bot sends you a code — enter it below
 telegram_login_open,Открыть Telegram,Telegramni ochish,Open Telegram
-telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
-telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
 update_force_title,Пора обновить приложение,Ilovani yangilash vaqti keldi,Time to update the app
 update_force_subtitle,"Мы добавили новые возможности и полностью обновили приложение. Установите свежую версию, чтобы пользоваться Lumi дальше.",Biz yangi imkoniyatlar qo‘shdik va ilovani to‘liq yangiladik. Lumi’dan foydalanishda davom etish uchun yangi versiyani o‘rnating.,We have added new features and rebuilt a lot under the hood. Install the latest version to keep using Lumi.
 update_optional_title,Доступна новая версия,Yangi versiya mavjud,A new version is available
@@ -1143,13 +595,9 @@ order_kind_activity,Занятие,Mashg‘ulot,Activity
 ticket_price_label,Цена,Narx,Price
 ticket_price_per_seat,Цена за место,Bir joy uchun narx,Price per seat
 shop_title,Lumi Shop,Lumi Shop,Lumi Shop
-shop_balance_label,Ваш баланс,Balansingiz,Your balance
 shop_my_orders,Мои заказы,Buyurtmalarim,My orders
 shop_sold_out,Нет в наличии,Tugagan,Sold out
 shop_only_n_left,Осталось всего {} шт.,Atigi {} ta qoldi,Only {} left
-shop_quantity,Количество,Miqdori,Quantity
-shop_buy_for,Купить за {},{} ga sotib olish,Buy for {}
-shop_pay_with_coins_hint,Можно оплатить Lumi-коинами: 1 коин = 1 сум,Lumi tangalar bilan to‘lash mumkin: 1 tanga = 1 so‘m,Payable with Lumi coins — 1 coin = 1 so‘m
 shop_empty_title,Пока пусто,Hozircha bo‘sh,Nothing here yet
 shop_empty_body,Скоро здесь появится мерч Lumi.,Tez orada Lumi merchi paydo bo‘ladi.,Lumi merch is on its way.
 shop_error_title,Не удалось загрузить,Yuklab bo‘lmadi,Could not load
@@ -1171,7 +619,6 @@ shop_payment_title,Оплата,To‘lov,Payment
 shop_choose_payment,Выбрать способ оплаты,To‘lov usulini tanlash,Choose a payment method
 shop_total,Итого,Jami,Total
 shop_paid_with_coins,Оплачено коинами,Tangalar bilan to‘landi,Paid with coins
-shop_left_to_pay,К оплате,To‘lash kerak,Left to pay
 shop_pay,Оплатить {},{} to‘lash,Pay {}
 shop_pay_with_coins,Оплатить коинами,Tangalar bilan to‘lash,Pay with coins
 shop_paid_title,Заказ принят,Buyurtma qabul qilindi,Order accepted
@@ -1203,8 +650,6 @@ shop_add_for,Добавить за {},{} ga qo‘shish,Add for {}
 shop_cart_empty_title,Корзина пуста,Savatcha bo‘sh,Your cart is empty
 shop_cart_empty_body,Добавьте что-нибудь из мерча Lumi.,Lumi merchidan biror narsa qo‘shing.,Add something from the Lumi merch.
 shop_cart_browse,Перейти к товарам,Mahsulotlarga o‘tish,Browse products
-shop_cart_items,{} шт. в корзине,Savatchada {} ta,{} items in the cart
-shop_cart_max,Максимум {},Ko‘pi bilan {},Max {}
 shop_checkout_cta,Оформить заказ,Buyurtma berish,Checkout
 shop_cart_title_n,{} шт. в корзине,Savatchada {} ta tovar,{} items in the cart
 shop_cart_summary,Ваш заказ,Buyurtmangiz,Your order
@@ -1215,11 +660,8 @@ shop_about_title,Описание,Tavsif,Description
 shop_details_title,Характеристики,Maʼlumot,Details
 shop_availability,Наличие,Mavjudligi,Availability
 shop_sold_label,Куплено,Sotib olingan,Bought
-shop_max_per_order,Максимум в заказе,Bitta buyurtmaga,Max per order
 shop_delivery_days,3 дня,3 kun,3 days
-shop_pay_with_money,Оплатить деньгами,Pul bilan to‘lash,Pay with money
 shop_coins_short,Не хватает {} коинов,{} tanga yetmaydi,{} coins short
-shop_coin_price_label,Цена в коинах,Tangadagi narxi,Coin price
 shop_or_with_coins,Или коинами,Yoki tangalar bilan,Or with coins
 shop_not_paid_yet,Оплата не прошла. Заказ не оформлен — попробуйте снова.,To‘lov amalga oshmadi. Buyurtma rasmiylashtirilmadi — qayta urinib ko‘ring.,Payment did not go through. The order was not placed — please try again.
 course_blocked_intake,Идёт набор — запись откроется позже,To‘plam ketmoqda — sotuv keyinroq ochiladi,Still recruiting — sales open later
@@ -1248,17 +690,10 @@ trial_request_hint_unpriced,"Оставьте заявку — центр поз
 trial_request_who,Для кого урок?,Dars kim uchun?,Who is the lesson for?
 trial_request_no_children,"Детей в профиле пока нет — центр уточнит по телефону.","Profilda hali bola yo‘q — markaz telefon orqali aniqlaydi.","No children in your profile yet — the centre will ask on the phone."
 profile_greeting,"Добро пожаловать, {}!","Xush kelibsiz, {}!","Welcome, {}!"
-services_title,Сервисы,Xizmatlar,Services
-help_title,Помощь,Yordam,Help
 payment_methods,Способы оплаты,To‘lov usullari,Payment methods
 all_my_bookings,Все мои брони,Barcha bronlarim,All my bookings
-shop_tile_subtitle,Подарки и товары,Sovg‘alar va mahsulotlar,Gifts and products
 dark_mode_subtitle,Удобно для глаз,Ko‘zlaringiz uchun qulay,Easier on the eyes
 contact_support_subtitle,Свяжитесь с нами,Biz bilan bog‘laning,Get in touch
-my_courses,Мои курсы,Mening kurslarim,My courses
-my_activity_bookings,Брони,Bronlar,Bookings
-no_courses_yet,Курсов пока нет,Hali kurslar yo‘q,No courses yet
-enrolled_courses_appear_here,"Здесь появятся курсы, на которые вы записались",Siz yozilgan kurslar shu yerda ko‘rinadi,Courses you enrol in will appear here
 course_lessons_progress,Уроки,Darslar,Lessons
 course_next_lesson,Следующий урок,Keyingi dars,Next lesson
 course_ends_on,Курс заканчивается,Kurs tugaydi,Course ends
@@ -1338,7 +773,6 @@ referral_copied,Скопировано,Nusxa olindi,Copied
 referral_share,Поделиться,Ulashish,Share
 referral_have_code,Есть код приглашения?,Taklif kodingiz bormi?,Have a referral code?
 referral_have_code_subtitle,"Введите код друга, который вас пригласил",Sizni taklif qilgan do'stingiz kodini kiriting,Enter the code of the friend who invited you
-referral_have_code_row_subtitle,Введите код друга,Do'stingiz kodini kiriting,Enter a friend's code
 referral_code_hint,"Например, LUMI7K3Q","Masalan, LUMI7K3Q","For example, LUMI7K3Q"
 referral_code_optional,Код приглашения (необязательно),Taklif kodi (ixtiyoriy),Referral code (optional)
 referral_code_unknown_hint,Такой код не найден — проверьте его,Bunday kod topilmadi — tekshirib ko'ring,We couldn't find this code — please check it
@@ -1396,11 +830,7 @@ promo_voucher_expired,Срок действия скидки истёк,Chegirma
 promo_voucher_min_order,Скидка действует для заказов от {},Chegirma {} dan boshlab buyurtmalar uchun amal qiladi,This voucher is valid for orders from {}
 voucher_chip_title,"−{}%, до {}","−{}%, ko'pi bilan {}","−{}%, max {}"
 voucher_yours,Ваша скидка:,Sizning chegirmangiz:,Your discount:
-voucher_chip_until,до {},{} gacha,until {}
 voucher_reason_min_order,Для заказов от {},{} dan boshlab buyurtmalar uchun,For orders from {}
-voucher_reason_not_applicable,Не действует для этого занятия,Bu mashg'ulot uchun amal qilmaydi,Not valid for this activity
-voucher_reason_coupon_plan,Не суммируется с купонным тарифом,Kupon tarifi bilan birga ishlamaydi,Can't be combined with a coupon plan
-voucher_reason_unknown,Сейчас недоступна,Hozir mavjud emas,Not available right now
 aksiya_hero_visits_suffix,занятия в разных местах,ta mashg‘ulot — turli joylarda,activities at different places
 rating_count,Оценок: {},Baholar: {},Ratings: {}
 rating_sheet_title,Оцените занятие,Mashg‘ulotni baholang,Rate this activity
@@ -1419,25 +849,16 @@ rate_prompt_hint,"Нажмите, чтобы оценить",Baholash uchun bosi
 search_centre_tag,Центр,Markaz,Centre
 new_coins_title,Lumi Coin,Lumi Coin,Lumi Coin
 new_coins_amount,{} Lumi Coin,{} Lumi Coin,{} Lumi Coin
-new_coins_about,Lumi Coin покупают пакетами и оплачивают ими занятия целиком — вместо денег. Это не кешбэк-кошелёк.,Lumi Coin paketlab sotib olinadi va mashg‘ulot uchun to‘liq to‘lanadi — pul o‘rniga. Bu keshbek hamyoni emas.,"Lumi Coin is bought in packs and pays for an activity in full, instead of money. It is not the cashback wallet."
 new_coins_balance_label,Ваш баланс Lumi Coin,Lumi Coin balansingiz,Your Lumi Coin balance
 new_coins_balance_line,Баланс: {} Lumi Coin,Balans: {} Lumi Coin,Balance: {} Lumi Coin
 new_coins_expire_on,Из них {} — до {},Shundan {} tasi {} gacha amal qiladi,{} of them valid until {}
 new_coins_valid_until,Действуют до {},{} gacha amal qiladi,Valid until {}
-new_coins_plan_subtitle,{} · до {},{} · {} gacha,{} · until {}
 new_coins_never_expire,Не сгорают,Muddati cheklanmagan,Never expire
 new_coins_history,История,Tarix,History
 new_coins_history_empty,Здесь появятся покупки и списания Lumi Coin.,Bu yerda Lumi Coin xaridlari va sarflari ko‘rinadi.,Your Lumi Coin purchases and spends will appear here.
-new_coins_main_section,Основные пакеты,Asosiy paketlar,Main packs
-new_coins_extra_section,Дополнительные пакеты,Qo‘shimcha paketlar,Extra packs
-new_coins_single_section,Отдельные коины,Alohida coinlar,Single coins
 new_coins_single_title,Купить Lumi Coin поштучно,Lumi Coin donalab sotib olish,Buy single Lumi Coin
 new_coins_single_hint,"Не сгорают — удобно, когда на занятие не хватает пары коинов.",Muddati cheklanmagan — mashg‘ulotga bir-ikki coin yetmaganda qulay.,They never expire — handy when a booking is a coin or two short.
-new_coins_extras_locked,Доступно при активном основном пакете.,Faol asosiy paket bo‘lganda mavjud.,Available with an active main pack.
-new_coins_valid_days,Действует {} дн.,{} kun amal qiladi,Valid for {} days
-new_coins_per_coin,{} за коин,1 coin — {},{} per coin
 new_coins_buy_for,Купить за {},{} ga sotib olish,Buy for {}
-new_coins_bonus_badge,+{} в подарок,+{} sovg‘a,+{} bonus
 new_coins_empty_title,Lumi Coin пока недоступны,Lumi Coin hozircha mavjud emas,Lumi Coin is not available yet
 new_coins_empty_body,Пакеты скоро появятся. Загляните позже.,Paketlar tez orada paydo bo‘ladi. Keyinroq qarab ko‘ring.,Packs are coming soon. Check back later.
 new_coins_success_title,Lumi Coin зачислены!,Lumi Coin hisobingizga tushdi!,Your Lumi Coin are in!
@@ -1447,7 +868,6 @@ new_coins_pay_cta,Оплатить {} Lumi Coin,{} Lumi Coin to‘lash,Pay {} Lu
 new_coins_short,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi,{} Lumi Coin short
 new_coins_left_after,Останется после оплаты,To‘lovdan keyin qoladi,Left after payment
 new_coins_paid_with,Оплачено: {} Lumi Coin,To‘landi: {} Lumi Coin,Paid with {} Lumi Coin
-new_coins_paid_with_label,Оплачено Lumi Coin,Lumi Coin bilan to‘langan,Paid with Lumi Coin
 new_coins_not_cancelable,"Бронь, оплаченную Lumi Coin, отменить нельзя.",Lumi Coin bilan to‘langan bronni bekor qilib bo‘lmaydi.,Bookings paid with Lumi Coin cannot be cancelled.
 new_coins_shortfall_title,Не хватает {} Lumi Coin,{} Lumi Coin yetmaydi,You are {} Lumi Coin short
 new_coins_shortfall_body,"Нужно {} Lumi Coin, а у вас {}.","{} Lumi Coin kerak, sizda esa {}.",This booking needs {} Lumi Coin and you have {}.
@@ -1471,20 +891,11 @@ new_coins_err_pack_inactive,Этот пакет больше не продаёт
 new_coins_err_insufficient,Недостаточно Lumi Coin для этой брони.,Bu bron uchun Lumi Coin yetarli emas.,Not enough Lumi Coin for this booking.
 new_coins_err_exclusive,"Lumi Coin нельзя совмещать с промокодом, кошельком или пакетом.","Lumi Coin promokod, hamyon yoki paket bilan birga ishlatilmaydi.","Lumi Coin cannot be combined with a promocode, the wallet or a packet."
 new_coins_days,{} дн.,{} kun,{} days
-new_coins_save_badge,−{}%,−{}%,−{}%
-new_coins_first_pack_banner,+{} Lumi Coin в подарок к первому пакету,Birinchi paketga +{} Lumi Coin sovg‘a,+{} Lumi Coin free with your first pack
-new_coins_buy_cta,Купить {} Lumi Coin · {},{} Lumi Coin · {} — sotib olish,Buy {} Lumi Coin · {}
 new_coins_top_up_cta,Пополнить Lumi Coin,Lumi Coin to‘ldirish,Top up Lumi Coin
-new_coins_to_pay,К оплате,To‘lanadi,To pay
 new_coins_your_balance,Ваш баланс,Balansingiz,Your balance
-new_coins_not_charged,Lumi Coin не списываются — оплачено пакетом.,Lumi Coin yechilmaydi — paket hisobidan to‘langan.,No Lumi Coin are taken — paid by your packet.
-new_coins_tab_packs,Пакеты,Paketlar,Packs
 new_coins_tab_mine,Мои коины,Mening coinlarim,My coins
 new_coins_hero_subtitle,Покупайте Lumi Coin пакетами и оплачивайте ими занятия,Lumi Coin paketlarini oling va mashg‘ulotlar uchun ular bilan to‘lang,Buy Lumi Coin in packs and pay for activities with them
-new_coins_step1,Выберите пакет Lumi Coin,Lumi Coin paketini tanlang,Choose a Lumi Coin pack
-new_coins_step2,Оплатите — коины сразу на балансе,To‘lang — coinlar darhol balansda,Pay — coins land on your balance
 new_coins_step3,Оплачивайте занятия коинами вместо денег,Mashg‘ulotlar uchun pul o‘rniga coin bilan to‘lang,Pay for activities with coins instead of money
-new_coins_price_label,Цена пакета,Paket narxi,Pack price
 new_coins_buy_btn,Купить,Sotib olish,Buy
 new_coins_change_btn,Сменить тариф,Tarifni o'zgartirish,Change plan
 new_coins_current_plan,Ваш текущий тариф,Joriy tarifingiz,Your current plan
@@ -1492,15 +903,10 @@ new_coins_current_badge,Текущий,Joriy,Current
 new_coins_change_subscription,Сменить подписку,Obunani o'zgartirish,Change subscription
 new_coins_history_more,Показать ещё,Yana ko‘rsatish,Show more
 new_coins_tx_refund,Возврат за отменённую бронь,Bekor qilingan bron uchun qaytarildi,Refund for a cancelled booking
-new_coins_bonus_card_chip,+{} при оплате картой,+{} karta orqali,+{} with card
 new_coins_pack_includes,Что входит в пакет,Paketga nimalar kiradi,What's in the pack
 new_coins_feat_coins_title,Коины в пакете,Paketdagi coinlar,Coins in the pack
-new_coins_feat_bonus_title,Подарок к первому пакету,Birinchi paket sovg‘asi,First pack gift
-new_coins_feat_bonus_body,Начисляется один раз при оплате картой,Karta orqali to‘laganda bir marta beriladi,Added once when you pay by card
 new_coins_feat_valid_title,Срок действия,Amal qilish muddati,Validity
 new_coins_feat_valid_body,Коины действуют {} дн. со дня покупки,Coinlar xarid kunidan boshlab {} kun amal qiladi,Coins are valid for {} days from purchase
-new_coins_feat_per_coin_title,Цена одного коина,Bir coin narxi,Price per coin
-new_coins_feat_per_coin_body,Экономия {}% на каждом коине,Har bir coinda {}% tejaysiz,Save {}% on every coin
 new_coins_feat_carry_title,Остаток переходит дальше,Qoldiq yangi paketga o‘tadi,Leftovers carry over
 new_coins_feat_carry_body,Купите новый основной пакет — неиспользованные коины перейдут на его срок,Yangi asosiy paket olsangiz — ishlatilmagan coinlar uning muddatiga o‘tadi,Buy a new main pack and unused coins move to its date
 new_coins_feat_extra_title,Пополнение к основному пакету,Asosiy paketga qo‘shimcha,Top-up for your main pack
@@ -1516,7 +922,6 @@ saved_empty_desc,Нажмите на сердечко у занятия или �
 activities_count,{} занятий,{} mashg'ulot,{} activities
 child_interests_title,Чем увлекается ваш ребёнок?,Farzandingiz nimaga qiziqadi?,What is your child into?
 parent_needs_title,Что вы ищете для ребёнка?,Farzandingiz uchun nima qidiryapsiz?,What are you looking for for your child?
-child_interests_required,Выберите хотя бы один вариант,Kamida bittasini tanlang,Pick at least one
 for_child,Для {},{} uchun,For {}
 home_discounts_title,Со скидкой,Chegirma bilan,On sale
 home_centres_title,Центры рядом,Yaqin markazlar,Centres nearby
@@ -1559,9 +964,6 @@ map_radius_all,Все,Hammasi,All
 map_radius_m,{} м,{} m,{} m
 map_radius_km,{} км,{} km,{} km
 filter_class_time,Время занятия,Mashg'ulot vaqti,Class time
-time_morning,Утро,Ertalab,Morning
-time_afternoon,День,Kunduzi,Afternoon
-time_evening,Вечер,Kechqurun,Evening
 map_list,Списком,Ro'yxat,List
 map_reset,Сбросить,Tozalash,Reset
 subscription_ribbon,В подписке,Obunada,In plan
