@@ -96,9 +96,7 @@ class NewCoinsPurchaseController with WidgetsBindingObserver {
   PromocodePreview? _promoFor(NewCoinPurchase purchase) {
     final pack = purchase.pack;
     final held = _packPromo;
-    return held != null && held.packId == pack.id
-        ? held.preview
-        : null;
+    return held != null && held.packId == pack.id ? held.preview : null;
   }
 
   /// What [purchase] costs once its promocode (if any) is taken off.

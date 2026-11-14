@@ -407,8 +407,10 @@ class _NewCoinArtState extends State<NewCoinArt>
   }
 }
 
-/// The top of one pack's page: the coin, the pack's name, what it costs, and
-/// a pill with the two numbers that define it — how many coins, for how long.
+/// The top of one pack's page. What the pack gives leads: the coin count is
+/// the headline, with how long the coins last beside it. The pack's name and
+/// price are labels above and below it — the price is repeated on the Buy bar,
+/// so it does not need to compete with the count here.
 class NewCoinPackHeader extends StatelessWidget {
   const NewCoinPackHeader({
     super.key,
@@ -428,6 +430,7 @@ class NewCoinPackHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = context.colors.textPrimary.withValues(alpha: 0.6);
     return Column(
       children: [
         NewCoinArt(tone: tone),
@@ -440,11 +443,7 @@ class NewCoinPackHeader extends StatelessWidget {
                 pack.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.phone32.copyWith(
-                  fontSize: 30.sp,
-                  fontWeight: FontWeight.w800,
-                  color: context.colors.textPrimary,
-                ),
+                style: AppText.bold18.copyWith(color: muted),
               ),
             ),
             if (isCurrent) ...[
@@ -456,51 +455,38 @@ class NewCoinPackHeader extends StatelessWidget {
             ],
           ],
         ),
-        4.kh,
-        Text(
-          pack.price.toRawUzsPrice(),
-          style: AppText.semibold16.copyWith(
-              color: context.colors.textPrimary.withValues(alpha: 0.7)),
-        ),
-        14.kh,
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
-          decoration: BoxDecoration(
-            // Paper on the wash, the same move the top pills make.
-            color: context.colors.coinPanel.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(40.r),
+        6.kh,
+        // The headline: how many coins this pack puts on the balance.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: CoinAmount(
+            amount: pack.coins,
+            style: AppText.phone32.copyWith(
+              fontSize: 44.sp,
+              fontWeight: FontWeight.w800,
+              height: 1.1,
+            ),
+            color: context.colors.textPrimary,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+        ),
+        8.kh,
+        // What it costs, and for how long — "159 000 so'm / 30 kun".
+        Text.rich(
+          TextSpan(
+            text: pack.price.toRawUzsPrice(),
             children: [
-              CoinAmount(
-                amount: pack.coins,
-                style: AppText.semibold14,
-                color: context.colors.textPrimary,
-              ),
-              if (pack.validDays > 0) ...[
-                8.kw,
-                Text(
-                  '·',
-                  style: AppText.semibold14.copyWith(color: AppColors.inkMuted),
+              if (pack.validDays > 0)
+                TextSpan(
+                  text:
+                      ' / ${'new_coins_days'.tr(args: ['${pack.validDays}'])}',
                 ),
-                8.kw,
-                // Flexible, so a long translation of the deadline shortens
-                // instead of pushing the saving chip off the end of the pill.
-                // The coin amount and the chip are the two figures that must
-                // stay whole; this one reads fine clipped.
-                Flexible(
-                  child: Text(
-                    'new_coins_days'.tr(args: ['${pack.validDays}']),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.semibold14
-                        .copyWith(color: context.colors.textPrimary),
-                  ),
-                ),
-              ],
             ],
           ),
+          // On the Text, not the span: one style for the whole line, and the
+          // colour where the stage-contrast test reads it.
+          style: AppText.semibold16.copyWith(color: muted),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -697,9 +683,15 @@ class NewCoinsBuyBar extends StatelessWidget {
     this.label,
     this.isCurrent = false,
     this.onChangePlan,
+    this.onHelp,
   });
 
   final NewCoinTone tone;
+
+  /// "How do coins work?" — a quiet text link over the button that opens the
+  /// coin FAQ screen. Not a second button: Buy stays
+  /// the one action. Null hides it (the checkout page has no FAQ).
+  final VoidCallback? onHelp;
 
   /// The button's word. Null is "Buy".
   final String? label;
@@ -753,6 +745,48 @@ class NewCoinsBuyBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (dots != null) ...[dots, 14.kh],
+          if (onHelp != null) ...[
+            // A pill, dressed like the balance pill over the shelf: paper on
+            // the wash with a hairline of ink, so the words hold against any
+            // pack's colour in either theme.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onHelp,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(12.w, 8.h, 8.w, 8.h),
+                decoration: BoxDecoration(
+                  color: context.colors.coinPanel.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(40.r),
+                  border: Border.all(
+                    color: context.colors.textPrimary.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.help_outline_rounded,
+                      size: 18.w,
+                      color: tone.accent,
+                    ),
+                    6.kw,
+                    Text(
+                      'new_coins_faq_link'.tr(),
+                      style: AppText.semibold14
+                          .copyWith(color: context.colors.textPrimary),
+                    ),
+                    2.kw,
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18.w,
+                      color: context.colors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            12.kh,
+          ],
           GestureDetector(
             onTap: isLoading
                 ? null

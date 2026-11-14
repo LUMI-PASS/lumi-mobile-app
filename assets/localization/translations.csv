@@ -39,17 +39,15 @@ faq,Часто задаваемые вопросы,Ko'p beriladigan savollar,FAQ
 faq_q1,В каких городах работает LUMI?,LUMI qaysi shaharlarda ishlaydi?,Which cities does LUMI operate in?
 faq_a1,"Пока работает в Ташкенте; в скором времени планируется расширение на другие города. Загрузите приложение, чтобы быть в курсе новостей.",Hozircha Toshkentda ishlaydi; tez orada boshqa shaharlarga kengayish rejasi bor. Yangiliklar uchun ilovani yuklab oling.,Currently operating in Tashkent; expansion to other cities is planned soon. Download the app to stay updated.
 faq_q2,Регистрация и поиск бесплатны?,Ro'yxatdan o'tish va qidiruv bepulmi?,Is registration and search free?
-faq_a2,"Да, совершенно бесплатно. Пользователи платят только за выбранные занятия — без дополнительных сборов или подписок.","Ha, mutlaqo bepul. Foydalanuvchilar faqat tanlagan mashg'ulotlari uchun to'laydi — qo'shimcha to'lov yoki obuna yo'q.","Yes, completely free. Users only pay for selected activities — no additional fees or subscriptions."
+faq_a2,"Да, регистрация и поиск бесплатны. Платите только за занятия: курсы оплачиваются деньгами, а разовые занятия — коинами из пакета Lumi Coin.","Ha, ro‘yxatdan o‘tish va qidiruv bepul. Faqat mashg‘ulotlar uchun to‘laysiz: kurslar pul bilan, bir martalik mashg‘ulotlar esa Lumi Coin paketidagi coinlar bilan to‘lanadi.","Yes, registration and search are free. You only pay for classes: courses are paid with money, and single activities with coins from a Lumi Coin pack."
 faq_q3,Как производится оплата?,To'lov qanday amalga oshiriladi?,How is payment processed?
 faq_a3,"Оплата производится прямо в приложении через банковскую карту или мобильный кошелёк (Payme, Click).","To'lovlar ilova ichida bank kartasi yoki mobil hamyon (Payme, Click) orqali amalga oshiriladi.","Payments are made within the app via bank card or mobile wallet (Payme, Click)."
 faq_q4,"Если я отменю бронирование, вернут ли деньги?","Bron qilingan mashg'ulotni bekor qilsam, pul qaytadimi?","If I cancel a booking, will I get a refund?"
-faq_a4,"Да, полный возврат средств; действуют условия по срокам отмены.","Ha, to'liq qaytariladi; bekor qilish muddatiga oid shartlar qo'llaniladi.","Yes, full refunds apply; cancellation timing conditions apply."
+faq_a4,"Для бронирований, оплаченных деньгами, — да, средства возвращаются полностью с учётом сроков отмены. По вопросам о бронированиях, оплаченных коинами, напишите в поддержку.","Pul bilan to‘langan bronlar uchun — ha, bekor qilish muddatlariga ko‘ra mablag‘ to‘liq qaytariladi. Coin bilan to‘langan bronlar bo‘yicha qo‘llab-quvvatlash xizmatiga yozing.","For bookings paid with money — yes, a full refund applies, subject to cancellation timing. For bookings paid with coins, please contact support."
 faq_q5,Как проверяются партнёры?,Hamkorlar qanday tekshiriladi?,How are partners verified?
 faq_a5,"Команда LUMI проверяет документы, стандарты безопасности и оборудование — в список включаются только одобренные центры.","LUMI jamoasi hujjatlarni, xavfsizlik standartlarini va jihozlarni tekshiradi; faqat tasdiqlangan joylar ro'yxatga olinadi.","The LUMI team verifies documentation, safety standards, and equipment; only approved venues are listed."
 faq_q6,Как найти занятия по возрасту ребёнка?,Bolaning yoshiga mos mashg'ulotni qanday topaman?,How do I find age-appropriate activities for my child?
 faq_a6,Используйте возрастные фильтры при поиске или добавьте профиль ребёнка для персональных рекомендаций.,Yosh filtrlari yordamida qidiring yoki shaxsiylashtirilgan tavsiyalar olish uchun bola profilini qo'shing.,"Use age filters to search, or add a child profile to receive personalized recommendations."
-faq_q7,Можно ли использовать LUMI через Telegram?,Telegram'dan foydalanish mumkinmi?,Can I use LUMI via Telegram?
-faq_a7,"Да, приложение доступно как Telegram Mini App — без отдельной установки.","Ha, alohida o'rnatmasdan Telegram Mini App sifatida mavjud.","Yes, it is available as a Telegram Mini App without a separate installation."
 log_out,Выйти,Chiqish,Log Out
 log_out_subtitle,До скорой встречи,Tez orada ko'rishguncha,See you soon
 my_children,Мои дети,Farzandlarim,My Children
@@ -916,6 +914,20 @@ onb4_point1,Рядом с домом,Uyingizga yaqin,Close to home
 onb4_point2,По возрасту,Yoshiga mos,Right for their age
 onb4_point3,По интересам,Qiziqishiga koʻra,Based on interests
 onb4_start,Начали!,Boshladik!,Let's start!
+new_coins_faq_link,Как работают коины?,Coinlar qanday ishlaydi?,How do coins work?
+new_coins_faq_title,Вопросы и ответы,Savol va javoblar,Questions and answers
+new_coins_faq_q1,Что такое Lumi Coin?,Lumi Coin nima?,What is Lumi Coin?
+new_coins_faq_a1,Это внутренняя валюта Lumi. Вы покупаете пакет коинов и оплачиваете ими занятия вместо денег.,Bu Lumi ichki valyutasi. Siz coinlar paketini sotib olasiz va mashg‘ulotlar uchun pul o‘rniga ular bilan to‘laysiz.,It is Lumi’s in-app currency. You buy a pack of coins and pay for activities with them instead of money.
+new_coins_faq_q2,Сколько коинов стоит одно занятие?,Bitta mashg‘ulot necha coin turadi?,How many coins does one activity cost?
+new_coins_faq_a2,Цена в коинах зависит от стоимости занятия — вы увидите её при записи.,Coindagi narx mashg‘ulot narxiga bog‘liq — uni bron qilish paytida ko‘rasiz.,The coin price depends on the activity’s price — you will see it when you book.
+new_coins_faq_q3,Можно ли записывать по одному пакету нескольких детей?,Bitta paket bilan bir nechta bola uchun bron qilish mumkinmi?,Can I book several children with one pack?
+new_coins_faq_a3,"Да. Коины хранятся на вашем аккаунте, и ими можно записать любого из ваших детей.",Ha. Coinlar sizning hisobingizda saqlanadi va ular bilan istalgan farzandingiz uchun bron qilishingiz mumkin.,"Yes. Coins are kept on your account, and you can book any of your children with them."
+new_coins_faq_q4,Что будет с неиспользованными коинами?,Ishlatilmagan coinlar nima bo‘ladi?,What happens to unused coins?
+new_coins_faq_a4,"Коины действуют до конца срока пакета, и первыми списываются те, что сгорают раньше. Если купить новый основной пакет, оставшиеся коины перейдут на его срок.","Coinlar paket muddati tugaguncha amal qiladi, avval muddati oldinroq tugaydiganlari sarflanadi. Yangi asosiy paket olsangiz, qolgan coinlar uning muddatiga o‘tadi.","Coins are valid until the pack’s end date, and the ones expiring soonest are spent first. Buy a new main pack and your leftover coins move to its date."
+new_coins_faq_q5,"Что делать, если коины закончились раньше срока?",Coinlar muddatidan oldin tugab qolsa-chi?,What if I run out of coins early?
+new_coins_faq_a5,"Пока действует основной пакет, можно докупить дополнительный пакет. Или купите новый основной пакет.",Asosiy paket amal qilayotgan paytda qo‘shimcha paket sotib olish mumkin. Yoki yangi asosiy paket oling.,While your main pack is active you can buy an extra pack. Or buy a new main pack.
+new_coins_faq_q6,Можно ли оплатить коинами курс или пробное занятие?,Kurs yoki sinov darsini coin bilan to‘lash mumkinmi?,Can I pay for a course or a trial lesson with coins?
+new_coins_faq_a6,"Нет. Коинами оплачиваются разовые занятия, а курсы и пробные занятия — деньгами.","Yo‘q. Coinlar bilan bir martalik mashg‘ulotlar to‘lanadi, kurslar va sinov darslari esa pul bilan.",No. Coins pay for single activities; courses and trial lessons are paid with money.
 invalid_credentials,Неверный логин или пароль.,Login yoki parol noto‘g‘ri.,Invalid login or password.
 invalid_code,Неверный код подтверждения,Noto'g'ri tasdiqlash kodi,Incorrect code confirmation
 check_internet_connection,Проверьте подключение к интернету!,Internetga ulanishni tekshiring!,Check your internet connection!

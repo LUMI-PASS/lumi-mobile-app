@@ -18,6 +18,7 @@ import 'package:lumi_pass/domain/repo/new_coins/new_coins_repository.dart';
 import 'package:lumi_pass/presentation/app/cubit/app_cubit.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_history_page.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_checkout_page.dart';
+import 'package:lumi_pass/presentation/app/new_coins/new_coins_faq_page.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_purchase_controller.dart';
 import 'package:lumi_pass/presentation/app/new_coins/new_coins_success_page.dart';
 import 'package:lumi_pass/presentation/app/new_coins/widgets/new_coins_widgets.dart';
@@ -436,7 +437,8 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                   // Тарифы tab the tabs scaffold runs `extendBody: true`,
                   // which reports the nav pill's height here, so the bar —
                   // and this inset above it — clear the pill too.
-                  bottom: MediaQuery.of(context).padding.bottom + 150.h,
+                  // 195, not 150: the FAQ pill sits over Buy too.
+                  bottom: MediaQuery.of(context).padding.bottom + 195.h,
                 ),
                 child: Stack(
                   children: [
@@ -514,6 +516,7 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                   label: _isChange(pack) ? 'new_coins_change_btn'.tr() : null,
                   isLoading: _purchasing == pack.id,
                   onBuy: busy ? null : () => _buy(NewCoinPurchase.pack(pack)),
+                  onHelp: _openFaq,
                   dots: shelf.length > 1
                       ? NewCoinsDots(count: shelf.length, active: active)
                       : null,
@@ -613,6 +616,14 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     );
   }
 
+  /// The buy bar's "How do coins work?": the coin questions on a screen of
+  /// their own, laid out like the profile FAQ — the shelf stays the packs.
+  void _openFaq() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NewCoinsFaqPage()),
+    );
+  }
+
   /// What the buyer holds: the balance, the deadlines behind it, and under
   /// them every movement that led there — in a sheet over the shelf.
   void _openMine() {
@@ -647,16 +658,39 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                   ),
                 ),
                 18.kh,
-                Text(
-                  'new_coins_tab_mine'.tr(),
-                  style: AppText.semibold18.copyWith(color: c.textSection),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'new_coins_tab_mine'.tr(),
+                        style: AppText.bold18.copyWith(color: c.textPrimary),
+                      ),
+                    ),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => Navigator.of(sheetContext).pop(),
+                      child: Container(
+                        width: 32.w,
+                        height: 32.w,
+                        decoration: BoxDecoration(
+                          color: c.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 18.sp,
+                          color: c.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 12.kh,
                 NewCoinsBalanceCard(balance: _balance),
                 20.kh,
                 Text(
                   'new_coins_history'.tr(),
-                  style: AppText.semibold18.copyWith(color: c.textSection),
+                  style: AppText.bold18.copyWith(color: c.textPrimary),
                 ),
                 12.kh,
                 const NewCoinsHistoryList(),
