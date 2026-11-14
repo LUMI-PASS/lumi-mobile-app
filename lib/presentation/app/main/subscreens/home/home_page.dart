@@ -3,6 +3,7 @@ import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -523,7 +524,8 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
     final textBlock = (list.any(_showsPrice) ? priceBlock : 84.0) * textScale;
     // Carded on a coloured panel, like "Obunaga kiradi", so the card adds its
     // own frame around the photo and text.
-    final rowH = cardImgH + 14.h + textBlock.h + HomeCourseCard.cardedExtraHeight;
+    final rowH =
+        cardImgH + 14.h + textBlock.h + HomeCourseCard.cardedExtraHeight;
     void openAll() => context.router.push(
           forChildren
               ? InterestsGridRoute(title: 'based_on_interests'.tr())
@@ -973,6 +975,11 @@ class _ConnectionErrorView extends StatelessWidget {
 /// Owns the feed's scroll controller so the Home tab can send it back to the
 /// top — see [homeScrollToTop]. [HomePage] is a stateless [BasePage], so the
 /// controller needs a State of its own to live and be disposed in.
+///
+/// Also floats a "back to top" button over the feed. It appears only once the
+/// parent is a screen or more down AND starts scrolling back up — the moment
+/// they are heading for the top anyway — and hides again on the way down or
+/// once the top is near, so it never sits over the cards while browsing.
 class _ScrollsToTop extends StatefulWidget {
   const _ScrollsToTop({required this.builder});
 
@@ -985,17 +992,38 @@ class _ScrollsToTop extends StatefulWidget {
 class _ScrollsToTopState extends State<_ScrollsToTop> {
   final _controller = ScrollController();
 
+  /// Whether the "back to top" button is showing.
+  bool _showUp = false;
+
   @override
   void initState() {
     super.initState();
     homeScrollToTop.addListener(_toTop);
+    _controller.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     homeScrollToTop.removeListener(_toTop);
+    _controller.removeListener(_onScroll);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_controller.hasClients) return;
+    final position = _controller.position;
+    final deep = position.pixels > position.viewportDimension;
+    var show = _showUp;
+    if (!deep) {
+      show = false;
+    } else if (position.userScrollDirection == ScrollDirection.forward) {
+      // Finger moving down the screen: the feed is heading back to its top.
+      show = true;
+    } else if (position.userScrollDirection == ScrollDirection.reverse) {
+      show = false;
+    }
+    if (show != _showUp) setState(() => _showUp = show);
   }
 
   void _toTop() {
@@ -1012,5 +1040,76 @@ class _ScrollsToTopState extends State<_ScrollsToTop> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(_controller);
+  Widget build(BuildContext context) {
+    // `padding`, not `viewPadding`: the tabs scaffold runs `extendBody: true`,
+    // so this carries the nav pill's height and the button clears the bar.
+    final bottom = MediaQuery.of(context).padding.bottom;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.builder(_controller),
+        Positioned(
+          right: 16.w,
+          bottom: bottom + 16.h,
+          child: IgnorePointer(
+            ignoring: !_showUp,
+            child: AnimatedScale(
+              scale: _showUp ? 1 : 0.6,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutBack,
+              child: AnimatedOpacity(
+                opacity: _showUp ? 1 : 0,
+                duration: const Duration(milliseconds: 180),
+                child: _ScrollUpButton(onTap: _toTop),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The round brand-purple "back to top" button floating over the feed.
+///
+/// Fixed brand ink (`brandPurple` / `onBrand`): it is the same purple in both
+/// themes, like the app's other primary actions.
+class _ScrollUpButton extends StatelessWidget {
+  const _ScrollUpButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: Container(
+          width: 48.w,
+          height: 48.w,
+          decoration: BoxDecoration(
+            color: AppColors.brandPurple,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.brandPurple.withValues(alpha: 0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.keyboard_arrow_up_rounded,
+            size: 28.w,
+            color: AppColors.onBrand,
+          ),
+        ),
+      ),
+    );
+  }
 }
