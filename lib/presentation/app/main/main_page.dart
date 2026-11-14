@@ -16,6 +16,9 @@ import 'package:lumi_pass/presentation/app/main/widgets/profile_prompt_banner.da
 /// `routes` list in [_MainPageState.build] and `_tabs` in [CustomBottomBar].
 const int profileTabIndex = 4;
 
+/// Index of the search tab — what an empty bookings list sends the parent to.
+const int searchTabIndex = 1;
+
 /// Switches the bottom nav to the Profile tab. Callable from anywhere inside a
 /// tab (e.g. the Home header), since it walks up to [MainPage]'s tabs router.
 void openProfileTab(BuildContext context) =>
@@ -97,25 +100,25 @@ class _MainPageState extends State<MainPage> {
     // Subscribe to locale changes so the bottom nav labels update immediately.
     context.locale;
 
-    // Order — Home · Search · Video · Tariffs · Profile. Search is second
+    // Order — Home · Search · Bookings · Tariffs · Profile. Search is second
     // because it is the other way into the same catalog the home feed lists,
     // so it belongs next to it. It took the map's place: the map is the first
     // thing on that screen rather than a tab of its own. `Muassasalar` (the
     // centres tab, `SearchPage`) is off the bar for now — the section is still
     // a coming-soon card, and the centres it would have shown are on the map.
     //
-    // The fourth slot is the Lumi Coin shelf (`Тарифы`), not the booking list
-    // it used to be: the packs are what an activity is paid with, so that is
-    // the screen worth a permanent place on the bar. `CalendarRoute` is off
-    // the bar and out of the router — bookings live behind Profile's "Мои
-    // брони" (`MyBookingsRoute`), which is where a push notification and
-    // `lumi://calendar` now land too. The page and its widgets stay put, so
-    // putting the tab back is a one-line change here, in `_tabs`, and in the
-    // router's `MainRoute` children.
+    // The third slot is the booking list (`Bronlar`, `MyBookingsRoute` — the
+    // same screen Profile's "Bronlarim" tile opens), in the place the Shorts
+    // feed held. Shorts is off the bar for now; Home's "view as reels" pushes
+    // `ShortsRoute` instead. Putting it back is a change here, in `_tabs`, in
+    // the router's `MainRoute` children and in `DeepLinkRoutes._tab*`.
+    //
+    // The fourth slot is the Lumi Coin shelf (`Тарифы`). `CalendarRoute`, the
+    // older booking tab, stays out of the router.
     final routes = <PageRouteInfo>[
       const HomeRoute(),
       const SearchCategoriesRoute(),
-      const ShortsRoute(),
+      const MyBookingsRoute(),
       NewCoinsRoute(),
       ProfileRoute(),
     ];

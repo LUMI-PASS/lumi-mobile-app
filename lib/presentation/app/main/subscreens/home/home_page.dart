@@ -40,9 +40,6 @@ import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_c
 import 'package:lumi_pass/presentation/app/main/subscreens/shorts/shorts_feed.dart';
 import 'package:lumi_pass/presentation/auth/interests/parent_interests_page.dart';
 
-// Tab index of the Shorts tab inside the main AutoTabsScaffold.
-const int _kShortsTabIndex = 2;
-
 @RoutePage()
 class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
   const HomePage({super.key});
@@ -915,7 +912,9 @@ class HomePage extends BasePage<HomeCubit, HomeBuildable, HomeListenable> {
 
   void _openShorts(BuildContext context, List<HomClass> feed, int index) {
     ShortsFeed.set(feed, index);
-    context.tabsRouter.setActiveIndex(_kShortsTabIndex);
+    // Shorts is off the bottom bar for now (Bronlar took its slot), so the
+    // feed is pushed as a full screen rather than switched to as a tab.
+    context.router.push(const ShortsRoute());
   }
 }
 

@@ -12,9 +12,9 @@ import 'package:lumi_pass/common/styles/app_gradients.dart';
 import 'package:lumi_pass/common/styles/app_text_styles.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/data/api_model/order/course_purchase.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 import 'package:lumi_pass/common/widget/purchase_kind_chip.dart';
-import 'package:lumi_pass/common/widget/soft_icon_tile.dart';
 import 'package:lumi_pass/data/api_model/order/user_order.dart';
 import 'package:lumi_pass/di/injection.dart';
 import 'package:lumi_pass/domain/repo/orders/orders_api.dart';
@@ -94,29 +94,6 @@ class BookingCard extends StatelessWidget {
   const BookingCard({super.key, required this.order});
 
   final UserOrder order;
-
-  /// One accent per KIND of fact, held still across every card: when is always
-  /// violet, where is always blue, money is always green. Colour is then a
-  /// second index into the card — the eye finds the price without reading the
-  /// labels — which only works while the mapping never moves.
-  static const _accentWhen = AppColors.lightPurple;
-  static const _accentWhere = AppColors.link;
-  static const _accentMoney = AppColors.green;
-  static const _accentWho = AppColors.brandPink;
-
-  /// "22 апр. 09:55" — day + short month + time.
-  String _dateTime(String? iso) {
-    if (iso == null || iso.isEmpty) return '';
-    try {
-      final d = DateTime.parse(iso).toLocal();
-      final month = 'month_short_${d.month}'.tr();
-      final hh = d.hour.toString().padLeft(2, '0');
-      final mm = d.minute.toString().padLeft(2, '0');
-      return '${d.day} $month $hh:$mm';
-    } catch (_) {
-      return '';
-    }
-  }
 
   /// "22 апр" — day + short month.
   String _dateOnly(String? iso) {
@@ -210,25 +187,31 @@ class BookingCard extends StatelessWidget {
                         order.activityName ?? 'Class',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppText.semibold16.copyWith(color: c.textPrimary),
+                        style:
+                            AppText.semibold16.copyWith(color: c.textPrimary),
                       ),
-                      // WHAT was bought. Three products come through one
-                      // checkout and land on this same card, where a term-long
-                      // enrolment and a single visit differed only by price.
+                      // The status sits under the title, not beside it: a pill
+                      // at the row's end squeezed a two-line title into three.
+                      // The kind chip joins it only for a course or a trial —
+                      // a single lesson is the ordinary case, and a
+                      // "Mashg'ulot" chip on every card said nothing.
                       6.kh,
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: PurchaseKindChip(
-                          kind: order.coursePurchase,
-                          subcourseName: order.subcourseName,
-                          compact: true,
-                        ),
+                      Wrap(
+                        spacing: 6.w,
+                        runSpacing: 6.h,
+                        children: [
+                          _StatusBadge(status: order.effectiveDisplayStatus),
+                          if (order.coursePurchase != CoursePurchase.none)
+                            PurchaseKindChip(
+                              kind: order.coursePurchase,
+                              subcourseName: order.subcourseName,
+                              compact: true,
+                            ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                8.kw,
-                _StatusBadge(status: order.effectiveDisplayStatus),
               ],
             ),
             16.kh,
@@ -241,7 +224,6 @@ class BookingCard extends StatelessWidget {
                 icon: Assets.icons.detail.babyGirl,
                 label: _ageRange(),
                 value: '${order.totalSeats}',
-                accent: _accentWho,
               ),
               12.kh,
             ],
@@ -256,7 +238,6 @@ class BookingCard extends StatelessWidget {
                 _InfoRow(
                   icon: Assets.icons.detail.icCalendar,
                   label: 'course_next_lesson'.tr(),
-                  accent: _accentWhen,
                   value: _lessonWhen(order.nextLesson!),
                 ),
                 12.kh,
@@ -264,7 +245,6 @@ class BookingCard extends StatelessWidget {
               _InfoRow(
                 icon: Assets.icons.time,
                 label: 'course_ends_on'.tr(),
-                accent: _accentWhen,
                 value: _dateOnly(order.endDate),
               ),
               12.kh,
@@ -277,14 +257,12 @@ class BookingCard extends StatelessWidget {
               _InfoRow(
                 icon: Assets.icons.detail.icCalendar,
                 label: 'filter_start_date'.tr(),
-                accent: _accentWhen,
                 value: _dateOnly(order.startDate),
               ),
               12.kh,
               _InfoRow(
                 icon: Assets.icons.detail.icCalendar,
                 label: 'filter_end_date'.tr(),
-                accent: _accentWhen,
                 value: _dateOnly(order.endDate),
               ),
               12.kh,
@@ -296,7 +274,6 @@ class BookingCard extends StatelessWidget {
                 _InfoRow(
                   icon: Assets.icons.time,
                   label: 'order_time'.tr(),
-                  accent: _accentWhen,
                   value: order.displayTimeRange!,
                 ),
                 12.kh,
@@ -305,7 +282,6 @@ class BookingCard extends StatelessWidget {
               _InfoRow(
                 icon: Assets.icons.detail.icCalendar,
                 label: 'order_date'.tr(),
-                accent: _accentWhen,
                 value: _sessionDateTime(),
               ),
               12.kh,
@@ -317,15 +293,19 @@ class BookingCard extends StatelessWidget {
               _InfoRow(
                 icon: Assets.icons.detail.icLocation,
                 label: 'ticket_venue'.tr(),
-                accent: _accentWhere,
                 value: order.branchName!,
               ),
               12.kh,
             ],
             _InfoRow(
-              icon: Assets.icons.detail.iconsaxReceipt,
+              // Coins were paid: the coin itself, not a receipt glyph.
+              icon: order.paidWithNewCoins
+                  ? null
+                  : Assets.icons.detail.iconsaxReceipt,
+              leading: order.paidWithNewCoins
+                  ? Assets.icons.coinLumi.image(width: 22.w, height: 22.w)
+                  : null,
               label: 'order_sum'.tr(),
-              accent: _accentMoney,
               // A promocode or a wallet balance that covered the whole order
               // leaves nothing to charge, and "0 so'm" reads like a bug beside
               // a real booking. Name it for what it is.
@@ -350,14 +330,6 @@ class BookingCard extends StatelessWidget {
               14.kh,
               _PayNowFooter(order: order),
             ],
-            // When the booking was made. Card metadata rather than a detail of
-            // the session itself, so it closes the card a size down and muted —
-            // and no longer sits next to the session date, where two "date"
-            // rows read as a contradiction.
-            if (_dateTime(order.createdAt).isNotEmpty) ...[
-              10.kh,
-              _CreatedLine(value: _dateTime(order.createdAt)),
-            ],
           ],
         ),
       ),
@@ -365,64 +337,42 @@ class BookingCard extends StatelessWidget {
   }
 }
 
-/// The "booking created" footer line — same label/value shape as [_InfoRow],
-/// two points smaller and muted on both sides.
-class _CreatedLine extends StatelessWidget {
-  const _CreatedLine({required this.value});
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'booking_date'.tr(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.regular12.copyWith(color: c.textMuted),
-          ),
-        ),
-        8.kw,
-        Text(
-          value,
-          style: AppText.medium12.copyWith(color: c.textMuted),
-        ),
-      ],
-    );
-  }
-}
-
-/// One fact on a [BookingCard]: a coloured glyph tile, then the answer with
-/// the question under it.
+/// One fact on a [BookingCard]: a plain glyph, then the answer with the
+/// question under it.
 ///
 /// The answer leads and the label follows in muted 12 — on a card the reader
 /// is scanning for "when" and "where", the values are what the eye should
-/// land on, and the old muted-label-dots-bold-value line made every row weigh
-/// the same. The accent is what separates one row from the next at a glance.
+/// land on. The glyphs are one muted colour on no tile: a tinted square per
+/// row, each a different colour, made the card louder than what it said.
 class _InfoRow extends StatelessWidget {
   const _InfoRow({
     required this.label,
     required this.value,
-    required this.accent,
     this.icon,
+    this.leading,
   });
 
   final SvgGenImage? icon;
+
+  /// In place of [icon], for a glyph that is an image — the Lumi Coin.
+  final Widget? leading;
   final String label;
   final String value;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final glyph = leading ??
+        icon?.svg(
+          width: 20.w,
+          height: 20.w,
+          colorFilter: ColorFilter.mode(c.textSecondary, BlendMode.srcIn),
+        );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (icon != null) ...[
-          SoftIconTile(asset: icon, accent: accent),
+        if (glyph != null) ...[
+          SizedBox(width: 24.w, child: Center(child: glyph)),
           12.kw,
         ],
         Expanded(
@@ -451,8 +401,9 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// Booking status pill. Active is a green gradient; the terminal states are
-/// solid (visited=blue, missed=orange, cancelled=red) per Figma 96-3204.
+/// Booking status pill, in the same soft style as the [PurchaseKindChip]
+/// beside it: the status colour as text on a 12% tint of itself. Solid fills
+/// next to a tinted chip read as two different design languages on one row.
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status});
 
@@ -460,41 +411,23 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Gradient? gradient;
-    Color? color;
-    final String label;
-    switch (status.toLowerCase()) {
-      case 'active':
-        gradient = AppGradients.green;
-        label = 'status_active'.tr();
-        break;
-      case 'visited':
-        color = const Color(0xFF497BF1);
-        label = 'status_visited'.tr();
-        break;
-      case 'missed':
-        color = const Color(0xFFEF8E48);
-        label = 'status_missed'.tr();
-        break;
-      case 'canceled':
-      case 'cancelled':
-        color = AppColors.error;
-        label = 'status_canceled'.tr();
-        break;
-      default: // pending
-        color = const Color(0xFFEF8E48);
-        label = 'status_pending'.tr();
-    }
+    final (Color accent, String label) = switch (status.toLowerCase()) {
+      'active' => (AppColors.green, 'status_active'.tr()),
+      'visited' => (AppColors.statusVisited, 'status_visited'.tr()),
+      'missed' => (AppColors.statusMissed, 'status_missed'.tr()),
+      'canceled' || 'cancelled' => (AppColors.error, 'status_canceled'.tr()),
+      _ => (AppColors.statusMissed, 'status_pending'.tr()),
+    };
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
-        gradient: gradient,
-        color: color,
-        borderRadius: BorderRadius.circular(48.r),
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(40.r),
       ),
       child: Text(
         label,
-        style: AppText.medium10.copyWith(color: Colors.white),
+        maxLines: 1,
+        style: AppText.semibold12.copyWith(color: accent),
       ),
     );
   }
@@ -563,7 +496,6 @@ class _PayNowFooterState extends State<_PayNowFooter> {
   }
 }
 
-
 /// How close to the last lesson a course starts asking to be renewed. Matches
 /// the first step of the expiry notification ladder, so the card and the push
 /// never disagree about whether a course is ending.
@@ -586,10 +518,13 @@ class _CourseProgress extends StatelessWidget {
       children: [
         Row(
           children: [
-            const SoftIconTile(
-              asset: null,
-              icon: Icons.school_rounded,
-              accent: AppColors.brandPurple,
+            SizedBox(
+              width: 24.w,
+              child: Icon(
+                Icons.school_rounded,
+                size: 20.w,
+                color: c.textSecondary,
+              ),
             ),
             12.kw,
             Expanded(
@@ -599,8 +534,7 @@ class _CourseProgress extends StatelessWidget {
                 children: [
                   Text(
                     '$done / $total',
-                    style:
-                        AppText.semibold14.copyWith(color: c.textPrimary),
+                    style: AppText.semibold14.copyWith(color: c.textPrimary),
                   ),
                   2.kh,
                   Text(

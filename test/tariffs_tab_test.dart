@@ -53,7 +53,8 @@ void main() {
     expect(names, [
       HomeRoute.name,
       SearchCategoriesRoute.name,
-      ShortsRoute.name,
+      // Bronlar took the Shorts slot; Shorts is pushed from Home for now.
+      MyBookingsRoute.name,
       NewCoinsRoute.name,
       ProfileRoute.name,
     ]);
@@ -78,11 +79,20 @@ void main() {
     expect(entry.tabIndex, 3);
   });
 
-  test('lumi://calendar still lands on a booking list', () {
-    final entry = DeepLinkRoutes.lookup('calendar')!;
-    // No longer a tab, so it pushes the full list that sits behind Profile.
+  test('lumi://calendar and lumi://my-bookings switch to the Bronlar tab',
+      () {
+    for (final key in ['calendar', 'my-bookings']) {
+      final entry = DeepLinkRoutes.lookup(key)!;
+      expect(entry.mode, DeepLinkNavMode.tab);
+      expect(entry.tabIndex, 2);
+    }
+  });
+
+  test('lumi://shorts pushes the feed now that it is off the bar', () {
+    final entry = DeepLinkRoutes.lookup('shorts')!;
     expect(entry.mode, DeepLinkNavMode.root);
-    expect(entry.build, isNotNull);
-    expect(entry.build!({}), isA<MyBookingsRoute>());
+    expect(entry.build!({}), isA<ShortsRoute>());
+    // Registered top-level, so the push has somewhere to go.
+    expect(router.routes.where((r) => r.name == ShortsRoute.name), hasLength(1));
   });
 }

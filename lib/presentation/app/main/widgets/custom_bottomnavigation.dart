@@ -65,7 +65,11 @@ class CustomBottomBar extends StatelessWidget {
   static const Color _figmaGrey = Color(0xFFA5A6BB);
 
   // Tab icon + localization key, per tab:
-  // Главный · Поиск · Видео · Тарифы · Профиль.
+  // Главный · Поиск · Брони · Тарифы · Профиль.
+  //
+  // The third slot is **Bronlar** (`MyBookingsPage`), in the place the Shorts
+  // feed held — Shorts is off the bar for now and opens from Home's
+  // "view as reels" instead.
   //
   // The fourth slot is the **Lumi Coin shelf** (`NewCoinsPage`), labelled
   // `Тарифы / Tariflar` — the packs an activity is paid with. It took the
@@ -80,7 +84,7 @@ class CustomBottomBar extends StatelessWidget {
   static final List<(SvgGenImage, String)> _tabs = [
     (Assets.icons.home.home, 'tab_home'),
     (Assets.icons.home.search, 'search_title'),
-    (Assets.icons.home.video, 'tab_shorts'),
+    (Assets.icons.home.calendar, 'tab_bookings'),
     (Assets.icons.home.money, 'tab_tariffs'),
     (Assets.icons.home.profile, 'tab_profile'),
   ];
@@ -94,7 +98,7 @@ class CustomBottomBar extends StatelessWidget {
   static final List<SvgGenImage> _iosIcons = [
     Assets.icons.home.tabHome,
     Assets.icons.home.tabSearch,
-    Assets.icons.home.tabShorts,
+    Assets.icons.home.tabBookings,
     Assets.icons.home.tabTariffs,
     Assets.icons.home.tabProfile,
   ];
@@ -122,7 +126,7 @@ class CustomBottomBar extends StatelessWidget {
         // PNGs it pre-renders from SVG assets, and hot-reloading a new icon
         // set into the old State draws the stale glyphs. Bump the key when
         // [_iosIcons] changes.
-        key: const ValueKey('cn-tab-bar-iconsax-bulk-15'),
+        key: const ValueKey('cn-tab-bar-iconsax-bulk-16'),
         items: [
           for (var i = 0; i < _tabs.length; i++)
             CNTabBarItem(

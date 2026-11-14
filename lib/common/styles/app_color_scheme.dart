@@ -20,6 +20,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.progressTrack,
     required this.control,
     required this.controlBorder,
+    required this.segmentTrack,
     required this.textPrimary,
     required this.textSecondary,
     required this.textSection,
@@ -102,6 +103,12 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   /// Hairline around a [control].
   final Color controlBorder;
 
+  /// The track of a [SegmentedTabSwitch] — what the unpicked halves sit on.
+  /// Not [control]: in light mode that is a shade off the canvas and the
+  /// track disappeared into the page, so light uses the white card surface;
+  /// dark keeps the control grey, since its surface is the canvas again.
+  final Color segmentTrack;
+
   // ── Text ──────────────────────────────────────────────────────────────────
   /// Headings and body copy. Absorbs the old `black`, `label`, `display` and
   /// `primary01`, which were four barely-distinguishable dark inks.
@@ -178,6 +185,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     progressTrack: AppColors.inkChip,
     control: AppColors.lightControl,
     controlBorder: AppColors.lightControlBorder,
+    segmentTrack: AppColors.white,
     textPrimary: AppColors.ink,
     textSecondary: AppColors.lightTextSecondary,
     textSection: AppColors.inkMuted,
@@ -214,6 +222,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     progressTrack: AppColors.chipGrey,
     control: AppColors.darkControl,
     controlBorder: AppColors.darkControlBorder,
+    segmentTrack: AppColors.darkControl,
     textPrimary: AppColors.white,
     textSecondary: AppColors.darkTextSecondary,
     textSection: AppColors.white,
@@ -263,6 +272,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? progressTrack,
     Color? control,
     Color? controlBorder,
+    Color? segmentTrack,
     Color? textPrimary,
     Color? textSecondary,
     Color? textSection,
@@ -298,6 +308,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       progressTrack: progressTrack ?? this.progressTrack,
       control: control ?? this.control,
       controlBorder: controlBorder ?? this.controlBorder,
+      segmentTrack: segmentTrack ?? this.segmentTrack,
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
       textSection: textSection ?? this.textSection,
@@ -338,6 +349,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       progressTrack: Color.lerp(progressTrack, other.progressTrack, t)!,
       control: Color.lerp(control, other.control, t)!,
       controlBorder: Color.lerp(controlBorder, other.controlBorder, t)!,
+      segmentTrack: Color.lerp(segmentTrack, other.segmentTrack, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       textSection: Color.lerp(textSection, other.textSection, t)!,

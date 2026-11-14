@@ -18,6 +18,11 @@ abstract final class AppColors {
   static const tagGreen = Color(0xFF7FB846);
   static const warning = Color(0xFFF6B53D);
 
+  /// Booking status accents — "Visited" and "Missed". Theme-invariant, like
+  /// [green] and [error] beside them on the same pill.
+  static const statusVisited = Color(0xFF497BF1);
+  static const statusMissed = Color(0xFFEF8E48);
+
   static const inkMuted = Color(0xFFA5A6BB);
   static const inkChip = Color(0xFFEFEEF5);
   static const greeting = Color(0xFF717386);

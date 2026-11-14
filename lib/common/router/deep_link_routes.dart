@@ -85,7 +85,7 @@ abstract final class DeepLinkRoutes {
 
   // Visual tab order — must match `routes` in main_page.dart's AutoTabsScaffold.
   static const int _tabHome = 0;
-  static const int _tabShorts = 2;
+  static const int _tabBookings = 2;
   static const int _tabTariffs = 3;
   static const int _tabProfile = 4;
 
@@ -177,13 +177,15 @@ abstract final class DeepLinkRoutes {
   static final Map<String, DeepLinkRoute> _registry = {
     // ── Tabs ───────────────────────────────────────────────────────────────
     'home': const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabHome),
-    'shorts':
-        const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabShorts),
-    // `calendar` used to be the Броны tab, which the Lumi Coin shelf took
-    // over. Bookings are a pushed screen now, so the link lands on the full
-    // list behind Profile — the same one the booking push notifications open.
+    // Shorts is off the bar for now, so the link pushes the feed.
+    'shorts': DeepLinkRoute(
+      mode: DeepLinkNavMode.root,
+      build: (_) => const ShortsRoute(),
+    ),
+    // `calendar` and `my-bookings` both switch to the Bronlar tab, which took
+    // the Shorts slot.
     'calendar':
-        const DeepLinkRoute(mode: DeepLinkNavMode.root, build: _buildBookings),
+        const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabBookings),
     // `search` used to be the Учреждения tab, which is off the bar for now.
     // The link still has to land somewhere sensible, and what anyone following
     // it wants is the search screen — the same one `discovery` opens.
@@ -268,10 +270,8 @@ abstract final class DeepLinkRoutes {
     ),
 
     // ── Account ────────────────────────────────────────────────────────────
-    'my-bookings': DeepLinkRoute(
-      mode: DeepLinkNavMode.root,
-      build: (_) => const MyBookingsRoute(),
-    ),
+    'my-bookings':
+        const DeepLinkRoute(mode: DeepLinkNavMode.tab, tabIndex: _tabBookings),
     'notifications': DeepLinkRoute(
       mode: DeepLinkNavMode.root,
       build: (_) => const NotificationsRoute(),
@@ -289,14 +289,6 @@ abstract final class DeepLinkRoutes {
       build: (_) => const ReferralRoute(),
     ),
   };
-
-  /// `lumi://calendar` — the booking list. It is no longer a tab (the Lumi
-  /// Coin shelf took that slot), so the link pushes the full list that sits
-  /// behind Profile instead of switching the bar.
-  static PageRouteInfo? _buildBookings(Map<String, String> params) {
-    dlog('build calendar: pushing MyBookingsRoute');
-    return const MyBookingsRoute();
-  }
 
   /// `lumi://class/<id>` — pushes the detail page with a minimal [HomClass].
   /// [ClassDetailPage] calls `_loadFull()` from `initState`, so the full record

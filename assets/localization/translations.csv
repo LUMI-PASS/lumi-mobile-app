@@ -942,6 +942,15 @@ notification_yesterday,Вчера,Kecha,Yesterday
 telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
 server_not_responding_or_timeout,Сервер не отвечает или отвечает слишком долго. Попробуйте позже.,Server javob bermayapti yoki juda sekin javob bermoqda. Keyinroq urinib ko‘ring.,Server is not responding or taking too long. Try again later.
 telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
+how_to_confirm_title,Как подтвердить посещение?,Tashrif qanday tasdiqlanadi?,How is a visit confirmed?
+how_to_confirm_step1,Приходите в центр по указанному адресу к началу занятия,Mashg‘ulot boshlanishiga ko‘rsatilgan manzildagi markazga keling,Come to the centre at the listed address by the start of the lesson
+how_to_confirm_step2,Откройте бронь и назовите номер билета сотруднику центра,Bronni oching va chipta raqamini markaz xodimiga ayting,Open the booking and tell the centre's staff your ticket number
+how_to_confirm_step3,"Центр отметит посещение, и статус брони сменится на «Посещено»",Markaz tashrifni belgilaydi va bron holati «Tashrif buyurilgan»ga o‘zgaradi,"The centre marks your visit, and the booking changes to «Visited»"
+how_to_confirm_note,Без номера билета центр не сможет отметить посещение,Chipta raqamisiz markaz tashrifni belgilay olmaydi,Without the ticket number the centre can't mark your visit
+collapse,Свернуть,Yig‘ish,Collapse
+bookings_empty_upcoming,Запланированных занятий нет,Rejalashtirilgan mashg‘ulotlar yo‘q,No upcoming lessons
+bookings_empty_past,Прошедших занятий нет,O‘tgan mashg‘ulotlar yo‘q,No past lessons
+find_lesson,Найти занятие,Mashg‘ulot topish,Find a lesson
 new_coins_tx_shop,Покупка в Lumi Shop,Lumi Shop’dan xarid,Lumi Shop purchase
 new_coins_tx_shop_refund,Возврат за отменённый заказ,Bekor qilingan buyurtma uchun qaytarildi,Refund for a cancelled order
 new_coins_refunded,Возвращено,Qaytarildi,Refunded

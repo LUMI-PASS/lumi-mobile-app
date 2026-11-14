@@ -752,6 +752,10 @@ class $AssetsIconsHomeGen {
   SvgGenImage get shortcutSaved =>
       const SvgGenImage('assets/icons/home/shortcut_saved.svg');
 
+  /// File path: assets/icons/home/tab_bookings.svg
+  SvgGenImage get tabBookings =>
+      const SvgGenImage('assets/icons/home/tab_bookings.svg');
+
   /// File path: assets/icons/home/tab_home.svg
   SvgGenImage get tabHome =>
       const SvgGenImage('assets/icons/home/tab_home.svg');
@@ -804,6 +808,7 @@ class $AssetsIconsHomeGen {
         shortcutActivities,
         shortcutMap,
         shortcutSaved,
+        tabBookings,
         tabHome,
         tabProfile,
         tabSearch,

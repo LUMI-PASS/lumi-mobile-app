@@ -121,7 +121,11 @@ class AppRouter extends _$AppRouter {
       children: [
         AutoRoute(page: HomeRoute.page),
         AutoRoute(page: SearchCategoriesRoute.page),
-        AutoRoute(page: ShortsRoute.page),
+        // The third tab: the booking list (Bronlar), in the slot Shorts held.
+        // Registered here AND top-level below — as a tab it is a root with
+        // nothing behind it, while Profile's "Bronlarim" tile, the booking
+        // pushes and `lumi://my-bookings` still push it as a screen.
+        AutoRoute(page: MyBookingsRoute.page),
         // The fourth tab: the Lumi Coin shelf, in the slot `CalendarRoute`
         // held. Registered here AND top-level below — as a tab it is the
         // bare shelf, while a push carries arguments (`topUpFor`,
@@ -156,6 +160,8 @@ class AppRouter extends _$AppRouter {
     AutoRoute(page: TicketReceiptRoute.page),
     AutoRoute(page: FiscalReceiptRoute.page),
     AutoRoute(page: MyBookingsRoute.page),
+    // Shorts is off the bar for now; Home's "view as reels" pushes it.
+    AutoRoute(page: ShortsRoute.page),
     AutoRoute(page: WalletRoute.page),
     AutoRoute(page: ReferralRoute.page),
     AutoRoute(page: MyCardsRoute.page),

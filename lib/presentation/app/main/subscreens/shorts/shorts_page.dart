@@ -10,6 +10,7 @@ import 'package:focus_detector/focus_detector.dart';
 import 'package:lumi_pass/common/extensions/date_extensions.dart';
 import 'package:lumi_pass/common/extensions/sizedbox_extensions.dart';
 import 'package:lumi_pass/common/router/app_router.dart';
+import 'package:lumi_pass/common/widget/base_app_bar.dart';
 import 'package:lumi_pass/data/api_model/class_full/class_full_model.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
 import 'package:lumi_pass/data/service/photo_service.dart';
@@ -476,6 +477,11 @@ class _ShortsPageState extends State<ShortsPage> {
     super.dispose();
   }
 
+  /// Asked of the router's type, as `NewCoinsPage` does: `canPop()` from a
+  /// tab walks up to the root router and answers true whenever anything sits
+  /// above the tabs.
+  bool get _isTab => context.router is TabsRouter;
+
   @override
   Widget build(BuildContext context) {
     return FocusDetector(
@@ -497,11 +503,25 @@ class _ShortsPageState extends State<ShortsPage> {
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: _classes.isEmpty
-            ? (_isLoadingDefault
-                ? _buildLoadingState()
-                : _buildEmptyState(context))
-            : _buildFeed(),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            _classes.isEmpty
+                ? (_isLoadingDefault
+                    ? _buildLoadingState()
+                    : _buildEmptyState(context))
+                : _buildFeed(),
+            // Shorts is off the bottom bar for now and is pushed from Home's
+            // "view as reels", so it needs its own way back. As a tab (the
+            // router is a TabsRouter) there is nothing behind it.
+            if (!_isTab)
+              Positioned(
+                top: MediaQuery.of(context).viewPadding.top + 8,
+                left: 0,
+                child: appBarLeading(context),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -591,8 +611,9 @@ class _ShortsPageState extends State<ShortsPage> {
     // Bottom nav bar floats over content (Scaffold.extendBody: true).
     // Reserve its height + a little breathing room so the video and
     // overlays sit fully above the bar.
-    final bottomInset =
-        MediaQuery.of(context).viewPadding.bottom + 56 + 4 + 12;
+    // Pushed (not a tab), there is no bar to clear — only the safe area.
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom +
+        (_isTab ? 56 + 4 + 12 : 12);
     // No YoutubePlayerBuilder here: it exists to support fullscreen, which this
     // surface never enters, and it pins the player under a GlobalKey — which is
     // why the one shared WebView used to be reparented from slide to slide on
