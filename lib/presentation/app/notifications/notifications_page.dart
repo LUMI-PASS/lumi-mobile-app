@@ -189,18 +189,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
             if (_hasUnread)
               Align(
                 alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: _markAllRead,
-                  child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(48.r),
-                    ),
-                    child: Text(
-                      Strings.notificationsMarkAllRead,
-                      style: AppText.medium12.copyWith(color: c.textSecondary),
+                // A double tick, mirroring the back chip on the left. The
+                // words stay as its label for screen readers and long-press.
+                child: Tooltip(
+                  message: Strings.notificationsMarkAllRead,
+                  child: Semantics(
+                    button: true,
+                    label: Strings.notificationsMarkAllRead,
+                    excludeSemantics: true,
+                    child: ControlChip(
+                      onTap: _markAllRead,
+                      width: 36.w,
+                      height: 36.w,
+                      padding: EdgeInsets.zero,
+                      borderWidth: 1.5,
+                      child: Icon(
+                        Icons.done_all_rounded,
+                        size: 18.w,
+                        color: c.textPrimary,
+                      ),
                     ),
                   ),
                 ),
