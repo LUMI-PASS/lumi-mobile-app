@@ -37,6 +37,9 @@ Future<void> enterAppAfterSignIn(BuildContext context) async {
   // left behind.
   await storage.interestsOwed
       .set(storage.needsOnboarding.call() == true ? true : null);
+  // Every successful sign-in — new account or returning — ends on the
+  // tariffs; MainPage shows them once the tabs are up (see showTariffsIntro).
+  await storage.tariffsIntroOwed.set(true);
   await askInterestsIfOwed(router);
   router.replaceAll(const [MainRoute()]);
 }

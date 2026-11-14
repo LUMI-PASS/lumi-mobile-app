@@ -69,6 +69,11 @@ class Storage {
   /// the app on that screen does not let the question go unasked.
   BaseStorage<bool> get interestsOwed => BaseStorage(_box, 'interestsOwed');
 
+  /// The tariffs are owed to whoever just signed in — set on every
+  /// successful sign-in, cleared by MainPage as it shows them.
+  BaseStorage<bool> get tariffsIntroOwed =>
+      BaseStorage(_box, 'tariffsIntroOwed');
+
   BaseStorage<String> get pendingPhone => BaseStorage(_box, 'pendingPhone');
 
   /// The logged-in user's phone number, persisted for the whole session
@@ -111,8 +116,7 @@ class Storage {
 
   /// The ids of the CENTRES the user saved — the other half of the same
   /// shelf, cached and cleared for the same reasons.
-  BaseStorage<List> get savedBranchIds =>
-      BaseStorage(_box, 'saved_branch_ids');
+  BaseStorage<List> get savedBranchIds => BaseStorage(_box, 'saved_branch_ids');
 
   BaseStorage<String> get parentName => BaseStorage(_box, 'parentName');
 
@@ -200,6 +204,7 @@ class Storage {
     // Once-per-user prompts — the next user hasn't seen them.
     await needsOnboarding.set(null);
     await interestsOwed.set(null);
+    await tariffsIntroOwed.set(null);
     await profilePromptDismissed.set(null);
     await isAdSeen.set(null);
 

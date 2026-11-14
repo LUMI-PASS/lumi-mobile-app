@@ -11,6 +11,7 @@ import 'package:lumi_pass/presentation/app/main/widgets/custom_bottomnavigation.
 import 'package:lumi_pass/presentation/app/main/widgets/onboarding_bottomsheet.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/packet_ad_screen.dart';
 import 'package:lumi_pass/presentation/app/main/widgets/profile_prompt_banner.dart';
+import 'package:lumi_pass/presentation/app/new_coins/tariffs_intro.dart';
 
 /// Index of the Profile tab in [MainPage]'s bottom nav. Keep in sync with the
 /// `routes` list in [_MainPageState.build] and `_tabs` in [CustomBottomBar].
@@ -57,8 +58,16 @@ class _MainPageState extends State<MainPage> {
       // A new account's first launch is over once it gets here; nothing
       // reads `needsOnboarding` after this point.
       if (_storage.needsOnboarding.call() == true) {
-        _storage.needsOnboarding.set(false);
+        await _storage.needsOnboarding.set(false);
       }
+      // Every successful sign-in is followed by the tariffs, once — and then
+      // not the packet ad on top of them in the same launch. Cleared BEFORE
+      // they are shown, so an app killed on them does not bring them back.
+      if (_storage.tariffsIntroOwed.call() == true) {
+        await _storage.tariffsIntroOwed.set(null);
+        if (mounted && await showTariffsIntro(context)) return;
+      }
+      if (!mounted) return;
       await _showPacketAdIfDue();
     });
   }

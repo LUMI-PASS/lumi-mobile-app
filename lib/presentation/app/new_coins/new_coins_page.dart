@@ -39,6 +39,7 @@ class NewCoinsPage extends StatefulWidget {
     super.key,
     this.topUpFor,
     this.returnOnPurchase = false,
+    this.isIntro = false,
   });
 
   /// Opened because a booking is this many coins short. The shelf then holds
@@ -56,6 +57,14 @@ class NewCoinsPage extends StatefulWidget {
   /// shelf. Set by a caller the buyer wants to get back to — a booking that
   /// was one top-up short of being paid.
   final bool returnOnPurchase;
+
+  /// Shown after every successful sign-in, as a full-screen
+  /// introduction to the tariffs (see `showTariffsIntro`). The shelf is the
+  /// same; only its frame changes: a heading and a ✕ at the top right instead
+  /// of the back and balance pills, and the
+  /// screen closes itself after a purchase, or when there is nothing to show
+  /// rather than greeting a new user with an empty state.
+  final bool isIntro;
 
   @override
   State<NewCoinsPage> createState() => _NewCoinsPageState();
@@ -135,7 +144,18 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+    // The intro is an invitation, not a destination: with nothing to offer it
+    // steps aside instead of showing the "unavailable" screen to a new user.
+    if (mounted &&
+        widget.isIntro &&
+        (_failed || (!_catalogue.isOnSale && _balance.balance <= 0))) {
+      _close();
+    }
   }
+
+  /// Leaves the intro. Through the Navigator: the intro is a pageless route
+  /// pushed with `pushWidget` (see `showTariffsIntro`).
+  void _close([bool? result]) => Navigator.of(context).maybePop(result);
 
   /// Extra packs are shown only to someone who may buy them — a locked shelf
   /// is a row of things the buyer cannot have.
@@ -264,6 +284,10 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
       ),
     );
     if (!mounted) return;
+    if (widget.isIntro) {
+      _close(true);
+      return;
+    }
     if (widget.returnOnPurchase) {
       context.router.maybePop(true);
       return;
@@ -353,8 +377,11 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     // up to the root router, which answers true whenever anything at all sits
     // above the tabs — a sheet, a dialog, a page still animating out — and the
     // pill then showed on the tab until the next rebuild.
-    final isTab = context.router is TabsRouter;
-    final canPop = !isTab && context.router.canPop();
+    //
+    // The intro never asks: it sits on the root stack, where `canPop` is
+    // true, but its way out is the ✕ — never a back pill beside it.
+    final isTab = !widget.isIntro && context.router is TabsRouter;
+    final canPop = !widget.isIntro && !isTab && context.router.canPop();
 
     // Loading wears the shelf's own stage — the wash, the back pill, the Buy
     // bar's place — so the packs arrive into the screen that was already
@@ -362,6 +389,9 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
     if (_isLoading) {
       return _NewCoinsLoading(
         onBack: canPop ? () => context.router.maybePop() : null,
+        // The way out is there from the first frame, not only once the shelf
+        // has arrived.
+        onClose: widget.isIntro ? _close : null,
       );
     }
 
@@ -528,43 +558,56 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
               right: 16.w,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (canPop)
-                    _TopPill(
-                      onTap: () => context.router.maybePop(),
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        size: 20.w,
-                        color: context.colors.textPrimary,
-                      ),
-                    )
-                  else
-                    // `spaceBetween` still pushes the balance to the right
-                    // edge, where it sits whether or not the pill is there.
-                    const SizedBox.shrink(),
-                  // What the buyer holds, and the way to the deadlines and
-                  // the history behind it — off the shelf, which is for
-                  // choosing a pack and nothing else.
-                  _TopPill(
-                    onTap: _openMine,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CoinAmount(
-                          amount: _balance.balance,
-                          style: AppText.semibold14,
-                          color: context.colors.textPrimary,
+                children: widget.isIntro
+                    ? [
+                        Expanded(child: _IntroHeading()),
+                        12.kw,
+                        _TopPill(
+                          onTap: _close,
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 20.w,
+                            color: context.colors.textPrimary,
+                          ),
                         ),
-                        2.kw,
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18.w,
-                          color: context.colors.textPrimary,
+                      ]
+                    : [
+                        if (canPop)
+                          _TopPill(
+                            onTap: () => context.router.maybePop(),
+                            child: Icon(
+                              Icons.arrow_back_rounded,
+                              size: 20.w,
+                              color: context.colors.textPrimary,
+                            ),
+                          )
+                        else
+                          // `spaceBetween` still pushes the balance to the right
+                          // edge, where it sits whether or not the pill is there.
+                          const SizedBox.shrink(),
+                        // What the buyer holds, and the way to the deadlines and
+                        // the history behind it — off the shelf, which is for
+                        // choosing a pack and nothing else.
+                        _TopPill(
+                          onTap: _openMine,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CoinAmount(
+                                amount: _balance.balance,
+                                style: AppText.semibold14,
+                                color: context.colors.textPrimary,
+                              ),
+                              2.kw,
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 18.w,
+                                color: context.colors.textPrimary,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                ],
               ),
             ),
           ],
@@ -736,6 +779,20 @@ class _TopPill extends StatelessWidget {
   }
 }
 
+/// The sign-up intro's heading, in the top row beside its ✕ — where the
+/// back pill sits on the ordinary shelf.
+class _IntroHeading extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'new_coins_intro_title'.tr(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppText.heading20.copyWith(color: context.colors.textPrimary),
+    );
+  }
+}
+
 /// The shelf while it loads: the stage and its wash exactly as the loaded
 /// screen draws them, with the first pack's page sketched in shimmer — the
 /// coin, the name and price, the pill, the "what's in the pack" card and the
@@ -745,11 +802,14 @@ class _TopPill extends StatelessWidget {
 /// repaints its child in its own opaque colours, which would cut flat blocks
 /// out of the wash this screen is about.
 class _NewCoinsLoading extends StatefulWidget {
-  const _NewCoinsLoading({this.onBack});
+  const _NewCoinsLoading({this.onBack, this.onClose});
 
   /// Null on the Тарифы tab, where the shelf is a root and has nothing behind
   /// it — the pill is then left off entirely.
   final VoidCallback? onBack;
+
+  /// Set on the sign-up intro: a ✕ takes the balance pill's place.
+  final VoidCallback? onClose;
 
   @override
   State<_NewCoinsLoading> createState() => _NewCoinsLoadingState();
@@ -1023,27 +1083,48 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                 ),
               ),
             ),
-            // The balance pill at the top right — always there once loaded.
-            Positioned(
-              top: top + 8.h,
-              right: 16.w,
-              child: FadeTransition(
-                opacity: _pulse,
-                child: Container(
-                  width: 78.w,
-                  height: 40.w,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: context.colors.coinPanel.withValues(alpha: 0.72),
-                    borderRadius: BorderRadius.circular(40.r),
-                    border: Border.all(
-                        color:
-                            context.colors.textPrimary.withValues(alpha: 0.08)),
+            if (widget.onClose != null)
+              Positioned(
+                top: top + 8.h,
+                left: 16.w,
+                right: 16.w,
+                child: Row(
+                  children: [
+                    Expanded(child: _IntroHeading()),
+                    12.kw,
+                    _TopPill(
+                      onTap: widget.onClose!,
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 20.w,
+                        color: context.colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              // The balance pill at the top right — always there once loaded.
+              Positioned(
+                top: top + 8.h,
+                right: 16.w,
+                child: FadeTransition(
+                  opacity: _pulse,
+                  child: Container(
+                    width: 78.w,
+                    height: 40.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.colors.coinPanel.withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(40.r),
+                      border: Border.all(
+                          color: context.colors.textPrimary
+                              .withValues(alpha: 0.08)),
+                    ),
+                    child: bar(44, 12, color: ghostOnPanel),
                   ),
-                  child: bar(44, 12, color: ghostOnPanel),
                 ),
               ),
-            ),
             if (onBack != null)
               Positioned(
                 top: top + 8.h,
