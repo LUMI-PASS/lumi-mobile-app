@@ -323,6 +323,14 @@ class HomeApi {
     });
   }
 
+  /// Every centre's id and position, unpaged — the radius page's dots.
+  Future<Response> discoveryBranchPoints({List<String>? categoryIds}) {
+    return _dio.get('discovery/branch-points', queryParameters: {
+      if (categoryIds != null && categoryIds.isNotEmpty)
+        'category_id': categoryIds.join(','),
+    });
+  }
+
   /// The home feed's rows of centres listed from open sources — titled and
   /// ordered by the adminka, each row nearest first.
   Future<Response> unclaimedShelves({double? lat, double? lng}) {

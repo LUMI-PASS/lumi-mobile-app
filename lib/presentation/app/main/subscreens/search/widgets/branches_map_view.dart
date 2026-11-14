@@ -953,6 +953,10 @@ class _BranchesMapViewState extends State<BranchesMapView> {
       context,
       center: here,
       branches: _plottable,
+      categoryIds: widget.selectedCategories
+          .map((c) => c.id)
+          .whereType<String>()
+          .toList(),
       initialRadiusKm: filter.hasRadius ? filter.radiusKm : null,
     );
     if (result == null || !mounted) return;

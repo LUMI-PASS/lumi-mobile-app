@@ -8,6 +8,7 @@ import 'package:lumi_pass/presentation/app/main/subscreens/home/widgets/home_cla
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_cubit.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/cubit/search_state.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
+import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_date_chips.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/view_switch_button.dart';
 
@@ -112,6 +113,8 @@ class _SearchViewState extends State<SearchView> {
           .copyWith(categories: state.selectedCategories),
       categories: state.categories,
       branches: state.branches,
+      // The dates are the chips under the search field here.
+      showDate: false,
     );
     if (result == null) return;
     cubit.applyFilter(result, categories: result.categories);
@@ -163,8 +166,19 @@ class _SearchViewState extends State<SearchView> {
               initialTerm: state.searchTerm,
               onChanged: cubit.setSearchTerm,
               onFilterTap: _openFilter,
-              filterCount: cubit.activeFilterCount,
+              // Less the date: it is set and shown by the chips below, not in
+              // the sheet this badge counts for.
+              filterCount: cubit.activeFilterCount -
+                  ((state.filter?.datePreset ?? DatePreset.none) ==
+                          DatePreset.none
+                      ? 0
+                      : 1),
               autofocus: widget.autofocusSearch,
+            ),
+            12.verticalSpace,
+            SearchDateChips(
+              filter: state.filter ?? const FilterResult(),
+              onChanged: (f) => cubit.applyFilter(f),
             ),
             // The recents screen carries none of the result furniture: there
             // are no tabs to switch, no total to count and no map to plot —

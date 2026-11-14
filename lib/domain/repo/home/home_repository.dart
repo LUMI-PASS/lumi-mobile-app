@@ -132,6 +132,12 @@ abstract class HomeRepository {
     double? lng,
   });
 
+  /// Where every centre stands, in one request: [HomBranch]es carrying only
+  /// `id`, `latitude` and `longitude`. For the radius page, which dots the
+  /// centres and needs nothing else — [getDiscoveryBranches] would send the
+  /// whole card for each, a page at a time.
+  Future<List<HomBranch>> getBranchPoints({List<String>? categoryIds});
+
   /// The home feed's rows of centres Lumi listed itself, before they signed —
   /// see [UnclaimedShelf].
   Future<List<UnclaimedShelf>> getUnclaimedShelves({double? lat, double? lng});

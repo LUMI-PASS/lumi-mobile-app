@@ -213,13 +213,21 @@ class FilterBottomSheet extends StatefulWidget {
     this.initial,
     this.categories = const [],
     this.branches = const [],
+    this.showDate = true,
   });
+
+  /// Whether the "Sana" section is built. The search list has its own date
+  /// chips under the search field (see `SearchDateChips`), so it leaves the
+  /// section out; the map has no such row and keeps it. Hidden, the dates
+  /// ride through untouched — Reset leaves them alone too.
+  final bool showDate;
 
   static Future<FilterResult?> show(
     BuildContext context, {
     FilterResult? initial,
     List<HomCategory> categories = const [],
     List<HomBranch> branches = const [],
+    bool showDate = true,
   }) {
     return showModalBottomSheet<FilterResult>(
       context: context,
@@ -234,6 +242,7 @@ class FilterBottomSheet extends StatefulWidget {
         initial: initial,
         categories: categories,
         branches: branches,
+        showDate: showDate,
       ),
     );
   }
@@ -364,9 +373,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   /// Whether anything is set — drives the Clear button's enabled look, so it
   /// never invites a tap that would do nothing.
   bool get _hasAnyFilter =>
-      _datePreset != DatePreset.none ||
-      _fromDate != null ||
-      _toDate != null ||
+      (widget.showDate &&
+          (_datePreset != DatePreset.none ||
+              _fromDate != null ||
+              _toDate != null)) ||
       !_ageFieldsAreEmpty ||
       _gender != Gender.any ||
       _kind != ActivityKind.any ||
@@ -385,9 +395,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _ageFromController.clear();
     _ageToController.clear();
     setState(() {
-      _datePreset = DatePreset.none;
-      _fromDate = null;
-      _toDate = null;
+      if (widget.showDate) {
+        _datePreset = DatePreset.none;
+        _fromDate = null;
+        _toDate = null;
+      }
       _gender = Gender.any;
       _kind = ActivityKind.any;
       _districts = <String>{};
@@ -469,6 +481,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       context,
       center: centre,
       branches: widget.branches,
+      categoryIds: _categoryIds.toList(),
       initialRadiusKm: _radiusKm,
     );
     if (result == null || !mounted) return;
@@ -576,36 +589,38 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ],
                     ),
                   ),
-                  16.kh,
-                  _Section(
-                    label: 'filter_date'.tr(),
-                    child: Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: [
-                        FilterPill(
-                          label: 'today'.tr(),
-                          selected: _datePreset == DatePreset.today,
-                          onTap: () => _selectDatePreset(DatePreset.today),
-                        ),
-                        FilterPill(
-                          label: 'tomorrow'.tr(),
-                          selected: _datePreset == DatePreset.tomorrow,
-                          onTap: () => _selectDatePreset(DatePreset.tomorrow),
-                        ),
-                        FilterPill(
-                          label: 'this_week'.tr(),
-                          selected: _datePreset == DatePreset.thisWeek,
-                          onTap: () => _selectDatePreset(DatePreset.thisWeek),
-                        ),
-                        FilterPill(
-                          label: _calendarChipLabel,
-                          selected: _datePreset == DatePreset.custom,
-                          onTap: _pickDateRange,
-                        ),
-                      ],
+                  if (widget.showDate) ...[
+                    16.kh,
+                    _Section(
+                      label: 'filter_date'.tr(),
+                      child: Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        children: [
+                          FilterPill(
+                            label: 'today'.tr(),
+                            selected: _datePreset == DatePreset.today,
+                            onTap: () => _selectDatePreset(DatePreset.today),
+                          ),
+                          FilterPill(
+                            label: 'tomorrow'.tr(),
+                            selected: _datePreset == DatePreset.tomorrow,
+                            onTap: () => _selectDatePreset(DatePreset.tomorrow),
+                          ),
+                          FilterPill(
+                            label: 'this_week'.tr(),
+                            selected: _datePreset == DatePreset.thisWeek,
+                            onTap: () => _selectDatePreset(DatePreset.thisWeek),
+                          ),
+                          FilterPill(
+                            label: _calendarChipLabel,
+                            selected: _datePreset == DatePreset.custom,
+                            onTap: _pickDateRange,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                   16.kh,
                   _Section(
                     label: 'filter_class_time'.tr(),

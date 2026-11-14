@@ -12,6 +12,8 @@ import 'package:lumi_pass/common/utils/map_marker_bitmap.dart';
 import 'package:lumi_pass/common/utils/user_location.dart';
 import 'package:lumi_pass/common/utils/user_location_puck.dart';
 import 'package:lumi_pass/data/api_model/home_model/home_model.dart';
+import 'package:lumi_pass/di/injection.dart';
+import 'package:lumi_pass/domain/repo/home/home_repository.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/filter_bottom_sheet.dart';
 import 'package:lumi_pass/presentation/app/main/subscreens/search/widgets/search_widgets.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
@@ -82,14 +84,23 @@ class LocationFilterPage extends StatefulWidget {
     super.key,
     required this.center,
     required this.branches,
+    this.categoryIds = const [],
     this.initialRadiusKm,
   });
 
   /// The user's position — what the radius is measured from.
   final Point center;
 
-  /// The centres the map is showing, plotted as dots for reference.
+  /// Whatever centres the caller already holds — drawn at once so the map is
+  /// not empty while [_LocationFilterPageState] loads the full set. Only a
+  /// placeholder: the list screen holds just the handful in its "centres" row,
+  /// and the map holds only the ones inside a radius already picked, so
+  /// neither can say where every centre is.
   final List<HomBranch> branches;
+
+  /// The categories picked when the page opened — the dots are the centres
+  /// running any of them, the ones a radius would actually narrow.
+  final List<String> categoryIds;
 
   final double? initialRadiusKm;
 
@@ -97,6 +108,7 @@ class LocationFilterPage extends StatefulWidget {
     BuildContext context, {
     required Point center,
     required List<HomBranch> branches,
+    List<String> categoryIds = const [],
     double? initialRadiusKm,
   }) {
     return Navigator.of(context).push<LocationFilterResult>(
@@ -105,6 +117,7 @@ class LocationFilterPage extends StatefulWidget {
         builder: (_) => LocationFilterPage(
           center: center,
           branches: branches,
+          categoryIds: categoryIds,
           initialRadiusKm: initialRadiusKm,
         ),
       ),
@@ -126,6 +139,41 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
   /// False until the opening camera is placed — MapKit starts on its own
   /// default view, which would otherwise flash first.
   bool _placed = false;
+
+  /// The dots on the map — [LocationFilterPage.branches] until the page's own
+  /// fetch lands, then every centre.
+  late List<HomBranch> _branches = widget.branches;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBranches();
+  }
+
+  /// Every centre, with no radius — the page is for judging what a radius
+  /// would cut, so it has to show what lies outside it too. One request to
+  /// `discovery/branch-points`, which sends only ids and positions.
+  ///
+  /// Swapped in only when it differs from what is drawn: opened from the map,
+  /// the placeholder is usually every centre already, and redrawing the same
+  /// dots made them blink. A failure keeps the placeholder.
+  Future<void> _loadBranches() async {
+    final List<HomBranch> loaded;
+    try {
+      loaded = await getIt<HomeRepository>().getBranchPoints(
+        categoryIds: widget.categoryIds.isEmpty ? null : widget.categoryIds,
+      );
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    final shown = {for (final b in _branches) b.id};
+    if (shown.length == loaded.length &&
+        loaded.every((b) => shown.contains(b.id))) {
+      return;
+    }
+    setState(() => _branches = loaded);
+  }
 
   @override
   void didChangeDependencies() {
@@ -241,7 +289,7 @@ class _LocationFilterPageState extends State<LocationFilterPage> {
                       // Dots rather than the main map's name pills: here the centres
                       // are a reference for the circle, not something to read.
                       if (_dot case final dot?)
-                        for (final b in widget.branches)
+                        for (final b in _branches)
                           if (b.latitude != null && b.longitude != null)
                             PlacemarkMapObject(
                               mapId: MapObjectId('dot_${b.id}'),

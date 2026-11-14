@@ -371,6 +371,13 @@ class HomeRepositoryImpl extends HomeRepository {
   }
 
   @override
+  Future<List<HomBranch>> getBranchPoints({List<String>? categoryIds}) async {
+    final res = await _api.discoveryBranchPoints(categoryIds: categoryIds);
+    final list = (res.data['data'] ?? const []) as List;
+    return list.map((e) => HomBranch.fromJson(e)).toList();
+  }
+
+  @override
   Future<BranchesPage> getDiscoveryBranches({
     int page = 1,
     int limit = 10,
