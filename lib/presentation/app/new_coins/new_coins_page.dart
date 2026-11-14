@@ -562,14 +562,7 @@ class _NewCoinsPageState extends State<NewCoinsPage> {
                     ? [
                         Expanded(child: _IntroHeading()),
                         12.kw,
-                        _TopPill(
-                          onTap: _close,
-                          child: Icon(
-                            Icons.close_rounded,
-                            size: 20.w,
-                            color: context.colors.textPrimary,
-                          ),
-                        ),
+                        _IntroClose(onTap: _close),
                       ]
                     : [
                         if (canPop)
@@ -774,6 +767,38 @@ class _TopPill extends StatelessWidget {
               color: context.colors.textPrimary.withValues(alpha: 0.08)),
         ),
         child: child,
+      ),
+    );
+  }
+}
+
+/// The intro's ✕: a small bare glyph, no pill behind it. The tap area stays
+/// finger-sized (40×40) even though the mark itself is small.
+class _IntroClose extends StatelessWidget {
+  const _IntroClose({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: MaterialLocalizations.of(context).closeButtonTooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: 40.w,
+          height: 40.w,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Icon(
+              Icons.close_rounded,
+              size: 22.w,
+              color: context.colors.textPrimary.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1092,14 +1117,7 @@ class _NewCoinsLoadingState extends State<_NewCoinsLoading>
                   children: [
                     Expanded(child: _IntroHeading()),
                     12.kw,
-                    _TopPill(
-                      onTap: widget.onClose!,
-                      child: Icon(
-                        Icons.close_rounded,
-                        size: 20.w,
-                        color: context.colors.textPrimary,
-                      ),
-                    ),
+                    _IntroClose(onTap: widget.onClose!),
                   ],
                 ),
               )
