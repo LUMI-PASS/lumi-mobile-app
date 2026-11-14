@@ -159,3 +159,25 @@ enum NewCoinErrorCode {
         NewCoinErrorCode.unknown => null,
       };
 }
+
+/// What a coin spend (or its refund) paid for — `order_type` on a history row.
+enum NewCoinOrderType {
+  activity('activity'),
+  shop('shop'),
+
+  /// No order behind the row (a purchase, an expiry), or a type this build
+  /// does not know.
+  unknown('');
+
+  const NewCoinOrderType(this.key);
+
+  final String key;
+
+  /// Never throws — an unmodelled type resolves to [unknown].
+  static NewCoinOrderType fromKey(String? key) {
+    for (final type in values) {
+      if (type != unknown && type.key == key) return type;
+    }
+    return unknown;
+  }
+}

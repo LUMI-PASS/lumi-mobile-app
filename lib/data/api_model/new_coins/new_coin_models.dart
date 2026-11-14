@@ -1,3 +1,4 @@
+import 'package:lumi_pass/common/utils/app_locale.dart';
 import 'package:lumi_pass/data/api_model/new_coins/new_coin_enums.dart';
 import 'package:lumi_pass/data/api_model/order/order_model.dart';
 
@@ -250,6 +251,17 @@ class NewCoinTransaction {
     this.activityId,
     this.note,
     this.createdAt,
+    this.orderTypeKey,
+    this.refunded = false,
+    this.activityNames,
+    this.branchName,
+    this.ticketDate,
+    this.startTime,
+    this.tickets,
+    this.shopOrderId,
+    this.itemNames,
+    this.itemCount,
+    this.packNames,
   });
 
   final String id;
@@ -265,7 +277,54 @@ class NewCoinTransaction {
   final String? note;
   final DateTime? createdAt;
 
+  // What the row was for — named by the server from the order or the pack
+  // behind it. All optional: an older server sends none of them.
+
+  /// The raw `order_type` — read [orderType].
+  final String? orderTypeKey;
+
+  /// A spend whose coins have since been given back.
+  final bool refunded;
+
+  /// `{uz, ru, en}` — read [activityName].
+  final Map<String, dynamic>? activityNames;
+  final String? branchName;
+
+  /// The first lesson the spend paid for, as the server stores it
+  /// (`YYYY-MM-DD`, `HH:mm`).
+  final String? ticketDate;
+  final String? startTime;
+
+  /// How many tickets the order holds.
+  final int? tickets;
+
+  /// The shop order's own id — what `ShopOrderRoute` opens by.
+  final String? shopOrderId;
+
+  /// `{uz, ru, en}` of the first item — read [itemName].
+  final Map<String, dynamic>? itemNames;
+  final int? itemCount;
+
+  /// `{uz, ru, en}` — read [packName].
+  final Map<String, dynamic>? packNames;
+
   NewCoinTransactionKind get kind => NewCoinTransactionKind.fromKey(kindKey);
+
+  NewCoinOrderType get orderType => NewCoinOrderType.fromKey(orderTypeKey);
+
+  String? get activityName => _localized(activityNames);
+  String? get itemName => _localized(itemNames);
+  String? get packName => _localized(packNames);
+
+  /// The lesson's date and time, when the server named one.
+  DateTime? get lessonAt {
+    final date = DateTime.tryParse(ticketDate ?? '');
+    if (date == null) return null;
+    final hm = (startTime ?? '').split(':');
+    final h = hm.isNotEmpty ? int.tryParse(hm[0]) : null;
+    final m = hm.length > 1 ? int.tryParse(hm[1]) : null;
+    return DateTime(date.year, date.month, date.day, h ?? 0, m ?? 0);
+  }
 
   factory NewCoinTransaction.fromJson(Map<String, dynamic> json) {
     String? nonEmpty(Object? v) {
@@ -282,8 +341,32 @@ class NewCoinTransaction {
       activityId: nonEmpty(json['activity_id']),
       note: nonEmpty(json['note']),
       createdAt: _date(json['created_at']),
+      orderTypeKey: nonEmpty(json['order_type']),
+      refunded: json['refunded'] == true,
+      activityNames: _map(json['activity_name']),
+      branchName: nonEmpty(json['branch_name']),
+      ticketDate: nonEmpty(json['ticket_date']),
+      startTime: nonEmpty(json['start_time']),
+      tickets: json['tickets'] == null ? null : _int(json['tickets']),
+      shopOrderId: nonEmpty(json['shop_order_id']),
+      itemNames: _map(json['item_name']),
+      itemCount: json['item_count'] == null ? null : _int(json['item_count']),
+      packNames: _map(json['pack_name']),
     );
   }
+}
+
+Map<String, dynamic>? _map(Object? v) =>
+    v is Map ? Map<String, dynamic>.from(v) : null;
+
+/// The app's language first, then any language that has the name.
+String? _localized(Map<String, dynamic>? names) {
+  if (names == null) return null;
+  for (final key in [currentLang, 'ru', 'uz', 'en']) {
+    final v = names[key];
+    if (v is String && v.trim().isNotEmpty) return v.trim();
+  }
+  return null;
 }
 
 /// One page of the ledger (`new-coins/transactions`). Unlike its siblings this

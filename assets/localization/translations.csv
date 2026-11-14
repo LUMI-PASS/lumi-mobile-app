@@ -930,3 +930,6 @@ notification_yesterday,Вчера,Kecha,Yesterday
 telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
 server_not_responding_or_timeout,Сервер не отвечает или отвечает слишком долго. Попробуйте позже.,Server javob bermayapti yoki juda sekin javob bermoqda. Keyinroq urinib ko‘ring.,Server is not responding or taking too long. Try again later.
 telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
+new_coins_tx_shop,Покупка в Lumi Shop,Lumi Shop’dan xarid,Lumi Shop purchase
+new_coins_tx_shop_refund,Возврат за отменённый заказ,Bekor qilingan buyurtma uchun qaytarildi,Refund for a cancelled order
+new_coins_refunded,Возвращено,Qaytarildi,Refunded

@@ -573,4 +573,61 @@ void main() {
       expect(problems, isEmpty, reason: problems.join('\n'));
     });
   });
+
+  group('history row names what it was for', () {
+    test('an activity spend reads its activity, branch and lesson', () {
+      final tx = NewCoinTransaction.fromJson({
+        'id': 't1',
+        'kind': 'spend',
+        'amount': -5,
+        'balance_after': 35,
+        'refunded': true,
+        'order_id': 'o1',
+        'order_type': 'activity',
+        'activity_name': {'uz': 'Suzish', 'ru': 'Плавание', 'en': 'Swimming'},
+        'branch_name': 'Aqua Kids',
+        'ticket_date': '2026-11-18',
+        'start_time': '16:30',
+        'tickets': 2,
+      });
+      expect(tx.orderType, NewCoinOrderType.activity);
+      expect(tx.refunded, isTrue);
+      expect(tx.activityName, isNotNull);
+      expect(tx.branchName, 'Aqua Kids');
+      expect(tx.lessonAt, DateTime(2026, 11, 18, 16, 30));
+      expect(tx.tickets, 2);
+    });
+
+    test('a shop spend reads its shop order and item', () {
+      final tx = NewCoinTransaction.fromJson({
+        'id': 't2',
+        'kind': 'spend',
+        'amount': -7,
+        'balance_after': 28,
+        'order_type': 'shop',
+        'shop_order_id': 's1',
+        'item_name': {'ru': 'Футболка'},
+        'item_count': 3,
+      });
+      expect(tx.orderType, NewCoinOrderType.shop);
+      expect(tx.shopOrderId, 's1');
+      expect(tx.itemName, 'Футболка');
+      expect(tx.itemCount, 3);
+    });
+
+    test('an older server sends none of it, and the row stays bare', () {
+      final tx = NewCoinTransaction.fromJson({
+        'id': 't3',
+        'kind': 'spend',
+        'amount': -5,
+        'balance_after': 35,
+        'order_type': 'something_new',
+      });
+      expect(tx.orderType, NewCoinOrderType.unknown);
+      expect(tx.activityName, isNull);
+      expect(tx.packName, isNull);
+      expect(tx.lessonAt, isNull);
+      expect(tx.refunded, isFalse);
+    });
+  });
 }

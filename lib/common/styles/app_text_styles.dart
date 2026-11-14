@@ -45,6 +45,7 @@ class AppText {
 
   /// B3 / Semibold / 16 — card titles, prices.
   static TextStyle get semibold16 => _s(16, FontWeight.w600);
+  static TextStyle get semibold15 => _s(15, FontWeight.w600);
 
   /// B3 / Medium / 16 — buttons, list labels.
   static TextStyle get medium16 => _s(16, FontWeight.w500);
