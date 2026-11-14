@@ -137,7 +137,11 @@ class _AddCardSheetState extends State<_AddCardSheet> {
             hint: 'pay_card_number_hint'.tr(),
             keyboardType: TextInputType.number,
             autofocus: true,
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) {
+              setState(() {});
+              // A full card number moves straight on to the expiry.
+              if (_pan.length == 16) _expiryFocus.requestFocus();
+            },
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(19),

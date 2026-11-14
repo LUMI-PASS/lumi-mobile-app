@@ -230,6 +230,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
 
   final _numberCtrl = TextEditingController();
   final _expiryCtrl = TextEditingController();
+  final _expiryFocus = FocusNode();
   final _otpCtrl = TextEditingController();
 
   /// Scrolls the card strip — so a card picked earlier is in view when the
@@ -293,6 +294,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
   void dispose() {
     _numberCtrl.dispose();
     _expiryCtrl.dispose();
+    _expiryFocus.dispose();
     _otpCtrl.dispose();
     _cardsScroll.dispose();
     super.dispose();
@@ -873,6 +875,12 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             controller: _numberCtrl,
             hint: 'pay_card_number_hint'.tr(),
             keyboardType: TextInputType.number,
+            // A full card number moves straight on to the expiry.
+            onChanged: (v) {
+              if (v.replaceAll(RegExp(r'[^0-9]'), '').length == 16) {
+                _expiryFocus.requestFocus();
+              }
+            },
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(16),
@@ -891,6 +899,7 @@ class _ChooserSheetState extends State<_ChooserSheet> {
             width: 170.w,
             child: PaymentField(
               controller: _expiryCtrl,
+              focusNode: _expiryFocus,
               hint: 'pay_card_expiry_hint'.tr(),
               keyboardType: TextInputType.number,
               inputFormatters: [
