@@ -7,18 +7,13 @@ order_date,Дата,Sana,Date
 order_time,Время,Vaqt,Time
 order_sum,Сумма,Summa,Amount
 status_canceled,Отменено вами,Bekor qilingan,Canceled
-status_visited,Посещено,Tashrif buyurilgan,Visited
-status_missed,Пропущено,O‘tkazib yuborilgan,Missed
-status_pending,В ожидании,Kutilmoqda,Pending
 settings_title,Настройки,Sozlamalar,Settings
 app_version,Версия приложения,Ilova versiyasi,App version
 age_years_suffix,лет,yosh,yrs
-profile_title,Профиль,Profil,Profile
 add_child_short,Добавить,Qo‘shish,Add
 edit_profile,Изменить,Tahrirlash,Edit
 favorites,Избранное,Sevimlilar,Favorites
 logout_account,Выйти из аккаунта,Akkauntdan chiqish,Log out
-save_button,Сохранить,Saqlash,Save
 cancel_button,Отменить,Bekor qilish,Cancel
 select_language,Выберите язык,Tilni tanlang,Select language
 contact_support,Связаться с поддержкой,Qo‘llab-quvvatlash bilan bog‘lanish,Contact support
@@ -40,11 +35,7 @@ coming_soon,Скоро,Tez orada,Coming soon
 coming_soon_desc,Мы уже готовим этот раздел. Загляните чуть позже.,Bu bo'lim tayyorlanmoqda. Birozdan so'ng qayting.,We're getting this section ready. Check back soon.
 booking_available_soon,Бронирование скоро будет доступно,Bron tez orada mavjud bo‘ladi,Booking will be available soon
 all_categories,Все категории,Barcha kategoriyalar,All Categories
-near_you,Рядом с вами,Sizga yaqin,Near you
-my_account,Мой аккаунт,Mening akkauntim,My Account
 faq,Часто задаваемые вопросы,Ko'p beriladigan savollar,FAQ
-faq_subtitle,Вопросы и ответы,Savol va javoblar,Question and Answers
-faqs_title,Вопросы,Savollar,Questions
 faq_q1,В каких городах работает LUMI?,LUMI qaysi shaharlarda ishlaydi?,Which cities does LUMI operate in?
 faq_a1,"Пока работает в Ташкенте; в скором времени планируется расширение на другие города. Загрузите приложение, чтобы быть в курсе новостей.",Hozircha Toshkentda ishlaydi; tez orada boshqa shaharlarga kengayish rejasi bor. Yangiliklar uchun ilovani yuklab oling.,Currently operating in Tashkent; expansion to other cities is planned soon. Download the app to stay updated.
 faq_q2,Регистрация и поиск бесплатны?,Ro'yxatdan o'tish va qidiruv bepulmi?,Is registration and search free?
@@ -61,16 +52,7 @@ faq_q7,Можно ли использовать LUMI через Telegram?,Telegr
 faq_a7,"Да, приложение доступно как Telegram Mini App — без отдельной установки.","Ha, alohida o'rnatmasdan Telegram Mini App sifatida mavjud.","Yes, it is available as a Telegram Mini App without a separate installation."
 log_out,Выйти,Chiqish,Log Out
 log_out_subtitle,До скорой встречи,Tez orada ko'rishguncha,See you soon
-my_bookings,Мои брони,Bronlarim,My Bookings
 my_children,Мои дети,Farzandlarim,My Children
-active_bookings,Активные,Faol,Active
-past_bookings,Прошедшие,O'tgan,Past
-no_bookings_yet,Бронирований пока нет,Hozircha buyurtmalar yo'q,No bookings yet
-booked_classes_appear_here,Ваши забронированные занятия появятся здесь,Buyurtma qilingan darslaringiz shu yerda ko'rinadi,Your booked classes will appear here
-pay_now,Оплатить,To'lash,Pay Now
-amount_due,Сумма к оплате,To'lanadigan summa,Amount Due
-amount_paid,Оплачено,To'langan,Amount Paid
-booking_id,ID бронирования,Buyurtma ID,Booking ID
 add_child,Добавить ребенка,Bola qo'shish,Add Child
 update_child,Обновить данные,Ma'lumotni yangilash,Update Child
 children,детей,bola,children
@@ -111,7 +93,6 @@ continue,Продолжить,Davom etish,Continue
 get_started,Начать,Boshlash,Get Started
 shorts_empty_title,Видео нет,Videolar yo'q,No shorts
 shorts_empty_subtitle,Возвращайтесь позже,Keyinroq qayting,Check back later
-view_details,Подробнее,Batafsil,View Details
 verify_button,Подтвердить,Tasdiqlash,Verify
 book_select_tickets,Выберите билеты,Chiptalarni tanlang,Select tickets
 book_add_ticket,Добавьте хотя бы один билет,Kamida bitta chipta qo‘shing,Add at least one ticket
@@ -178,8 +159,7 @@ my_bookings,Мои бронирования,Bronlarim,My bookings
 no_bookings_yet,Бронирований пока нет,Hali bronlar yo‘q,No bookings yet
 active_bookings,Активные,Faol,Active
 past_bookings,Прошедшие,Tugagan,Past
-booked,Забронировано,Band qilingan,Booked
-booked_classes_appear_here,Здесь появятся забронированные активности,Band qilingan mashg'ulotlar shu yerda ko‘rinadi,Booked activities will appear here
+booked_classes_appear_here,Здесь появятся забронированные активности,Band qilingan mashg‘ulotlar shu yerda ko‘rinadi,Booked activities will appear here
 view_details,Подробнее,Batafsil,View details
 weekday_short_1,Пн,Du,Mon
 weekday_short_2,Вт,Se,Tue
@@ -222,7 +202,7 @@ branch_build_route,Построить маршрут,Yo’nalish qurish,Build ro
 route_open_failed,Не удалось открыть карты,Xaritalarni ochib bo‘lmadi,Could not open maps
 branch_about,О центре,Markaz haqida,About
 branch_route_video,Как добраться,Qanday borish,How to get there
-branch_no_classes,Занятий пока нет,Mashg’ulotlar hali yo’q ,No classes yet
+branch_no_classes,Занятий пока нет,Mashg‘ulotlar hali yo‘q,No classes yet
 branch_load_more_classes,Загрузить ещё,Ko’proq yuklash,Load more
 share_app,Поделиться приложением,Ilovani ulashing,Share app
 share_app_subtitle,Расскажи друзьям о LumiPass,Do’stlarga LumiPass haqida ayting,Tell your friends about LumiPass
@@ -243,12 +223,6 @@ resend_code,Отправить повторно,Qaytadan yuborish,Resend code
 save_button,Сохранить,Saqlash,Save
 registration_title,Регистрация,Ro‘yxatdan o‘tish,Registration
 registration_subtitle,Создайте аккаунт и получите полный доступ ко всем возможностям,Hisob yarating va barcha imkoniyatlarga to‘liq ega bo‘ling,Create an account and get full access to all features
-filter_title,Фильтр,Filtr,Filter
-price_label,Цена,Narx,Price
-map_view,Карта,Xarita,Map
-clear_button,Очистить,Tozalash,Clear
-apply_button,Применить,Qo'llash,Apply
-filter_title,Фильтр,Filtr,Filter
 price_label,Цена,Narx,Price
 map_view,Карта,Xarita,Map
 clear_button,Очистить,Tozalash,Clear
@@ -942,3 +916,17 @@ onb4_point1,Рядом с домом,Uyingizga yaqin,Close to home
 onb4_point2,По возрасту,Yoshiga mos,Right for their age
 onb4_point3,По интересам,Qiziqishiga koʻra,Based on interests
 onb4_start,Начали!,Boshladik!,Let's start!
+invalid_credentials,Неверный логин или пароль.,Login yoki parol noto‘g‘ri.,Invalid login or password.
+invalid_code,Неверный код подтверждения,Noto'g'ri tasdiqlash kodi,Incorrect code confirmation
+check_internet_connection,Проверьте подключение к интернету!,Internetga ulanishni tekshiring!,Check your internet connection!
+server_error_try_later,На сервере произошла ошибка. Попробуйте позже.,Serverda xatolik yuz berdi. Keyinroq urinib ko‘ring.,A server error occurred. Try again later.
+unknown_error,Произошла ошибка,"Nimadir xato ketdi, keyinroq urinib ko'ring",Something went wrong
+connection_error,Нет подключения к интернету. Попробуйте снова.,"Internetga ulanish yo‘q. Iltimos, qayta urinib ko‘ring.",No internet connection. Please try again.
+notifications_title,Уведомления,Bildirishnomalar,Notifications
+notifications_empty,Нет уведомлений,Bildirishnomalar yo'q,No notifications
+notifications_mark_all_read,Прочитать все,Barchasini o'qish,Mark all read
+notification_today,Сегодня,Bugun,Today
+notification_yesterday,Вчера,Kecha,Yesterday
+telegram_open_failed,Не удалось открыть Telegram,Telegramni ochib bo‘lmadi,Could not open Telegram
+server_not_responding_or_timeout,Сервер не отвечает или отвечает слишком долго. Попробуйте позже.,Server javob bermayapti yoki juda sekin javob bermoqda. Keyinroq urinib ko‘ring.,Server is not responding or taking too long. Try again later.
+telegram_login_unavailable,Вход через Telegram сейчас недоступен,Telegram orqali kirish hozircha ishlamayapti,Telegram sign-in is unavailable right now
