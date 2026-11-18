@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/gen/assets.gen.dart';
@@ -70,12 +71,17 @@ class UserAvatar extends StatelessWidget {
       );
     }
     if (imageUrl != null) {
-      return Image.network(
-        imageUrl!,
+      // CachedNetworkImage, not Image.network: the app's cache manager is what
+      // puts a timeout on the fetch, and a raw Image.network has none — it
+      // would sit on an empty circle forever rather than falling back to the
+      // glyph. See `common/utils/image_cache.dart`.
+      return CachedNetworkImage(
+        imageUrl: imageUrl!,
         width: dimension,
         height: dimension,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _glyph(dimension),
+        placeholder: (_, __) => _glyph(dimension),
+        errorWidget: (_, __, ___) => _glyph(dimension),
       );
     }
     return _glyph(dimension);

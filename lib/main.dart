@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lumi_pass/common/extensions/theme_extensions.dart';
 import 'package:lumi_pass/common/gen/strings.dart';
+import 'package:lumi_pass/common/utils/image_cache.dart';
 import 'package:lumi_pass/common/utils/fixed_csv_asset_loader.dart';
 import 'package:lumi_pass/common/widget/display/display_widget.dart';
 import 'package:lumi_pass/common/utils/app_locale.dart';
@@ -112,6 +113,7 @@ Future<void> _runWeb() async {
     try {
       log('1 binding');
       WidgetsFlutterBinding.ensureInitialized();
+      installImageFetchTimeout();
 
       log('2 localization');
       await EasyLocalization.ensureInitialized();
@@ -162,6 +164,11 @@ Future<void> _runWeb() async {
 
 Future<void> _runNative() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Before anything can ask for a picture, and after the binding, since the
+  // cache manager opens its store as it is built. A cached image fetch has no
+  // timeout of its own, and a request that never answers leaves the card blank
+  // forever instead of drawing its fallback. See `image_cache.dart`.
+  installImageFetchTimeout();
   await EasyLocalization.ensureInitialized();
   await _seedDefaultLocale();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

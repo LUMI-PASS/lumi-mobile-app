@@ -40,6 +40,10 @@ dependencies:
   logger: ^2.2.0
   hive: ^2.2.3
   cached_network_image: ^3.3.1
+  # Imported directly by lib/common/utils/image_cache.dart, which gives the
+  # image fetch a timeout. Already in the tree as cached_network_image's own
+  # dependency — named here because we use it ourselves.
+  flutter_cache_manager: ^3.4.1
   lottie: ^3.1.0
   jwt_decoder: ^2.0.1
   dio_cookie_manager: ^3.1.1

@@ -65,6 +65,21 @@ instead of copying the decoration inline. Existing shared building blocks:
 - **`Container3d`** (`lib/common/widget/container_3d.dart`) — bordered card with
   a subtle 3D press animation.
 
+### Images
+
+- **Network images go through `CachedNetworkImage`, never `Image.network`.**
+  The timeout on an image fetch lives in the app's cache manager
+  (`lib/common/utils/image_cache.dart`, installed from `main()`), and
+  `Image.network` does its own fetching where that cannot reach it. Without a
+  timeout a stalled request never fails, so the widget shows its placeholder
+  forever and never draws the `errorWidget` fallback — which is exactly what an
+  outage looked like in November 2026: every photo and category icon blank,
+  with no error anywhere. `test/image_fetch_timeout_test.dart` fails if an
+  `Image.network` comes back.
+- Always pass an `errorWidget` (and a `placeholder` where an empty frame would
+  read as broken). The fallback is what the user sees whenever the picture
+  cannot be had.
+
 ### Typography
 
 - Text styles come from `AppText` (`lib/common/styles/app_text_styles.dart`),

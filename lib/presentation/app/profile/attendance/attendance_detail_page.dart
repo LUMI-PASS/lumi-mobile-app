@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -97,11 +98,15 @@ class AttendanceDetailPage extends BasePage<AttendanceCubit,
               borderRadius: BorderRadius.circular(12.r),
             ),
             clipBehavior: Clip.antiAlias,
+            // CachedNetworkImage, not Image.network: the fetch's timeout lives
+            // in the app's cache manager, and without it a stalled request
+            // leaves an empty frame instead of this glyph. See
+            // `common/utils/image_cache.dart`.
             child: childModel.hasPhoto == true
-                ? Image.network(
-                    photoUrl,
+                ? CachedNetworkImage(
+                    imageUrl: photoUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(
+                    errorWidget: (_, __, ___) => Icon(
                       Icons.person_rounded,
                       size: 24.w,
                       color: context.colors.primary.withOpacity(0.4),
