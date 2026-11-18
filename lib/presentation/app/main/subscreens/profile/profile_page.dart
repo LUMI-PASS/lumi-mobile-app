@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lumi_pass/common/styles/app_color_scheme.dart';
 
 import 'package:auto_route/auto_route.dart';
@@ -791,13 +792,18 @@ class _ChildChip extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: AppColors.brandPurple.withOpacity(0.12),
                   ),
+                  // CachedNetworkImage, not Image.network: the fetch's
+                  // timeout lives in the app's cache manager, and without it a
+                  // stalled request leaves an empty circle instead of this
+                  // placeholder. See `common/utils/image_cache.dart`.
                   child: _photoUrl != null
-                      ? Image.network(
-                          _photoUrl!,
+                      ? CachedNetworkImage(
+                          imageUrl: _photoUrl!,
                           width: 48.w,
                           height: 48.w,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholder,
+                          placeholder: (_, __) => _placeholder,
+                          errorWidget: (_, __, ___) => _placeholder,
                         )
                       : _placeholder,
                 ),

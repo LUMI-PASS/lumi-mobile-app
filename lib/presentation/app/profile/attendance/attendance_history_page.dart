@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -160,11 +161,16 @@ class _ChildSelectionCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14.r),
               ),
               clipBehavior: Clip.antiAlias,
+              // CachedNetworkImage, not Image.network: the fetch's timeout
+              // lives in the app's cache manager, and without it a stalled
+              // request leaves an empty frame instead of this avatar. See
+              // `common/utils/image_cache.dart`.
               child: child.hasPhoto == true
-                  ? Image.network(
-                      _childPhotoUrl,
+                  ? CachedNetworkImage(
+                      imageUrl: _childPhotoUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _defaultAvatar(context),
+                      placeholder: (_, __) => _defaultAvatar(context),
+                      errorWidget: (_, __, ___) => _defaultAvatar(context),
                     )
                   : _defaultAvatar(context),
             ),
