@@ -77,11 +77,12 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
 
   /// Whether a search of activities also asks for the centres that match.
   ///
-  /// The results screen shows both in one grid — the centres first, the
-  /// activities after them — so one term finds a place by its name as well as
+  /// The results screen shows both in one grid — the activities first, the
+  /// centres after them, paged by the server as one list (`centres=after`) —
+  /// so one term finds a place by its name as well as
   /// what runs there. Only for a typed term: with nothing typed the centres
-  /// would be every centre there is, standing in front of the activities the
-  /// user came to browse. They come back in the SAME response as the activities
+  /// would be every centre there is, piled onto the activities the user came
+  /// to browse. They come back in the SAME response as the activities
   /// (`centres=1`), never from a second request. Not with a filter on: ages, prices, dates and districts
   /// describe a CLASS and `discovery/branches` ignores them, so the row would
   /// show centres the filter was supposed to rule out. And not on the map,
@@ -479,21 +480,28 @@ class SearchCubit extends BaseCubit<SearchBuildable, SearchListenable> {
           radiusKm: q.radiusKm,
           fromTime: q.fromTime,
           toTime: q.toTime,
-          // First page only: the row is not paged, so a "load more" has no
-          // use for them.
-          centres: !append && _listsCentres,
+          // Every page: the server pages activities and centres as one list
+          // (`centres=after`), so the centres arrive on the pages after the
+          // last activity, never in front of them.
+          centres: _listsCentres,
         );
 
         _classesTotal = result.total;
         final centres = result.branches;
+        if (!append) _branchesTotal = 0;
         if (centres != null) _branchesTotal = result.branchesTotal;
 
         if (append) {
           final existingIds = buildable.classes.map((c) => c.id).toSet();
           final unique =
               result.classes.where((c) => !existingIds.contains(c.id)).toList();
+          final centreIds = buildable.branches.map((b) => b.id).toSet();
+          final newCentres = (centres ?? const <HomBranch>[])
+              .where((br) => !centreIds.contains(br.id))
+              .toList();
           build((b) => b.copyWith(
                 classes: [...b.classes, ...unique],
+                branches: [...b.branches, ...newCentres],
                 classesPage: page + 1,
                 classesTotalPages: result.totalPages,
                 classesLoaded: true,

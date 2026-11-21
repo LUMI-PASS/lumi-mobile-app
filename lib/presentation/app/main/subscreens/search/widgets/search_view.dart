@@ -279,14 +279,23 @@ class _SearchViewState extends State<SearchView> {
                       itemBuilder: (_, __) => _CardSkeleton(c: c),
                     );
                   }
-                  // One search, one list: the centres whose name matched
-                  // lead, the activities follow, all in the same grid. A
-                  // centre is a result like any other — it is told apart by
-                  // its tag, not by living in a section of its own.
+                  // One search, one list: the activities lead and the centres
+                  // whose name matched follow, all in the same grid. A centre
+                  // is a result like any other — it is told apart by its tag,
+                  // not by living in a section of its own.
+                  //
+                  // Activities first because they are what the search is for:
+                  // with the centres in front, "zoopark" opened on a centre
+                  // and the zoo itself sat second.
+                  //
+                  // The server pages the two as one list (`centres=after`), so
+                  // [state.branches] only fills once the activities have run
+                  // out and simply follows them here.
                   final centres = state.branches;
                   if (items.isEmpty && centres.isEmpty) {
                     return const SearchEmptyView();
                   }
+                  final classCount = state.classes.length;
 
                   return RefreshIndicator(
                     onRefresh: cubit.refresh,
@@ -298,9 +307,10 @@ class _SearchViewState extends State<SearchView> {
                       slivers: [
                         SliverToBoxAdapter(
                           // Everything the grid can reach: every matching
-                          // activity, plus the centres it is showing.
+                          // activity, plus the centres at the end of it —
+                          // counted before they have paged in.
                           child: SearchCountRow(
-                            count: cubit.resultCount + centres.length,
+                            count: cubit.resultCount + cubit.centresCount,
                           ),
                         ),
                         SliverToBoxAdapter(child: 14.verticalSpace),
@@ -308,10 +318,10 @@ class _SearchViewState extends State<SearchView> {
                           padding: padding,
                           sliver: SliverGrid.builder(
                             gridDelegate: grid,
-                            itemCount: centres.length + state.classes.length,
+                            itemCount: classCount + centres.length,
                             itemBuilder: (context, index) {
-                              if (index < centres.length) {
-                                final branch = centres[index];
+                              if (index >= classCount) {
+                                final branch = centres[index - classCount];
                                 return SearchBranchCard(
                                   key: ValueKey('centre-${branch.id ?? index}'),
                                   branch: branch,
@@ -319,8 +329,7 @@ class _SearchViewState extends State<SearchView> {
                                   tag: 'search_centre_tag'.tr(),
                                 );
                               }
-                              final model =
-                                  state.classes[index - centres.length];
+                              final model = state.classes[index];
                               return HomeCourseCard(
                                 key: ValueKey(model.id ?? index),
                                 homClass: model,

@@ -244,8 +244,11 @@ class HomeApi {
         'districts': districts.join(','),
       if (kind != null) 'kind': kind,
       // Asks for the matching centres in the same response (`branches`), so a
-      // search that shows both costs one request.
-      if (centres) 'centres': 1,
+      // search that shows both costs one request. `after` pages activities and
+      // centres as one list, every activity first: each page carries the
+      // centres that fall on it, none until the activities run out. (`1`, what
+      // released builds send, puts all of them beside page one instead.)
+      if (centres) 'centres': 'after',
       // The map's "By location": centres within this many km of [lat]/[lng].
       if (radiusKm != null) 'radius_km': radiusKm,
       // The "By time" window, HH:mm, matched on when a lesson starts.
